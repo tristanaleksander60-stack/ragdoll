@@ -14,7 +14,7 @@ Talk to the owner in Danish, short and plain.
 - After editing, check the script landed in Studio (Roblox Studio MCP) before testing; sync can lag.
 
 ## Tests
-- `ServerStorage.RunSelfTest = true`, then Play. `Server/Tests/T01..T42` print `[SelfTest] PASS/FAIL <name>` and `DONE pass= fail=`. Full suite ~10-12 min; run only affected tests while working, the full suite once per phase.
+- `ServerStorage.RunSelfTest = true`, then Play. `Server/Tests/T01..T59` print `[SelfTest] PASS/FAIL <name>` and `DONE pass= fail=`. Full suite ~10-12 min; run only affected tests while working, the full suite once per phase.
 - Known flaky: T15, T19, T24, T25, T27, T32. LabLive must be off during tests.
 - LayoutCheck (client) checks 8 screen sizes; it is the phone evidence.
 
@@ -24,7 +24,7 @@ Talk to the owner in Danish, short and plain.
 - Copy what the top Roblox ragdoll games do (Ragdoll Engine, Ragdoll Reality, Fling Things and People).
 
 ## Owner decisions
-- Purple blood; severed limbs allowed behind the `SEVERING` switch in Config; real-ish gun names via nicknames (G17, Deagle), no trademarks.
+- Purple blood; severed limbs allowed behind the `SEVERING` switch in Config; real-ish gun names via nicknames (G17, Deagle), no trademarks. **Phase 0 (19 Nov) changed the defaults, each one switch away:** `Config.SEVERING = false`, `Config.BLOOD = "off"` ("purple" = the old choice), `Config.TOY_NAMES = true` (G17 -> Popper ...; ids unchanged), `Config.MILD_TEXT = true` (hit line by body region). Owner to confirm.
 - Gunshot sounds: community uploads.
 - Own lab per player, others' plots not visible, shared plaza (players can hit each other, no damage), friends enter a lab by invite.
 - Christmas theme on now; admin/troll menu owner-only.
@@ -76,6 +76,14 @@ Talk to the owner in Danish, short and plain.
 - Quiet HUD + 3 slots (v0.17.0, 10 Nov, owner): Toys.SLOTS = 3 (+ the 3 locked NextUnlocks cards; older saved loadouts keep their first 3: LoadoutStore.validate). Bar plan: one row WEAPONS + 3 slots + 3 next; too narrow (phones) = the next cards on a row under the slots (plan.nextRow). "+1 TAKEDOWN" small (100-150 px), silent, first 120 s only. LEVEL: 22 px badge, short 3 px line, silent level-up. HudSlots.QUIET controls drawn at HUD_SCALE 0.8 via a UIScale "HudScale" (touch never under 44 px; NEXT weapon button and touch fire buttons keep size); launcher column Controller.HUD_SCALE 0.85 with caption floor C.HUD_CAPTION_MIN 11. LayoutCheck uses the scaled rects; mouse tap floor 32 px (touch 44). LayoutCheck 0 problems, live 0; T23/T35/T45/T46 pass. Backup `2026-11-10-quiet-hud`.
 - In-game favorite (v0.17.1, 10 Nov): LikePrompt window "Favorite Ragdoll Havoc?" with a FAVORITE button = AvatarEditorService:PromptSetFavorite(game.PlaceId, Asset, true) (Roblox's own prompt, no leaving; does not show in Studio, untested live), PromptSetFavoriteCompleted Success -> thanks toast, no more auto-asks. Roblox has NO in-game like/thumbs-up prompt (only SocialService:PromptFeedbackSubmissionAsync for written feedback), so the window still points to the game page for the like. MENU entry is now "FAVORITE". No reward (Roblox rules).
 - M12 started. Name is Ragdoll Havoc again (Config.GameName + 4 player texts). Owner dropped the desert oasis: improve the spawn lab instead; dead monitor off by default (on only via Settings).
+
+## Phase 0 (19 Nov 2026, branch `fase0`, v0.18.0; plan: echo-heist docs/ragdoll-havoc/MASTER_PLAN.md)
+- Gamepad: Shared\PadMap (pure) + Client\GamepadControls (CAS at Medium+100, under the kit's B close). R2 fire at screen centre (hold = auto), L2 zoom, LB/RB + D-pad L/R slots (tabs in WEAPONS), Y WEAPONS, X grab/throw, B ragdoll (Spectate: B stop, LB/RB next), Select view cycle (player -> 1st person -> lab; sticks orbit/pan), D-pad up SHOP, down MENU (Start is Roblox's). AutoSelectGui off; MENU shows every launcher to a pad. Pad glyphs in onboarding hints.
+- Portrait phones: HudSlots `ctx.portrait` (thumb row: SHOOT/GRAB by jump, RUN + THROW/ZOOM above), bar over it (PokeController.PORTRAIT_BOTTOM 180), full-width toasts under the top cluster, toasts shrink text to fit. Phone: LAB VIEW + RUN after `Config.QUIET_START` (90 s), BUILD in MENU (SANDBOX entry was commented out by accident), landscape RUN shares THROW's box. LayoutCheck: 4 portrait phones + RUN. Not forced to landscape.
+- Quiet start 90 s: no view card (`Config.VIEW_CARD`), egg card / auto egg / gift note / tips after 90 s, chase at 150 s, the first-minute hint steps aside for a toast.
+- Bar: `Toys.SLOTS = 6`; NEXT cards only from `Config.NEXT_UNLOCKS_MIN_TAKEDOWNS` 25 and `NEXT_UNLOCKS_AFTER` 180 s (BarRules.nextUnlocksShown).
+- SessionStats: `pv` (PlaceVersion), usedPad/Keys/Mouse/Touch + `input`, portrait, funnel `step`; tools\SessionReport updated. SOON cards hidden while ids are 0. STORE_TEXT.md, TEST-FASE0.md.
+- New tests T53_Gamepad, T54_PortraitHud, T55_QuietStart, T56_BarSixSlots, T57_MildContent, T58_SessionRecord, T59_NoSoonCards; T35 updated. Pure ones were also run off-Studio with a lune harness. Nothing here was play-tested in Studio yet.
 
 ## M10 progress (9 Nov 2026, NOT yet tested in Studio)
 **M10 PASSED (9 Nov 2026): blind review 8.75 after fix round 1.** Latest backup: `Documents\RagdollLab-backups\2026-11-09-m10-done` (pre-M10: `2026-11-08-baseline`). Full suite 44/46 before the fixes; the two failures were fixed (T40 Golf grip, T38 quiet-mode) except T37, which fails at ~24 Hz on this PC with the pre-M10 code too (environmental). Golf grip and Tip were moved onto the handle/head in the place (N7Assets) with welds rebuilt: the place must be saved. MAX_CORPSES = 16 server-wide. Scope cuts (owner may ask later): per-weapon Palm attachments, two-handed left-hand stance retune, server movement guard for sprint, client-side sprint self-test.
