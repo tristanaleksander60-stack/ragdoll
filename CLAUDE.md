@@ -3,8 +3,8 @@
 Studio place: "[💥] Ragdoll Havoc", placeId 126037745825106. Game name: **Ragdoll Havoc** (owner changed it back on 10 Nov 2026; 'Santa's Sandbox' is dropped).
 Talk to the owner in Danish, short and plain.
 
-## NEXT: v3 (owner order, 19 Nov 2026)
-When the owner writes **"klar"**, run `docs/V3_PLAN.md` from its State line, automatically and without questions: research (Reddit, TikTok, YouTube, Roblox communities), then the look/HUD/first person/3D UI, maps from Creator Store models, lab activities and economy. Best, fastest, quality and cheapest, as that file says. Update its State line after every phase.
+## How every session runs (owner order, 19 Nov 2026)
+The owner types **`/klar`** (`.claude/commands/klar.md`) or **"klar"**. Then follow `docs/MASTER_PROMPT.md` ("The prompt") from the State line in `docs/V3_PLAN.md`: automatically and without questions; quality first, then speed, then cost. The PC session (Studio + Roblox Studio MCP) is the main one. A cloud session (no Studio) only does research and code, and lists the Studio steps under PC TODO.
 
 ## Code and deploy
 - This folder is synced into Studio with Script Sync (each service is the sync root):
