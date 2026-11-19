@@ -297,16 +297,17 @@ local function body(results: { string }, player: Player)
 	MinigameService.downForTest(fifth.model)
 	local expected = MinigameService.RLGL.caught + MinigameService.RLGL.wrongRed + MinigameService.RLGL.wrongGreen * 2
 	assert(s.score == expected, "a knock-down on green did not cost")
-	-- A runner over the red line.
+	-- A cheater over the red line (v4 A1: an honest one is safe, T94).
 	local runner = s.runners[4]
+	runner.cheated = true
 	local centre = Places.floorCenter((Workspace:GetAttribute("LabOrigin") :: Vector3?) or Vector3.zero, "Arena") :: Vector3
 	DummyControl.reset(runner.model, CFrame.new(centre + Vector3.new(runner.laneX, 3, -46)))
 	task.wait(0.2)
 	MinigameService.stepForTest()
-	assert(s.lives == MinigameService.RLGL.lives - 1, "a runner over the red line did not cost a life")
+	assert(s.lives == MinigameService.RLGL.lives - 1, "a cheater over the red line did not cost a life")
 	MinigameService.stopForTest()
 	assert(ProgressService.best(player, "RLGL") >= expected, "the best score was not kept")
-	table.insert(results, string.format("red light: sneaker caught +%d, still runner %d, on green or yellow %d (score %d, kept as best); a runner over the line cost a life; one game at a time", MinigameService.RLGL.caught, MinigameService.RLGL.wrongRed, MinigameService.RLGL.wrongGreen, expected))
+	table.insert(results, string.format("red light: sneaker caught +%d, still runner %d, on green or yellow %d (score %d, kept as best); a cheater over the line cost a life; one game at a time", MinigameService.RLGL.caught, MinigameService.RLGL.wrongRed, MinigameService.RLGL.wrongGreen, expected))
 
 	-- 7. Shoot 'em.
 	ok = MinigameService.start(player, "Shoot")

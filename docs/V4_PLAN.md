@@ -221,3 +221,10 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
 
 ## State
 - 20 Nov 2026: plan written (cloud). Nothing of v4 started. Before v4, the v3 leftovers in `docs/V3_PLAN.md` (State, PC TODO) still count, and the PC session decides with the owner's priority (this list comes first).
+- 20 Nov 2026 (PC): **A1 done.** Play test (1 player) found the round could not be won: every runner through the red line cost a life, honest green-light walkers too, and at pace 1.1 they crossed in two greens, so the round ended at ~12 s. Now:
+  - only a cheater (one that moved on RED) costs a life; an honest finisher is "Safe!";
+  - every runner that is out is replaced in its lane after 1.5 s, so the round lasts its minute (no early end while replacements are pending);
+  - pace 0.55, sneak 0.12, lives 5.
+  - Seen in Studio: the round ran its minute with lights and HUD right. T94_RedLight is new; T27 is updated.
+  - Not done: a 2-client test (Studio multi-client).
+  - The Studio viewport went white again after visiting the Arena (Studio renderer state; only a Studio restart fixes it), so A1's captures show only the HUD.

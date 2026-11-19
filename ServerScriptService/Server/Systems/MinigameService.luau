@@ -37,15 +37,16 @@ local MinigameService = {}
 MinigameService.RLGL = {
 	duration = 60,
 	runners = 8,
-	lives = 3,
+	lives = 5, -- (3 with 30% sneaking ended the round at 35 s with no catches; PC play test 20 Nov)
 	green = { 2.5, 4.5 }, -- s
 	yellow = 0.9,
 	red = { 2.2, 3.6 },
-	sneak = 0.3, -- of the runners, each red, keep walking
+	sneak = 0.12, -- of the runners, each red, keep walking (0.3: two or three cheaters every red)
 	caught = 100,
 	wrongRed = -50,
 	wrongGreen = -25,
-	pace = 1.1,
+	pace = 0.55, -- (1.1 crossed the arena in two greens: the round ended in 12 s, PC play test 20 Nov)
+	respawnAfter = 1.5, -- s: a runner through the line is replaced at the start (the round lasts its minute)
 }
 MinigameService.SHOOT = {
 	duration = 45,
@@ -59,7 +60,7 @@ local FINISH_Z = -40 -- the red line
 local COOLDOWN = 3 -- s between games
 local TICK = 0.1
 
-type Runner = { model: Model, sneaking: boolean, done: boolean, laneX: number, moving: boolean? }
+type Runner = { model: Model, sneaking: boolean, done: boolean, laneX: number, moving: boolean?, cheated: boolean?, replaced: boolean? }
 type Session = {
 	game: string,
 	host: Player,
@@ -73,6 +74,7 @@ type Session = {
 	runners: { Runner },
 	ended: boolean,
 	hits: number,
+	pending: number?, -- RLGL: runners waiting to be replaced
 }
 
 local remote: RemoteEvent
@@ -310,6 +312,9 @@ local function stepRLGL(s: Session, now: number)
 			-- Red: the honest freeze, a few sneak on.
 			for _, r in s.runners do
 				r.sneaking = not r.done and rng:NextNumber() < cfg.sneak
+				if r.sneaking then
+					r.cheated = true -- (moved on red: it may not get through)
+				end
 			end
 			setLight(s, "Red", rng:NextNumber(cfg.red[1], cfg.red[2]))
 		else
@@ -327,10 +332,18 @@ local function stepRLGL(s: Session, now: number)
 			local z = pelvis.Position.Z - centre.Z
 			if z < FINISH_Z then
 				r.done = true
-				s.lives -= 1
-				pop("A runner got past you!", false)
+				-- (PC play test 20 Nov: every runner through cost a life, honest ones too, so the round
+				-- could not be won. Only a cheater, one that moved on RED, costs a life now; an honest
+				-- one is safe home. Either way a fresh runner starts in its lane.)
+				if r.cheated then
+					s.lives -= 1
+					pop("A cheater got past you!", false)
+				else
+					pop("Safe! (they played fair)", true)
+				end
 				tell("State", stateOf(s))
 				goTo(r.model, centre + Vector3.new(r.laneX, 0, FINISH_Z - 10), centre + Vector3.new(r.laneX, 0, FINISH_Z - 20))
+				task.delay(cfg.respawnAfter + 1, clearAway, r.model)
 			else
 				local moving = s.light == "Green" or s.light == "Yellow" or r.sneaking
 				local state = r.model:GetAttribute("RagdollState")
@@ -348,9 +361,28 @@ local function stepRLGL(s: Session, now: number)
 			end
 		end
 	end
+	-- A runner that is out (caught, or through the line) is replaced in its lane after a beat, so
+	-- the round lasts its minute (not in its last seconds).
+	for _, r in s.runners do
+		if r.done and not r.replaced then
+			r.replaced = true
+			if Workspace:GetServerTimeNow() < s.endsAt - 6 then
+				s.pending = (s.pending or 0) + 1
+				local lane = r.laneX
+				task.delay(cfg.respawnAfter, function()
+					s.pending = (s.pending or 1) - 1
+					if session == s and not s.ended then
+						local at = centre + Vector3.new(lane, 0, START_Z)
+						local fresh = addRunner(s, at, at - Vector3.zAxis, 100 + rng:NextInteger(1, 899))
+						fresh.model:SetAttribute("Pace", cfg.pace)
+					end
+				end)
+			end
+		end
+	end
 	if s.lives <= 0 then
 		finish(s, "Out of lives")
-	elseif alive == 0 then
+	elseif alive == 0 and (s.pending or 0) == 0 then
 		finish(s, "Every runner is down or through")
 	end
 end
