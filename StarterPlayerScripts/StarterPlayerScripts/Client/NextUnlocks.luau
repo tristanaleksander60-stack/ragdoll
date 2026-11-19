@@ -10,6 +10,8 @@ local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Toys = require(Shared:WaitForChild("Toys"))
+local BarRules = require(Shared:WaitForChild("BarRules"))
+local Config = require(Shared:WaitForChild("Config"))
 local Theme = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUITheme"))
 
 local ToolPicture = require(script.Parent:WaitForChild("ToolPicture"))
@@ -266,9 +268,26 @@ function NextUnlocks.count(): number
 end
 
 -- HudPlus: the takedowns and what is yours (whenever either changes).
+local lastState: { takedowns: number, owned: { [string]: boolean } }? = nil
+local recheck = false
 function NextUnlocks.setState(takedowns: number, owned: { [string]: boolean })
 	local before = #upcoming
-	upcoming = NextUnlocks.listFor(takedowns, owned)
+	lastState = { takedowns = takedowns, owned = owned }
+	-- (Phase 0: hidden for new players; looked at again once the visit is old enough.)
+	if BarRules.nextUnlocksShown(takedowns, time()) then
+		upcoming = NextUnlocks.listFor(takedowns, owned)
+	else
+		upcoming = {}
+		if not recheck and time() < Config.NEXT_UNLOCKS_AFTER then
+			recheck = true
+			task.delay(Config.NEXT_UNLOCKS_AFTER - time() + 0.1, function()
+				local s = lastState
+				if s then
+					NextUnlocks.setState(s.takedowns, s.owned)
+				end
+			end)
+		end
+	end
 	redraw()
 	if #upcoming ~= before then
 		local cb = NextUnlocks.onCount

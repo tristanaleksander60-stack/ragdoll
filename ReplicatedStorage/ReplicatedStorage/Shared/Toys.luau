@@ -250,7 +250,9 @@ local CATEGORIES: { Category } = { "Melee", "Guns", "Explosives", "Specials" }
 -- takedowns (players from before keep them: ProgressService.grandfather, LADDER 3).
 local DEFAULT_LOADOUT = { "Blaster", "Grab", "Punch" }
 -- How many slots the bar has (a fixed number, not the starting bar's length: round 5).
-local SLOTS = 3 -- (the owner, 10 Nov: three weapon slots, then the three locked next weapons on the bar)
+-- (Phase 0, 19 Nov: back to 6. The cut to 3 in 0.16 made every new weapon a "pick a slot to
+-- replace" step right when WEAPONS unlocks; it lines up with the ~19 s session drop: AUDIT.md 1.3.)
+local SLOTS = 6
 
 -- Buy now with Robux (round 2, N4): four price tiers by how far up the ladder a weapon is (the
 -- owner makes one developer product per tier: MoneyService). R$.

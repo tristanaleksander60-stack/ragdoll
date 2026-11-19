@@ -18,6 +18,10 @@ local Config = {
 	-- The "Walk, or view from above?" card (74 % never answered it): off; everyone starts in the
 	-- player view and LAB VIEW stays a button (MENU's on a phone after the quiet start).
 	VIEW_CARD = false,
+	-- The three locked "next weapon" cards on the bar (0.15) wait until a player has this many
+	-- takedowns AND this many seconds of the visit have passed (BarRules.nextUnlocksShown).
+	NEXT_UNLOCKS_MIN_TAKEDOWNS = 25,
+	NEXT_UNLOCKS_AFTER = 180,
 }
 
 return table.freeze(Config)

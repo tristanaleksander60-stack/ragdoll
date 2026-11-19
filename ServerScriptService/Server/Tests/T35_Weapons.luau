@@ -78,7 +78,7 @@ local function ladder(results: { string })
 	end
 	-- (Round 5: the G17 and Punch, and Grab; Bat, Crowbar and Shove at 2, 4 and 6 takedowns.)
 	assert(#weapons == 2, string.format("a new player has %d weapons (want 2)", #weapons))
-	assert(Toys.SLOTS == 3 and #Toys.defaultLoadout == 3, "the bar is not 3 slots, full at the start")
+	assert(Toys.SLOTS == 6 and #Toys.defaultLoadout == 3, "the bar is not 6 slots with 3 tools at the start (phase 0)")
 	assert(Toys.byId.Bat.unlockAt == 2 and Toys.byId.Crowbar.unlockAt == 4 and Toys.byId.Shove.unlockAt == 6, "Bat, Crowbar, Shove are not at 2, 4, 6")
 	-- Players from before keep them (grandfather from ladder 2).
 	local old: any = { owned = {}, oldEggs = 0, eggs = 0, ladder = 2 }
