@@ -173,6 +173,7 @@ local Config = {
 		flippedReset = 4, -- s an empty flipped or fallen car waits before it goes home
 		idleReset = 30, -- s an empty car left away from its pad waits before it goes home
 	}),
+	BIG_BUTTON_GAP = 75, -- s between two presses of a lab's BIG RED BUTTON (a random free event)
 	-- All UI 3D and interactive (19 Nov 2026, the owner): turning weapon models on the cards and the
 	-- bar, tilt and depth on the HUD buttons, windows that swing in (Client\Ui3D). Live (turning)
 	-- viewports at once per device tier; the rest are drawn once and left still.

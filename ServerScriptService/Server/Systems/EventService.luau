@@ -35,6 +35,7 @@ local FxService = require(Systems.FxService)
 local PlayerRagdoll = require(Systems.PlayerRagdoll)
 local Purchases = require(Systems.Purchases)
 local Lab = require(Systems.Lab)
+local Creatures = require(Systems.Creatures)
 
 local log = Log.new("Events")
 
@@ -341,6 +342,27 @@ handlers.FlashFreeze = function()
 		end
 	end
 	-- the ice thaws by itself
+end
+
+-- v3 Phase C: the animals walk the host's lab (its middle; the plaza when they are not in it).
+local function labMiddle(job: Job): Vector3
+	local host = hostOf(job)
+	local character = host and host.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if host and Lab.plotIndex(host) and root and root:IsA("BasePart") and Lab.ownerAt(root.Position) == host then
+		local o = Lab.originFor(host)
+		return Vector3.new(o.X, Lab.plazaOrigin().Y - 0.5, o.Z)
+	end
+	local p = Lab.plazaOrigin()
+	return Vector3.new(p.X, p.Y - 0.5, p.Z)
+end
+
+handlers.GorillaRampage = function(job, onEnd)
+	onEnd(Creatures.gorilla(labMiddle(job)))
+end
+
+handlers.BullRun = function(job, onEnd)
+	onEnd(Creatures.bulls(labMiddle(job)))
 end
 
 for _, event in Events.list do

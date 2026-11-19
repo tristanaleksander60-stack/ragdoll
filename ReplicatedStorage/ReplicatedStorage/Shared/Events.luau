@@ -24,6 +24,10 @@ local list: { Event } = {
 	{ id = "ZeroG", name = "Zero-G", blurb = "Gravity almost off for everyone", duration = 20, productId = 3730107024, icon = "event_ZeroG", glyph = "🪐", color = "#9B6BFF" },
 	{ id = "BouncyFloor", name = "Bouncy Floor", blurb = "Everything that lands bounces back up", duration = 20, productId = 3730107042, icon = "event_BouncyFloor", glyph = "🏀", color = "#38C46A" },
 	{ id = "FlashFreeze", name = "Flash Freeze", blurb = "Every dummy turns to ice at once", duration = 8, productId = 3730107067, icon = "event_FlashFreeze", glyph = "🧊", color = "#7FE3FF" },
+	-- v3 Phase C (19 Nov 2026): animals. Not on sale until the owner makes their products (0): the
+	-- lab's BIG RED BUTTON and the free events reach them meanwhile.
+	{ id = "GorillaRampage", name = "Gorilla Rampage", blurb = "A giant gorilla swats dummies around your lab", duration = 20, productId = 0, icon = "event_GorillaRampage", glyph = "🦍", color = "#6B5B4B" },
+	{ id = "BullRun", name = "Bull Run", blurb = "Three bulls charge straight through the lab", duration = 14, productId = 0, icon = "event_BullRun", glyph = "🐂", color = "#B5562E" },
 }
 
 local byId: { [string]: Event } = {}

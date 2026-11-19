@@ -731,6 +731,54 @@ function Playground.showChristmas(on: boolean)
 end
 
 -- Builds a playground round a lab's (or the plaza's) spawn point.
+-- v3 Phase C (19 Nov 2026, like the leader's big red button): press it and a random event happens
+-- in this lab, free, once every Config.BIG_BUTTON_GAP s per lab. Anyone in the lab may press it.
+local function buildBigButton()
+	local x, z = 14, 14
+	local base = part("BigButtonBase", Vector3.new(1.6, 6, 6), at(x, 0.8, z) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 200, 205), Enum.Material.Metal, Enum.PartType.Cylinder)
+	local button = part("BigButton", Vector3.new(1, 4.4, 4.4), at(x, 2, z) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(220, 30, 30), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
+	local lit = Color3.fromRGB(220, 30, 30)
+	local dim = Color3.fromRGB(90, 40, 40)
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "Press"
+	prompt.ActionText = "Press"
+	prompt.ObjectText = "Big Red Button"
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = button
+	local labOrigin = origin
+	local readyAt = 0
+	prompt.Triggered:Connect(function(player: Player)
+		local now = os.clock()
+		if now < readyAt then
+			return
+		end
+		local Lab = require(script.Parent.Lab)
+		local owner = Lab.ownerAt(labOrigin)
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if not owner or not root or not root:IsA("BasePart") or Lab.ownerAt(root.Position) ~= owner then
+			return
+		end
+		local Events = require(Shared.Events)
+		local EventService = require(script.Parent.EventService)
+		local pick = Events.list[math.random(1, #Events.list)]
+		if EventService.trigger(pick.id, player.DisplayName, "Free", false, nil, owner.UserId) then
+			readyAt = now + Config.BIG_BUTTON_GAP
+			button.Color = dim
+			prompt.Enabled = false
+			button.CFrame = button.CFrame * CFrame.new(-0.3, 0, 0)
+			task.delay(Config.BIG_BUTTON_GAP, function()
+				button.Color = lit
+				prompt.Enabled = true
+				button.CFrame = button.CFrame * CFrame.new(0.3, 0, 0)
+			end)
+		end
+	end)
+	sign("BIG RED BUTTON", base, 4.5, WHITE)
+end
+
 function Playground.build(labOrigin: Vector3, name: string?)
 	if not root then
 		local new = Instance.new("Folder")
@@ -753,6 +801,7 @@ function Playground.build(labOrigin: Vector3, name: string?)
 		buildBullseye()
 		buildSpikes()
 		buildStations() -- (round 5: PUT RAGDOLL HERE)
+		buildBigButton() -- (v3 Phase C)
 		-- Round 5, phase 3: round pedestals under the things to try.
 		pedestal(48, 6, 7.5) -- the human cannon
 		-- Round 5, phase 4: SINGLEPLAYER and MULTIPLAYER behind the spawn.
