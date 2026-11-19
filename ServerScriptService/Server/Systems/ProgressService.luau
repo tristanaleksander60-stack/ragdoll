@@ -492,6 +492,7 @@ function saveLocked(player: Player, profile: Profile): boolean
 				playSeconds = merged.playSeconds,
 				settings = merged.settings,
 				goals = merged.goals,
+				eco = merged.eco, -- (phase 2: bolts, journal, daily, codes; release fix: it was never written)
 			}), { userId }
 		end)
 	end)
@@ -523,7 +524,7 @@ local function saveOnto(player: Player, session: Profile): boolean
 				radio = m.radio, keys = m.keys, gifts = m.gifts, freeUntil = m.freeUntil, streak = m.streak,
 				owned = m.owned, pending = m.pending, ladder = m.ladder, bought = m.bought,
 				oldEggs = math.min(m.oldEggs, m.eggs),
-				playSeconds = m.playSeconds, settings = m.settings, goals = m.goals,
+				playSeconds = m.playSeconds, settings = m.settings, goals = m.goals, eco = m.eco,
 			}), { userId }
 		end)
 	end)
