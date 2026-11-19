@@ -10,7 +10,31 @@ build is live. Written fresh; nothing is taken from another game's page.
 3. `[UPD] Ragdoll Havoc 💥` (use only in an update week)
 4. `Ragdoll Havoc: Launch the Dummies 💥`
 
-## Description (English)
+## Description v2 (English, release 0.20.0; recommended)
+
+💥 Crash-test dummies, a lab full of toys, and a cannon. Make them fly, then watch it again in X-ray slow-mo!
+
+🧪 EVERY DAY
+• 3 new Daily Experiments, the same for everyone. Can you clear today's?
+• Earn Bolts and fill your Bone Journal
+
+💥 WHAT YOU DO
+• 60+ toys: blasters, bats, rockets, freeze rays, black holes and more
+• Launch dummies from the cannon, onto the bullseye, into the lava or up the Sky Launch
+• Big hits replay in X-ray slow-mo. Share the code with your friends!
+• Grab a dummy, spin it and throw it. Or go RAGDOLL yourself
+• Prank Party: bring up to 6 friends and toss each other into the traps for combos
+• Build your own contraptions in SANDBOX
+
+🎄 Christmas Lab from 1 December: the chimney launcher, the sleigh ramp and a daily advent experiment
+
+🎮 Computer, phone (upright or sideways), tablet and controller
+
+⭐ Favorite so you can find your lab again. New toys and experiments every week!
+
+Cartoon effects only: stars and sparks, no blood.
+
+## Description (English, phase 0)
 
 💥 Your own lab, a crowd of crash-test dummies and a wall full of toys. Make them fly!
 
