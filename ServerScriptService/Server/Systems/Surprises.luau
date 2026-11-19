@@ -43,6 +43,8 @@ local function spot(center: Vector3, margin: number?): Vector3
 	return center + Vector3.new(rng:NextNumber(-Surprises.HALF + m, Surprises.HALF - m), 0, rng:NextNumber(Surprises.Z_MIN + m, Surprises.Z_MAX - m))
 end
 
+-- (A model moved by PivotTo gets its WorldPivot set by its builder, plain and at a known point:
+-- otherwise the pivot copies its first part's turn and PivotTo turns the whole model.)
 local function model(name: string): Model
 	local m = Instance.new("Model")
 	m.Name = name
@@ -116,6 +118,7 @@ function Surprises.UfoBeam(center: Vector3): Stop
 	end
 	local beam = neon(block(ufo, "Beam", Vector3.new(h, 16, 16), CFrame.new(center + Vector3.new(0, h / 2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(140, 255, 170), Enum.PartType.Cylinder))
 	beam.Transparency = 0.75
+	ufo.WorldPivot = base -- (the pivot plain at the saucer's middle: PivotTo then never turns it)
 	FxService.hit(center + Vector3.new(0, h, 0), 30, "BlackHole")
 	local from, to = center, spot(center, 14)
 	local legT, leg = 0, 4
@@ -210,6 +213,7 @@ function Surprises.RocketRain(center: Vector3): Stop
 			local m = model("Rocket")
 			table.insert(made, m)
 			local look = CFrame.lookAt(from, to)
+			m.WorldPivot = look
 			block(m, "Body", Vector3.new(0.9, 0.9, 3.4), look, Color3.fromHSV(rng:NextNumber(), 0.75, 1))
 			neon(block(m, "Nose", Vector3.new(0.7, 0.7, 0.9), look * CFrame.new(0, 0, -2.1), Color3.fromRGB(255, 240, 200)))
 			local flame = neon(block(m, "Flame", Vector3.new(0.6, 0.6, 1.6), look * CFrame.new(0, 0, 2.4), Color3.fromRGB(255, 160, 40)))
@@ -249,6 +253,7 @@ function Surprises.MagnetStorm(center: Vector3): Stop
 	block(m, "ArmR", Vector3.new(5, 12, 5), top * CFrame.new(5.5, -8.5, 0), red)
 	block(m, "TipL", Vector3.new(5.2, 3, 5.2), top * CFrame.new(-5.5, -16, 0), steel).Material = Enum.Material.Metal
 	block(m, "TipR", Vector3.new(5.2, 3, 5.2), top * CFrame.new(5.5, -16, 0), steel).Material = Enum.Material.Metal
+	m.WorldPivot = top
 	local core = (top * CFrame.new(0, -16, 0)).Position
 	FxService.hit(core, 30, "BlackHole")
 	local pull = every(0.2)
@@ -290,9 +295,10 @@ function Surprises.LightningStorm(center: Vector3): Stop
 		p.CastShadow = false
 	end
 	local made: { Instance } = { cloud }
+	local cloudPivot = cloud:GetPivot()
 	local strike = every(0.7)
 	return run(made, function(_dt, t)
-		cloud:PivotTo(CFrame.new(center + Vector3.new(math.sin(t * 0.5) * 8, 0, 0)) * CFrame.new(-center))
+		cloud:PivotTo(cloudPivot + Vector3.new(math.sin(t * 0.5) * 8, 0, 0))
 		if not strike(t) then
 			return
 		end
@@ -500,6 +506,7 @@ function Surprises.BalloonDrop(center: Vector3, owner: Player?): Stop
 		end
 	end
 	build(CFrame.new())
+	m.WorldPivot = CFrame.new() -- (the pivot at the basket: PivotTo puts the basket at the point)
 	local h = 42
 	local from = center + Vector3.new(-Surprises.HALF - 20, h, rng:NextNumber(-40, 20))
 	local to = center + Vector3.new(Surprises.HALF + 20, h, rng:NextNumber(-40, 20))
@@ -514,11 +521,11 @@ function Surprises.BalloonDrop(center: Vector3, owner: Player?): Stop
 		local inside = math.abs(at.X - center.X) < Surprises.HALF - 10
 		if inside and t > 1.5 and dropped < Surprises.BALLOON_DUMMIES and drop(t) then
 			dropped += 1
-			local ok, body = pcall(DummyFactory.spawn, at - Vector3.new(0, 5, 0), at + Vector3.new(0, -5, 4), owner)
+			local ok, body = pcall(DummyFactory.spawn, at - Vector3.new(0, 7, 0), at + Vector3.new(0, -7, 4), owner)
 			if ok and body then
 				body:SetAttribute("NoCredit", true)
 				table.insert(guests, body)
-				FxService.hit(at - Vector3.new(0, 3, 0), 20, "BalloonPop")
+				FxService.hit(at - Vector3.new(0, 4, 0), 20, "BalloonPop")
 			end
 		end
 	end)
