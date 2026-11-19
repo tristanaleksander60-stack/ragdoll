@@ -172,7 +172,11 @@ The owner types **`/klar`** (`.claude/commands/klar.md`) or **"klar"**. Then fol
 - Landscape keeps the plaza front flat and free of trees (`PLAZA_HALF_X`/`PLAZA_FRONT`); the plaza boards stood on a hill.
 - Full suite before those fixes: 71/78 (T19, T32 flaky). After: every fixed test passes alone.
 - Phase B started: `Places` has an outdoor row (`outdoor`, `row`, `OUTDOOR_Z` 1400, `OUTDOOR_SPACING` 900). `Server/Systems/OutdoorMaps` builds the **Island** (terrain sea/sand/grass, a cliff with steps, a jetty, a boat, beach huts, a lighthouse, a catapult base, palms/bushes/rocks/crates). T26 accepts outdoor maps (no ceiling, budget 3000).
-- Island captures still to do: Studio's viewport stopped rendering (captures time out; the log asks for a Studio restart after an Assistant plugin update).
+- After the Studio restart: 5 open-air maps were built and seen. They are Island, City "Downtown", Site, Farm "Old Farm" and Military "Army Base", all in `OutdoorMaps` with `Places.OUTDOOR_SPACING` 1200.
+  - **Pack pieces:** `piece(m, pack, name|"A>B>2", at, yaw, fit, collide)` reads from `ServerStorage.V3Packs.*`. That folder lives only in the place file (saved, v485).
+  - **Terrain:** fill the ground first, then measure its top (`ground()`); terrain lands a few studs off the asked height.
+  - **Arrival:** `Places.arrive` sets how far south of the middle the arrival pad sits.
+  - **Materials to avoid:** terrain Pebble showed as grass, Sand reads white from above, and the Farm pack's row/wheat tiles drew as white bits.
 
 ## M10 progress (9 Nov 2026, NOT yet tested in Studio)
 **M10 PASSED (9 Nov 2026): blind review 8.75 after fix round 1.** Latest backup: `Documents\RagdollLab-backups\2026-11-09-m10-done` (pre-M10: `2026-11-08-baseline`). Full suite 44/46 before the fixes; the two failures were fixed (T40 Golf grip, T38 quiet-mode) except T37, which fails at ~24 Hz on this PC with the pre-M10 code too (environmental). Golf grip and Tip were moved onto the handle/head in the place (N7Assets) with welds rebuilt: the place must be saved. MAX_CORPSES = 16 server-wide. Scope cuts (owner may ask later): per-weapon Palm attachments, two-handed left-hand stance retune, server movement guard for sprint, client-side sprint self-test.

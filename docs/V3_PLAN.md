@@ -57,7 +57,7 @@ The owner's standing order (19 Nov 2026): "når jeg skriver klar, gør du automa
   - **LayoutCheck had 551 problems on its first Studio run** (the cloud phases were never run there): fixed to **0**, live 0. Main fixes: one bar row on phones clear of GRAB/SHOOT, upright-phone placement for the event bars, BUILD/PLAY, the doctor monitor and the hit line, tablet RUN, button and rarity contrast.
 - **Next:**
   1. The rest of the PC TODO: phone captures, drive the car/truck, press the BIG RED BUTTON, first-person tuning.
-  2. Phase B maps: STARTED. The Island is built by code (OutdoorMaps); captures are still due (restart Studio first). Next: the City, the Building Site, the Farm and the Military base from the packs in PC_PROMPT_ASSETS.md (import them, then write their builders in OutdoorMaps).
+  2. Phase B maps: **5 open-air maps built and seen in Studio (19 Nov PC)**: Island, Downtown (City), Building Site, Old Farm, Army Base (`Server/Systems/OutdoorMaps`, `Places` outdoor row, spacing 1200). Packs live in the place only: `ServerStorage.V3Packs` (CityBuildings, CityRoads, CityProps, SUV, SiteMeshes, Crane, Scaffold, Mixer, Farm, Military; all scripts stripped, seats off; saved v485). Terrain is filled first and the floor stands on its measured top. T21/T26/T27 pass, LayoutCheck 0. Still to do: Maps window cards with real screenshots, the activities (catapult, cliff dive, crane, firing range) in phase C, and a denser Site and Army Base.
   3. Then the rest of C: a lab activity of the day, disasters (tornado or meteors) and a throw tower.
   4. Then D: a Lab Controls pass, an Endless Events pass, an Everything pass and a vehicle pass. Their ids come from the owner.
 
