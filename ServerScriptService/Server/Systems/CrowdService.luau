@@ -334,10 +334,15 @@ end
 
 -- Floor at this spot (not a table top or a shelf): a ray down lands at the zone's floor height.
 local function onFloor(zone: Zone, spot: Vector3, params: RaycastParams): boolean
-	local hit = Workspace:Raycast(Vector3.new(spot.X, zone.center.Y + 5, spot.Z), Vector3.new(0, -10, 0), params)
+	-- (From well above: a ray from 5 up started inside the island's grass hill, met the floor under it
+	-- and stood people inside the hill, v4 A2. A roof, a tree or a hill over the spot now refuses it.)
+	local hit = Workspace:Raycast(Vector3.new(spot.X, zone.center.Y + 40, spot.Z), Vector3.new(0, -45, 0), params)
 	-- (2 studs: the open-air city's streets stand 1.0 and its sidewalks 1.6 over its floor; at 1 every
 	-- spot failed and the whole crowd piled up in the middle, 19 Nov. Tables are higher.)
-	return hit ~= nil and math.abs(hit.Position.Y - zone.center.Y) < 2
+	-- (5 on an open-air map: terrain is uneven by a few studs, the army base's road and grass too.)
+	local place = Places.byId[zone.id]
+	local tolerance = if place and place.outdoor then 5 else 2
+	return hit ~= nil and math.abs(hit.Position.Y - zone.center.Y) < tolerance
 end
 
 local function pick<T>(list: { T }): T
@@ -1046,7 +1051,9 @@ local function floorSpot(zone: Zone, radius: number): Vector3
 		local spot = zone.center + Vector3.new(math.cos(angle), 0, math.sin(angle)) * radius * math.sqrt(rng:NextNumber(0.05, 0.9))
 		if onFloor(zone, spot, params) then
 			-- Nothing standing there or hanging over it (a dummy is dropped onto the first thing below).
-			local box = Workspace:GetPartBoundsInBox(CFrame.new(spot + Vector3.new(0, 11, 0)), Vector3.new(2.5, 20, 2.5))
+			-- (From 3 studs over the floor line up: a street or a sidewalk under the feet is the ground, not
+			-- something in the way; at 1 up every city spot was refused and the crowd piled up, v4 A2.)
+			local box = Workspace:GetPartBoundsInBox(CFrame.new(spot + Vector3.new(0, 12.5, 0)), Vector3.new(2.5, 19, 2.5))
 			local blocked = false
 			for _, p in box do
 				if p.CanQuery and p.Anchored and p.Name ~= "Floor" then
@@ -1357,6 +1364,14 @@ function CrowdService.start(labOrigin: Vector3)
 	plaza = makeZone("Plaza", labOrigin + ZONE_OFFSET, ZONE_RADIUS, ESCAPE_RADIUS, LOST_DISTANCE, CrowdService.SIZE, { "Barista", "Office", "Tourist" }, true)
 	for _, place in Places.list do
 		local centre = Places.floorCenter(labOrigin, place.id)
+		-- (An open-air map stands on measured terrain: its built Floor's top is the real floor line, v4 A2;
+		-- the planned one was a few studs off and every spot on the farm and the base was refused.)
+		local places = Workspace:FindFirstChild("Places")
+		local built = places and places:FindFirstChild(place.id)
+		local floorPart = built and built:FindFirstChild("Floor")
+		if centre and floorPart and floorPart:IsA("BasePart") then
+			centre = Vector3.new(centre.X, floorPart.Position.Y + floorPart.Size.Y / 2, centre.Z)
+		end
 		if centre then
 			local half = math.min(place.size.X, place.size.Z) / 2
 			local roles: { Role } = {}

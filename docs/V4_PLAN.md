@@ -238,3 +238,13 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
   - T95_DamageDeath: 6 Popper rounds or 10 punches kill; 6 rounds in a foot do not.
   - T33's blow check is 3 Mega Slaps now (5 kill by damage).
 - 20 Nov 2026 (PC): **A6 done.** Lab, Plaza and Game Arena captures in art/maps, uploaded (Places.image); other players' labs show the lab picture; all 8 cards seen with pictures in the Maps window. The window's caption no longer says 'rooms full of people'. The Arena capture shows it needs D1 (plain pink box).
+- 20 Nov 2026 (PC): **A2 done** (and most of B1's clump).
+  - Measured every body on the plaza and all 5 maps. On the Island, people stood 3.7 studs inside the grass hill: the crowd's floor ray started 5 up, inside the hill, and met the floor under it.
+  - The farm, the base and the city crowds all spawned in the middle:
+    - the clearance box started 1 stud up, inside the city's sidewalks;
+    - the zone used the planned floor height, not the measured terrain;
+    - the tolerance was too tight for uneven terrain.
+  - Fixed in CrowdService: the floor ray from 40 up; the clearance box from 3 up; the zone height from the built Floor; tolerance 5 on open-air maps.
+  - New `Server/Systems/GroundGuard`: every 2 s it lifts any resting body that has solid ground over its pelvis.
+  - T96_GroundGuard; T26 passes.
+  - Crowds raised: Island 12, Downtown 18, Site 12, Farm 12, Base 14. All spread (closest pair 3.6-28 studs), none buried.
