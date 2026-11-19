@@ -306,8 +306,9 @@ Theme.Focus = { color = Theme.Palette.white, thickness = 3, grow = 10 }
 ---------------------------------------------------------------------------
 local function uiV2(): boolean
 	local ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local shared = ReplicatedStorage:FindFirstChild("Shared")
-	local config = shared and shared:FindFirstChild("Config")
+	-- (Replicated before any script runs; the short waits only guard a slow join.)
+	local shared = ReplicatedStorage:WaitForChild("Shared", 5)
+	local config = shared and shared:WaitForChild("Config", 5)
 	if not config or not config:IsA("ModuleScript") then
 		return false
 	end
