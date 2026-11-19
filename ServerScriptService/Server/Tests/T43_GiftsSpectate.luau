@@ -20,6 +20,8 @@ local function gifts(results: { string }, p: Player)
 	local profile = ProgressService.profileForTest(p) :: any
 	assert(profile, "no profile")
 	local eggsBefore = profile.eggs
+	local ration = PlaytimeGifts.RATION
+	PlaytimeGifts.RATION = false -- (phase 2 gives BOLTS; this checks the egg path, T63 the bolts)
 	local ok, err = pcall(function()
 		profile.eggs = 0
 		PlaytimeGifts.joinForTest(p)
@@ -48,6 +50,7 @@ local function gifts(results: { string }, p: Player)
 		assert(profile.eggs == 3, "a fifth gift")
 	end)
 	PlaytimeGifts.leaveForTest(p)
+	PlaytimeGifts.RATION = ration
 	profile.eggs = eggsBefore
 	assert(ok, err)
 	table.insert(results, "gifts: eggs at 2, 5, 10, 15 min, once each, the clock on the player, none past full slots (it waits), none after the fourth")

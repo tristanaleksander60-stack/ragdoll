@@ -123,8 +123,23 @@ local TOY_NAMES: { [string]: { string } } = {
 }
 local Config = require(script.Parent:WaitForChild("Config"))
 
+-- Phase 2 (Config.LADDER_V2): a ladder rung (takedowns) as the retuned ladder has it.
+local function squeeze(rung: number): number
+	if Config.LADDER_V2 and rung > Config.LADDER_KEEP and rung ~= math.huge then
+		return math.floor(Config.LADDER_KEEP + (rung - Config.LADDER_KEEP) * Config.LADDER_V2_SCALE + 0.5)
+	end
+	return rung
+end
+
 local function add(id: string, spec: Spec)
 	assert(byId[id] == nil, "tool " .. id .. " listed twice")
+	-- (Phase 2: the retuned ladder, Config.LADDER_V2: the first rungs as they were, the rest squeezed.)
+	local rung = spec.unlockAt
+	if rung and squeeze(rung) ~= rung then
+		local s0 = table.clone(spec) :: any
+		s0.unlockAt = squeeze(rung)
+		spec = s0
+	end
 	local mild = if Config.TOY_NAMES then TOY_NAMES[id] else nil
 	if mild then
 		local s = table.clone(spec) :: any
@@ -281,9 +296,10 @@ local SLOTS = 6
 -- Buy now with Robux (round 2, N4): four price tiers by how far up the ladder a weapon is (the
 -- owner makes one developer product per tier: MoneyService). R$.
 local PRICE_TIERS = table.freeze({
-	{ key = "Weapon25", upTo = 60, robux = 25 },
-	{ key = "Weapon49", upTo = 200, robux = 49 },
-	{ key = "Weapon99", upTo = 500, robux = 99 },
+	-- (Phase 2: the bounds move with the retuned ladder, so every weapon keeps its price.)
+	{ key = "Weapon25", upTo = squeeze(60), robux = 25 },
+	{ key = "Weapon49", upTo = squeeze(200), robux = 49 },
+	{ key = "Weapon99", upTo = squeeze(500), robux = 99 },
 	{ key = "Weapon199", upTo = math.huge, robux = 199 },
 })
 -- BUY shows only for a weapon still this many takedowns away or more: one nearly earned is never

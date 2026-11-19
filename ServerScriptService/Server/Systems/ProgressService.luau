@@ -38,6 +38,7 @@ local Metrics = require(script.Parent.Metrics)
 local BadgeAwards = require(script.Parent.BadgeAwards)
 local SessionStats = require(script.Parent.SessionStats)
 local ExperimentService = require(script.Parent.ExperimentService)
+local Economy = require(Shared:WaitForChild("Economy"))
 
 local log = Log.new("Progress")
 
@@ -88,6 +89,7 @@ export type Profile = {
 	playSeconds: number, -- time played in all (round 3, M6: the MOST TIME PLAYED boards)
 	settings: { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean }?, -- SETTINGS (M6, M11)
 	goals: Goals?, -- the day's three goals (round 3, M9: DailyGoals)
+	eco: Economy.Eco?, -- phase 2: bolts, journal, today's daily experiments, codes (Shared\Economy)
 }
 export type Goals = { day: number, p: { number }, claimed: { boolean }, bonus: boolean }
 
@@ -99,7 +101,7 @@ local ROUND5_STARTERS = { "Bat", "Crowbar", "Shove" } -- (on everyone's bar befo
 local OLD_UNLOCK: { [string]: number } = { Crossbow = 10, NailGun = 20, Slime = 30, Shrink = 50, Chicken = 75, Float = 100, Slowmo = 125, Portal = 150 }
 -- Every field this version writes (anything else stored is kept as it is: keepUnknown).
 local KNOWN_FIELDS: { [string]: boolean } = {}
-for _, key in { "takedowns", "eggs", "hats", "hat", "best", "lastDay", "noPranks", "freeDay", "seen", "radio", "keys", "gifts", "freeUntil", "streak", "owned", "pending", "ladder", "bought", "oldEggs", "playSeconds", "settings", "goals" } do
+for _, key in { "takedowns", "eggs", "hats", "hat", "best", "lastDay", "noPranks", "freeDay", "seen", "radio", "keys", "gifts", "freeUntil", "streak", "owned", "pending", "ladder", "bought", "oldEggs", "playSeconds", "settings", "goals", "eco" } do
 	KNOWN_FIELDS[key] = true
 end
 local BOUGHT_KEPT = 30
@@ -257,6 +259,9 @@ local function clean(raw: unknown): Profile
 			end
 		end
 	end
+	if t.eco ~= nil then
+		p.eco = Economy.clean(t.eco) -- (phase 2)
+	end
 	if type(t.bought) == "table" then
 		for _, id in t.bought do
 			if type(id) == "string" and #id <= 64 and not table.find(p.bought, id) then
@@ -329,6 +334,8 @@ local function merge(stored: Profile, session: Profile): Profile
 	m.gifts = session.gifts or stored.gifts
 	m.settings = session.settings or stored.settings
 	m.goals = ProgressService.mergeGoals(stored.goals, session.goals)
+	-- (Phase 2: this session's economy wins: it was read from the store and only grew since.)
+	m.eco = session.eco or stored.eco
 	m.playSeconds = math.max(stored.playSeconds, session.playSeconds)
 	m.freeUntil = math.max(stored.freeUntil, session.freeUntil)
 	-- The daily streak: whichever side saw the later day.
@@ -1926,6 +1933,35 @@ function ProgressService.start(labOrigin: Vector3)
 		end
 	end)
 	log.info("progress ready" .. (if store then " (DataStore)" else " (memory)"))
+end
+
+-- Phase 2: the player's economy (bolts, journal, daily, codes), nil until the profile is safely
+-- read (never counted from zero over a failed read). EconomyService changes it, then ecoChanged.
+function ProgressService.ecoOf(player: Player): Economy.Eco?
+	local p = profiles[player]
+	if not p or loaded[player] ~= true or readFailed[player] then
+		return nil
+	end
+	if not p.eco then
+		p.eco = Economy.clean(nil)
+	end
+	return p.eco
+end
+
+function ProgressService.ecoChanged(player: Player)
+	local p = profiles[player]
+	local e = p and p.eco
+	if e then
+		player:SetAttribute("Bolts", e.bolts)
+		scheduleSave(player)
+	end
+end
+
+-- Phase 2: whether a weapon is yours (owned, or reached on the ladder).
+function ProgressService.isMine(player: Player, id: string): boolean
+	local p = profiles[player]
+	local toy = Toys.byId[id]
+	return p ~= nil and toy ~= nil and (p.owned[id] == true or p.takedowns >= toy.unlockAt)
 end
 
 return ProgressService

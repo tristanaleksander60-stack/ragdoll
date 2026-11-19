@@ -29,6 +29,7 @@ local ViewMode = require(Client:WaitForChild("ViewMode"))
 local Toast = require(Client:WaitForChild("Toast"))
 
 local ExperimentCard = {}
+ExperimentCard.showEconomy = function(_d: any) end -- (set below; phase 2)
 
 local player = Players.LocalPlayer
 local card: TextButton? = nil
@@ -36,6 +37,8 @@ local current: any = nil -- the server's Card data
 local endsAt = 0
 local challenge: { toy: string, score: number }? = nil
 local windowText: TextLabel? = nil
+local ecoText: TextLabel? = nil
+local buyButton: any = nil
 
 -- A friend's code: the toy and the score to beat (nil: not a code).
 function ExperimentCard.challengeOf(code: string): (string?, number?)
@@ -85,7 +88,7 @@ local function pop(b: GuiObject)
 end
 
 local function buildWindow()
-	local window = C.Window({ name = "Experiments", title = "Experiments", theme = "daily", icon = "gift", size = Vector2.new(420, 360) })
+	local window = C.Window({ name = "Experiments", title = "Experiments", theme = "daily", icon = "gift", size = Vector2.new(440, if Config.ECONOMY then 640 else 360) })
 	windowText = C.Text("body", "", { wrap = true, size = UDim2.new(1, 0, 0, 60), layoutOrder = 1, parent = window.body })
 	C.Button({
 		text = "SKIP",
@@ -138,7 +141,97 @@ local function buildWindow()
 			end
 		end,
 	})
+	-- Phase 2: BOLTS, today's Daily Experiments, the BONE JOURNAL and like-milestone codes
+	-- (EconomyService State). Lines of text and two buttons: nothing here can be typed but a code.
+	if Config.ECONOMY then
+		local remote = Net.event(Net.Names.Economy)
+		ecoText = C.Text("body", "", { wrap = true, size = UDim2.new(1, 0, 0, 230), layoutOrder = 6, parent = window.body })
+		buyButton = C.Button({
+			text = "BUY NEXT WEAPON",
+			role = "go",
+			size = UDim2.fromOffset(240, 46),
+			layoutOrder = 7,
+			parent = window.body,
+			onActivated = function()
+				remote:FireServer("BuyNext")
+			end,
+		})
+		local codeBox = Instance.new("TextBox")
+		codeBox.Name = "LikeCode"
+		codeBox.PlaceholderText = "Code"
+		codeBox.Text = ""
+		codeBox.ClearTextOnFocus = false
+		codeBox.Size = UDim2.new(1, 0, 0, 46)
+		codeBox.LayoutOrder = 8
+		codeBox.FontFace = Theme.Fonts.display
+		codeBox.TextSize = 22
+		codeBox.BackgroundColor3 = Theme.Palette.dusk
+		codeBox.TextColor3 = Color3.new(1, 1, 1)
+		codeBox.Parent = window.body
+		codeBox:GetPropertyChangedSignal("Text"):Connect(function()
+			local clean = string.sub(string.upper(string.gsub(codeBox.Text, "[^%w]", "")), 1, 24)
+			if clean ~= codeBox.Text then
+				codeBox.Text = clean
+			end
+		end)
+		C.Button({
+			text = "REDEEM CODE",
+			role = "neutral",
+			size = UDim2.fromOffset(200, 46),
+			layoutOrder = 9,
+			parent = window.body,
+			onActivated = function()
+				if codeBox.Text ~= "" then
+					remote:FireServer("Redeem", codeBox.Text)
+					codeBox.Text = ""
+				end
+			end,
+		})
+		remote.OnClientEvent:Connect(function(kind: unknown, data: unknown)
+			if kind == "State" and type(data) == "table" then
+				ExperimentCard.showEconomy(data)
+			end
+		end)
+		remote:FireServer("Hello")
+	end
 	Controller.register(window)
+end
+
+-- The economy part of the window from the server's State.
+ExperimentCard.showEconomy = function(d: any)
+	local lines = { string.format("\u{1F529} %d BOLTS", tonumber(d.bolts) or 0) }
+	if type(d.nextName) == "string" then
+		table.insert(lines, string.format("Next weapon: %s for %d BOLTS", d.nextName, tonumber(d.price) or 0))
+	end
+	table.insert(lines, "\nTODAY'S EXPERIMENTS (the same on every server):")
+	for _, x in (if type(d.daily) == "table" then d.daily else {}) do
+		table.insert(lines, (if x.done then "\u{2705} " else "\u{2B1C} ") .. tostring(x.text))
+	end
+	local got, total, found = 0, 0, {}
+	for _, page in (if type(d.journal) == "table" then d.journal else {}) do
+		total += 1
+		if page.got then
+			got += 1
+			table.insert(found, tostring(page.text))
+		end
+	end
+	table.insert(lines, string.format("\n\u{1F4D6} BONE JOURNAL %d/%d%s", got, total, if #found > 0 then ": " .. table.concat(found, ", ") else ""))
+	for _, c in (if type(d.codes) == "table" then d.codes else {}) do
+		if type(c.code) == "string" and c.code ~= "" then
+			table.insert(lines, string.format("CODE %s (%d likes!)", c.code, c.likes))
+		else
+			table.insert(lines, string.format("At %d likes: a new code here!", tonumber(c.likes) or 0))
+			break
+		end
+	end
+	local t = ecoText
+	if t then
+		t.Text = table.concat(lines, "\n")
+	end
+	local b = buyButton
+	if b then
+		b.setText(if type(d.nextName) == "string" then string.format("BUY %s (%d)", string.upper(d.nextName), tonumber(d.price) or 0) else "ALL WEAPONS YOURS")
+	end
 end
 
 local function build()

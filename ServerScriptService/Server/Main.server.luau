@@ -51,6 +51,7 @@ SessionStats.hasLab = function(player: Player): boolean
 end
 SessionStats.start()
 require(Systems:WaitForChild("ExperimentService")).start() -- phase 1: Experiment cards (Shared\Experiments)
+require(Systems:WaitForChild("EconomyService")).start() -- phase 2: bolts, bone journal, daily experiments, codes
 FxService.start()
 VitalsService.start() -- blood, pulse and wounds (round 2, N2)
 DummyControl.start()

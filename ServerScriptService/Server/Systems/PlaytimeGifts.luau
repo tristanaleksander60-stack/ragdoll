@@ -21,12 +21,16 @@ local Players = game:GetService("Players")
 
 local Log = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Log"))
 local ProgressService = require(script.Parent.ProgressService)
+local EconomyService = require(script.Parent.EconomyService)
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 
 local log = Log.new("Gifts")
 
 local PlaytimeGifts = {}
 
 PlaytimeGifts.AT = { 120, 300, 600, 900 } -- s of play today for each gift (one weapon egg each)
+-- Phase 2 (Config.EGG_RATION): the gifts are BOLTS, not eggs (tests may turn it off).
+PlaytimeGifts.RATION = Config.EGG_RATION and Config.ECONOMY
 PlaytimeGifts.TEXT = "FREE GIFT for playing! A weapon egg is yours."
 PlaytimeGifts.FULL_TEXT = "Your gift is ready! Open an egg in RANK & EGGS to make room for it."
 PlaytimeGifts.RETRY = 30 -- s after a DataStore failure (doubling each time, at most 10 min)
@@ -154,7 +158,8 @@ local function tryGive(player: Player)
 	if d.secs < PlaytimeGifts.AT[d.got + 1] or os.clock() < (retryAt[player] or 0) then
 		return
 	end
-	local room = ProgressService.eggRoom(player)
+	-- (Phase 2, Config.EGG_RATION: the gift is BOLTS, so a full egg rack does not hold it.)
+	local room = if PlaytimeGifts.RATION then nil else ProgressService.eggRoom(player)
 	if room ~= nil then
 		-- Full or loading: the clock waits at GIFT!, given once there is room; full is told once.
 		if room == "full" and not toldFull[player] then
@@ -168,7 +173,10 @@ local function tryGive(player: Player)
 	local outcome = write(player.UserId, d, n)
 	if outcome == "took" then
 		failures[player] = nil
-		if player.Parent and days[player] == d and ProgressService.giveEgg(player, PlaytimeGifts.TEXT) then
+		local given = if PlaytimeGifts.RATION
+			then EconomyService.give(player, Config.PLAYTIME_BOLTS, string.format("FREE GIFT for playing! +%d BOLTS", Config.PLAYTIME_BOLTS))
+			else ProgressService.giveEgg(player, PlaytimeGifts.TEXT)
+		if player.Parent and days[player] == d and given then
 			d.got = n
 			toldFull[player] = nil
 		else

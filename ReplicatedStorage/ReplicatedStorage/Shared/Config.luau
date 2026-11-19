@@ -44,6 +44,29 @@ local Config = {
 	EXPERIMENT_FIRST_AT = 30, -- s into a visit (the first-minute bar must be free too)
 	XRAY_REPLAY = true,
 	PHONE_HUD_MAX7 = true,
+	-- Phase 2 (reasons to stay): BOLTS, the BONE JOURNAL, Daily Experiments, rationed eggs, the
+	-- retuned ladder and like-milestone codes (Shared\Economy, EconomyService).
+	ECONOMY = true,
+	BOLTS_PER_STAR = 10,
+	DAILY_BONUS = 30, -- extra bolts for each of today's Daily Experiments
+	DAILY_COUNT = 3,
+	JOURNAL_BOLTS = 25,
+	PLAYTIME_BOLTS = 40,
+	EGG_RATION = true, -- playtime gifts give BOLTS, not eggs (eggs: the daily egg and milestones)
+	BOLTS_PER_TAKEDOWN = 1.5, -- a weapon costs its ladder takedowns x this in bolts...
+	BOLTS_MIN_PRICE = 20, -- ...and never less
+	-- The ladder (LADDER_V2): up to LADDER_KEEP takedowns as it was; above, squeezed so the top
+	-- (Golden Popper, 1,600) is ~600 and a one-hour goal is in reach. Ids and order unchanged.
+	LADDER_V2 = true,
+	LADDER_KEEP = 30,
+	LADDER_V2_SCALE = 0.363,
+	-- Codes the owner turns on by hand when the like count reaches a milestone (never a reward for
+	-- liking: Roblox forbids it; anyone may type a live code). Set `code` and `live = true`.
+	LIKE_CODES = table.freeze({
+		table.freeze({ likes = 100, code = "", bolts = 100, live = false }),
+		table.freeze({ likes = 500, code = "", bolts = 200, live = false }),
+		table.freeze({ likes = 1000, code = "", bolts = 400, live = false }),
+	}),
 	-- Extra ragdolls a device simulates for its own lab (Shared\DeviceTier: phone low, tablet and
 	-- console mid, computer high).
 	DEVICE_CAPS = table.freeze({

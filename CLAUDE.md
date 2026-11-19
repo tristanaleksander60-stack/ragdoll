@@ -91,6 +91,13 @@ Talk to the owner in Danish, short and plain.
 - Device tiers (Shared\DeviceTier, `Config.DEVICE_CAPS`): visitors/chasers per device (phone 1/4). Bodies already have one network owner (the lab's player) for life.
 - Tests T60_Experiments, T61_ShareCode, T62_DeviceTier; T54 has the Experiment box. TEST-FASE1.md.
 
+## Phase 2 (19 Nov 2026, branch `fase2`)
+- Economy (`Config.ECONOMY`): Shared\Economy (pure: eco clean/count/rollDay/price/nextBuy/redeem, BONE JOURNAL 15 pages) in profile field `eco` (ProgressService.ecoOf/ecoChanged, merge keeps the session's). Server EconomyService: bolts from experiments (stars x10), daily bonus +30, journal +25, playtime gifts +40 instead of eggs (`EGG_RATION`, PlaytimeGifts.RATION), BuyNext = cheapest locked weapon for bolts (grantWeapon "Bolts"), like-milestone codes (`Config.LIKE_CODES`, owner sets live). Remote Economy. UI lives in the EXPERIMENTS window.
+- Daily Experiments: Experiments.daily(UTC day) dealt first (ExperimentService.setDeck), same on every server.
+- Ladder v2 (`LADDER_V2`): rungs above 30 squeezed x0.363 (top 600), price tier bounds squeezed too (same prices).
+- Shop.OFFERS: the monetisation ladder as data, ids 0 (owner creates them). DoubleBolts attribute doubles bolts.
+- Tests T63_Economy, T64_Ladder, T65_OffersCodes; T43 runs with RATION off. TEST-FASE2.md.
+
 ## M10 progress (9 Nov 2026, NOT yet tested in Studio)
 **M10 PASSED (9 Nov 2026): blind review 8.75 after fix round 1.** Latest backup: `Documents\RagdollLab-backups\2026-11-09-m10-done` (pre-M10: `2026-11-08-baseline`). Full suite 44/46 before the fixes; the two failures were fixed (T40 Golf grip, T38 quiet-mode) except T37, which fails at ~24 Hz on this PC with the pre-M10 code too (environmental). Golf grip and Tip were moved onto the handle/head in the place (N7Assets) with welds rebuilt: the place must be saved. MAX_CORPSES = 16 server-wide. Scope cuts (owner may ask later): per-weapon Palm attachments, two-handed left-hand stance retune, server movement guard for sprint, client-side sprint self-test.
 Notes below are the pre-test M10 log.

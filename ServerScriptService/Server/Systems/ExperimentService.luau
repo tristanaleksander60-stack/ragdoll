@@ -20,6 +20,8 @@ local ExperimentService = {}
 ExperimentService.NEXT_AFTER = 4 -- s between a finished card and the next
 ExperimentService.SKIP_GAP = 3
 ExperimentService.onReward = nil :: ((player: Player, def: Experiments.Def) -> ())?
+-- Phase 2: every event, card or not (EconomyService counts them into the BONE JOURNAL).
+ExperimentService.onEvent = nil :: ((player: Player, kind: string, n: number) -> ())?
 
 type Player_ = {
 	state: Experiments.State?,
@@ -98,6 +100,10 @@ end
 
 -- Something a card may count happened (kind: Shared\Experiments.KINDS).
 function ExperimentService.event(player: Player, kind: string, n: number?)
+	local hook = ExperimentService.onEvent
+	if hook then
+		task.spawn(hook, player, kind, n or 1)
+	end
 	local p = players[player]
 	local s = p and p.state
 	if not p or not s then
