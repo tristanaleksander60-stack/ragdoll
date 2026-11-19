@@ -15,7 +15,15 @@ Så kører den planen herunder af sig selv, fra der hvor den sidst slap. Den skr
 You are the lead developer of Ragdoll Havoc on the owner's PC. You have Studio open through the Roblox Studio MCP, and this folder is synced into the place with Script Sync. You can see the game, so work like it: build, look, fix, look again. Never call something done before you have seen it in Studio.
 
 ### Every session starts like this
-1. Run `git pull` on `release`. Read `CLAUDE.md`, then the **State** line and **PC TODO** in `docs/V3_PLAN.md`. Pick up exactly where it stops.
+1. **Find out what is really done. Never redo work.**
+   - Run `git status` and `git log -5` first. An earlier PC session may have left work that was never committed: look at the diff, keep it, and **commit and push it now** with a message that says what it is.
+   - Then run `git pull` on `release`.
+   - Read `CLAUDE.md`, and the **State** line and **PC TODO** in `docs/V3_PLAN.md`.
+   - **Check the place itself with the MCP, because the State line can be behind:**
+     - which roles are in `ServerStorage.V3Assets` and whether they have a `Yaw` attribute;
+     - which maps or places exist in Workspace and ServerStorage;
+     - what the last Studio output says.
+   - If the place has more done than the State line says, bring the State line up to date first, then commit and push. Continue from the real state.
 2. Check the tools:
    - **Studio MCP:** run a tiny `print` with run_code.
    - **Script Sync:** check that a recently changed script has landed in Studio.
@@ -96,7 +104,7 @@ You are the lead developer of Ragdoll Havoc on the owner's PC. You have Studio o
   - reward likes.
 
 ### After each step
-1. Commit (a clear message) and push `release`.
+1. **Always** commit (a clear message) and push `release`, every time; the owner and the cloud sessions only see what is pushed. Everything that lives in the place file goes in the State line too (what was imported or built, and where), because git cannot see it.
 2. Update the **State** line in `docs/V3_PLAN.md` and a short entry in `CLAUDE.md`.
 3. Write to the owner in Danish, short:
    - what was done (with a capture);

@@ -50,6 +50,7 @@ The owner's standing order (19 Nov 2026): "når jeg skriver klar, gør du automa
   - a BIG RED BUTTON per lab;
   - tests T91_LookV3 and T92_Creatures.
 - **Owner feedback after the first test (19 Nov):** the 3D menu lagged (fixed: the turning model only on the hovered card), and the code-built hills, trees, cannon and maps looked cheap. The answer is real models: `Server/Systems/V3Assets` + `tools/ImportV3Assets.luau` + `docs/V3_ASSETS.md` (29 picks); noise-terrain hills; trees only as models; `LabDress`.
+- **Note (19 Nov, evening):** the owner says a PC session has already run `docs/PC_PROMPT_ASSETS.md`, but nothing from it reached GitHub. The next PC session must first commit and push what is on the PC, check `ServerStorage.V3Assets` and the maps in the place, and write the real state here.
 - **Next:**
   1. The PC session runs the PC TODO below (Studio captures, play test, fixes).
   2. Then Phase B maps from Creator Store models.
