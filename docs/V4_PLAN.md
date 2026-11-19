@@ -214,6 +214,8 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
 - Nothing misleading: every image shows something that is really in the game.
 - Save them in `art/store/` and tell the owner how to upload them and run the test.
 
+**E2b. Store video.** `docs/TRAILER.md`: `tools/TrailerCam.luau` (client) and `tools/TrailerServer.luau` (server) direct about 30 s of real gameplay while the owner records. Redo it after each big update.
+
 **E3. Release and measure.**
 - Bump `Config.Version` and `Shop.WHATS_NEW`, and update `STORE_TEXT.md` with true claims only.
 - The owner publishes with "Shut Down All Servers". Remind them about the maturity questionnaire (target: all ages).
