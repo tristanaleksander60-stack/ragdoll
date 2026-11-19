@@ -612,15 +612,22 @@ BUILDERS.Farm = function(m, place, mid)
 	piece(m, "Farm", FP .. "Vehicles>Trailer", c + Vector3.new(10, 0, 30), 15, nil, true)
 	-- The paddock (south-east): a painted fence round it, bison grazing.
 	local pad = c + Vector3.new(80, 0, -60)
-	for x = -40, 40, 10 do
-		for _, z in { -30, 30 } do
-			piece(m, "Farm", "Meshes/SM_Prop_Fence_Painted_01", pad + Vector3.new(x, 0, z), 0, nil, true)
+	-- (The pack's painted fence lay flat: a post-and-rail fence of our own, PC look 19 Nov.)
+	local wood = rgb(120, 88, 58)
+	local function rail(a: Vector3, b: Vector3)
+		local mid2 = (a + b) / 2
+		local len = (b - a).Magnitude
+		for _, y in { 1.6, 3.2 } do
+			part(m, "FenceRail", Vector3.new(0.4, 0.5, len), CFrame.lookAt(mid2 + Vector3.new(0, y, 0), b + Vector3.new(0, y, 0)), wood, Enum.Material.Wood)
+		end
+		local n = math.floor(len / 6)
+		for k = 0, n do
+			part(m, "FencePost", Vector3.new(0.7, 4.2, 0.7), CFrame.new(a:Lerp(b, k / n) + Vector3.new(0, 2.1, 0)), wood:Lerp(Color3.new(0, 0, 0), 0.15), Enum.Material.Wood)
 		end
 	end
-	for z = -25, 25, 10 do
-		for _, x in { -45, 45 } do
-			piece(m, "Farm", "Meshes/SM_Prop_Fence_Painted_01", pad + Vector3.new(x, 0, z), 90, nil, true)
-		end
+	local corners = { pad + Vector3.new(-45, 0, -30), pad + Vector3.new(45, 0, -30), pad + Vector3.new(45, 0, 30), pad + Vector3.new(-45, 0, 30) }
+	for k = 1, 4 do
+		rail(corners[k], corners[k % 4 + 1])
 	end
 	for i, p in { Vector3.new(-15, 0, 8), Vector3.new(12, 0, -10), Vector3.new(25, 0, 14) } do
 		prop(m, "Bull", pad + p, i * 70, 6, nil, true)

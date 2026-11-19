@@ -21,6 +21,7 @@ export type Place = {
 	outdoor: boolean?, -- v3 phase B: an open-air map (terrain, sky, no ceiling) in the outdoor row
 	row: number?, -- its place in the outdoor row (1..n)
 	arrive: number?, -- an outdoor map's arrival pad, studs south of its middle (else by the south edge)
+	image: string?, -- a capture of the place for its MAPS card (uploaded from art/maps)
 }
 
 local Places = {}
@@ -45,11 +46,11 @@ Places.list = table.freeze({
 	{ id = "Metro", name = "Metro Station", blurb = "Platform 1. The 8:15 is late again.", slot = 8, size = Vector3.new(140, 30, 96), crowd = 10, roles = { "Office", "Traveler", "Tourist", "Guard" }, light = "Cool", color = "#3A7BD5", glyph = "🚇" },
 	{ id = "Arena", name = "Game Arena", blurb = "Red light, green light and Shoot 'em. Beat your best!", slot = 7, size = Vector3.new(120, 40, 140), crowd = 0, roles = {}, light = "Cool", color = "#F2C230", glyph = "🎮" },
 	-- v3 phase B: open-air maps, in their own row (OutdoorMaps builds them).
-	{ id = "Island", name = "Tropical Island", blurb = "Sand, palms, a cliff to dive off and a catapult.", slot = 101, size = Vector3.new(360, 80, 360), crowd = 6, roles = { "Tourist", "Traveler" }, light = "Lab", color = "#2EC4B6", glyph = "\u{1F3DD}\u{FE0F}", outdoor = true, row = 1, arrive = 110 },
-	{ id = "City", name = "Downtown", blurb = "A big crossroads, towers, parked cars and buses.", slot = 102, size = Vector3.new(440, 120, 440), crowd = 10, roles = { "Office", "Tourist", "Guard" }, light = "Lab", color = "#8A9BB0", glyph = "\u{1F3D9}\u{FE0F}", outdoor = true, row = 2, arrive = 150 },
-	{ id = "Site", name = "Building Site", blurb = "A crane, scaffolding, a pit and a half-built tower.", slot = 103, size = Vector3.new(320, 100, 320), crowd = 6, roles = { "Guard", "Office" }, light = "Lab", color = "#F2A33A", glyph = "\u{1F3D7}\u{FE0F}", outdoor = true, row = 3, arrive = 120 },
-	{ id = "Farm", name = "Old Farm", blurb = "Barns, tractors, hay bales and grumpy bison.", slot = 104, size = Vector3.new(360, 90, 360), crowd = 6, roles = { "Tourist", "Chef" }, light = "Lab", color = "#C8553D", glyph = "\u{1F69C}", outdoor = true, row = 4, arrive = 150 },
-	{ id = "Military", name = "Army Base", blurb = "Tanks, a firing range, an obstacle course and a helipad.", slot = 105, size = Vector3.new(340, 90, 340), crowd = 6, roles = { "Guard" }, light = "Lab", color = "#6B7A4B", glyph = "\u{1FA96}", outdoor = true, row = 5, arrive = 140 },
+	{ id = "Island", name = "Tropical Island", blurb = "Sand, palms, a cliff to dive off and a catapult.", slot = 101, size = Vector3.new(360, 80, 360), crowd = 6, roles = { "Tourist", "Traveler" }, light = "Lab", color = "#2EC4B6", glyph = "\u{1F3DD}\u{FE0F}", outdoor = true, row = 1, arrive = 110, image = "rbxassetid://73249753517996" },
+	{ id = "City", name = "Downtown", blurb = "A big crossroads, towers, parked cars and buses.", slot = 102, size = Vector3.new(440, 120, 440), crowd = 10, roles = { "Office", "Tourist", "Guard" }, light = "Lab", color = "#8A9BB0", glyph = "\u{1F3D9}\u{FE0F}", outdoor = true, row = 2, arrive = 150, image = "rbxassetid://121412966164073" },
+	{ id = "Site", name = "Building Site", blurb = "A crane, scaffolding, a pit and a half-built tower.", slot = 103, size = Vector3.new(320, 100, 320), crowd = 6, roles = { "Guard", "Office" }, light = "Lab", color = "#F2A33A", glyph = "\u{1F3D7}\u{FE0F}", outdoor = true, row = 3, arrive = 120, image = "rbxassetid://117598102089877" },
+	{ id = "Farm", name = "Old Farm", blurb = "Barns, tractors, hay bales and grumpy bison.", slot = 104, size = Vector3.new(360, 90, 360), crowd = 6, roles = { "Tourist", "Chef" }, light = "Lab", color = "#C8553D", glyph = "\u{1F69C}", outdoor = true, row = 4, arrive = 150, image = "rbxassetid://94155941068741" },
+	{ id = "Military", name = "Army Base", blurb = "Tanks, a firing range, an obstacle course and a helipad.", slot = 105, size = Vector3.new(340, 90, 340), crowd = 6, roles = { "Guard" }, light = "Lab", color = "#6B7A4B", glyph = "\u{1F396}\u{FE0F}", outdoor = true, row = 5, arrive = 140, image = "rbxassetid://128146376061336" },
 } :: { Place })
 
 Places.byId = {} :: { [string]: Place }

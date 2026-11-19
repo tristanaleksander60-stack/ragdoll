@@ -101,13 +101,29 @@ local function placeCard(parent: Instance, id: string, order: number, color: str
 	corner.Parent = preview
 	-- Its picture in the kit's picture style (the emoji on a darkened shape with a white edge),
 	-- as every tool, event and window draws it.
+	-- v3 phase B: a place with a capture shows it (cropped to the strip), its icon small in the corner.
+	local place = Places.byId[id]
+	local shot = place and place.image
+	if shot then
+		local img = Instance.new("ImageLabel")
+		img.Name = "Shot"
+		img.Size = UDim2.fromScale(1, 1)
+		img.BackgroundTransparency = 1
+		img.Image = shot
+		img.ScaleType = Enum.ScaleType.Crop
+		local imgCorner = Instance.new("UICorner")
+		imgCorner.CornerRadius = UDim.new(0, 10)
+		imgCorner.Parent = img
+		img.Parent = preview
+	end
 	local name = "place_" .. (if Places.labPlot(id) then "OtherLab" else id)
 	if not Icons.Fallbacks[name] then
 		Icons.Fallbacks[name] = { glyph = glyph, shape = "square", color = Color3.fromHex(color) }
 	end
-	local pic = Icons.make(name, UDim2.fromOffset(56, 56))
-	pic.AnchorPoint = Vector2.new(0.5, 0.5)
-	pic.Position = UDim2.fromScale(0.5, 0.5)
+	local pic = Icons.make(name, if shot then UDim2.fromOffset(30, 30) else UDim2.fromOffset(56, 56))
+	pic.AnchorPoint = if shot then Vector2.new(0, 1) else Vector2.new(0.5, 0.5)
+	pic.Position = if shot then UDim2.new(0, 6, 1, -6) else UDim2.fromScale(0.5, 0.5)
+	pic.ZIndex = 3
 	pic.Parent = preview
 	preview.Parent = card.content
 	C.Text("title", title, { scaled = true, size = UDim2.new(1, 0, 0, 26), layoutOrder = 2, parent = card.content })
