@@ -73,7 +73,7 @@ local function gorillaModel(): (Model, { [string]: BasePart })
 	for _, side in { -1, 1 } do
 		block(m, "Eye", Vector3.new(0.5, 0.5, 0.2), CFrame.new(side * 0.6, 11.8, -2.62), Color3.fromRGB(250, 250, 250))
 		parts["arm" .. side] = block(m, "Arm", Vector3.new(1.8, 7, 1.8), CFrame.new(side * 4, 6.2, -0.6), fur)
-		block(m, "Fist", Vector3.new(2.2, 1.6, 2.2), CFrame.new(side * 4, 2.4, -0.6), skin)
+		parts["fist" .. side] = block(m, "Fist", Vector3.new(2.2, 1.6, 2.2), CFrame.new(side * 4, 2.4, -0.6), skin)
 		parts["leg" .. side] = block(m, "Leg", Vector3.new(2, 4.5, 2), CFrame.new(side * 1.7, 2.25, 0.4), fur)
 	end
 	return m, parts
@@ -109,15 +109,18 @@ local function knock(model: Model, from: Vector3, speed: number, lift: number)
 	DummyControl.hit(model, pelvis, dir * speed * mass, pelvis.Position)
 end
 
-local function knockPlayers(from: Vector3, reach: number, speed: number, lift: number, center: Vector3)
+local function knockPlayers(from: Vector3, reach: number, speed: number, lift: number, center: Vector3, done: { [Player]: boolean }?)
 	for _, player in Players:GetPlayers() do
 		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-		if root and root:IsA("BasePart") then
+		if root and root:IsA("BasePart") and not (done and done[player]) and math.abs(root.Position.Y - center.Y) < 20 then
 			local offset = root.Position - from
 			local flat = Vector3.new(offset.X, 0, offset.Z)
 			if flat.Magnitude < reach and math.abs(root.Position.X - center.X) < Creatures.HALF + 10 then
 				local dir = ((if flat.Magnitude > 0.01 then flat.Unit else Vector3.xAxis) + Vector3.new(0, lift, 0)).Unit
 				PlayerRagdoll.knock(player, dir * speed * 0.7)
+				if done then
+					done[player] = true
+				end
 			end
 		end
 	end
@@ -155,8 +158,13 @@ function Creatures.gorilla(center: Vector3): () -> ()
 		local root = CFrame.new(at) * CFrame.Angles(0, facing, 0) * CFrame.new(0, bob, 0)
 		for p, cf in base do
 			local extra = CFrame.identity
-			if p == parts["arm-1"] or p == parts["arm1"] then
-				extra = CFrame.new(0, 3, 0) * CFrame.Angles(math.sin(t * 6 + (if p == parts["arm1"] then math.pi else 0)) * 0.5, 0, 0) * CFrame.new(0, -3, 0)
+			-- (An arm and its fist swing together about the shoulder, 9.7 studs up.)
+			local side = if p == parts["arm-1"] or p == parts["fist-1"] then -1 elseif p == parts["arm1"] or p == parts["fist1"] then 1 else 0
+			if side ~= 0 then
+				local swing = math.sin(t * 6 + (if side == 1 then math.pi else 0)) * 0.5
+				local shoulder = CFrame.new(0, 9.7, -0.6)
+				p.CFrame = root * shoulder * CFrame.Angles(swing, 0, 0) * shoulder:Inverse() * cf
+				continue
 			end
 			p.CFrame = root * cf * extra
 		end
@@ -166,12 +174,22 @@ function Creatures.gorilla(center: Vector3): () -> ()
 	FxService.hit(at + Vector3.new(0, 4, 0), 120, "BigBoom")
 	local lastSwat = 0
 	local t = 0
+	local bodies: { Body } = {}
+	local scannedAt = -1
 	local connection = RunService.Heartbeat:Connect(function(dt)
 		t += dt
+		-- (The lab's dummies, looked up five times a second, not every frame.)
+		if t - scannedAt > 0.2 then
+			scannedAt = t
+			bodies = dummiesIn(center)
+		end
 		-- The nearest dummy standing in the lab.
 		local target: Vector3? = nil
 		local best = math.huge
-		for _, d in dummiesIn(center) do
+		for _, d in bodies do
+			if not d.pelvis.Parent then
+				continue
+			end
 			local dist = (d.pelvis.Position - at).Magnitude
 			if dist < best then
 				best, target = dist, d.pelvis.Position
@@ -189,8 +207,8 @@ function Creatures.gorilla(center: Vector3): () -> ()
 		place(t)
 		if os.clock() - lastSwat > Creatures.GORILLA_GAP then
 			local swatted = false
-			for _, d in dummiesIn(center) do
-				if (d.pelvis.Position - at).Magnitude < Creatures.GORILLA_REACH then
+			for _, d in bodies do
+				if d.pelvis.Parent and (d.pelvis.Position - at).Magnitude < Creatures.GORILLA_REACH then
 					knock(d.model, at, Creatures.GORILLA_SWAT, 0.9)
 					swatted = true
 				end
@@ -232,10 +250,13 @@ function Creatures.bulls(center: Vector3): () -> ()
 			local facing = if fromLeft then -math.pi / 2 else math.pi / 2
 			local at = center + Vector3.new(x0, 0, z)
 			local hit: { [Model]: boolean } = {}
+			local hitPlayers: { [Player]: boolean } = {}
 			bull.Parent = folder()
 			table.insert(made, bull)
 			FxService.hit(at, 70, "BigBoom")
 			local t = 0
+			local scanned = -1
+			local bodies: { Body } = {}
 			local c: RBXScriptConnection
 			c = RunService.Heartbeat:Connect(function(dt)
 				t += dt
@@ -244,14 +265,21 @@ function Creatures.bulls(center: Vector3): () -> ()
 				for p, cf in base do
 					p.CFrame = root * cf
 				end
-				for _, d in dummiesIn(center) do
+				if t - scanned > 0.15 then
+					scanned = t
+					bodies = dummiesIn(center)
+				end
+				for _, d in bodies do
+					if not d.pelvis.Parent then
+						continue
+					end
 					local o = d.pelvis.Position - at
 					if not hit[d.model] and math.abs(o.Z) < Creatures.BULL_REACH and math.abs(o.X) < Creatures.BULL_REACH + 1 then
 						hit[d.model] = true
 						knock(d.model, at - Vector3.new(dirX * 4, 0, 0), Creatures.BULL_THROW, 1.1)
 					end
 				end
-				knockPlayers(at, Creatures.BULL_REACH, Creatures.BULL_THROW, 1.1, center)
+				knockPlayers(at, Creatures.BULL_REACH, Creatures.BULL_THROW, 1.1, center, hitPlayers)
 				if math.abs(at.X - center.X) > Creatures.HALF + 2 then
 					c:Disconnect()
 					bull:Destroy()

@@ -34,6 +34,9 @@ HitInfo.LEAD_UP = 4
 HitInfo.MAX_W = 420 -- px, at most (less on a narrow screen: 24 px from each side)
 HitInfo.MAX_W_PHONE = 280 -- (a phone: clear of GRAB and THROW on the right)
 HitInfo.HEIGHT = 48 -- px: the two lines (26 + 22)
+if Config.LOOK_V3 then
+	HitInfo.HEIGHT = 64 -- (LOOK_V3: the black card's two lines, 30 + 26, and its padding)
+end
 HitInfo.HOLD = 6 -- s fully shown after the last hit on the body
 HitInfo.FADE = 0.6
 HitInfo.LIVE_EVERY = 0.25 -- s between two looks at the body while the lines show
@@ -144,6 +147,7 @@ HitInfo.POINT_AFTER = 3 -- hit lines before the doctor's monitor is pointed out 
 
 local player = Players.LocalPlayer
 local box: Frame? = nil
+local hitBar: Frame? = nil -- (LOOK_V3: the yellow bar)
 local topLabel: TextLabel? = nil
 local statusLabel: TextLabel? = nil
 local shownAt = 0
@@ -220,15 +224,16 @@ local function build()
 		pad.PaddingLeft = UDim.new(0, 16)
 		pad.PaddingRight = UDim.new(0, 14)
 		pad.Parent = f
+		-- (The bar hangs from the top line, not from the list's frame: the list would stack it.)
 		local bar = Instance.new("Frame")
 		bar.Name = "Bar"
-		bar.AnchorPoint = Vector2.new(0, 0.5)
-		bar.Position = UDim2.new(0, -10, 0.5, 0)
-		bar.Size = UDim2.new(0, 4, 1, -16)
+		bar.Position = UDim2.new(0, -10, 0, 2)
+		bar.Size = UDim2.fromOffset(4, 52)
 		bar.BackgroundColor3 = Color3.fromRGB(255, 205, 64)
 		bar.BackgroundTransparency = 1
 		bar.BorderSizePixel = 0
-		bar.Parent = f
+		bar.Parent = t
+		hitBar = bar
 		for i, l in { t, st } do
 			l.Size = UDim2.fromOffset(0, if i == 1 then 30 else 26)
 			l.AutomaticSize = Enum.AutomaticSize.X
@@ -256,8 +261,8 @@ local function setShown(alpha: number)
 	local b = box
 	if V3 and b then
 		b.BackgroundTransparency = 0.12 + 0.88 * alpha
-		local bar = b:FindFirstChild("Bar")
-		if bar and bar:IsA("Frame") then
+		local bar = hitBar
+		if bar then
 			bar.BackgroundTransparency = alpha
 		end
 	end
@@ -383,8 +388,8 @@ function HitInfo.show(line: string, before: number?, model: Model?)
 		local b = box
 		if V3 and b then
 			table.insert(fading, TweenService:Create(b, info, { BackgroundTransparency = 1 }))
-			local bar = b:FindFirstChild("Bar")
-			if bar and bar:IsA("Frame") then
+			local bar = hitBar
+			if bar then
 				table.insert(fading, TweenService:Create(bar, info, { BackgroundTransparency = 1 }))
 			end
 		end

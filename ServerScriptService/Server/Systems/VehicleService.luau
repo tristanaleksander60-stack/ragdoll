@@ -37,7 +37,7 @@ VehicleService.SPECS = {
 local DARK = Color3.fromRGB(26, 26, 30)
 local GLASS = Color3.fromRGB(150, 190, 220)
 
-type Car = { model: Model, body: BasePart, seat: VehicleSeat, home: CFrame, origin: Vector3, kind: Kind, idleSince: number, badSince: number }
+type Car = { model: Model, body: BasePart, seat: VehicleSeat, home: CFrame, origin: Vector3, kind: Kind, idleSince: number, badSince: number, ejecting: boolean }
 local cars: { Car } = {}
 
 local function weld(a: BasePart, b: BasePart)
@@ -85,12 +85,16 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	body.Parent = model
 	model.PrimaryPart = body
 	local top = home * CFrame.new(0, b.Y / 2, 0)
-	-- The cabin with glass, the bonnet, bumpers and lights.
-	local cabin = piece(model, body, "Cabin", Vector3.new(b.X - 0.6, b.Y * 1.1, b.Z * 0.45), top * CFrame.new(0, b.Y * 0.55, b.Z * 0.08), spec.color)
-	piece(model, body, "Windscreen", Vector3.new(b.X - 0.8, b.Y * 0.9, 0.2), cabin.CFrame * CFrame.new(0, 0.05, -cabin.Size.Z / 2 - 0.05), GLASS, Enum.Material.Glass).Transparency = 0.35
-	for _, side in { -1, 1 } do
-		piece(model, body, "Window", Vector3.new(0.2, b.Y * 0.7, cabin.Size.Z * 0.8), cabin.CFrame * CFrame.new(side * (cabin.Size.X / 2 + 0.05), 0.1, 0), GLASS, Enum.Material.Glass).Transparency = 0.35
+	-- The cabin: a roof on four pillars with a windscreen, open at the sides so the driver shows.
+	local cabinH, cabinZ = 4.4, b.Z * 0.45 -- (tall enough for a seated avatar's head)
+	local cabinCf = top * CFrame.new(0, cabinH / 2, b.Z * 0.08)
+	piece(model, body, "Roof", Vector3.new(b.X - 0.4, 0.35, cabinZ), cabinCf * CFrame.new(0, cabinH / 2, 0), spec.color)
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			piece(model, body, "Pillar", Vector3.new(0.35, cabinH, 0.35), cabinCf * CFrame.new(sx * (b.X / 2 - 0.4), 0, sz * (cabinZ / 2 - 0.2)), spec.color).CanCollide = false
+		end
 	end
+	piece(model, body, "Windscreen", Vector3.new(b.X - 0.9, cabinH * 0.9, 0.15), cabinCf * CFrame.new(0, 0.05, -cabinZ / 2 + 0.2), GLASS, Enum.Material.Glass).Transparency = 0.45
 	piece(model, body, "Bumper", Vector3.new(b.X + 0.2, 0.7, 0.6), home * CFrame.new(0, -b.Y * 0.2, -b.Z / 2 - 0.2), DARK)
 	piece(model, body, "Bumper", Vector3.new(b.X + 0.2, 0.7, 0.6), home * CFrame.new(0, -b.Y * 0.2, b.Z / 2 + 0.2), DARK)
 	for _, side in { -1, 1 } do
@@ -124,6 +128,7 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	seat.CanCollide = false
 	seat.Massless = true
 	seat.MaxSpeed = 0 -- (the legacy drive is off: VehicleClient drives)
+	seat.HeadsUpDisplay = false
 	seat.Torque = 0
 	seat:SetAttribute("LabCar", kind)
 	seat.Parent = model
@@ -142,6 +147,9 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 		if humanoid and humanoid.Health > 0 and not seat.Occupant and humanoid.SeatPart == nil then
 			seat:Sit(humanoid)
 		end
+	end)
+	seat:GetPropertyChangedSignal("Occupant"):Connect(function()
+		prompt.Enabled = seat.Occupant == nil
 	end)
 	model:SetAttribute("Vehicle", kind)
 	return model, body, seat
@@ -189,7 +197,7 @@ function VehicleService.build(into: Folder, origin: Vector3)
 		local cf = CFrame.new(origin + Vector3.new(spec.pad.X, spec.lift + spec.body.Y / 2 + 0.1, spec.pad.Y))
 		local model, body, seat = make(kind, cf)
 		model.Parent = holder
-		local car: Car = { model = model, body = body, seat = seat, home = cf, origin = origin, kind = kind, idleSince = os.clock(), badSince = 0 }
+		local car: Car = { model = model, body = body, seat = seat, home = cf, origin = origin, kind = kind, idleSince = os.clock(), badSince = 0, ejecting = false }
 		table.insert(cars, car)
 		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
 			car.idleSince = os.clock()
@@ -233,13 +241,18 @@ function VehicleService.start()
 			if occupied then
 				car.idleSince = now
 				-- Off the floor with a driver: the driver gets out and the car goes home.
-				if off and now - car.badSince > 0.5 then
-					local occupant = car.seat.Occupant
-					if occupant then
-						occupant.Sit = false
-						occupant.Jump = true
+				if off and now - car.badSince > 0.5 and not car.ejecting then
+					car.ejecting = true
+					-- (The seat's weld goes: that frees the driver even though their screen owns
+					-- their humanoid.)
+					local weld = car.seat:FindFirstChild("SeatWeld")
+					if weld then
+						weld:Destroy()
 					end
-					task.delay(0.3, home, car)
+					task.delay(0.3, function()
+						home(car)
+						car.ejecting = false
+					end)
 				end
 			elseif (car.badSince > 0 and now - car.badSince > (Config.VEHICLES.flippedReset or 4))
 				or (now - car.idleSince > (Config.VEHICLES.idleReset or 30) and (p - car.home.Position).Magnitude > 6) then

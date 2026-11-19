@@ -47,13 +47,30 @@ local function onScreen(g: GuiObject): boolean
 	if size.X < 8 or size.Y < 8 then
 		return false
 	end
-	-- (Its ScreenGui must be on, and every frame above it shown.)
+	-- (Its ScreenGui must be on, every frame above it shown, and it must lie inside any scrolling
+	-- list it is in and on the screen: a card scrolled away does not take a turning slot.)
+	local at = g.AbsolutePosition
+	local camera = workspace.CurrentCamera
+	if camera then
+		local view = camera.ViewportSize
+		if at.X + size.X < 0 or at.Y + size.Y < 0 or at.X > view.X or at.Y > view.Y then
+			return false
+		end
+	end
 	local node: Instance? = g.Parent
 	while node do
 		if node:IsA("ScreenGui") then
 			return node.Enabled
-		elseif node:IsA("GuiObject") and not node.Visible then
-			return false
+		elseif node:IsA("GuiObject") then
+			if not node.Visible then
+				return false
+			end
+			if node:IsA("ScrollingFrame") then
+				local p, s = node.AbsolutePosition, node.AbsoluteSize
+				if at.X + size.X < p.X or at.Y + size.Y < p.Y or at.X > p.X + s.X or at.Y > p.Y + s.Y then
+					return false
+				end
+			end
 		end
 		node = node.Parent
 	end
@@ -86,6 +103,11 @@ local function start()
 	end
 	started = true
 	RunService.RenderStepped:Connect(frame)
+end
+
+-- A low-end device (UI_3D_LIVE.low or less): pictures stay drawn, no models (ToolPicture asks).
+function Ui3D.lowEnd(): boolean
+	return budget() <= (Config.UI_3D_LIVE :: any).low
 end
 
 -- A picture that can turn: `turn(yaw)` redraws it at that angle (radians about the up axis).

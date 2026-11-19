@@ -1087,7 +1087,7 @@ local function updateLine(life: Life, now: number)
 		life.lineUntil = math.max(life.lineUntil, now + 0.6) -- (stays up while the gun points)
 	end
 	-- Just got up from a fall.
-	if life.state == "Standing" and life.previous and life.previous ~= "Standing" and life.previous ~= "Walking"
+	if life.state == "Standing" and (life.previous == "GettingUp" or life.previous == "Recovering")
 		and now - life.stateSince < DummyLines.OUCH_WINDOW and life.ouchFor ~= life.stateSince then
 		life.ouchFor = life.stateSince
 		if rng:NextNumber() < DummyLines.OUCH_CHANCE then

@@ -110,7 +110,7 @@ end
 -- turn (UI_3D, 19 Nov 2026): the real model even when a drawn picture exists, and it turns
 -- (slowly on screen, faster under the pointer, by hand when dragged: Ui3D).
 function ToolPicture.make(id: string, size: UDim2, wide: boolean?, turn: boolean?): GuiObject
-	local turning = turn == true and Config.UI_3D and ToolPicture.model(id) ~= nil
+	local turning = turn == true and Config.UI_3D and not Ui3D.lowEnd() and ToolPicture.model(id) ~= nil
 	-- The hand-drawn picture first (10 Nov 2026, the owner: drawn, not rendered; Shared.DrawnIcons),
 	-- on the same darkened disc in the tool's colour.
 	if Icons.has("tool_" .. id) and not turning then
@@ -257,9 +257,18 @@ function ToolPicture.make(id: string, size: UDim2, wide: boolean?, turn: boolean
 	camera.FieldOfView = FOV
 	local view = viewOf(id, wide == true)
 	local aspectNow = 1
+	-- (The fit and the halo's sizes depend on the frame's shape only: worked out again only when it
+	-- changes, so a turning picture just moves its camera and halo each frame.)
+	local fitAspect: number? = nil
+	local fitCf, fitDistance = CFrame.identity, 1
+	local sizedFor: number? = nil
 	local function place(aspect: number, yaw: number?)
 		aspectNow = aspect
-		local cf, distance = fit(middle, corners, view, aspect)
+		if aspect ~= fitAspect then
+			fitAspect = aspect
+			fitCf, fitDistance = fit(middle, corners, view, aspect)
+		end
+		local cf, distance = fitCf, fitDistance
 		if yaw then
 			-- (UI_3D: the camera goes round the model's middle; the halo follows it.)
 			cf = CFrame.new(middle) * CFrame.Angles(0, yaw, 0) * CFrame.new(-middle) * cf
@@ -269,14 +278,18 @@ function ToolPicture.make(id: string, size: UDim2, wide: boolean?, turn: boolean
 		local k = (distance + back) / math.max(distance, 0.01)
 		local pad = extent * HALO
 		local away = cf.LookVector * back
+		local resize = sizedFor ~= aspect
+		sizedFor = aspect
 		for _, h in haloParts do
-			-- (A MeshPart's size scales its mesh: the pad thickens every piece, thin ones most.)
-			local grown = (h.size + Vector3.one * pad) * k
-			h.part.Size = grown
-			-- (A mesh in a SpecialMesh ignores its part's size: its own scale grows the same way.)
-			local mesh, meshScale = h.mesh, h.meshScale
-			if mesh and meshScale then
-				mesh.Scale = meshScale * (grown / Vector3.new(math.max(h.size.X, 0.001), math.max(h.size.Y, 0.001), math.max(h.size.Z, 0.001)))
+			if resize then
+				-- (A MeshPart's size scales its mesh: the pad thickens every piece, thin ones most.)
+				local grown = (h.size + Vector3.one * pad) * k
+				h.part.Size = grown
+				-- (A mesh in a SpecialMesh ignores its part's size: its own scale grows the same way.)
+				local mesh, meshScale = h.mesh, h.meshScale
+				if mesh and meshScale then
+					mesh.Scale = meshScale * (grown / Vector3.new(math.max(h.size.X, 0.001), math.max(h.size.Y, 0.001), math.max(h.size.Z, 0.001)))
+				end
 			end
 			h.part.CFrame = (h.cf - h.cf.Position) + middle + (h.cf.Position - middle) * k + away
 		end

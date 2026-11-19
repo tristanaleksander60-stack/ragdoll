@@ -388,15 +388,25 @@ local function step()
 	end
 	local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 	local Controller = require(UI:WaitForChild("LihFolkUIController"))
+	-- (Only ever hidden here; given back once when HudV3 goes off. Their own modules decide the rest.)
 	local layer = Controller.getGui()
 	local column = layer and layer:FindFirstChild("Launcher")
-	if column and column:IsA("GuiObject") then
-		column.Visible = not on
-	end
 	local pg = player:FindFirstChild("PlayerGui")
 	local pad = pg and pg:FindFirstChild("BodyPad")
-	if pad and pad:IsA("ScreenGui") then
-		pad.Enabled = not (on and not ViewMode.isTouch())
+	if on then
+		if column and column:IsA("GuiObject") then
+			column.Visible = false
+		end
+		if pad and pad:IsA("ScreenGui") and not ViewMode.isTouch() then
+			pad.Enabled = false
+		end
+	elseif hidden then
+		if column and column:IsA("GuiObject") then
+			column.Visible = true
+		end
+		if pad and pad:IsA("ScreenGui") then
+			pad.Enabled = true
+		end
 	end
 	local c = chips
 	if c then
@@ -511,8 +521,13 @@ function HudV3.start()
 	buildTop(function()
 		Controller.toggle("Rewards")
 	end)
+	local lastTakedowns = 0
 	ProgressUI.onState(function(state: any)
-		HudV3.drawNext(state.takedowns or 0)
+		lastTakedowns = state.takedowns or 0
+		HudV3.drawNext(lastTakedowns)
+	end)
+	player:GetAttributeChangedSignal("Owned"):Connect(function()
+		HudV3.drawNext(lastTakedowns)
 	end)
 	local acc = 0
 	RunService.Heartbeat:Connect(function(dt)

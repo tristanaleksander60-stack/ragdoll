@@ -733,6 +733,7 @@ end
 -- Builds a playground round a lab's (or the plaza's) spawn point.
 -- v3 Phase C (19 Nov 2026, like the leader's big red button): press it and a random event happens
 -- in this lab, free, once every Config.BIG_BUTTON_GAP s per lab. Anyone in the lab may press it.
+local BUTTON_EVENTS = { "GorillaRampage", "BullRun", "MegaBomb", "DummyRain" }
 local function buildBigButton()
 	local x, z = 14, 14
 	local base = part("BigButtonBase", Vector3.new(1.6, 6, 6), at(x, 0.8, z) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 200, 205), Enum.Material.Metal, Enum.PartType.Cylinder)
@@ -761,10 +762,18 @@ local function buildBigButton()
 		if not owner or not root or not root:IsA("BasePart") or Lab.ownerAt(root.Position) ~= owner then
 			return
 		end
-		local Events = require(Shared.Events)
 		local EventService = require(script.Parent.EventService)
-		local pick = Events.list[math.random(1, #Events.list)]
-		if EventService.trigger(pick.id, player.DisplayName, "Free", false, nil, owner.UserId) then
+		-- (Only events that stay in this lab, and only while nothing waits: the server's one queue
+		-- stays free for bought events.)
+		local pick = BUTTON_EVENTS[math.random(1, #BUTTON_EVENTS)]
+		local started = EventService.queued() == 0 and EventService.trigger(pick, player.DisplayName, "Free", false, nil, owner.UserId)
+		if not started then
+			prompt.ActionText = "Busy, try again soon"
+			task.delay(2.5, function()
+				prompt.ActionText = "Press"
+			end)
+		end
+		if started then
 			readyAt = now + Config.BIG_BUTTON_GAP
 			button.Color = dim
 			prompt.Enabled = false

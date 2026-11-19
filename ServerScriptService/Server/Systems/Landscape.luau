@@ -15,8 +15,8 @@ local Landscape = {}
 Landscape.GRASS = Color3.fromRGB(104, 128, 66)
 Landscape.SEED = 1119 -- the same trees on every server
 Landscape.TREES = 140
-Landscape.FRONT = { 110, 260 } -- tree band in front of the labs (studs from the lab line, +Z)
-Landscape.BACK = { -135, -280 } -- and behind them (-Z)
+Landscape.FRONT = { 110, 200 } -- tree band in front of the labs (studs from the lab line, +Z)
+Landscape.BACK = { -135, -215 } -- and behind them (-Z)
 Landscape.HILLS_Z = { 360, -390 } -- the hill rings' distance from the lab line
 Landscape.HILL_STEP = 150
 
