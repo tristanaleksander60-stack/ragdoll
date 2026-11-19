@@ -171,7 +171,7 @@ local function buildCannon()
 	-- N7Assets.Props.LabCannon, a Creator Store model, scripts stripped; its pivot on the ground, -Z
 	-- at the muzzle). The built barrel and stand stay as invisible stand-ins (their names are read).
 	-- (v3: the hand-picked Creator Store cannon first, V3Assets "Cannon".)
-	local v3 = require(script.Parent.V3Assets).place("Cannon", folder, CFrame.lookAt(barrelBase, barrelBase + flat), { size = 11, collide = false, name = "CannonModel" })
+	local v3 = require(script.Parent.V3Assets).place("Cannon", folder, CFrame.lookAt(barrelBase, barrelBase + flat), { size = 14, collide = false, name = "CannonModel" })
 	local n7 = game:GetService("ServerStorage"):FindFirstChild("N7Assets")
 	local props = n7 and n7:FindFirstChild("Props")
 	local real = props and props:FindFirstChild("LabCannon")

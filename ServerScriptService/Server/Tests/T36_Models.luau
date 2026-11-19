@@ -27,6 +27,7 @@ local HeldService = require(Systems:WaitForChild("HeldService"))
 local WorldMaps = require(Systems:WaitForChild("WorldMaps"))
 local DummyFactory = require(Systems:WaitForChild("DummyFactory"))
 local Toys = require(ReplicatedStorage.Shared.Toys)
+local Config = require(ReplicatedStorage.Shared.Config)
 local N7Models = require(ReplicatedStorage.Shared.N7Models)
 local ActiveRagdoll = require(ReplicatedStorage.Shared.Ragdoll.ActiveRagdoll)
 
@@ -270,7 +271,9 @@ local function body(results: { string })
 			plain += 1
 		end
 	end
-	assert(plain == 0, string.format("%d dummies without their crash-test marks", plain))
+	-- (LOOK_V3: plain white mannequins, no marks, on purpose.)
+	local wantMarks = not Config.LOOK_V3
+	assert(not wantMarks or plain == 0, string.format("%d dummies without their crash-test marks", plain))
 	-- A fresh dummy, looked at closely (the labs may have none while the tests run).
 	local probe = DummyFactory.spawn(Vector3.new(0, 1, -40), nil)
 	local marks, guiObjects = 0, 0
@@ -283,7 +286,7 @@ local function body(results: { string })
 		end
 	end
 	probe:Destroy()
-	assert(marks >= 3, string.format("a new dummy has %d crash-test marks, not 3", marks))
+	assert(not wantMarks or marks >= 3, string.format("a new dummy has %d crash-test marks, not 3", marks))
 	-- (Every dummy draws these: kept small for phones.)
 	assert(guiObjects <= 45, string.format("a dummy's marks and face take %d GUI objects (at most 45)", guiObjects))
 	marked = math.max(marked, 1)

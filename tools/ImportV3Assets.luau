@@ -25,11 +25,11 @@ type Pick = { role: string, id: number, backup: number?, yaw: number?, single: b
 local PICKS: { Pick } = {
 	-- PICKS_START (docs/V3_ASSETS.md, 19 Nov 2026; yaw: fill in after looking, so the front faces -Z)
 	-- Used by the game code now:
-	{ role = "Cannon", id = 4558839272, backup = 18435394013 },
-	{ role = "Car", id = 6418239833, backup = 6418234850 }, -- Roblox Sedan (its A-Chassis scripts go)
-	{ role = "MonsterTruck", id = 1222491712, backup = 6418225759 },
-	{ role = "Gorilla", id = 10594810401, backup = 1421609150 },
-	{ role = "Bull", id = 5035521514, backup = 11162919482 }, -- (a bison: no real bull exists)
+	{ role = "Cannon", id = 4558839272, backup = 18435394013, yaw = -90 },
+	{ role = "Car", id = 6418239833, backup = 6418234850, yaw = 0, single = true, childName = "Sedan (white)" }, -- Roblox Sedan (its A-Chassis scripts go)
+	{ role = "MonsterTruck", id = 1222491712, backup = 6418225759, yaw = 180 },
+	{ role = "Gorilla", id = 10594810401, backup = 1421609150, yaw = 90 },
+	{ role = "Bull", id = 5035521514, backup = 11162919482, yaw = 90 }, -- (a bison: no real bull exists)
 	{ role = "BigFan", id = 104680325645946, backup = 290574315 },
 	{ role = "Rocket", id = 220664616, backup = 5380747922 },
 	{ role = "Barrel", id = 9021582812, backup = 14452389275 },
@@ -52,7 +52,7 @@ local PICKS: { Pick } = {
 	{ role = "Barrier", id = 8325588430, backup = 2766525411 },
 	{ role = "Trampoline", id = 7829441554, backup = 89910882365911 },
 	{ role = "BigButton", id = 14087568246, backup = 15240203293 },
-	{ role = "TreePalm", id = 1567799120, backup = 10562894034, single = true },
+	{ role = "TreePalm", id = 1567799120, backup = 10562894034, single = true, childName = "Coconut Tree 1" },
 	{ role = "Mountain", id = 10606824320, backup = 8761896930 },
 	{ role = "BrickWall", id = 1425120075, backup = 104053043839965 },
 	-- PICKS_END
@@ -94,6 +94,41 @@ local function clean(model: Model, label: string): number
 			removed += 1
 		end
 	end
+	-- Props are scenery: no seats to sit in, no prompts, clicks, sounds, fire or headlights, and
+	-- no brand marks (found on the PC import, 19 Nov: a Chevrolet emblem on the truck, logo decals
+	-- on the rocket and truck, a train name board).
+	for _, d in model:GetDescendants() do
+		if d:IsA("Seat") or d:IsA("VehicleSeat") then
+			d.Disabled = true
+		elseif
+			d:IsA("ProximityPrompt") or d:IsA("ClickDetector") or d:IsA("Sound") or d:IsA("Fire") or d:IsA("Smoke")
+			or d:IsA("ParticleEmitter") or d:IsA("SurfaceLight") or d:IsA("Camera")
+		then
+			d:Destroy()
+			removed += 1
+		elseif d:IsA("Decal") and (label == "Rocket" or label == "MonsterTruck" or (d.Parent and d.Parent.Name == "Decal Holder")) then
+			d:Destroy()
+		elseif d:IsA("BasePart") and (d.Name:lower():find("emblem") or d.Name:lower():find("logo")) then
+			d:Destroy()
+		elseif d:IsA("Model") and d.Name:lower():find("emblem") then
+			d:Destroy()
+		end
+	end
+	if label == "Rocket" then
+		-- (Its launch-site ground: camo strips and flat plates far from the pad.)
+		for _, d in model:GetDescendants() do
+			if d:IsA("BasePart") and (d.BrickColor.Name == "Camo" or (math.min(d.Size.X, d.Size.Y, d.Size.Z) <= 1.5 and math.max(d.Size.X, d.Size.Y, d.Size.Z) >= 100)) then
+				d:Destroy()
+			end
+		end
+	end
+	if label == "Fence" then
+		-- (One mesh panel turned 152 degrees: square it to the X axis.)
+		local p = model:FindFirstChildWhichIsA("BasePart", true)
+		if p then
+			p.CFrame = CFrame.new(p.Position)
+		end
+	end
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") then
 			d.Anchored = true
@@ -106,9 +141,23 @@ local function clean(model: Model, label: string): number
 end
 
 local function settle(model: Model, yaw: number?)
-	local cf, size = model:GetBoundingBox()
-	local bottom = Vector3.new(cf.Position.X, cf.Position.Y - size.Y / 2, cf.Position.Z)
-	model.WorldPivot = CFrame.new(bottom)
+	-- (The world box of the visible parts: GetBoundingBox follows a pack's own turn and once put
+	-- the rocket 21 studs in the air.)
+	local mn, mx = Vector3.one * 1e9, -Vector3.one * 1e9
+	for _, d in model:GetDescendants() do
+		if d:IsA("BasePart") and d.Transparency < 0.95 then
+			for _, sx in { -1, 1 } do
+				for _, sy in { -1, 1 } do
+					for _, sz in { -1, 1 } do
+						local p = d.CFrame:PointToWorldSpace(d.Size / 2 * Vector3.new(sx, sy, sz))
+						mn = mn:Min(p)
+						mx = mx:Max(p)
+					end
+				end
+			end
+		end
+	end
+	model.WorldPivot = CFrame.new((mn.X + mx.X) / 2, mn.Y, (mn.Z + mx.Z) / 2)
 	if yaw then
 		model:SetAttribute("Yaw", yaw)
 	end

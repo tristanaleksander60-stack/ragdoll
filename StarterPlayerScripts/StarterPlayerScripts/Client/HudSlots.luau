@@ -48,7 +48,7 @@ end
 local SLOTS: { [string]: (ctx: Context) -> Slot } = {
 	View = function(ctx)
 		-- Wider off a phone: room for the V key badge beside "LAB VIEW".
-		return slot(1, 0, UDim2.new(1, -12, 0, 10), if ctx.phone then 112 else 140, 44)
+		return slot(1, 0, UDim2.new(1, -12, 0, 10), if ctx.phone then 112 else 172, 44) -- 172: the UI_V2 eye icon + "LAB VIEW" + the key chip (140 cut it, PC play test 19 Nov)
 	end,
 	Replay = function()
 		return slot(1, 0, UDim2.new(1, -12, 0, 66), 120, 52)
