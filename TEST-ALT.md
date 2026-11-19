@@ -139,3 +139,41 @@ SHOP → SERVER EVENTS → ADMIN EVENTS (OWNER) → CHRISTMAS THEME → **ON**. 
 - **Det hele skal tilbage:** Creator Hub → Places → Ragdoll Havoc → Version History → vælg versionen før
   0.20 → Restore → Shut Down All Servers. Koden: `git checkout main` i `Documents\RagdollLab`
   (eller åbn backup-filen fra trin 1). Gemte BOLTS forsvinder ikke: den gamle version gemmer felter den ikke kender.
+
+## 13. World/Feel v2 (branch `world-polish`, kun hvis den er merget)
+Alt her står bag to kontakter i `Config.luau`: `WORLD_V2` (labbets nye pynt, dukkernes dragter) og
+`FEEL_V2` (rystelser, partikler, spor, mundingsglimt, hylstre, rekyl, combo-slowmo, lemmer der ikke
+"eksploderer"). Slå én fra, hvis den driller: spillet er så som 0.20. Intet her er kørt i Studio endnu.
+1. SelfTest: `ServerStorage.SelfTestOnly = "T80,T81,T82"` → Play. Alle tre skal give PASS.
+   T80 = budgetter pr. enhed (lamper, partikler, spor, hylstre, ragdolls), T81 = labbets pynt
+   (kolliderer ikke, inden for 320 dele og 12 lamper), T82 = lemme-vagten.
+   Kør også T31, T36, T50, T66 (labbet, modellerne, stationerne, julelabbet): de skal stadig give PASS.
+2. Dit eget lab, set fra spawn (pc og telefon på højkant):
+   - [ ] Bagvæg med hvide paneler, mørke piller, gul-sort fodliste og tre lamper.
+   - [ ] En stålportal "CRASH TEST ZONE" over dukkernes række, to spots på den. Den skygger ikke for dukkerne.
+   - [ ] Orange og gule pile på gulvet fra spawn til kanonen, et "HUMAN CANNON"-skilt ved kanonen,
+         en mast med orange flag og blink.
+   - [ ] En prikket bue i luften fra kanonen ned til BULLSEYE.
+   - [ ] Advarselsskilte ved lava, pigge og mace, med gul-sorte striber. De står ikke foran dukkerne.
+   - [ ] Kasser, tønder, dæk, vogne, lystårne med kabler langs siderne og bagerst. Man kan gå igennem
+         dem (de er kun pynt): sig til, hvis det ser forkert ud et sted.
+   - [ ] Rækværk på faldtårnet, "FALL TOWER"-skilt, stivere på wrecking ball, kanter på rampen,
+         skilte bag de tre stationer.
+   - [ ] Dukkerne har hver sin dragtfarve (orange, blå, gul, hvid, grå) og et nummer på ryggen.
+         Ingen er grønne, før de er døde.
+3. Lamper: på pc lyser op til 14 lamper ad gangen, på telefon 4 (de nærmeste). Tjek at fps holder på
+   telefon (Ctrl+Shift+F5 i Studio, eller en rigtig telefon): sig til, hvis det falder.
+4. Følelse (slå "Camera shake" fra i SETTINGS bagefter og tjek at alle rystelser og rekyl er væk):
+   - [ ] Et hårdt slag eller en eksplosion tæt på: kort ryk i kameraet (blødt, ikke hakkende), stjerner,
+         gnister og støv. Intet blod.
+   - [ ] En dukke der lander hårdt: "flop" / "thud" / "slam" efter farten, og en støvring.
+   - [ ] Kanonen, en station eller et kast: kroppen trækker en farvet hale (orange = skudt afsted,
+         blå = kastet, hvid = slået langt).
+   - [ ] Skyd med G17, AK, Shotgun, Revolver: mundingsglimt ved løbet, messinghylstre (røde
+         haglpatroner) ud til siden; Revolver og Double Barrel smider ingen. Kameraet sparker lidt op
+         (Sniper og Railgun mest).
+   - [ ] Combo på 5 (og 10, 15 ...): farverne falmer et øjeblik, billedet trækker sig ind, et dybt "whoosh".
+         Med Motion = LESS: kun farven.
+   - [ ] Dukker eksploderer ikke: skyd/slå dem hårdt mange gange, kast dem i kanonen: ingen arme eller
+         ben der flyver af sted eller strækkes.
+5. Hvis noget driller live: `WORLD_V2 = false` eller `FEEL_V2 = false`, bump `Version`, publish med Shut Down.
