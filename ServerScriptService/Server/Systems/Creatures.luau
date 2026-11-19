@@ -516,4 +516,85 @@ function Creatures.meteors(center: Vector3): () -> ()
 	end
 end
 
+-- v3 Phase C: the train. Rails appear across the back of the lab, a steam engine thunders along
+-- them once each way and throws everything on the line; then rails and engine are gone.
+Creatures.TRAIN_SPEED = 55 -- studs/s
+Creatures.TRAIN_REACH = 7 -- studs either side of the line
+Creatures.TRAIN_THROW = 95
+Creatures.TRAIN_Z = -52 -- the line, studs from the lab's middle
+
+function Creatures.train(center: Vector3): () -> ()
+	local running = true
+	local made: { Instance } = {}
+	local lane = center + Vector3.new(0, 0, Creatures.TRAIN_Z)
+	-- The rails, in pieces along X (the Creator Store track; flat code rails without it).
+	local x = -Creatures.HALF - 20
+	while x < Creatures.HALF + 20 do
+		local piece = V3Assets.place("Rails", folder(), CFrame.new(lane + Vector3.new(x + 15, 0, 0)) * CFrame.Angles(0, math.rad(90), 0), { size = 30, collide = false })
+		if piece then
+			table.insert(made, piece)
+		else
+			local m = Instance.new("Model")
+			m.Name = "Rails"
+			for _, z in { -2.4, 2.4 } do
+				block(m, "Rail", Vector3.new(30, 0.4, 0.4), CFrame.new(lane + Vector3.new(x + 15, 0.4, z)), Color3.fromRGB(90, 90, 96))
+			end
+			m.Parent = folder()
+			table.insert(made, m)
+		end
+		x += 30
+	end
+	task.spawn(function()
+		for pass = 1, 2 do
+			if not running then
+				return
+			end
+			local dirX = if pass == 1 then 1 else -1
+			local at = lane + Vector3.new(-dirX * (Creatures.HALF + 30), 0, 0)
+			local facing = if dirX > 0 then -math.pi / 2 else math.pi / 2
+			local engine = V3Assets.place("Train", folder(), CFrame.new(at) * CFrame.Angles(0, facing, 0), { size = 34, collide = false })
+			if not engine then
+				return
+			end
+			table.insert(made, engine)
+			FxService.hit(at, 90, "BigBoom")
+			local hit: { [Model]: boolean } = {}
+			local hitPlayers: { [Player]: boolean } = {}
+			local scanned = -1
+			local t = 0
+			local bodies: { Body } = {}
+			while running and engine.Parent and math.abs(at.X - center.X) < Creatures.HALF + 40 do
+				local dt = RunService.Heartbeat:Wait()
+				t += dt
+				at += Vector3.new(dirX * Creatures.TRAIN_SPEED * dt, 0, 0)
+				engine:PivotTo(CFrame.new(at) * CFrame.Angles(0, facing, 0))
+				if t - scanned > 0.1 then
+					scanned = t
+					bodies = dummiesIn(center)
+				end
+				for _, d in bodies do
+					if d.pelvis.Parent and not hit[d.model] then
+						local o = d.pelvis.Position - at
+						if math.abs(o.Z) < Creatures.TRAIN_REACH and math.abs(o.X) < 18 then
+							hit[d.model] = true
+							knock(d.model, at - Vector3.new(dirX * 6, 0, 0), Creatures.TRAIN_THROW, 0.9)
+						end
+					end
+				end
+				knockPlayers(at, Creatures.TRAIN_REACH + 8, Creatures.TRAIN_THROW, 0.9, center, hitPlayers)
+			end
+			engine:Destroy()
+			task.wait(1.5)
+		end
+	end)
+	return function()
+		running = false
+		for _, m in made do
+			if m.Parent then
+				m:Destroy()
+			end
+		end
+	end
+end
+
 return Creatures

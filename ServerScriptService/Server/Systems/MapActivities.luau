@@ -21,8 +21,42 @@ MapActivities.EVENT_GAP = 30 -- s: one experiment event per player per launcher 
 
 local wired: { [BasePart]: boolean } = {}
 
+-- A lift pad: `TeleportTo` (a world point) puts whoever steps on it there (the top of the throw
+-- tower, the crane's jib), once per COOLDOWN. Server-placed points only.
+local function wireLift(p: BasePart, to: Vector3)
+	local last: { [Player]: number } = {}
+	Players.PlayerRemoving:Connect(function(player)
+		last[player] = nil
+	end)
+	p.Touched:Connect(function(other)
+		local character = other:FindFirstAncestorOfClass("Model")
+		local player = character and Players:GetPlayerFromCharacter(character)
+		if not player or not character or PlayerRagdoll.isDown(player) then
+			return
+		end
+		local now = os.clock()
+		if last[player] and now - last[player] < MapActivities.COOLDOWN then
+			return
+		end
+		last[player] = now
+		local root = character:FindFirstChild("HumanoidRootPart")
+		local look = if root and root:IsA("BasePart") then root.CFrame.LookVector else Vector3.zAxis
+		character:PivotTo(CFrame.lookAt(to, to + Vector3.new(look.X, 0, look.Z)))
+		FxService.hit(to, 40, "CannonPad")
+	end)
+end
+
 function MapActivities.wire(p: BasePart)
+	if not Config.MAP_ACTIVITIES then
+		return
+	end
 	if wired[p] then
+		return
+	end
+	local lift = p:GetAttribute("TeleportTo")
+	if typeof(lift) == "Vector3" then
+		wired[p] = true
+		wireLift(p, lift)
 		return
 	end
 	local launch = p:GetAttribute("Launch")
@@ -33,6 +67,8 @@ function MapActivities.wire(p: BasePart)
 	local velocity = if launch.Magnitude > MapActivities.MAX_SPEED then launch.Unit * MapActivities.MAX_SPEED else launch
 	local what = p:GetAttribute("What")
 	local label = if type(what) == "string" then what else "the LAUNCHER"
+	local kindAttr = p:GetAttribute("Kind")
+	local kind = if type(kindAttr) == "string" then kindAttr else "Map" -- (Experiments: "Map", "Tower")
 	local last: { [Player]: number } = {}
 	local counted: { [Player]: number } = {}
 	Players.PlayerRemoving:Connect(function(player)
@@ -60,7 +96,7 @@ function MapActivities.wire(p: BasePart)
 		FxService.hit(root.Position, math.min(velocity.Magnitude, 140), "CannonPad")
 		if not counted[player] or now - counted[player] >= MapActivities.EVENT_GAP then
 			counted[player] = now
-			ExperimentService.event(player, "Hazard", 1, label)
+			ExperimentService.event(player, kind, 1, label)
 		end
 	end)
 	p.Destroying:Connect(function()

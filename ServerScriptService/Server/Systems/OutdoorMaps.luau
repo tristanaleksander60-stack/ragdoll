@@ -433,6 +433,10 @@ BUILDERS.Site = function(m, place, c)
 	-- Phase C: a jump pad at the pit's edge flings you over it; one by the frame throws you onto its roof.
 	launcher(m, c + Vector3.new(60, 0, 4), Vector3.new(0, 110, 95), "the PIT JUMP", rgb(255, 200, 40))
 	launcher(m, frameAt + Vector3.new(0, 0, -36), Vector3.new(0, 150, 40), "the ROOF LAUNCH", rgb(255, 120, 40))
+	-- The crane hook: a lift at the crane's foot drops you from its hook, high over the pit.
+	local hook = launcher(m, c + Vector3.new(20, 0, 92), Vector3.zero, "the CRANE DROP", rgb(80, 200, 255), 6)
+	hook:SetAttribute("Launch", nil)
+	hook:SetAttribute("TeleportTo", c + Vector3.new(60, 55, 50))
 	-- (PC look 19 Nov: too empty.) Dirt heaps, a gravel track from the gate to the frame, site
 	-- containers, the monster truck and a car parked, stacked crates and pallets, more barrels.
 	for _, h in { { Vector3.new(-110, -6, 100), 22 }, { Vector3.new(110, -8, -80), 26 }, { Vector3.new(-120, -10, -110), 20 }, { Vector3.new(120, -6, 110), 18 }, { Vector3.new(0, -12, 130), 24 } } do

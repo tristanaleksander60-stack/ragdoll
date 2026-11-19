@@ -30,6 +30,7 @@ local list: { Event } = {
 	{ id = "BullRun", name = "Bull Run", blurb = "Three bulls charge straight through the lab", duration = 14, productId = 0, icon = "event_BullRun", glyph = "🐂", color = "#B5562E" },
 	{ id = "Tornado", name = "Tornado", blurb = "A twister wanders your lab and spins everything into the sky", duration = 18, productId = 0, icon = "event_Tornado", glyph = "\u{1F32A}\u{FE0F}", color = "#7A7F87" },
 	{ id = "MeteorShower", name = "Meteor Shower", blurb = "Burning rocks rain down and blast the dummies", duration = 12, productId = 0, icon = "event_MeteorShower", glyph = "\u{2604}\u{FE0F}", color = "#D9622B" },
+	{ id = "TrainRun", name = "Train Run", blurb = "Rails appear and a steam train thunders through your lab", duration = 12, productId = 0, icon = "event_TrainRun", glyph = "\u{1F682}", color = "#3E5C76" },
 }
 
 local byId: { [string]: Event } = {}

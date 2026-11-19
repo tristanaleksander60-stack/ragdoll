@@ -33,9 +33,12 @@ local LIST: { Def } = {
 	{ id = "Takedown25", text = "Take down 25 dummies", kind = "Takedown", target = 25, seconds = 240, stars = 3 },
 	{ id = "Bullseye2", text = "Land on the BULLSEYE twice", kind = "Bullseye", target = 2, seconds = 240, stars = 3 },
 	{ id = "Cannon3", text = "Blast off the CANNON 3 times", kind = "Cannon", target = 3, seconds = 150, stars = 2 },
+	-- v3 phase C: the throw tower in your lab and the launchers on the open-air maps.
+	{ id = "Tower", text = "Jump off the THROW TOWER", kind = "Tower", target = 1, seconds = 120, stars = 1 },
+	{ id = "MapLaunch", text = "Get launched on any MAP", kind = "Map", target = 1, seconds = 240, stars = 2 },
 }
 Experiments.LIST = table.freeze(LIST)
-Experiments.KINDS = table.freeze({ Takedown = true, Cannon = true, Bullseye = true, Hazard = true, Egg = true, Chimney = true, Present = true, Toss = true })
+Experiments.KINDS = table.freeze({ Takedown = true, Cannon = true, Bullseye = true, Hazard = true, Egg = true, Chimney = true, Present = true, Toss = true, Tower = true, Map = true })
 
 -- Phase 3: Prank Party (2-6 players in one lab): one shared card, everyone's events count, everyone
 -- gets the stars (ExperimentService.startParty; PartyService deals it).

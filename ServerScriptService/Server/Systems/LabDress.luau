@@ -35,6 +35,52 @@ LabDress.SPOTS = {
 	{ role = "Cone", x = 60, z = -40, yaw = 0, height = 2.2 },
 } :: { Spot }
 
+-- v3 phase C: the throw tower (north-west corner): a stone watch tower, a lift pad at its foot
+-- (MapActivities TeleportTo) that puts you on top, and a launcher up there that throws you out
+-- over the lab, the way friends throw each other off it.
+LabDress.TOWER = { x = -66, z = 44, height = 30 }
+
+function LabDress.throwTower(folder: Instance, origin: Vector3)
+	if not V3Assets.has("CastleTower") then
+		return
+	end
+	local spec = LabDress.TOWER
+	local base = origin + Vector3.new(spec.x, 0, spec.z)
+	local tower = V3Assets.place("CastleTower", folder, CFrame.new(base), { height = spec.height, collide = true, name = "ThrowTower" })
+	if not tower then
+		return
+	end
+	-- Its real top: a ray down onto the tower only.
+	local only = RaycastParams.new()
+	only.FilterType = Enum.RaycastFilterType.Include
+	only.FilterDescendantsInstances = { tower }
+	local hit = workspace:Raycast(base + Vector3.new(0, spec.height + 30, 0), Vector3.new(0, -spec.height - 40, 0), only)
+	local top = if hit then hit.Position else base + Vector3.new(0, spec.height, 0)
+	local function pad(name: string, at: Vector3, size: number, colour: Color3): Part
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Anchored = true
+		p.Size = Vector3.new(size, 0.6, size)
+		p.CFrame = CFrame.new(at + Vector3.new(0, 0.3, 0))
+		p.Color = colour
+		p.Material = Enum.Material.Neon
+		p.Parent = folder
+		return p
+	end
+	local _, size = tower:GetBoundingBox()
+	-- The lift on the side that faces the lab's middle (east), just outside the wall.
+	local lift = pad("TowerLift", base + Vector3.new(size.X / 2 + 4, 0, 0), 6, Color3.fromRGB(80, 200, 255))
+	lift:SetAttribute("TeleportTo", top + Vector3.new(0, 4, 0))
+	lift:SetAttribute("What", "the THROW TOWER")
+	local jump = pad("TowerJump", top + Vector3.new(2, 0, 0), 5, Color3.fromRGB(255, 120, 40))
+	jump:SetAttribute("Launch", Vector3.new(85, 60, -10))
+	jump:SetAttribute("What", "the THROW TOWER")
+	jump:SetAttribute("Kind", "Tower")
+	local MapActivities = require(script.Parent.MapActivities)
+	MapActivities.wire(lift)
+	MapActivities.wire(jump)
+end
+
 -- The fence along the back edge (z -94), a piece every FENCE_STEP studs.
 LabDress.FENCE_STEP = 12
 
@@ -56,6 +102,7 @@ function LabDress.dress(into: Instance, origin: Vector3)
 			x += LabDress.FENCE_STEP
 		end
 	end
+	LabDress.throwTower(folder, origin)
 	if #folder:GetChildren() == 0 then
 		folder:Destroy()
 	end

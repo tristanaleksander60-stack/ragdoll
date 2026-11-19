@@ -60,6 +60,22 @@ return {
 		task.wait(0.1)
 		assert(sawScorch, "no meteor landed")
 		assert(#(folder :: Instance):GetChildren() == 0, "disasters left something behind")
+		-- The train: rails appear, the engine runs, nothing stays.
+		assert(Events.byId.TrainRun, "no Train Run event")
+		local stopTrain = Creatures.train(center)
+		task.wait(1)
+		local rails, engine = 0, false
+		for _, c in (folder :: Instance):GetChildren() do
+			if c.Name == "Rails" then
+				rails += 1
+			elseif c.Name == "Train" then
+				engine = true
+			end
+		end
+		stopTrain()
+		task.wait(0.1)
+		assert(rails >= 4 and engine, string.format("the train: %d rail pieces, engine %s", rails, tostring(engine)))
+		assert(#(folder :: Instance):GetChildren() == 0, "the train left something behind")
 		-- The button in every lab.
 		local buttons = 0
 		local playground = Workspace:FindFirstChild("Playground")
