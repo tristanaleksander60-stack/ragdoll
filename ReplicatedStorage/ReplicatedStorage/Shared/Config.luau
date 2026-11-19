@@ -141,6 +141,7 @@ local Config = {
 	-- up from a fall, and idle chatter (DummyLife + Shared\DummyLines), no shouting signs in the world
 	-- (Playground billboards), and the clean HUD (HudV3). false = the 0.20 look.
 	LOOK_V3 = true,
+	MAP_ACTIVITIES = true, -- v3 phase C: launchers on the open-air maps (Server/Systems/MapActivities)
 	LOOK_V3_LIGHT = table.freeze({
 		ClockTime = 13,
 		Brightness = 2.2,

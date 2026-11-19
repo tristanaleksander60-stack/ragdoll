@@ -173,6 +173,23 @@ local function piece(m: Instance, pack: string, name: string, at: Vector3, yaw: 
 	return copy
 end
 
+-- A launcher (phase C, MapActivities throws whoever touches it): a glowing pad with an arrow the
+-- way it throws and a small sign. `velocity` is world studs/s.
+local function launcher(m: Instance, at: Vector3, velocity: Vector3, what: string, colour: Color3, size: number?): Part
+	local w = size or 8
+	local pad = part(m, "Launcher", Vector3.new(w, 0.6, w), CFrame.new(at + Vector3.new(0, 0.3, 0)), colour, Enum.Material.Neon)
+	pad:SetAttribute("Launch", velocity)
+	pad:SetAttribute("What", what)
+	local flat = Vector3.new(velocity.X, 0, velocity.Z)
+	if flat.Magnitude > 1 then
+		local arrow = part(m, "LauncherArrow", Vector3.new(1.2, 0.1, w * 0.7), CFrame.lookAt(at + Vector3.new(0, 0.65, 0), at + Vector3.new(0, 0.65, 0) + flat.Unit), rgb(255, 255, 255), Enum.Material.Neon, false)
+		arrow.Transparency = 0.1
+	end
+	local ring = part(m, "LauncherRim", Vector3.new(w + 1, 0.4, w + 1), CFrame.new(at + Vector3.new(0, 0.2, 0)), rgb(30, 30, 34), Enum.Material.Metal, false)
+	ring.CastShadow = false
+	return pad
+end
+
 local BUILDERS: { [string]: (Model, any, Vector3) -> () } = {}
 
 ------------------------------------------------------------------------------------------------
@@ -257,6 +274,9 @@ BUILDERS.City = function(m, place, c)
 		piece(m, "CityProps", "Planter_Square_01_A", corner, q * 90)
 		prop(m, "TreeRound", corner + Vector3.new(sx * 8, 0, 0), q * 70, 18)
 	end
+	-- Phase C: burst manholes in two streets shoot you up the side of the towers.
+	launcher(m, c + Vector3.new(0, 1, 120), Vector3.new(0, 190, 0), "the MANHOLE", rgb(120, 230, 255), 6)
+	launcher(m, c + Vector3.new(-120, 1, 0), Vector3.new(0, 190, 0), "the MANHOLE", rgb(120, 230, 255), 6)
 	-- The skyline: tall towers beyond each edge (outside the walls: scenery).
 	local far = { { "building_05", Vector3.new(-1, 0, 1) }, { "building_08", Vector3.new(1, 0, 1) }, { "building_04", Vector3.new(-1, 0, -1) }, { "building_11", Vector3.new(1, 0, -1) } }
 	for k, f in far do
@@ -406,6 +426,9 @@ BUILDERS.Site = function(m, place, c)
 	for i, p in scatter(5, c, 10, 20, half - 30, { { at = frameAt, r = 40 }, { at = c + Vector3.new(60, 0, 50), r = 44 } }) do
 		V3Assets.place(if i % 2 == 0 then "Barrel" else "Cone", m, CFrame.new(p), { height = if i % 2 == 0 then 4 else 2.4, collide = i % 2 == 0 })
 	end
+	-- Phase C: a jump pad at the pit's edge flings you over it; one by the frame throws you onto its roof.
+	launcher(m, c + Vector3.new(60, 0, 4), Vector3.new(0, 110, 95), "the PIT JUMP", rgb(255, 200, 40))
+	launcher(m, frameAt + Vector3.new(0, 0, -36), Vector3.new(0, 150, 40), "the ROOF LAUNCH", rgb(255, 120, 40))
 	-- (PC look 19 Nov: too empty.) Dirt heaps, a gravel track from the gate to the frame, site
 	-- containers, the monster truck and a car parked, stacked crates and pallets, more barrels.
 	for _, h in { { Vector3.new(-110, -6, 100), 22 }, { Vector3.new(110, -8, -80), 26 }, { Vector3.new(-120, -10, -110), 20 }, { Vector3.new(120, -6, 110), 18 }, { Vector3.new(0, -12, 130), 24 } } do
@@ -560,6 +583,9 @@ BUILDERS.Island = function(m, place, mid)
 	end
 	prop(m, "Barrel", jetty + Vector3.new(4, 0, 8), 0, 4)
 	prop(m, "Barrel", jetty + Vector3.new(7, 0, 9), 50, 4)
+	-- Phase C: the catapult throws you across the island; the cliff top throws you out to sea.
+	launcher(m, cat + Vector3.new(0, 0, -10), Vector3.new(0, 125, 115), "the CATAPULT", rgb(255, 150, 40))
+	launcher(m, cliff + Vector3.new(6, 36, 6), Vector3.new(40, 60, 40), "the CLIFF DIVE", rgb(60, 200, 255), 7)
 end
 
 ------------------------------------------------------------------------------------------------
@@ -639,6 +665,9 @@ BUILDERS.Farm = function(m, place, mid)
 		piece(m, "Farm", names[(i - 1) % #names + 1], p, i * 37, nil, true)
 	end
 	piece(m, "Farm", "Meshes/SM_Prop_Truck_Rusted_01", c + Vector3.new(-140, 0, -130), 60, nil, true)
+	-- Phase C: the hay slingshot throws you over the yard into the hay; a second one into the paddock.
+	launcher(m, c + Vector3.new(-10, 0, -20), Vector3.new(30, 120, 110), "the HAY SLINGSHOT", rgb(255, 210, 60))
+	launcher(m, c + Vector3.new(10, 0, -90), Vector3.new(80, 110, 30), "the BISON TOSS", rgb(200, 120, 60))
 	piece(m, "Farm", FP .. "Hay>SquareBalesTrailer", c + Vector3.new(30, 0, -20), 80, nil, true)
 	-- Trees round the edge, a few bushes.
 	for i, p in scatter(61, c, 18, half - 40, half - 10, { { at = c + Vector3.new(0, 0, -half), r = 30 } }) do
@@ -716,6 +745,9 @@ BUILDERS.Military = function(m, place, mid)
 		local tyre = part(m, "Tyre", Vector3.new(1.2, 3.6, 3.6), CFrame.new(course + Vector3.new(-20 + (k % 2) * 4, 0.6, -30 + k * 7)) * CFrame.Angles(0, 0, math.rad(90)), rgb(30, 30, 32), Enum.Material.Rubber)
 		tyre.Shape = Enum.PartType.Cylinder
 	end
+	-- Phase C: the mortar fires you over the base; the course ends on an ejector seat.
+	launcher(m, c + Vector3.new(-30, 0, -40), Vector3.new(60, 170, 100), "the MORTAR", rgb(255, 80, 60))
+	launcher(m, course + Vector3.new(0, 0, 40), Vector3.new(0, 210, 0), "the EJECTOR SEAT", rgb(255, 220, 60), 6)
 	-- Containers, crates, barrels, barriers; lamps on the corners; the perimeter fence.
 	for i, at in { Vector3.new(-140, 0, -140), Vector3.new(-120, 0, -140), Vector3.new(140, 0, 140) } do
 		local box = Instance.new("Model")
