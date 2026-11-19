@@ -248,3 +248,9 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
   - New `Server/Systems/GroundGuard`: every 2 s it lifts any resting body that has solid ground over its pelvis.
   - T96_GroundGuard; T26 passes.
   - Crowds raised: Island 12, Downtown 18, Site 12, Farm 12, Base 14. All spread (closest pair 3.6-28 studs), none buried.
+- 20 Nov 2026 (PC): **A3 done (code; not heard).**
+  - `Client/SoundMix` adds SoundGroups under the player's Effects setting: Weapons 0.95, Impacts 0.8, Blasts 1, World 0.7, UI 0.45, Ambient 0.5 (`Config.SOUND_MIX`).
+  - A CompressorSoundEffect sits on Effects; boomBig/boomMid/cannonShot duck World and Ambient for 0.6-1.2 s.
+  - FxController plays each bank in its group; the kit's clicks are in UI (quieter than guns). The existing per-bank throttle, voice cap and roll-off stay.
+  - Checked in Studio: the groups exist, sounds sit in them, T41 passes.
+  - Not done: a listening pass by ear (no audio capture over MCP); Settings sliders per group (one SFX row as before).

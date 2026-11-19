@@ -24,6 +24,7 @@ local PlotPrivacy = require(script.Parent:WaitForChild("PlotPrivacy"))
 local BulletHoles = require(script.Parent:WaitForChild("BulletHoles"))
 local DummyLife = require(script.Parent:WaitForChild("DummyLife"))
 local Settings = require(script.Parent:WaitForChild("Settings"))
+local SoundMix = require(script.Parent:WaitForChild("SoundMix"))
 -- World/Feel v2 (Config.FEEL_V2): the trauma shake, particle bursts, flops, trails, muzzle flash and
 -- casings, the combo beat. Every v2 layer is behind FeelV2.ON; off, this file plays as in 0.20.
 local FeelV2 = require(script.Parent:WaitForChild("FeelV2"))
@@ -282,7 +283,7 @@ local function play(bank: string, position: Vector3, volume: number, speed: numb
 	sound.Volume = volume * rng:NextNumber(if vary then 1 - vary else 0.9, 1)
 	sound.PlaybackSpeed = speed * (if vary then rng:NextNumber(1 - vary, 1 + vary) else rng:NextNumber(0.92, 1.08))
 	sound.RollOffMaxDistance = o.reach or SOUND_REACH
-	sound.SoundGroup = Settings.effects() -- (SETTINGS: sound effects normal, quiet or off)
+	sound.SoundGroup = SoundMix.groupFor(bank) -- (v4 A3: its group in the mix, under SETTINGS' effects)
 	beginWhenLoaded(voice, plays, o.cut, o.from, o.fade)
 end
 
@@ -291,6 +292,9 @@ end
 local function blast(bank: string, position: Vector3, volume: number, speed: number, cut: number?)
 	if hasBank(bank) then
 		play(bank, position, volume, speed, { cut = cut, fade = if cut then 0.8 else nil, reach = 260, vary = 0.06 })
+		if bank == "boomBig" or bank == "boomMid" or bank == "cannonShot" then
+			SoundMix.duck(if bank == "boomBig" then 1.2 else 0.6) -- (the rest dips so the blast reads)
+		end
 	else
 		play("boom", position, volume, speed)
 	end

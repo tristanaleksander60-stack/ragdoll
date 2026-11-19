@@ -145,6 +145,8 @@ local Config = {
 	-- v4 A5 (owner): bodies die from enough hits, not only headshots. Every hit adds damage =
 	-- weapon power x DAMAGE_PER_POWER x the region (head, limbs) x DAMAGE_BLUNT for blows; BODY_HP of it
 	-- kills (about 6 Popper rounds to the body, about 10 punches). Headshots stay instant.
+	-- v4 A3: the sound mix (Client/SoundMix): each group's volume under the player's Effects setting.
+	SOUND_MIX = table.freeze({ Weapons = 0.95, Impacts = 0.8, Blasts = 1, World = 0.7, UI = 0.45, Ambient = 0.5 }),
 	BODY_HP = 100,
 	DAMAGE_PER_POWER = 17,
 	DAMAGE_HEAD = 1.5,

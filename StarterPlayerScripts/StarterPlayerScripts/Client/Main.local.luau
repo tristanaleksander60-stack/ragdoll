@@ -47,6 +47,7 @@ require(Client:WaitForChild("SessionClient")).start() -- (first: the boot time i
 require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIIcons")).registerMany(require(Shared:WaitForChild("DrawnIcons")).ASSETS)
 PlotPrivacy.start() -- (first: other labs leave this screen before anything draws them)
 task.spawn(require(Client:WaitForChild("DummySkins")).start) -- the dummies' sculpted mannequin bodies
+require(Client:WaitForChild("SoundMix")).start() -- v4 A3: the mix's groups and compressor
 FxController.start()
 AvatarMoves.start()
 

@@ -217,7 +217,8 @@ local function build()
 end
 
 function Settings.start()
-	C.soundGroup = group -- (the kit's clicks are effects too)
+	-- (The kit's clicks are effects too, in the mix's quieter UI group: v4 A3.)
+	C.soundGroup = require(script.Parent:WaitForChild("SoundMix")).group("UI")
 	build()
 	local r = Net.event(Net.Names.Progress)
 	remote = r
