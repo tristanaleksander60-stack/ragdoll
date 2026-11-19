@@ -21,6 +21,7 @@ local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local V3 = Config.LOOK_V3 -- (LOOK_V3: the black hit card)
 local Net = require(Shared:WaitForChild("Net"))
 local Theme = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUITheme"))
 
@@ -203,6 +204,44 @@ local function build()
 	f.Parent = gui
 	gui.Parent = player:WaitForChild("PlayerGui")
 	box, topLabel, statusLabel = f, t, st
+	-- LOOK_V3 (19 Nov 2026, like the big ragdoll games): the two lines in a small black box with a
+	-- yellow bar on its left, hugging the text; the body part in yellow, the state in white.
+	if V3 then
+		f.Size = UDim2.fromOffset(0, HitInfo.HEIGHT)
+		f.AutomaticSize = Enum.AutomaticSize.X
+		f.BackgroundColor3 = Color3.fromRGB(14, 14, 16)
+		f.BackgroundTransparency = 1
+		list.HorizontalAlignment = Enum.HorizontalAlignment.Left
+		list.VerticalAlignment = Enum.VerticalAlignment.Center
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 4)
+		corner.Parent = f
+		local pad = Instance.new("UIPadding")
+		pad.PaddingLeft = UDim.new(0, 16)
+		pad.PaddingRight = UDim.new(0, 14)
+		pad.Parent = f
+		local bar = Instance.new("Frame")
+		bar.Name = "Bar"
+		bar.AnchorPoint = Vector2.new(0, 0.5)
+		bar.Position = UDim2.new(0, -10, 0.5, 0)
+		bar.Size = UDim2.new(0, 4, 1, -16)
+		bar.BackgroundColor3 = Color3.fromRGB(255, 205, 64)
+		bar.BackgroundTransparency = 1
+		bar.BorderSizePixel = 0
+		bar.Parent = f
+		for i, l in { t, st } do
+			l.Size = UDim2.fromOffset(0, if i == 1 then 30 else 26)
+			l.AutomaticSize = Enum.AutomaticSize.X
+			l.TextXAlignment = Enum.TextXAlignment.Left
+			l.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
+			l.TextSize = if i == 1 then 26 else 22
+			l.TextColor3 = if i == 1 then Color3.fromRGB(255, 205, 64) else Color3.fromRGB(240, 240, 240)
+			local stroke = l:FindFirstChildOfClass("UIStroke")
+			if stroke then
+				stroke.Enabled = false
+			end
+		end
+	end
 end
 
 -- The first minute's hint steps aside while the lines show (OnboardingController reads it).
@@ -214,6 +253,14 @@ local function holdHint(on: boolean)
 end
 
 local function setShown(alpha: number)
+	local b = box
+	if V3 and b then
+		b.BackgroundTransparency = 0.12 + 0.88 * alpha
+		local bar = b:FindFirstChild("Bar")
+		if bar and bar:IsA("Frame") then
+			bar.BackgroundTransparency = alpha
+		end
+	end
 	for _, l in { topLabel, statusLabel } do
 		if l then
 			l.TextTransparency = alpha
@@ -331,6 +378,14 @@ function HitInfo.show(line: string, before: number?, model: Model?)
 			local stroke = l:FindFirstChildOfClass("UIStroke")
 			if stroke then
 				table.insert(fading, TweenService:Create(stroke, info, { Transparency = 1 }))
+			end
+		end
+		local b = box
+		if V3 and b then
+			table.insert(fading, TweenService:Create(b, info, { BackgroundTransparency = 1 }))
+			local bar = b:FindFirstChild("Bar")
+			if bar and bar:IsA("Frame") then
+				table.insert(fading, TweenService:Create(bar, info, { BackgroundTransparency = 1 }))
 			end
 		end
 		for _, tw in fading do

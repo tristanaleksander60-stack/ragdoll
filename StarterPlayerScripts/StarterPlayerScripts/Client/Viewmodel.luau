@@ -22,6 +22,25 @@ Viewmodel.OFFSET = CFrame.new(0.85, -0.75, -2.1) -- where the grip sits from the
 Viewmodel.SCALE = 0.55 -- the copy's size against the one in the hand
 Viewmodel.KICK = 0.14 -- studs back a round throws it
 Viewmodel.SWAY = 0.06
+Viewmodel.TILT = 0.9 -- radians of lift per stud of kick
+Viewmodel.SETTLE = 1.4 -- studs of kick taken back a second
+Viewmodel.ARM = Vector3.new(0.26, 0.26, 1.1)
+Viewmodel.HAND = nil :: Color3? -- nil: the avatar's own hand colour
+-- LOOK_V3 (19 Nov 2026, like the big ragdoll games): the gun big in the lower right, held by one
+-- plain white hand and forearm from the corner, a small sway, and a short sharp recoil (about 4
+-- degrees, settled in about a tenth of a second).
+do
+	local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
+	if Config.LOOK_V3 then
+		Viewmodel.OFFSET = CFrame.new(1.05, -0.95, -2.0)
+		Viewmodel.SCALE = 0.8
+		Viewmodel.SWAY = 0.03
+		Viewmodel.TILT = 0.5
+		Viewmodel.SETTLE = 2.6
+		Viewmodel.ARM = Vector3.new(0.5, 0.5, 1.9)
+		Viewmodel.HAND = Config.LOOK_V3_DUMMY
+	end
+end
 
 local player = Players.LocalPlayer
 local holder: Model? = nil
@@ -77,9 +96,10 @@ local function build(held: Model)
 	if hand and hand:IsA("BasePart") then
 		skin = hand.Color
 	end
+	skin = Viewmodel.HAND or skin
 	local a = Instance.new("Part")
 	a.Name = "Forearm"
-	a.Size = Vector3.new(0.26, 0.26, 1.1)
+	a.Size = Viewmodel.ARM
 	a.Color = skin
 	a.Material = Enum.Material.SmoothPlastic
 	a.Anchored = true
@@ -148,7 +168,7 @@ local function frame(dt: number)
 	end
 	lastLook = look
 	sway = sway:Lerp(Vector2.zero, math.min(1, dt * 4))
-	kick = math.max(0, kick - dt * 1.4)
+	kick = math.max(0, kick - dt * Viewmodel.SETTLE)
 	-- Reloading: the weapon dips and tilts.
 	local reload = Ammo.reloading(AmmoClient.bookForTest(), toolId, os.clock())
 	local dip = if reload then math.sin(reload * math.pi) else 0
@@ -156,11 +176,11 @@ local function frame(dt: number)
 	local at = camera.CFrame
 		* Viewmodel.OFFSET
 		* CFrame.new(sway.X * Viewmodel.SWAY, sway.Y * Viewmodel.SWAY - dip * 0.45 + bob, kick)
-		* CFrame.Angles(kick * 0.9 + dip * -0.5, 0, dip * 0.6)
+		* CFrame.Angles(kick * Viewmodel.TILT + dip * -0.5, 0, dip * 0.6)
 	c:PivotTo(at)
 	local a = arm
 	if a then
-		a.CFrame = at * CFrame.new(0.05, -0.2, 0.6) * CFrame.Angles(math.rad(12), 0, 0)
+		a.CFrame = at * CFrame.new(0.05, -0.2 - Viewmodel.ARM.Y * 0.4, Viewmodel.ARM.Z * 0.55) * CFrame.Angles(math.rad(12), 0, 0)
 	end
 	local fp, light = flashPart, flash
 	if fp and light then
