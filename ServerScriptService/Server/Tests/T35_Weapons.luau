@@ -308,7 +308,9 @@ local function buying(results: { string }, player: Player, profile: any)
 		WeaponShop.resetForTest(player)
 		WeaponShop.onRequest(player, "Buy", "Poke")
 		assert(next(profile.pending) == nil and not profile.owned.Poke, "Poke, 3 takedowns away, was put up for buying")
-		assert(not Toys.canBuy(Toys.byId.Pan, 43) and Toys.canBuy(Toys.byId.Pan, 35), "the buy line for the Pan is wrong")
+		-- (From its rung: LADDER_V2 moved the Pan from 50 to 37.)
+		local panAt = Toys.byId.Pan.unlockAt
+		assert(not Toys.canBuy(Toys.byId.Pan, panAt - 14) and Toys.canBuy(Toys.byId.Pan, panAt - 15), "the buy line for the Pan is wrong")
 		-- Asking to buy one you have: refused before any prompt (no new choice kept).
 		ProgressService.setOwnedForTest(player, { Katana = true })
 		profile.pending = {}

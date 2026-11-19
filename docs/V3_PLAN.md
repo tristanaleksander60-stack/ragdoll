@@ -50,10 +50,14 @@ The owner's standing order (19 Nov 2026): "når jeg skriver klar, gør du automa
   - a BIG RED BUTTON per lab;
   - tests T91_LookV3 and T92_Creatures.
 - **Owner feedback after the first test (19 Nov):** the 3D menu lagged (fixed: the turning model only on the hovered card), and the code-built hills, trees, cannon and maps looked cheap. The answer is real models: `Server/Systems/V3Assets` + `tools/ImportV3Assets.luau` + `docs/V3_ASSETS.md` (29 picks); noise-terrain hills; trees only as models; `LabDress`.
-- **Note (19 Nov, evening):** the owner says a PC session has already run `docs/PC_PROMPT_ASSETS.md`, but nothing from it reached GitHub. The next PC session must first commit and push what is on the PC, check `ServerStorage.V3Assets` and the maps in the place, and write the real state here.
+- **Checked 19 Nov (PC):** the note that an earlier PC session had run `PC_PROMPT_ASSETS.md` did not hold: the saved place had no `ServerStorage.V3Assets`, and the PC folder had no unpushed work. This session did the import (below).
+- **19 Nov 2026, PC session (Studio), first "klar":**
+  - PC TODO step 0 done: the 29 models are in `ServerStorage.V3Assets` (place saved, version 471). All scripts stripped; also seats disabled, prompts/clicks/sounds/fire/headlights removed, brand marks removed (a Chevrolet emblem on the truck, logo decals on the rocket and truck, the train's name board), the rocket's launch-site ground removed, one white Sedan and one palm kept from their packs, the fence squared, Yaw set (Car 0, MonsterTruck 180, Gorilla/Bull 90, Cannon -90). `tools/ImportV3Assets.luau` now does all of that itself.
+  - Play test with captures (spawn, cannon, west, back end): every model placed, sizes right; the cannon is now 14 studs. T91, T92, T36 (fixed for LOOK_V3), T50, T23, T54, T56, T60, T90, T35 (Ladder v2), T38 (MILD_TEXT) pass.
+  - **LayoutCheck had 551 problems on its first Studio run** (the cloud phases were never run there): fixed to **0**, live 0. Main fixes: one bar row on phones clear of GRAB/SHOOT, upright-phone placement for the event bars, BUILD/PLAY, the doctor monitor and the hit line, tablet RUN, button and rarity contrast.
 - **Next:**
-  1. The PC session runs the PC TODO below (Studio captures, play test, fixes).
-  2. Then Phase B maps from Creator Store models.
+  1. The rest of the PC TODO: phone captures, drive the car/truck, press the BIG RED BUTTON, first-person tuning.
+  2. Phase B maps: STARTED. The Island is built by code (OutdoorMaps); captures are still due (restart Studio first). Next: the City, the Building Site, the Farm and the Military base from the packs in PC_PROMPT_ASSETS.md (import them, then write their builders in OutdoorMaps).
   3. Then the rest of C: a lab activity of the day, disasters (tornado or meteors) and a throw tower.
   4. Then D: a Lab Controls pass, an Endless Events pass, an Everything pass and a vehicle pass. Their ids come from the owner.
 
@@ -365,7 +369,7 @@ The 9 store images were downloaded via thumbnails.roblox.com (the video could no
 6. **Maps:** several clean maps in place of one crowded lab. One of them is a plain "clean room". We have WorldMaps (Office, WhiteRoom): put them in a Maps window with screenshots.
 
 ## PC TODO (Studio only; for the PC session or the owner)
-0. **Real models first:** run the prompt in `docs/PC_PROMPT_ASSETS.md`. It imports the 29 Creator Store picks with `tools/ImportV3Assets.luau`, then play-tests and builds the maps. The code switches to the models by itself (`V3Assets`).
+0. **DONE 19 Nov (PC):** real models imported and saved. ~~Run the prompt in `docs/PC_PROMPT_ASSETS.md`.~~ It imports the 29 Creator Store picks with `tools/ImportV3Assets.luau`, then play-tests and builds the maps. The code switches to the models by itself (`V3Assets`).
 1. **Sync and play** the `release` branch. Run the SelfTest (T91, T92 and the full suite once) and LayoutCheck.
 2. **Captures before and after** from the same 3 spots (spawn, cannon, crash wall) plus one in a car, on PC and phone. Check:
    - the light (no grey wash; shadows visible);

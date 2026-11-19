@@ -21,6 +21,7 @@ local N7Models = require(Shared:WaitForChild("N7Models"))
 local Metrics = require(script.Parent.Metrics)
 local Lab = require(script.Parent.Lab)
 local Finish = require(script.Parent.Finish)
+local OutdoorMaps = require(script.Parent.OutdoorMaps)
 
 local log = Log.new("Maps")
 
@@ -983,7 +984,7 @@ function WorldMaps.build(labOrigin: Vector3)
 	root.Name = "Places"
 	for _, place in Places.list do
 		local centre = Places.floorCenter(labOrigin, place.id)
-		local builder = BUILDERS[place.id]
+		local builder = BUILDERS[place.id] or (if place.outdoor and OutdoorMaps.has(place.id) then OutdoorMaps.build else nil)
 		if centre and builder then
 			local model = Instance.new("Model")
 			model.Name = place.id

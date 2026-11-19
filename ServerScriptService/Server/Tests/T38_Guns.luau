@@ -16,6 +16,7 @@ local Lab = require(Systems:WaitForChild("Lab"))
 local HitService = require(Systems:WaitForChild("HitService"))
 local VitalsService = require(Systems:WaitForChild("VitalsService"))
 local DummyFactory = require(Systems:WaitForChild("DummyFactory"))
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 local Shared = ReplicatedStorage.Shared
 local Anatomy = require(Shared.Anatomy)
 local Toys = require(Shared.Toys)
@@ -243,7 +244,9 @@ local function run(results: { string })
 		VitalsService.liveForTest(false)
 		local sent = VitalsService.lastSent[shooter]
 		assert(nailed:GetAttribute("Vital") == "Dead", "a nail in the jaw left it " .. tostring(nailed:GetAttribute("Vital")))
-		assert(sent and sent.killed and string.find(sent.line, "Jaw", 1, true), "the killing line was held back or not marked: " .. tostring(sent and sent.line))
+		-- (Config.MILD_TEXT, phase 0: the line names the body region, "Head", not the organ.)
+		local word = if Config.MILD_TEXT then "Head" else "Jaw"
+		assert(sent and sent.killed and string.find(sent.line, word, 1, true), "the killing line was held back or not marked: " .. tostring(sent and sent.line))
 		table.insert(results, string.format("a nail in the jaw: dead on the spot; its line (%q) sent marked as the kill right after another", sent.line))
 	end
 

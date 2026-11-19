@@ -82,6 +82,12 @@ local function dressed(on: boolean): number
 							ownHat = true
 						end
 					end
+					-- (Hair too tall for a Santa hat counts too: ChristmasService.hasOwnHat, TallHair.)
+					for _, item in outfit:GetChildren() do
+						if item:IsA("Accessory") and item:GetAttribute("TallHair") == true then
+							ownHat = true
+						end
+					end
 				end
 				if on and ownHat then
 					assert(not hat, body.Name .. " wears a Santa hat on top of its own hat")

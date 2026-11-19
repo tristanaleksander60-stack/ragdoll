@@ -18,6 +18,8 @@ export type Place = {
 	light: string, -- ZoneLighting profile
 	color: string, -- the card's colour
 	glyph: string, -- its picture (a colour emoji, unique among places; T21 checks)
+	outdoor: boolean?, -- v3 phase B: an open-air map (terrain, sky, no ceiling) in the outdoor row
+	row: number?, -- its place in the outdoor row (1..n)
 }
 
 local Places = {}
@@ -25,6 +27,10 @@ local Places = {}
 Places.ROOM_HEIGHT = 1600 -- studs above the lab's floor where the rooms stand (out of sight from it)
 Places.ROOM_SPACING = 420 -- studs between rooms (further than the crowd's wake-up range)
 Places.TRAVEL_GAP = 2 -- s between two trips (server-checked)
+-- v3 phase B: the open-air maps stand in a row of their own, behind the rooms (+Z), further apart:
+-- each is a few hundred studs of land, sea or site.
+Places.OUTDOOR_Z = 1400 -- studs from the rooms' row
+Places.OUTDOOR_SPACING = 900 -- studs between two outdoor maps' middles
 
 Places.list = table.freeze({
 	{ id = "Lab", name = "My Lab", blurb = "Your own lab: your dummies, your machines.", slot = 0, size = Vector3.zero, crowd = 0, roles = {}, light = "Lab", color = "#7CC8FF", glyph = "🧪" },
@@ -37,6 +43,8 @@ Places.list = table.freeze({
 	{ id = "WhiteRoom", name = "White Room", blurb = "A giant empty test room. Go wild.", slot = 6, size = Vector3.new(150, 44, 150), crowd = 10, roles = { "Office", "Tourist", "Traveler", "Chef" }, light = "White", color = "#E6E6EE", glyph = "🔬" },
 	{ id = "Metro", name = "Metro Station", blurb = "Platform 1. The 8:15 is late again.", slot = 8, size = Vector3.new(140, 30, 96), crowd = 10, roles = { "Office", "Traveler", "Tourist", "Guard" }, light = "Cool", color = "#3A7BD5", glyph = "🚇" },
 	{ id = "Arena", name = "Game Arena", blurb = "Red light, green light and Shoot 'em. Beat your best!", slot = 7, size = Vector3.new(120, 40, 140), crowd = 0, roles = {}, light = "Cool", color = "#F2C230", glyph = "🎮" },
+	-- v3 phase B: open-air maps, in their own row (OutdoorMaps builds them).
+	{ id = "Island", name = "Tropical Island", blurb = "Sand, palms, a cliff to dive off and a catapult.", slot = 101, size = Vector3.new(360, 80, 360), crowd = 6, roles = { "Tourist", "Traveler" }, light = "Lab", color = "#2EC4B6", glyph = "\u{1F3DD}\u{FE0F}", outdoor = true, row = 1 },
 } :: { Place })
 
 Places.byId = {} :: { [string]: Place }
@@ -44,19 +52,26 @@ for _, place in Places.list do
 	Places.byId[place.id] = place
 end
 
-local rooms = 0
+local rooms, outdoors = 0, 0
 for _, place in Places.list do
-	if place.slot > 0 then
+	if place.outdoor then
+		outdoors += 1
+	elseif place.slot > 0 then
 		rooms += 1
 	end
 end
-Places.ROOMS = rooms
+Places.ROOMS = rooms -- (the closed rooms' row; the outdoor maps are counted apart)
+Places.OUTDOORS = outdoors
 
 -- The middle of a room's floor (its top surface), from the plaza's middle. Ground places: nil.
 function Places.floorCenter(labOrigin: Vector3, id: string): Vector3?
 	local place = Places.byId[id]
 	if not place or place.slot == 0 then
 		return nil
+	end
+	if place.outdoor then
+		local row = place.row or 1
+		return labOrigin + Vector3.new((row - 1) * Places.OUTDOOR_SPACING - (outdoors - 1) * Places.OUTDOOR_SPACING / 2, Places.ROOM_HEIGHT, Places.OUTDOOR_Z)
 	end
 	return labOrigin + Vector3.new((place.slot - 1) * Places.ROOM_SPACING - (rooms - 1) * Places.ROOM_SPACING / 2, Places.ROOM_HEIGHT, 0)
 end

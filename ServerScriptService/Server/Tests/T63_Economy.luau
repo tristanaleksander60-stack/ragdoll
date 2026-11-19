@@ -49,6 +49,11 @@ return {
 		local today = EconomyService.dailyToday()
 		assert(#today >= Config.DAILY_COUNT, "not the day's daily experiments") -- (+1 advent card in December)
 		eco.daily = {}
+		-- (Every journal page already filled: a first experiment would fill one, +JOURNAL_BOLTS; PC
+		-- run 19 Nov paid 65 for 40. Put back below from `saved`.)
+		for _, page in Economy.JOURNAL do
+			eco.journal[page.id] = true
+		end
 		local before = eco.bolts
 		EconomyService.experimentDone(player, today[1])
 		local want = today[1].stars * Config.BOLTS_PER_STAR + Config.DAILY_BONUS

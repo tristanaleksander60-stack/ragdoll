@@ -18,7 +18,9 @@ return {
 		if not Config.FEEL_V2 then
 			return "FEEL_V2 off: guard not active (nothing to check)"
 		end
-		local model = DummyFactory.spawn(Vector3.new(1180, 0, 560))
+		-- (High in the air: on the ground out here the LOOK_V3 landscape caught the falling body
+		-- mid-check, PC run 19 Nov. The launch is measured as a change of speed.)
+		local model = DummyFactory.spawn(Vector3.new(1180, 900, 560))
 		task.wait(0.5)
 		local pelvisPart = model:FindFirstChild("LowerTorso")
 		local handPart = model:FindFirstChild("LeftHand")
@@ -37,9 +39,10 @@ return {
 		worst = (hand.AssemblyLinearVelocity - pelvis.AssemblyLinearVelocity).Magnitude
 		assert(worst <= ActiveRagdoll.LIMB_REL_MAX * 1.5, string.format("a hand kept %.0f studs/s against its body (guard %d)", worst, ActiveRagdoll.LIMB_REL_MAX))
 		-- The whole body thrown fast keeps its speed.
+		local before = pelvis.AssemblyLinearVelocity.Y
 		ActiveRagdoll.push(model, Vector3.new(0, 140, 0))
 		RunService.PostSimulation:Wait()
-		local up = pelvis.AssemblyLinearVelocity.Y
+		local up = pelvis.AssemblyLinearVelocity.Y - before
 		model:Destroy()
 		assert(up > 60, string.format("a whole-body launch was slowed to %.0f studs/s", up))
 		return string.format("a 900 studs/s hand kick settled to %.0f studs/s against the body; a launch kept %.0f studs/s up", worst, up)

@@ -23,6 +23,7 @@ local WorldMaps = require(Systems:WaitForChild("WorldMaps"))
 local Places = require(ReplicatedStorage.Shared.Places)
 
 local PART_BUDGET = 400 -- per room
+local OUTDOOR_BUDGET = 3000 -- per open-air map (real models; streamed, far from the labs)
 
 local function waitFor(check: () -> boolean, timeout: number): boolean
 	local started = os.clock()
@@ -84,7 +85,8 @@ local function body(results: { string }, player: Player)
 			local floor = model:FindFirstChild("Floor")
 			assert(floor and floor:GetAttribute("Floor") == true, p.id .. " has no floor for the crowd")
 			assert(model:FindFirstChild("Arrival"), p.id .. " has no arrival pad")
-			for _, wall in { "WallN", "WallS", "WallE", "WallW", "Ceiling" } do
+			-- (v3 phase B: an open-air map has invisible edge walls and the sky for a ceiling.)
+			for _, wall in if p.outdoor then { "WallN", "WallS", "WallE", "WallW" } else { "WallN", "WallS", "WallE", "WallW", "Ceiling" } do
 				assert(model:FindFirstChild(wall), p.id .. " is missing its " .. wall)
 			end
 			local count = 0
@@ -94,7 +96,8 @@ local function body(results: { string }, player: Player)
 					assert(d.Anchored, p.id .. ": a loose part (" .. d.Name .. ")")
 				end
 			end
-			assert(count <= PART_BUDGET, string.format("%s has %d parts (budget %d)", p.id, count, PART_BUDGET))
+			local budget = if p.outdoor then OUTDOOR_BUDGET else PART_BUDGET
+			assert(count <= budget, string.format("%s has %d parts (budget %d)", p.id, count, budget))
 			total += count
 		end
 	end

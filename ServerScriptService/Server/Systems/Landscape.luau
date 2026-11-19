@@ -24,6 +24,10 @@ Landscape.FLAT = 30 -- studs of flat land next to the labs before the hills star
 Landscape.DEPTH = 360 -- studs of land in front of and behind the lab line
 Landscape.SIDE = 420 -- studs of land past each end of the lab line
 Landscape.PEAK = 110 -- the far hills' height
+-- The plaza's front (its leaderboards stand at z 130-136, PC play test 19 Nov: they stood on a hill)
+-- is play area too: flat, no trees, within this box round the middle of the lab line.
+Landscape.PLAZA_HALF_X = 70
+Landscape.PLAZA_FRONT = 150
 Landscape.TREES = 220
 Landscape.TREE_ROLES = { "TreeRound", "TreePine", "TreeRound", "Bush", "Rock" }
 
@@ -81,6 +85,9 @@ function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: num
 				local ax = math.max(0, math.abs(x) - reach)
 				local az = if z > front then z - front elseif z < back then back - z else 0
 				local away = math.sqrt(ax * ax + az * az)
+				local px = math.max(0, math.abs(x) - Landscape.PLAZA_HALF_X)
+				local pz = if z > Landscape.PLAZA_FRONT then z - Landscape.PLAZA_FRONT elseif z < back then back - z else 0
+				away = math.min(away, math.sqrt(px * px + pz * pz))
 				if away > 0 then
 					local h = heightAt(x, z, away)
 					column[z] = h
@@ -125,9 +132,10 @@ function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: num
 			local x = rng:NextNumber(-reach - Landscape.SIDE + 20, reach + Landscape.SIDE - 20)
 			local inFront = rng:NextNumber() < 0.5
 			local z = if inFront then rng:NextNumber(front + 12, front + Landscape.DEPTH - 30) else rng:NextNumber(back - Landscape.DEPTH + 30, back - 12)
+			local inPlaza = math.abs(x) < Landscape.PLAZA_HALF_X + 12 and z < Landscape.PLAZA_FRONT + 12 and z > back - 12
 			local from = Vector3.new(labOrigin.X + x, ground + 300, labOrigin.Z + z)
 			local hit = Workspace:Raycast(from, Vector3.new(0, -400, 0), params)
-			if hit and hit.Normal.Y > 0.75 then
+			if hit and hit.Normal.Y > 0.75 and not inPlaza then
 				local role = roles[rng:NextInteger(1, #roles)]
 				local height = if role == "Bush" then rng:NextNumber(3, 5) elseif role == "Rock" then rng:NextNumber(3, 9) else rng:NextNumber(18, 32)
 				V3Assets.place(role, folder, CFrame.new(hit.Position) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0), { height = height, collide = role == "Rock" })
