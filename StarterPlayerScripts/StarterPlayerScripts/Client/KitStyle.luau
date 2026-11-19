@@ -290,7 +290,8 @@ end
 -- Numbers that count up (bolts, kills, the level): from what the label shows now to the new value,
 -- quicker for small steps. Reduced Motion (or v1): the new value at once.
 
-local counting: { [Instance]: { value: NumberValue, shown: number } } = setmetatable({}, { __mode = "k" }) :: any
+type Count = { value: NumberValue, shown: number, target: number }
+local counting: { [Instance]: Count } = setmetatable({}, { __mode = "k" }) :: any
 
 function KitStyle.countUp(label: TextLabel | TextButton, to: number, format: ((n: number) -> string)?)
 	local show = format or function(n: number): string
@@ -300,7 +301,7 @@ function KitStyle.countUp(label: TextLabel | TextButton, to: number, format: ((n
 	local from = if entry then entry.shown else to
 	if not entry then
 		local v = Instance.new("NumberValue")
-		entry = { value = v, shown = to }
+		entry = { value = v, shown = to, target = to }
 		counting[label] = entry
 		v.Changed:Connect(function(n: number)
 			local e = counting[label]
@@ -314,7 +315,11 @@ function KitStyle.countUp(label: TextLabel | TextButton, to: number, format: ((n
 			end
 		end)
 	end
-	local e = entry :: { value: NumberValue, shown: number }
+	local e = entry :: Count
+	if e.target == to and e.shown ~= to then
+		return -- (already counting to it)
+	end
+	e.target = to
 	if not KitStyle.V2 or Theme.isReducedMotion() or to <= from or from == to then
 		e.value.Value = to
 		e.shown = to

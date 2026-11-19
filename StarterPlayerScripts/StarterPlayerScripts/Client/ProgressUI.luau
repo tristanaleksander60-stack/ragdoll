@@ -15,6 +15,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local Net = require(Shared:WaitForChild("Net"))
 local Progress = require(Shared:WaitForChild("Progress"))
 local Toys = require(Shared:WaitForChild("Toys"))
+local UiRarity = require(Shared:WaitForChild("UiRarity"))
 
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local Theme = require(UI:WaitForChild("LihFolkUITheme"))
@@ -24,6 +25,7 @@ local Controller = require(UI:WaitForChild("LihFolkUIController"))
 
 local Client = script.Parent
 local Toast = require(Client:WaitForChild("Toast"))
+local KitStyle = require(Client:WaitForChild("KitStyle"))
 local ToolPicture = require(script.Parent:WaitForChild("ToolPicture"))
 local HudMenu = require(Client:WaitForChild("HudMenu"))
 local PokeController = require(Client:WaitForChild("PokeController"))
@@ -184,7 +186,7 @@ local function playOpening(result: { kind: string?, id: string, name: string, ra
 	end
 	local weapon = if result.kind == "Weapon" then Toys.byId[result.id] else nil
 	local rarity = if weapon
-		then { color = weapon.color }
+		then { color = if KitStyle.V2 then UiRarity.of(weapon).color else weapon.color } -- (UI v2: the card's rarity colour)
 		else (Progress.RARITY :: any)[result.rarity or ""] or Progress.RARITY.Common
 	root.Visible = true
 	root.BackgroundTransparency = 1
@@ -281,7 +283,13 @@ local function playOpening(result: { kind: string?, id: string, name: string, ra
 			end
 		end
 		icon.Parent = card
-		text("NEW WEAPON", 74, 26, Color3.fromRGB(255, 210, 74), Theme.Fonts.display)
+		if KitStyle.V2 then
+			-- (UI v2: the word for its rarity, in its colour, as on its catalog card.)
+			local r = UiRarity.of(weapon)
+			text("NEW " .. r.label .. " WEAPON", 74, 26, r.color, Theme.Fonts.display)
+		else
+			text("NEW WEAPON", 74, 26, Color3.fromRGB(255, 210, 74), Theme.Fonts.display)
+		end
 		text(weapon.label, 106, 44, Color3.new(1, 1, 1), Theme.Fonts.display)
 		text("Yours to keep. Going on your bar now!", 158, 24, P.textMid, Theme.Fonts.body)
 	else
@@ -677,7 +685,7 @@ function ProgressUI.popTakedown(n: number)
 	label.Parent = gui
 	local camera = workspace.CurrentCamera
 	local short = if camera then math.min(camera.ViewportSize.X, camera.ViewportSize.Y) else 600
-	local w = math.clamp(short * 0.3, 100, 150)
+	local w = if KitStyle.V2 then math.clamp(short * 0.32, 120, 160) else math.clamp(short * 0.3, 100, 150) -- (UI v2: its words 14 px or more)
 	TweenService:Create(label, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.fromOffset(w, w * 0.2) }):Play()
 	label.TextTransparency = 0.2
 	task.delay(0.5, function()

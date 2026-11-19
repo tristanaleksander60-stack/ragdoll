@@ -146,6 +146,23 @@ function showNext()
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, Theme.Radius.card)
 	corner.Parent = label
+	if Theme.V2 then
+		-- (UI v2: a solid navy card lit from above, a thicker ink edge, the message's own colour as
+		-- the text; it pops in a little as it lands.)
+		label.BackgroundTransparency = 0
+		outline.Thickness = Theme.Stroke.button
+		local shine = Instance.new("UIGradient")
+		shine.Rotation = 90
+		shine.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(205, 210, 225))
+		shine.Parent = label
+		label.TextStrokeTransparency = 0.1
+		if not Theme.isReducedMotion() then
+			local pop = Instance.new("UIScale")
+			pop.Scale = 0.85
+			pop.Parent = label
+			TweenService:Create(pop, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+		end
+	end
 	local y = if item.top then math.max(TOP, item.top() - g.AbsolutePosition.Y) else TOP
 	if boxTop then
 		y = math.max(y, boxTop)

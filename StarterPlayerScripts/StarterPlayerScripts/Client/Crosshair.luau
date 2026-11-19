@@ -17,6 +17,8 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Toys = require(Shared:WaitForChild("Toys"))
+local Config = require(Shared:WaitForChild("Config"))
+local V2 = Config.UI_V2 == true
 
 local Crosshair = {}
 
@@ -32,6 +34,14 @@ Crosshair.MARK_HOLD = 0.28 -- s a hit mark shows
 Crosshair.KILL_HOLD = 0.7
 local MARK = { length = 7, out = 9, thick = Crosshair.THICK }
 local KILL_MARK = { length = 13, out = 13, thick = Crosshair.THICK + 2 }
+-- UI v2: marks you cannot miss on a phone: thicker, a punch of the whole crosshair on every hit
+-- (bigger for a kill), and a "KO!" stamp beside it for the round that killed.
+if V2 then
+	MARK = { length = 9, out = 10, thick = 3 }
+	KILL_MARK = { length = 16, out = 15, thick = 5 }
+end
+Crosshair.PUNCH = 1.3 -- UI v2: scale the crosshair jumps to on a hit (KILL_PUNCH on a kill)
+Crosshair.KILL_PUNCH = 1.6
 
 local HEAD = require(Shared:WaitForChild("Anatomy")).HEAD_ZONES
 local MARK_RED = Color3.fromRGB(255, 70, 70)
@@ -108,6 +118,29 @@ local function build()
 		table.insert(marks, m)
 	end
 	shapeMarks(MARK)
+	if V2 then
+		local punch = Instance.new("UIScale")
+		punch.Name = "Punch"
+		punch.Parent = f
+		local ko = Instance.new("TextLabel")
+		ko.Name = "KO"
+		ko.AnchorPoint = Vector2.new(0, 1)
+		ko.Position = UDim2.new(0.5, 14, 0.5, -10)
+		ko.Size = UDim2.fromOffset(44, 24)
+		ko.BackgroundTransparency = 1
+		ko.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
+		ko.TextSize = 22
+		ko.Text = "KO!"
+		ko.TextColor3 = MARK_RED
+		ko.TextTransparency = 1
+		ko.Rotation = -8
+		local koStroke = Instance.new("UIStroke")
+		koStroke.Color = Color3.fromRGB(10, 10, 14)
+		koStroke.Thickness = 2
+		koStroke.Transparency = 1
+		koStroke.Parent = ko
+		ko.Parent = f
+	end
 	f.Parent = gui
 	gui.Parent = player:WaitForChild("PlayerGui")
 	root = f
@@ -166,6 +199,27 @@ function Crosshair.hit(head: boolean, killed: boolean)
 		if stroke then
 			stroke.Transparency = 0.2
 			table.insert(markTweens, TweenService:Create(stroke, info, { Transparency = 1 }))
+		end
+	end
+	local f = root
+	if V2 and f then
+		-- (UI v2: the punch, and "KO!" for the round that killed.)
+		local punch = f:FindFirstChild("Punch")
+		if punch and punch:IsA("UIScale") then
+			punch.Scale = if killed then Crosshair.KILL_PUNCH else Crosshair.PUNCH
+			table.insert(markTweens, TweenService:Create(punch, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }))
+		end
+		local ko = f:FindFirstChild("KO")
+		if ko and ko:IsA("TextLabel") then
+			local koStroke = ko:FindFirstChildOfClass("UIStroke")
+			local show = if killed then 0 else 1
+			ko.TextTransparency = show
+			local fade = TweenInfo.new(Crosshair.KILL_HOLD, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+			table.insert(markTweens, TweenService:Create(ko, fade, { TextTransparency = 1 }))
+			if koStroke then
+				koStroke.Transparency = show
+				table.insert(markTweens, TweenService:Create(koStroke, fade, { Transparency = 1 }))
+			end
 		end
 	end
 	for _, tw in markTweens do
