@@ -17,7 +17,10 @@ local HudMenu = {}
 local ENTRIES = {
 	-- (One colour for going somewhere; green where something waits to be claimed; red is the kit's
 	-- close and delete, never a place to go.)
-	{ window = "Maps", text = "PLACES", role = "info", phoneOnly = true }, -- (off a phone PLACES is on the left edge)	{ window = "Sandbox", text = "SANDBOX", role = "go", phoneOnly = true }, -- (and SANDBOX here: HudMenu.onSandbox)
+	{ window = "Maps", text = "PLACES", role = "info", phoneOnly = true }, -- (off a phone PLACES is on the left edge)
+	-- (Phase 0: SANDBOX had slipped onto the line above, behind its comment, so a phone had no way
+	-- to build; it is back, and a phone's BUILD button now lives here.)
+	{ window = "Sandbox", text = "SANDBOX", role = "go", phoneOnly = true }, -- (HudMenu.onSandbox)
 	{ window = "Rewards", text = "REWARDS", role = "go", phoneOnly = true }, -- (round 5; off a phone: its own launcher)
 	{ window = "Eggs", text = "RANK & EGGS", role = "go" },
 	{ window = "Friends", text = "FRIENDS", role = "info" },
@@ -134,8 +137,11 @@ function HudMenu.start()
 		local e = entry :: any
 		if e.notPhone or e.phoneOnly then
 			local function show()
-				button.root.Visible = if e.phoneOnly then isPhone() else not isPhone()
+				-- (Phase 0: a gamepad has no left column to reach, so MENU holds everything for it too.)
+				local pad = string.sub(UserInputService:GetLastInputType().Name, 1, 7) == "Gamepad"
+				button.root.Visible = if e.phoneOnly then (isPhone() or pad) else not isPhone()
 			end
+			UserInputService.LastInputTypeChanged:Connect(show)
 			show()
 			local camera = workspace.CurrentCamera
 			if camera then

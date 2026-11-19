@@ -14,6 +14,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Toys = require(Shared:WaitForChild("Toys"))
@@ -51,6 +52,15 @@ end
 -- Whether SHOOT and the crosshair show now.
 function TouchShoot.wanted(): boolean
 	return ViewMode.isTouch() and not ViewMode.isLab() and PokeController.active() and gunPicked() ~= nil and player.Character ~= nil
+end
+
+-- Phase 0: a gamepad fires at the centre too (R2: GamepadControls), so it gets the crosshair
+-- (not the SHOOT button) whenever its last input was the pad and a gun is picked.
+function TouchShoot.padCross(): boolean
+	return string.sub(UserInputService:GetLastInputType().Name, 1, 7) == "Gamepad"
+		and not ViewMode.isLab()
+		and PokeController.active()
+		and gunPicked() ~= nil
 end
 
 local function centre(): Vector2
@@ -286,10 +296,11 @@ function TouchShoot.start()
 		if cg then
 			-- lihfolk-ignore: findfirstchild-chain (the result is nil-checked on the next line)
 			local cross = cg:FindFirstChild("Cross") :: GuiObject?
-			if cross and cross.Visible ~= want then
-				cross.Visible = want
+			local crossOn = want or TouchShoot.padCross()
+			if cross and cross.Visible ~= crossOn then
+				cross.Visible = crossOn
 			end
-			local on = want or handShown -- (the hand lives in the crosshair's layer)
+			local on = crossOn or handShown -- (the hand lives in the crosshair's layer)
 			if cg.Enabled ~= on then
 				cg.Enabled = on
 			end

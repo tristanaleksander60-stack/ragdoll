@@ -1449,6 +1449,20 @@ function PokeController.select(id: string)
 	select(id)
 end
 
+-- Phase 0 (gamepad LB / RB, D-pad left / right): the previous or next slot on the bar, wrapping;
+-- the same as pressing its key.
+function PokeController.cycle(step: number)
+	if not enabled or doctorHold then
+		return
+	end
+	local list = shown()
+	if #list == 0 then
+		return
+	end
+	local i = table.find(list, selected) or 0
+	pressed(list[((i - 1 + step) % #list) + 1])
+end
+
 -- The way to the next weapon (10 Nov 2026, the audit: progress could only be seen inside the
 -- catalog): a thin gold bar along the foot of the bar's WEAPONS slab, filling towards the next unlock;
 -- it hops when it moves on. frac nil: hidden (everything earned).

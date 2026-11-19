@@ -748,6 +748,29 @@ function GrabController.tryBegin(viewportPosition: Vector2, input: InputObject?)
 	return begin(viewportPosition, input, false)
 end
 
+-- Phase 0 (gamepad X): grab what is under the middle of the screen (Grab is picked for it when it
+-- is on the bar), or throw what you hold where you look, a dummy or a player in the plaza.
+function GrabController.padGrab()
+	if PlayerGrabClient.isHolding() then
+		PlayerGrabClient.throw()
+		refreshPad()
+		return
+	end
+	if current then
+		throwForward()
+		refreshPad()
+		return
+	end
+	if not PokeController.active() then
+		return
+	end
+	if PokeController.getSelected() ~= "Grab" then
+		PokeController.select("Grab")
+	end
+	begin(screenCenter(), nil, true)
+	refreshPad()
+end
+
 function GrabController.start()
 	buildPad()
 	buildMouseHelp()

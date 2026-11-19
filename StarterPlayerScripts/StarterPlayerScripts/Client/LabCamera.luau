@@ -71,6 +71,8 @@ type Pointer = {
 }
 
 local LabCamera = {}
+-- Switches the player view and the lab view (set once the button is built: start).
+LabCamera.toggleView = function() end
 
 local home: Vector3 = Vector3.new(0, 3, -18)
 local origin: Vector3 = Vector3.zero
@@ -369,7 +371,20 @@ local function updateRecenterButton()
 	button.Visible = away and ViewMode.isLab() and not ReplayController.isPlaying()
 end
 
+-- Phase 0: a gamepad in the lab view: the right stick orbits, the left one pans.
+local padOrbit, padPan = Vector2.zero, Vector2.zero
+local PAD_DEAD = 0.15
+
 local function onRender(dt: number)
+	if ViewMode.isLab() and (padOrbit.Magnitude > PAD_DEAD or padPan.Magnitude > PAD_DEAD) then
+		if padOrbit.Magnitude > PAD_DEAD then
+			orbitBy(padOrbit.X * dt * 500, -padOrbit.Y * dt * 350)
+		end
+		if padPan.Magnitude > PAD_DEAD then
+			panBy(-padPan.X * dt * 600, padPan.Y * dt * 600)
+		end
+		userTouched()
+	end
 	local camera = Workspace.CurrentCamera
 	if not camera or ReplayController.isPlaying() then
 		return
@@ -515,6 +530,7 @@ local function buildRecenterButton()
 		end
 	end
 	view.Activated:Connect(toggleView)
+	LabCamera.toggleView = toggleView -- (the gamepad's Select: GamepadControls)
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if Keybinds.live(processed) and input.UserInputType == Enum.UserInputType.Keyboard and Keybinds.is("View", input.KeyCode) then
 			toggleView()
@@ -653,6 +669,11 @@ function LabCamera.start()
 	end)
 	UserInputService.InputChanged:Connect(function(input, processed)
 		local kind = input.UserInputType
+		if input.KeyCode == Enum.KeyCode.Thumbstick2 then
+			padOrbit = Vector2.new(input.Position.X, input.Position.Y)
+		elseif input.KeyCode == Enum.KeyCode.Thumbstick1 then
+			padPan = Vector2.new(input.Position.X, input.Position.Y)
+		end
 		if kind == Enum.UserInputType.Touch then
 			onMove(input, viewportOf(input))
 		elseif kind == Enum.UserInputType.MouseMovement then

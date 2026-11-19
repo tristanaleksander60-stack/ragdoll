@@ -657,6 +657,17 @@ function ToolCatalog.toggle()
 	Controller.toggle(WINDOW)
 end
 
+-- Phase 0 (gamepad LB / RB while WEAPONS is open): the previous or next tab. False when closed.
+function ToolCatalog.stepTab(step: number): boolean
+	if not Controller.isOpen(WINDOW) then
+		return false
+	end
+	local i = table.find(Toys.categories, current) or 1
+	local n = #Toys.categories
+	showShelf(Toys.categories[((i - 1 + step) % n) + 1])
+	return true
+end
+
 function ToolCatalog.isOpen(): boolean
 	return Controller.isOpen(WINDOW)
 end

@@ -18,6 +18,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Toys = require(Shared:WaitForChild("Toys"))
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
+local PadMap = require(Shared:WaitForChild("PadMap"))
 
 local Client = script.Parent
 local PokeController = require(Client:WaitForChild("PokeController"))
@@ -32,6 +33,23 @@ local Theme = require(game:GetService("ReplicatedStorage"):WaitForChild("LihFolk
 local HudSlots = require(Client:WaitForChild("HudSlots"))
 
 local player = Players.LocalPlayer
+
+-- Phase 0: the button's name when the last input was a gamepad (Shared\PadMap), else nil.
+local function padGlyph(name: string): string?
+	local UIS = game:GetService("UserInputService")
+	if not PadMap.isPad(UIS:GetLastInputType()) then
+		return nil
+	end
+	local ok, a = pcall(function()
+		return UIS:GetStringForKeyCode(Enum.KeyCode.ButtonA)
+	end)
+	local ps = ok and type(a) == "string" and string.find(string.lower(a), "cross", 1, true) ~= nil
+	return PadMap.glyph(name, ps)
+end
+local function weaponsCall(): string
+	local y = padGlyph("Weapons")
+	return if y then "Press " .. y .. " for WEAPONS" else "Tap WEAPONS"
+end
 
 -- The first minute's bar is the bar you keep (no swap after the first replay).
 local STARTERS = Toys.defaultLoadout
@@ -157,7 +175,7 @@ local function playReplay(at: number, first: boolean)
 		askChoiceLater() -- the card that waited (also when the replay had too little to show)
 		Net.event(Net.Names.Onboarding):FireServer(if completed then "ReplayDone" else "ReplaySkipped")
 		release()
-		Toast.show(Toys.starterCount() .. " weapons unlocked! Tap WEAPONS", Color3.fromRGB(120, 230, 140))
+		Toast.show(Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
 		PokeController.highlightTools()
 	end
 end
@@ -200,7 +218,8 @@ local function onBigEvent(_toyId: string, at: number, _position: Vector3)
 		-- The next verb, taught only to those who have not found it: your own body is a ragdoll too.
 		task.delay(RAGDOLL_TIP_DELAY, function()
 			if not PlayerBody.hasGoneLimp() and not ViewMode.isLab() then
-				Toast.show(if ViewMode.isTouch() then "Tap RAGDOLL to flop yourself!" else "Press F to ragdoll yourself!")
+				local b = padGlyph("Ragdoll")
+				Toast.show(if b then "Press " .. b .. " to ragdoll yourself!" elseif ViewMode.isTouch() then "Tap RAGDOLL to flop yourself!" else "Press F to ragdoll yourself!")
 				PlayerBody.highlight()
 			end
 		end)
@@ -278,7 +297,8 @@ local greeterWatch: RBXScriptConnection? = nil
 local greeterModel: Model? = nil
 
 local function shootHint()
-	showHint(if ViewMode.isTouch() then "Tap the dummy to shoot!" else "Click the dummy to shoot!")
+	local fire = padGlyph("Fire")
+	showHint(if fire then "Press " .. fire .. " to shoot!" elseif ViewMode.isTouch() then "Tap the dummy to shoot!" else "Click the dummy to shoot!")
 end
 
 local function watchGreeter()
@@ -515,7 +535,7 @@ local function unlockFallback()
 		stopWatchingGreeter()
 		Net.event(Net.Names.Onboarding):FireServer("ReplaySkipped")
 		release()
-		Toast.show(Toys.starterCount() .. " weapons unlocked! Tap WEAPONS", Color3.fromRGB(120, 230, 140))
+		Toast.show(Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
 		PokeController.highlightTools()
 	end
 end
