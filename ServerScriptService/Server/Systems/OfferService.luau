@@ -73,6 +73,7 @@ function OfferService.apply(player: Player)
 	player:SetAttribute("DoubleBolts", e.DoubleBolts)
 	player:SetAttribute("VipLab", e.VipLab)
 	player:SetAttribute("EventsPass", e.EventsPass)
+	player:SetAttribute("LabControls", e.LabControls)
 	for _, offer in Shop.OFFERS do
 		if offer.kind == "pass" then
 			player:SetAttribute("Offer_" .. offer.key, if mine[offer.key] then true else nil)

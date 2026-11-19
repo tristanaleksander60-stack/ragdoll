@@ -12,6 +12,7 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
 local FxService = require(script.Parent.FxService)
 local ExperimentService = require(script.Parent.ExperimentService)
+local PlayerGrab = require(script.Parent.PlayerGrab)
 
 local MapActivities = {}
 
@@ -31,7 +32,10 @@ local function wireLift(p: BasePart, to: Vector3)
 	p.Touched:Connect(function(other)
 		local character = other:FindFirstAncestorOfClass("Model")
 		local player = character and Players:GetPlayerFromCharacter(character)
-		if not player or not character or PlayerRagdoll.isDown(player) then
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		-- (Not from a car seat, nor while holding or held: the car or the other body would come too.)
+		if not player or not character or PlayerRagdoll.isDown(player) or (humanoid and humanoid.SeatPart)
+			or PlayerGrab.holdingOf(player) or PlayerGrab.heldByOf(player) then
 			return
 		end
 		local now = os.clock()
@@ -97,6 +101,7 @@ function MapActivities.wire(p: BasePart)
 		if not counted[player] or now - counted[player] >= MapActivities.EVENT_GAP then
 			counted[player] = now
 			ExperimentService.event(player, kind, 1, label)
+			ExperimentService.event(player, "Hazard", 1, label) -- (still a trap: combos, trap cards, the journal)
 		end
 	end)
 	p.Destroying:Connect(function()

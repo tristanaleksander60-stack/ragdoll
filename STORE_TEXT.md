@@ -10,6 +10,31 @@ build is live. Written fresh; nothing is taken from another game's page.
 3. `[UPD] Ragdoll Havoc 💥` (use only in an update week)
 4. `Ragdoll Havoc: Launch the Dummies 💥`
 
+## Description v3 (English, release 0.22.0; recommended)
+
+💥 Crash-test dummies, a lab full of toys, and 5 big maps to wreck. Make them fly!
+
+🗺️ 5 MAPS
+• Tropical Island, Downtown, Building Site, Old Farm and Army Base
+• Launch pads everywhere: the catapult, the cliff dive, burst manholes, the mortar, the hay slingshot and the crane drop
+
+💥 YOUR LAB
+• 60+ toys: blasters, bats, rockets, freeze rays, black holes and more
+• The cannon, the bullseye, the lava and the THROW TOWER
+• Press the BIG RED BUTTON: a tornado, a meteor shower, a train, a gorilla or a bull run
+• Drive the car or the monster truck into the crowd
+• Big hits replay in X-ray slow-mo. Share the code with your friends!
+
+🧪 EVERY DAY
+• 3 new Daily Experiments, the same for everyone
+• Earn Bolts and fill your Bone Journal
+
+🎮 Computer, phone (upright or sideways), tablet and controller
+
+⭐ Favorite so you can find your lab again. New maps and toys every week!
+
+Cartoon effects only: stars and sparks, no blood.
+
 ## Description v2 (English, release 0.20.0; recommended)
 
 💥 Crash-test dummies, a lab full of toys, and a cannon. Make them fly, then watch it again in X-ray slow-mo!

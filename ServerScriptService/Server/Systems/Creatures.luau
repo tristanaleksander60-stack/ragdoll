@@ -353,7 +353,7 @@ local function tornadoModel(): Model
 			dust.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2 + i * 0.4), NumberSequenceKeypoint.new(1, 6 + i * 0.8) })
 			dust.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 1) })
 			dust.Lifetime = NumberRange.new(0.8, 1.4)
-			dust.Rate = 26
+			dust.Rate = 13 -- (phones: six of these)
 			dust.Shape = Enum.ParticleEmitterShape.Cylinder
 			dust.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
 			dust.Speed = NumberRange.new(2, 5)
@@ -391,7 +391,9 @@ function Creatures.tornado(center: Vector3, seconds: number?): () -> ()
 			goal = center + Vector3.new(math.random(-Creatures.HALF + 10, Creatures.HALF - 10), 0, math.random(-80, 60))
 		end
 		local step = goal - at
-		at += step.Unit * math.min(step.Magnitude, Creatures.TORNADO_SPEED * dt)
+		if step.Magnitude > 0.01 then
+			at += step.Unit * math.min(step.Magnitude, Creatures.TORNADO_SPEED * dt)
+		end
 		local spin = CFrame.Angles(0, t * 6, 0)
 		for p, cf in parts do
 			local wobble = math.sin(t * 3 + cf.Position.Y * 0.2) * 1.5
@@ -407,7 +409,7 @@ function Creatures.tornado(center: Vector3, seconds: number?): () -> ()
 			end
 			local o = d.pelvis.Position - at
 			local flat = Vector3.new(o.X, 0, o.Z)
-			if flat.Magnitude < Creatures.TORNADO_REACH and (not spun[d.model] or t - spun[d.model] > 1.2) then
+			if flat.Magnitude > 0.05 and flat.Magnitude < Creatures.TORNADO_REACH and (not spun[d.model] or t - spun[d.model] > 1.2) then
 				spun[d.model] = t
 				local around = Vector3.new(-flat.Z, 0, flat.X).Unit
 				local mass = (d.model:GetAttribute("Mass") :: number?) or 10
@@ -420,7 +422,7 @@ function Creatures.tornado(center: Vector3, seconds: number?): () -> ()
 			if root and root:IsA("BasePart") and math.abs(root.Position.Y - center.Y) < 30 then
 				local o = root.Position - at
 				local flat = Vector3.new(o.X, 0, o.Z)
-				if flat.Magnitude < Creatures.TORNADO_REACH and (not lifted[player] or t - lifted[player] > 2.5) then
+				if flat.Magnitude > 0.05 and flat.Magnitude < Creatures.TORNADO_REACH and (not lifted[player] or t - lifted[player] > 2.5) then
 					lifted[player] = t
 					PlayerRagdoll.knock(player, Vector3.new(0, Creatures.TORNADO_LIFT, 0) + Vector3.new(-flat.Z, 0, flat.X).Unit * 30)
 				end

@@ -6,6 +6,7 @@
 --               checked every join with Roblox, never saved (a refund takes it away)
 --   doubleBolts the "DoubleBolts" attribute EconomyService reads
 --   vipLab      the "VipLab" attribute: more visitor ragdolls in your lab (VisitorService)
+--   labControls the "LabControls" attribute: the lab's BIG RED BUTTON every LAB_CONTROLS_GAP s
 --   eventsPass  the "EventsPass" attribute: server events start free (EventService, one per
 --               Config.EVENTS_PASS_GAP s)
 --   bolts/weapon a developer product's one-off grant (OfferService.deliver, once per purchase id)
@@ -19,6 +20,7 @@ export type Grant = {
 	doubleBolts: boolean?,
 	vipLab: boolean?,
 	eventsPass: boolean?,
+	labControls: boolean?,
 	bolts: number?,
 	weapon: string?,
 }
@@ -27,10 +29,12 @@ Offers.GRANTS = table.freeze({
 	EntryPack = table.freeze({ bolts = 300, weapon = "AK" }), -- (AK = the Rattler)
 	AllMelee = table.freeze({ toys = { "Melee" } }),
 	AllExplosives = table.freeze({ toys = { "Explosives" } }),
+	AllGuns = table.freeze({ toys = { "Guns" } }),
+	LabControls = table.freeze({ labControls = true }),
 	DoubleBolts = table.freeze({ doubleBolts = true }),
 	VipLab = table.freeze({ vipLab = true }),
 	EventsPass = table.freeze({ eventsPass = true }),
-	Everything = table.freeze({ toys = { "*" }, doubleBolts = true, vipLab = true, eventsPass = true }),
+	Everything = table.freeze({ toys = { "*" }, doubleBolts = true, vipLab = true, eventsPass = true, labControls = true }),
 } :: { [string]: Grant })
 
 Offers.byKey = {} :: { [string]: any }
@@ -39,7 +43,7 @@ for _, offer in Shop.OFFERS do
 end
 
 -- The effects of a set of owned passes, as the attributes the rest of the game reads.
-export type Effects = { PassToys: string?, DoubleBolts: boolean?, VipLab: boolean?, EventsPass: boolean? }
+export type Effects = { PassToys: string?, DoubleBolts: boolean?, VipLab: boolean?, EventsPass: boolean?, LabControls: boolean? }
 function Offers.effectsOf(ownedKeys: { [string]: boolean }): Effects
 	local shelves: { [string]: boolean } = {}
 	local all = false
@@ -59,6 +63,7 @@ function Offers.effectsOf(ownedKeys: { [string]: boolean }): Effects
 			e.DoubleBolts = e.DoubleBolts or g.doubleBolts or nil
 			e.VipLab = e.VipLab or g.vipLab or nil
 			e.EventsPass = e.EventsPass or g.eventsPass or nil
+			e.LabControls = e.LabControls or g.labControls or nil
 		end
 	end
 	if all then

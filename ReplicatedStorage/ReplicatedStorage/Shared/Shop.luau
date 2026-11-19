@@ -57,6 +57,16 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.22.0",
+		lines = {
+			"5 NEW MAPS: Tropical Island, Downtown, Building Site, Old Farm and Army Base",
+			"LAUNCH PADS on every map: catapult, cliff dive, manholes, mortar, hay slingshot and more",
+			"THROW TOWER in your lab: ride up, then fly off the top",
+			"NEW EVENTS: TORNADO, METEOR SHOWER and TRAIN RUN (try the BIG RED BUTTON)",
+			"New experiment cards and a phone screen that fits better",
+		},
+	},
+	{
 		version = "0.21.0",
 		lines = {
 			"NEW LOOK: calm daylight, green hills and trees, clean white test dummies",
@@ -123,10 +133,12 @@ Shop.OFFERS = table.freeze({
 	table.freeze({ key = "EntryPack", kind = "product", name = "Starter Crate", robux = 49, id = 0, gives = "300 BOLTS and the Rattler" }),
 	table.freeze({ key = "AllMelee", kind = "pass", name = "All Melee", robux = 69, id = 0, gives = "Every melee toy" }),
 	table.freeze({ key = "AllExplosives", kind = "pass", name = "All Explosives", robux = 99, id = 0, gives = "Every explosive" }),
+	table.freeze({ key = "AllGuns", kind = "pass", name = "All Guns", robux = 149, id = 0, gives = "Every gun" }),
+	table.freeze({ key = "LabControls", kind = "pass", name = "Lab Controls", robux = 179, id = 0, gives = "BIG RED BUTTON every 8 s in your lab" }),
 	table.freeze({ key = "DoubleBolts", kind = "pass", name = "2x BOLTS", robux = 129, id = 0, gives = "Double BOLTS from everything" }),
 	table.freeze({ key = "VipLab", kind = "pass", name = "VIP Lab", robux = 199, id = 0, gives = "More dummies roaming your lab" }),
 	table.freeze({ key = "EventsPass", kind = "pass", name = "Events Pass", robux = 249, id = 0, gives = "Every server event, free, all season" }),
-	table.freeze({ key = "Everything", kind = "pass", name = "Everything", robux = 699, id = 0, gives = "Every toy, 2x BOLTS, VIP Lab and Events Pass" }),
+	table.freeze({ key = "Everything", kind = "pass", name = "Everything", robux = 699, id = 0, gives = "Every toy, 2x BOLTS, VIP Lab, Events Pass and Lab Controls" }),
 })
 
 return table.freeze(Shop)

@@ -5,7 +5,7 @@ local Config = {
 	GameName = "Ragdoll Havoc", -- (the owner's name for the game, 10 Nov 2026)
 	-- Bumped with every change that goes live (round 5): SessionStats keeps it per visit, so the
 	-- numbers of one build can be told from another's.
-	Version = "0.21.0", -- (0.18.0 phase 0; 0.19.0 phases 1-3; 0.20.0 the release; 0.21.0 v3 look, cars, animals, 19 Nov 2026; SessionStats also keeps game.PlaceVersion)
+	Version = "0.22.0", -- (0.18.0 phase 0; 0.19.0 phases 1-3; 0.20.0 the release; 0.21.0 v3 look, cars, animals; 0.22.0 open-air maps, launchers, disasters, train, throw tower, 19 Nov 2026; SessionStats also keeps game.PlaceVersion)
 	Phase = 3,
 	-- Heavy weapons and close blasts can cut a limb off (round 2, N2). Roblox lists severed body
 	-- parts as Restricted (18+, ID-checked players only): switching this off keeps the game at a
@@ -175,6 +175,7 @@ local Config = {
 		idleReset = 30, -- s an empty car left away from its pad waits before it goes home
 	}),
 	BIG_BUTTON_GAP = 75, -- s between two presses of a lab's BIG RED BUTTON (a random free event)
+	LAB_CONTROLS_GAP = 8, -- s: the same with the Lab Controls pass (its owner, in their own lab)
 	-- All UI 3D and interactive (19 Nov 2026, the owner): turning weapon models on the cards and the
 	-- bar, tilt and depth on the HUD buttons, windows that swing in (Client\Ui3D). Live (turning)
 	-- viewports at once per device tier; the rest are drawn once and left still.

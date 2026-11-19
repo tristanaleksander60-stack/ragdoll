@@ -220,6 +220,8 @@ local function body(results: { string }): ()
 	local patient = people[6]
 	place(patient, center + Vector3.new(10, 0, 10), center)
 	task.wait(1.2)
+	-- (Short before the hit: the crowd may see the break first and fix its heal time then. 19 Nov.)
+	CrowdService.HEAL_AFTER = 1
 	local hitsBefore = (patient:GetAttribute("Hits") :: number?) or 0
 	local leg = patient:FindFirstChild("LeftLowerLeg") :: BasePart
 	HitService.applyToy(Toys.byId.Launch, leg, leg.Position, Vector3.new(0, 0, 1))
@@ -229,7 +231,6 @@ local function body(results: { string }): ()
 	end, 6), string.format("the landing was not on the chart (KOs %s, Bones %s)", tostring(patient:GetAttribute("KOs")), tostring(patient:GetAttribute("Bones"))))
 	local joints = patient:GetAttribute("BrokenJoints")
 	assert(type(joints) == "string" and string.find(joints, "LeftKnee") ~= nil, "the chart does not say which bone: " .. tostring(joints))
-	CrowdService.HEAL_AFTER = 1
 	CrowdService.holdForTest(false)
 	assert(waitFor(function()
 		return ((patient:GetAttribute("Broken") :: number?) or 0) == 0

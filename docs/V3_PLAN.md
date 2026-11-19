@@ -389,3 +389,19 @@ The 9 store images were downloaded via thumbnails.roblox.com (the video could no
    - Do the trees stay out of the labs?
    - Is the baseplate grass, with no concrete texture left?
 7. **Maps (Phase B):** insert Creator Store models, run the malware pass, and save the place. Build in this order: Test Ground dressing (props like the leader's), City, Island, Building Site.
+
+## State update (19 Nov 2026, PC, "continue every phase")
+- Phase C DONE (see above). Blind review of C/D 7.8 -> fix round 1 applied:
+  - the BIG RED BUTTON only starts an event when nothing runs or waits (no queue hogging, no lab event running in the plaza);
+  - TrainRun is only picked when the Train model exists;
+  - the tower jump pad sits on the tower's edge, and the lift lands beside it;
+  - no lift from a car seat or while holding/held;
+  - launchers count as traps again (Hazard);
+  - NaN guards; tornado dust halved;
+  - T68 knows LabControls; T25 race fixed (HEAL_AFTER set before the hit);
+  - the tower moved to (-70, -28): it sat on the Christmas present trap (T66).
+- Phase D DONE in code: Shop.OFFERS has AllGuns (pass, 149) and LabControls (pass, 179: the BIG RED BUTTON every Config.LAB_CONTROLS_GAP 8 s for its owner in their own lab); Everything now includes Lab Controls. All ids are 0 until the owner creates them. A Vehicle pass was skipped: the car and the truck are free in every lab, and nothing paid would add to them yet.
+- Release 0.22.0: Config.Version, Shop.WHATS_NEW, STORE_TEXT.md "Description v3".
+- Full suite 77/79 before the last fixes (T25 race and T66 tower: both fixed and passing alone); LayoutCheck 0.
+- Phase 6 (phones): LayoutCheck covers the phone layouts at 0 problems. HudV3 itself stays off on phones; the phone HUD is the fitted round-5 one.
+- **The owner must:** save the place; create the products and passes listed below; publish with "Shut Down All Servers".

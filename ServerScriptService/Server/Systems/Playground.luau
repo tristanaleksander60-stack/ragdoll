@@ -771,8 +771,17 @@ local function buildBigButton()
 		local EventService = require(script.Parent.EventService)
 		-- (Only events that stay in this lab, and only while nothing waits: the server's one queue
 		-- stays free for bought events.)
-		local pick = BUTTON_EVENTS[math.random(1, #BUTTON_EVENTS)]
-		local started = EventService.queued() == 0 and EventService.trigger(pick, player.DisplayName, "Free", false, nil, owner.UserId)
+		-- (No train without its engine model: Creatures.train would run empty.)
+		local pool = {}
+		for _, id in BUTTON_EVENTS do
+			if id ~= "TrainRun" or require(script.Parent.V3Assets).has("Train") then
+				table.insert(pool, id)
+			end
+		end
+		local pick = pool[math.random(1, #pool)]
+		-- (Only when nothing runs or waits: a free lab event never holds the server's one queue, and it
+		-- starts now, while the presser is in this lab. Blind review 19 Nov.)
+		local started = EventService.current() == nil and EventService.queued() == 0 and EventService.trigger(pick, player.DisplayName, "Free", false, nil, owner.UserId)
 		if not started then
 			prompt.ActionText = "Busy, try again soon"
 			task.delay(2.5, function()
@@ -780,11 +789,13 @@ local function buildBigButton()
 			end)
 		end
 		if started then
-			readyAt = now + Config.BIG_BUTTON_GAP
+			-- (The Lab Controls pass: its owner, in their own lab, waits LAB_CONTROLS_GAP instead.)
+			local gap = if player == owner and player:GetAttribute("LabControls") == true then Config.LAB_CONTROLS_GAP else Config.BIG_BUTTON_GAP
+			readyAt = now + gap
 			button.Color = dim
 			prompt.Enabled = false
 			button.CFrame = button.CFrame * CFrame.new(-0.3, 0, 0)
-			task.delay(Config.BIG_BUTTON_GAP, function()
+			task.delay(gap, function()
 				button.Color = lit
 				prompt.Enabled = true
 				button.CFrame = button.CFrame * CFrame.new(0.3, 0, 0)

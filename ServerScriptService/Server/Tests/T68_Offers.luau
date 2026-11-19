@@ -20,7 +20,7 @@ local Systems = script.Parent.Parent:WaitForChild("Systems")
 local OfferService = require(Systems:WaitForChild("OfferService")) :: any
 local ProgressService = require(Systems:WaitForChild("ProgressService"))
 
-local ATTRS = { "PassToys", "DoubleBolts", "VipLab", "EventsPass" }
+local ATTRS = { "PassToys", "DoubleBolts", "VipLab", "EventsPass", "LabControls" }
 
 return {
 	name = "T68_Offers",

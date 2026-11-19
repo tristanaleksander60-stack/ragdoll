@@ -38,7 +38,7 @@ LabDress.SPOTS = {
 -- v3 phase C: the throw tower (north-west corner): a stone watch tower, a lift pad at its foot
 -- (MapActivities TeleportTo) that puts you on top, and a launcher up there that throws you out
 -- over the lab, the way friends throw each other off it.
-LabDress.TOWER = { x = -66, z = 44, height = 30 }
+LabDress.TOWER = { x = -70, z = -28, height = 30 } -- (west side, between the fan and the rocket: at -66, 44 it sat on the Christmas present trap, T66)
 
 function LabDress.throwTower(folder: Instance, origin: Vector3)
 	if not V3Assets.has("CastleTower") then
@@ -70,9 +70,9 @@ function LabDress.throwTower(folder: Instance, origin: Vector3)
 	local _, size = tower:GetBoundingBox()
 	-- The lift on the side that faces the lab's middle (east), just outside the wall.
 	local lift = pad("TowerLift", base + Vector3.new(size.X / 2 + 4, 0, 0), 6, Color3.fromRGB(80, 200, 255))
-	lift:SetAttribute("TeleportTo", top + Vector3.new(0, 4, 0))
+	lift:SetAttribute("TeleportTo", top + Vector3.new(-3, 4, 0)) -- (beside the jump pad, not on it)
 	lift:SetAttribute("What", "the THROW TOWER")
-	local jump = pad("TowerJump", top + Vector3.new(2, 0, 0), 5, Color3.fromRGB(255, 120, 40))
+	local jump = pad("TowerJump", top + Vector3.new(math.max(4, size.X / 2 - 5), 0, 0), 5, Color3.fromRGB(255, 120, 40)) -- (its east edge, facing the lab)
 	jump:SetAttribute("Launch", Vector3.new(85, 60, -10))
 	jump:SetAttribute("What", "the THROW TOWER")
 	jump:SetAttribute("Kind", "Tower")
