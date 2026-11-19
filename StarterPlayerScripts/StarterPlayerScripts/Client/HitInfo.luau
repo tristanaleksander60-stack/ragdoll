@@ -20,6 +20,7 @@ local TextService = game:GetService("TextService")
 local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
 local Net = require(Shared:WaitForChild("Net"))
 local Theme = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUITheme"))
 
@@ -69,7 +70,8 @@ end
 -- The bottom line in rich text: blood, pulse (nil: none) with the arrow against `before`, and the
 -- body's state ("Alive" | "Unconscious" | "Dead").
 function HitInfo.status(blood: number, pulse: number?, before: number?, vital: string?): string
-	local bloodText = string.format("<font color=\"%s\">%d%% blood</font>", severity(blood >= 80, blood < 45), blood)
+	-- (Phase 0, Config.MILD_TEXT: "health", not blood; the server's line keeps its shape.)
+	local bloodText = string.format("<font color=\"%s\">%d%% %s</font>", severity(blood >= 80, blood < 45), blood, if Config.MILD_TEXT then "health" else "blood")
 	local pulseText
 	if pulse and pulse > 0 and vital ~= "Dead" then
 		local arrow = ""

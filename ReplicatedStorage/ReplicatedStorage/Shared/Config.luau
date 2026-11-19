@@ -10,7 +10,9 @@ local Config = {
 	-- Heavy weapons and close blasts can cut a limb off (round 2, N2). Roblox lists severed body
 	-- parts as Restricted (18+, ID-checked players only): switching this off keeps the game at a
 	-- lower maturity label (purple blood counts as unrealistic) without touching anything else.
-	SEVERING = true,
+	-- PHASE 0 (19 Nov 2026) CHANGED THE DEFAULT, owner decision recorded in CLAUDE.md: was true. Set
+	-- it back to true to allow severing again (Restricted risk).
+	SEVERING = false,
 	-- Phase 0 (19 Nov 2026): nothing that interrupts in a new visit's first QUIET_START s: no view
 	-- card, no egg window, at most one hint at a time; tips and gift notes wait until after it. On a
 	-- phone LAB VIEW and RUN wait too (HudSlots.PHONE_LATER).
@@ -22,6 +24,16 @@ local Config = {
 	-- takedowns AND this many seconds of the visit have passed (BarRules.nextUnlocksShown).
 	NEXT_UNLOCKS_MIN_TAKEDOWNS = 25,
 	NEXT_UNLOCKS_AFTER = 180,
+	-- Mild content (phase 0; the owner's earlier choices stay one switch away):
+	--   BLOOD "off": hits show cartoon stars, sparks and dust (HitFxConfig "Stylised"), and the
+	--   Settings row is hidden; "purple": the owner's purple cartoon blood, players may turn it off.
+	BLOOD = "off" :: "off" | "purple",
+	--   TOY_NAMES: toy-style names for the real-gun nicknames (G17 -> Popper ...; Toys.TOY_NAMES).
+	--   Internal ids stay, so saves, products and sounds are untouched. false = the old names.
+	TOY_NAMES = true,
+	--   MILD_TEXT: the hit line names a body region ("Body", "Left arm") and "health", not organs and
+	--   blood; doctor mode (opt-in) keeps its monitor.
+	MILD_TEXT = true,
 }
 
 return table.freeze(Config)

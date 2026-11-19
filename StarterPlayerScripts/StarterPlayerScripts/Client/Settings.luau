@@ -15,6 +15,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
 local Net = require(Shared:WaitForChild("Net"))
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local C = require(UI:WaitForChild("LihFolkUIComponents"))
@@ -172,6 +173,8 @@ local function build()
 			Settings.set("blood", on)
 		end,
 	})
+	-- (Phase 0: with Config.BLOOD "off" there is no blood to choose: the row is hidden.)
+	blood.root.Visible = Config.BLOOD ~= "off"
 	local shake = C.SettingRow({
 		label = "Camera shake",
 		description = "The screen shakes when something big goes off",

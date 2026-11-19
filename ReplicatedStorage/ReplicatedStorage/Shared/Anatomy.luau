@@ -66,6 +66,29 @@ zone("Blast", "Blast", 1.2, 6, 25, { stops = 30 })
 
 Anatomy.zones = table.freeze(Z)
 
+-- Phase 0 (mild content, Config.MILD_TEXT): the body region a zone is in, for the hit line every
+-- player sees (no organ names). Doctor mode keeps the zone's own label.
+local REGION: { [string]: string } = {
+	Brain = "Head", Skull = "Head", Jaw = "Head", Neck = "Neck",
+	Heart = "Chest", Aorta = "Chest", LeftLung = "Chest", RightLung = "Chest", Spine = "Back",
+	Liver = "Belly", Stomach = "Belly", LeftKidney = "Belly", RightKidney = "Belly", Intestines = "Belly",
+	Pelvis = "Hips", Blast = "Blast",
+}
+function Anatomy.mildLabel(id: string): string
+	local region = REGION[id]
+	if region then
+		return region
+	end
+	local side, rest = string.match(id, "^(%u%l+)(%u.*)$")
+	if side and rest then
+		local part = if rest == "Femoral" or rest == "Thigh" or rest == "Shin" then "leg"
+			elseif rest == "ArmStump" or rest == "UpperArm" or rest == "Forearm" then "arm"
+			else string.lower(rest)
+		return side .. " " .. part
+	end
+	return "Body"
+end
+
 -- The parts each limb is made of, from the body outwards, and the joint that holds it on.
 Anatomy.LIMBS = table.freeze({
 	LeftArm = { joint = "LeftShoulder", parts = { "LeftUpperArm", "LeftLowerArm", "LeftHand" }, label = "Left arm" },

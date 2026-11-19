@@ -9,10 +9,13 @@
 
 local HitFxConfig = {}
 
+local Config = require(script.Parent:WaitForChild("Config"))
+
 export type Style = "Stylised" | "CartoonBlood" | "Blood"
 
 -- The most this game shows. Lowering it is one constant.
-HitFxConfig.MaxStyle = "CartoonBlood" :: Style
+-- (Phase 0: Config.BLOOD; "off" = Stylised, "purple" = the owner's purple cartoon blood.)
+HitFxConfig.MaxStyle = (if Config.BLOOD == "purple" then "CartoonBlood" else "Stylised") :: Style
 
 -- The player's own choice (attribute "HitFxStyle" on the Player), within the ceiling. Unset: the
 -- ceiling (cartoon blood is a reason people play ragdoll games).

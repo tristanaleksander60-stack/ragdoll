@@ -84,7 +84,9 @@ local function ladder(results: { string })
 	local old: any = { owned = {}, oldEggs = 0, eggs = 0, ladder = 2 }
 	ProgressService.grandfather(old, 0, 0, 2)
 	assert(old.owned.Bat and old.owned.Crowbar and old.owned.Shove and old.owned.Kick == nil, "a ladder-2 profile did not keep exactly Bat, Crowbar and Shove")
-	assert(Toys.byId.Blaster.label == "G17", "the Blaster is not the G17")
+	-- (Phase 0: Config.TOY_NAMES gives it a toy name; the id stays "Blaster".)
+	local Config = require(game:GetService("ReplicatedStorage").Shared.Config) :: any
+	assert(Toys.byId.Blaster.label == (if Config.TOY_NAMES then "Popper" else "G17"), "the Blaster's name is wrong: " .. Toys.byId.Blaster.label)
 
 	-- 2. The ladder: the first rung soon, no long empty stretch, the last one far up.
 	local rungs = {}

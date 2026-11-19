@@ -501,7 +501,9 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 		end
 	end
 	VitalsService.step(model, v, 0)
-	local label = if severed then (Anatomy.LIMBS[severed :: string].label .. " severed") else zone.label
+	local label = if severed then (Anatomy.LIMBS[severed :: string].label .. " severed")
+		elseif Config.MILD_TEXT then Anatomy.mildLabel(zone.id) -- (phase 0: a body region, no organs)
+		else zone.label
 	local line = string.format("%s \u{00B7} %d%% blood \u{00B7} %s", label, math.floor(v.blood + 0.5), if v.state == "Dead" then "no pulse" else "pulse " .. math.floor(v.pulse + 0.5))
 	local killedNow = not wasDead and v.state == "Dead"
 	-- (Round 4, M10: the line for the hit that killed is never held back by INFO_GAP.)

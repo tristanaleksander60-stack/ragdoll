@@ -106,8 +106,32 @@ local byId: { [string]: Toy } = {}
 
 local MAX_HIT_SPEED = 135 -- the hardest hit sets the power bar to full
 
+-- Phase 0 (mild content, Config.TOY_NAMES): toy names for the real-gun nicknames. The ids (saves,
+-- products, sounds, models) do not change. { label, short, blurb? }.
+local TOY_NAMES: { [string]: { string } } = {
+	Blaster = { "Popper", "Popper", "Quick little pops. Your first blaster" },
+	Deagle = { "Big Popper", "Big Pop", "A big blaster. Slow, and it hits HARD" },
+	SMG = { "Buzz Blaster", "Buzz" },
+	AK = { "Rattler", "Rattler", "The classic rattler. Loud and rough" },
+	M4 = { "Ripper", "Ripper", "Short and steady. Hold to rip" },
+	TommyGun = { "Drum Rattler", "Drum" },
+	LMG = { "Belt Buster", "Buster" },
+	DMR = { "Long Popper", "Long" },
+	GoldenDeagle = { "Golden Popper", "Golden" },
+	RPG = { "Rocket Tube", "Tube" },
+	Shotgun = { "Shotgun", "Shotgun", "BOOM. Up close it sends them flying" },
+}
+local Config = require(script.Parent:WaitForChild("Config"))
+
 local function add(id: string, spec: Spec)
 	assert(byId[id] == nil, "tool " .. id .. " listed twice")
+	local mild = if Config.TOY_NAMES then TOY_NAMES[id] else nil
+	if mild then
+		local s = table.clone(spec) :: any
+		s.label, s.short = mild[1], mild[2]
+		s.blurb = mild[3] or spec.blurb
+		spec = s
+	end
 	local speed = spec.speed or 0
 	local toy: Toy = table.freeze({
 		id = id,
@@ -289,6 +313,7 @@ return table.freeze({
 	list = table.freeze(list),
 	byId = table.freeze(byId),
 	categories = table.freeze(CATEGORIES),
+	TOY_NAMES = table.freeze(TOY_NAMES), -- (phase 0: shown when Config.TOY_NAMES)
 	defaultLoadout = table.freeze(DEFAULT_LOADOUT),
 	priceTiers = PRICE_TIERS,
 	priceTier = priceTier,

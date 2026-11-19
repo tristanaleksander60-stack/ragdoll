@@ -1197,8 +1197,8 @@ function HospitalCharts.pointTheWay()
 	end
 	pointed = true
 	Toast.show(if ViewMode.isTouch()
-		then "See their heart, blood and injuries: DOCTOR MODE in WEAPONS"
-		else "See their heart, blood and injuries: Doctor mode (" .. Keybinds.labelOf("Doctor") .. ")")
+		then "See their pulse and bumps: DOCTOR MODE in WEAPONS"
+		else "See their pulse and bumps: Doctor mode (" .. Keybinds.labelOf("Doctor") .. ")")
 end
 
 function HospitalCharts.start()
