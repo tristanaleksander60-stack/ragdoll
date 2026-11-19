@@ -37,7 +37,7 @@ local PROPS = { "Plant", "Espresso", "OfficeChair", "Jet", "Crate", "Shelf", "Ca
 local ROOM_BUDGET = 400 -- parts in one room
 local LAB_BUDGET = 80 -- parts in one lab's markings, sign and props
 local PLAZA_BUDGET = 120 -- parts in the plaza's dressing
-local CROWD = { Barista = true, Office = true, Tourist = true, Chef = true, Guard = true, Cashier = true, Traveler = true }
+local CROWD = { Barista = true, Office = true, Tourist = true, Chef = true, Guard = true, Cashier = true, Traveler = true, Worker = true, Farmer = true, Soldier = true, Beachgoer = true }
 local WEAR = { ChefHat = "Chef", GuardCap = "Guard", BucketHat = "Tourist", Camera = "Tourist", Backpack = "Traveler", NeckPillow = "Traveler" }
 local ROOM_PROPS: { [string]: { string } } = {
 	Cafe = { "Espresso", "Plant" },

@@ -119,7 +119,7 @@ local NAMES = {
 	"Hank", "Yuki", "Leo", "Fatima", "Dmitri", "Rosa", "Sven", "Amara", "Pete", "Ines", "Bo", "Lila",
 	"Carl", "Zara", "Milo", "Greta", "Theo", "Nia",
 }
-export type Role = "Barista" | "Office" | "Tourist" | "Chef" | "Guard" | "Cashier" | "Traveler"
+export type Role = "Barista" | "Office" | "Tourist" | "Chef" | "Guard" | "Cashier" | "Traveler" | "Worker" | "Farmer" | "Soldier" | "Beachgoer"
 export type Personality = "Coward" | "Brave" | "Grumpy" | "Clown" | "Sleepy"
 local PERSONALITIES: { Personality } = { "Coward", "Brave", "Grumpy", "Clown", "Sleepy" }
 type Traits = { panic: number, react: number, hearing: number, scream: number, linger: number, chat: number }
@@ -139,6 +139,11 @@ local SHIRTS: { [Role]: { Color3 } } = {
 	Guard = { Color3.fromRGB(40, 52, 88), Color3.fromRGB(30, 34, 44) },
 	Cashier = { Color3.fromRGB(245, 245, 245), Color3.fromRGB(250, 230, 200) },
 	Traveler = { Color3.fromRGB(120, 90, 170), Color3.fromRGB(70, 130, 90), Color3.fromRGB(200, 70, 70), Color3.fromRGB(90, 90, 100) },
+	-- v4 B3: the open-air maps' people (dressed for the place).
+	Worker = { Color3.fromRGB(70, 90, 120), Color3.fromRGB(110, 110, 115), Color3.fromRGB(150, 120, 90) },
+	Farmer = { Color3.fromRGB(200, 60, 50), Color3.fromRGB(230, 220, 200), Color3.fromRGB(90, 130, 170) },
+	Soldier = { Color3.fromRGB(85, 100, 60), Color3.fromRGB(100, 110, 75) },
+	Beachgoer = { Color3.fromRGB(255, 120, 150), Color3.fromRGB(80, 200, 220), Color3.fromRGB(255, 220, 80), Color3.fromRGB(255, 255, 255) },
 }
 local PANTS: { [Role]: { Color3 } } = {
 	Barista = { Color3.fromRGB(30, 30, 35), Color3.fromRGB(60, 50, 45) },
@@ -148,6 +153,10 @@ local PANTS: { [Role]: { Color3 } } = {
 	Guard = { Color3.fromRGB(32, 40, 66) },
 	Cashier = { Color3.fromRGB(40, 50, 70), Color3.fromRGB(60, 60, 64) },
 	Traveler = { Color3.fromRGB(60, 80, 120), Color3.fromRGB(80, 70, 60), Color3.fromRGB(40, 40, 44) },
+	Worker = { Color3.fromRGB(60, 70, 90), Color3.fromRGB(80, 70, 60) },
+	Farmer = { Color3.fromRGB(50, 80, 140), Color3.fromRGB(60, 90, 150) }, -- (overalls)
+	Soldier = { Color3.fromRGB(80, 95, 58), Color3.fromRGB(95, 105, 70) },
+	Beachgoer = { Color3.fromRGB(40, 120, 200), Color3.fromRGB(240, 110, 60), Color3.fromRGB(60, 170, 110) }, -- (shorts)
 }
 
 -- Round 4, M11: real Roblox clothes and hair, as people in the top ragdoll games wear (the owner:
@@ -194,7 +203,7 @@ CrowdService.HAIR_IDS = {
 	9174354743, -- Top Knot - Black
 }
 local TALL_HAIR: { [number]: boolean } = { [7193450455] = true, [9174355709] = true, [9174354743] = true }
-local HAT_ROLES: { [string]: boolean } = { Chef = true, Guard = true, Tourist = true }
+local HAT_ROLES: { [string]: boolean } = { Chef = true, Guard = true, Tourist = true, Worker = true, Farmer = true, Soldier = true, Beachgoer = true }
 CrowdService.HAT_ROLES = HAT_ROLES -- (roles with a hat of their own: no hair, no Santa hat; tests)
 local hairs: { { accessory: Accessory, tall: boolean } } = {} -- loaded at start, copied per person
 local looks = Random.new() -- (clothes and hair: the crowd's own rng is declared further down)
@@ -443,9 +452,9 @@ local function dress(model: Model, role: Role)
 	local pants = pick(PANTS[role])
 	paint(model, { "Head", "LeftHand", "RightHand" }, skin)
 	paint(model, { "UpperTorso", "LeftUpperArm", "RightUpperArm" }, shirt)
-	paint(model, { "LeftLowerArm", "RightLowerArm" }, if role == "Office" or role == "Guard" or role == "Chef" then shirt else skin)
+	paint(model, { "LeftLowerArm", "RightLowerArm" }, if role == "Office" or role == "Guard" or role == "Chef" or role == "Soldier" then shirt else skin)
 	paint(model, { "LowerTorso", "LeftUpperLeg", "RightUpperLeg" }, pants)
-	paint(model, { "LeftLowerLeg", "RightLowerLeg" }, if role == "Tourist" then skin else pants)
+	paint(model, { "LeftLowerLeg", "RightLowerLeg" }, if role == "Tourist" or role == "Beachgoer" then skin else pants)
 	paint(model, { "LeftFoot", "RightFoot" }, Color3.fromRGB(40, 36, 34))
 	-- Round 4, M11: real clothes where the role is not a uniform (skin under them, so a T-shirt's
 	-- sleeves and shorts show arms and legs).
@@ -492,6 +501,31 @@ local function dress(model: Model, role: Role)
 			weldOn(outfit, chest, "VestL", Vector3.new(chest.Size.X * 0.32, chest.Size.Y * 0.9, 0.1), vest, CFrame.new(-chest.Size.X * 0.3, -chest.Size.Y * 0.04, front))
 			weldOn(outfit, chest, "VestR", Vector3.new(chest.Size.X * 0.32, chest.Size.Y * 0.9, 0.1), vest, CFrame.new(chest.Size.X * 0.3, -chest.Size.Y * 0.04, front))
 			weldOn(outfit, chest, "NameTag", Vector3.new(0.5, 0.25, 0.06), Color3.fromRGB(250, 250, 250), CFrame.new(chest.Size.X * 0.3, chest.Size.Y * 0.2, front - 0.07))
+		elseif role == "Worker" then
+			-- v4 B3: hi-vis vest and a hard hat.
+			local vest = pick({ Color3.fromRGB(255, 140, 20), Color3.fromRGB(220, 240, 40) })
+			weldOn(outfit, chest, "VestL", Vector3.new(chest.Size.X * 0.36, chest.Size.Y * 0.92, 0.1), vest, CFrame.new(-chest.Size.X * 0.28, -chest.Size.Y * 0.03, front))
+			weldOn(outfit, chest, "VestR", Vector3.new(chest.Size.X * 0.36, chest.Size.Y * 0.92, 0.1), vest, CFrame.new(chest.Size.X * 0.28, -chest.Size.Y * 0.03, front))
+			weldOn(outfit, chest, "Stripe", Vector3.new(chest.Size.X * 0.95, 0.14, 0.12), Color3.fromRGB(230, 230, 230), CFrame.new(0, -chest.Size.Y * 0.18, front - 0.02), nil, Enum.Material.Neon)
+			weldOn(outfit, head, "HardHat", Vector3.new(head.Size.X * 1.18, 0.55, head.Size.Z * 1.18), Color3.fromRGB(255, 205, 30), CFrame.new(0, head.Size.Y * 0.47, 0))
+			weldOn(outfit, head, "HatBrim", Vector3.new(head.Size.X * 1.3, 0.12, head.Size.Z * 1.4), Color3.fromRGB(240, 190, 25), CFrame.new(0, head.Size.Y * 0.3, -0.08))
+		elseif role == "Farmer" then
+			-- Overall straps and a straw hat.
+			for _, x in { -0.28, 0.28 } do
+				weldOn(outfit, chest, "Strap", Vector3.new(0.22, chest.Size.Y * 0.95, 0.08), Color3.fromRGB(50, 80, 140), CFrame.new(chest.Size.X * x, 0, front))
+			end
+			weldOn(outfit, chest, "Bib", Vector3.new(chest.Size.X * 0.55, chest.Size.Y * 0.42, 0.08), Color3.fromRGB(50, 80, 140), CFrame.new(0, -chest.Size.Y * 0.28, front))
+			weldOn(outfit, head, "StrawBrim", Vector3.new(0.14, head.Size.X * 2, head.Size.X * 2), Color3.fromRGB(225, 195, 120), CFrame.new(0, head.Size.Y * 0.42, 0) * CFrame.Angles(0, 0, math.rad(90)), Enum.PartType.Cylinder, Enum.Material.Fabric)
+			weldOn(outfit, head, "StrawTop", Vector3.new(0.6, head.Size.X * 1.05, head.Size.X * 1.05), Color3.fromRGB(215, 185, 110), CFrame.new(0, head.Size.Y * 0.68, 0) * CFrame.Angles(0, 0, math.rad(90)), Enum.PartType.Cylinder, Enum.Material.Fabric)
+		elseif role == "Soldier" then
+			-- An olive helmet and a belt.
+			weldOn(outfit, head, "Helmet", Vector3.new(head.Size.X * 1.22, 0.75, head.Size.Z * 1.25), Color3.fromRGB(70, 82, 50), CFrame.new(0, head.Size.Y * 0.43, 0), nil, Enum.Material.Fabric)
+			weldOn(outfit, belly, "Belt", Vector3.new(belly.Size.X * 1.04, 0.25, belly.Size.Z * 1.04), Color3.fromRGB(45, 40, 32), CFrame.new(0, belly.Size.Y * 0.3, 0))
+		elseif role == "Beachgoer" then
+			-- A sun hat and sunglasses.
+			weldOn(outfit, head, "SunBrim", Vector3.new(0.12, head.Size.X * 1.9, head.Size.X * 1.9), pick({ Color3.fromRGB(255, 240, 200), Color3.fromRGB(255, 180, 200) }), CFrame.new(0, head.Size.Y * 0.4, 0) * CFrame.Angles(0, 0, math.rad(90)), Enum.PartType.Cylinder, Enum.Material.Fabric)
+			weldOn(outfit, head, "SunTop", Vector3.new(0.5, head.Size.X * 1.02, head.Size.X * 1.02), Color3.fromRGB(255, 240, 200), CFrame.new(0, head.Size.Y * 0.6, 0) * CFrame.Angles(0, 0, math.rad(90)), Enum.PartType.Cylinder, Enum.Material.Fabric)
+			weldOn(outfit, head, "Shades", Vector3.new(head.Size.X * 0.85, 0.22, 0.1), Color3.fromRGB(20, 20, 24), CFrame.new(0, head.Size.Y * 0.08, -head.Size.Z / 2 - 0.05), nil, Enum.Material.Glass)
 		elseif role == "Traveler" then
 			-- (The backpack is worn on the back: its front, the side with the pocket, faces away.)
 			if not wear(outfit, chest, "Backpack", Vector3.new(chest.Size.X * 0.85, chest.Size.Y * 1.05, 0.95), CFrame.new(0, -chest.Size.Y * 0.05, chest.Size.Z / 2 + 0.45) * CFrame.Angles(0, math.pi, 0)) then

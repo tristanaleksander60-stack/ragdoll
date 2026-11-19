@@ -323,7 +323,7 @@ end
 
 -- Whether a body wears a hat of its own (the crowd's chef, guard and tourist: CrowdService), or hair
 -- too tall for a Santa hat (round 4, M11: an afro, dreads or a top knot, marked TallHair).
-local OWN_HATS = { "ChefHat", "Cap", "GuardCap", "BucketHat", "HatTop" }
+local OWN_HATS = { "ChefHat", "Cap", "GuardCap", "BucketHat", "HatTop", "HardHat", "StrawTop", "Helmet", "SunTop" } -- (v4 B3: the open-air maps' hats)
 local function hasOwnHat(body: Model): boolean
 	local outfit = body:FindFirstChild("Outfit")
 	if outfit then

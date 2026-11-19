@@ -254,3 +254,6 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
   - FxController plays each bank in its group; the kit's clicks are in UI (quieter than guns). The existing per-bank throttle, voice cap and roll-off stay.
   - Checked in Studio: the groups exist, sounds sit in them, T41 passes.
   - Not done: a listening pass by ear (no audio capture over MCP); Settings sliders per group (one SFX row as before).
+- 20 Nov 2026 (PC): **B1** (spread and counts) came with A2.
+- **B2 (talk part):** DummyLines.PLACE has idle lines per place (Plaza, Island, City, Site, Farm, Military), and DummyLife picks them from the body's Zone. Activity spots and pathfinding to benches/jetty are not done.
+- **B3 (map NPCs):** new crowd roles Worker (hi-vis vest, hard hat), Farmer (overall straps, straw hat), Soldier (olive kit, helmet), Beachgoer (sun hat, shades). Places use them: Island Beachgoer/Tourist, Site Worker/Guard, Farm Farmer/Tourist, Base Soldier. The new hats count as own hats for Christmas (no Santa hat on top); T36/T40 know them. Seen on the Site. A better lab mannequin is not done.

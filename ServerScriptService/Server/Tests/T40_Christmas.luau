@@ -77,7 +77,7 @@ local function dressed(on: boolean): number
 				local ownHat = false -- (a chef, a guard or a tourist keeps their own hat)
 				local outfit = body:FindFirstChild("Outfit")
 				if outfit then
-					for _, name in { "ChefHat", "Cap", "GuardCap", "BucketHat", "HatTop" } do
+					for _, name in { "ChefHat", "Cap", "GuardCap", "BucketHat", "HatTop", "HardHat", "StrawTop", "Helmet", "SunTop" } do
 						if outfit:FindFirstChild(name) then
 							ownHat = true
 						end

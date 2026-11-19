@@ -1024,7 +1024,7 @@ local function showLine(life: Life, kind: string, now: number)
 	if life.lineKind == "Idle" then
 		idleShown = math.max(0, idleShown - 1)
 	end
-	local list = if kind == "Fear" then DummyLines.FEAR elseif kind == "Ouch" then DummyLines.OUCH else DummyLines.IDLE
+	local list = if kind == "Fear" then DummyLines.FEAR elseif kind == "Ouch" then DummyLines.OUCH else DummyLines.idleFor(life.model:GetAttribute("Zone")) -- (v4 B2: what they say fits the place)
 	life.lineTurn += 1
 	if not life.line then
 		local g = Instance.new("BillboardGui")

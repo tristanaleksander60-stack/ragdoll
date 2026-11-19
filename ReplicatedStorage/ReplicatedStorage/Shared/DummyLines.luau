@@ -47,6 +47,72 @@ DummyLines.IDLE = table.freeze({
 	"Hello? Anybody?",
 })
 
+-- v4 B2 (owner: "they talk about where they are"): idle chatter per place (the body's Zone
+-- attribute, CrowdService). Short, kid-safe, about the place and what they do there.
+DummyLines.PLACE = table.freeze({
+	Plaza = table.freeze({
+		"Has anyone seen the fountain work?",
+		"Those labs are so loud today.",
+		"I'm just here for the hot cocoa.",
+		"Who keeps launching people over the fence?",
+		"Meet you by the big tree!",
+		"Is the arena open yet?",
+	}),
+	Island = table.freeze({
+		"Sunscreen? Anyone? Anyone?",
+		"The water is perfect today.",
+		"Don't go near the catapult!",
+		"I saw someone dive off the cliff!",
+		"This sand gets everywhere.",
+		"Is that the lighthouse beeping?",
+		"I'm building the biggest sandcastle.",
+		"Coconut, anyone?",
+	}),
+	City = table.freeze({
+		"Has anyone seen the 8:15 bus?",
+		"Late for work. Again.",
+		"That manhole just shot a guy up!",
+		"Coffee first, then meetings.",
+		"Watch out, the light is red!",
+		"I parked right here. I think.",
+		"These towers are so tall.",
+		"Taxi! TAXI!",
+	}),
+	Site = table.freeze({
+		"Hard hats on, people!",
+		"Who moved my wheelbarrow?",
+		"That crane is not a ride!",
+		"Lunch break in five.",
+		"Mind the pit!",
+		"Another day, another wall.",
+		"Did someone order more bricks?",
+	}),
+	Farm = table.freeze({
+		"The bison are grumpy today.",
+		"Who left the gate open?",
+		"Hay bales don't stack themselves.",
+		"The tractor won't start again.",
+		"Fresh eggs this morning!",
+		"Stay out of the paddock!",
+		"Smells like rain. And bison.",
+	}),
+	Military = table.freeze({
+		"Left, right, left, right!",
+		"Nobody touches the tanks.",
+		"Range is hot! Stay back!",
+		"Ten more laps of the course.",
+		"Is that a mortar or a trampoline?",
+		"At ease, everyone.",
+		"Helipad is clear!",
+	}),
+})
+
+-- The idle list for a body in `zone` (the generic one in the labs and anywhere unknown).
+function DummyLines.idleFor(zone: unknown): { string }
+	local list = if type(zone) == "string" then DummyLines.PLACE[zone] else nil
+	return list or DummyLines.IDLE
+end
+
 DummyLines.FEAR_COLOR = Color3.fromRGB(255, 205, 64)
 DummyLines.IDLE_COLOR = Color3.fromRGB(245, 245, 245)
 DummyLines.BOX_COLOR = Color3.fromRGB(16, 16, 18)
