@@ -103,7 +103,7 @@ local function placeCard(parent: Instance, id: string, order: number, color: str
 	-- as every tool, event and window draws it.
 	-- v3 phase B: a place with a capture shows it (cropped to the strip), its icon small in the corner.
 	local place = Places.byId[id]
-	local shot = place and place.image
+	local shot = (place and place.image) or (if Places.labPlot(id) then Places.byId.Lab.image else nil) -- (a friend's lab: the lab picture)
 	if shot then
 		local img = Instance.new("ImageLabel")
 		img.Name = "Shot"
@@ -197,7 +197,7 @@ end
 
 local function build()
 	local window = C.Window({ name = "Maps", title = "Places", theme = "codes", icon = "map" })
-	C.Text("caption", "Your lab, the plaza, other players' labs and rooms full of people.", {
+	C.Text("caption", "Your lab, the plaza, other players' labs, the arena and five big maps.", {
 		color = Theme.Palette.textMid,
 		wrap = true,
 		size = UDim2.new(1, 0, 0, 24),

@@ -237,3 +237,4 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
   - patching up and the revive clear it; the attribute Damage carries it; headshots stay instant.
   - T95_DamageDeath: 6 Popper rounds or 10 punches kill; 6 rounds in a foot do not.
   - T33's blow check is 3 Mega Slaps now (5 kill by damage).
+- 20 Nov 2026 (PC): **A6 done.** Lab, Plaza and Game Arena captures in art/maps, uploaded (Places.image); other players' labs show the lab picture; all 8 cards seen with pictures in the Maps window. The window's caption no longer says 'rooms full of people'. The Arena capture shows it needs D1 (plain pink box).
