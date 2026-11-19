@@ -4,7 +4,7 @@ Studio place: "[💥] Ragdoll Havoc", placeId 126037745825106. Game name: **Ragd
 Talk to the owner in Danish, short and plain.
 
 ## How every session runs (owner order, 19 Nov 2026)
-The owner types **`/klar`** (`.claude/commands/klar.md`) or **"klar"**. Then follow `docs/MASTER_PROMPT.md` ("The prompt") from the State line in `docs/V3_PLAN.md`: automatically and without questions; quality first, then speed, then cost. The PC session (Studio + Roblox Studio MCP) is the main one. A cloud session (no Studio) only does research and code, and lists the Studio steps under PC TODO.
+The owner types **`/klar`** (`.claude/commands/klar.md`) or **"klar"**. Then follow `docs/MASTER_PROMPT.md` ("The prompt"): the owner's fix list in `docs/V4_PLAN.md` (20 Nov 2026), step by step from its State line (v3 leftovers in `docs/V3_PLAN.md`): automatically and without questions; quality first, then speed, then cost. The PC session (Studio + Roblox Studio MCP) is the main one. A cloud session (no Studio) only does research and code, and lists the Studio steps under PC TODO.
 
 ## Code and deploy
 - This folder is synced into Studio with Script Sync (each service is the sync root):
