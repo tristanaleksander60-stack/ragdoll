@@ -1,0 +1,305 @@
+--!strict
+-- Round 5, phase 00: shooting on a touch screen, like a mobile shooter. While a gun is picked in
+-- the walk view on a touch screen:
+--   * a clear crosshair in the middle of the screen (where SHOOT fires)
+--   * a big round SHOOT button by the jump button (HudSlots "Shoot"); hold it to keep firing at the
+--     gun's own pace. It fires through PokeController (the same remotes and checks as a tap, and
+--     the same aim help: a body near the crosshair is hit)
+--   * until the first shot of the visit (at most HAND_FOR s): a hand over the nearest dummy, "TAP A
+--     DUMMY!" (your greeter first)
+-- Tapping a dummy still works as before. Nothing here on a computer or a console.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Toys = require(Shared:WaitForChild("Toys"))
+local Shop = require(Shared:WaitForChild("Shop"))
+
+local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
+local Theme = require(UI:WaitForChild("LihFolkUITheme"))
+
+local Client = script.Parent
+local PokeController = require(Client:WaitForChild("PokeController"))
+local ViewMode = require(Client:WaitForChild("ViewMode"))
+local HudSlots = require(Client:WaitForChild("HudSlots"))
+local SessionClient = require(Client:WaitForChild("SessionClient"))
+
+local TouchShoot = {}
+
+TouchShoot.HAND_FOR = 45 -- s: the "tap a dummy" hand shows at most this long into a visit
+local SHOOT_RED = Color3.fromRGB(230, 50, 50)
+
+local player = Players.LocalPlayer
+local buttonGui: ScreenGui? = nil
+local button: TextButton? = nil
+local centreGui: ScreenGui? = nil
+local hand: TextLabel? = nil
+local holding = false
+
+local function gunPicked(): Toys.Toy?
+	local toy = Toys.byId[PokeController.getSelected()]
+	if toy and toy.gun then
+		return toy
+	end
+	return nil
+end
+
+-- Whether SHOOT and the crosshair show now.
+function TouchShoot.wanted(): boolean
+	return ViewMode.isTouch() and not ViewMode.isLab() and PokeController.active() and gunPicked() ~= nil and player.Character ~= nil
+end
+
+local function centre(): Vector2
+	local camera = Workspace.CurrentCamera
+	return if camera then camera.ViewportSize / 2 else Vector2.zero
+end
+
+-- One shot at the crosshair: at a body if one is there (or near it), otherwise into the world.
+function TouchShoot.fire(): boolean
+	local at = centre()
+	return PokeController.pressAt(at) or PokeController.tapAt(at)
+end
+
+local function holdFire()
+	if holding then
+		return
+	end
+	holding = true
+	task.spawn(function()
+		while holding and TouchShoot.wanted() do
+			local toy = gunPicked()
+			TouchShoot.fire()
+			local cooldown = if toy then toy.cooldown else 0.2
+			if player:GetAttribute("ZeroDelay") == true then
+				cooldown = math.min(cooldown, Shop.ZERO_DELAY)
+			end
+			task.wait(math.max(cooldown, 0.04) + 0.01)
+		end
+		holding = false
+	end)
+end
+
+local function build()
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "TouchShoot"
+	gui.ResetOnSpawn = false
+	gui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets -- (HudSlots' frame)
+	gui.DisplayOrder = 6
+	gui.Enabled = false
+	local b = Instance.new("TextButton")
+	b.Name = "Shoot"
+	b.Text = "SHOOT"
+	b.FontFace = Theme.Fonts.display
+	b.TextScaled = true
+	b.TextColor3 = Color3.new(1, 1, 1)
+	b.BackgroundColor3 = SHOOT_RED
+	b.AutoButtonColor = true
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0.5, 0)
+	corner.Parent = b
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 4
+	stroke.Color = Color3.fromRGB(10, 10, 14)
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Parent = b
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft = UDim.new(0.14, 0)
+	pad.PaddingRight = UDim.new(0.14, 0)
+	pad.PaddingTop = UDim.new(0.3, 0)
+	pad.PaddingBottom = UDim.new(0.3, 0)
+	pad.Parent = b
+	b.InputBegan:Connect(function(input)
+		local kind = input.UserInputType
+		if kind == Enum.UserInputType.Touch or kind == Enum.UserInputType.MouseButton1 then
+			holdFire()
+			TweenService:Create(b, TweenInfo.new(0.06), { BackgroundColor3 = Color3.fromRGB(255, 110, 90) }):Play()
+		end
+	end)
+	b.InputEnded:Connect(function(input)
+		local kind = input.UserInputType
+		if kind == Enum.UserInputType.Touch or kind == Enum.UserInputType.MouseButton1 then
+			holding = false
+			TweenService:Create(b, TweenInfo.new(0.12), { BackgroundColor3 = SHOOT_RED }):Play()
+		end
+	end)
+	b.Parent = gui
+	button = b
+	-- Round 5: ZOOM over SHOOT while a scoped gun (Sniper, DMR) is picked: a toggle (GunFeel).
+	local z = Instance.new("TextButton")
+	z.Name = "Zoom"
+	z.Text = "ZOOM"
+	z.TextScaled = true
+	z.FontFace = Theme.Fonts.display
+	z.TextColor3 = Color3.new(1, 1, 1)
+	z.BackgroundColor3 = Color3.fromRGB(40, 60, 90)
+	z.AnchorPoint = Vector2.new(0.5, 1)
+	z.Position = UDim2.new(0.5, 0, 0, -8)
+	z.Size = UDim2.new(1, 0, 0, 34)
+	z.Visible = false
+	local zc = Instance.new("UICorner")
+	zc.CornerRadius = UDim.new(0, 10)
+	zc.Parent = z
+	local zs = Instance.new("UIStroke")
+	zs.Thickness = 2
+	zs.Color = Color3.fromRGB(10, 10, 14)
+	zs.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	zs.Parent = z
+	z.Activated:Connect(function()
+		local GunFeel = require(Client:WaitForChild("GunFeel")) :: any
+		local on = not GunFeel.zoomed()
+		GunFeel.setZoomToggle(on)
+		z.BackgroundColor3 = if on then Color3.fromRGB(40, 150, 80) else Color3.fromRGB(40, 60, 90)
+	end)
+	z.Parent = gui -- (its own box over SHOOT, not inside SHOOT's padding: review fix)
+	buttonGui = gui
+	gui.Parent = player:WaitForChild("PlayerGui")
+	HudSlots.watch(function()
+		local ctx = HudSlots.context(true, false)
+		HudSlots.apply(b, "Shoot", ctx)
+		local zoom = gui:FindFirstChild("Zoom")
+		if zoom and zoom:IsA("GuiObject") then
+			HudSlots.apply(zoom, "Zoom", ctx)
+		end
+	end)
+
+	-- The crosshair in the middle (its own layer, which ignores the insets: the camera's centre ray).
+	local c = Instance.new("ScreenGui")
+	c.Name = "TouchCrosshair"
+	c.ResetOnSpawn = false
+	c.IgnoreGuiInset = true
+	c.DisplayOrder = 6
+	c.Enabled = false
+	local holder = Instance.new("Frame")
+	holder.Name = "Cross"
+	holder.AnchorPoint = Vector2.new(0.5, 0.5)
+	holder.Position = UDim2.fromScale(0.5, 0.5)
+	holder.Size = UDim2.fromOffset(44, 44)
+	holder.BackgroundTransparency = 1
+	holder.Parent = c
+	for _, spec in { { 0.5, 0, 3, 13 }, { 0.5, 1, 3, 13 }, { 0, 0.5, 13, 3 }, { 1, 0.5, 13, 3 } } do
+		local line = Instance.new("Frame")
+		line.AnchorPoint = Vector2.new(spec[1], spec[2])
+		line.Position = UDim2.fromScale(spec[1], spec[2])
+		line.Size = UDim2.fromOffset(spec[3], spec[4])
+		line.BackgroundColor3 = Color3.new(1, 1, 1)
+		line.BorderSizePixel = 0
+		local s = Instance.new("UIStroke")
+		s.Color = Color3.fromRGB(10, 10, 14)
+		s.Thickness = 1.5
+		s.Parent = line
+		line.Parent = holder
+	end
+	local dot = Instance.new("Frame")
+	dot.AnchorPoint = Vector2.new(0.5, 0.5)
+	dot.Position = UDim2.fromScale(0.5, 0.5)
+	dot.Size = UDim2.fromOffset(5, 5)
+	dot.BackgroundColor3 = SHOOT_RED
+	dot.BorderSizePixel = 0
+	local dc = Instance.new("UICorner")
+	dc.CornerRadius = UDim.new(0.5, 0)
+	dc.Parent = dot
+	dot.Parent = holder
+	-- The hand over a dummy, until the first shot.
+	local h = Instance.new("TextLabel")
+	h.Name = "TapHand"
+	h.AnchorPoint = Vector2.new(0.5, 1)
+	h.Size = UDim2.fromOffset(190, 64)
+	h.BackgroundTransparency = 1
+	h.FontFace = Theme.Fonts.display
+	h.TextScaled = true
+	h.TextColor3 = Color3.fromRGB(255, 230, 90)
+	h.Text = "TAP A DUMMY!\n\u{1F447}"
+	h.Visible = false
+	local hs = Instance.new("UIStroke")
+	hs.Thickness = 3
+	hs.Color = Color3.fromRGB(20, 10, 0)
+	hs.Parent = h
+	h.Parent = c
+	hand = h
+	centreGui = c
+	c.Parent = player:WaitForChild("PlayerGui")
+end
+
+-- The dummy the hand points at: your greeter if it is here, else the nearest one on screen.
+local function handTarget(camera: Camera): Vector2?
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if not dummies then
+		return nil
+	end
+	local best: Vector2? = nil
+	local bestScore = math.huge
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	for _, model in dummies:GetChildren() do
+		local head = model:FindFirstChild("Head")
+		if head and head:IsA("BasePart") and model:GetAttribute("Vital") ~= "Dead" then
+			local p, on = camera:WorldToViewportPoint(head.Position + Vector3.new(0, 1.2, 0))
+			if on and p.Z > 0 then
+				local score = if root and root:IsA("BasePart") then (head.Position - root.Position).Magnitude else p.Z
+				if model:GetAttribute("Greeter") == player.UserId then
+					score -= 1000
+				end
+				if score < bestScore then
+					best, bestScore = Vector2.new(p.X, p.Y), score
+				end
+			end
+		end
+	end
+	return best
+end
+
+function TouchShoot.start()
+	build()
+	RunService.RenderStepped:Connect(function()
+		local want = TouchShoot.wanted()
+		local bg, cg = buttonGui, centreGui
+		if bg and bg.Enabled ~= want then
+			bg.Enabled = want
+			if not want then
+				holding = false
+			end
+		end
+		-- lihfolk-ignore: findfirstchild-chain (nil-checked on the next line)
+		local zoom = bg and bg:FindFirstChild("Zoom") :: GuiObject?
+		if zoom then
+			local toy = gunPicked()
+			zoom.Visible = want and toy ~= nil and (toy.id == "Sniper" or toy.id == "DMR")
+		end
+		local h = hand
+		local camera = Workspace.CurrentCamera
+		local handShown = false
+		if h and camera then
+			local show = ViewMode.isTouch() and PokeController.active() and not SessionClient.hasShot() and time() < TouchShoot.HAND_FOR
+			local at = if show then handTarget(camera) else nil
+			if at then
+				local bob = math.sin(os.clock() * 6) * 6
+				h.Position = UDim2.fromOffset(at.X, at.Y - 8 + bob)
+				handShown = true
+			end
+			if h.Visible ~= handShown then
+				h.Visible = handShown
+			end
+		end
+		if cg then
+			-- lihfolk-ignore: findfirstchild-chain (the result is nil-checked on the next line)
+			local cross = cg:FindFirstChild("Cross") :: GuiObject?
+			if cross and cross.Visible ~= want then
+				cross.Visible = want
+			end
+			local on = want or handShown -- (the hand lives in the crosshair's layer)
+			if cg.Enabled ~= on then
+				cg.Enabled = on
+			end
+		end
+	end)
+end
+
+-- Tests / LayoutCheck: the button (nil before start).
+function TouchShoot.buttonForTest(): TextButton?
+	return button
+end
+
+return TouchShoot

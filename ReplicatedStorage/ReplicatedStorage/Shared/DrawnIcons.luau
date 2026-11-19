@@ -1,0 +1,111 @@
+--!strict
+-- The hand-drawn icon set (10 Nov 2026, the owner: "much less AI-like, as if drawn"): sticker
+-- doodles with a black ink line, flat colours and a white edge, drawn by art\tools\Doodles.cs
+-- (art\tools\build-icons.ps1 -> art\icons\*.png; every icon centred and filling its square the same
+-- way) and uploaded to Roblox. Registered with the kit (LihFolkUIIcons) at the client's start, so
+-- every Icons.make of these names draws the picture; ToolPicture draws "tool_<id>" instead of the
+-- 3D model.
+--
+-- To change one: edit its case in Doodles.cs, run build-icons.ps1 -Only <name>, upload the PNG and
+-- put the new id here.
+
+local DrawnIcons = {}
+
+DrawnIcons.ASSETS = {
+	-- The kit's names (HUD launchers and window titles).
+	shop = "rbxassetid://123768976087491",
+	settings = "rbxassetid://93865298232808",
+	sandbox = "rbxassetid://91079374186462",
+	gift = "rbxassetid://121323709806351",
+	star = "rbxassetid://75052165451326",
+	crown = "rbxassetid://97120792689619",
+	toolbox = "rbxassetid://87530964149060",
+	map = "rbxassetid://135418487521264",
+	friends = "rbxassetid://133196367639079",
+	camera = "rbxassetid://97886507627944",
+	music = "rbxassetid://119428311265233",
+	keys = "rbxassetid://78806992474446",
+	eye = "rbxassetid://106782633724987",
+	shake = "rbxassetid://87333899289928",
+	heart = "rbxassetid://100715694293712",
+	-- The Robux events.
+	event_DummyRain = "rbxassetid://76383550499082",
+	event_MegaBomb = "rbxassetid://98674767170188",
+	event_ZeroG = "rbxassetid://106239231737168",
+	event_BouncyFloor = "rbxassetid://89177360296677",
+	event_FlashFreeze = "rbxassetid://110744201682823",
+	-- Every weapon and tool.
+	tool_Blaster = "rbxassetid://108854870039876",
+	tool_Deagle = "rbxassetid://92665121427767",
+	tool_Shotgun = "rbxassetid://121494580896911",
+	tool_NailGun = "rbxassetid://140483180158707",
+	tool_Crossbow = "rbxassetid://118438907580871",
+	tool_Portal = "rbxassetid://117503135412883",
+	tool_Slime = "rbxassetid://79057600461015",
+	tool_Grab = "rbxassetid://136501616539674",
+	tool_Poke = "rbxassetid://101520545808183",
+	tool_Slap = "rbxassetid://107084901425399",
+	tool_Shove = "rbxassetid://136568706025396",
+	tool_Punch = "rbxassetid://109477017713969",
+	tool_Kick = "rbxassetid://94766195500877",
+	tool_Uppercut = "rbxassetid://84731390345061",
+	tool_MegaSlap = "rbxassetid://101077124586691",
+	tool_Glove = "rbxassetid://130239179111185",
+	tool_Pan = "rbxassetid://86856288710904",
+	tool_Bat = "rbxassetid://120779194863360",
+	tool_Golf = "rbxassetid://132627402201289",
+	tool_Hammer = "rbxassetid://137554080025682",
+	tool_Crowbar = "rbxassetid://86801806731471",
+	tool_Axe = "rbxassetid://109541118718121",
+	tool_Cleaver = "rbxassetid://107219657507120",
+	tool_Katana = "rbxassetid://108708854080127",
+	tool_Chainsaw = "rbxassetid://114579021072362",
+	tool_PlasmaBlade = "rbxassetid://103864989599859",
+	tool_Launch = "rbxassetid://132351738779405",
+	tool_Firecracker = "rbxassetid://78010955299924",
+	tool_TNT = "rbxassetid://133314481308915",
+	tool_Shockwave = "rbxassetid://113585761335547",
+	tool_StickyBomb = "rbxassetid://96156763190537",
+	tool_Cannon = "rbxassetid://82415148008781",
+	tool_BigBoom = "rbxassetid://96248611898688",
+	tool_Rocket = "rbxassetid://119465798619664",
+	tool_Balloon = "rbxassetid://111541902967985",
+	tool_Freeze = "rbxassetid://106668824277064",
+	tool_Zap = "rbxassetid://104964727243809",
+	tool_BlackHole = "rbxassetid://112489214069781",
+	tool_Heal = "rbxassetid://116724599759242",
+	tool_Anvil = "rbxassetid://89050440776823",
+	tool_Trampoline = "rbxassetid://90983738736340",
+	tool_SpringPad = "rbxassetid://136881846342759",
+	tool_Banana = "rbxassetid://102542329430685",
+	tool_Fan = "rbxassetid://79918917355099",
+	tool_Bowling = "rbxassetid://137736005696234",
+	tool_Shrink = "rbxassetid://117542025113047",
+	tool_Chicken = "rbxassetid://81197004426106",
+	tool_Float = "rbxassetid://115983327899653",
+	tool_Slowmo = "rbxassetid://120783799012144",
+	-- The big ones (10 Nov 2026).
+	tool_Grenade = "rbxassetid://121595186455738",
+	tool_C4 = "rbxassetid://139268487623519",
+	tool_Minigun = "rbxassetid://130796938900694",
+	-- The gun ladder (10 Nov 2026).
+	tool_Revolver = "rbxassetid://87125338712595",
+	tool_FlareGun = "rbxassetid://97554012109692",
+	tool_GoldenDeagle = "rbxassetid://74741230348932",
+	tool_SMG = "rbxassetid://113319488063127",
+	tool_AK = "rbxassetid://102399662624042",
+	tool_M4 = "rbxassetid://102836588761796",
+	tool_TommyGun = "rbxassetid://127994319134244",
+	tool_AutoShotgun = "rbxassetid://108406719056550",
+	tool_LMG = "rbxassetid://73507862474751",
+	tool_DMR = "rbxassetid://85125163115589",
+	tool_DoubleBarrel = "rbxassetid://72069442535712",
+	tool_LaserRifle = "rbxassetid://82052248984686",
+	tool_Railgun = "rbxassetid://78542645832798",
+	tool_Sniper = "rbxassetid://109221572341479",
+	tool_RPG = "rbxassetid://111359560820805",
+	tool_GravityGun = "rbxassetid://76034517850638",
+	tool_Nuke = "rbxassetid://96839589580988",
+}
+
+return DrawnIcons

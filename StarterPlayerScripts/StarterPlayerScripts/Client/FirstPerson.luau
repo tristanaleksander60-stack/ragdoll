@@ -1,0 +1,90 @@
+--!strict
+-- Round 5: FIRST PERSON (V, or 1ST PERSON on the right edge). The camera goes into your head (the
+-- player view only: the lab view keeps its own camera), your body is hidden from you, and the weapon
+-- you hold shows in front of the camera (Viewmodel: arms, sway, kick, muzzle flash). V again, or the
+-- lab view, puts the camera back as it was.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+
+local Keybinds = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Keybinds"))
+
+local Client = script.Parent
+local ViewMode = require(Client:WaitForChild("ViewMode"))
+
+local FirstPerson = {}
+
+local player = Players.LocalPlayer
+local on = false
+local kept: { mode: Enum.CameraMode, minZoom: number, maxZoom: number }? = nil
+local listeners: { (boolean) -> () } = {}
+
+function FirstPerson.isOn(): boolean
+	return on
+end
+
+function FirstPerson.onChanged(fn: (boolean) -> ())
+	table.insert(listeners, fn)
+end
+
+function FirstPerson.set(want: boolean)
+	if want and ViewMode.isLab() then
+		return -- (first person is the player's own eyes: from the player view)
+	end
+	if want == on then
+		return
+	end
+	on = want
+	if want then
+		kept = { mode = player.CameraMode, minZoom = player.CameraMinZoomDistance, maxZoom = player.CameraMaxZoomDistance }
+		player.CameraMode = Enum.CameraMode.LockFirstPerson
+	else
+		local k = kept
+		player.CameraMode = if k then k.mode else Enum.CameraMode.Classic
+		if k then
+			player.CameraMinZoomDistance = k.minZoom
+			player.CameraMaxZoomDistance = k.maxZoom
+		end
+		-- (Out of first person Roblox leaves the camera at the head: back to a normal distance.)
+		player.CameraMinZoomDistance = math.max(player.CameraMinZoomDistance, 0.5)
+		task.defer(function()
+			if not on and player.CameraMaxZoomDistance >= 10 then
+				local camera = workspace.CurrentCamera
+				local head = player.Character and player.Character:FindFirstChild("Head")
+				if camera and head and head:IsA("BasePart") and (camera.CFrame.Position - head.Position).Magnitude < 2 then
+					player.CameraMinZoomDistance = 10
+					task.wait()
+					player.CameraMinZoomDistance = if k then k.minZoom else 0.5
+				end
+			end
+		end)
+	end
+	for _, fn in listeners do
+		task.spawn(fn, on)
+	end
+end
+
+function FirstPerson.toggle()
+	FirstPerson.set(not on)
+end
+
+function FirstPerson.start()
+	ViewMode.onChanged(function()
+		if ViewMode.isLab() and on then
+			FirstPerson.set(false)
+		end
+	end)
+	UserInputService.InputBegan:Connect(function(input, processed)
+		if Keybinds.live(processed) and input.UserInputType == Enum.UserInputType.Keyboard and Keybinds.is("FirstPerson", input.KeyCode) then
+			FirstPerson.toggle()
+		end
+	end)
+	player.CharacterAdded:Connect(function()
+		if on then
+			player.CameraMode = Enum.CameraMode.LockFirstPerson
+		end
+	end)
+end
+
+return FirstPerson

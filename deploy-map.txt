@@ -1,0 +1,4 @@
+# Repo folder -> Script Sync root on the PC (Documents\RagdollLab\...)
+ServerScriptService   -> ServerScriptService
+ReplicatedStorage     -> ReplicatedStorage\ReplicatedStorage
+StarterPlayerScripts  -> StarterPlayerScripts\StarterPlayerScripts

@@ -1,0 +1,45 @@
+--!strict
+-- Which view the player is in.
+--   "Player" (default): you are your avatar, like in every big ragdoll game on Roblox. Standard
+--            movement (WASD / thumbstick + jump) and the standard third-person camera; you grab
+--            and throw from your character.
+--   "Lab":   the optional orbit camera over the lab. The avatar stands still; one finger orbits,
+--            pinch zooms, and taps act wherever you point.
+
+local UserInputService = game:GetService("UserInputService")
+
+export type Mode = "Player" | "Lab"
+
+local ViewMode = {}
+
+local mode: Mode = "Player"
+local listeners: { (Mode) -> () } = {}
+
+function ViewMode.get(): Mode
+	return mode
+end
+
+function ViewMode.isLab(): boolean
+	return mode == "Lab"
+end
+
+function ViewMode.set(new: Mode)
+	if new == mode then
+		return
+	end
+	mode = new
+	for _, listener in listeners do
+		task.spawn(listener, new)
+	end
+end
+
+function ViewMode.onChanged(listener: (Mode) -> ())
+	table.insert(listeners, listener)
+end
+
+-- A phone or tablet without a mouse: thumbstick, jump button and screen-centre aiming.
+function ViewMode.isTouch(): boolean
+	return UserInputService.TouchEnabled and not UserInputService.MouseEnabled
+end
+
+return ViewMode
