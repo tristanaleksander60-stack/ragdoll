@@ -12,6 +12,7 @@ local Places = require(ReplicatedStorage.Shared.Places)
 local Systems = script.Parent.Parent:WaitForChild("Systems")
 local WorldMaps = require(Systems:WaitForChild("WorldMaps"))
 local MapActivities = require(Systems:WaitForChild("MapActivities"))
+local PlayerRagdoll = require(Systems:WaitForChild("PlayerRagdoll"))
 
 return {
 	name = "T93_MapActivities",
@@ -29,6 +30,10 @@ return {
 				local model = (folder :: Instance):FindFirstChild(place.id)
 				assert(model, place.id .. " was not built")
 				local centre = Places.floorCenter(Vector3.zero, place.id) :: Vector3
+				local floorPart = (model :: Instance):FindFirstChild("Floor")
+				if floorPart and floorPart:IsA("BasePart") then
+					centre = Vector3.new(centre.X, floorPart.Position.Y + floorPart.Size.Y / 2, centre.Z) -- (the measured ground)
+				end
 				local half = place.size.X / 2
 				local n = 0
 				for _, d in (model :: Instance):GetDescendants() do
@@ -73,6 +78,10 @@ return {
 			end
 			assert(peak > 12, string.format("standing on %s did not throw the player (rose %.1f)", tostring(pad:GetAttribute("What")), peak))
 			thrown = string.format("%s threw the player %.0f studs up", tostring(pad:GetAttribute("What")), peak)
+			-- Put the player back: up again, then home to the lab (the next tests start there).
+			PlayerRagdoll.getUp(player)
+			task.wait(Places.TRAVEL_GAP + 0.2)
+			WorldMaps.travel(player, "Lab")
 		end
 		return string.format("%d launchers on %d maps, all land inside; %s", total, Places.OUTDOORS, thrown)
 	end,

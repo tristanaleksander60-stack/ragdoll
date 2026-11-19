@@ -21,6 +21,7 @@ local Shared = ReplicatedStorage.Shared
 local Net = require(Shared.Net)
 local Log = require(Shared.Log)
 local HitMath = require(Shared.HitMath)
+local Places = require(Shared.Places)
 local ActiveRagdoll = require(Shared.Ragdoll.ActiveRagdoll)
 local Topology = require(Shared.Ragdoll.Topology)
 
@@ -208,7 +209,21 @@ local function validSpot(character: Model): boolean
 	end
 	local labOrigin = Workspace:GetAttribute("LabOrigin")
 	local center = if typeof(labOrigin) == "Vector3" then labOrigin else Vector3.zero
-	return Vector3.new(p.X - center.X, 0, p.Z - center.Z).Magnitude < MAX_DISTANCE
+	if Vector3.new(p.X - center.X, 0, p.Z - center.Z).Magnitude < MAX_DISTANCE then
+		return true
+	end
+	-- (v3 phase B: the open-air maps lie far out; a spot inside any place, with room for a throw, is
+	-- fine too. Blind review 19 Nov: getting up on one sent the player home.)
+	for _, place in Places.list do
+		local mid = Places.floorCenter(center, place.id)
+		if mid then
+			local d = p - mid
+			if math.abs(d.X) < place.size.X / 2 + 60 and math.abs(d.Z) < place.size.Z / 2 + 60 and d.Y > -80 and d.Y < place.size.Y + 300 then
+				return true
+			end
+		end
+	end
+	return false
 end
 
 -- The player's client reports a state change of its own body.

@@ -17,6 +17,7 @@ local MapActivities = {}
 
 MapActivities.COOLDOWN = 2.5 -- s between two throws of one player by one launcher
 MapActivities.MAX_SPEED = 260 -- studs/s: a launcher's speed is capped here (a typo can't fling to the void)
+MapActivities.EVENT_GAP = 30 -- s: one experiment event per player per launcher in this time (no farming)
 
 local wired: { [BasePart]: boolean } = {}
 
@@ -33,8 +34,10 @@ function MapActivities.wire(p: BasePart)
 	local what = p:GetAttribute("What")
 	local label = if type(what) == "string" then what else "the LAUNCHER"
 	local last: { [Player]: number } = {}
+	local counted: { [Player]: number } = {}
 	Players.PlayerRemoving:Connect(function(player)
 		last[player] = nil
+		counted[player] = nil
 	end)
 	p.Touched:Connect(function(other)
 		local character = other:FindFirstAncestorOfClass("Model")
@@ -47,13 +50,18 @@ function MapActivities.wire(p: BasePart)
 			return
 		end
 		local now = os.clock()
-		if last[player] and now - last[player] < MapActivities.COOLDOWN then
+		-- (Not while down: a limp body landing back on a straight-up pad would be thrown again and
+		-- again. Blind review 19 Nov.)
+		if PlayerRagdoll.isDown(player) or (last[player] and now - last[player] < MapActivities.COOLDOWN) then
 			return
 		end
 		last[player] = now
 		PlayerRagdoll.launch(player, velocity)
 		FxService.hit(root.Position, math.min(velocity.Magnitude, 140), "CannonPad")
-		ExperimentService.event(player, "Hazard", 1, label)
+		if not counted[player] or now - counted[player] >= MapActivities.EVENT_GAP then
+			counted[player] = now
+			ExperimentService.event(player, "Hazard", 1, label)
+		end
 	end)
 	p.Destroying:Connect(function()
 		wired[p] = nil

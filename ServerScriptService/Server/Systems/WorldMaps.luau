@@ -762,6 +762,12 @@ local function arrivalOf(player: Player?, id: string): CFrame?
 		return nil
 	end
 	local at = centre + Vector3.new(0, if place.outdoor then 8 else 3, if place.outdoor then OutdoorMaps.arriveZ(place) else -place.size.Z / 2 + ARRIVE_BACK)
+	-- (An open-air map stands on its measured terrain: land 3 over its built pad.)
+	local built = folder and folder:FindFirstChild(id)
+	local pad = built and built:FindFirstChild("Arrival")
+	if place.outdoor and pad and pad:IsA("BasePart") then
+		at = pad.Position + Vector3.new(0, 3, 0)
+	end
 	return CFrame.lookAt(at, at + Vector3.new(0, 0, 1))
 end
 
@@ -989,7 +995,11 @@ function WorldMaps.build(labOrigin: Vector3)
 			local model = Instance.new("Model")
 			model.Name = place.id
 			model:SetAttribute("Place", place.id)
-			builder(model, place, centre)
+			-- (One failing map must not take the rest and travel down with it: blind review 19 Nov.)
+			local ok, err = pcall(builder, model, place, centre)
+			if not ok then
+				warn(string.format("[Maps] %s failed to build: %s", place.id, tostring(err)))
+			end
 			local look = LOOKS[place.id]
 			if look then
 				dress(model, place, centre, look)

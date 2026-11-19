@@ -53,6 +53,10 @@ local function frame(m: Instance, place: any, c: Vector3, floorColor: Color3, fl
 	floor.CastShadow = false
 	if not visibleFloor then
 		floor.Transparency = 1
+		-- (Terrain is the ground there: the slab is only the crowd's Floor marker. Solid, it made a
+		-- glass floor over the sea and over the pit: blind review 19 Nov.)
+		floor.CanCollide = false
+		floor.CanTouch = false
 	end
 	local h = s.Y / 2
 	for name, cf in {
