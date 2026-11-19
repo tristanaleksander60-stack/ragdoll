@@ -192,7 +192,9 @@ local function body(player: Player, root: BasePart): string
 	assert(not LoadoutStore.validate({ "Grab", "NotATool", "Launch", "TNT", "Rocket", "Freeze" }), "a bar with an unknown tool was kept")
 	assert(LoadoutStore.validate({ "Grab" }), "a bar with one tool (the rest unequipped) was refused")
 	assert(not LoadoutStore.validate({}), "an empty bar was kept")
-	assert(not LoadoutStore.validate({ "Grab", "Shove", "Launch", "TNT", "Rocket", "Freeze", "Bat" }), "a bar of seven was kept")
+	-- (Release fix: since 0.17 a longer saved bar keeps its first Toys.SLOTS tools: LoadoutStore.validate, T56.)
+	local seven = LoadoutStore.validate({ "Grab", "Shove", "Launch", "TNT", "Rocket", "Freeze", "Bat" })
+	assert(seven and #seven == Toys.SLOTS and seven[1] == "Grab" and table.find(seven, "Bat") == nil, "a bar of seven was not cut to its first " .. Toys.SLOTS)
 	assert(not LoadoutStore.validate("Grab"), "a string was kept as a bar")
 	local good = { "Shove", "Grab", "Launch", "TNT", "Rocket", "Freeze" }
 	LoadoutStore.onSet(player, "Set", good)
