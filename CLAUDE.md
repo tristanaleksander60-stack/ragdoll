@@ -3,6 +3,9 @@
 Studio place: "[💥] Ragdoll Havoc", placeId 126037745825106. Game name: **Ragdoll Havoc** (owner changed it back on 10 Nov 2026; 'Santa's Sandbox' is dropped).
 Talk to the owner in Danish, short and plain.
 
+## NEXT: v3 (owner order, 19 Nov 2026)
+When the owner writes **"klar"**, run `docs/V3_PLAN.md` from its State line, automatically and without questions: research (Reddit, TikTok, YouTube, Roblox communities), then the look/HUD/first person/3D UI, maps from Creator Store models, lab activities and economy. Best, fastest, quality and cheapest, as that file says. Update its State line after every phase.
+
 ## Code and deploy
 - This folder is synced into Studio with Script Sync (each service is the sync root):
   - `ServerScriptService/` -> ServerScriptService (code in `Server/`)
