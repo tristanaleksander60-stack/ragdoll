@@ -25,6 +25,7 @@ local Log = require(Shared.Log)
 local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
 local FxService = require(script.Parent.FxService)
 local ProgressService = require(script.Parent.ProgressService)
+local ExperimentService = require(script.Parent.ExperimentService)
 local BadgeAwards = require(script.Parent.BadgeAwards)
 local Finish = require(script.Parent.Finish)
 
@@ -139,6 +140,7 @@ function watchBullseye(player: Player, target: BasePart)
 			if Vector3.new(d.X, 0, d.Z).Magnitude <= Playground.BULLSEYE_RADIUS + 1 and d.Y < 5 then
 				FxService.hit(target.Position + Vector3.new(0, 2, 0), 130, "CannonPad")
 				ProgressService.notice(player, "\u{1F3AF} BULLSEYE!")
+				ExperimentService.event(player, "Bullseye", 1)
 				BadgeAwards.award(player, "Bullseye")
 				return
 			end
@@ -202,6 +204,7 @@ local function buildCannon()
 		end
 		lastFired[player] = now
 		PlayerRagdoll.launch(player, CANNON_DIRECTION * CANNON_SPEED)
+		ExperimentService.event(player, "Cannon", 1)
 		FxService.hit(padPart.Position + Vector3.new(0, 3, 0), 120, "CannonPad")
 		-- A lab's bullseye (where the shot comes down): landing on it is told (watchBullseye).
 		local target = mine:FindFirstChild("Bullseye")
@@ -232,6 +235,7 @@ local function throwOnTouch(p: BasePart, cooldown: number, fxSpeed: number, fxId
 		last[player] = now
 		PlayerRagdoll.launch(player, velocityFor(root))
 		FxService.hit(root.Position, fxSpeed, fxId)
+		ExperimentService.event(player, "Hazard", 1)
 		if after then
 			task.spawn(after, player, root)
 		end

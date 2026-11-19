@@ -21,6 +21,7 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Toys = require(Shared:WaitForChild("Toys"))
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 local Shop = require(Shared:WaitForChild("Shop"))
 local Level = require(Shared:WaitForChild("Level"))
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
@@ -534,6 +535,7 @@ local function refresh()
 	local w = weapons
 	if w then
 		w.Visible = not first and not PokeController.isDoctor() and not PokeController.isPicking()
+			and not (phone and Config.PHONE_HUD_MAX7) -- (phase 1: the experiment card's place on a phone)
 		keyChip(w, keyText("Catalog"), UDim2.fromOffset(8, 6))
 	end
 	local d = deal

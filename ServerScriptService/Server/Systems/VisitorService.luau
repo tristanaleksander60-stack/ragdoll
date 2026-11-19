@@ -13,6 +13,8 @@ local Workspace = game:GetService("Workspace")
 local DummyFactory = require(script.Parent.DummyFactory)
 local Lab = require(script.Parent.Lab)
 local EventService = require(script.Parent.EventService)
+local SessionStats = require(script.Parent.SessionStats)
+local DeviceTier = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("DeviceTier"))
 
 local VisitorService = {}
 
@@ -82,7 +84,10 @@ local function fill(player: Player)
 			table.remove(list, i)
 		end
 	end
-	local want = VisitorService.VISITORS - #list
+	-- (Phase 1: the player's device simulates its lab's bodies: a phone gets fewer. DeviceTier.)
+	local record = SessionStats.recordFor(player)
+	local cap = math.min(VisitorService.VISITORS, DeviceTier.caps(DeviceTier.of(record and record.plat)).visitors)
+	local want = cap - #list
 	if want <= 0 then
 		return
 	end

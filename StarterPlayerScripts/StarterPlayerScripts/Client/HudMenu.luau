@@ -23,6 +23,7 @@ local ENTRIES = {
 	{ window = "Sandbox", text = "SANDBOX", role = "go", phoneOnly = true }, -- (HudMenu.onSandbox)
 	{ window = "Rewards", text = "REWARDS", role = "go", phoneOnly = true }, -- (round 5; off a phone: its own launcher)
 	{ window = "Eggs", text = "RANK & EGGS", role = "go" },
+	{ window = "Experiments", text = "EXPERIMENTS", role = "go", padOnly = true }, -- (phase 1: a pad reaches the card's window here)
 	{ window = "Friends", text = "FRIENDS", role = "info" },
 	{ window = "Creator", text = "CLIPS & LIVE", role = "info" },
 	{ window = "Settings", text = "SETTINGS", role = "neutral", phoneOnly = true }, -- (off a phone: its own launcher)
@@ -54,7 +55,7 @@ end
 function HudMenu.phoneCount(): number
 	local n = 0
 	for _, entry in ENTRIES do
-		if not (entry :: any).keyboardOnly and not (entry :: any).notPhone then
+		if not (entry :: any).keyboardOnly and not (entry :: any).notPhone and not (entry :: any).padOnly then
 			n += 1
 		end
 	end
@@ -152,6 +153,13 @@ function HudMenu.start()
 		local badge = C.Pill("!", { role = "danger", anchor = Vector2.new(0.5, 0.5), position = UDim2.new(1, -8, 0, 6), zIndex = 20, parent = button.root })
 		badge.Visible = false
 		buttons[name] = { badge = badge }
+		if (entry :: any).padOnly then
+			local function showPad()
+				button.root.Visible = string.sub(UserInputService:GetLastInputType().Name, 1, 7) == "Gamepad"
+			end
+			showPad()
+			UserInputService.LastInputTypeChanged:Connect(showPad)
+		end
 		if (entry :: any).keyboardOnly then
 			local function show()
 				button.root.Visible = UserInputService.KeyboardEnabled

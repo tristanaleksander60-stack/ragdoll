@@ -73,14 +73,17 @@ local MIN_GAP = 4
 local TOUCH_MIN = 44 -- px, the smallest tap target on a phone
 -- Boxes that are never on screen at the same time (the view card replaces the hint and holds toasts).
 local NEVER_TOGETHER: { [string]: { [string]: boolean } } = {
-	Choice = { Chase = true, Hint = true, Toast = true, Chip = true, GameBar = true, Light = true, HordeToast = true, Nuke = true, NukeHorde = true, HitInfo = true }, -- the card steps aside while a slot is picked; no nuke warning while it is up
+	Choice = { Experiment = true, Chase = true, Hint = true, Toast = true, Chip = true, GameBar = true, Light = true, HordeToast = true, Nuke = true, NukeHorde = true, HitInfo = true }, -- the card steps aside while a slot is picked; no nuke warning while it is up
 	-- (The hit line is not drawn while the view card asks its question; the first minute's hint steps
 	-- aside while it shows; nothing is fired while a slot is picked: HitInfo.show.)
 	HitInfo = { Choice = true, Hint = true, Chip = true, Chase = true },
-	Hint = { Choice = true, HordeToast = true, NukeHorde = true, HitInfo = true, Weapons = true, Chase = true },
-	Chip = { Choice = true, HitInfo = true, Weapons = true, Chase = true },
+	Hint = { Experiment = true, Choice = true, HordeToast = true, NukeHorde = true, HitInfo = true, Weapons = true, Chase = true },
+	Chip = { Experiment = true, Choice = true, HitInfo = true, Weapons = true, Chase = true },
 	-- (Round 5: the big WEAPONS button waits out the first minute, and steps aside while a slot is picked.)
-	Weapons = { Hint = true, Chip = true },
+	Weapons = { Experiment = true, Hint = true, Chip = true },
+	-- (Phase 1: the Experiment card waits out the first minute, steps aside while a slot is picked,
+	-- for a chase, the arena and a horde; on a phone it has the big WEAPONS button's box, hidden there.)
+	Experiment = { Hint = true, Chip = true, Chase = true, GameBar = true, HordeToast = true, NukeHorde = true, Weapons = true, Choice = true },
 	-- (Round 5: SHOOT shows only with a gun picked, GRAB and THROW only with Grab.)
 	Shoot = { Grab = true, Throw = true },
 	Grab = { Shoot = true, Zoom = true },
@@ -91,17 +94,17 @@ local NEVER_TOGETHER: { [string]: { [string]: boolean } } = {
 	Sprint = { Throw = true, Zoom = true },
 	-- (The chase waits for the horde and the arena: ChaseService; never in the first minute.)
 	-- (The hit line rests during a chase: HitInfo.show; the bar steps aside for the pick chip: ChaseHud.)
-	Chase = { GameBar = true, HordeToast = true, NukeHorde = true, Light = true, Hint = true, Choice = true, HitInfo = true, Chip = true },
+	Chase = { Experiment = true, GameBar = true, HordeToast = true, NukeHorde = true, Light = true, Hint = true, Choice = true, HitInfo = true, Chip = true },
 	-- (Toasts wait while the arena game's bar is up: MinigameHud pauses them; the view card is
 	-- only ever shown in the lab, never in the arena.)
 	Toast = { Choice = true, GameBar = true, Light = true, HordeToast = true, Nuke = true, NukeHorde = true },
 	-- (Below the bar only while a horde runs in the lab: never with the first minute's hint or
 	-- card, and it replaces the usual toast place.)
-	HordeToast = { Toast = true, Choice = true, Hint = true, Light = true, Nuke = true, NukeHorde = true },
-	GameBar = { Toast = true, Choice = true, Nuke = true },
+	HordeToast = { Experiment = true, Toast = true, Choice = true, Hint = true, Light = true, Nuke = true, NukeHorde = true },
+	GameBar = { Experiment = true, Toast = true, Choice = true, Nuke = true },
 	-- (The nuke warning has the toast's place, toasts wait; with the horde's bar up it goes under it.)
 	Nuke = { Toast = true, HordeToast = true, NukeHorde = true, GameBar = true, Choice = true },
-	NukeHorde = { Toast = true, HordeToast = true, Nuke = true, Choice = true, Hint = true, Light = true },
+	NukeHorde = { Experiment = true, Toast = true, HordeToast = true, Nuke = true, Choice = true, Hint = true, Light = true },
 	Light = { Toast = true, Choice = true, HordeToast = true },
 	-- (Round 2, N5: the Robux packs step aside while Streamer Mode's gift guide is up.)
 	Packs = { Guide = true },
@@ -116,7 +119,7 @@ local NEVER_TOGETHER: { [string]: { [string]: boolean } } = {
 	Revive = { Guide = true },
 	Reset = { Guide = true },
 }
-local TAPPABLE = { Sprint = true, View = true, Replay = true, Ragdoll = true, Recenter = true, Grab = true, Throw = true, Shoot = true, Mode = true, Play = true,
+local TAPPABLE = { Experiment = true, Sprint = true, View = true, Replay = true, Ragdoll = true, Recenter = true, Grab = true, Throw = true, Shoot = true, Mode = true, Play = true,
 	Weapons = true, Deal = true, FirstPerson = true, SlowMo = true, Revive = true, Reset = true }
 
 local function overlap(a: Rect, b: Rect): boolean
@@ -199,6 +202,7 @@ local function controls(screen: Vector2, touch: boolean, lab: boolean): { Rect }
 		end
 	end
 	table.insert(names, "Weapons") -- (round 5: the big WEAPONS button, under the chaos meter)
+	table.insert(names, "Experiment") -- (phase 1: the experiment card)
 	if not touch and not lab then
 		table.insert(names, "MouseHelp")
 	end

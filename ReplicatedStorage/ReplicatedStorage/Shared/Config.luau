@@ -34,6 +34,23 @@ local Config = {
 	--   MILD_TEXT: the hit line names a body region ("Body", "Left arm") and "health", not organs and
 	--   blood; doctor mode (opt-in) keeps its monitor.
 	MILD_TEXT = true,
+	-- Phase 1 (first 60 s hook):
+	--   EXPERIMENTS: one-line goal cards with a timer and stars (Shared\Experiments, ExperimentService)
+	--   XRAY_REPLAY: the replay shows see-through bodies with their bones, a score pop ("CRACK! +140"),
+	--   CLIP IT and a SHARE CODE (Shared\ShareCode)
+	--   PHONE_HUD_MAX7: a phone shows the experiment card in the big WEAPONS button's place (the bar
+	--   keeps its own WEAPONS slab): fire, stick, bar, experiment, SHOP, MENU, RAGDOLL
+	EXPERIMENTS = true,
+	EXPERIMENT_FIRST_AT = 30, -- s into a visit (the first-minute bar must be free too)
+	XRAY_REPLAY = true,
+	PHONE_HUD_MAX7 = true,
+	-- Extra ragdolls a device simulates for its own lab (Shared\DeviceTier: phone low, tablet and
+	-- console mid, computer high).
+	DEVICE_CAPS = table.freeze({
+		low = table.freeze({ visitors = 1, chasers = 4 }),
+		mid = table.freeze({ visitors = 2, chasers = 7 }),
+		high = table.freeze({ visitors = 3, chasers = 10 }),
+	}),
 }
 
 return table.freeze(Config)

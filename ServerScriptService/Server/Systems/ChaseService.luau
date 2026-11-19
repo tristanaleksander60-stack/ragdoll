@@ -22,6 +22,8 @@ local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
 local EventService = require(script.Parent.EventService)
 local MinigameService = require(script.Parent.MinigameService)
 local Metrics = require(script.Parent.Metrics)
+local SessionStats = require(script.Parent.SessionStats)
+local DeviceTier = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("DeviceTier"))
 
 local ChaseService = {}
 
@@ -113,7 +115,10 @@ function ChaseService.start(player: Player, count: number?): Chase?
 	if chases[player] or not inOwnLab(player) then
 		return nil
 	end
-	local n = math.min(count or math.random(ChaseService.CHASE_MIN, ChaseService.CHASE_MAX), EventService.dummyRoom())
+	-- (Phase 1: at most the device tier's chasers; DeviceTier.)
+	local record = SessionStats.recordFor(player)
+	local most = math.max(ChaseService.CHASE_MIN, math.min(ChaseService.CHASE_MAX, DeviceTier.caps(DeviceTier.of(record and record.plat)).chasers))
+	local n = math.min(count or math.random(ChaseService.CHASE_MIN, most), EventService.dummyRoom())
 	if n < ChaseService.CHASE_MIN and not count then
 		return nil
 	end

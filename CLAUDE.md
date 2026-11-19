@@ -85,6 +85,12 @@ Talk to the owner in Danish, short and plain.
 - SessionStats: `pv` (PlaceVersion), usedPad/Keys/Mouse/Touch + `input`, portrait, funnel `step`; tools\SessionReport updated. SOON cards hidden while ids are 0. STORE_TEXT.md, TEST-FASE0.md.
 - New tests T53_Gamepad, T54_PortraitHud, T55_QuietStart, T56_BarSixSlots, T57_MildContent, T58_SessionRecord, T59_NoSoonCards; T35 updated. Pure ones were also run off-Studio with a lune harness. Nothing here was play-tested in Studio yet.
 
+## Phase 1 (19 Nov 2026, branch `fase1`)
+- Experiment cards: Shared\Experiments (pure list, step, daily pick) + Server ExperimentService (leaf; events from ProgressService takedowns/eggs and Playground cannon/bullseye/hazards; remote Experiment Card/Done/Late, client Skip; stars as player attr Stars, `onReward` hook) + Client ExperimentCard (HudSlots "Experiment": phone = big WEAPONS box, hidden there by `Config.PHONE_HUD_MAX7`; else top middle in Chase's place) + EXPERIMENTS window (SKIP, friend's code). MENU "EXPERIMENTS" for pads.
+- X-ray replay (`Config.XRAY_REPLAY`): ReplayController copies go see-through blue with neon bones, "CRACK! +N" (ShareCode.scoreOf), SHARE CODE (Shared\ShareCode: toy + score, checksum), "CLIP IT" = the old Record clip.
+- Device tiers (Shared\DeviceTier, `Config.DEVICE_CAPS`): visitors/chasers per device (phone 1/4). Bodies already have one network owner (the lab's player) for life.
+- Tests T60_Experiments, T61_ShareCode, T62_DeviceTier; T54 has the Experiment box. TEST-FASE1.md.
+
 ## M10 progress (9 Nov 2026, NOT yet tested in Studio)
 **M10 PASSED (9 Nov 2026): blind review 8.75 after fix round 1.** Latest backup: `Documents\RagdollLab-backups\2026-11-09-m10-done` (pre-M10: `2026-11-08-baseline`). Full suite 44/46 before the fixes; the two failures were fixed (T40 Golf grip, T38 quiet-mode) except T37, which fails at ~24 Hz on this PC with the pre-M10 code too (environmental). Golf grip and Tip were moved onto the handle/head in the place (N7Assets) with welds rebuilt: the place must be saved. MAX_CORPSES = 16 server-wide. Scope cuts (owner may ask later): per-weapon Palm attachments, two-handed left-hand stance retune, server movement guard for sprint, client-side sprint self-test.
 Notes below are the pre-test M10 log.

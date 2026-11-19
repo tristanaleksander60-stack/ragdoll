@@ -50,6 +50,7 @@ SessionStats.hasLab = function(player: Player): boolean
 	return Lab.plotIndex(player) ~= nil
 end
 SessionStats.start()
+require(Systems:WaitForChild("ExperimentService")).start() -- phase 1: Experiment cards (Shared\Experiments)
 FxService.start()
 VitalsService.start() -- blood, pulse and wounds (round 2, N2)
 DummyControl.start()

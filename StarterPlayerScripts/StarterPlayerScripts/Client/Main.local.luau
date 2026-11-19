@@ -105,6 +105,9 @@ FriendsUI.start()
 ControlsUI.start()
 require(Client:WaitForChild("LikePrompt")).start() -- a friendly "like the game" ask (round 4)
 CreatorUI.start()
+require(Client:WaitForChild("ExperimentCard")).start() -- phase 1: the experiment card and EXPERIMENTS window
+ReplayController.currentToy = PokeController.getSelected -- (phase 1: the X-ray replay's SHARE CODE)
+ReplayController.onScore = require(Client:WaitForChild("ExperimentCard")).scored
 require(Client:WaitForChild("GamepadControls")).start() -- phase 0: the whole game on a gamepad (Shared\PadMap)
 ToolCatalog.bindHospital(HospitalCharts.isDoctor, function(on: boolean)
 	HospitalCharts.setDoctor(on)

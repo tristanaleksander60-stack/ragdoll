@@ -44,12 +44,14 @@ local APART: { [string]: { [string]: boolean } } = {
 	Throw = { Shoot = true, Zoom = true, Sprint = true },
 	Zoom = { Grab = true, Throw = true, Sprint = true },
 	Sprint = { Throw = true, Zoom = true },
+	Experiment = { Weapons = true }, -- (phase 1: on a phone the card has the big WEAPONS button's box)
+	Weapons = { Experiment = true },
 }
 
 local function check(screen: Vector2, portrait: boolean, problems: { string })
 	local ctx = { touch = true, lab = false, phone = true, portrait = portrait }
 	local list: { Rect } = { jump(screen) }
-	for _, name in { "Shoot", "Grab", "Throw", "Sprint", "Zoom", "View", "Ragdoll", "Chaos", "Weapons" } do
+	for _, name in { "Shoot", "Grab", "Throw", "Sprint", "Zoom", "View", "Ragdoll", "Chaos", "Weapons", "Experiment" } do
 		table.insert(list, rect(name, ctx, screen))
 	end
 	local cx, tw, ty = HudSlots.toastBox(screen, ctx)

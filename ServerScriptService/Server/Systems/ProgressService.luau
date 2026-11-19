@@ -37,6 +37,7 @@ local DummyControl = require(script.Parent.DummyControl)
 local Metrics = require(script.Parent.Metrics)
 local BadgeAwards = require(script.Parent.BadgeAwards)
 local SessionStats = require(script.Parent.SessionStats)
+local ExperimentService = require(script.Parent.ExperimentService)
 
 local log = Log.new("Progress")
 
@@ -873,6 +874,7 @@ function ProgressService.addTakedowns(player: Player, count: number): number
 	local before = p.takedowns
 	local rankBefore = Progress.rankOf(before)
 	p.takedowns += count
+	ExperimentService.event(player, "Takedown", count) -- (phase 1: experiment cards)
 	local every = (ProgressService.eggEvery and ProgressService.eggEvery(player)) or Progress.EGG_EVERY
 	local found = math.floor(p.takedowns / every) - math.floor(before / every)
 	if found > 0 then
@@ -1166,6 +1168,7 @@ function ProgressService.openEgg(player: Player, rolls: { pick: number?, any: nu
 	end
 	p.eggs -= 1
 	SessionStats.count(player, "eggOpened")
+	ExperimentService.event(player, "Egg", 1)
 	ProgressService.goal(player, "Eggs", 1)
 	BadgeAwards.award(player, "FirstEgg")
 	-- (A slot just came free: a daily egg that waited for room comes now. After this call.)

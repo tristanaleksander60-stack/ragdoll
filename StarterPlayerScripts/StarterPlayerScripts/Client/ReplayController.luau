@@ -9,6 +9,10 @@ local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local Keybinds = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Keybinds"))
 local KitStyle = require(script.Parent:WaitForChild("KitStyle"))
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
+local ShareCode = require(Shared:WaitForChild("ShareCode"))
+local Toys = require(Shared:WaitForChild("Toys"))
 
 local ReplayController = {}
 
@@ -32,6 +36,56 @@ local skipRequested = false
 
 -- Called by others: replay started / finished (to hide and show their UI).
 ReplayController.onStateChanged = nil :: ((playing: boolean) -> ())?
+-- Phase 1 (X-ray replay): the toy in hand (set by Main: PokeController.getSelected) and who hears
+-- the replay's score (ExperimentCard.scored: a friend's code beaten).
+ReplayController.currentToy = nil :: (() -> string)?
+ReplayController.onScore = nil :: ((score: number) -> ())?
+ReplayController.lastCode = nil :: string?
+
+-- The bodies' limbs that get a bone in the X-ray look.
+local BONES: { [string]: boolean } = {
+	Head = true, UpperTorso = true, LowerTorso = true,
+	LeftUpperArm = true, LeftLowerArm = true, RightUpperArm = true, RightLowerArm = true,
+	LeftUpperLeg = true, LeftLowerLeg = true, RightUpperLeg = true, RightLowerLeg = true,
+}
+local XRAY_SKIN = Color3.fromRGB(120, 200, 255)
+
+-- Phase 1: see-through bodies with a white bone in each limb (copies only; the world is untouched).
+local function xray(map: { [BasePart]: BasePart }, folder: Instance)
+	for _, copy in map do
+		if BONES[copy.Name] then
+			copy.Color = XRAY_SKIN
+			copy.Material = Enum.Material.Glass
+			copy.Transparency = 0.6
+			for _, d in copy:GetDescendants() do
+				if d:IsA("Decal") or d:IsA("Texture") or d:IsA("SurfaceAppearance") then
+					d:Destroy()
+				end
+			end
+			if copy:IsA("MeshPart") then
+				copy.TextureID = ""
+			end
+			local bone = Instance.new("Part")
+			bone.Name = "XrayBone"
+			bone.Shape = Enum.PartType.Cylinder
+			local long = math.max(copy.Size.X, copy.Size.Y, copy.Size.Z)
+			bone.Size = Vector3.new(long * 0.8, 0.22, 0.22)
+			bone.CFrame = copy.CFrame * CFrame.Angles(0, 0, math.rad(90))
+			bone.Color = Color3.new(1, 1, 1)
+			bone.Material = Enum.Material.Neon
+			bone.CanCollide = false
+			bone.CanQuery = false
+			bone.CanTouch = false
+			bone.Massless = true
+			bone.CastShadow = false
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = copy
+			weld.Part1 = bone
+			weld.Parent = bone
+			bone.Parent = folder
+		end
+	end
+end
 
 local function sources(): { Instance }
 	local list = {}
@@ -181,7 +235,7 @@ local function letterbox(): ScreenGui
 	label.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Heavy)
 	label.TextSize = 24
 	label.TextColor3 = Color3.fromRGB(255, 214, 70)
-	label.Text = "INSTANT REPLAY  0.3x"
+	label.Text = if Config.XRAY_REPLAY then "X-RAY REPLAY  0.3x" else "INSTANT REPLAY  0.3x"
 	label.Parent = g
 	local skip = Instance.new("TextButton")
 	skip.Name = "Skip"
@@ -204,7 +258,7 @@ local function letterbox(): ScreenGui
 	rec.Size = UDim2.fromOffset(150, 44)
 	rec.BackgroundColor3 = Color3.fromRGB(235, 70, 70)
 	rec.TextColor3 = Color3.new(1, 1, 1)
-	rec.Text = "Record clip"
+	rec.Text = if Config.XRAY_REPLAY then "CLIP IT" else "Record clip"
 	rec.Parent = g
 	rec.Activated:Connect(function()
 		if recording then
@@ -260,6 +314,9 @@ function ReplayController.play(eventTime: number): boolean
 	folder.Parent = Workspace
 	local map = buildActors(window, folder)
 	hideOriginals(map, true)
+	if Config.XRAY_REPLAY then
+		xray(map, folder)
+	end
 
 	-- Subject: the copy that travels furthest in the window.
 	local subject: BasePart? = nil
@@ -283,6 +340,58 @@ function ReplayController.play(eventTime: number): boolean
 	local oldCFrame = camera.CFrame
 	camera.CameraType = Enum.CameraType.Scriptable
 	local overlay = letterbox()
+	-- Phase 1: the hit's score ("CRACK! +140") and its SHARE CODE (toy + score) for a friend.
+	if Config.XRAY_REPLAY then
+		local rise, travel = 0, 0
+		local subjectOriginal: BasePart? = nil
+		for original, copy in map do
+			if copy == subject then
+				subjectOriginal = original
+			end
+		end
+		if subjectOriginal then
+			local a = first.cfs[subjectOriginal]
+			for _, f in window do
+				local cf = f.cfs[subjectOriginal]
+				if a and cf then
+					rise = math.max(rise, cf.Position.Y - a.Position.Y)
+					travel = math.max(travel, (cf.Position - a.Position).Magnitude)
+				end
+			end
+		end
+		local score, word = ShareCode.scoreOf(travel, rise)
+		local toyFn = ReplayController.currentToy
+		local toyIndex = table.find(Toys.list, Toys.byId[if toyFn then toyFn() else "Blaster"] or Toys.byId.Blaster) or 1
+		local code = ShareCode.encode(toyIndex, score)
+		ReplayController.lastCode = code
+		local pop = Instance.new("TextLabel")
+		pop.Name = "Score"
+		pop.BackgroundTransparency = 1
+		pop.AnchorPoint = Vector2.new(0.5, 0.5)
+		pop.Position = UDim2.fromScale(0.5, 0.3)
+		pop.Size = UDim2.fromScale(0.8, 0.12)
+		pop.TextScaled = true
+		pop.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Heavy)
+		pop.TextColor3 = Color3.fromRGB(255, 214, 70)
+		pop.TextStrokeTransparency = 0
+		pop.Text = string.format("%s +%d", word, score)
+		pop.Parent = overlay
+		local codeLabel = Instance.new("TextLabel")
+		codeLabel.Name = "Code"
+		codeLabel.BackgroundTransparency = 1
+		codeLabel.Position = UDim2.new(0, 24, 0.025, 38) -- (under the title: the buttons own the bottom bar)
+		codeLabel.Size = UDim2.fromOffset(260, 28)
+		codeLabel.TextXAlignment = Enum.TextXAlignment.Left
+		codeLabel.FontFace = pop.FontFace
+		codeLabel.TextSize = 20
+		codeLabel.TextColor3 = Color3.new(1, 1, 1)
+		codeLabel.Text = "SHARE CODE  " .. code
+		codeLabel.Parent = overlay
+		local onScore = ReplayController.onScore
+		if onScore then
+			task.spawn(onScore, score)
+		end
+	end
 
 	local t0 = window[1].t
 	local duration = window[#window].t - t0

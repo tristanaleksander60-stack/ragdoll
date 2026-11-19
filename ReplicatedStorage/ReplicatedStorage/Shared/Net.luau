@@ -48,6 +48,7 @@ Net.Names = table.freeze({
 	Rewards = "Rewards", -- both ways: client Hello / ClaimGroup; server State (round 5, RewardsService)
 	Session = "Session", -- client -> server: Hello (device, screen, boot time) / EggCard / FirstShot (round 5, SessionStats)
 	Aim = "Aim", -- client -> server (unreliable, ~10/s): where your gun points (pitch, yaw); the server shares it as the character's Aim attribute
+	Experiment = "Experiment", -- server -> client: Card (def, count, ends) / Done (stars) / Late; client -> server: Skip (phase 1)
 	Admin = "Admin", -- both ways, the owner only: client Theme (and M8's tricks); server Theme / Refused
 })
 

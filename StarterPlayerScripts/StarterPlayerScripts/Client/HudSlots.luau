@@ -146,6 +146,15 @@ end
 SLOTS.Weapons = function(ctx)
 	return slot(0, 0, UDim2.new(0, 12, 0, 68), if ctx.phone then 158 else 214, if ctx.phone then 46 else 58)
 end
+-- Phase 1: the Experiment card. On a phone it takes the big WEAPONS button's box (HudPlus hides
+-- that button there: Config.PHONE_HUD_MAX7; the bar keeps its WEAPONS slab); elsewhere top middle,
+-- under the toasts, where the NPC Chase's bar goes (it steps aside for a chase and the arena).
+SLOTS.Experiment = function(ctx)
+	if ctx.phone then
+		return slot(0, 0, UDim2.new(0, 12, 0, 68), 158, 46)
+	end
+	return slot(0.5, 0, UDim2.new(0.5, 0, 0, 108), 280, 46)
+end
 HudSlots.SIDE_X = -112 -- the right-hand cards' right edge (clear of the 86 px sandbox column)
 SLOTS.Deal = function()
 	return slot(1, 0, UDim2.new(1, HudSlots.SIDE_X, 0, 130), HudSlots.PACK.X, 56)
