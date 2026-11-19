@@ -49,6 +49,7 @@ The owner's standing order (19 Nov 2026): "når jeg skriver klar, gør du automa
   - Creatures: Gorilla Rampage and Bull Run events;
   - a BIG RED BUTTON per lab;
   - tests T91_LookV3 and T92_Creatures.
+- **Owner feedback after the first test (19 Nov):** the 3D menu lagged (fixed: the turning model only on the hovered card), and the code-built hills, trees, cannon and maps looked cheap. The answer is real models: `Server/Systems/V3Assets` + `tools/ImportV3Assets.luau` + `docs/V3_ASSETS.md` (29 picks); noise-terrain hills; trees only as models; `LabDress`.
 - **Next:**
   1. The PC session runs the PC TODO below (Studio captures, play test, fixes).
   2. Then Phase B maps from Creator Store models.
@@ -363,6 +364,7 @@ The 9 store images were downloaded via thumbnails.roblox.com (the video could no
 6. **Maps:** several clean maps in place of one crowded lab. One of them is a plain "clean room". We have WorldMaps (Office, WhiteRoom): put them in a Maps window with screenshots.
 
 ## PC TODO (Studio only; for the PC session or the owner)
+0. **Real models first:** run the prompt in `docs/PC_PROMPT_ASSETS.md`. It imports the 29 Creator Store picks with `tools/ImportV3Assets.luau`, then play-tests and builds the maps. The code switches to the models by itself (`V3Assets`).
 1. **Sync and play** the `release` branch. Run the SelfTest (T91, T92 and the full suite once) and LayoutCheck.
 2. **Captures before and after** from the same 3 spots (spawn, cannon, crash wall) plus one in a car, on PC and phone. Check:
    - the light (no grey wash; shadows visible);
