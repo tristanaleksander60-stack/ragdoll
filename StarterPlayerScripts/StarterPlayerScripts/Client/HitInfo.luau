@@ -33,6 +33,18 @@ HitInfo.TEXT_PHONE = 16
 HitInfo.LEAD_UP = 4
 HitInfo.MAX_W = 420 -- px, at most (less on a narrow screen: 24 px from each side)
 HitInfo.MAX_W_PHONE = 280 -- (a phone: clear of GRAB and THROW on the right)
+-- Its width on `screen`: on a landscape phone also clear of GRAB/SHOOT on both sides (196 px from
+-- each edge, like the bar: PC LayoutCheck 19 Nov, iPhone SE).
+function HitInfo.widthOn(screen: Vector2): number
+	local phone = math.min(screen.X, screen.Y) <= 500
+	if not phone then
+		return math.min(HitInfo.MAX_W, screen.X - 48)
+	end
+	if screen.X > screen.Y then
+		return math.min(HitInfo.MAX_W_PHONE, screen.X - 2 * 196)
+	end
+	return math.min(HitInfo.MAX_W_PHONE, screen.X - 24)
+end
 HitInfo.HEIGHT = 48 -- px: the two lines (26 + 22)
 if Config.LOOK_V3 then
 	HitInfo.HEIGHT = 64 -- (LOOK_V3: the black card's two lines, 30 + 26, and its padding)
@@ -333,7 +345,7 @@ function HitInfo.show(line: string, before: number?, model: Model?)
 	lastLine = line
 	local phone = phoneNow()
 	local size = if phone then HitInfo.TEXT_PHONE else HitInfo.TEXT
-	local room = if phone then HitInfo.MAX_W_PHONE else math.min(HitInfo.MAX_W, (workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize.X or 800) - 48)
+	local room = HitInfo.widthOn(if workspace.CurrentCamera then workspace.CurrentCamera.ViewportSize else Vector2.new(800, 600))
 	t.TextSize = size + HitInfo.LEAD_UP
 	st.TextSize = size
 	version += 1

@@ -9,11 +9,20 @@ local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Theme = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUITheme"))
+local HudSlots = require(script.Parent:WaitForChild("HudSlots"))
 
 local ChaseHud = {}
 
 ChaseHud.TOP = 108 -- px down the safe area: under the toast box (a phone's ends at 96), 12 clear
 ChaseHud.SIZE = Vector2.new(280, 46)
+
+-- (A phone held upright: under its toast box, HudSlots.eventTop.)
+function ChaseHud.top(screen: Vector2): number
+	return HudSlots.eventTop(screen, ChaseHud.TOP, HudSlots.PORTRAIT_CHASE_BELOW)
+end
+local function top(): number
+	return ChaseHud.top(workspace.CurrentCamera.ViewportSize)
+end
 
 local player = Players.LocalPlayer
 
@@ -26,7 +35,7 @@ function ChaseHud.start()
 	gui.Enabled = false
 	local frame = Instance.new("Frame")
 	frame.AnchorPoint = Vector2.new(0.5, 0)
-	frame.Position = UDim2.new(0.5, 0, 0, ChaseHud.TOP)
+	frame.Position = UDim2.new(0.5, 0, 0, top())
 	frame.Size = UDim2.fromOffset(280, 46)
 	frame.BackgroundColor3 = Color3.fromRGB(20, 16, 24)
 	frame.BackgroundTransparency = 0.15
@@ -70,18 +79,22 @@ function ChaseHud.start()
 		end
 		-- (Steps aside while a slot is picked: the pick chip has the middle of a phone. LayoutCheck.)
 		local chip = player.PlayerGui:FindFirstChild("PickChip", true)
-		gui.Enabled = not (chip and chip:IsA("GuiObject") and chip.Visible)
+		-- (And on a phone held upright while building: BUILD/PLAY have its row. The chase runs on.)
+		local vp = workspace.CurrentCamera.ViewportSize
+		local upright = math.min(vp.X, vp.Y) <= 500 and vp.Y > vp.X
+		gui.Enabled = not (chip and chip:IsA("GuiObject") and chip.Visible) and not (upright and player:GetAttribute("Building") == true)
+		frame.Position = UDim2.new(0.5, 0, 0, top())
 		local left = player:GetAttribute("ChaseLeft")
 		title.Text = string.format("NPC CHASE  ·  HP %d  ·  %s LEFT", hp, tostring(left or "?"))
 		TweenService:Create(fill, TweenInfo.new(0.15), { Size = UDim2.fromScale(math.clamp(hp / max, 0, 1), 1) }):Play()
 		if lastHp >= 0 and hp < lastHp then
 			-- (A punch: the bar shakes.)
-			frame.Position = UDim2.new(0.5, 6, 0, ChaseHud.TOP)
-			TweenService:Create(frame, TweenInfo.new(0.2, Enum.EasingStyle.Elastic), { Position = UDim2.new(0.5, 0, 0, ChaseHud.TOP) }):Play()
+			frame.Position = UDim2.new(0.5, 6, 0, top())
+			TweenService:Create(frame, TweenInfo.new(0.2, Enum.EasingStyle.Elastic), { Position = UDim2.new(0.5, 0, 0, top()) }):Play()
 		end
 		lastHp = hp
 	end
-	for _, a in { "ChaseHP", "ChaseMax", "ChaseLeft" } do
+	for _, a in { "ChaseHP", "ChaseMax", "ChaseLeft", "Building" } do
 		player:GetAttributeChangedSignal(a):Connect(redraw)
 	end
 	task.spawn(function()

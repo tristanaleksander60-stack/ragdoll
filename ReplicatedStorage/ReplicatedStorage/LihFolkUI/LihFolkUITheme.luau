@@ -347,9 +347,9 @@ if Theme.V2 then
 			textStroke = if stroke == "none" then nil else hex(stroke or "#090A14"),
 		}
 	end
-	set("go", "#62F29F", "#17B054", "#0A6630")
+	set("go", "#62F29F", "#13A04C", "#0A6630") -- (bottom #17B054 gave white 2.8:1; 3:1 needed with the stroke: PC LayoutCheck 19 Nov)
 	set("neutral", "#35416C", "#232C4B", "#0C1022")
-	set("premium", "#FFE27A", "#FFB120", "#9E5A00")
+	set("premium", "#FFE27A", "#FFB120", "#9E5A00", "#141A2C", "none") -- (ink on gold: white was 1.8:1)
 	set("danger", "#FF6E84", "#E0284F", "#7C0E27")
 	set("info", "#55D6FF", "#1F8EEA", "#0D4A8A")
 	set("done", "#E9EEF8", "#C4CCDD", "#7D8699", "#141A2C", "none")

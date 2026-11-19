@@ -51,6 +51,7 @@ HospitalCharts.MAX_W = 640
 HospitalCharts.MIN_W = 260
 HospitalCharts.WIDE_AT = 520 -- px: one row of tiles from this width
 HospitalCharts.BOTTOM = 12
+HospitalCharts.UPRIGHT_BOTTOM = 178 -- px: an upright phone's thumb row under it (JUMP, GRAB, THROW, RUN; RECENTER rests then, LabCamera)
 HospitalCharts.SWEEP = 3 -- s for the trace to cross the strip
 HospitalCharts.SLIDE = 40 -- px the monitor slides in from below
 HospitalCharts.LEAVE = Vector2.new(84, 44) -- the LEAVE button (a touch screen's way out: the bar is away)
@@ -82,6 +83,7 @@ export type Plan = {
 	tile: number, -- a tile's height
 	injuries: number, -- the injury line's height
 	body: number, -- the body map's column width (round 3, M5)
+	bottom: number, -- px under it (an upright phone: over the thumb row)
 }
 
 -- The monitor's size on a screen of this size (pure: LayoutCheck runs it for every screen).
@@ -92,18 +94,23 @@ function HospitalCharts.plan(screen: Vector2, touch: boolean, lab: boolean): Pla
 	if phone then
 		side = math.max(side, HospitalCharts.PHONE_SIDE)
 	end
+	local upright = phone and screen.Y > screen.X
+	if upright then
+		side = 12 -- (an upright phone: the whole width, over the thumb row; PC LayoutCheck 19 Nov)
+	end
 	local w = math.clamp(screen.X - 2 * side, HospitalCharts.MIN_W, HospitalCharts.MAX_W)
 	local wide = w >= HospitalCharts.WIDE_AT
 	-- A phone is short: everything a little lower, so the monitor stays under the toasts.
 	local header = if phone then 18 else 20
 	-- (Taller than before: the ECG and the SpO2 wave share the strip.)
-	local ecg = if wide then 84 elseif phone then 50 else 62
+	local ecg = if wide then 84 elseif upright then 40 elseif phone then 50 else 62 -- (upright: under the toasts on a 360x780 Android)
 	local tile = if wide then 40 elseif phone then 29 else 36
 	local injuries = if phone then 16 else 18
 	local rows = if wide then 1 else 2
 	local h = 8 + header + 4 + ecg + 6 + rows * tile + (rows - 1) * 4 + 4 + injuries + 8
 	local body = if wide then 54 elseif phone then 35 else 44
-	return { size = Vector2.new(w, h), wide = wide, ecg = ecg, header = header, tile = tile, injuries = injuries, body = body }
+	return { size = Vector2.new(w, h), wide = wide, ecg = ecg, header = header, tile = tile, injuries = injuries, body = body,
+		bottom = if upright then HospitalCharts.UPRIGHT_BOTTOM else HospitalCharts.BOTTOM }
 end
 
 -- The waves (round 3, M5 fix 1: shared, Anatomy, so the self-tests check them too).
@@ -305,7 +312,7 @@ local function build(): Ui
 	local panel = Instance.new("Frame")
 	panel.Name = "Monitor"
 	panel.AnchorPoint = Vector2.new(0.5, 1)
-	panel.Position = UDim2.new(0.5, 0, 1, -HospitalCharts.BOTTOM)
+	panel.Position = UDim2.new(0.5, 0, 1, -(if plan then plan.bottom else HospitalCharts.BOTTOM))
 	panel.BackgroundColor3 = INK
 	panel.BackgroundTransparency = 0.12
 	panel.Active = true -- (taps on it never reach the world behind)
@@ -523,6 +530,9 @@ local function layout()
 	plan = p
 	local w = p.size.X
 	u.panel.Size = UDim2.fromOffset(w, p.size.Y)
+	if not auto then
+		u.panel.Position = UDim2.new(0.5, 0, 1, -p.bottom) -- (turned upright or back: over the thumb row or not)
+	end
 	local y = 8
 	u.name.Position = UDim2.fromOffset(10, y)
 	u.name.Size = UDim2.new(1, -(20 + (if auto then 0 else HospitalCharts.LEAVE.X)), 0, p.header)
@@ -1022,7 +1032,7 @@ local function setAuto(body: Model?)
 		u.gui.Enabled = false
 		u.panel.Active = true
 		u.panel.AnchorPoint = Vector2.new(0.5, 1)
-		u.panel.Position = UDim2.new(0.5, 0, 1, -HospitalCharts.BOTTOM)
+		u.panel.Position = UDim2.new(0.5, 0, 1, -(if plan then plan.bottom else HospitalCharts.BOTTOM))
 		popScale().Scale = 1
 		watch(nil)
 	end
@@ -1100,8 +1110,8 @@ function HospitalCharts.setDoctor(on: boolean, quiet: boolean?)
 	local u = ui
 	if u then
 		-- It slides up into the bar's place, and down out of it (at once under Reduced Motion).
-		local base = UDim2.new(0.5, 0, 1, -HospitalCharts.BOTTOM)
-		local below = UDim2.new(0.5, 0, 1, -HospitalCharts.BOTTOM + HospitalCharts.SLIDE)
+		local base = UDim2.new(0.5, 0, 1, -(if plan then plan.bottom else HospitalCharts.BOTTOM))
+		local below = UDim2.new(0.5, 0, 1, -(if plan then plan.bottom else HospitalCharts.BOTTOM) + HospitalCharts.SLIDE)
 		local still = GuiService.ReducedMotionEnabled
 		if on then
 			u.gui.Enabled = true

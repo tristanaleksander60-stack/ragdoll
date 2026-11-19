@@ -26,6 +26,7 @@ local MinigameHud = require(script.Parent:WaitForChild("MinigameHud"))
 local HitInfo = require(script.Parent:WaitForChild("HitInfo"))
 local HospitalCharts = require(script.Parent:WaitForChild("HospitalCharts"))
 local Toys = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Toys"))
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local ToolCatalog = require(script.Parent:WaitForChild("ToolCatalog")) :: any
 local FriendsUI = require(script.Parent:WaitForChild("FriendsUI")) :: any
 local CreatorUI = require(script.Parent:WaitForChild("CreatorUI")) :: any
@@ -96,7 +97,11 @@ local NEVER_TOGETHER: { [string]: { [string]: boolean } } = {
 	Sprint = { Throw = true, Zoom = true },
 	-- (The chase waits for the horde and the arena: ChaseService; never in the first minute.)
 	-- (The hit line rests during a chase: HitInfo.show; the bar steps aside for the pick chip: ChaseHud.)
-	Chase = { Experiment = true, GameBar = true, HordeToast = true, NukeHorde = true, Light = true, Hint = true, Choice = true, HitInfo = true, Chip = true },
+	Chase = { Experiment = true, GameBar = true, HordeToast = true, NukeHorde = true, Light = true, Hint = true, Choice = true, HitInfo = true, Chip = true, Mode = true, Play = true },
+	-- (BUILD/PLAY show only while building on a phone; on an upright one the chase bar steps aside
+	-- then, ChaseHud, and toasts go under them, BuildController -> Toast.setMinTop.)
+	Mode = { Chase = true, Toast = true, GameBar = true, Nuke = true }, -- (the bar and the nuke banner go under them too: MinigameHud barTop, Toast.topY)
+	Play = { Chase = true, Toast = true, GameBar = true, Nuke = true },
 	-- (Toasts wait while the arena game's bar is up: MinigameHud pauses them; the view card is
 	-- only ever shown in the lab, never in the arena.)
 	Toast = { Choice = true, GameBar = true, Light = true, HordeToast = true, Nuke = true, NukeHorde = true },
@@ -328,19 +333,21 @@ function LayoutCheck.scene(s: Screen, lab: boolean, withTools: boolean): ({ Rect
 	if not withTools then
 		table.insert(all, { x = (s.size.X - 260) / 2, y = bar.y - 14 - 44, w = 260, h = 44, name = "Hint" })
 	end
-	table.insert(all, { x = (s.size.X - 270) / 2, y = bar.y - 10 - 104, w = 270, h = 104, name = "Choice" })
+	if Config.VIEW_CARD then -- (phase 0: the card is off, Config.VIEW_CARD)
+		table.insert(all, { x = (s.size.X - 270) / 2, y = bar.y - 10 - 104, w = 270, h = 104, name = "Choice" })
+	end
 	-- The hit line (round 2, N2), just above the bar: two lines at most.
 	local phone = math.min(s.size.X, s.size.Y) <= 500
-	local hw = if phone then HitInfo.MAX_W_PHONE else math.min(HitInfo.MAX_W, s.size.X - 48)
+	local hw = HitInfo.widthOn(s.size)
 	table.insert(all, { x = (s.size.X - hw) / 2, y = bar.y - HitInfo.ABOVE_BAR - HitInfo.HEIGHT, w = hw, h = HitInfo.HEIGHT, name = "HitInfo" })
 	-- The arena game's bar (MinigameHud), top middle (the light is drawn on it).
 	local gb = MinigameHud.BAR_SIZE
-	table.insert(all, { x = (s.size.X - gb.X) / 2, y = MinigameHud.BAR_TOP, w = gb.X, h = gb.Y, name = "GameBar" })
+	table.insert(all, { x = (s.size.X - gb.X) / 2, y = HudSlots.eventTop(s.size, MinigameHud.BAR_TOP), w = gb.X, h = gb.Y, name = "GameBar" })
 	-- Round 5: the NPC Chase's health bar (top middle, under the toasts; never with the horde's or
 	-- the arena's bar: ChaseService waits for them) and, on a touch screen in the player view, ZOOM
 	-- in its slot (only with a scoped gun: never with GRAB or THROW).
 	local ChaseHud = require(script.Parent:WaitForChild("ChaseHud")) :: any
-	table.insert(all, { x = (s.size.X - ChaseHud.SIZE.X) / 2, y = ChaseHud.TOP, w = ChaseHud.SIZE.X, h = ChaseHud.SIZE.Y, name = "Chase" })
+	table.insert(all, { x = (s.size.X - ChaseHud.SIZE.X) / 2, y = ChaseHud.top(s.size), w = ChaseHud.SIZE.X, h = ChaseHud.SIZE.Y, name = "Chase" })
 	if s.touch and not lab then
 		local ctx = ctxOf(s.size, true, false)
 		local at, size = HudSlots.rect("Zoom", ctx, s.size)
@@ -394,14 +401,14 @@ function LayoutCheck.run(): string
 				table.insert(all, toast)
 				-- During a horde toasts go on below the game bar (Toast.setMinTop); a phone shows them
 				-- in the bar's points line instead (MinigameHud setBar), so it has no such box.
-				local underBar = MinigameHud.BAR_TOP + MinigameHud.BAR_SIZE.Y + MinigameHud.TOAST_UNDER_GAP
+				local underBar = HudSlots.eventTop(s.size, MinigameHud.BAR_TOP) + MinigameHud.BAR_SIZE.Y + MinigameHud.TOAST_UNDER_GAP
 				if not phone then
 					table.insert(all, { x = centre - tw / 2, y = underBar, w = tw, h = 76, name = "HordeToast" })
 				end
 				-- The nuke warning (FriendsUI): in the toast's place, as wide as the toast box allows
 				-- (toasts wait while it shows); under the horde's bar while one runs.
 				local nw = math.min(FriendsUI.BANNER.X, tw)
-				table.insert(all, { x = centre - nw / 2, y = 10, w = nw, h = FriendsUI.BANNER.Y, name = "Nuke" })
+				table.insert(all, { x = centre - nw / 2, y = ty or 10, w = nw, h = FriendsUI.BANNER.Y, name = "Nuke" }) -- (FriendsUI: at Toast.topY)
 				if not phone then -- (a phone shows it in the horde bar's points line instead)
 					table.insert(all, { x = centre - nw / 2, y = underBar, w = nw, h = FriendsUI.BANNER.Y, name = "NukeHorde" })
 				end
@@ -521,14 +528,14 @@ function LayoutCheck.run(): string
 			local ok, bounds = pcall(TextService.GetTextBoundsAsync, TextService, params)
 			if ok then
 				worst = math.max(worst, bounds.Y)
-				if bounds.Y > MinigameHud.POP_LINES * MinigameHud.POP_TEXT * 1.25 then
+				if bounds.Y > MinigameHud.popLines(s.size) * MinigameHud.POP_TEXT * 1.25 then
 					problems += 1
-					table.insert(lines, string.format("%s: arena line over %d lines: %s", s.name, MinigameHud.POP_LINES, text))
+					table.insert(lines, string.format("%s: arena line over %d lines: %s", s.name, MinigameHud.popLines(s.size), text))
 				end
 			end
 		end
 		if math.min(s.size.X, s.size.Y) <= 500 then
-			table.insert(lines, string.format("%-18s arena line %d wide, %d lines of %d px: longest fit (%d px tall)", s.name, w, MinigameHud.POP_LINES, MinigameHud.POP_TEXT, worst))
+			table.insert(lines, string.format("%-18s arena line %d wide, %d lines of %d px: longest fit (%d px tall)", s.name, w, MinigameHud.popLines(s.size), MinigameHud.POP_TEXT, worst))
 		end
 	end
 	-- A line's width as the text engine draws it (the legacy GetTextSize measures about a tenth
@@ -581,7 +588,7 @@ function LayoutCheck.run(): string
 			for _, lab in { false, true } do
 				local phone = math.min(s.size.X, s.size.Y) <= 500
 				local p = HospitalCharts.plan(s.size, s.touch, lab)
-				local monitor: Rect = { x = (s.size.X - p.size.X) / 2, y = s.size.Y - HospitalCharts.BOTTOM - p.size.Y, w = p.size.X, h = p.size.Y, name = "Monitor" }
+				local monitor: Rect = { x = (s.size.X - p.size.X) / 2, y = s.size.Y - p.bottom - p.size.Y, w = p.size.X, h = p.size.Y, name = "Monitor" }
 				local all = controls(s.size, s.touch, lab)
 				local centre, tw, ty = HudSlots.toastBox(s.size, ctxOf(s.size, s.touch, lab))
 				table.insert(all, { x = centre - tw / 2, y = ty or 10, w = tw, h = toastH(s.size), name = "Toast" })
@@ -591,7 +598,7 @@ function LayoutCheck.run(): string
 				end
 				for _, r in all do
 					-- (SHOOT is not drawn in doctor mode: tools rest, PokeController.active.)
-					if r.name ~= "Shoot" and r.name ~= "Weapons" and overlap(monitor, r) then -- (round 5: the big WEAPONS button rests in doctor mode too)
+					if r.name ~= "Shoot" and r.name ~= "Weapons" and r.name ~= "Experiment" and r.name ~= "Recenter" and overlap(monitor, r) then -- (round 5: the big WEAPONS button rests in doctor mode too; so does the experiment card, ExperimentCard.shown)
 						table.insert(hits, "Monitor/" .. r.name)
 					end
 				end
@@ -663,7 +670,7 @@ function LayoutCheck.run(): string
 		local worst, worstText = 0, ""
 		for _, s in LayoutCheck.SCREENS do
 			local phone = math.min(s.size.X, s.size.Y) <= 500
-			local room = if phone then HitInfo.MAX_W_PHONE else math.min(HitInfo.MAX_W, s.size.X - 48)
+			local room = HitInfo.widthOn(s.size)
 			local size = if phone then HitInfo.TEXT_PHONE else HitInfo.TEXT
 			for _, pair in { { HitInfo.LONGEST_TOP, size + HitInfo.LEAD_UP }, { HitInfo.LONGEST_STATUS, size } } do
 				for _, text in pair[1] do
@@ -1079,7 +1086,7 @@ function LayoutCheck.uiV2(lines: { string }, widthOf: (string, number) -> number
 	local rare = {}
 	for _, r in UiRarity.LIST do
 		local onCard = LayoutCheck.contrast(r.color, card)
-		local word = if KitStyle.lightFace(r.color) then Theme.Palette.ink else Color3.new(1, 1, 1)
+		local word = if KitStyle.tagInk(r.color) then Theme.Palette.ink else Color3.new(1, 1, 1)
 		local tag = LayoutCheck.contrast(word, r.color)
 		if onCard < 3 or tag < 4.5 then
 			problems += 1

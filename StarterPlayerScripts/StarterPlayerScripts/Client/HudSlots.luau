@@ -40,6 +40,7 @@ export type Context = {
 -- them; the tool bar sits above that row (PokeController.PORTRAIT_BOTTOM), toasts go full width
 -- under the top cluster (toastBox's third value). LayoutCheck checks four portrait phones.
 HudSlots.PORTRAIT_TOAST_TOP = 200 -- px: under LAB VIEW / RAGDOLL (right) and SHOP / MENU (left)
+HudSlots.PORTRAIT_BUILD_ROW = 56 -- px: BUILD/PLAY (44) + 12 at the top of an upright phone's toast box while building
 
 local function slot(ax: number, ay: number, position: UDim2, w: number, h: number): Slot
 	return { anchor = Vector2.new(ax, ay), position = position, size = Vector2.new(w, h) }
@@ -59,7 +60,10 @@ local SLOTS: { [string]: (ctx: Context) -> Slot } = {
 	Chaos = function()
 		return slot(0, 0, UDim2.new(0, 12, 0, 10), 214, 46)
 	end,
-	Recenter = function()
+	Recenter = function(ctx)
+		if ctx.portrait then
+			return slot(1, 1, UDim2.new(1, -14, 1, -168), 56, 56) -- (upright: clear of the hit line over the bar)
+		end
 		return slot(1, 1, UDim2.new(1, -14, 1, -96), 56, 56)
 	end,
 	Grab = function(ctx)
@@ -79,12 +83,21 @@ local SLOTS: { [string]: (ctx: Context) -> Slot } = {
 	end,
 	Mode = function(ctx)
 		if ctx.phone then
+			if ctx.portrait then
+				-- (Upright, PC LayoutCheck 19 Nov: side by side with PLAY in the toasts' top row; while
+				-- building there toasts go under them, BuildController -> Toast.setMinTop, and the chase
+				-- bar steps aside, ChaseHud.)
+				return slot(0, 0, UDim2.new(0, 12, 0, HudSlots.PORTRAIT_TOAST_TOP), 92, 44)
+			end
 			return slot(0, 0, UDim2.new(0, 12, 0.5, 50), 92, 44) -- under the Events launcher
 		end
 		return slot(0, 1, UDim2.new(0, 14, 1, -14), 92, 56)
 	end,
 	Play = function(ctx)
 		if ctx.phone then
+			if ctx.portrait then
+				return slot(0, 0, UDim2.new(0, 114, 0, HudSlots.PORTRAIT_TOAST_TOP), 92, 44) -- right of BUILD
+			end
 			return slot(0, 0, UDim2.new(0, 12, 0.5, 104), 92, 44) -- under BUILD
 		end
 		return slot(0, 1, UDim2.new(0, 14, 1, -80), 92, 56) -- above BUILD
@@ -124,7 +137,9 @@ SLOTS.Sprint = function(ctx)
 		-- it): THROW's box, and RUN steps aside while THROW or ZOOM need it: HudSlots.sprintFree.)
 		return slot(1, 1, UDim2.new(1, -116, 1, -112), 60, 60)
 	end
-	return slot(1, 1, UDim2.new(1, -200, 1, -60), 70, 70)
+	-- (A tablet: under the 120 px jump button in the corner, clear of the 6-slot bar that ends 196 px
+	-- from the right; left of the jump button it sat on the bar: PC LayoutCheck 19 Nov, iPad.)
+	return slot(1, 1, UDim2.new(1, -100, 1, -8), 70, 70)
 end
 
 -- Round 5, phase 00: SHOOT (touch, the walk view, a gun picked) takes GRAB's place by the jump
@@ -241,6 +256,19 @@ end
 -- in the middle of the gap (a phone). Returns the centre x and the widest a toast may be; on a
 -- phone toasts may use three lines (TOAST_LINES) at a smaller size.
 HudSlots.TOAST_MAX = 520
+
+-- The top-middle bars (the arena's bar, the chase's health bar) on `screen`: `normal` px down,
+-- or on a phone held upright under the top corners, where its toasts go (PC LayoutCheck run,
+-- 19 Nov: at the top they sat on LAB VIEW, Replay, the chaos meter and WEAPONS). `below` = px
+-- under the toast's top line (the chase bar keeps clear of a toast).
+function HudSlots.eventTop(screen: Vector2, normal: number, below: number?): number
+	if math.min(screen.X, screen.Y) <= 500 and screen.Y > screen.X then
+		return HudSlots.PORTRAIT_TOAST_TOP + (below or 0)
+	end
+	return normal
+end
+HudSlots.PORTRAIT_CHASE_BELOW = 124 -- the chase bar under a portrait phone's toast (110 high, outlines + gap)
+
 function HudSlots.toastBox(screen: Vector2, ctx: Context): (number, number, number?)
 	if ctx.portrait then
 		-- (Upright: the gap between the top corners is a few dozen px; the whole width under them.)

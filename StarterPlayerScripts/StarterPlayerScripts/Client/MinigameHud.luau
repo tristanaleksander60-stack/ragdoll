@@ -33,11 +33,27 @@ MinigameHud.BAR_SIZE = Vector2.new(190, 60)
 MinigameHud.TOAST_UNDER_GAP = 12 -- px between the horde bar and a toast under it (outlines 10 apart)
 -- (Red Light, Green Light shows the light on the bar itself: its word in big letters in its colour
 -- and the bar's outline in it too; no second box under the bar.)
-local POP_Y = MinigameHud.BAR_TOP + MinigameHud.BAR_SIZE.Y + 10
+-- (A phone held upright: under the top corners, HudSlots.eventTop.)
+local function barTop(): number
+	local vp = workspace.CurrentCamera.ViewportSize
+	local top = HudSlots.eventTop(vp, MinigameHud.BAR_TOP)
+	if top ~= MinigameHud.BAR_TOP and Players.LocalPlayer:GetAttribute("Building") == true then
+		top += HudSlots.PORTRAIT_BUILD_ROW -- (under BUILD/PLAY while building upright)
+	end
+	return top
+end
+local function popY(): number
+	return barTop() + MinigameHud.BAR_SIZE.Y + 10
+end
 -- The points line under the bar: up to two lines, as wide as the screen allows (LayoutCheck checks
 -- the longest messages the server sends fit it on every screen).
 MinigameHud.POP_TEXT = 22
 MinigameHud.POP_LINES = 2
+-- (A phone held upright has the room under its bar and is narrow: 3 lines there; a 360 px Android
+-- needed them for the longest messages, PC LayoutCheck 19 Nov.)
+function MinigameHud.popLines(screen: Vector2): number
+	return if math.min(screen.X, screen.Y) <= 500 and screen.Y > screen.X then 3 else MinigameHud.POP_LINES
+end
 function MinigameHud.popWidth(screenWidth: number): number
 	return math.min(screenWidth - 32, 380)
 end
@@ -122,7 +138,13 @@ local function build()
 	local b = Instance.new("Frame")
 	b.Name = "Bar"
 	b.AnchorPoint = Vector2.new(0.5, 0)
-	b.Position = UDim2.new(0.5, 0, 0, MinigameHud.BAR_TOP)
+	b.Position = UDim2.new(0.5, 0, 0, barTop())
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+		b.Position = UDim2.new(0.5, 0, 0, barTop()) -- (turned upright or back)
+	end)
+	Players.LocalPlayer:GetAttributeChangedSignal("Building"):Connect(function()
+		b.Position = UDim2.new(0.5, 0, 0, barTop())
+	end)
 	b.Size = UDim2.fromOffset(MinigameHud.BAR_SIZE.X, MinigameHud.BAR_SIZE.Y)
 	b.BackgroundColor3 = P.dusk
 	local corner = Instance.new("UICorner")
@@ -146,7 +168,7 @@ local function build()
 	livesLabel = label(b, "Lives", Theme.Fonts.display, 18, Color3.fromRGB(255, 110, 130), UDim2.new(1, -60, 0, 26), UDim2.fromOffset(52, 30), Enum.TextXAlignment.Right)
 	b.Parent = g
 	-- Points (two lines at most, wrapped, never cut off).
-	popLabel = label(g, "Pop", Theme.Fonts.display, MinigameHud.POP_TEXT, P.positive, UDim2.new(0.5, 0, 0, POP_Y), UDim2.fromOffset(240, MinigameHud.POP_TEXT * MinigameHud.POP_LINES + 8))
+	popLabel = label(g, "Pop", Theme.Fonts.display, MinigameHud.POP_TEXT, P.positive, UDim2.new(0.5, 0, 0, popY()), UDim2.fromOffset(240, MinigameHud.POP_TEXT * MinigameHud.POP_LINES + 8))
 	popLabel.AnchorPoint = Vector2.new(0.5, 0)
 	popLabel.TextWrapped = true
 	popLabel.TextTruncate = Enum.TextTruncate.None
@@ -154,7 +176,8 @@ local function build()
 	local function fitPop()
 		local camera = Workspace.CurrentCamera
 		local w = if camera then camera.ViewportSize.X else 800
-		popLabel.Size = UDim2.fromOffset(MinigameHud.popWidth(w), MinigameHud.POP_TEXT * MinigameHud.POP_LINES + 8)
+		local vp = if camera then camera.ViewportSize else Vector2.new(800, 600)
+		popLabel.Size = UDim2.fromOffset(MinigameHud.popWidth(w), MinigameHud.POP_TEXT * MinigameHud.popLines(vp) + 8)
 	end
 	fitPop()
 	if Workspace.CurrentCamera then
@@ -203,10 +226,10 @@ local function pop(text: string, good: boolean)
 	if stroke then
 		stroke.Transparency = 0
 	end
-	popLabel.Position = UDim2.new(0.5, 0, 0, POP_Y)
+	popLabel.Position = UDim2.new(0.5, 0, 0, popY())
 	-- (Long lines stay a little longer: time to read them.)
 	local info = TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, if #text > 24 then 1.6 else 0.6)
-	TweenService:Create(popLabel, info, { TextTransparency = 1, Position = UDim2.new(0.5, 0, 0, POP_Y - 14) }):Play()
+	TweenService:Create(popLabel, info, { TextTransparency = 1, Position = UDim2.new(0.5, 0, 0, popY() - 14) }):Play()
 	if stroke then
 		TweenService:Create(stroke, info, { Transparency = 1 }):Play()
 	end
@@ -229,7 +252,7 @@ function setBar(on: boolean)
 		pop(text, true)
 	end else nil)
 	Toast.setMinTop(if on and not arena and not phone then function(): number
-		return MinigameHud.BAR_TOP + MinigameHud.BAR_SIZE.Y + MinigameHud.TOAST_UNDER_GAP
+		return barTop() + MinigameHud.BAR_SIZE.Y + MinigameHud.TOAST_UNDER_GAP
 	end else nil)
 end
 

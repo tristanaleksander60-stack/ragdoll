@@ -627,7 +627,7 @@ local function build()
 			tag.Size = UDim2.fromOffset(0, 22)
 			tag.AutomaticSize = Enum.AutomaticSize.X
 			tag.BackgroundColor3 = rarity.color
-			tag.TextColor3 = if KitStyle.lightFace(rarity.color) then Theme.Palette.ink else Color3.new(1, 1, 1)
+			tag.TextColor3 = if KitStyle.tagInk(rarity.color) then Theme.Palette.ink else Color3.new(1, 1, 1)
 			tag.FontFace = Theme.Fonts.display
 			tag.TextSize = 17
 			tag.Text = rarity.label

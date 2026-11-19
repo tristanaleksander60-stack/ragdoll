@@ -368,7 +368,8 @@ local function updateRecenterButton()
 	end
 	local away = (focus - home).Magnitude > 12 or math.abs(distance - HOME_DISTANCE) > 25
 		or math.abs(((yaw - HOME_YAW + 180) % 360) - 180) > 70
-	button.Visible = away and ViewMode.isLab() and not ReplayController.isPlaying()
+	-- (Rests in doctor mode: the monitor has the bottom, and the camera is not the point then.)
+	button.Visible = away and ViewMode.isLab() and not ReplayController.isPlaying() and not PokeController.isDoctor()
 end
 
 -- Phase 0: a gamepad in the lab view: the right stick orbits, the left one pans.

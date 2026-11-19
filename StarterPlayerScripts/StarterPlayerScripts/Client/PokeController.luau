@@ -431,6 +431,7 @@ export type Plan = {
 	nextStacked: boolean, -- (no longer used: the cards never stack; kept false)
 	nextRow: boolean, -- the next cards on a row of their own under the slots (a phone, a tablet)
 	lead: number, -- columns before the slots (WEAPONS)
+	shown: number, -- slots drawn (a small landscape phone shows the first ones that fit; the rest stay in WEAPONS)
 }
 
 -- The chip stays below this line: under the top HUD rows and any toast (LayoutCheck checks it on
@@ -443,11 +444,14 @@ local CHIP_CLEAR_TOP = 96
 -- On a phone the bar keeps clear of the left edge's launchers (round 3, M6: SHOP, WEAPONS, SANDBOX
 -- and MENU two to a row, 136 px wide at most, and 10 px between).
 PokeController.PHONE_SIDE_MIN = 146
+-- A landscape phone's GRAB/SHOOT box (HudSlots: 108 from the right, 76 wide) plus LayoutCheck's clearance
+-- (3 px outlines on both and a 4 px gap).
+PokeController.PHONE_THUMB_RIGHT = 196
 PokeController.NEXT_SHOWN = NextUnlocks.SHOWN
 PokeController.NEXT_SIDE = 226 -- px each side on a computer with the next cards: the longer bar clears the
 -- part counter beside PLAY (left) and the mouse help (right)
 PokeController.CHIP_SIDE_WIDE = 222 -- the pick chip clears the counter too off a phone
-PokeController.CHIP_MAX = 720 -- ...and is never wider than it was before the next cards (clear of the gift guide)
+PokeController.CHIP_MAX = 700 -- ...and is never wider than it was before the next cards (clear of the gift guide: 720 left 1 px at 1280 wide, PC LayoutCheck 19 Nov)
 -- Phase 0: a phone held upright in the walk view: the bar sits over the thumb row (the move stick,
 -- SHOOT / GRAB and the jump button, with RUN and THROW over them: HudSlots, portrait).
 PokeController.PORTRAIT_BOTTOM = 180
@@ -457,6 +461,11 @@ function PokeController.plan(screen: Vector2, touch: boolean, lab: boolean, with
 	local phone = math.min(screen.X, screen.Y) <= 500
 	if phone then
 		side = math.max(side, PokeController.PHONE_SIDE_MIN)
+	end
+	if phone and touch then
+		-- (PC play test 19 Nov: with 6 slots, the next cards made the bar two rows on a landscape
+		-- phone, over JUMP/SHOOT/GRAB. The WEAPONS button already names the next weapon there.)
+		up = 0
 	end
 	if not touch and up > 0 then
 		side = math.max(side, PokeController.NEXT_SIDE)
@@ -468,8 +477,21 @@ function PokeController.plan(screen: Vector2, touch: boolean, lab: boolean, with
 	-- One row: WEAPONS, your slots, then the next cards, each a slot wide. Too narrow for that (a
 	-- phone, a tablet in the walk view): the next cards go on a row of their own under the slots.
 	local rows, perRow, tail, nextRow = 1, count, up, false
+	local shownCount = count
 	local w = widthFor(lead + count + up, side)
-	if w < MIN_W_ONE_ROW then
+	local landscapePhone = phone and touch and screen.X > screen.Y
+	if landscapePhone and not lab then
+		-- A landscape phone keeps one short row between the move stick and GRAB/SHOOT (their box
+		-- ends PHONE_THUMB_RIGHT from the right edge), never the full width over them (PC play
+		-- test 19 Nov, 6 slots): as many slots as fit at the 44 px touch floor, at least 3.
+		local clear = PokeController.PHONE_THUMB_RIGHT
+		local fit = math.floor((screen.X - 2 * clear - 2 * EDGE + GAP) / (44 + GAP)) - lead
+		shownCount = math.clamp(fit, math.min(3, count), count)
+		perRow = shownCount
+		w = math.clamp(widthFor(lead + shownCount, clear), 44, MAX_W)
+	elseif landscapePhone and w < MIN_W_ONE_ROW then
+		w = math.max(w, 44) -- (the lab view: no thumb buttons, one row at the touch floor)
+	elseif w < MIN_W_ONE_ROW then
 		perRow = math.max(count, up)
 		tail = 0
 		nextRow = up > 0
@@ -480,6 +502,17 @@ function PokeController.plan(screen: Vector2, touch: boolean, lab: boolean, with
 		end
 	end
 	w = math.clamp(w, 44, MAX_W)
+	if phone and touch and screen.Y > screen.X then
+		-- An upright phone: the slots that fit across at the 44 px floor (a 360 px Android fits 5
+		-- of 6 with WEAPONS; PC LayoutCheck 19 Nov found the bar off screen).
+		local fit = math.floor((screen.X - 24 - 2 * EDGE + GAP) / (44 + GAP)) - lead
+		if fit < shownCount then
+			shownCount = math.max(fit, 1)
+			perRow = shownCount
+			rows = 1 + (if nextRow then 1 else 0)
+			w = math.clamp(widthFor(lead + shownCount, 12), 44, MAX_W)
+		end
+	end
 	-- Phones are short: slabs 48 high (the touch floor is 44) keep the two-row bar low on screen.
 	local h = if touch and math.min(screen.X, screen.Y) <= 500 then 48 elseif touch then 58 else 60
 	local columns = perRow + lead + tail
@@ -499,6 +532,7 @@ function PokeController.plan(screen: Vector2, touch: boolean, lab: boolean, with
 		nextStacked = false,
 		nextRow = nextRow,
 		lead = lead,
+		shown = shownCount,
 	}
 end
 -- Places every slab per the plan, shows the bar's tools in order (and TOOLS after the first
@@ -541,6 +575,9 @@ local function layout()
 	end
 	for id, slab in slabs do
 		local index = table.find(list, id)
+		if index and index > plan.shown then
+			index = nil -- (a small landscape phone: past the slots that fit)
+		end
 		local root = slab.button.root
 		root.Visible = index ~= nil
 		if index then

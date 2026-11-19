@@ -62,6 +62,14 @@ local function lightFace(c: Color3): boolean
 	return 0.2126 * lin(c.R) + 0.7152 * lin(c.G) + 0.0722 * lin(c.B) > 0.4
 end
 KitStyle.lightFace = lightFace
+-- A small word on a coloured tag (the rarity tags): ink when it reads better than white, i.e. above
+-- about 0.2 luminance (white on the RARE blue was 2.5:1; PC LayoutCheck 19 Nov).
+function KitStyle.tagInk(c: Color3): boolean
+	local function lin(v: number): number
+		return if v <= 0.03928 then v / 12.92 else ((v + 0.055) / 1.055) ^ 2.4
+	end
+	return 0.2126 * lin(c.R) + 0.7152 * lin(c.G) + 0.0722 * lin(c.B) > 0.2
+end
 
 -- TextScaled under a cap (the size it was designed at) and the floor. A TextSize set later (the
 -- callers do: "RAGDOLL" at 16) moves the cap, so nothing a caller tuned is lost.

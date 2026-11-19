@@ -74,6 +74,7 @@ local function shown(): boolean
 	return (current ~= nil or party ~= nil)
 		and not PokeController.firstMinute()
 		and not PokeController.isPicking()
+		and not PokeController.isDoctor() -- (rests with the tools while the monitor has the bar's place)
 		and not ReplayController.isPlaying()
 		and not ToolCatalog.isOpen()
 		and not (chase and chase:IsA("ScreenGui") and chase.Enabled)

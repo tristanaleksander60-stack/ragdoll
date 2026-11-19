@@ -73,6 +73,7 @@ local wires: { { number } } = {}
 local busy = false
 local toyBarWasOn = true
 local ownsToyBar = false -- build mode has taken over the toy bar
+local ownsToastFloor = false -- build mode pushed toasts under BUILD/PLAY (an upright phone)
 local unlocked = false -- the first minute is over: build mode can be opened
 local sandboxHud: any = nil -- the left column's SANDBOX (round 2, N5)
 
@@ -412,6 +413,18 @@ local function refreshMode()
 	rail.Visible = active and not playing
 	counter.Visible = active
 	Players.LocalPlayer:SetAttribute("Building", active) -- (a phone's chaos meter steps aside: ChaosMeter)
+	-- A phone held upright: BUILD/PLAY have the toasts' top row, so toasts go under them while
+	-- building (on a phone nothing else sets the toast floor: MinigameHud redirects there).
+	local upright = HudSlots.context(ViewMode.isTouch(), ViewMode.isLab()).portrait == true
+	if active and upright then
+		Toast.setMinTop(function(): number
+			return HudSlots.PORTRAIT_TOAST_TOP + HudSlots.PORTRAIT_BUILD_ROW
+		end)
+		ownsToastFloor = true
+	elseif ownsToastFloor then
+		Toast.setMinTop(nil)
+		ownsToastFloor = false
+	end
 	counter.Text = string.format("%d/%d parts", pieceCount, Catalog.MAX_PARTS)
 	setTool(tool)
 	-- While building, the toy bar steps aside; while playing your machine, it is back.
