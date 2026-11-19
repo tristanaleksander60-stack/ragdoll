@@ -70,6 +70,14 @@ require(Systems:WaitForChild("PlayerGrab")).start() -- grab and throw other play
 Playground.build(workspace:GetAttribute("LabOrigin") or Vector3.zero, "Plaza") -- the plaza's own
 Lab.setPlaygroundBuilder(Playground.build) -- and one in every lab once someone owns it
 WorldMaps.build(workspace:GetAttribute("LabOrigin") or Vector3.zero) -- the places (before their crowds)
+do -- LOOK_V3: grass, hills and trees round the labs (after WorldMaps: it repaints the baseplate)
+	local ok, err = pcall(function()
+		require(Systems:WaitForChild("Landscape")).build(workspace:GetAttribute("LabOrigin") or Vector3.zero, Lab.PLOT_SPACING, Lab.PLOT_COUNT)
+	end)
+	if not ok then
+		warn("[Landscape] " .. tostring(err))
+	end
+end
 -- A trip to a room counts towards the day's goals (round 3, M9).
 WorldMaps.onTrip = function(player: Player, landed: string)
 	local place = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Places")).byId[landed]
