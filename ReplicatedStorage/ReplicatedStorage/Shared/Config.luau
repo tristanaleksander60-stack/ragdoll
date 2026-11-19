@@ -97,6 +97,13 @@ local Config = {
 	-- entry of Shop.WHATS_NEW must carry Config.Version (T66 checks it).
 	UPDATE_TITLE = "[UPD] Ragdoll Havoc \u{1F4A5}",
 	UPDATE_DAYS = table.freeze({ "Thursday", "Saturday" }),
+	-- UI v2 (19 Nov 2026, branch ui-polish): one premium, phone-first look for every screen. The
+	-- LihFolk kit's tokens (LihFolkUITheme: navy canvas, havoc-orange accent, Fredoka One titles,
+	-- rounder corners, press squish 0.92, 14 px text floor), drawn icons on the HUD's text buttons
+	-- (KitStyle.icon), press + click on every button (KitStyle.press), count-up numbers, rarity
+	-- colours and readable stat bars on the weapon cards (Shared\UiRarity), a clearer hit / kill
+	-- mark. false = the round 5 dark-glass look, unchanged.
+	UI_V2 = true,
 	-- Extra ragdolls a device simulates for its own lab (Shared\DeviceTier: phone low, tablet and
 	-- console mid, computer high).
 	DEVICE_CAPS = table.freeze({

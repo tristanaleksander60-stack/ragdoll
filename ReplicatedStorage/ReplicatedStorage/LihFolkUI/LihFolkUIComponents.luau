@@ -129,14 +129,17 @@ local function recess(parent: GuiObject, radius: UDim)
 end
 
 -- The gamepad selection ring used by every selectable LihFolk control.
+-- (UI v2: the ring takes Theme.Focus: a bright yellow a little further out, seen on every surface.)
 local function selectionRing(radius: UDim): Frame
-	local ring = blank("SelectionRing", UDim2.new(1, 10, 1, 10))
+	local focus = Theme.Focus
+	local ring = blank("SelectionRing", UDim2.new(1, focus.grow, 1, focus.grow))
 	ring.AnchorPoint = Vector2.new(0.5, 0.5)
 	ring.Position = UDim2.fromScale(0.5, 0.5)
 	corner(ring, radius)
-	outline(ring, 3, P.white)
+	outline(ring, focus.thickness, focus.color)
 	return ring
 end
+Components.selectionRing = selectionRing
 
 Components.corner = corner
 Components.outline = outline
@@ -1217,7 +1220,7 @@ function Components.HudButton(props: HudButtonProps): HudButton
 	})
 	local captionFit = caption:FindFirstChildOfClass("UITextSizeConstraint")
 	if captionFit then
-		captionFit.MaxTextSize = 15
+		captionFit.MaxTextSize = if Theme.V2 then 17 else 15 -- (UI v2: short names draw 14 px on a phone)
 		captionFit.MinTextSize = Components.HUD_CAPTION_MIN -- (every name fits: LayoutCheck measures them)
 	end
 	caption.FontFace = Theme.Fonts.body -- (Builder Sans Bold: a name of 7 letters keeps 15 px in the tile)
@@ -1373,6 +1376,25 @@ function Components.Window(props: WindowProps): Window
 	local motionScale = Instance.new("UIScale")
 	motionScale.Name = "Motion"
 	motionScale.Parent = panel
+	-- UI v2: a soft drop shadow under the panel (Theme.Shadow), a sibling behind it that follows the
+	-- panel's open / close scale (never a second UIScale on the panel itself).
+	local shadowSpec = Theme.Shadow
+	if shadowSpec.enabled then
+		local shadow = blank("Shadow")
+		shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+		shadow.Position = UDim2.new(0.5, 0, 0.5, shadowSpec.offset)
+		shadow.BackgroundTransparency = shadowSpec.transparency
+		shadow.BackgroundColor3 = shadowSpec.color
+		shadow.ZIndex = 0
+		corner(shadow, px(Theme.Radius.panel + 2))
+		local shadowScale = Instance.new("UIScale")
+		shadowScale.Name = "Motion"
+		shadowScale.Parent = shadow
+		motionScale:GetPropertyChangedSignal("Scale"):Connect(function()
+			shadowScale.Scale = motionScale.Scale
+		end)
+		shadow.Parent = root
+	end
 
 	if props.pattern ~= false and Theme.Bands then
 		Components.Pattern(panel, swatch.top)

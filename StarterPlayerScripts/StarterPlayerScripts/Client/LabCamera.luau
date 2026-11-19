@@ -23,7 +23,6 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 local Workspace = game:GetService("Workspace")
-local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
@@ -469,14 +468,7 @@ local function buildRecenterButton()
 	end)
 	button.Activated:Connect(function()
 		recenter()
-		local scale = Instance.new("UIScale")
-		scale.Scale = 0.85
-		scale.Parent = button
-		local tween = TweenService:Create(scale, TweenInfo.new(0.18, Enum.EasingStyle.Back), { Scale = 1 })
-		tween:Play()
-		tween.Completed:Once(function()
-			scale:Destroy()
-		end)
+		KitStyle.pop(button, 0.85) -- (on the slot's own UIScale: never a second one)
 	end)
 	button.Parent = gui
 
@@ -488,6 +480,7 @@ local function buildRecenterButton()
 	view.Text = "LAB VIEW"
 	view.AutoButtonColor = true
 	KitStyle.button(view)
+	KitStyle.icon(view, KitStyle.HUD_ICONS.View) -- (UI v2: the drawn eye beside the word)
 	-- The key for it, in the corner of the button (keyboards only; V unless changed in Controls).
 	if UserInputService.KeyboardEnabled and not ViewMode.isTouch() then
 		local key = Instance.new("TextLabel")

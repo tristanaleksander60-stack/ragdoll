@@ -18,6 +18,7 @@ local UserInputService = game:GetService("UserInputService")
 local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 local ViewMode = require(script.Parent:WaitForChild("ViewMode"))
 local HudSlots = require(script.Parent:WaitForChild("HudSlots"))
+local KitStyle = require(script.Parent:WaitForChild("KitStyle"))
 local PokeController = require(script.Parent:WaitForChild("PokeController"))
 local AvatarMoves = require(script.Parent:WaitForChild("AvatarMoves"))
 local FxController = require(script.Parent:WaitForChild("FxController"))
@@ -57,7 +58,7 @@ local function showHold()
 	local button = touchButton
 	local on = touchHeld or padHeld
 	if button then
-		button.BackgroundColor3 = if on then Color3.fromRGB(60, 170, 90) else Color3.fromRGB(20, 22, 28)
+		button.BackgroundColor3 = if on then (if KitStyle.V2 then KitStyle.GO else Color3.fromRGB(60, 170, 90)) elseif KitStyle.V2 then KitStyle.SLAB else Color3.fromRGB(20, 22, 28)
 	end
 end
 
@@ -71,7 +72,7 @@ local function makeTouchButton(): TextButton
 	local button = Instance.new("TextButton")
 	button.Name = "Run"
 	button.Text = "RUN"
-	button.Font = Enum.Font.GothamBold
+	button.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold) -- (Gotham is retired: it draws Montserrat)
 	button.TextSize = 16
 	button.TextColor3 = Color3.new(1, 1, 1)
 	button.BackgroundColor3 = Color3.fromRGB(20, 22, 28)
@@ -85,6 +86,12 @@ local function makeTouchButton(): TextButton
 	stroke.Color = Color3.new(0, 0, 0)
 	stroke.Thickness = 2
 	stroke.Parent = button
+	if KitStyle.V2 then
+		-- (UI v2: the kit's round HUD button with the drawn boot over the word, Fredoka, fitted.)
+		KitStyle.button(button, true)
+		button.BackgroundColor3 = KitStyle.SLAB
+		KitStyle.icon(button, KitStyle.HUD_ICONS.Sprint, "top")
+	end
 	-- The finger that pressed it is followed to its end, wherever it slides or is cancelled.
 	button.InputBegan:Connect(function(input: InputObject)
 		if input.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType ~= Enum.UserInputType.MouseButton1 then

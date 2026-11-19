@@ -27,6 +27,7 @@ local Client = script.Parent
 local PokeController = require(Client:WaitForChild("PokeController"))
 local ViewMode = require(Client:WaitForChild("ViewMode"))
 local HudSlots = require(Client:WaitForChild("HudSlots"))
+local KitStyle = require(Client:WaitForChild("KitStyle"))
 local SessionClient = require(Client:WaitForChild("SessionClient"))
 
 local TouchShoot = {}
@@ -138,6 +139,16 @@ local function build()
 	end)
 	b.Parent = gui
 	button = b
+	if KitStyle.V2 then
+		-- (UI v2: the drawn blaster over the word, the kit's light-from-above face, the press squish.)
+		local shade = Instance.new("UIGradient")
+		shade.Rotation = 90
+		shade.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(205, 205, 215))
+		shade.Parent = b
+		KitStyle.fit(b, 22)
+		KitStyle.icon(b, KitStyle.HUD_ICONS.Shoot, "top")
+		KitStyle.press(b, "") -- (no click per shot: the gun is the sound)
+	end
 	-- Round 5: ZOOM over SHOOT while a scoped gun (Sniper, DMR) is picked: a toggle (GunFeel).
 	local z = Instance.new("TextButton")
 	z.Name = "Zoom"
@@ -164,6 +175,10 @@ local function build()
 		GunFeel.setZoomToggle(on)
 		z.BackgroundColor3 = if on then Color3.fromRGB(40, 150, 80) else Color3.fromRGB(40, 60, 90)
 	end)
+	if KitStyle.V2 then
+		KitStyle.fit(z, 20)
+		KitStyle.press(z)
+	end
 	z.Parent = gui -- (its own box over SHOOT, not inside SHOOT's padding: review fix)
 	buttonGui = gui
 	gui.Parent = player:WaitForChild("PlayerGui")

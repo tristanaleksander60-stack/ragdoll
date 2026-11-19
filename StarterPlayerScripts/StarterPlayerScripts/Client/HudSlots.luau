@@ -270,6 +270,7 @@ function HudSlots.apply(object: GuiObject, name: string, ctx: Context)
 	object.Size = UDim2.fromOffset(s.size.X, s.size.Y)
 	object:SetAttribute("HudSlot", name)
 	local k = HudSlots.scaleOf(name, ctx)
+	object:SetAttribute("KitBase", k) -- (UI v2: KitStyle's press and pop return to this scale)
 	local scale = object:FindFirstChild("HudScale")
 	if k < 1 and not scale then
 		local made = Instance.new("UIScale")
