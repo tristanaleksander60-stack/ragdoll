@@ -301,7 +301,8 @@ local function run(results: { string }, player: Player)
 	local healedBlood = bruised:GetAttribute("Blood") :: number
 	assert(bruisedBlood >= 85 and healedBlood > bruisedBlood, string.format("blood after the blows %d%%, 3 s later %d%%", bruisedBlood, healedBlood))
 	table.insert(results, string.format("blunt blows: a Punch on the top of the head is the skull (alive), a Slap on the heart (%q) clots in seconds: %d%% blood, back to %d%% 3 s later", slapLine, bruisedBlood, healedBlood))
-	-- Blows alone never put a body down: eight Mega Slaps on the heart (the heaviest blow), then
+	-- Blows never bleed a body out: three Mega Slaps on the heart (the heaviest blow; v4 A5: five
+	-- would kill by damage, T95), then
 	-- watched until every bruise has long stopped bleeding.
 	local boxer = body(Lab.plazaOrigin() + Vector3.new(-36, 0, -28))
 	local lowest, lowestBlood = math.huge, math.huge
@@ -310,7 +311,7 @@ local function run(results: { string }, player: Player)
 		lowest = math.min(lowest, boxer:GetAttribute("Pulse") :: number)
 		assert(boxer:GetAttribute("Vital") == "Alive", string.format("Mega Slaps on the heart left it %s at %d%% blood", tostring(boxer:GetAttribute("Vital")), boxer:GetAttribute("Blood") :: number))
 	end
-	for _ = 1, 8 do
+	for _ = 1, 3 do
 		local boxChest = part(boxer, "UpperTorso")
 		HitService.applyToy(Toys.byId.MegaSlap, boxChest, at(boxChest, -0.2, 0.2, -0.95), Vector3.new(0, 0, 1))
 		for _ = 1, 4 do
@@ -327,7 +328,7 @@ local function run(results: { string }, player: Player)
 	assert(lowestBlood >= 50, "blows took it to " .. lowestBlood .. "% blood")
 	assert(lowest >= Anatomy.DEAD_PULSE * 2, "the pulse fell to " .. lowest)
 	assert(boxer:GetAttribute("Bleeding") ~= true and (boxer:GetAttribute("Blood") :: number) > lowestBlood, "15 s after the last swing it still bleeds, or the blood is not coming back")
-	table.insert(results, string.format("eight Mega Slaps on the heart, watched 18 s: alive throughout, blood at its lowest %d%% (blows stop at 50), pulse at its lowest %d, the bleeding stopped and the blood coming back (%d%%)", lowestBlood, lowest, boxer:GetAttribute("Blood") :: number))
+	table.insert(results, string.format("three Mega Slaps on the heart, watched 15 s: alive throughout, blood at its lowest %d%% (blows stop at 50), pulse at its lowest %d, the bleeding stopped and the blood coming back (%d%%)", lowestBlood, lowest, boxer:GetAttribute("Blood") :: number))
 
 	-- A flurry of pokes after a heart shot: the open heart wound stays (the list keeps the wounds
 	-- that bleed), so the body goes on bleeding.

@@ -96,6 +96,7 @@ type Vitals = {
 	shared: string?, -- the wound list as last shared (Wounds)
 	weak: number, -- bpm every round so far took off the pulse for good (only patching up resets it)
 	ceiling: number?, -- after a round: the pulse never climbs above where that round left it
+	damage: number?, -- v4 A5: hits so far (Config.BODY_HP of it kills); patching up clears it
 }
 
 local vitals: { [Model]: Vitals } = {}
@@ -230,12 +231,14 @@ local function patchUp(model: Model, v: Vitals, quiet: boolean?)
 	table.clear(v.wounds)
 	v.weak = 0
 	v.ceiling = nil
+	v.damage = 0
 	v.lethalAt = nil
 	v.knockUntil = 0
 	v.shared = ""
 	model:SetAttribute("Wounds", "")
 	model:SetAttribute("LegShotLeft", nil) -- (patched up: no leg round counts any more)
 	model:SetAttribute("LegShotRight", nil)
+	model:SetAttribute("Damage", nil)
 	setState(model, v, "Alive")
 	publish(model, v, false)
 	DummyControl.heal(model)
@@ -487,6 +490,18 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 			v.pulse = 0
 			v.lethalAt = now -- (already past: the step loop treats it as pending-dead)
 			setState(model, v, "Dead", "Brain")
+		end
+		-- v4 A5 (owner): enough hits kill, body shots and blows too (headshots stay instant, above).
+		-- Region and weapon set the share; the body shows it as today (knocked out, dead green, revive).
+		if v.state ~= "Dead" then
+			local region = if head then Config.DAMAGE_HEAD elseif zone.limb then Config.DAMAGE_LIMB else 1
+			v.damage = (v.damage or 0) + power * Config.DAMAGE_PER_POWER * region * (if blunt then Config.DAMAGE_BLUNT else 1)
+			model:SetAttribute("Damage", math.floor(v.damage :: number))
+			if not quiet() and (v.damage :: number) >= Config.BODY_HP then
+				v.pulse = 0
+				v.lethalAt = now
+				setState(model, v, "Dead", "Wounds")
+			end
 		end
 		if zone.knockout and power >= (if blunt then BLUNT_KNOCKOUT else 0.6) then
 			v.knockUntil = math.max(v.knockUntil, now + KNOCK_HOLD)

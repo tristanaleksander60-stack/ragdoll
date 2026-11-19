@@ -231,3 +231,9 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
   - Not done: a 2-client test (Studio multi-client).
   - The Studio viewport went white again after visiting the Arena (Studio renderer state; only a Studio restart fixes it), so A1's captures show only the HUD.
 - 20 Nov 2026 (PC): **A4 done.** FirstPerson: scrolling all the way in (camera under ENTER_AT 1 stud from the head) enters first person with the viewmodel; the wheel out leaves it; V unchanged; skipped in the lab view, while seated and on touch. Seen in Studio: the zoom-in switched to LockFirstPerson.
+- 20 Nov 2026 (PC): **A5 done.** VitalsService keeps a damage pool per body:
+  - every hit adds power x Config.DAMAGE_PER_POWER 17 x the region (head 1.5, limbs 0.6) x 0.83 for blows; BODY_HP 100 kills (cause "Wounds");
+  - shown as today (dead green, revive after REVIVE_AFTER);
+  - patching up and the revive clear it; the attribute Damage carries it; headshots stay instant.
+  - T95_DamageDeath: 6 Popper rounds or 10 punches kill; 6 rounds in a foot do not.
+  - T33's blow check is 3 Mega Slaps now (5 kill by damage).

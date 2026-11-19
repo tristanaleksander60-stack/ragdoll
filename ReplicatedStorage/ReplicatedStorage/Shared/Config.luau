@@ -142,6 +142,14 @@ local Config = {
 	-- (Playground billboards), and the clean HUD (HudV3). false = the 0.20 look.
 	LOOK_V3 = true,
 	MAP_ACTIVITIES = true, -- v3 phase C: launchers on the open-air maps (Server/Systems/MapActivities)
+	-- v4 A5 (owner): bodies die from enough hits, not only headshots. Every hit adds damage =
+	-- weapon power x DAMAGE_PER_POWER x the region (head, limbs) x DAMAGE_BLUNT for blows; BODY_HP of it
+	-- kills (about 6 Popper rounds to the body, about 10 punches). Headshots stay instant.
+	BODY_HP = 100,
+	DAMAGE_PER_POWER = 17,
+	DAMAGE_HEAD = 1.5,
+	DAMAGE_LIMB = 0.6,
+	DAMAGE_BLUNT = 0.83,
 	LOOK_V3_LIGHT = table.freeze({
 		ClockTime = 13,
 		Brightness = 2.2,
