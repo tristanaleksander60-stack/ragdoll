@@ -359,7 +359,7 @@ function AdminService.setAllWeapons(on: boolean)
 end
 
 local function ownerTag(player: Player, character: Model)
-	if not Owner.isOwner(player) then
+	if not Owner.isOwner(player) or require(game:GetService("ReplicatedStorage").Shared.Config).LOOK_V3 then
 		return
 	end
 	local head = character:WaitForChild("Head", 10)

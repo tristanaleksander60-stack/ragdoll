@@ -25,6 +25,12 @@ local YELLOW = Color3.fromRGB(245, 200, 40)
 DummyFactory.SHELL = Color3.fromRGB(104, 105, 109)
 DummyFactory.SHELL_LOW = Color3.fromRGB(88, 89, 94)
 DummyFactory.JOINT = Color3.fromRGB(42, 44, 50)
+-- LOOK_V3 (19 Nov 2026): the plain white mannequin of the big ragdoll games, no dark joints.
+if Config.LOOK_V3 then
+	DummyFactory.SHELL = Config.LOOK_V3_DUMMY
+	DummyFactory.SHELL_LOW = Config.LOOK_V3_DUMMY_LOW
+	DummyFactory.JOINT = Config.LOOK_V3_DUMMY_ENDS
+end
 DummyFactory.HEAD = 0.86 -- the head's size after the build (a real body's head is smaller than Roblox's)
 -- (Slender human proportions: Roblox's own scales at their thin end, the body type towards Rthro's
 -- longer limbs and smaller head.)
@@ -283,7 +289,9 @@ function DummyFactory.spawn(at: Vector3, lookAt: Vector3?, owner: Player?, lift:
 		end
 	end
 	giveExpressiveFace(model)
-	giveMarks(model)
+	if not Config.LOOK_V3 then
+		giveMarks(model) -- (LOOK_V3: a plain mannequin, no crash-test marks)
+	end
 	segment(model)
 	if Config.WORLD_V2 then
 		suit(model)

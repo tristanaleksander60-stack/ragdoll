@@ -30,6 +30,8 @@ local ContentProvider = game:GetService("ContentProvider")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Assets = require(Shared:WaitForChild("Assets"))
 local GunThreat = require(Shared:WaitForChild("GunThreat"))
+local Config = require(Shared:WaitForChild("Config"))
+local DummyLines = require(Shared:WaitForChild("DummyLines"))
 
 local Faces = Assets.Faces
 local rad, deg, sin, cos = math.rad, math.deg, math.sin, math.cos
@@ -124,6 +126,14 @@ type Life = {
 	bubble: BillboardGui?, -- speech or panic bubble (made when first needed)
 	bubbleText: TextLabel?,
 	bubbleKind: string?,
+	line: BillboardGui?, -- LOOK_V3: the black line box (made when first needed)
+	lineText: TextLabel?,
+	lineKind: string?, -- "Fear", "Ouch" or "Idle" while one is up
+	lineUntil: number,
+	lineTurn: number,
+	idleAt: number, -- next idle line (os.clock)
+	wasHandsUp: boolean,
+	ouchFor: number, -- the stateSince of the last get-up already answered
 	lodWait: number, -- s gathered since the last update (far away)
 	noiseAt: number, -- when it heard the last bang (os.clock, after the sound's delay)
 	noisePos: Vector3?,
@@ -213,6 +223,14 @@ local function build(model: Model): Life?
 		bubble = nil,
 		bubbleText = nil,
 		bubbleKind = nil,
+		line = nil,
+		lineText = nil,
+		lineKind = nil,
+		lineUntil = 0,
+		lineTurn = 0,
+		idleAt = os.clock() + rng:NextNumber(4, 30),
+		wasHandsUp = false,
+		ouchFor = -1,
 		lodWait = 0,
 		noiseAt = -math.huge,
 		noisePos = nil,
@@ -987,6 +1005,111 @@ local function updateBubble(life: Life, now: number, near: boolean)
 	life.bubbleKind = key
 end
 
+-- LOOK_V3 (19 Nov 2026, like the big ragdoll games): a short line in a small black box over the
+-- head. Yellow when a gun points at it or it just got up from a fall, white for idle chatter (at
+-- most DummyLines.IDLE_MAX idle lines on this screen at once). Lines: Shared\DummyLines.
+local idleShown = 0
+
+local function hideLine(life: Life)
+	if life.lineKind == "Idle" then
+		idleShown = math.max(0, idleShown - 1)
+	end
+	life.lineKind = nil
+	if life.line then
+		life.line.Enabled = false
+	end
+end
+
+local function showLine(life: Life, kind: string, now: number)
+	if life.lineKind == "Idle" then
+		idleShown = math.max(0, idleShown - 1)
+	end
+	local list = if kind == "Fear" then DummyLines.FEAR elseif kind == "Ouch" then DummyLines.OUCH else DummyLines.IDLE
+	life.lineTurn += 1
+	if not life.line then
+		local g = Instance.new("BillboardGui")
+		g.Name = "Line"
+		g.Adornee = life.head
+		g.Size = UDim2.fromOffset(300, 34)
+		g.StudsOffsetWorldSpace = Vector3.new(0, BUBBLE_OFFSET, 0)
+		g.LightInfluence = 0
+		g.MaxDistance = DummyLines.DISTANCE
+		g.AlwaysOnTop = false
+		g.ResetOnSpawn = false
+		local box = Instance.new("Frame")
+		box.Name = "Box"
+		box.AnchorPoint = Vector2.new(0.5, 1)
+		box.Position = UDim2.fromScale(0.5, 1)
+		box.Size = UDim2.fromOffset(0, 30)
+		box.AutomaticSize = Enum.AutomaticSize.X
+		box.BackgroundColor3 = DummyLines.BOX_COLOR
+		box.BackgroundTransparency = DummyLines.BOX_ALPHA
+		box.BorderSizePixel = 0
+		box.Parent = g
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 4)
+		corner.Parent = box
+		local pad = Instance.new("UIPadding")
+		pad.PaddingLeft = UDim.new(0, 9)
+		pad.PaddingRight = UDim.new(0, 9)
+		pad.Parent = box
+		local text = Instance.new("TextLabel")
+		text.Name = "Text"
+		text.BackgroundTransparency = 1
+		text.Size = UDim2.fromScale(0, 1)
+		text.AutomaticSize = Enum.AutomaticSize.X
+		text.Font = Enum.Font.BuilderSansBold
+		text.TextSize = 18
+		text.Parent = box
+		g.Parent = life.head
+		life.line = g
+		life.lineText = text
+	end
+	local text = life.lineText :: TextLabel
+	text.Text = DummyLines.pick(list, life.seed, life.lineTurn)
+	text.TextColor3 = if kind == "Idle" then DummyLines.IDLE_COLOR else DummyLines.FEAR_COLOR
+	;(life.line :: BillboardGui).Enabled = true
+	life.lineKind = kind
+	life.lineUntil = now + DummyLines.HOLD
+	if kind == "Idle" then
+		idleShown += 1
+	end
+end
+
+local function updateLine(life: Life, now: number)
+	local raised = life.handsUp and not life.wasHandsUp
+	life.wasHandsUp = life.handsUp
+	if raised then
+		showLine(life, "Fear", now)
+		return
+	end
+	if life.lineKind == "Fear" and life.handsUp then
+		life.lineUntil = math.max(life.lineUntil, now + 0.6) -- (stays up while the gun points)
+	end
+	-- Just got up from a fall.
+	if life.state == "Standing" and life.previous and life.previous ~= "Standing" and life.previous ~= "Walking"
+		and now - life.stateSince < DummyLines.OUCH_WINDOW and life.ouchFor ~= life.stateSince then
+		life.ouchFor = life.stateSince
+		if rng:NextNumber() < DummyLines.OUCH_CHANCE then
+			showLine(life, "Ouch", now)
+			return
+		end
+	end
+	if life.lineKind and now >= life.lineUntil then
+		hideLine(life)
+	end
+	if not life.lineKind and life.state == "Standing" and now >= life.idleAt then
+		life.idleAt = now + rng:NextNumber(DummyLines.IDLE_GAP.X, DummyLines.IDLE_GAP.Y)
+		if idleShown < DummyLines.IDLE_MAX then
+			showLine(life, "Idle", now)
+		end
+	end
+	-- A fallen or dead one stops talking idly.
+	if life.lineKind == "Idle" and life.state ~= "Standing" and life.state ~= "Walking" then
+		hideLine(life)
+	end
+end
+
 local function step(life: Life, now: number, dt: number)
 	local model = life.model
 	local state = (model:GetAttribute("RagdollState") :: string?) or "Standing"
@@ -1059,7 +1182,11 @@ local function step(life: Life, now: number, dt: number)
 		life.groundSpeed = 0
 	end
 	-- (10 Nov 2026, the owner: no text bubbles; the faces and the bodies show what they feel.)
-	updateBubble(life, now, BUBBLES)
+	if Config.LOOK_V3 then
+		updateLine(life, now)
+	else
+		updateBubble(life, now, BUBBLES)
+	end
 end
 
 -- Something went bang (FxController plays every moment through here too): every dummy and person in
@@ -1146,6 +1273,12 @@ local function onRender(dt: number)
 			if life.bubble then
 				life.bubble:Destroy()
 			end
+			if life.lineKind == "Idle" then
+				idleShown = math.max(0, idleShown - 1)
+			end
+			if life.line then
+				life.line:Destroy()
+			end
 		else
 			-- Up close every frame; further off a few times a second; far away and off screen not
 			-- at all (its face and pose wait where they were).
@@ -1166,6 +1299,8 @@ local function onRender(dt: number)
 					step(life, now, waited)
 				elseif not onScreen and life.bubble then
 					updateBubble(life, now, false)
+				elseif not onScreen and life.lineKind then
+					hideLine(life)
 				end
 			end
 		end

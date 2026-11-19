@@ -122,7 +122,7 @@ local Config = {
 	--   moments, star/dust/spark bursts, flop sounds by landing speed, speed trails on launched and
 	--   thrown bodies, a slow-mo beat on big combos, muzzle flash, casings and recoil per gun) and the
 	--   ragdoll guard (limbs never fly off the body: ActiveRagdoll). false = the 0.20 feel.
-	WORLD_V2 = true,
+	WORLD_V2 = false, -- (LOOK_V3, 19 Nov: off. Its neon boards, suits and floating bits read as clutter)
 	FEEL_V2 = true,
 	-- What one device draws at most (Shared\FeelTuning reads it; DeviceTier picks the tier):
 	--   lights: world lamps lit at once (the nearest; WorldLights), flashes: muzzle-flash lights at
@@ -134,6 +134,41 @@ local Config = {
 		mid = table.freeze({ lights = 8, flashes = 2, particles = 18, trails = 6, casings = 12, ragdolls = 18 }),
 		high = table.freeze({ lights = 14, flashes = 4, particles = 30, trails = 10, casings = 24, ragdolls = 22 }),
 	}),
+	-- LOOK_V3 (19 Nov 2026, the owner: "copy everything graphic from the big ragdoll games"; plan:
+	-- docs/V3_PLAN.md). Calm overcast daylight with soft shadows and no grey wash on the play area
+	-- (ZoneLighting), plain white dummies with no glow, no crash marks and no suits (DummyFactory,
+	-- NpcGlow), short lines in a black box over a dummy's head when a gun points at it, when it gets
+	-- up from a fall, and idle chatter (DummyLife + Shared\DummyLines), no shouting signs in the world
+	-- (Playground billboards), and the clean HUD (HudV3). false = the 0.20 look.
+	LOOK_V3 = true,
+	LOOK_V3_LIGHT = table.freeze({
+		ClockTime = 13,
+		Brightness = 2.2,
+		Ambient = Color3.fromRGB(70, 72, 78),
+		OutdoorAmbient = Color3.fromRGB(120, 124, 130),
+		ExposureCompensation = 0,
+		EnvironmentDiffuseScale = 1,
+		EnvironmentSpecularScale = 0.6,
+		ShadowSoftness = 0.35,
+		airDensity = 0.3,
+		airOffset = 0.1,
+		airHaze = 0.4,
+		airGlare = 0,
+		airColor = Color3.fromRGB(199, 205, 214),
+		airDecay = Color3.fromRGB(106, 112, 125),
+		bloom = 0.1,
+		bloomThreshold = 2,
+		contrast = 0.05,
+		saturation = -0.05,
+	}),
+	LOOK_V3_DUMMY = Color3.fromRGB(240, 240, 238), -- the plain white of a test mannequin
+	LOOK_V3_DUMMY_LOW = Color3.fromRGB(232, 232, 230), -- forearms and shins, a hair darker
+	LOOK_V3_DUMMY_ENDS = Color3.fromRGB(222, 222, 220), -- hands and feet
+	-- All UI 3D and interactive (19 Nov 2026, the owner): turning weapon models on the cards and the
+	-- bar, tilt and depth on the HUD buttons, windows that swing in (Client\Ui3D). Live (turning)
+	-- viewports at once per device tier; the rest are drawn once and left still.
+	UI_3D = true,
+	UI_3D_LIVE = table.freeze({ low = 2, mid = 4, high = 6 }),
 	WORLD_V2_LAB_PARTS = 320, -- parts one lab's WORLD_V2 dressing may add (T81)
 	WORLD_V2_LAB_LIGHTS = 12, -- lights one lab's dressing may hold (only FX_CAPS[tier].lights are lit)
 	COMBO_SLOWMO = 5, -- a combo of this many (and every this-many after) gets the slow-mo beat

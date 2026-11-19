@@ -390,7 +390,37 @@ local function hazardRim(x: number, z: number, w: number, d: number, height: num
 end
 
 -- A short word over an attraction (the game's own words; nobody types anything here).
+-- LOOK_V3 (19 Nov 2026, like the big ragdoll games: almost no text in the world): the shouting
+-- words go, the stations keep a small plain name seen only up close.
+local V3_DROP = { ["PUT RAGDOLL HERE"] = true, ["LAVA!"] = true, ["BULLSEYE"] = true, ["SPIKE MACE"] = true }
 local function sign(text: string, onto: BasePart, height: number, color: Color3)
+	if Config.LOOK_V3 then
+		if V3_DROP[text] then
+			return
+		end
+		local gui = Instance.new("BillboardGui")
+		gui.Name = "Sign"
+		gui.Size = UDim2.new(6, 0, 1.1, 0)
+		gui.StudsOffsetWorldSpace = Vector3.new(0, math.min(height, 6), 0)
+		gui.MaxDistance = 38
+		gui.LightInfluence = 0
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.fromScale(1, 1)
+		label.BackgroundTransparency = 1
+		label.Font = Enum.Font.BuilderSansBold
+		label.TextScaled = true
+		label.TextColor3 = Color3.fromRGB(245, 245, 245)
+		label.TextTransparency = 0.1
+		label.Text = text
+		local stroke = Instance.new("UIStroke")
+		stroke.Thickness = 1.5
+		stroke.Transparency = 0.4
+		stroke.Color = BLACK
+		stroke.Parent = label
+		label.Parent = gui
+		gui.Parent = onto
+		return
+	end
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "Sign"
 	gui.Size = UDim2.new(10, 0, 2.4, 0) -- (studs: it shrinks with distance like the world)

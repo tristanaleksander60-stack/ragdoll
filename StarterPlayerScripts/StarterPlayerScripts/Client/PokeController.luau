@@ -812,6 +812,7 @@ local function openCatalog()
 	ToolCatalog.showTool(selected)
 	ToolCatalog.toggle()
 end
+PokeController.openCatalog = openCatalog -- (LOOK_V3: HudV3's WEAPONS square)
 
 -- One slab on the bar: a kit Button, with a ring for "selected"/"pick me", a cooldown shade and
 -- its own pop scale.

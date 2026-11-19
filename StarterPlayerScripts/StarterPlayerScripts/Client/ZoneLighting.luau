@@ -10,6 +10,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local Places = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Places"))
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local V3 = Config.LOOK_V3_LIGHT
 
 local ZoneLighting = {}
 
@@ -47,12 +49,31 @@ local AIR: { [string]: Air } = {
 	Cool = { density = 0.16, color = Color3.fromRGB(214, 226, 240), decay = Color3.fromRGB(130, 145, 170), saturation = 0.12, tint = Color3.fromRGB(240, 246, 255) },
 	White = { density = 0.08, color = Color3.fromRGB(245, 245, 250), decay = Color3.fromRGB(220, 220, 230), saturation = 0.06, tint = Color3.new(1, 1, 1) },
 }
+-- LOOK_V3 (19 Nov 2026): the calm overcast daylight of the big ragdoll games. Soft shadows, a
+-- light fade only far off on the hills, no grey wash over the play area, colours a touch muted.
+if Config.LOOK_V3 then
+	PROFILES.Day = {
+		ClockTime = V3.ClockTime,
+		Brightness = V3.Brightness,
+		Ambient = V3.Ambient,
+		OutdoorAmbient = V3.OutdoorAmbient,
+		ExposureCompensation = V3.ExposureCompensation,
+		EnvironmentDiffuseScale = V3.EnvironmentDiffuseScale,
+		EnvironmentSpecularScale = V3.EnvironmentSpecularScale,
+	}
+	AIR.Lab = { density = V3.airDensity, color = V3.airColor, decay = V3.airDecay, saturation = V3.saturation, tint = Color3.new(1, 1, 1) }
+end
 local airTween: { Tween } = {}
 
 local function applyAir(key: string, instant: boolean?)
 	local air = AIR[key] or AIR.Lab
 	local atmosphere = Lighting:FindFirstChild("LabAir") :: Atmosphere?
 	local cc = Lighting:FindFirstChild("LabFinish") :: ColorCorrectionEffect?
+	if Config.LOOK_V3 then
+		-- (V3 tunes whatever the place has, its own effects included.)
+		atmosphere = atmosphere or Lighting:FindFirstChildOfClass("Atmosphere")
+		cc = cc or Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
+	end
 	for _, t in airTween do
 		t:Cancel()
 	end
@@ -174,8 +195,60 @@ local function finish()
 	end
 end
 
+-- LOOK_V3's finish: soft shadows, almost no bloom, no sun rays or far blur, a low haze.
+local function finishV3()
+	Lighting.ShadowSoftness = V3.ShadowSoftness
+	Lighting.GlobalShadows = true
+	for _, d in Lighting:GetChildren() do
+		if d:IsA("SunRaysEffect") or d:IsA("DepthOfFieldEffect") then
+			d.Enabled = false
+		end
+	end
+	local bloom = Lighting:FindFirstChildOfClass("BloomEffect")
+	if not bloom then
+		local made = Instance.new("BloomEffect")
+		made.Name = "LabGlow"
+		made.Parent = Lighting
+		bloom = made
+	end
+	assert(bloom)
+	bloom.Intensity = V3.bloom
+	bloom.Size = 20
+	bloom.Threshold = V3.bloomThreshold
+	local cc = Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
+	if not cc then
+		local made = Instance.new("ColorCorrectionEffect")
+		made.Name = "LabFinish"
+		made.Parent = Lighting
+		cc = made
+	end
+	assert(cc)
+	cc.Contrast = V3.contrast
+	cc.Brightness = 0
+	cc.Saturation = V3.saturation
+	cc.TintColor = Color3.new(1, 1, 1)
+	local air = Lighting:FindFirstChildOfClass("Atmosphere")
+	if not air then
+		local made = Instance.new("Atmosphere")
+		made.Name = "LabAir"
+		made.Parent = Lighting
+		air = made
+	end
+	assert(air)
+	air.Density = V3.airDensity
+	air.Offset = V3.airOffset
+	air.Haze = V3.airHaze
+	air.Glare = V3.airGlare
+	air.Color = V3.airColor
+	air.Decay = V3.airDecay
+end
+
 function ZoneLighting.start()
-	finish()
+	if Config.LOOK_V3 then
+		finishV3()
+	else
+		finish()
+	end
 	-- The labs and the plaza: the clear afternoon (Day), not the flatter light the place was built
 	-- with; the Christmas theme still tints it through the air and the grade.
 	PROFILES.Lab = PROFILES.Day

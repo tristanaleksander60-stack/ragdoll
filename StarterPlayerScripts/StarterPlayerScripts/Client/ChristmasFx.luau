@@ -59,6 +59,10 @@ end
 -- saturated), gone when it is off.
 local function winterLight(on: boolean)
 	local Lighting = game:GetService("Lighting")
+	-- (LOOK_V3: the snow alone says winter; no blue tint over the calm daylight.)
+	if require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")).LOOK_V3 then
+		on = false
+	end
 	local tint = Lighting:FindFirstChild("ChristmasWinter")
 	if on and not tint then
 		local c = Instance.new("ColorCorrectionEffect")

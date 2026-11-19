@@ -37,6 +37,7 @@ local KitStyle = require(Client:WaitForChild("KitStyle"))
 local PokeController = require(Client:WaitForChild("PokeController"))
 local ToolPicture = require(Client:WaitForChild("ToolPicture"))
 local NextUnlocks = require(Client:WaitForChild("NextUnlocks"))
+local HudV3 = require(script.Parent:WaitForChild("HudGate")) -- (LOOK_V3: is HudV3 on)
 local ProgressUI = require(Client:WaitForChild("ProgressUI"))
 local ViewMode = require(Client:WaitForChild("ViewMode"))
 local FirstPerson = require(Client:WaitForChild("FirstPerson"))
@@ -531,6 +532,9 @@ local function followBar()
 	if KitStyle.V2 and shown and time() < Config.QUIET_START and HudSlots.context(ViewMode.isTouch(), ViewMode.isLab()).phone then
 		shown = false
 	end
+	if HudV3.active() then
+		shown = false -- (LOOK_V3: the top bar's Next pill says it)
+	end
 	lg.Enabled = shown
 	if not shown or not bar or not bar:IsA("GuiObject") then
 		return
@@ -568,6 +572,7 @@ local function place()
 end
 
 local function refresh()
+	local v3 = HudV3.active() -- (LOOK_V3: HudV3's squares take these places)
 	local first = PokeController.firstMinute()
 	local touch = ViewMode.isTouch()
 	local phone = HudSlots.context(touch, ViewMode.isLab()).phone
@@ -577,15 +582,16 @@ local function refresh()
 	if w then
 		w.Visible = not first and not PokeController.isDoctor() and not PokeController.isPicking()
 			and not (phone and Config.PHONE_HUD_MAX7) -- (phase 1: the experiment card's place on a phone)
+			and not v3
 		keyChip(w, keyText("Catalog"), UDim2.fromOffset(8, 6))
 	end
 	local d = deal
 	if d then
 		-- (Phase 0: no "SOON" card for a product that does not exist yet: Shop.STARTER_PACK 0 hides it.)
-		d.Visible = Shop.STARTER_PACK ~= 0 and not phone and not first and not busy
+		d.Visible = Shop.STARTER_PACK ~= 0 and not phone and not first and not busy and not v3
 	end
 	for name, b in sandbox do
-		b.Visible = not touch and not first and not busy
+		b.Visible = not touch and not first and not busy and not v3
 		keyChip(b, keyText(SANDBOX_KEY[name]), UDim2.new(0, -13, 0.5, 0)) -- (inside the padding: 13 px from the edge)
 	end
 	-- The left column's launchers: their keys, with a keyboard.

@@ -98,6 +98,7 @@ require(Client:WaitForChild("ChaseHud")).start()
 require(Client:WaitForChild("NpcGlow")).start()
 require(Client:WaitForChild("PortalUI")).start() -- SINGLEPLAYER / MULTIPLAYER portals, the server list (round 5) -- the dummies' slow purple glow (round 5) -- the health bar in an NPC Chase (round 5) -- the weapon in front of the camera in first person
 require(Client:WaitForChild("HudPlus")).start() -- big WEAPONS, LEVEL, today's deal, sandbox column (round 5)
+require(Client:WaitForChild("HudV3")).start() -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)
 require(Client:WaitForChild("RewardsUI")).start() -- REWARDS: daily, play gift, dares, trophies, group (round 5)
 require(Client:WaitForChild("GiftClock")).start() -- the clock to the next free gift for time played
 MinigameHud.start()

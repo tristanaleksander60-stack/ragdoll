@@ -27,6 +27,11 @@ local function phaseOf(model: Model): number
 end
 
 function NpcGlow.start()
+	-- LOOK_V3 (19 Nov 2026): no glow; the living read by their faces and moves, the dead by green.
+	local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
+	if Config.LOOK_V3 then
+		return
+	end
 	local accumulated = 0
 	RunService.Heartbeat:Connect(function(dt)
 		accumulated += dt

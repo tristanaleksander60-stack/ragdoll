@@ -18,6 +18,7 @@ local V2 = require(Shared:WaitForChild("Config")).UI_V2 == true -- (UI v2: the 1
 
 local Client = script.Parent
 local ReplayController = require(Client:WaitForChild("ReplayController"))
+local HudV3 = require(script.Parent:WaitForChild("HudGate")) -- (LOOK_V3: is HudV3 on)
 local HudSlots = require(Client:WaitForChild("HudSlots"))
 
 local player = Players.LocalPlayer
@@ -208,7 +209,7 @@ function ChaosMeter.start()
 	RunService.Heartbeat:Connect(function()
 		-- (On a phone the part counter has its place while building: BuildController's "Building".)
 		local building = player:GetAttribute("Building") == true and HudSlots.context(false, false).phone
-		local want = not ReplayController.isPlaying() and not building and (shownCount > 0 or os.clock() - lastNonZero < LINGER)
+		local want = not ReplayController.isPlaying() and not building and not HudV3.active() and (shownCount > 0 or os.clock() - lastNonZero < LINGER)
 		setVisible(want)
 	end)
 end

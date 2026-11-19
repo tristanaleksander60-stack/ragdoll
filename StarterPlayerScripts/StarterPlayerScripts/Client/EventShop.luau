@@ -337,7 +337,7 @@ local function placePacks()
 	-- Off a phone (a phone has them in MENU's shop), not in a new player's first minute (as
 	-- WEAPONS and SANDBOX), not while building (its tools have that edge) and not while Streamer
 	-- Mode's gift guide is there.
-	gui.Enabled = EventShop.packsShown(HudSlots.context(false, false).phone, packsAfterFirstMinute, player:GetAttribute("Building") == true, player:GetAttribute("Streamer") == true)
+	gui.Enabled = not require(script.Parent:WaitForChild("HudGate")).active() and EventShop.packsShown(HudSlots.context(false, false).phone, packsAfterFirstMinute, player:GetAttribute("Building") == true, player:GetAttribute("Streamer") == true)
 end
 
 local function buildPacks()
