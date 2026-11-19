@@ -63,7 +63,9 @@ function GiftClock.start()
 		local left = secondsLeft()
 		if left and left > 5 then
 			local minutes = math.max(1, math.ceil(left / 60))
-			Toast.show(string.format("\u{1F381} Play %d more min for a FREE weapon egg! The clock is on WEAPONS.", minutes), Color3.fromRGB(255, 210, 74))
+			-- (Release fix: with Config.EGG_RATION the play gift is BOLTS, so the note says so.)
+			local prize = if Config.EGG_RATION and Config.ECONOMY then string.format("%d FREE BOLTS", Config.PLAYTIME_BOLTS) else "a FREE weapon egg"
+			Toast.show(string.format("\u{1F381} Play %d more min for %s! The clock is on WEAPONS.", minutes, prize), Color3.fromRGB(255, 210, 74))
 		end
 	end)
 end

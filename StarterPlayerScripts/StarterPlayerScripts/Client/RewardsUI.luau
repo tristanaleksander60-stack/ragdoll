@@ -18,6 +18,9 @@ local Net = require(Shared:WaitForChild("Net"))
 local DailyGoals = require(Shared:WaitForChild("DailyGoals"))
 local Toys = require(Shared:WaitForChild("Toys"))
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
+local Config = require(Shared:WaitForChild("Config"))
+-- (Release fix: with Config.EGG_RATION the play gift is BOLTS, not an egg: PlaytimeGifts.RATION.)
+local BOLT_GIFTS = Config.EGG_RATION and Config.ECONOMY
 
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local Theme = require(UI:WaitForChild("LihFolkUITheme"))
@@ -217,12 +220,12 @@ local function tickPlay()
 		bar.setValue(1)
 		bar.setText("DONE")
 	elseif left <= 0 then
-		label.Text = "\u{1F381} Your play gift is ready: an egg is on its way!"
+		label.Text = if BOLT_GIFTS then "\u{1F381} Your play gift is ready: BOLTS are on their way!" else "\u{1F381} Your play gift is ready: an egg is on its way!"
 		bar.setValue(1)
 		bar.setText("READY")
 	else
 		local s = math.ceil(left)
-		label.Text = string.format("\u{1F381} Next free weapon egg in %d:%02d of play", s // 60, s % 60)
+		label.Text = string.format(if BOLT_GIFTS then "\u{1F381} Next free BOLTS in %d:%02d of play" else "\u{1F381} Next free weapon egg in %d:%02d of play", s // 60, s % 60)
 		local span = 300
 		bar.setValue(math.clamp(1 - left / span, 0, 1))
 		bar.setText(string.format("%d:%02d", s // 60, s % 60))
