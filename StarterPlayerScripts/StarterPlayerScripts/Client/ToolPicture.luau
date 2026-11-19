@@ -17,6 +17,8 @@ local Toys = require(Shared:WaitForChild("Toys"))
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local Icons = require(UI:WaitForChild("LihFolkUIIcons"))
 local N7Models = require(Shared:WaitForChild("N7Models"))
+local Config = require(Shared:WaitForChild("Config"))
+local Ui3D = require(script.Parent:WaitForChild("Ui3D"))
 
 local ToolPicture = {}
 
@@ -105,10 +107,13 @@ end
 
 -- A picture of the tool, size as given. wide: no disc, the model fills a wide frame (the catalog's
 -- picture strip, where a weapon lies along it); otherwise a disc (the bar, the egg card).
-function ToolPicture.make(id: string, size: UDim2, wide: boolean?): GuiObject
+-- turn (UI_3D, 19 Nov 2026): the real model even when a drawn picture exists, and it turns
+-- (slowly on screen, faster under the pointer, by hand when dragged: Ui3D).
+function ToolPicture.make(id: string, size: UDim2, wide: boolean?, turn: boolean?): GuiObject
+	local turning = turn == true and Config.UI_3D and ToolPicture.model(id) ~= nil
 	-- The hand-drawn picture first (10 Nov 2026, the owner: drawn, not rendered; Shared.DrawnIcons),
 	-- on the same darkened disc in the tool's colour.
-	if Icons.has("tool_" .. id) then
+	if Icons.has("tool_" .. id) and not turning then
 		local toy = Toys.byId[id]
 		local holder = Instance.new("Frame")
 		holder.Name = "Drawn_" .. id
@@ -251,8 +256,14 @@ function ToolPicture.make(id: string, size: UDim2, wide: boolean?): GuiObject
 	local camera = Instance.new("Camera")
 	camera.FieldOfView = FOV
 	local view = viewOf(id, wide == true)
-	local function place(aspect: number)
+	local aspectNow = 1
+	local function place(aspect: number, yaw: number?)
+		aspectNow = aspect
 		local cf, distance = fit(middle, corners, view, aspect)
+		if yaw then
+			-- (UI_3D: the camera goes round the model's middle; the halo follows it.)
+			cf = CFrame.new(middle) * CFrame.Angles(0, yaw, 0) * CFrame.new(-middle) * cf
+		end
 		camera.CFrame = cf
 		local back = extent * HALO_BACK
 		local k = (distance + back) / math.max(distance, 0.01)
@@ -283,6 +294,11 @@ function ToolPicture.make(id: string, size: UDim2, wide: boolean?): GuiObject
 		end
 		frame:GetPropertyChangedSignal("AbsoluteSize"):Connect(refit)
 		task.defer(refit)
+	end
+	if turning then
+		Ui3D.track(disc, function(yaw: number)
+			place(aspectNow, yaw)
+		end)
 	end
 	return disc
 end

@@ -273,7 +273,7 @@ local function playOpening(result: { kind: string?, id: string, name: string, ra
 		-- A weapon: its picture at the top of the card (inside it: nothing reaches past the card
 		-- on a short phone), its name, and where it is now.
 		height = 200
-		local icon = ToolPicture.make(weapon.id, UDim2.fromOffset(60, 60))
+		local icon = ToolPicture.make(weapon.id, UDim2.fromOffset(60, 60), nil, true)
 		icon.AnchorPoint = Vector2.new(0.5, 0)
 		icon.Position = UDim2.new(0.5, 0, 0, 10)
 		icon.ZIndex = 6

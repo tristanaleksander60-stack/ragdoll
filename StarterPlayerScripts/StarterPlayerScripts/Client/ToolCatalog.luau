@@ -557,7 +557,7 @@ local function build()
 		icon.Parent = iconSlot
 		local toyId = toy.id
 		pictureMakers[toyId] = function()
-			local picture = ToolPicture.make(toyId, UDim2.fromScale(1, 1), true)
+			local picture = ToolPicture.make(toyId, UDim2.fromScale(1, 1), true, true)
 			picture.Parent = icon
 		end
 		local lock = Instance.new("TextLabel")
