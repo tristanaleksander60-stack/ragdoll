@@ -85,6 +85,35 @@ function FirstPerson.start()
 			player.CameraMode = Enum.CameraMode.LockFirstPerson
 		end
 	end)
+	-- v4 A4 (owner): scrolling all the way in enters first person (the gun in your hands), scrolling
+	-- out leaves it; V still toggles. Roblox's own zoom is read, never fought: under ENTER_AT studs
+	-- from the head counts as in. Not in the lab view, not while seated (a car), not on touch.
+	game:GetService("RunService").RenderStepped:Connect(function()
+		if on or ViewMode.isLab() or not UserInputService.MouseEnabled or UserInputService.TouchEnabled then
+			return
+		end
+		local camera = workspace.CurrentCamera
+		local character = player.Character
+		local head = character and character:FindFirstChild("Head")
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if not camera or not head or not head:IsA("BasePart") or (humanoid and humanoid.SeatPart) then
+			return
+		end
+		if (camera.CFrame.Position - head.Position).Magnitude < FirstPerson.ENTER_AT then
+			FirstPerson.set(true)
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input, processed)
+		if processed or not on or input.UserInputType ~= Enum.UserInputType.MouseWheel then
+			return
+		end
+		if input.Position.Z < 0 then
+			-- (Out, however it was entered: set(false) puts the camera back behind the head.)
+			FirstPerson.set(false)
+		end
+	end)
 end
+
+FirstPerson.ENTER_AT = 1.0 -- studs from the head: scrolled all the way in
 
 return FirstPerson

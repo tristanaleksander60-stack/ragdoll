@@ -228,3 +228,4 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
   - Seen in Studio: the round ran its minute with lights and HUD right. T94_RedLight is new; T27 is updated.
   - Not done: a 2-client test (Studio multi-client).
   - The Studio viewport went white again after visiting the Arena (Studio renderer state; only a Studio restart fixes it), so A1's captures show only the HUD.
+- 20 Nov 2026 (PC): **A4 done.** FirstPerson: scrolling all the way in (camera under ENTER_AT 1 stud from the head) enters first person with the viewmodel; the wheel out leaves it; V unchanged; skipped in the lab view, while seated and on touch. Seen in Studio: the zoom-in switched to LockFirstPerson.
