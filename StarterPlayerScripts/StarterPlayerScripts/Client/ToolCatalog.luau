@@ -289,6 +289,7 @@ local function refreshEquip()
 end
 
 local pictureMakers: { [string]: () -> () } = {} -- cards whose 3D picture is not drawn yet
+local hovered3d: GuiObject? = nil -- (UI_3D: the one turning model, on the card under the pointer)
 local function showShelf(category: string)
 	current = category
 	for name, tab in tabs do
@@ -557,9 +558,39 @@ local function build()
 		icon.Parent = iconSlot
 		local toyId = toy.id
 		pictureMakers[toyId] = function()
-			local picture = ToolPicture.make(toyId, UDim2.fromScale(1, 1), true, true)
+			-- (19 Nov 2026, the owner: the turning 3D shelf lagged. The card shows its still
+			-- picture; only the card under the pointer gets the turning model, one at a time.)
+			local picture = ToolPicture.make(toyId, UDim2.fromScale(1, 1), true)
 			picture.Parent = icon
 		end
+		iconSlot.MouseEnter:Connect(function()
+			if hovered3d and hovered3d.Parent then
+				hovered3d:Destroy()
+			end
+			local still = icon:FindFirstChildWhichIsA("GuiObject")
+			local turning = ToolPicture.make(toyId, UDim2.fromScale(1, 1), true, true)
+			if turning:FindFirstChild("View") then -- (a model exists: put it over the still picture)
+				turning.ZIndex = (if still then still.ZIndex else icon.ZIndex) + 1
+				turning.Parent = icon
+				if still then
+					still.Visible = false
+				end
+				hovered3d = turning
+				turning.Destroying:Connect(function()
+					if still then
+						still.Visible = true
+					end
+				end)
+			else
+				turning:Destroy()
+			end
+		end)
+		iconSlot.MouseLeave:Connect(function()
+			if hovered3d and hovered3d.Parent == icon then
+				hovered3d:Destroy()
+				hovered3d = nil
+			end
+		end)
 		local lock = Instance.new("TextLabel")
 		lock.Name = "Lock"
 		lock.BackgroundTransparency = 1

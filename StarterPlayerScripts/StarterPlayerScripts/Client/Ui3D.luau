@@ -14,7 +14,7 @@ local Config = require(Shared:WaitForChild("Config"))
 
 local Ui3D = {}
 
-Ui3D.IDLE_SPEED = 0.6 -- rad/s on screen
+Ui3D.IDLE_SPEED = 0.35 -- rad/s on screen (gentle: the one hovered card, the egg card)
 Ui3D.HOVER_SPEED = 1.8 -- rad/s under the pointer
 Ui3D.DRAG = 0.012 -- rad per pixel dragged
 Ui3D.START = math.rad(-25) -- the first angle (a three-quarter view)
