@@ -12,6 +12,10 @@
 --                     Drop           -> Free with no push
 --   held              Wriggle        -> free after WRIGGLE_AFTER s (jump three times)
 --
+-- Release 0.20 (Config.PARTY_THROWS): the members of a running Prank Party may also grab and throw
+-- each other inside that party's lab (Zones.mayGrab), and a friend thrown into the cannon, a station,
+-- the bullseye or a trap is a TOSS COMBO (ExperimentService.thrown). Hitting stays plaza only.
+--
 -- A hold always ends: HOLD_MAX, either one leaving the plaza, dying or going, or drifting apart.
 -- Every end of a hold counts as the plaza knock (PlayerRagdoll.markPlazaKnock), and nobody may grab
 -- that player again for VICTIM_GAP (the same grabber: PAIR_GAP).
@@ -24,7 +28,9 @@ local Shared = ReplicatedStorage.Shared
 local Net = require(Shared.Net)
 local Zones = require(Shared.Zones)
 local HitMath = require(Shared.HitMath)
+local Config = require(Shared.Config)
 local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
+local ExperimentService = require(script.Parent.ExperimentService)
 
 local PlayerGrab = {}
 
@@ -46,6 +52,13 @@ local lastTry: { [Player]: number } = {}
 local lastPair: { [Player]: { [Player]: number } } = {} -- grabber -> held -> when the hold ended
 local lastHeld: { [Player]: number } = {} -- held -> when their last hold ended (by anyone)
 local remote: RemoteEvent
+
+-- Release 0.20: the plaza, or inside a running Prank Party's lab between two of its members
+-- (Config.PARTY_THROWS, Zones.mayGrab).
+local function placeAllows(grabber: Player, target: Player, a: Vector3, b: Vector3): boolean
+	return Zones.mayGrab(grabber, target, a, b, Config.PARTY_THROWS == true and Config.PRANK_PARTY == true)
+end
+PlayerGrab.placeAllows = placeAllows
 
 local function rootOf(player: Player): BasePart?
 	local character = player.Character
@@ -87,8 +100,8 @@ function PlayerGrab.refusal(grabber: Player, target: Player): string?
 	if not a or not b then
 		return "nobody"
 	end
-	if not Zones.isPlaza(a.Position) or not Zones.isPlaza(b.Position) then
-		return "Only in the plaza!"
+	if not placeAllows(grabber, target, a.Position, b.Position) then
+		return if Config.PARTY_THROWS then "Only in the plaza, or with friends in a Prank Party!" else "Only in the plaza!"
 	end
 	if (a.Position - b.Position).Magnitude > PlayerGrab.REACH then
 		return "Too far away. Walk closer to grab them"
@@ -150,15 +163,18 @@ function PlayerGrab.throw(grabber: Player, look: Vector3)
 		finish(hold, nil)
 		return
 	end
-	-- (Both still in the plaza: never thrown into a lab. Otherwise just let go.)
+	-- (Both still in the plaza, or both still in their Prank Party's lab: never thrown from the
+	-- plaza into a lab. Otherwise just let go.)
 	local a, b = rootOf(grabber), rootOf(hold.held)
-	if not a or not b or not Zones.isPlaza(a.Position) or not Zones.isPlaza(b.Position) then
+	if not a or not b or not placeAllows(grabber, hold.held, a.Position, b.Position) then
 		finish(hold, nil)
 		return
 	end
 	local dir = (look.Unit + Vector3.new(0, PlayerGrab.THROW_LIFT, 0)).Unit
 	local v = dir * math.min(PlayerGrab.THROW_SPEED, HitMath.PLAYER_MAX_KNOCK)
 	finish(hold, v)
+	-- (Release 0.20: where they land in the next few seconds may be a TOSS COMBO: ExperimentService.)
+	ExperimentService.thrown(hold.held, grabber)
 end
 
 function PlayerGrab.drop(grabber: Player)
@@ -192,8 +208,8 @@ local function endReason(hold: Hold, now: number): string?
 		return "gone" -- (died, reset or respawned: a new body is never held)
 	elseif PlayerRagdoll.isDown(hold.grabber) then
 		return "grabber down"
-	elseif not Zones.isPlaza(a.Position) or not Zones.isPlaza(b.Position) then
-		return "left the plaza"
+	elseif not placeAllows(hold.grabber, hold.held, a.Position, b.Position) then
+		return "left the plaza" -- (or the Prank Party's lab, or the party ended)
 	elseif (a.Position - b.Position).Magnitude > PlayerGrab.APART then
 		return "apart"
 	end

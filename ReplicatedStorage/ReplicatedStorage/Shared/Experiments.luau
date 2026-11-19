@@ -7,6 +7,8 @@
 --   Bullseye  you landed on the bullseye (Playground.watchBullseye)
 --   Hazard    the lava, the spikes, the mace or the wrecking ball threw you (Playground.throwOnTouch)
 --   Egg       you opened a toy egg (ProgressService)
+--   Toss      a friend you threw landed in the cannon, a station, the bullseye or a trap (release
+--             0.20: a TOSS COMBO, ExperimentService.thrown; Prank Party cards only)
 -- Phase 2 adds Daily Experiments: Experiments.daily picks the same three on every server each day.
 
 local Experiments = {}
@@ -33,7 +35,7 @@ local LIST: { Def } = {
 	{ id = "Cannon3", text = "Blast off the CANNON 3 times", kind = "Cannon", target = 3, seconds = 150, stars = 2 },
 }
 Experiments.LIST = table.freeze(LIST)
-Experiments.KINDS = table.freeze({ Takedown = true, Cannon = true, Bullseye = true, Hazard = true, Egg = true, Chimney = true, Present = true })
+Experiments.KINDS = table.freeze({ Takedown = true, Cannon = true, Bullseye = true, Hazard = true, Egg = true, Chimney = true, Present = true, Toss = true })
 
 -- Phase 3: Prank Party (2-6 players in one lab): one shared card, everyone's events count, everyone
 -- gets the stars (ExperimentService.startParty; PartyService deals it).
@@ -41,6 +43,9 @@ Experiments.PARTY = table.freeze({
 	{ id = "PartyDown", text = "TOGETHER: take down 15 dummies", kind = "Takedown", target = 15, seconds = 120, stars = 2 },
 	{ id = "PartyCannon", text = "TOGETHER: 5 cannon shots", kind = "Cannon", target = 5, seconds = 120, stars = 2 },
 	{ id = "PartyTraps", text = "TOGETHER: get thrown by 6 traps", kind = "Hazard", target = 6, seconds = 150, stars = 2 },
+	-- (Release 0.20, Config.PARTY_THROWS: grab a friend, throw them into the cannon, a station or a
+	-- trap: each TOSS COMBO counts. PartyService skips it with PARTY_THROWS off.)
+	{ id = "PartyToss", text = "TOGETHER: toss friends into 3 traps", kind = "Toss", target = 3, seconds = 180, stars = 3 },
 } :: { Def })
 
 -- Phase 3: the daily advent experiment, 1-24 December (Christmas lab: CHIMNEY launcher and the

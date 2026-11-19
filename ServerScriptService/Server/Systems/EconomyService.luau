@@ -154,7 +154,7 @@ end
 
 function EconomyService.redeem(player: Player, code: string): number?
 	local now = os.clock()
-	local t = tries[player] or { n = 0, at = -math.huge }
+	local t: { n: number, at: number } = tries[player] or { n = 0, at = -math.huge }
 	tries[player] = t
 	if t.n >= EconomyService.REDEEM_MAX or now - t.at < EconomyService.REDEEM_GAP then
 		return nil
@@ -207,6 +207,7 @@ function EconomyService.start()
 	Players.PlayerRemoving:Connect(function(player)
 		tries[player] = nil
 	end)
+	-- lihfolk-ignore: remote-unvalidated-args (kind is only compared with fixed strings; arg is type- and length-checked)
 	;(remote :: RemoteEvent).OnServerEvent:Connect(function(player: Player, kind: unknown, arg: unknown)
 		if kind == "Hello" then
 			EconomyService.send(player)

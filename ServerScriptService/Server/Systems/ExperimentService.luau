@@ -32,6 +32,12 @@ type Player_ = {
 }
 
 local players: { [Player]: Player_ } = {}
+-- Release 0.20 (throw your friend): who threw whom, and when (PlayerGrab.throw), and each thrower's
+-- run of combos.
+local tossed: { [Player]: { by: Player, at: number } } = {}
+local chains: { [Player]: { n: number, at: number } } = {}
+-- Where a thrown friend may land for a TOSS COMBO, and how the pop names it.
+ExperimentService.COMBO_KINDS = table.freeze({ Cannon = "the CANNON", Bullseye = "the BULLSEYE", Hazard = "a TRAP", Chimney = "the CHIMNEY", Present = "the PRESENT" }) :: { [string]: string }
 -- Phase 3: Prank Party cards, by the lab owner; partyOf: a member's owner.
 type Party = { state: Experiments.State, members: { Player } }
 local parties: { [Player]: Party } = {}
@@ -102,8 +108,50 @@ local function finish(player: Player, p: Player_, result: string)
 	end)
 end
 
--- Something a card may count happened (kind: Shared\Experiments.KINDS).
-function ExperimentService.event(player: Player, kind: string, n: number?)
+-- Release 0.20: `held` was just thrown by `by` (PlayerGrab). Landing somewhere in COMBO_KINDS within
+-- Config.THROW_COMBO_WINDOW s is a TOSS COMBO.
+function ExperimentService.thrown(held: Player, by: Player)
+	if Config.EXPERIMENTS and held.Parent and by.Parent then
+		tossed[held] = { by = by, at = os.clock() }
+	end
+end
+
+-- A thrown player landed in `kind` (named `what` on the pop, e.g. "the LAVA"): the combo pop for both
+-- and one "Toss" for the thrower (their card, their party's card, the journal). Returns the combo
+-- count (nil: no combo).
+local function tossCombo(held: Player, kind: string, what: string?): number?
+	local t = tossed[held]
+	if not t then
+		return nil
+	end
+	tossed[held] = nil
+	local by = t.by
+	local now = os.clock()
+	if now - t.at > Config.THROW_COMBO_WINDOW or not by.Parent then
+		return nil
+	end
+	local last = chains[by]
+	local c: { n: number, at: number } = if last and now - last.at <= Config.THROW_COMBO_CHAIN
+		then { n = last.n + 1, at = now }
+		else { n = 1, at = now }
+	chains[by] = c
+	local where = what or ExperimentService.COMBO_KINDS[kind] or "a TRAP"
+	local times = if c.n > 1 then string.format(" x%d", c.n) else ""
+	send(by, "Combo", { text = string.format("TOSS COMBO%s! %s into %s", times, held.DisplayName, where), n = c.n })
+	if held ~= by then
+		send(held, "Combo", { text = string.format("%s tossed you into %s!", by.DisplayName, where), n = c.n })
+	end
+	ExperimentService.event(by, "Toss", 1)
+	return c.n
+end
+ExperimentService.tossComboForTest = tossCombo
+
+-- Something a card may count happened (kind: Shared\Experiments.KINDS). `what` names the place for
+-- a TOSS COMBO pop ("the LAVA"; release 0.20).
+function ExperimentService.event(player: Player, kind: string, n: number?, what: string?)
+	if tossed[player] and ExperimentService.COMBO_KINDS[kind] then
+		tossCombo(player, kind, what)
+	end
 	local hook = ExperimentService.onEvent
 	if hook then
 		task.spawn(hook, player, kind, n or 1)
@@ -132,6 +180,7 @@ function ExperimentService.startParty(owner: Player, members: { Player }, def: E
 	parties[owner] = party
 	for _, m in members do
 		partyOf[m] = owner
+		m:SetAttribute("PartyLab", owner.UserId) -- (release 0.20: party members may toss each other here: Zones.mayGrab)
 		send(m, "Party", cardData(party.state, os.clock()))
 	end
 end
@@ -145,6 +194,9 @@ function ExperimentService.endParty(owner: Player)
 	for _, m in party.members do
 		if partyOf[m] == owner then
 			partyOf[m] = nil
+			if m.Parent then
+				m:SetAttribute("PartyLab", nil)
+			end
 		end
 		send(m, "PartyEnd", {})
 	end
@@ -228,9 +280,11 @@ function ExperimentService.start()
 		players[player] = nil
 		ExperimentService.endParty(player)
 		partyOf[player] = nil
+		tossed[player] = nil
+		chains[player] = nil
 	end)
+	-- lihfolk-ignore: remote-unvalidated-args (kind is only compared with "Skip"; nothing else is read)
 	;(remote :: RemoteEvent).OnServerEvent:Connect(function(player: Player, kind: unknown)
-		-- lihfolk-ignore: remote-unvalidated-args (kind is compared with "Skip" below; nothing else is read)
 		local p = players[player]
 		if not p or kind ~= "Skip" then
 			return

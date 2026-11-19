@@ -80,6 +80,30 @@ function Zones.mayEnter(player: Player, index: number?): boolean
 	return owner ~= nil and (owner == player or Zones.isGuest(owner, player.UserId))
 end
 
+-- Release 0.20 (Config.PARTY_THROWS, passed in as `partyThrows`): whether `grabber` standing at `a`
+-- may grab or throw `target` standing at `b`. Always in the plaza; with partyThrows also inside a lab
+-- while a Prank Party runs there, between two of its members (ExperimentService sets their PartyLab
+-- attribute to the lab owner's UserId) who both stand in that owner's plot. Server (PlayerGrab) and
+-- client (PlayerGrabClient) ask the same question.
+function Zones.mayGrab(grabber: Player, target: Player, a: Vector3, b: Vector3, partyThrows: boolean): boolean
+	if Zones.isPlaza(a) and Zones.isPlaza(b) then
+		return true
+	end
+	if not partyThrows then
+		return false
+	end
+	local party = grabber:GetAttribute("PartyLab")
+	if type(party) ~= "number" or target:GetAttribute("PartyLab") ~= party then
+		return false
+	end
+	local plot = Zones.plotAt(a)
+	if plot == nil or plot == 0 or Zones.plotAt(b) ~= plot then
+		return false
+	end
+	local owner = Zones.ownerOf(plot)
+	return owner ~= nil and owner.UserId == party
+end
+
 -- Whether a player may touch (hit, shoot, place on, blast) what is at a point.
 function Zones.mayReach(player: Player, position: Vector3): boolean
 	return Zones.mayEnter(player, Zones.plotAt(position))

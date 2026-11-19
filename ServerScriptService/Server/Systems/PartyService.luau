@@ -39,14 +39,27 @@ function PartyService.groups(): { [Player]: { Player } }
 	return out
 end
 
+-- The next party card for this lab, in turn (the TOSS card only with Config.PARTY_THROWS).
+function PartyService.nextCard(owner: Player): Experiments.Def
+	local list = Experiments.PARTY
+	local def = list[1]
+	for _ = 1, #list do
+		dealt[owner] = (dealt[owner] or 0) + 1
+		def = list[((dealt[owner] - 1) % #list) + 1]
+		if def.kind ~= "Toss" or Config.PARTY_THROWS then
+			break
+		end
+	end
+	return def
+end
+
 -- One check: deal a party card where a lab has company, end the ones that lost it.
 function PartyService.step(now: number, groups: { [Player]: { Player } })
 	for owner, members in groups do
 		local n = #members
 		local running = ExperimentService.partyOf(owner)
 		if n >= 2 and n <= Config.PARTY_MAX and not running and now >= (nextAt[owner] or 0) then
-			dealt[owner] = (dealt[owner] or 0) + 1
-			local def = Experiments.PARTY[((dealt[owner] - 1) % #Experiments.PARTY) + 1]
+			local def = PartyService.nextCard(owner)
 			ExperimentService.startParty(owner, members, def)
 			nextAt[owner] = now + def.seconds + PartyService.GAP
 		elseif running and n < 2 then

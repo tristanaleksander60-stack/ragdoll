@@ -89,6 +89,54 @@ local function pop(b: GuiObject)
 	end)
 end
 
+-- Release 0.20: the TOSS COMBO pop ("TOSS COMBO x2! Sam into the LAVA"), big and gold in the
+-- middle of the screen for a moment; a newer one replaces it. Text from the server only (display
+-- names and fixed words: nothing typed).
+local comboLabel: TextLabel? = nil
+local comboToken = 0
+function ExperimentCard.combo(text: string, n: number)
+	local gui = player:FindFirstChild("PlayerGui")
+	local host = gui and gui:FindFirstChild("ExperimentCard")
+	if not host then
+		return
+	end
+	local old = comboLabel
+	if old then
+		old:Destroy()
+	end
+	local label = Instance.new("TextLabel")
+	label.Name = "Combo"
+	label.BackgroundTransparency = 1
+	label.AnchorPoint = Vector2.new(0.5, 0.5)
+	label.Position = UDim2.fromScale(0.5, 0.36)
+	label.Size = UDim2.new(0.9, 0, 0, 56)
+	label.FontFace = Theme.Fonts.display
+	label.TextScaled = true
+	label.TextColor3 = if n >= 3 then Color3.fromRGB(255, 120, 60) else Color3.fromRGB(255, 214, 70)
+	label.TextStrokeTransparency = 0
+	label.Text = text
+	local limit = Instance.new("UITextSizeConstraint")
+	limit.MaxTextSize = 40
+	limit.MinTextSize = 16
+	limit.Parent = label
+	label.Parent = host
+	comboLabel = label
+	pop(label)
+	comboToken += 1
+	local token = comboToken
+	task.delay(1.8, function()
+		if comboToken == token and label.Parent then
+			TweenService:Create(label, TweenInfo.new(0.3), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+			task.delay(0.35, function()
+				if comboToken == token then
+					label:Destroy()
+					comboLabel = nil
+				end
+			end)
+		end
+	end)
+end
+
 local function buildWindow()
 	local window = C.Window({ name = "Experiments", title = "Experiments", theme = "daily", icon = "gift", size = Vector2.new(440, if Config.ECONOMY then 640 else 360) })
 	windowText = C.Text("body", "", { wrap = true, size = UDim2.new(1, 0, 0, 60), layoutOrder = 1, parent = window.body })
@@ -318,6 +366,8 @@ function ExperimentCard.start()
 			end
 		elseif kind == "PartyEnd" then
 			party = nil
+		elseif kind == "Combo" and type(d.text) == "string" then
+			ExperimentCard.combo(d.text, tonumber(d.n) or 1)
 		end
 	end)
 	RunService.Heartbeat:Connect(function()

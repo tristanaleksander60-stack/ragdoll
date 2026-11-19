@@ -74,6 +74,15 @@ local Config = {
 	PRANK_PARTY = true,
 	PARTY_MAX = 6,
 	SERVER_SIZE = 6,
+	-- Release 0.20 (throw your friend): PARTY_THROWS lets the members of a running Prank Party grab
+	-- and throw each other inside that lab (PlayerGrab; everywhere else it stays plaza only, and
+	-- nobody is ever hurt). A player thrown by a friend who lands in the cannon, on the bullseye, on
+	-- a station or in a trap within THROW_COMBO_WINDOW s is a TOSS COMBO: a pop on both screens, a
+	-- "Toss" for the thrower's cards (the party's TOSS card, the journal). Combos less than
+	-- THROW_COMBO_CHAIN s apart count up (x2, x3...). false = the plaza-only grab of 0.19.
+	PARTY_THROWS = true,
+	THROW_COMBO_WINDOW = 4,
+	THROW_COMBO_CHAIN = 20,
 	--   CHRISTMAS_FROM_DEC1: the season starts 1 December (it was on since 7 November 2026; Santa hats
 	--   in mid-November read as stale). CHRISTMAS_LAB: the chimney launcher, the present trap and the
 	--   sleigh ramp in every lab while the season is on; ADVENT: a daily advent experiment 1-24 Dec.

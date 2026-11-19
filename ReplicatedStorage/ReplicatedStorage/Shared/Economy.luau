@@ -40,6 +40,7 @@ Economy.JOURNAL = table.freeze({
 	{ id = "Professor", text = "Professor: 50 experiments", kind = "Experiment", need = 50 },
 	{ id = "Daily", text = "A daily experiment", kind = "Daily", need = 1 },
 	{ id = "Regular", text = "Regular: 15 daily experiments", kind = "Daily", need = 15 },
+	{ id = "Toss", text = "Friend flinger: a TOSS COMBO", kind = "Toss", need = 1 }, -- (release 0.20)
 } :: { Page })
 
 local function num(v: unknown, lo: number, hi: number): number?

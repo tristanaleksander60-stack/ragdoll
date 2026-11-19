@@ -16,6 +16,9 @@ local UserInputService = game:GetService("UserInputService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Zones = require(Shared:WaitForChild("Zones"))
+local Config = require(Shared:WaitForChild("Config"))
+-- (Release 0.20: friends in a Prank Party may toss each other inside its lab too: Zones.mayGrab.)
+local PARTY_THROWS = Config.PARTY_THROWS == true and Config.PRANK_PARTY == true
 
 local Client = script.Parent
 local PlayerBody = require(Client:WaitForChild("PlayerBody"))
@@ -107,7 +110,7 @@ end
 -- The other player under this viewport point, if they could be grabbed from here.
 local function playerAt(screen: Vector2): Player?
 	local root = myRoot()
-	if not root or not Zones.isPlaza(root.Position) then
+	if not root or (not Zones.isPlaza(root.Position) and player:GetAttribute("PartyLab") == nil) then
 		return nil
 	end
 	local camera = Workspace.CurrentCamera
@@ -133,7 +136,7 @@ local function playerAt(screen: Vector2): Player?
 		return nil
 	end
 	local theirs = model and model:FindFirstChild("HumanoidRootPart")
-	if not theirs or not theirs:IsA("BasePart") or not Zones.isPlaza(theirs.Position) then
+	if not theirs or not theirs:IsA("BasePart") or not Zones.mayGrab(player, other, root.Position, theirs.Position, PARTY_THROWS) then
 		return nil
 	end
 	if (theirs.Position - root.Position).Magnitude > REACH then

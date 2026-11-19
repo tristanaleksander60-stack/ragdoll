@@ -141,7 +141,7 @@ function watchBullseye(player: Player, target: BasePart)
 			if Vector3.new(d.X, 0, d.Z).Magnitude <= Playground.BULLSEYE_RADIUS + 1 and d.Y < 5 then
 				FxService.hit(target.Position + Vector3.new(0, 2, 0), 130, "CannonPad")
 				ProgressService.notice(player, "\u{1F3AF} BULLSEYE!")
-				ExperimentService.event(player, "Bullseye", 1)
+				ExperimentService.event(player, "Bullseye", 1, "the BULLSEYE")
 				BadgeAwards.award(player, "Bullseye")
 				return
 			end
@@ -205,7 +205,7 @@ local function buildCannon()
 		end
 		lastFired[player] = now
 		PlayerRagdoll.launch(player, CANNON_DIRECTION * CANNON_SPEED)
-		ExperimentService.event(player, "Cannon", 1)
+		ExperimentService.event(player, "Cannon", 1, "the CANNON")
 		FxService.hit(padPart.Position + Vector3.new(0, 3, 0), 120, "CannonPad")
 		-- A lab's bullseye (where the shot comes down): landing on it is told (watchBullseye).
 		local target = mine:FindFirstChild("Bullseye")
@@ -217,8 +217,19 @@ end
 
 -- Players touching `p` are thrown (ragdolled) with velocityFor's answer, once per `cooldown` s each,
 -- with a bang where they are (the hazards of the labs, 10 Nov 2026).
+-- (Release 0.20: what a TOSS COMBO pop calls each trap: "Sam into the LAVA!". ExperimentService.)
+local TRAP_NAMES: { [string]: string } = {
+	LavaPool = "the LAVA",
+	SpikeBlock = "the SPIKES",
+	SwingBall = "the WRECKING BALL",
+	MaceBall = "the SPIKE MACE",
+	ChimneyPad = "the CHIMNEY",
+	PresentTrap = "the PRESENT",
+}
 local function throwOnTouch(p: BasePart, cooldown: number, fxSpeed: number, fxId: string, velocityFor: (root: BasePart) -> Vector3, after: ((Player, BasePart) -> ())?)
 	local last: { [Player]: number } = {}
+	local station = p:GetAttribute("Station")
+	local what = if type(station) == "string" then "the " .. station else TRAP_NAMES[p.Name]
 	p.Touched:Connect(function(other)
 		local character = other:FindFirstAncestorOfClass("Model")
 		local player = character and Players:GetPlayerFromCharacter(character)
@@ -236,7 +247,7 @@ local function throwOnTouch(p: BasePart, cooldown: number, fxSpeed: number, fxId
 		last[player] = now
 		PlayerRagdoll.launch(player, velocityFor(root))
 		FxService.hit(root.Position, fxSpeed, fxId)
-		ExperimentService.event(player, "Hazard", 1)
+		ExperimentService.event(player, "Hazard", 1, what)
 		if after then
 			task.spawn(after, player, root)
 		end
