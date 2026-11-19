@@ -301,6 +301,8 @@ function KitStyle.icon(object: GuiObject, name: string?, placement: ("left" | "t
 	end
 	local p = pad :: UIPadding
 	if where == "top" then
+		p.PaddingLeft = UDim.new(0, 3) -- (the word may use the full width under its icon)
+		p.PaddingRight = UDim.new(0, 3)
 		p.PaddingTop = UDim.new(0, px + 2)
 		p.PaddingBottom = UDim.new(0, 4)
 		icon.AnchorPoint = Vector2.new(0.5, 0)

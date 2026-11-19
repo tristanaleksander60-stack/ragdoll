@@ -705,7 +705,7 @@ local function buildButton()
 	b.TextSize = 16
 	b.AutoButtonColor = true
 	KitStyle.button(b)
-	KitStyle.icon(b, KitStyle.HUD_ICONS.Ragdoll) -- (UI v2: a drawn icon beside the word)
+	KitStyle.icon(b, KitStyle.HUD_ICONS.Ragdoll, "top") -- (UI v2: a drawn icon over the word: the slot is narrow)
 	b.Activated:Connect(function()
 		KitStyle.pop(b, 0.88) -- (on the slot's own UIScale: never a second one)
 		PlayerBody.toggle()

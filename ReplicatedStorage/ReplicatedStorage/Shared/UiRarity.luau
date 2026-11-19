@@ -79,12 +79,14 @@ local function bests(): { [string]: { power: number, speed: number, chaos: numbe
 	return made
 end
 
--- A value against the shelf's best, on 1..SCALE (0 only when the weapon has none of it).
+-- A value against the shelf's best, on 1..SCALE (0 only when the weapon has none of it). On a
+-- square-root curve, as loudness is drawn: one railgun on the shelf no longer squashes every other
+-- gun to a 1 (the order and the best = 10 stay).
 local function onScale(value: number, top: number): number
 	if value <= 0 or top <= 0 then
 		return 0
 	end
-	return math.clamp(math.floor(value / top * UiRarity.SCALE + 0.5), 1, UiRarity.SCALE)
+	return math.clamp(math.floor(math.sqrt(value / top) * UiRarity.SCALE + 0.5), 1, UiRarity.SCALE)
 end
 
 function UiRarity.stats(toy: Toys.Toy): Stats

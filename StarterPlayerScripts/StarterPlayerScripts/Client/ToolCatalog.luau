@@ -31,7 +31,7 @@ local C = require(UI:WaitForChild("LihFolkUIComponents"))
 local Controller = require(UI:WaitForChild("LihFolkUIController"))
 
 local SP = Theme.Space
-local CARD = Vector2.new(182, if KitStyle.V2 then 322 else 316) -- (the weapon's 3D model on a stage on top: the picture is what young players read first)
+local CARD = Vector2.new(182, if KitStyle.V2 then 346 else 316) -- (UI v2: a third stat row, SPEED) -- (the weapon's 3D model on a stage on top: the picture is what young players read first)
 
 -- Phones (shorter side 500 px or less) see the window at the touch floor's scale, about 335 design
 -- units tall: there the instruction line is left out and EQUIP sits right under the tool's name, so
@@ -708,8 +708,10 @@ local function build()
 		elseif KitStyle.V2 then
 			-- (UI v2: on a 1-10 scale against the shelf's best, with the number: UiRarity.stats.)
 			local scaled = UiRarity.stats(toy)
+			stats.Size = UDim2.new(1, 0, 0, 74)
 			statRow("POWER", scaled.power, 1, stats, Theme.role("premium").bottom)
-			statRow("CHAOS", scaled.chaos, 2, stats, Theme.role("danger").bottom)
+			statRow("SPEED", scaled.speed, 2, stats, Theme.role("info").bottom)
+			statRow("CHAOS", scaled.chaos, 3, stats, Theme.role("danger").bottom)
 		else
 			statBar("POWER", toy.power, 1, stats)
 			statBar("CHAOS", toy.chaos, 2, stats)

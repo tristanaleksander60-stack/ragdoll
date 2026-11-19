@@ -124,6 +124,37 @@ SHOP → SERVER EVENTS → ADMIN EVENTS (OWNER) → CHRISTMAS THEME → **ON**. 
 - [ ] Butikstekst: kopier fra `STORE_TEXT.md` (titel `Ragdoll Havoc 💥 Toy Lab`, fra 1. dec. `[🎄] Ragdoll Havoc 💥`).
 - [ ] Sæt reklamer (Ads Manager) på **pause** til tallene holder (median-session over 90 s).
 
+## 10b. Nyt UI-look ("UI v2", branch `ui-polish`, `Config.UI_V2 = true`)
+Hent det med `git checkout ui-polish` (bygger oven på `release`). Intet af det er set i Studio endnu.
+1. SelfTest: `ServerStorage.SelfTestOnly = "T23,T35,T45,T46,T54,T56,T90"` → Play. Alle `PASS`
+   (T90_UiV2 er ny: sjældenhed, stats 1-10, farvekontrast, tekst mindst 14 px, ikoner findes).
+2. LayoutCheck i Play (klient, Studio MCP), med `run()`, `live()`, `catalogLive()` (WEAPONS åben) og
+   den nye `textLive()` (kør den med WEAPONS, SHOP, MENU og REWARDS åbne efter tur):
+   - [ ] `run()`: 0 problemer. Kig efter linjerne der starter med `UI v2` (tekst, roller, sjældenhed,
+         ikoner, våbenkort, ikon-knapper, level-mærke) og "first minute: … things" (højst 7 på telefon).
+   - [ ] `textLive()`: "0 … under 14 px or not fitting" (eller send mig listen).
+3. Se det med øjnene (Device Emulator iPhone 14 højkant + Galaxy S21 landskab + PC):
+   - [ ] Vinduer er mørkeblå (ikke grå), titler i Fredoka One, runde hjørner, en skygge under vinduet.
+   - [ ] Alle knapper "klemmer" sig sammen når du trykker, og der kommer et klik.
+   - [ ] LAB VIEW (øje), RAGDOLL, BUILD (kasse), GRAB (handske), THROW, RUN (støvle), SHOOT (pistol)
+         har en tegnet ikon + ordet, og ordet er ikke klippet. Punkterne i MENU har ikoner.
+   - [ ] WEAPONS: hvert kort har en kant og et mærke i sin sjældenhed (COMMON grå, RARE blå, EPIC lilla,
+         LEGENDARY orange, MYTHIC rød). Låste har et mørkt slør over billedet og en hængelås på knappen.
+         EQUIPPED har et flueben og grøn kant. Fanen du står på er orange.
+   - [ ] POWER / SPEED / CHAOS står med et tal 1-10 og streger for hver tiende; den bedste i hver fane
+         er 10. Ingen bjælke er næsten tom (G17: 5/7/5).
+   - [ ] Baren: ord på slots er mindst 14 px; hvor ordet ikke kan være (6 slots på højkant), vises
+         kun billedet, stort og centreret. WEAPONS-feltet viser værktøjskassen hvis ordet ikke kan være.
+   - [ ] Træf: krydset "hopper" ved hvert træf; et drab giver et stort rødt kryds + "KO!".
+   - [ ] BOLTS i EXPERIMENTS tæller op når de stiger; level-tallet tæller op. Level-mærket er skjult
+         de første 90 s på telefon.
+   - [ ] Toasts er solide mørkeblå kort der popper ind; intet klippet.
+   - [ ] Replay: "CRACK! +140" tæller op; SHARE CODE står i en mørk pille; CLIP IT har et kamera.
+   - [ ] SHOP → OFFERS (kun i Studio, id 0 = TEST): billede på hvert kort, Robux-mærke på BUY,
+         "BEST VALUE" på Everything.
+   - [ ] Gamepad: det valgte felt har en tydelig gul ring.
+4. Ser noget forkert ud: sæt `UI_V2 = false` i `Config.luau` → det gamle look kommer tilbage uændret.
+
 ## 11. Publish
 1. Gem place-filen (Ctrl+S). Modellerne i `N7Assets` findes kun i place-filen.
 2. File → Publish to Roblox.
@@ -133,7 +164,7 @@ SHOP → SERVER EVENTS → ADMIN EVENTS (OWNER) → CHRISTMAS THEME → **ON**. 
 ## 12. Hvis noget går galt (rollback)
 - **Før publish:** fejl i test → skriv til mig med testnavn + Output-linjen; publish ikke.
 - **En enkelt ting driller live:** slå den kontakt fra i `Config.luau`, bump `Version`, publish med Shut Down:
-  `PARTY_THROWS` (kast i labbet), `PRANK_PARTY`, `EXPERIMENTS`, `XRAY_REPLAY`, `ECONOMY` / `EGG_RATION`
+  `UI_V2` (det nye UI-look), `PARTY_THROWS` (kast i labbet), `PRANK_PARTY`, `EXPERIMENTS`, `XRAY_REPLAY`, `ECONOMY` / `EGG_RATION`
   (giver æg igen), `CHRISTMAS_LAB`, `ADVENT`. Slå **ikke** `LADDER_V2` fra når den har været live
   (våben spillerne har nået bliver låst igen).
 - **Det hele skal tilbage:** Creator Hub → Places → Ragdoll Havoc → Version History → vælg versionen før

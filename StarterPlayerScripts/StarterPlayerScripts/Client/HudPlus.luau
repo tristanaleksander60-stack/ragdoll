@@ -527,6 +527,10 @@ local function followBar()
 	local barGui = pg and pg:FindFirstChild("ToyBar")
 	local bar = barGui and barGui:FindFirstChild("Bar")
 	local shown = bar ~= nil and bar:IsA("GuiObject") and barGui:IsA("ScreenGui") and barGui.Enabled and bar.Visible and bar.AbsoluteSize.X > 0
+	-- (UI v2: a phone's first QUIET_START s show at most seven things: the level waits.)
+	if KitStyle.V2 and shown and time() < Config.QUIET_START and HudSlots.context(ViewMode.isTouch(), ViewMode.isLab()).phone then
+		shown = false
+	end
 	lg.Enabled = shown
 	if not shown or not bar or not bar:IsA("GuiObject") then
 		return

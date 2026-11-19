@@ -11,6 +11,7 @@ local UserInputService = game:GetService("UserInputService")
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local C = require(UI:WaitForChild("LihFolkUIComponents"))
 local Controller = require(UI:WaitForChild("LihFolkUIController"))
+local Theme = require(UI:WaitForChild("LihFolkUITheme"))
 
 local HudMenu = {}
 
@@ -30,6 +31,21 @@ local ENTRIES: { any } = {
 	{ window = "Like", text = "\u{2B50} FAVORITE", role = "go" }, -- (round 4: LikePrompt)
 	{ window = "Controls", text = "KEYS", role = "neutral", keyboardOnly = true },
 }
+-- UI v2: the drawn icon for each MENU entry (DrawnIcons names; the same pictures as the launchers).
+local MENU_ICONS: { [string]: string } = {
+	Maps = "map",
+	Sandbox = "sandbox",
+	Rewards = "gift",
+	Eggs = "crown",
+	Experiments = "star",
+	Friends = "friends",
+	Creator = "camera",
+	Settings = "settings",
+	Like = "star",
+	Controls = "keys",
+}
+HudMenu.ICONS = MENU_ICONS
+
 -- What stays on the left edge beside MENU, on a phone and a computer alike (round 3, M6): the
 -- three things a player reaches for while playing. Everything else is one tap away in MENU.
 -- Round 5 (like the big ragdoll games): WEAPONS is its own big button above the column (HudPlus);
@@ -117,8 +133,11 @@ function HudMenu.start()
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	for index, entry in ENTRIES do
 		local name = entry.window
+		-- (UI v2: every entry carries its drawn picture beside the word: MENU_ICONS.)
+		local icon = if Theme.V2 then MENU_ICONS[name] else nil
 		local button = C.Button({
-			text = entry.text,
+			text = if icon and name == "Like" then "FAVORITE" else entry.text,
+			icon = icon,
 			role = entry.role :: any,
 			size = UDim2.fromOffset(HudMenu.CELL.X, HudMenu.CELL.Y),
 			layoutOrder = index,
