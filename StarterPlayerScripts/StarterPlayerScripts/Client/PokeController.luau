@@ -406,6 +406,9 @@ PokeController.NEXT_SIDE = 226 -- px each side on a computer with the next cards
 -- part counter beside PLAY (left) and the mouse help (right)
 PokeController.CHIP_SIDE_WIDE = 222 -- the pick chip clears the counter too off a phone
 PokeController.CHIP_MAX = 720 -- ...and is never wider than it was before the next cards (clear of the gift guide)
+-- Phase 0: a phone held upright in the walk view: the bar sits over the thumb row (the move stick,
+-- SHOOT / GRAB and the jump button, with RUN and THROW over them: HudSlots, portrait).
+PokeController.PORTRAIT_BOTTOM = 180
 function PokeController.plan(screen: Vector2, touch: boolean, lab: boolean, withTools: boolean, count: number, upcoming: number?): Plan
 	local up = upcoming or PokeController.NEXT_SHOWN
 	local side = PokeController.sideMargin(touch, lab)
@@ -444,7 +447,9 @@ function PokeController.plan(screen: Vector2, touch: boolean, lab: boolean, with
 		perRow = perRow,
 		cell = Vector2.new(w, h),
 		size = size,
-		bottom = if touch then 12 else PokeController.HELP_BOTTOM + PokeController.HELP_H + 12,
+		bottom = if touch and phone and screen.Y > screen.X and not lab then PokeController.PORTRAIT_BOTTOM
+			elseif touch then 12
+			else PokeController.HELP_BOTTOM + PokeController.HELP_H + 12,
 		chip = screen.Y - 12 - size.Y - CHIP_H - CHIP_GAP >= CHIP_CLEAR_TOP,
 		chipWidth = math.min(size.X - 2 * EDGE, screen.X - 2 * (if phone then CHIP_SIDE else PokeController.CHIP_SIDE_WIDE), PokeController.CHIP_MAX),
 		next = up,

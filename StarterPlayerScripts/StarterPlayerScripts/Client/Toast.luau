@@ -25,6 +25,7 @@ local STALE = 8 -- s a message may wait before it is no longer worth showing
 local TOP = 10
 local HEIGHT_MAX = 76 -- two lines at 20 px
 local PHONE_HEIGHT_MAX = 86 -- three lines at 18 px
+local PORTRAIT_HEIGHT_MAX = 110 -- phase 0: four lines at 18 px across an upright phone (nothing cut)
 
 local Toast = {}
 
@@ -102,14 +103,15 @@ function showNext()
 	local g = ensureGui()
 	local P = Theme.Palette
 	local ctx = HudSlots.context(false, false)
-	local centre, width = HudSlots.toastBox(g.AbsoluteSize, ctx)
+	local centre, width, boxTop = HudSlots.toastBox(g.AbsoluteSize, ctx)
+	local tallest = if ctx.portrait then PORTRAIT_HEIGHT_MAX elseif ctx.phone then PHONE_HEIGHT_MAX else HEIGHT_MAX
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0)
 	label.Size = UDim2.fromOffset(0, 44)
 	label.AutomaticSize = Enum.AutomaticSize.XY
 	label.TextWrapped = true
 	local limit = Instance.new("UISizeConstraint")
-	limit.MaxSize = Vector2.new(width, if ctx.phone then PHONE_HEIGHT_MAX else HEIGHT_MAX)
+	limit.MaxSize = Vector2.new(width, tallest)
 	limit.Parent = label
 	label.BackgroundColor3 = P.dusk
 	label.BackgroundTransparency = 0.05
@@ -124,6 +126,16 @@ function showNext()
 	outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	outline.Parent = label
 	label.Text = item.text
+	-- Phase 0 ("Play 2 more min for a", "Daily egg! Come" were cut): a text that still does not
+	-- fit the box at its size steps down until it does (14 px at the least).
+	task.defer(function()
+		local size = label.TextSize
+		while label.Parent and not label.TextFits and size > 14 do
+			size -= 1
+			label.TextSize = size
+			task.wait()
+		end
+	end)
 	current = label
 	local pad = Instance.new("UIPadding")
 	pad.PaddingLeft = UDim.new(0, 16)
@@ -135,6 +147,9 @@ function showNext()
 	corner.CornerRadius = UDim.new(0, Theme.Radius.card)
 	corner.Parent = label
 	local y = if item.top then math.max(TOP, item.top() - g.AbsolutePosition.Y) else TOP
+	if boxTop then
+		y = math.max(y, boxTop)
+	end
 	local under = minTop
 	if under then
 		y = math.max(y, under())
@@ -142,7 +157,6 @@ function showNext()
 	local lowest = floor
 	if lowest then
 		-- Pushed down below the event banner, it still stops above the tool bar and its chip.
-		local tallest = if ctx.phone then PHONE_HEIGHT_MAX else HEIGHT_MAX
 		y = math.max(TOP, math.min(y, lowest() - tallest))
 	end
 	if Theme.isReducedMotion() then

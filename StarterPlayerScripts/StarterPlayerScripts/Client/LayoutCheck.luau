@@ -47,7 +47,24 @@ LayoutCheck.SCREENS = {
 	{ name = "PC 1366x768", size = Vector2.new(1366, 654), touch = false },
 	{ name = "PC 1280x720", size = Vector2.new(1280, 606), touch = false }, -- (a short window: the column is drawn smaller)
 	{ name = "PC 1920x1080", size = Vector2.new(1920, 964), touch = false },
+	-- Phase 0 (19 Nov 2026): 95 % of phone visits hold the phone upright. Portrait phones, in the
+	-- safe area (Roblox's 58 px top bar and the home indicator / navigation bar taken off).
+	{ name = "iPhone 14 portrait 390x844", size = Vector2.new(390, 752), touch = true },
+	{ name = "iPhone 11 portrait 414x896", size = Vector2.new(414, 804), touch = true },
+	{ name = "Android portrait 360x780", size = Vector2.new(360, 690), touch = true },
+	{ name = "iPhone Pro Max portrait 430x932", size = Vector2.new(430, 840), touch = true },
 } :: { Screen }
+
+-- The HudSlots context for a screen of this size (portrait: a phone held upright).
+local function ctxOf(size: Vector2, touch: boolean, lab: boolean): HudSlots.Context
+	local phone = math.min(size.X, size.Y) <= 500
+	return { touch = touch, lab = lab, phone = phone, portrait = phone and size.Y > size.X }
+end
+-- A toast at its biggest on this screen (Toast: PORTRAIT_HEIGHT_MAX, PHONE_HEIGHT_MAX, HEIGHT_MAX).
+local function toastH(size: Vector2): number
+	local phone = math.min(size.X, size.Y) <= 500
+	return if phone and size.Y > size.X then 110 elseif phone then 86 else 76
+end
 
 -- Every control here has a 3 px ink outline drawn outside its box; two outlines may not touch, and
 -- there is a 4 px gap between them (so boxes are at least 10 px apart).
@@ -67,8 +84,11 @@ local NEVER_TOGETHER: { [string]: { [string]: boolean } } = {
 	-- (Round 5: SHOOT shows only with a gun picked, GRAB and THROW only with Grab.)
 	Shoot = { Grab = true, Throw = true },
 	Grab = { Shoot = true, Zoom = true },
-	Throw = { Shoot = true, Zoom = true },
-	Zoom = { Grab = true, Throw = true },
+	Throw = { Shoot = true, Zoom = true, Sprint = true },
+	Zoom = { Grab = true, Throw = true, Sprint = true },
+	-- (Phase 0: on a landscape phone RUN shares THROW's / ZOOM's box and steps aside for them:
+	-- HudSlots.sprintFree.)
+	Sprint = { Throw = true, Zoom = true },
 	-- (The chase waits for the horde and the arena: ChaseService; never in the first minute.)
 	-- (The hit line rests during a chase: HitInfo.show; the bar steps aside for the pick chip: ChaseHud.)
 	Chase = { GameBar = true, HordeToast = true, NukeHorde = true, Light = true, Hint = true, Choice = true, HitInfo = true, Chip = true },
@@ -96,7 +116,7 @@ local NEVER_TOGETHER: { [string]: { [string]: boolean } } = {
 	Revive = { Guide = true },
 	Reset = { Guide = true },
 }
-local TAPPABLE = { View = true, Replay = true, Ragdoll = true, Recenter = true, Grab = true, Throw = true, Shoot = true, Mode = true, Play = true,
+local TAPPABLE = { Sprint = true, View = true, Replay = true, Ragdoll = true, Recenter = true, Grab = true, Throw = true, Shoot = true, Mode = true, Play = true,
 	Weapons = true, Deal = true, FirstPerson = true, SlowMo = true, Revive = true, Reset = true }
 
 local function overlap(a: Rect, b: Rect): boolean
@@ -151,7 +171,7 @@ end
 local guideWidest = 300 -- (set from CreatorUI.guideWidthMax when run starts)
 
 local function controls(screen: Vector2, touch: boolean, lab: boolean): { Rect }
-	local ctx: HudSlots.Context = { touch = touch, lab = lab, phone = math.min(screen.X, screen.Y) <= 500 }
+	local ctx: HudSlots.Context = ctxOf(screen, touch, lab)
 	local list: { Rect } = {}
 	local names = { "View", "Replay", "Chaos", "Mode", "Play", "Counter" }
 	if lab then
@@ -163,6 +183,7 @@ local function controls(screen: Vector2, touch: boolean, lab: boolean): { Rect }
 		table.insert(names, "Grab")
 		table.insert(names, "Throw")
 		table.insert(names, "Shoot")
+		table.insert(names, "Sprint") -- (phase 0: RUN was never checked)
 		table.insert(list, jumpButton(screen))
 	end
 	-- Round 2, N5: the Robux packs (off a phone) and, on a computer in the player view, the mouse
@@ -315,7 +336,7 @@ function LayoutCheck.scene(s: Screen, lab: boolean, withTools: boolean): ({ Rect
 	local ChaseHud = require(script.Parent:WaitForChild("ChaseHud")) :: any
 	table.insert(all, { x = (s.size.X - ChaseHud.SIZE.X) / 2, y = ChaseHud.TOP, w = ChaseHud.SIZE.X, h = ChaseHud.SIZE.Y, name = "Chase" })
 	if s.touch and not lab then
-		local ctx = { touch = true, lab = false, phone = math.min(s.size.X, s.size.Y) <= 500 }
+		local ctx = ctxOf(s.size, true, false)
 		local at, size = HudSlots.rect("Zoom", ctx, s.size)
 		table.insert(all, { x = at.X, y = at.Y, w = size.X, h = size.Y, name = "Zoom" })
 	end
@@ -362,8 +383,8 @@ function LayoutCheck.run(): string
 				local hits = {}
 				-- A toast at its biggest, where Toast puts it: it may not touch anything.
 				local phone = math.min(s.size.X, s.size.Y) <= 500
-				local centre, tw = HudSlots.toastBox(s.size, { touch = s.touch, lab = lab, phone = phone })
-				local toast: Rect = { x = centre - tw / 2, y = 10, w = tw, h = if phone then 86 else 76, name = "Toast" }
+				local centre, tw, ty = HudSlots.toastBox(s.size, ctxOf(s.size, s.touch, lab))
+				local toast: Rect = { x = centre - tw / 2, y = ty or 10, w = tw, h = toastH(s.size), name = "Toast" }
 				table.insert(all, toast)
 				-- During a horde toasts go on below the game bar (Toast.setMinTop); a phone shows them
 				-- in the bar's points line instead (MinigameHud setBar), so it has no such box.
@@ -450,12 +471,15 @@ function LayoutCheck.run(): string
 		"No horde this time: the plaza is too full",
 		"A lab came free: it's yours! Open Places > My Lab",
 		"Nobody has that lab now",
+		-- (Phase 0: cut on a phone in the owner's captures.)
+		"Play 2 more min for a FREE weapon egg! The clock is on WEAPONS.",
+		"Daily egg! Come back tomorrow for the next one, the streak grows",
 	}
 	for _, s in LayoutCheck.SCREENS do
 		local phone = math.min(s.size.X, s.size.Y) <= 500
-		local _, tw = HudSlots.toastBox(s.size, { touch = s.touch, lab = false, phone = phone })
+		local _, tw = HudSlots.toastBox(s.size, ctxOf(s.size, s.touch, false))
 		local textSize = if phone then 18 else 20
-		local maxLines = if phone then 3 else 2
+		local maxLines = if phone and s.size.Y > s.size.X then 4 elseif phone then 3 else 2
 		for _, text in longest do
 			local params = Instance.new("GetTextBoundsParams")
 			params.Text = text
@@ -553,8 +577,8 @@ function LayoutCheck.run(): string
 				local p = HospitalCharts.plan(s.size, s.touch, lab)
 				local monitor: Rect = { x = (s.size.X - p.size.X) / 2, y = s.size.Y - HospitalCharts.BOTTOM - p.size.Y, w = p.size.X, h = p.size.Y, name = "Monitor" }
 				local all = controls(s.size, s.touch, lab)
-				local centre, tw = HudSlots.toastBox(s.size, { touch = s.touch, lab = lab, phone = phone })
-				table.insert(all, { x = centre - tw / 2, y = 10, w = tw, h = if phone then 86 else 76, name = "Toast" })
+				local centre, tw, ty = HudSlots.toastBox(s.size, ctxOf(s.size, s.touch, lab))
+				table.insert(all, { x = centre - tw / 2, y = ty or 10, w = tw, h = toastH(s.size), name = "Toast" })
 				local hits = {}
 				if monitor.x < 0 or monitor.y < 0 or monitor.x + monitor.w > s.size.X then
 					table.insert(hits, "Monitor off screen")

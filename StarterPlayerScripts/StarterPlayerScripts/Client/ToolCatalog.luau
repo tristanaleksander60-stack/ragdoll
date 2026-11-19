@@ -348,7 +348,7 @@ local function build()
 	for index, category in Toys.categories do
 		local tab = C.Button({
 			name = "Tab_" .. category,
-			text = string.upper(category),
+			text = if category == "Explosives" then "BOMBS" else string.upper(category), -- (phase 0: "EXPLOSI / VES" broke over two lines on a phone)
 			role = "neutral",
 			size = UDim2.new(0.25, -SP.sm, 0, 56), -- four across, whatever the width
 			layoutOrder = index,

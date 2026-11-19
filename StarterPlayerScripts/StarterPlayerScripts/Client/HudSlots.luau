@@ -32,7 +32,14 @@ export type Context = {
 	touch: boolean,
 	lab: boolean,
 	phone: boolean,
+	portrait: boolean?, -- phase 0: a phone held upright (95 % of phone visits)
 }
+
+-- Phase 0 (19 Nov 2026), a phone held upright: the thumb row at the bottom is the move stick
+-- (left), SHOOT / GRAB beside Roblox's jump button and, one row up, RUN and THROW (or ZOOM) over
+-- them; the tool bar sits above that row (PokeController.PORTRAIT_BOTTOM), toasts go full width
+-- under the top cluster (toastBox's third value). LayoutCheck checks four portrait phones.
+HudSlots.PORTRAIT_TOAST_TOP = 200 -- px: under LAB VIEW / RAGDOLL (right) and SHOP / MENU (left)
 
 local function slot(ax: number, ay: number, position: UDim2, w: number, h: number): Slot
 	return { anchor = Vector2.new(ax, ay), position = position, size = Vector2.new(w, h) }
@@ -62,6 +69,9 @@ local SLOTS: { [string]: (ctx: Context) -> Slot } = {
 		return slot(1, 1, UDim2.new(1, -32, 1, -254), 76, 76) -- above the 120 px jump button
 	end,
 	Throw = function(ctx)
+		if ctx.portrait then
+			return slot(1, 1, UDim2.new(1, -30, 1, -104), 60, 60) -- over the jump button
+		end
 		if ctx.phone then
 			return slot(1, 1, UDim2.new(1, -116, 1, -112), 60, 60) -- above GRAB
 		end
@@ -106,8 +116,13 @@ end
 -- Round 4, M10: the RUN button (touch only, the walk view): on a phone just above Roblox's jump
 -- button, clear of THROW to its left; on a tablet left of the jump button, under GRAB and THROW.
 SLOTS.Sprint = function(ctx)
+	if ctx.portrait then
+		return slot(1, 1, UDim2.new(1, -104, 1, -112), 56, 56) -- over SHOOT / GRAB, left of THROW
+	end
 	if ctx.phone then
-		return slot(1, 1, UDim2.new(1, -25, 1, -102), 64, 64)
+		-- (Phase 0: over the jump button it touched RAGDOLL on short phones (LayoutCheck now checks
+		-- it): THROW's box, and RUN steps aside while THROW or ZOOM need it: HudSlots.sprintFree.)
+		return slot(1, 1, UDim2.new(1, -116, 1, -112), 60, 60)
 	end
 	return slot(1, 1, UDim2.new(1, -200, 1, -60), 70, 70)
 end
@@ -150,6 +165,9 @@ end
 -- Round 5 (review fix): ZOOM for a scoped gun on touch: on a phone just over SHOOT (in THROW's
 -- place: THROW shows only with Grab picked), clear of RAGDOLL and the bar; on a tablet left of SHOOT.
 SLOTS.Zoom = function(ctx)
+	if ctx.portrait then
+		return slot(1, 1, UDim2.new(1, -30, 1, -104), 60, 48) -- (THROW's box: never together)
+	end
 	if ctx.phone then
 		return slot(1, 1, UDim2.new(1, -116, 1, -114), 64, 48)
 	end
@@ -157,6 +175,25 @@ SLOTS.Zoom = function(ctx)
 end
 
 HudSlots.NAMES = { "View", "Replay", "Ragdoll", "Chaos", "Recenter", "Grab", "Throw", "Mode", "Play", "Counter", "Packs", "MouseHelp", "Sprint", "Weapons", "Deal", "FirstPerson", "SlowMo", "Revive", "Reset" }
+
+-- Whether RUN may show with this tool picked (a landscape phone shares THROW's / ZOOM's box).
+function HudSlots.sprintFree(ctx: Context, selected: string): boolean
+	if ctx.phone and not ctx.portrait then
+		return selected ~= "Grab" and selected ~= "Sniper" and selected ~= "DMR"
+	end
+	return true
+end
+
+-- Phase 0: on a phone the first QUIET_START s of a visit show only what the first minute needs
+-- (fire, the move stick, the bar, WEAPONS, SHOP, MENU, RAGDOLL); these wait (LAB VIEW and RUN), and
+-- BUILD lives in MENU (SANDBOX) on a phone. Config.QUIET_START.
+HudSlots.PHONE_LATER = { View = true, Sprint = true }
+function HudSlots.shownNow(name: string, ctx: Context, now: number, quietStart: number): boolean
+	if ctx.phone and HudSlots.PHONE_LATER[name] then
+		return now >= quietStart
+	end
+	return true
+end
 
 function HudSlots.get(name: string, ctx: Context): Slot
 	return SLOTS[name](ctx)
@@ -195,7 +232,11 @@ end
 -- in the middle of the gap (a phone). Returns the centre x and the widest a toast may be; on a
 -- phone toasts may use three lines (TOAST_LINES) at a smaller size.
 HudSlots.TOAST_MAX = 520
-function HudSlots.toastBox(screen: Vector2, ctx: Context): (number, number)
+function HudSlots.toastBox(screen: Vector2, ctx: Context): (number, number, number?)
+	if ctx.portrait then
+		-- (Upright: the gap between the top corners is a few dozen px; the whole width under them.)
+		return screen.X / 2, math.min(HudSlots.TOAST_MAX, screen.X - 24), HudSlots.PORTRAIT_TOAST_TOP
+	end
 	local chaosAt, chaosSize = HudSlots.rect("Chaos", ctx, screen)
 	local viewAt = HudSlots.rect("View", ctx, screen)
 	local replayAt = HudSlots.rect("Replay", ctx, screen)
@@ -235,7 +276,8 @@ end
 -- The context right now, from the camera's viewport and the view mode.
 function HudSlots.context(touch: boolean, lab: boolean): Context
 	local viewport = workspace.CurrentCamera.ViewportSize
-	return { touch = touch, lab = lab, phone = math.min(viewport.X, viewport.Y) <= 500 }
+	local phone = math.min(viewport.X, viewport.Y) <= 500
+	return { touch = touch, lab = lab, phone = phone, portrait = phone and viewport.Y > viewport.X }
 end
 
 -- Calls back whenever the screen changes size (the first frames report a tiny viewport, a phone

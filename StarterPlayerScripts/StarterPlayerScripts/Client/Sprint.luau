@@ -15,8 +15,10 @@ local RunService = game:GetService("RunService")
 local StarterPlayer = game:GetService("StarterPlayer")
 local UserInputService = game:GetService("UserInputService")
 
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 local ViewMode = require(script.Parent:WaitForChild("ViewMode"))
 local HudSlots = require(script.Parent:WaitForChild("HudSlots"))
+local PokeController = require(script.Parent:WaitForChild("PokeController"))
 local AvatarMoves = require(script.Parent:WaitForChild("AvatarMoves"))
 local FxController = require(script.Parent:WaitForChild("FxController"))
 
@@ -147,11 +149,17 @@ function Sprint.start()
 	local function place()
 		local button = touchButton
 		if button then
-			HudSlots.apply(button, "Sprint", HudSlots.context(true, ViewMode.isLab()))
+			local ctx = HudSlots.context(true, ViewMode.isLab())
+			HudSlots.apply(button, "Sprint", ctx)
+			-- (Phase 0: a phone shows RUN after the quiet start: HudSlots.PHONE_LATER.)
 			button.Visible = not ViewMode.isLab()
+				and HudSlots.shownNow("Sprint", ctx, time(), Config.QUIET_START)
+				and HudSlots.sprintFree(ctx, PokeController.getSelected())
 		end
 	end
 	HudSlots.watch(place)
+	PokeController.changed:Connect(place)
+	task.delay(math.max(0, Config.QUIET_START - time()) + 0.1, place)
 	-- Drops every input: entering the lab view, leaving the window (its key-up never arrives here)
 	-- or a new avatar; no one's hand is still on a button then.
 	local function dropAll()

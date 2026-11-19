@@ -29,6 +29,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
 local Toys = require(Shared:WaitForChild("Toys"))
 local Assets = require(Shared:WaitForChild("Assets"))
+local Config = require(Shared:WaitForChild("Config"))
 
 local Client = script.Parent
 local PokeController = require(Client:WaitForChild("PokeController"))
@@ -543,6 +544,9 @@ local function buildRecenterButton()
 	HudSlots.watch(function()
 		local ctx = HudSlots.context(ViewMode.isTouch(), ViewMode.isLab())
 		HudSlots.apply(view, "View", ctx)
+		-- (Phase 0: a phone shows LAB VIEW after the quiet start, HudSlots.PHONE_LATER; the lab view
+		-- itself always keeps its way back.)
+		view.Visible = ViewMode.isLab() or HudSlots.shownNow("View", ctx, time(), Config.QUIET_START)
 		-- The V badge only fits the wide button (off phones).
 		local key = view:FindFirstChild("Key")
 		if key and key:IsA("GuiObject") then
@@ -550,6 +554,9 @@ local function buildRecenterButton()
 		end
 	end)
 
+	task.delay(math.max(0, Config.QUIET_START - time()) + 0.1, function()
+		view.Visible = true
+	end)
 	gui.Parent = player:WaitForChild("PlayerGui")
 	recenterButton = button
 end

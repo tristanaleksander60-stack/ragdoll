@@ -390,7 +390,9 @@ local function modeShown(): boolean
 		return false
 	end
 	-- (Off a phone the column's SANDBOX tile reads DONE while building: one way out, not two.)
-	return HudSlots.context(ViewMode.isTouch(), ViewMode.isLab()).phone
+	-- Phase 0: a phone starts building from MENU's SANDBOX; the button shows only while building
+	-- (the way back to playing), so the first minute has one button less.
+	return HudSlots.context(ViewMode.isTouch(), ViewMode.isLab()).phone and active
 end
 
 local function refreshMode()
