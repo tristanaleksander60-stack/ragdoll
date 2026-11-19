@@ -48,6 +48,7 @@ require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIIcons
 PlotPrivacy.start() -- (first: other labs leave this screen before anything draws them)
 task.spawn(require(Client:WaitForChild("DummySkins")).start) -- the dummies' sculpted mannequin bodies
 require(Client:WaitForChild("SoundMix")).start() -- v4 A3: the mix's groups and compressor
+task.spawn(require(Client:WaitForChild("NpcTalk")).start) -- v4 B4: the talk panel
 FxController.start()
 AvatarMoves.start()
 

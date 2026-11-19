@@ -38,6 +38,7 @@ Net.Names = table.freeze({
 	Streamer = "Streamer", -- both ways: client Mode / Action / Hello; server Mode / Ran / NextTool / Hello / Refused
 	Money = "Money", -- both ways: client Buy / Admin / SeenNew / Hello; server Owned / Free / FreeOver / WhatsNew / Admin / Refused
 	Travel = "Travel", -- both ways: client asks to go to a place; server answers Arrived / Refused
+	NpcCommand = "NpcCommand", -- both ways (v4 B4): server Open (talked to) / Done; client Follow / Stay / Attack / Bye
 	HitInfo = "HitInfo", -- server -> the hitter: what was hit, the body's blood and pulse (one short line)
 	Weapons = "Weapons", -- both ways: client Buy (a weapon id); server Bought / Refused
 	Shot = "Shot", -- client -> server: a gun fired at nothing (the ground, a wall, the air)

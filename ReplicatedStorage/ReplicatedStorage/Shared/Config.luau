@@ -142,6 +142,7 @@ local Config = {
 	-- (Playground billboards), and the clean HUD (HudV3). false = the 0.20 look.
 	LOOK_V3 = true,
 	MAP_ACTIVITIES = true, -- v3 phase C: launchers on the open-air maps (Server/Systems/MapActivities)
+	NPC_COMMANDS = true, -- v4 B4: talk to NPCs (E): follow, stay, attack with your weapons (Server/Systems/NpcCommand, Client/NpcTalk)
 	-- v4 A5 (owner): bodies die from enough hits, not only headshots. Every hit adds damage =
 	-- weapon power x DAMAGE_PER_POWER x the region (head, limbs) x DAMAGE_BLUNT for blows; BODY_HP of it
 	-- kills (about 6 Popper rounds to the body, about 10 punches). Headshots stay instant.

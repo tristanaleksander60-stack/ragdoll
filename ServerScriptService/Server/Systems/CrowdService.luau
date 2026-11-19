@@ -790,6 +790,10 @@ local function think(npc: Npc, now: number)
 	else
 		npc.healAt = nil
 	end
+	-- v4 B4: a body a player has talked to follows that player's commands (NpcCommand), not ours.
+	if model:GetAttribute("CommandedBy") ~= nil then
+		return
+	end
 	if npc.mode == "Panic" then
 		if now < npc.panicUntil then
 			return
@@ -1261,6 +1265,17 @@ end
 -- Tests and API
 
 -- The people in a zone (the plaza's when none is named).
+-- v4 B4 (NpcCommand): walk one of the crowd to `spot`, facing `facing`; false if it is not ours.
+function CrowdService.goTo(model: Model, spot: Vector3, facing: Vector3?): boolean
+	for _, npc in npcs do
+		if npc.model == model then
+			setGoal(npc, spot, facing)
+			return true
+		end
+	end
+	return false
+end
+
 function CrowdService.people(zoneId: string?): { Model }
 	local list = {}
 	for _, npc in npcs do

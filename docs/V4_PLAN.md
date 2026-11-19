@@ -257,3 +257,11 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
 - 20 Nov 2026 (PC): **B1** (spread and counts) came with A2.
 - **B2 (talk part):** DummyLines.PLACE has idle lines per place (Plaza, Island, City, Site, Farm, Military), and DummyLife picks them from the body's Zone. Activity spots and pathfinding to benches/jetty are not done.
 - **B3 (map NPCs):** new crowd roles Worker (hi-vis vest, hard hat), Farmer (overall straps, straw hat), Soldier (olive kit, helmet), Beachgoer (sun hat, shades). Places use them: Island Beachgoer/Tourist, Site Worker/Guard, Farm Farmer/Tourist, Base Soldier. The new hats count as own hats for Christmas (no Santa hat on top); T36/T40 know them. Seen on the Site. A better lab mannequin is not done.
+- **B4 done (20 Nov, PC):** talk to NPCs (`Config.NPC_COMMANDS`).
+  - Every NPC in Workspace.Dummies gets a Talk prompt (E), except arena runners, chasers and greeters.
+  - Client `NpcTalk` panel: FOLLOW ME / STAY HERE / ATTACK… (who: nearest 4; with what: your unlocked hitting weapons) / BYE. It is centred and scales down on short screens.
+  - Server `NpcCommand` checks everything: the body must be an NPC within 14 studs; at most 3 per player; one owner per NPC; the target must be an NPC within 60 studs; the weapon must be an owned `hit` tool; 0.3 s between requests.
+  - Commands end on leaving the place or the game, or on death.
+  - Commanded crowd bodies skip CrowdService.think and walk via `CrowdService.goTo`.
+  - Attack holds the weapon model in the right hand and hits through HitService with no requester (the server pushes, and an NPC's hits never count as your takedowns).
+  - Seen in Studio: the panel, and a Punch attack that walked up and dealt damage 10→60. T97_NpcCommand passes (+ T36/T40).

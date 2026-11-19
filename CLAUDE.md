@@ -193,3 +193,6 @@ Phases 0-4b, A-M, N1-N5, N7 (graphics accepted as is), M1-M8 done. M9 was under 
 - M12 world: rename, desert-oasis spawn lab, clear glass walls between plots, much better maps.
 - M13: Christmas icon and thumbnails, then test everything.
 - Mobile fixes (v0.17.2, 11 Nov): sound on phones (FxController: POOL 1 on phones, pool grows to POOL_MAX 6, busy asset restarts its oldest loaded voice, LOAD_WAIT 0.2 phone / own shots LOAD_WAIT_OWN 0.35, start-bar guns + hit banks made first). Walking no longer shoots: Client\MoveStick (touch that starts on TouchGui's DynamicThumbstickFrame/ThumbstickFrame, fallback lower-left 40%x55%) is claimed in LabCamera.onPress and skipped by Crosshair. Play test clean; not yet tested on a real phone.
+
+## v4 (20 Nov 2026, PC, branch `release`; plan docs/V4_PLAN.md)
+- A1-A6, B1-B4 done (details in V4_PLAN.md). New remote **NpcCommand** (Net; server Open/Done/Refused, client Follow/Stay/Attack/Bye, validated in Server/Systems/NpcCommand). New systems: SoundMix (client), GroundGuard, MapActivities, OutdoorMaps, NpcCommand; Client NpcTalk. Crowd roles Worker/Farmer/Soldier/Beachgoer; DummyLines.PLACE.
