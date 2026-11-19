@@ -102,19 +102,20 @@ Shop.WHATS_NEW = table.freeze({
 	},
 })
 
--- Phase 2 (MASTER_PLAN 5): the monetisation ladder, as data. Every id is 0 until the owner makes
--- the developer product / game pass on the Creator Dashboard and sends its id; a card with id 0
--- never shows on a live server (phase 0). No paid random items here (no eggs: no odds needed), and
--- slow-mo and the replay are never sold. Wiring each one is a small job once its id exists
--- (DoubleBolts already doubles bolts for a player with the "DoubleBolts" attribute: EconomyService).
+-- Phase 2 (MASTER_PLAN 5): the monetisation ladder. Every id is 0 until the owner makes the
+-- developer product / game pass on the Creator Dashboard: PASTE THE ID INTO `id = 0` BELOW and
+-- nothing else (release 0.20.0: OfferService sells and grants them, Shared\Offers says what each
+-- gives, the SHOP window's OFFERS section shows every one with an id; id 0 is hidden live and
+-- shown as TEST in Studio). No paid random items here (no eggs: no odds needed), and slow-mo and
+-- the replay are never sold.
 Shop.OFFERS = table.freeze({
 	table.freeze({ key = "EntryPack", kind = "product", name = "Starter Crate", robux = 49, id = 0, gives = "300 BOLTS and the Rattler" }),
 	table.freeze({ key = "AllMelee", kind = "pass", name = "All Melee", robux = 69, id = 0, gives = "Every melee toy" }),
 	table.freeze({ key = "AllExplosives", kind = "pass", name = "All Explosives", robux = 99, id = 0, gives = "Every explosive" }),
 	table.freeze({ key = "DoubleBolts", kind = "pass", name = "2x BOLTS", robux = 129, id = 0, gives = "Double BOLTS from everything" }),
-	table.freeze({ key = "VipLab", kind = "pass", name = "VIP Lab", robux = 199, id = 0, gives = "A bigger lab with more dummies" }),
+	table.freeze({ key = "VipLab", kind = "pass", name = "VIP Lab", robux = 199, id = 0, gives = "More dummies roaming your lab" }),
 	table.freeze({ key = "EventsPass", kind = "pass", name = "Events Pass", robux = 249, id = 0, gives = "Every server event, free, all season" }),
-	table.freeze({ key = "Everything", kind = "pass", name = "Everything", robux = 699, id = 0, gives = "Every toy, 2x BOLTS and VIP Lab" }),
+	table.freeze({ key = "Everything", kind = "pass", name = "Everything", robux = 699, id = 0, gives = "Every toy, 2x BOLTS, VIP Lab and Events Pass" }),
 })
 
 return table.freeze(Shop)

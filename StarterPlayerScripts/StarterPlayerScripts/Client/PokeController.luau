@@ -1705,6 +1705,7 @@ function PokeController.start()
 	Workspace:GetAttributeChangedSignal("OwnerParty"):Connect(pruneLocked) -- (the owner's free weapons ending)
 	player:GetAttributeChangedSignal("ProgressLoaded"):Connect(pruneLocked)
 	player:GetAttributeChangedSignal("TrialWeapon"):Connect(pruneLocked) -- (a free try over: round 5)
+	player:GetAttributeChangedSignal("PassToys"):Connect(pruneLocked) -- (release 0.20.0: Shop.OFFERS passes)
 	Net.event(Net.Names.ToyRefused).OnClientEvent:Connect(function(toyId: unknown, reason: unknown)
 		if type(toyId) ~= "string" or type(reason) ~= "string" then
 			return

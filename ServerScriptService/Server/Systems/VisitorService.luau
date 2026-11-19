@@ -15,6 +15,7 @@ local Lab = require(script.Parent.Lab)
 local EventService = require(script.Parent.EventService)
 local SessionStats = require(script.Parent.SessionStats)
 local DeviceTier = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("DeviceTier"))
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 
 local VisitorService = {}
 
@@ -87,6 +88,10 @@ local function fill(player: Player)
 	-- (Phase 1: the player's device simulates its lab's bodies: a phone gets fewer. DeviceTier.)
 	local record = SessionStats.recordFor(player)
 	local cap = math.min(VisitorService.VISITORS, DeviceTier.caps(DeviceTier.of(record and record.plat)).visitors)
+	-- (Release 0.20.0: the VIP LAB pass, Shop.OFFERS: a few more of them. OfferService sets VipLab.)
+	if player:GetAttribute("VipLab") == true then
+		cap += Config.VIP_LAB_VISITORS
+	end
 	local want = cap - #list
 	if want <= 0 then
 		return

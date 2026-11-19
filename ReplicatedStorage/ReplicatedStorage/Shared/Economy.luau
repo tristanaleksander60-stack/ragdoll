@@ -18,6 +18,7 @@ export type Eco = {
 	day: number, -- the UTC day `daily` belongs to
 	daily: { [string]: boolean }, -- today's daily experiments done
 	codes: { [string]: boolean }, -- like-milestone codes redeemed
+	got: { string }, -- release 0.20.0: purchase ids of offers already granted (OfferService; newest last)
 }
 
 export type Page = { id: string, text: string, kind: string, need: number }
@@ -43,13 +44,15 @@ Economy.JOURNAL = table.freeze({
 	{ id = "Toss", text = "Friend flinger: a TOSS COMBO", kind = "Toss", need = 1 }, -- (release 0.20)
 } :: { Page })
 
+Economy.GOT_KEPT = 30 -- purchase ids remembered (Purchases keeps 100 per buyer as well)
+
 local function num(v: unknown, lo: number, hi: number): number?
 	return if type(v) == "number" and v == v then math.clamp(math.floor(v), lo, hi) else nil
 end
 
 -- A stored eco table (or nothing) checked into a clean one.
 function Economy.clean(raw: unknown): Eco
-	local e: Eco = { bolts = 0, counts = {}, journal = {}, day = 0, daily = {}, codes = {} }
+	local e: Eco = { bolts = 0, counts = {}, journal = {}, day = 0, daily = {}, codes = {}, got = {} }
 	if type(raw) ~= "table" then
 		return e
 	end
@@ -62,6 +65,16 @@ function Economy.clean(raw: unknown): Eco
 			if type(k) == "string" and #k <= 16 and n then
 				e.counts[k] = n
 			end
+		end
+	end
+	if type(t.got) == "table" then
+		for _, id in t.got do
+			if type(id) == "string" and #id <= 64 and not table.find(e.got, id) then
+				table.insert(e.got, id)
+			end
+		end
+		while #e.got > Economy.GOT_KEPT do
+			table.remove(e.got, 1)
 		end
 	end
 	local pages: { [string]: boolean } = {}

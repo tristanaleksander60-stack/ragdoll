@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Toys = require(Shared:WaitForChild("Toys"))
+local Offers = require(Shared:WaitForChild("Offers"))
 local Net = require(Shared:WaitForChild("Net"))
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
 local Toast = require(script.Parent:WaitForChild("Toast"))
@@ -95,6 +96,10 @@ local function stateOf(toy: Toys.Toy, owned: { [string]: boolean }): (string, nu
 	end
 	-- (The owner is in this server and gave everyone every weapon: AdminService.)
 	if game:GetService("Workspace"):GetAttribute("OwnerParty") == true then
+		return "open", have
+	end
+	-- (Release 0.20.0: an owned ALL ... pass covers its shelves: OfferService sets PassToys.)
+	if Offers.covers(Players.LocalPlayer:GetAttribute("PassToys"), toy.category) then
 		return "open", have
 	end
 	return if known == nil then "loading" else "locked", have
@@ -743,6 +748,7 @@ function ToolCatalog.start(barApi: Bar)
 		end
 	end)
 	game:GetService("Workspace"):GetAttributeChangedSignal("OwnerParty"):Connect(refreshEquip)
+	Players.LocalPlayer:GetAttributeChangedSignal("PassToys"):Connect(refreshEquip) -- (release 0.20.0: a pass bought)
 	-- A weapon bought: it is yours (the Owned attribute redraws the cards), and it says so.
 	Net.event(Net.Names.Weapons).OnClientEvent:Connect(function(kind: unknown, data: unknown)
 		if type(data) ~= "table" then

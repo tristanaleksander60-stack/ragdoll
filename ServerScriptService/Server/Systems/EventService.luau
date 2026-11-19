@@ -25,6 +25,7 @@ local Shared = ReplicatedStorage.Shared
 local Net = require(Shared.Net)
 local Log = require(Shared.Log)
 local Events = require(Shared.Events)
+local Config = require(Shared.Config)
 local N7Models = require(Shared.N7Models)
 
 local Systems = script.Parent
@@ -66,6 +67,7 @@ local nextAt = 0
 local stateRemote: RemoteEvent? = nil -- set by start
 local noticeRemote: RemoteEvent? = nil
 local lastPrompt: { [Player]: number } = {}
+local lastPassEvent: { [Player]: number } = {} -- (release 0.20.0: the EVENTS PASS's free events)
 local heldForTest = false
 local failStarts = 0 -- tests: how many starts to fail on purpose
 
@@ -191,6 +193,7 @@ handlers.DummyRain = function(job, onEnd)
 			if stopped or dummyCount() >= MAX_DUMMIES then
 				break
 			end
+			-- lihfolk-ignore: paid-random-no-policy (where the rain's dummies land; a bought event's effect is fixed, nothing is rolled as a reward)
 			local angle = math.random() * math.pi * 2
 			local d = math.sqrt(math.random()) * RAIN_RADIUS
 			local spot = center + Vector3.new(math.cos(angle) * d, 0, math.sin(angle) * d)
@@ -540,6 +543,22 @@ local function onBuy(player: Player, id: unknown)
 		notify(player, "You already have events waiting. Let them go off first!", "warn")
 		return
 	end
+	-- (Release 0.20.0: the EVENTS PASS, Shop.OFFERS: free, at most one per Config.EVENTS_PASS_GAP s.
+	-- OfferService sets the EventsPass attribute from Roblox's answer.)
+	if player:GetAttribute("EventsPass") == true then
+		local gap = Config.EVENTS_PASS_GAP - (now - (lastPassEvent[player] or -math.huge))
+		if gap <= 0 then
+			lastPassEvent[player] = now
+			local place = EventService.trigger(id, player.DisplayName, "Free", nil, nil, player.UserId)
+			if place then
+				notify(player, string.format("EVENTS PASS: your %s %s", event.name, placeOf(place)), nil, place <= 1 and not current)
+			end
+			return
+		elseif event.productId == 0 then
+			notify(player, string.format("EVENTS PASS: your next free event in %d s", math.ceil(gap)), "warn")
+			return
+		end
+	end
 	if event.productId ~= 0 then
 		MarketplaceService:PromptProductPurchase(player, event.productId)
 	elseif RunService:IsStudio() then
@@ -592,6 +611,7 @@ function EventService.start()
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		lastPrompt[player] = nil
+		lastPassEvent[player] = nil
 		buyerLeft(player.UserId)
 	end)
 	game:BindToClose(function()

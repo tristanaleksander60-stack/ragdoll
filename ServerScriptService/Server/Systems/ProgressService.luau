@@ -39,6 +39,7 @@ local BadgeAwards = require(script.Parent.BadgeAwards)
 local SessionStats = require(script.Parent.SessionStats)
 local ExperimentService = require(script.Parent.ExperimentService)
 local Economy = require(Shared:WaitForChild("Economy"))
+local Offers = require(Shared:WaitForChild("Offers"))
 
 local log = Log.new("Progress")
 
@@ -1760,6 +1761,10 @@ function ProgressService.isUnlocked(player: Player, toy: { unlockAt: number, id:
 			return true
 		end
 	end
+	-- (Release 0.20.0: a Shop.OFFERS pass covers its shelves while owned: OfferService, Offers.covers.)
+	if toy.id ~= nil and Offers.covers(player:GetAttribute("PassToys"), Toys.byId[toy.id] and Toys.byId[toy.id].category) then
+		return true
+	end
 	local p = profiles[player]
 	return p ~= nil and (p.takedowns >= toy.unlockAt or (toy.id ~= nil and p.owned[toy.id] == true))
 end
@@ -1962,7 +1967,7 @@ end
 function ProgressService.isMine(player: Player, id: string): boolean
 	local p = profiles[player]
 	local toy = Toys.byId[id]
-	return p ~= nil and toy ~= nil and (p.owned[id] == true or p.takedowns >= toy.unlockAt)
+	return p ~= nil and toy ~= nil and (p.owned[id] == true or p.takedowns >= toy.unlockAt or Offers.covers(player:GetAttribute("PassToys"), toy.category))
 end
 
 return ProgressService

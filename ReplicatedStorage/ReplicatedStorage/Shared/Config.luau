@@ -81,6 +81,10 @@ local Config = {
 	-- "Toss" for the thrower's cards (the party's TOSS card, the journal). Combos less than
 	-- THROW_COMBO_CHAIN s apart count up (x2, x3...). false = the plaza-only grab of 0.19.
 	PARTY_THROWS = true,
+	-- Release 0.20.0 (Shop.OFFERS passes, OfferService): EVENTS PASS starts a server event free at
+	-- most once per EVENTS_PASS_GAP s; VIP LAB adds VIP_LAB_VISITORS roaming ragdolls in your lab.
+	EVENTS_PASS_GAP = 120,
+	VIP_LAB_VISITORS = 2,
 	THROW_COMBO_WINDOW = 4,
 	THROW_COMBO_CHAIN = 20,
 	--   CHRISTMAS_FROM_DEC1: the season starts 1 December (it was on since 7 November 2026; Santa hats

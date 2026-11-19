@@ -76,12 +76,13 @@ function EconomyService.send(player: Player)
 end
 
 -- Gives bolts (a reason in a notice). False when the profile is not safely read.
-function EconomyService.give(player: Player, n: number, text: string?): boolean
+-- `exact`: a bought amount (OfferService), never doubled by 2x BOLTS.
+function EconomyService.give(player: Player, n: number, text: string?, exact: boolean?): boolean
 	local e = ProgressService.ecoOf(player)
 	if not e or n <= 0 then
 		return false
 	end
-	local times = if player:GetAttribute("DoubleBolts") == true then 2 else 1 -- (Shop.OFFERS DoubleBolts)
+	local times = if not exact and player:GetAttribute("DoubleBolts") == true then 2 else 1 -- (Shop.OFFERS DoubleBolts)
 	e.bolts += math.floor(n) * times
 	ProgressService.ecoChanged(player)
 	if text then

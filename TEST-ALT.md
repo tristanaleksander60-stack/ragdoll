@@ -16,11 +16,11 @@ Sæt kryds, og skriv ned hvad der fejler (testnavn + linjen fra Output).
 ## 2. SelfTest
 1. `ServerStorage.RunSelfTest = true`, `LabLive` fra.
 2. Først kun de nye og ændrede (ca. 2 min):
-   `ServerStorage.SelfTestOnly = "T22,T33,T35,T40,T43,T53,T54,T55,T56,T57,T58,T59,T60,T61,T62,T63,T64,T65,T66,T67"` → Play.
+   `ServerStorage.SelfTestOnly = "T22,T33,T35,T40,T43,T53,T54,T55,T56,T57,T58,T59,T60,T61,T62,T63,T64,T65,T66,T67,T68"` → Play.
    Alle skal give `[SelfTest] PASS`.
    - Nye: T53 Gamepad, T54 PortraitHud, T55 QuietStart, T56 BarSixSlots, T57 MildContent,
      T58 SessionRecord, T59 NoSoonCards, T60 Experiments, T61 ShareCode, T62 DeviceTier,
-     T63 Economy, T64 Ladder, T65 OffersCodes, T66 ChristmasParty, T67 PartyToss.
+     T63 Economy, T64 Ladder, T65 OffersCodes, T66 ChristmasParty, T67 PartyToss, T68 Offers.
    - Rettet: T22 (bar på 7 skæres til 6), T33 (træfferlinjen siger "Chest"/"Head"), T35, T40, T43.
 3. Derefter hele suiten én gang (`SelfTestOnly` tom, ca. 12 min): `DONE pass= fail=`.
    Kendte ustabile (må fejle én gang, kør dem igen alene): T15, T19, T24, T25, T27, T32
@@ -92,13 +92,22 @@ SHOP → SERVER EVENTS → ADMIN EVENTS (OWNER) → CHRISTMAS THEME → **ON**. 
 | Game Pass | All Melee | 69 | Alt nærkamp-legetøj |
 | Game Pass | All Explosives | 99 | Alle bomber |
 | Game Pass | 2x BOLTS | 129 | Dobbelt BOLTS |
-| Game Pass | VIP Lab | 199 | Større lab, flere dukker |
+| Game Pass | VIP Lab | 199 | Flere dukker der går rundt i dit lab (+2) |
 | Game Pass | Events Pass | 249 | Alle server-events gratis hele sæsonen |
-| Game Pass | Everything | 699 | Alt legetøj, 2x BOLTS og VIP Lab |
+| Game Pass | Everything | 699 | Alt legetøj, 2x BOLTS, VIP Lab og Events Pass |
 
-- Send id'erne til mig (eller sæt dem selv i `ReplicatedStorage/ReplicatedStorage/Shared/Shop.luau`, `Shop.OFFERS`, feltet `id = 0`).
-  **Vigtigt:** de sælges ikke i spillet endnu. Selve købet kobles på i næste runde, når id'erne findes.
-  Opret dem gerne nu, men sæt dem ikke "on sale" før da.
+- Navn og pris præcis som i tabellen. Sæt dem "on sale".
+- **Det eneste du skal gøre i koden:** åbn `ReplicatedStorage\ReplicatedStorage\Shared\Shop.luau`, find
+  `Shop.OFFERS = table.freeze({`, og skift `id = 0` til tallet fra Creator Hub på den linje med samme `key`
+  (fx `key = "DoubleBolts"` → `id = 1234567890`). Gem; Script Sync tager det. Intet andet skal ændres.
+- Så virker det hele: kortet kommer frem i SHOP → OFFERS (id 0 = skjult live, "TEST" i Studio, hvor et tryk giver det med det samme),
+  købet går gennem Roblox' eget vindue, et produkt gives én gang pr. køb (gemt i Orders_v1 som de andre produkter),
+  og et pass tjekkes hver gang man kommer ind (et refunderet pass forsvinder igen).
+- Test efter id'erne er sat (rigtig spiller, live eller Studio med API-adgang):
+  - [ ] Starter Crate: +300 BOLTS og Rattler; kommer ikke igen ved rejoin.
+  - [ ] All Melee / All Explosives: alle våben på den hylde er åbne i WEAPONS. Everything: alle hylder.
+  - [ ] 2x BOLTS: et eksperiment giver dobbelt. VIP Lab: 2 ekstra dukker går rundt i dit lab.
+  - [ ] Events Pass: tryk på et server-event i SHOP → det starter gratis (højst ét hvert 2. minut).
 - Stadig åbne id'er: `Shop.STARTER_PACK` (R$29, "3 weapon eggs + the Revolver"; obs: tilfældige æg for Robux
   kræver odds-visning), `Shop.GROUP_ID`, badges Takedowns100 / Nuke / Takedowns1000.
 

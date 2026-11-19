@@ -99,6 +99,7 @@ require(Systems:WaitForChild("ChaseService")).start_() -- NPC Chase: a pack runs
 require(Systems:WaitForChild("TrialService")).start() -- TRY FREE: a locked weapon for 2 min, once a day each (round 5)
 require(Systems:WaitForChild("SandboxService")).start() -- SLOW-MO / REVIVE ALL / RESET in your own lab (round 5)
 require(Systems:WaitForChild("RewardsService")).start() -- REWARDS: the group gift and trophies (round 5)
+require(Systems:WaitForChild("OfferService")).start() -- release 0.20.0: Shop.OFFERS products and passes (Shared\Offers)
 require(Systems:WaitForChild("BadgeAwards")).start() -- badges (ids in Shared/Badges; 0 = not made yet)
 Metrics.start() -- counts for the Creator Dashboard (phase Å)
 StreamerService.start() -- Streamer Mode: gift keys set off fun things (private servers, no lasting value)

@@ -103,6 +103,94 @@ local function refreshPasses()
 	end
 end
 
+-- Release 0.20.0: the OFFERS (Shop.OFFERS, sold by the server's OfferService; what each gives:
+-- Shared\Offers). A card shows once its id is pasted into Shop.OFFERS; id 0 is hidden on a live
+-- server and shows as TEST in Studio (a tap there grants it for testing). Products show Roblox's own
+-- price (RobuxPrice); passes say BUY, and OWNED from the server's Offer_<key> attribute.
+local offerButtons: { [string]: any } = {}
+local offerRemote: RemoteEvent? = nil
+local offerLockedUntil = 0
+local function refreshOffers()
+	for key, button in offerButtons do
+		local offer: any = nil
+		for _, o in Shop.OFFERS do
+			if o.key == key then
+				offer = o
+			end
+		end
+		if offer then
+			local mine = offer.kind == "pass" and player:GetAttribute("Offer_" .. key) == true
+			button.setRole(if mine then "done" else "premium")
+			if mine then
+				button.setText("OWNED")
+			elseif offer.id == 0 then
+				button.setText("TEST")
+			elseif offer.kind == "pass" then
+				button.setText("BUY")
+			end
+			button.setEnabled(not mine and os.clock() >= offerLockedUntil)
+		end
+	end
+end
+
+local function buildOffers(window: any)
+	local studio = RunService:IsStudio()
+	local anyShown = false
+	for _, offer in Shop.OFFERS do
+		if offer.id ~= 0 or studio then
+			anyShown = true
+		end
+	end
+	local header = C.SectionHeader("OFFERS", "shop", -6, window.body)
+	local grid = Instance.new("Frame")
+	grid.Name = "Offers"
+	grid.BackgroundTransparency = 1
+	grid.Size = UDim2.fromScale(1, 0)
+	grid.AutomaticSize = Enum.AutomaticSize.Y
+	grid.LayoutOrder = -5
+	C.Grid(grid, Vector2.new(CARD.X, 200), SP.md)
+	grid.Parent = window.body
+	header.Visible = anyShown
+	grid.Visible = anyShown
+	offerRemote = Net.event(Net.Names.Offers)
+	;(offerRemote :: RemoteEvent).OnClientEvent:Connect(function(kind: unknown, text: unknown)
+		if kind == "Refused" and type(text) == "string" then
+			Toast.show(text)
+		end
+	end)
+	for index, offer in Shop.OFFERS do
+		local card = C.Card({ name = "Offer_" .. offer.key, gap = SP.xs, layoutOrder = index, parent = grid })
+		card.root.Visible = offer.id ~= 0 or studio
+		C.Text("title", offer.name, { scaled = true, size = UDim2.new(1, 0, 0, 34), layoutOrder = 1, parent = card.content })
+		C.Text("body", offer.gives, { wrap = true, size = UDim2.new(1, 0, 0, 56), layoutOrder = 2, parent = card.content })
+		local key = offer.key
+		local button = C.Button({
+			text = if offer.id == 0 then "TEST" elseif offer.kind == "pass" then "BUY" else "...",
+			role = "premium",
+			size = UDim2.new(1, 0, 0, Theme.Size.buttonH),
+			layoutOrder = 3,
+			parent = card.content,
+			onActivated = function()
+				local r = offerRemote
+				if r and os.clock() >= offerLockedUntil then
+					offerLockedUntil = os.clock() + BUY_LOCK
+					refreshOffers()
+					task.delay(BUY_LOCK, refreshOffers)
+					r:FireServer("Buy", key)
+				end
+			end,
+		})
+		offerButtons[key] = button
+		if offer.kind == "product" and offer.id ~= 0 then
+			RobuxPrice.get(offer.id, function(robux: number?)
+				button.setText(if robux then "R$ " .. RobuxPrice.text(robux) else "BUY")
+			end)
+		end
+		player:GetAttributeChangedSignal("Offer_" .. key):Connect(refreshOffers)
+	end
+	refreshOffers()
+end
+
 local function buildPasses(window: any)
 	C.SectionHeader("PASSES", "shop", -4, window.body)
 	local grid = Instance.new("Frame")
@@ -351,6 +439,7 @@ end
 
 local function buildShop()
 	local window = C.Window({ name = "Events", title = "Shop", theme = "shop", icon = "shop" })
+	buildOffers(window) -- (release 0.20.0)
 	buildPasses(window)
 	queueLabel = C.Text("caption", "", {
 		color = Theme.Palette.textMid,
