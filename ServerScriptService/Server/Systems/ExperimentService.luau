@@ -252,6 +252,13 @@ function ExperimentService.start()
 					finish(player, p, "late")
 				end
 			end
+			-- (Release fix: a party card whose time ran out with nobody scoring stayed up for good,
+			-- and no new one could be dealt in that lab.)
+			for owner, party in parties do
+				if now - party.state.startedAt > party.state.def.seconds then
+					ExperimentService.endParty(owner)
+				end
+			end
 		end
 	end)
 end
