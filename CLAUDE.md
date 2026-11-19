@@ -129,6 +129,25 @@ When the owner writes **"klar"**, run `docs/V3_PLAN.md` from its State line, aut
 - Screens: icons on LAB VIEW, RAGDOLL, BUILD, PLAY, GRAB, THROW, RUN, SHOOT, CLIP IT and every MENU entry (`HudMenu.ICONS`); bar slabs 14 px or picture only (`PokeController.iconOnly`, `SLAB_MIN_TEXT`, WEAPONS slab -> toolbox icon); weapon cards with rarity (`Shared/UiRarity`: by ladder rung on the price-tier bounds; outline, lit stage, tag, veil when locked, lock/tick icons) and POWER/SPEED/CHAOS 1-10 per shelf on a sqrt curve (`UiRarity.stats`; Toys untouched), CARD 182x346; toasts, experiment card, combo pop, replay overlay, egg card (rarity word), offers (pictures, Robux mark, BEST VALUE), level badge 30 px + count-up (hidden on a phone during QUIET_START), BOLTS count-up, crosshair punch + "KO!", chaos meter/slot numbers/gift tag/next cards at 14 px.
 - LayoutCheck: `uiV2` section in `run()` (text floor, role/rarity contrast, drawn icons, stat rows, icon-button room, level badge, first minute <= 7 on portrait phones) + `textLive()`. Test T90_UiV2. PC-only pieces (help line, mouse help, sandbox column, Robux packs, deal) keep their old floors.
 
+## v3 (19 Nov 2026, cloud session on `release`, v0.21.0; never run in Studio)
+- Plan: `docs/V3_PLAN.md` (its State line and PC TODO). Research: echo-heist `docs/ragdoll-havoc/research/RESEARCH_V3.md`.
+- **Biggest owner lever:** the game is listed "Minimal, Ages 16+". Redo the maturity questionnaire for all ages (Bloody Ragdoll Physics went 2.5k → 21k CCU after its label change).
+- `Config.LOOK_V3` (WORLD_V2 now false):
+  - ZoneLighting finishV3;
+  - white dummies, no marks, no glow;
+  - DummyLife lines (Shared/DummyLines);
+  - quiet Playground signs, OWNER tag off;
+  - `Client/HudV3` + `HudGate` (off phones: Shop/Weapons/Lab left, Maps/Menu right, key chips, top-bar Next pill, LAB window; old HUD pieces step aside);
+  - Viewmodel V3 (big gun, white hand);
+  - HitInfo black card;
+  - `Server/Systems/Landscape` (grass, hills, trees).
+- `Config.UI_3D`: `Client/Ui3D` turns weapon models (ToolPicture `turn` argument) in the catalog and the egg card. Live budget comes from `UI_3D_LIVE`.
+- Phase C:
+  - `Server/Systems/VehicleService` + `Client/VehicleClient` (`Config.VEHICLES`): Car + Truck per lab, the Drive prompt, driver-owned handling, dummies knocked by the PropContacts machine rule.
+  - `Server/Systems/Creatures`: the GorillaRampage and BullRun events (productId 0).
+  - BIG RED BUTTON per lab (`Config.BIG_BUTTON_GAP`).
+  - Tests: T91_LookV3, T92_Creatures.
+
 ## M10 progress (9 Nov 2026, NOT yet tested in Studio)
 **M10 PASSED (9 Nov 2026): blind review 8.75 after fix round 1.** Latest backup: `Documents\RagdollLab-backups\2026-11-09-m10-done` (pre-M10: `2026-11-08-baseline`). Full suite 44/46 before the fixes; the two failures were fixed (T40 Golf grip, T38 quiet-mode) except T37, which fails at ~24 Hz on this PC with the pre-M10 code too (environmental). Golf grip and Tip were moved onto the handle/head in the place (N7Assets) with welds rebuilt: the place must be saved. MAX_CORPSES = 16 server-wide. Scope cuts (owner may ask later): per-weapon Palm attachments, two-handed left-hand stance retune, server movement guard for sprint, client-side sprint self-test.
 Notes below are the pre-test M10 log.

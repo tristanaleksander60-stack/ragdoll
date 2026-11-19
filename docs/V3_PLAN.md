@@ -33,7 +33,27 @@ The owner's standing order (19 Nov 2026): "når jeg skriver klar, gør du automa
    - tell the owner in Danish: done / test this / still open.
 
 ## State
-- Nothing of v3 built yet (19 Nov 2026). Start at Phase 0.
+- **19 Nov 2026, cloud session (no Studio): v0.21.0 on `release`, never run in Studio.**
+- Phase 0 is done: echo-heist `docs/ragdoll-havoc/research/RESEARCH_V3.md` and `MARKET_2026-11-19-evening.md`. Reddit, TikTok and YouTube were unreachable from the cloud, so those findings are search snippets only.
+- Phase A is done in code (`Config.LOOK_V3`, `UI_3D`):
+  - overcast light;
+  - white dummies that talk (DummyLines);
+  - quiet world signs;
+  - HudV3: squares, key chips, the Next pill and the LAB window (off phones only);
+  - the first-person gun in a white hand;
+  - the black hit card;
+  - weapon models that turn in the catalog and the egg card (Ui3D);
+  - Landscape: a grass baseplate, a terrain hill ring and 140 low-poly trees.
+- Phase C has started in code:
+  - VehicleService and VehicleClient: a family car and a monster truck per lab;
+  - Creatures: Gorilla Rampage and Bull Run events;
+  - a BIG RED BUTTON per lab;
+  - tests T91_LookV3 and T92_Creatures.
+- **Next:**
+  1. The PC session runs the PC TODO below (Studio captures, play test, fixes).
+  2. Then Phase B maps from Creator Store models.
+  3. Then the rest of C: a lab activity of the day, disasters (tornado or meteors) and a throw tower.
+  4. Then D: a Lab Controls pass, an Endless Events pass, an Everything pass and a vehicle pass. Their ids come from the owner.
 
 
 # RAGDOLL HAVOC v3: maps, look and lab activities (owner request, 19 Nov 2026)
@@ -342,5 +362,23 @@ The 9 store images were downloaded via thumbnails.roblox.com (the video could no
    - events at 25/49/89 with one free per day.
 6. **Maps:** several clean maps in place of one crowded lab. One of them is a plain "clean room". We have WorldMaps (Office, WhiteRoom): put them in a Maps window with screenshots.
 
-## PC TODO
-(empty)
+## PC TODO (Studio only; for the PC session or the owner)
+1. **Sync and play** the `release` branch. Run the SelfTest (T91, T92 and the full suite once) and LayoutCheck.
+2. **Captures before and after** from the same 3 spots (spawn, cannon, crash wall) plus one in a car, on PC and phone. Check:
+   - the light (no grey wash; shadows visible);
+   - white dummies and their lines;
+   - the HUD squares not overlapping Roblox's top bar or player list;
+   - the Next pill in the top bar;
+   - the LAB window rows;
+   - the hit card.
+3. **First person:** set the gun size and place against the HRR capture (`Viewmodel.OFFSET` and `SCALE` under LOOK_V3), and check the white forearm reads as an arm.
+4. **Cars:**
+   - Do they drive and turn without flipping? Tune `Config.VEHICLES` and `VehicleClient.GRIP`.
+   - Do dummies fly when hit?
+   - Do the pads at (66, 20) and (68, -32) clash with the Christmas chimney or sleigh, or with any WORLD prop?
+5. **Animals:** press the BIG RED BUTTON until a gorilla and a bull run come. Check their size, speed and swats.
+6. **Landscape:**
+   - Are the hills seen from spawn but not on the play area?
+   - Do the trees stay out of the labs?
+   - Is the baseplate grass, with no concrete texture left?
+7. **Maps (Phase B):** insert Creator Store models, run the malware pass, and save the place. Build in this order: Test Ground dressing (props like the leader's), City, Island, Building Site.

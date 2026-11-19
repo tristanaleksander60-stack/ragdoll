@@ -57,6 +57,17 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.21.0",
+		lines = {
+			"NEW LOOK: calm daylight, green hills and trees, clean white test dummies",
+			"DUMMIES TALK: point something at them and hear what they think",
+			"CARS: hop in the family car or the MONSTER TRUCK and drive into the crowd",
+			"BIG RED BUTTON in every lab: press it for a random event",
+			"GORILLA RAMPAGE and BULL RUN: new animal events",
+			"A cleaner screen, the LAB window, and weapons you can spin in 3D",
+		},
+	},
+	{
 		version = "0.20.0", -- (0.18 and 0.19 never went live: this entry is all of them)
 		lines = {
 			"EXPERIMENTS: a quick goal card with a timer and stars. Three DAILY EXPERIMENTS, the same for everyone",
