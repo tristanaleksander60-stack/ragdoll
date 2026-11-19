@@ -54,7 +54,12 @@ local STAND = 2.85 -- a standing person's pelvis above the floor
 -- Puts a person on the floor at `at` (its height is the floor's), standing, facing a point.
 local function place(model: Model, at: Vector3, facing: Vector3)
 	assert(model.Parent and model:FindFirstChild("LowerTorso"), string.format("%s (%s) is gone", tostring(model:GetAttribute("PersonName")), tostring(model:GetAttribute("Personality"))))
-	local y = at.Y + STAND
+	-- (Stand on what is there: the open-air city's street is a stud over its floor line.)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { model, Workspace:FindFirstChild("Dummies") :: Instance }
+	local ground = Workspace:Raycast(at + Vector3.new(0, 6, 0), Vector3.new(0, -12, 0), params)
+	local y = (if ground then ground.Position.Y else at.Y) + STAND
 	local spot = Vector3.new(at.X, y, at.Z)
 	DummyControl.reset(model, CFrame.lookAt(spot, Vector3.new(facing.X, y, facing.Z)))
 	model:SetAttribute("Home", spot)
@@ -107,29 +112,29 @@ local function body(results: { string }, player: Player)
 	local character = player.Character :: Model
 	assert(WorldMaps.refusal(player, "Nowhere") ~= nil, "an unknown place was allowed")
 	assert(WorldMaps.refusal(player, 42) ~= nil, "a number for a place was allowed")
-	assert(WorldMaps.refusal(player, { "Cafe" }) ~= nil, "a table for a place was allowed")
+	assert(WorldMaps.refusal(player, { "City" }) ~= nil, "a table for a place was allowed")
 	-- (Set and cleared in the same frame: the avatar never really lies down.)
 	character:SetAttribute("RagdollState", "Ragdoll")
-	local lying = WorldMaps.refusal(player, "Cafe")
+	local lying = WorldMaps.refusal(player, "City")
 	character:SetAttribute("RagdollState", nil)
 	assert(lying == "Get up first to travel!", "travel while lying on the floor was allowed: " .. tostring(lying))
-	assert(trip(player, "Cafe"), "a trip to the coffee bar was refused")
-	local arrival = WorldMaps.arrival("Cafe") :: CFrame
+	assert(trip(player, "City"), "a trip to the coffee bar was refused")
+	local arrival = WorldMaps.arrival("City") :: CFrame
 	local root = character:FindFirstChild("HumanoidRootPart") :: BasePart
 	assert(flat(root.Position - arrival.Position).Magnitude < 8, "the avatar did not land on the coffee bar's pad")
-	assert(player:GetAttribute("Place") == "Cafe", "the player's Place was not set")
-	local again = WorldMaps.refusal(player, "Office")
+	assert(player:GetAttribute("Place") == "City", "the player's Place was not set")
+	local again = WorldMaps.refusal(player, "Site")
 	assert(again ~= nil, "a second trip straight after the first was allowed")
 	table.insert(results, "unknown, malformed, lying down and too-soon trips refused; a trip lands on the pad")
 
 	-- 3. The coffee bar comes to life.
-	local cafe = Places.byId.Cafe
-	local centre = Places.floorCenter(origin, "Cafe") :: Vector3
+	local cafe = Places.byId.City
+	local centre = Places.floorCenter(origin, "City") :: Vector3
 	assert(waitFor(function()
-		local z = CrowdService.zones().Cafe
+		local z = CrowdService.zones().City
 		return z.populated and z.active and z.people >= cafe.crowd
 	end, 3), "the coffee bar's people did not come in")
-	local people = CrowdService.people("Cafe")
+	local people = CrowdService.people("City")
 	local personalities: { [string]: boolean } = {}
 	local kinds = 0
 	for _, model in people do
@@ -147,9 +152,13 @@ local function body(results: { string }, player: Player)
 	for _, model in people do
 		local p = pelvis(model).Position - centre
 		assert(math.abs(p.X) < cafe.size.X / 2 and math.abs(p.Z) < cafe.size.Z / 2, "someone stands outside the coffee bar's walls")
-		assert(p.Y > 0 and p.Y < 6, string.format("someone is %.1f studs above the floor (on a table?)", p.Y))
+		if not (p.Y > 0 and p.Y < 6) then
+			local under = Workspace:Raycast(pelvis(model).Position, Vector3.new(0, -60, 0))
+			local what = if under then under.Instance:GetFullName() else "nothing"
+			error(string.format("someone is %.1f studs above the floor at (%.0f, %.0f), on %s", p.Y, p.X, p.Z, what))
+		end
 	end
-	assert(not CrowdService.zones().Office.populated, "the office came to life with nobody in it")
+	assert(not CrowdService.zones().Site.populated, "the building site came to life with nobody in it")
 	table.insert(results, string.format("coffee bar: %d people (%s), %d personalities, all on the floor inside", #people, table.concat(cafe.roles, "/"), kinds))
 
 	-- 4. Personalities.
@@ -243,10 +252,10 @@ local function body(results: { string }, player: Player)
 	assert(trip(player, "Lab"), "the trip back to the lab was refused")
 	assert(player:GetAttribute("Place") == "Lab", "back at the lab, Place still says " .. tostring(player:GetAttribute("Place")))
 	assert(waitFor(function()
-		return not CrowdService.zones().Cafe.active
+		return not CrowdService.zones().City.active
 	end, 2), "the coffee bar kept thinking with nobody in it")
-	CrowdService.emptyForTest("Cafe")
-	assert(#CrowdService.people("Cafe") == 0, "the coffee bar's people did not go home")
+	CrowdService.emptyForTest("City")
+	assert(#CrowdService.people("City") == 0, "the coffee bar's people did not go home")
 	table.insert(results, "back at the lab: the coffee bar stops thinking; emptied, its people go home")
 end
 

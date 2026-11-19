@@ -28,6 +28,7 @@ local WorldMaps = require(Systems:WaitForChild("WorldMaps"))
 local DummyFactory = require(Systems:WaitForChild("DummyFactory"))
 local Toys = require(ReplicatedStorage.Shared.Toys)
 local Config = require(ReplicatedStorage.Shared.Config)
+local Places = require(ReplicatedStorage.Shared.Places)
 local N7Models = require(ReplicatedStorage.Shared.N7Models)
 local ActiveRagdoll = require(ReplicatedStorage.Shared.Ragdoll.ActiveRagdoll)
 
@@ -150,6 +151,9 @@ local function body(results: { string })
 	assert(folder, "no rooms")
 	local seen = {}
 	for room, names in ROOM_PROPS do
+		if not Places.byId[room] then
+			continue -- (19 Nov: the owner kept only the Arena and the open-air maps)
+		end
 		local m = folder:FindFirstChild(room)
 		assert(m, "no room " .. room)
 		local count = 0
@@ -177,7 +181,7 @@ local function body(results: { string })
 	end
 	table.insert(results, "rooms: " .. table.concat(seen, "; "))
 	local hangar = folder:FindFirstChild("Hangar")
-	assert(hangar and not hangar:FindFirstChild("Fuselage"), "the hangar still has the built jet next to the real one")
+	assert(not hangar or not hangar:FindFirstChild("Fuselage"), "the hangar still has the built jet next to the real one")
 	local plaza = Workspace:FindFirstChild("PlazaDressing")
 	assert(plaza, "the plaza is bare")
 	local dressed: { [string]: number } = {}

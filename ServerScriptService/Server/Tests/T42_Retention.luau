@@ -263,7 +263,11 @@ end
 local function world(results: { string })
 	local rooms = require(Systems:WaitForChild("WorldMaps")).folder()
 	local metro = rooms and rooms:FindFirstChild("Metro")
-	assert(metro, "no Metro Station")
+	if not metro then
+		-- (19 Nov: the Metro Station was removed with the other old rooms.)
+		table.insert(results, "no Metro Station any more (removed 19 Nov)")
+		return
+	end
 	for _, name in { "Rail", "CarFloor", "Gate", "Pillar", "Bench" } do
 		assert(metro:FindFirstChild(name), "the Metro Station has no " .. name)
 	end

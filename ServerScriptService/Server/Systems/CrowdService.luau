@@ -335,7 +335,9 @@ end
 -- Floor at this spot (not a table top or a shelf): a ray down lands at the zone's floor height.
 local function onFloor(zone: Zone, spot: Vector3, params: RaycastParams): boolean
 	local hit = Workspace:Raycast(Vector3.new(spot.X, zone.center.Y + 5, spot.Z), Vector3.new(0, -10, 0), params)
-	return hit ~= nil and math.abs(hit.Position.Y - zone.center.Y) < 1
+	-- (2 studs: the open-air city's streets stand 1.0 and its sidewalks 1.6 over its floor; at 1 every
+	-- spot failed and the whole crowd piled up in the middle, 19 Nov. Tables are higher.)
+	return hit ~= nil and math.abs(hit.Position.Y - zone.center.Y) < 2
 end
 
 local function pick<T>(list: { T }): T

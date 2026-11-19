@@ -172,6 +172,7 @@ The owner types **`/klar`** (`.claude/commands/klar.md`) or **"klar"**. Then fol
 - Landscape keeps the plaza front flat and free of trees (`PLAZA_HALF_X`/`PLAZA_FRONT`); the plaza boards stood on a hill.
 - Full suite before those fixes: 71/78 (T19, T32 flaky). After: every fixed test passes alone.
 - Phase B started: `Places` has an outdoor row (`outdoor`, `row`, `OUTDOOR_Z` 1400, `OUTDOOR_SPACING` 900). `Server/Systems/OutdoorMaps` builds the **Island** (terrain sea/sand/grass, a cliff with steps, a jetty, a boat, beach huts, a lighthouse, a catapult base, palms/bushes/rocks/crates). T26 accepts outdoor maps (no ceiling, budget 3000).
+- 19 Nov (owner): the old rooms are gone from `Places` (Hangar, Cafe, Office, FoodCourt, Market, WhiteRoom, Metro). Maps now: Lab, Plaza, Game Arena + the 5 open-air maps. Their builders still sit unused in WorldMaps. Crowd floor tolerance is 2 studs (the city crowd had piled up in the middle). Tests moved: T26 to City/Site, T31 to Island, T36/T42 skip removed rooms.
 - After the Studio restart: 5 open-air maps were built and seen. They are Island, City "Downtown", Site, Farm "Old Farm" and Military "Army Base", all in `OutdoorMaps` with `Places.OUTDOOR_SPACING` 1200.
   - **Pack pieces:** `piece(m, pack, name|"A>B>2", at, yaw, fit, collide)` reads from `ServerStorage.V3Packs.*`. That folder lives only in the place file (saved, v485).
   - **Terrain:** fill the ground first, then measure its top (`ground()`); terrain lands a few studs off the asked height.
