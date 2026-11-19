@@ -1,3 +1,5 @@
+> **Erstattet af [TEST-ALT.md](TEST-ALT.md)** (release 0.20.0, branch `release`). Brug den; denne fil er kun baggrund.
+
 # Test af fase 1 (branch `fase1`, bygger på fase 0)
 
 ## SelfTest

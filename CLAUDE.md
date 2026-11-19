@@ -32,7 +32,7 @@ Talk to the owner in Danish, short and plain.
 
 ## Open with the owner
 - Create developer products (weapon tiers 25/49/99/199, event packs) and gamepasses ULTRA/VIP; send IDs.
-- Publish with "Shut Down All Servers"; server size 10.
+- Publish with "Shut Down All Servers"; server size 6 (`Config.SERVER_SIZE`, release 0.20.0; was 10).
 
 ## 10 Nov 2026
 - M11 PASSED (blind review 9.2 system / 9.2 UI): real Roblox clothes + hair on the crowd (CrowdService), small quiet bubbles (DummyLife), auto dead-body monitor beside the mouse (HospitalCharts, Settings "Dead monitor").
@@ -103,6 +103,13 @@ Talk to the owner in Danish, short and plain.
 - Prank Party (`PRANK_PARTY`, `PARTY_MAX` 6): PartyService (Lab.ownerAt groups every 5 s) -> ExperimentService.startParty: one shared card, everyone's events count, everyone paid. `SERVER_SIZE` 6 is documentation for the dashboard setting.
 - Update rhythm: `UPDATE_TITLE`, `UPDATE_DAYS`; Shop.WHATS_NEW[1].version must equal Config.Version (T66). docs/CREATOR_KIT.md.
 - T66_ChristmasParty; T40, T58, T63 adjusted. TEST-FASE3.md.
+
+## Release 0.20.0 (19 Nov 2026, branch `release` from `fase3`; not merged, never run in Studio)
+- One owner checklist for everything: **TEST-ALT.md** (the TEST-FASE0..3 files point to it).
+- Bug fixes from the review of `main...fase3`: the profile's `eco` was never written by UpdateAsync (bolts lost every save; ProgressService save/saveOnto); a Prank Party card past its time stayed up forever (ExperimentService timer); play-gift texts promised eggs while EGG_RATION pays BOLTS (GiftClock, RewardsUI); T33 expected organ names under MILD_TEXT; T22 expected a 7-tool bar refused (validate cuts to SLOTS); strict-type fixes (string.upper on gsub, advent list, PadMap, HudMenu).
+- Throw your friend (`PARTY_THROWS`, `THROW_COMBO_WINDOW` 4, `THROW_COMBO_CHAIN` 20): Prank Party members may grab/throw each other inside that lab (Zones.mayGrab, used by PlayerGrab and PlayerGrabClient; attribute PartyLab = owner UserId while the card runs); plaza stays as it was. A thrown player landing in the cannon/bullseye/station/trap within the window = TOSS COMBO (ExperimentService.thrown -> tossCombo): "Combo" pop on both screens (ExperimentCard.combo), x2/x3 chains, a "Toss" event for the thrower (party card PartyToss "TOGETHER: toss friends into 3 traps", journal page "Toss"). Playground passes trap names (TRAP_NAMES). T67_PartyToss.
+- Shop.OFFERS is still data only: nothing sells them and nothing sets `DoubleBolts` yet (wire after the owner sends ids).
+- Static checks: lune compile all changed files, luau-lsp 1.53.1 analyze (roblox defs; only type-only noise left), selene (std roblox, pre-existing warnings only), LihFolk check 0 errors / 0 warnings. No stylua/selene config in the repo, so no reformatting.
 
 ## M10 progress (9 Nov 2026, NOT yet tested in Studio)
 **M10 PASSED (9 Nov 2026): blind review 8.75 after fix round 1.** Latest backup: `Documents\RagdollLab-backups\2026-11-09-m10-done` (pre-M10: `2026-11-08-baseline`). Full suite 44/46 before the fixes; the two failures were fixed (T40 Golf grip, T38 quiet-mode) except T37, which fails at ~24 Hz on this PC with the pre-M10 code too (environmental). Golf grip and Tip were moved onto the handle/head in the place (N7Assets) with welds rebuilt: the place must be saved. MAX_CORPSES = 16 server-wide. Scope cuts (owner may ask later): per-weapon Palm attachments, two-handed left-hand stance retune, server movement guard for sprint, client-side sprint self-test.

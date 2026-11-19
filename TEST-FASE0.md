@@ -1,3 +1,5 @@
+> **Erstattet af [TEST-ALT.md](TEST-ALT.md)** (release 0.20.0, branch `release`). Brug den; denne fil er kun baggrund.
+
 # Test af fase 0 (v0.18.0) før publish
 
 Branch: `fase0`. Hent den, lad Script Sync lægge koden i Studio, og tjek at scripts er landet.
