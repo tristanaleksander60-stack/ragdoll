@@ -170,10 +170,16 @@ local function buildCannon()
 	-- Round 5, phase 3: a real cannon on wooden wheels when the place has it (ServerStorage
 	-- N7Assets.Props.LabCannon, a Creator Store model, scripts stripped; its pivot on the ground, -Z
 	-- at the muzzle). The built barrel and stand stay as invisible stand-ins (their names are read).
+	-- (v3: the hand-picked Creator Store cannon first, V3Assets "Cannon".)
+	local v3 = require(script.Parent.V3Assets).place("Cannon", folder, CFrame.lookAt(barrelBase, barrelBase + flat), { size = 11, collide = false, name = "CannonModel" })
 	local n7 = game:GetService("ServerStorage"):FindFirstChild("N7Assets")
 	local props = n7 and n7:FindFirstChild("Props")
 	local real = props and props:FindFirstChild("LabCannon")
-	if real and real:IsA("Model") then
+	if v3 then
+		barrel.Transparency = 1
+		stand.Transparency = 1
+		stand.CanCollide = false
+	elseif real and real:IsA("Model") then
 		local copy = real:Clone()
 		for _, d in copy:GetDescendants() do
 			if d:IsA("LuaSourceContainer") then
@@ -837,6 +843,10 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	buildWreckingBall() -- after parenting: the swinging parts need to be in the world to be owned
 	if lab then
 		buildMace() -- (moving too: after parenting)
+		-- v3: the lab's dressing from the Creator Store models the place has (LabDress).
+		pcall(function()
+			require(script.Parent.LabDress).dress(folder, origin)
+		end)
 		-- v3 Phase C: a car and a monster truck on the east side (after parenting: they move).
 		local ok, err = pcall(function()
 			require(script.Parent.VehicleService).build(folder, origin)

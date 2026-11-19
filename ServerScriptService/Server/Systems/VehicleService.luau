@@ -151,6 +151,26 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	seat:GetPropertyChangedSignal("Occupant"):Connect(function()
 		prompt.Enabled = seat.Occupant == nil
 	end)
+	-- v3: a real car model over the driving box when the place has one (V3Assets "Car" /
+	-- "MonsterTruck"): welded on, weightless and without collisions; the code-built shell goes
+	-- see-through but keeps doing the physics.
+	local V3Assets = require(script.Parent.V3Assets)
+	local role = if kind == "Truck" then "MonsterTruck" else "Car"
+	local bottom = home * CFrame.new(0, -b.Y / 2 - spec.lift, 0)
+	local look = V3Assets.place(role, model, bottom, { size = b.Z + 1.5, collide = false, anchored = false, name = "Look" })
+	if look then
+		for _, shell in look:GetDescendants() do
+			if shell:IsA("BasePart") then
+				shell.Massless = true
+				weld(body, shell)
+			end
+		end
+		for _, p in model:GetChildren() do
+			if p:IsA("BasePart") and p ~= seat then
+				p.Transparency = 1
+			end
+		end
+	end
 	model:SetAttribute("Vehicle", kind)
 	return model, body, seat
 end

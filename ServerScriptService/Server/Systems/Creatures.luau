@@ -15,6 +15,7 @@ local Systems = script.Parent
 local DummyControl = require(Systems.DummyControl)
 local FxService = require(Systems.FxService)
 local PlayerRagdoll = require(Systems.PlayerRagdoll)
+local V3Assets = require(Systems.V3Assets)
 
 local Creatures = {}
 
@@ -153,9 +154,21 @@ function Creatures.gorilla(center: Vector3): () -> ()
 	end
 	local at = center + Vector3.new(0, 0, 60)
 	local facing = 0
+	-- v3: the Creator Store gorilla when the place has one (V3Assets "Gorilla"); the blocky one is
+	-- the fallback.
+	local look = V3Assets.place("Gorilla", folder(), CFrame.new(at), { height = 13, collide = false })
+	if look then
+		table.clear(base)
+		model:Destroy()
+		model = look
+	end
 	local function place(t: number)
 		local bob = math.abs(math.sin(t * 6)) * 0.6
 		local root = CFrame.new(at) * CFrame.Angles(0, facing, 0) * CFrame.new(0, bob, 0)
+		if look then
+			look:PivotTo(root)
+			return
+		end
 		for p, cf in base do
 			local extra = CFrame.identity
 			-- (An arm and its fist swing together about the shoulder, 9.7 studs up.)
@@ -240,15 +253,19 @@ function Creatures.bulls(center: Vector3): () -> ()
 			local fromLeft = i % 2 == 1
 			local x0 = if fromLeft then -Creatures.HALF else Creatures.HALF
 			local dirX = if fromLeft then 1 else -1
-			local bull = bullModel()
-			local base: { [BasePart]: CFrame } = {}
-			for _, p in bull:GetChildren() do
-				if p:IsA("BasePart") then
-					base[p] = p.CFrame
-				end
-			end
 			local facing = if fromLeft then -math.pi / 2 else math.pi / 2
 			local at = center + Vector3.new(x0, 0, z)
+			-- (v3: the Creator Store bull when the place has one; the blocky one is the fallback.)
+			local asset = V3Assets.place("Bull", folder(), CFrame.new(at) * CFrame.Angles(0, facing, 0), { height = 7, collide = false })
+			local bull = asset or bullModel()
+			local base: { [BasePart]: CFrame } = {}
+			if not asset then
+				for _, p in bull:GetChildren() do
+					if p:IsA("BasePart") then
+						base[p] = p.CFrame
+					end
+				end
+			end
 			local hit: { [Model]: boolean } = {}
 			local hitPlayers: { [Player]: boolean } = {}
 			bull.Parent = folder()
@@ -262,6 +279,9 @@ function Creatures.bulls(center: Vector3): () -> ()
 				t += dt
 				at += Vector3.new(dirX * Creatures.BULL_SPEED * dt, 0, 0)
 				local root = CFrame.new(at) * CFrame.Angles(0, facing, 0) * CFrame.new(0, math.abs(math.sin(t * 14)) * 0.5, 0)
+				if asset then
+					asset:PivotTo(root)
+				end
 				for p, cf in base do
 					p.CFrame = root * cf
 				end

@@ -1,72 +1,47 @@
 --!strict
--- LOOK_V3 (19 Nov 2026, like the big ragdoll games' test grounds): the world around the labs is a
--- green landscape, not a grey slab. The baseplate becomes grass (the labs' concrete floors stay as
--- test pads on it), rolling terrain hills ring the whole play area far off, and low-poly trees
--- (round crowns and pines) stand in the open ground in front of and behind the labs. Built once at
--- start by code; trees and hills are scenery (no collisions on crowns, nothing to hit).
+-- LOOK_V3 (19 Nov 2026): the world around the labs is a green landscape, not a grey slab.
+--   Ground: the baseplate becomes grass (the labs' concrete floors stay as test pads on it).
+--   Hills: real rolling terrain from a noise height map in the open land in front of, behind and
+--     beside the lab line: flat near the labs, rising to big soft hills far off, rock on the
+--     steep slopes. (v2 of this file: the first try's terrain balls read as blobs.)
+--   Trees, bushes, rocks: real models from the Creator Store when the place has them
+--     (V3Assets roles TreeRound, TreePine, Bush, Rock), scattered on the land. No code-built
+--     stand-ins: the owner judged ball-on-stick trees as junk, so without models there are none.
+-- Built once at start, after a short wait so the first players are not held up.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local V3Assets = require(script.Parent.V3Assets)
 
 local Landscape = {}
 
 Landscape.GRASS = Color3.fromRGB(104, 128, 66)
-Landscape.SEED = 1119 -- the same trees on every server
-Landscape.TREES = 140
-Landscape.FRONT = { 110, 200 } -- tree band in front of the labs (studs from the lab line, +Z)
-Landscape.BACK = { -135, -215 } -- and behind them (-Z)
-Landscape.HILLS_Z = { 360, -390 } -- the hill rings' distance from the lab line
-Landscape.HILL_STEP = 150
+Landscape.SEED = 1119 -- the same land on every server
+Landscape.STEP = 8 -- studs per terrain column
+Landscape.FLAT = 30 -- studs of flat land next to the labs before the hills start
+Landscape.DEPTH = 360 -- studs of land in front of and behind the lab line
+Landscape.SIDE = 420 -- studs of land past each end of the lab line
+Landscape.PEAK = 110 -- the far hills' height
+Landscape.TREES = 220
+Landscape.TREE_ROLES = { "TreeRound", "TreePine", "TreeRound", "Bush", "Rock" }
 
-local LEAF = { Color3.fromRGB(86, 140, 64), Color3.fromRGB(70, 122, 54), Color3.fromRGB(104, 152, 70) }
-local PINE = Color3.fromRGB(48, 98, 60)
-local BARK = Color3.fromRGB(104, 76, 54)
+local function smooth(t: number): number
+	t = math.clamp(t, 0, 1)
+	return t * t * (3 - 2 * t)
+end
 
-local function scenery(parent: Instance, name: string, size: Vector3, cf: CFrame, color: Color3, shape: Enum.PartType?, collide: boolean?): Part
-	local p = Instance.new("Part")
-	p.Name = name
-	if shape then
-		p.Shape = shape
+-- The height of the land at (x, z) in lab space, given how far the point is from the play area.
+local function heightAt(x: number, z: number, away: number): number
+	if away <= Landscape.FLAT then
+		return 0
 	end
-	p.Size = size
-	p.CFrame = cf
-	p.Color = color
-	p.Material = Enum.Material.SmoothPlastic
-	p.Anchored = true
-	p.CanCollide = collide == true
-	p.CanQuery = collide == true
-	p.CanTouch = false
-	p.CastShadow = true
-	p.TopSurface = Enum.SurfaceType.Smooth
-	p.BottomSurface = Enum.SurfaceType.Smooth
-	p.Parent = parent
-	return p
+	local rise = smooth((away - Landscape.FLAT) / 260)
+	local n = math.noise(x / 230, z / 230, 0.37) * 0.6 + math.noise(x / 90, z / 90, 4.1) * 0.25 + math.noise(x / 35, z / 35, 9.3) * 0.08
+	return math.max(0, rise * Landscape.PEAK * (0.55 + n))
 end
 
-local function roundTree(parent: Instance, at: Vector3, k: number, rng: Random)
-	local h = 7 * k
-	scenery(parent, "Trunk", Vector3.new(h, 1.4 * k, 1.4 * k), CFrame.new(at + Vector3.new(0, h / 2, 0)) * CFrame.Angles(0, 0, math.rad(90)), BARK, Enum.PartType.Cylinder, true)
-	local leaf = LEAF[rng:NextInteger(1, #LEAF)]
-	local r = 5.5 * k
-	scenery(parent, "Crown", Vector3.one * r * 2, CFrame.new(at + Vector3.new(0, h + r * 0.6, 0)), leaf, Enum.PartType.Ball)
-	scenery(parent, "Crown", Vector3.one * r * 1.4, CFrame.new(at + Vector3.new(r * 0.7, h + r * 0.2, r * 0.3)), leaf, Enum.PartType.Ball)
-	scenery(parent, "Crown", Vector3.one * r * 1.3, CFrame.new(at + Vector3.new(-r * 0.6, h + r * 0.3, -r * 0.4)), leaf, Enum.PartType.Ball)
-end
-
-local function pine(parent: Instance, at: Vector3, k: number)
-	local h = 5 * k
-	scenery(parent, "Trunk", Vector3.new(h, 1.1 * k, 1.1 * k), CFrame.new(at + Vector3.new(0, h / 2, 0)) * CFrame.Angles(0, 0, math.rad(90)), BARK, Enum.PartType.Cylinder, true)
-	for i, r in { 5, 3.8, 2.6 } do
-		local y = h + (i - 1) * 3.6 * k + 2 * k
-		-- (A squashed ball per tier reads as a pine's layers from afar.)
-		scenery(parent, "Needles", Vector3.new(r * 2 * k, 4.2 * k, r * 2 * k), CFrame.new(at + Vector3.new(0, y, 0)), PINE, Enum.PartType.Ball)
-	end
-end
-
--- Builds the landscape around the lab line (labOrigin: the plaza's middle at floor height; the labs
--- run along X from it). Safe to call once.
 function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: number)
 	if not Config.LOOK_V3 then
 		return
@@ -85,46 +60,83 @@ function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: num
 			(base :: any).MaterialVariant = ""
 		end)
 	end
-	local reach = (math.ceil(plotCount / 2) + 0.5) * plotSpacing
-	local folder = Instance.new("Folder")
-	folder.Name = "Landscape"
-	local rng = Random.new(Landscape.SEED)
-	-- Trees in front of and behind the lab line.
-	for i = 1, Landscape.TREES do
-		local band = if i % 2 == 0 then Landscape.FRONT else Landscape.BACK
-		local z = rng:NextNumber(math.min(band[1], band[2]), math.max(band[1], band[2]))
-		local x = rng:NextNumber(-reach, reach)
-		local at = Vector3.new(labOrigin.X + x, ground, labOrigin.Z + z)
-		local k = rng:NextNumber(0.8, 1.35)
-		if rng:NextNumber() < 0.45 then
-			pine(folder, at, k)
-		else
-			roundTree(folder, at, k, rng)
-		end
-	end
-	folder.Parent = Workspace
-	-- Rolling hills far off (terrain grass), a ring in front, behind and at both ends.
 	local terrain = Workspace.Terrain
-	local function hill(x: number, z: number, r: number)
-		terrain:FillBall(Vector3.new(labOrigin.X + x, ground - r * 0.55, labOrigin.Z + z), r, Enum.Material.Grass)
-	end
 	pcall(function()
 		terrain:SetMaterialColor(Enum.Material.Grass, Landscape.GRASS)
+		terrain:SetMaterialColor(Enum.Material.Rock, Color3.fromRGB(120, 118, 112))
 	end)
-	local x = -reach - 200
-	while x <= reach + 200 do
-		for _, z in Landscape.HILLS_Z do
-			hill(x + rng:NextNumber(-40, 40), z + rng:NextNumber(-40, 40), rng:NextNumber(90, 150))
+	-- The play area: the labs' line along X (each lab 85 studs either side of its middle, from
+	-- z -95 to +72). Land starts outside it.
+	local reach = (math.ceil(plotCount / 2) + 0.5) * plotSpacing
+	local front, back = 75, -98
+	task.spawn(function()
+		task.wait(3)
+		local step = Landscape.STEP
+		local done = 0
+		local heights: { [number]: { [number]: number } } = {}
+		for x = -reach - Landscape.SIDE, reach + Landscape.SIDE, step do
+			local column: { [number]: number } = {}
+			heights[x] = column
+			for z = back - Landscape.DEPTH, front + Landscape.DEPTH, step do
+				local ax = math.max(0, math.abs(x) - reach)
+				local az = if z > front then z - front elseif z < back then back - z else 0
+				local away = math.sqrt(ax * ax + az * az)
+				if away > 0 then
+					local h = heightAt(x, z, away)
+					column[z] = h
+					if h > 1 then
+						local slope = 0
+						local left = heights[x - step]
+						if left and left[z] then
+							slope = math.abs(h - left[z])
+						end
+						local material = if slope > step * 0.9 then Enum.Material.Rock else Enum.Material.Grass
+						terrain:FillBlock(CFrame.new(labOrigin.X + x, ground + h / 2 - 2, labOrigin.Z + z), Vector3.new(step, h + 4, step), material)
+						done += 1
+						if done % 400 == 0 then
+							task.wait()
+						end
+					end
+				end
+			end
 		end
-		x += Landscape.HILL_STEP
-	end
-	for _, side in { -1, 1 } do
-		local z = Landscape.HILLS_Z[2]
-		while z <= Landscape.HILLS_Z[1] do
-			hill(side * (reach + 260) + rng:NextNumber(-30, 30), z, rng:NextNumber(100, 160))
-			z += Landscape.HILL_STEP
+		-- Trees, bushes and rocks on the land (real models only).
+		local roles: { string } = {}
+		for _, role in Landscape.TREE_ROLES do
+			if V3Assets.has(role) then
+				table.insert(roles, role)
+			end
 		end
-	end
+		if #roles == 0 then
+			return
+		end
+		local folder = Instance.new("Folder")
+		folder.Name = "Landscape"
+		folder.Parent = Workspace
+		local rng = Random.new(Landscape.SEED)
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Include
+		local hitList: { Instance } = { terrain }
+		if base then
+			table.insert(hitList, base)
+		end
+		params.FilterDescendantsInstances = hitList
+		for i = 1, Landscape.TREES do
+			local x = rng:NextNumber(-reach - Landscape.SIDE + 20, reach + Landscape.SIDE - 20)
+			local inFront = rng:NextNumber() < 0.5
+			local z = if inFront then rng:NextNumber(front + 12, front + Landscape.DEPTH - 30) else rng:NextNumber(back - Landscape.DEPTH + 30, back - 12)
+			local from = Vector3.new(labOrigin.X + x, ground + 300, labOrigin.Z + z)
+			local hit = Workspace:Raycast(from, Vector3.new(0, -400, 0), params)
+			if hit and hit.Normal.Y > 0.75 then
+				local role = roles[rng:NextInteger(1, #roles)]
+				local height = if role == "Bush" then rng:NextNumber(3, 5) elseif role == "Rock" then rng:NextNumber(3, 9) else rng:NextNumber(18, 32)
+				V3Assets.place(role, folder, CFrame.new(hit.Position) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0), { height = height, collide = role == "Rock" })
+			end
+			if i % 20 == 0 then
+				task.wait()
+			end
+		end
+	end)
 end
 
 return Landscape
