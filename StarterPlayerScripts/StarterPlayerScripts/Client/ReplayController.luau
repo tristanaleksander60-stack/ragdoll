@@ -9,6 +9,7 @@ local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local Keybinds = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Keybinds"))
 local KitStyle = require(script.Parent:WaitForChild("KitStyle"))
+local Theme = require(game:GetService("ReplicatedStorage"):WaitForChild("LihFolkUI"):WaitForChild("LihFolkUITheme"))
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
 local ShareCode = require(Shared:WaitForChild("ShareCode"))
@@ -236,6 +237,14 @@ local function letterbox(): ScreenGui
 	label.TextSize = 24
 	label.TextColor3 = Color3.fromRGB(255, 214, 70)
 	label.Text = if Config.XRAY_REPLAY then "X-RAY REPLAY  0.3x" else "INSTANT REPLAY  0.3x"
+	if KitStyle.V2 then
+		-- (UI v2: the display face with an ink outline, fitted to its box: never cut on a phone.)
+		label.FontFace = Theme.Fonts.display
+		label.TextStrokeTransparency = 0
+		label.TextStrokeColor3 = Theme.Palette.ink
+		KitStyle.fit(label, 26)
+		label.TextXAlignment = Enum.TextXAlignment.Left
+	end
 	label.Parent = g
 	local skip = Instance.new("TextButton")
 	skip.Name = "Skip"
@@ -259,6 +268,13 @@ local function letterbox(): ScreenGui
 	rec.BackgroundColor3 = Color3.fromRGB(235, 70, 70)
 	rec.TextColor3 = Color3.new(1, 1, 1)
 	rec.Text = if Config.XRAY_REPLAY then "CLIP IT" else "Record clip"
+	if KitStyle.V2 then
+		-- (A clone carries the press marker but not its connections: wired again, with its icon.)
+		rec:SetAttribute("KitPress", nil)
+		KitStyle.button(rec)
+		rec.BackgroundColor3 = Theme.role("danger").bottom
+		KitStyle.icon(rec, "camera")
+	end
 	rec.Parent = g
 	rec.Activated:Connect(function()
 		if recording then
@@ -376,6 +392,19 @@ function ReplayController.play(eventTime: number): boolean
 		pop.TextStrokeTransparency = 0
 		pop.Text = string.format("%s +%d", word, score)
 		pop.Parent = overlay
+		if KitStyle.V2 then
+			-- (UI v2: the display face, a pop, and the score counting up to its value.)
+			pop.FontFace = Theme.Fonts.display
+			pop.TextStrokeColor3 = Theme.Palette.ink
+			KitStyle.fit(pop, 72, 24)
+			pop.Text = word .. " +0"
+			KitStyle.countUp(pop, 0, function(n: number): string
+				return string.format("%s +%d", word, n)
+			end)
+			KitStyle.countUp(pop, score, function(n: number): string
+				return string.format("%s +%d", word, n)
+			end)
+		end
 		local codeLabel = Instance.new("TextLabel")
 		codeLabel.Name = "Code"
 		codeLabel.BackgroundTransparency = 1
@@ -386,6 +415,20 @@ function ReplayController.play(eventTime: number): boolean
 		codeLabel.TextSize = 20
 		codeLabel.TextColor3 = Color3.new(1, 1, 1)
 		codeLabel.Text = "SHARE CODE  " .. code
+		if KitStyle.V2 then
+			-- (A dark pill, so the code reads over any scene.)
+			codeLabel.BackgroundTransparency = 0.25
+			codeLabel.BackgroundColor3 = Theme.Palette.dusk
+			codeLabel.FontFace = Theme.Fonts.display
+			local pill = Instance.new("UICorner")
+			pill.CornerRadius = UDim.new(0.5, 0)
+			pill.Parent = codeLabel
+			KitStyle.fit(codeLabel, 20)
+			local pad = Instance.new("UIPadding")
+			pad.PaddingLeft = UDim.new(0, 12)
+			pad.PaddingRight = UDim.new(0, 12)
+			pad.Parent = codeLabel
+		end
 		codeLabel.Parent = overlay
 		local onScore = ReplayController.onScore
 		if onScore then

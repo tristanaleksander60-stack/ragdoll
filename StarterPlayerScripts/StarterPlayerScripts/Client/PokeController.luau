@@ -21,6 +21,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local TextService = game:GetService("TextService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -46,6 +47,7 @@ local DummySim = require(Client:WaitForChild("DummySim"))
 local ViewMode = require(Client:WaitForChild("ViewMode"))
 local ToolCatalog = require(Client:WaitForChild("ToolCatalog"))
 local Icons = require(UI:WaitForChild("LihFolkUIIcons"))
+local KitStyle = require(Client:WaitForChild("KitStyle"))
 local Toast = require(Client:WaitForChild("Toast"))
 local ToolPicture = require(script.Parent:WaitForChild("ToolPicture"))
 local NextUnlocks = require(script.Parent:WaitForChild("NextUnlocks"))
@@ -100,7 +102,7 @@ type Slab = {
 }
 
 PokeController.NUMBER = 18 -- px, the slot number's badge
-PokeController.TOOLS_MIN_TEXT = 10 -- px: the WEAPONS slab's floor
+PokeController.TOOLS_MIN_TEXT = if KitStyle.V2 then 14 else 10 -- px: the WEAPONS slab's floor (UI v2: or its icon alone)
 
 -- The help line under the bar on a computer (round 2, N5): what the picked weapon does and the
 -- keys that matter, one line. The bar sits higher to make room for it.
@@ -126,6 +128,35 @@ function PokeController.pictureFor(height: number): (number, number)
 	return size, size + 6
 end
 PokeController.PICTURE_PAD = select(2, PokeController.pictureFor(60))
+
+-- UI v2: a slab's word never draws under 14 px. Where the word does not fit at that size (six
+-- slots on an upright phone), the slab shows its drawn picture alone, bigger and centred (the
+-- slot number and the ring still say which is which; the hit line names the tool when picked).
+PokeController.SLAB_MIN_TEXT = if KitStyle.V2 then 14 else 12
+local wordWidths: { [string]: number } = {}
+function PokeController.wordWidth(text: string): number
+	local known = wordWidths[text]
+	if known then
+		return known
+	end
+	-- (The legacy measure runs about a tenth narrower than the Fredoka One FontFace: LayoutCheck.)
+	local ok, size = pcall(function(): Vector2
+		return TextService:GetTextSize(text, PokeController.SLAB_MIN_TEXT, Enum.Font.FredokaOne, Vector2.new(10000, 100))
+	end)
+	local w = if ok then size.X * 1.15 else #text * PokeController.SLAB_MIN_TEXT * 0.62
+	wordWidths[text] = w
+	return w
+end
+function PokeController.iconOnly(width: number, height: number, text: string): boolean
+	if not KitStyle.V2 then
+		return false
+	end
+	local stacked = width < PokeController.STACK_BELOW
+	local _, pad = PokeController.pictureFor(height)
+	local roomW = width - 3 - (if stacked then 3 else pad)
+	local roomH = height - Theme.Size.depthSmall - (if stacked then PokeController.STACK_TOP else 0) - 4
+	return PokeController.wordWidth(text) > roomW or roomH < PokeController.SLAB_MIN_TEXT
+end
 
 local selected: string = Toys.default
 local loadout: { string } = table.clone(Toys.defaultLoadout)
@@ -281,6 +312,17 @@ local function placePicture(slab: Slab, width: number, height: number)
 	if not icon or not padding then
 		return
 	end
+	local label = slab.button.label
+	if PokeController.iconOnly(width, height, label.Text) then
+		-- (UI v2: the picture alone, centred and as big as the face allows.)
+		label.Visible = false
+		local size = math.max(PokeController.PICTURE_STACKED, math.min(width - 10, height - Theme.Size.depthSmall - 8))
+		icon.AnchorPoint = Vector2.new(0.5, 0.5)
+		icon.Position = UDim2.fromScale(0.5, 0.5)
+		icon.Size = UDim2.fromOffset(size, size)
+		return
+	end
+	label.Visible = label.Text ~= ""
 	if width < PokeController.STACK_BELOW then
 		icon.AnchorPoint = Vector2.new(0.5, 0)
 		icon.Position = UDim2.new(0.5, 0, 0, 3)
@@ -464,6 +506,9 @@ end
 -- (A tool's slab is made the first time the bar needs it: ensureSlab, below makeSlab.)
 local slotsParent: Instance? = nil
 local ensureSlab: (id: string) -> Slab?
+local drawTools: (picking: boolean) -> () -- (below, with the pick chip)
+local toolsIconOnly = false -- UI v2: the WEAPONS slab shows its icon alone (drawTools)
+local toolsPicking = false
 
 local function layout()
 	local frame, gui, slotsBox = barFrame, barGui, slotsFrame
@@ -488,6 +533,11 @@ local function layout()
 		tools.button.root.Visible = withTools and (not plan.nextStacked or pendingEquip ~= nil)
 		tools.button.root.Size = UDim2.fromOffset(w, tall)
 		tools.button.root.Position = UDim2.fromOffset(EDGE, EDGE)
+		local iconOnly = KitStyle.V2 and (PokeController.wordWidth("WEAPONS") > w - 8 or PokeController.wordWidth("CANCEL") > w - 8)
+		if iconOnly ~= toolsIconOnly then
+			toolsIconOnly = iconOnly
+			drawTools(toolsPicking)
+		end
 	end
 	for id, slab in slabs do
 		local index = table.find(list, id)
@@ -571,6 +621,23 @@ local function select(id: string)
 	end
 end
 
+-- The bar's first slab: WEAPONS, or CANCEL while a slot is picked. UI v2: where the word does not
+-- fit at the 14 px floor (an upright phone), the drawn toolbox (or a close mark) alone.
+drawTools = function(picking: boolean)
+	toolsPicking = picking
+	local tools = toolsSlab
+	if not tools then
+		return
+	end
+	if toolsIconOnly then
+		tools.button.setText("")
+		tools.button.setIcon(if picking then "close" else "toolbox")
+	else
+		tools.button.setIcon(nil)
+		tools.button.setText(if picking then "CANCEL" else "WEAPONS")
+	end
+end
+
 -- While a tool waits for its slot: the chip above the bar says which (or, on a screen too short
 -- for it, a toast), and TOOLS turns into the way out.
 local function showPickChip(id: string?)
@@ -598,7 +665,7 @@ local function showPickChip(id: string?)
 		end
 	end
 	if tools then
-		tools.button.setText(if id then "CANCEL" else "WEAPONS")
+		drawTools(id ~= nil)
 		tools.button.setSwatch(if id then Theme.role("danger") else Theme.role("neutral"))
 	end
 end
@@ -763,7 +830,7 @@ local function makeSlab(id: string, text: string, swatch: Theme.Swatch, parent: 
 	-- A one-word label may draw down to the kit's 12 px floor, so the longest names fit a phone slot.
 	local fit = button.label:FindFirstChildOfClass("UITextSizeConstraint")
 	if fit then
-		fit.MinTextSize = 12
+		fit.MinTextSize = PokeController.SLAB_MIN_TEXT -- (UI v2: 14; a word that cannot fit hides: iconOnly)
 	end
 	-- A one-word label gets the whole face (the kit pads text buttons for long captions).
 	local content = button.face:FindFirstChild("Content")
@@ -843,7 +910,7 @@ local function makeSlab(id: string, text: string, swatch: Theme.Swatch, parent: 
 	number.BackgroundTransparency = 0.1
 	number.TextColor3 = WHITE
 	number.FontFace = Theme.Fonts.display
-	number.TextSize = 13
+	number.TextSize = if KitStyle.V2 then 14 else 13
 	number.Text = ""
 	number.ZIndex = 7
 	number.Visible = false
@@ -975,7 +1042,7 @@ local function buildUi()
 	})
 	local fit = label:FindFirstChildOfClass("UITextSizeConstraint")
 	if fit then
-		fit.MinTextSize = 12 -- a long tool name on a phone still fits the chip
+		fit.MinTextSize = if KitStyle.V2 then 14 else 12 -- a long tool name on a phone still fits the chip
 	end
 	label.ZIndex = 8
 	pickLabel = label

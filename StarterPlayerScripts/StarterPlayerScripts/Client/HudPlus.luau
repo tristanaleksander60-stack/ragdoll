@@ -33,6 +33,7 @@ local Controller = require(UI:WaitForChild("LihFolkUIController"))
 
 local Client = script.Parent
 local HudSlots = require(Client:WaitForChild("HudSlots"))
+local KitStyle = require(Client:WaitForChild("KitStyle"))
 local PokeController = require(Client:WaitForChild("PokeController"))
 local ToolPicture = require(Client:WaitForChild("ToolPicture"))
 local NextUnlocks = require(Client:WaitForChild("NextUnlocks"))
@@ -43,6 +44,8 @@ local FirstPerson = require(Client:WaitForChild("FirstPerson"))
 local HudPlus = {}
 
 local P = Theme.Palette
+local LEVEL_BADGE = 30 -- px, UI v2 (22 before): its number draws 14 px or more
+HudPlus.LEVEL_BADGE = if KitStyle.V2 then LEVEL_BADGE else 22
 local RED = Color3.fromRGB(214, 40, 48)
 local RED_DARK = Color3.fromRGB(120, 16, 22)
 local player = Players.LocalPlayer
@@ -210,7 +213,8 @@ local function drawWeapons(takedowns: number)
 	local w = weapons
 	if w then
 		-- lihfolk-ignore: findfirstchild-chain (made when missing, just below)
-		local scale = w:FindFirstChild("Pulse") :: UIScale?
+		-- (The button's one UIScale, whoever made it: KitStyle's press shares it.)
+		local scale = w:FindFirstChildOfClass("UIScale")
 		if not scale then
 			local s = Instance.new("UIScale")
 			s.Name = "Pulse"
@@ -296,6 +300,7 @@ local function buildWeapons(parent: ScreenGui)
 	b.Activated:Connect(function()
 		PokeController.openCatalog()
 	end)
+	KitStyle.press(b) -- (UI v2: squish and click)
 	b.Parent = parent
 	weapons = b :: any
 	task.defer(fit)
@@ -310,11 +315,11 @@ local function buildWeapons(parent: ScreenGui)
 				t.Name = "Tag"
 				t.AnchorPoint = Vector2.new(1, 0.5)
 				t.Position = UDim2.new(1, -8, 0, 0)
-				t.Size = UDim2.fromOffset(72, 15)
+				t.Size = UDim2.fromOffset(if KitStyle.V2 then 82 else 72, if KitStyle.V2 then 18 else 15)
 				t.BackgroundColor3 = P.gold
 				t.TextColor3 = P.ink
 				t.FontFace = Theme.Fonts.display
-				t.TextSize = 13
+				t.TextSize = if KitStyle.V2 then 14 else 13
 				t.ZIndex = 21
 				round(t, UDim.new(1, 0))
 				stroke(t, 1.5)
@@ -412,13 +417,22 @@ local function buildSandbox(parent: ScreenGui)
 		b.Activated:Connect(function()
 			HudPlus.sandbox(name)
 		end)
+		if KitStyle.V2 then
+			-- (UI v2: the HUD's slab colour lit from above, the press squish and a click.)
+			b.BackgroundColor3 = KitStyle.SLAB
+			round(b, UDim.new(0, Theme.Radius.button))
+			KitStyle.fit(b, 18)
+			KitStyle.press(b)
+		end
 		b.Parent = parent
 		sandbox[name] = b
 	end
 	FirstPerson.onChanged(function(on: boolean)
 		local b = sandbox.FirstPerson
 		if b then
-			b.BackgroundColor3 = if on then Color3.fromRGB(40, 150, 80) else Color3.fromRGB(44, 48, 64)
+			b.BackgroundColor3 = if KitStyle.V2 then (if on then KitStyle.GO else KitStyle.SLAB)
+				elseif on then Color3.fromRGB(40, 150, 80)
+				else Color3.fromRGB(44, 48, 64)
 		end
 	end)
 end
@@ -456,6 +470,24 @@ local function buildLevel()
 	stroke(circle, 1.5, Color3.fromRGB(200, 215, 240))
 	local text = label(circle, "1", UDim2.fromScale(0.1, 0.18), UDim2.fromScale(0.8, 0.64))
 	text.TextXAlignment = Enum.TextXAlignment.Center
+	if KitStyle.V2 then
+		-- (UI v2: still small and quiet, but its number draws 14 px or more: a 30 px solid badge in
+		-- the kit's info blue, an ink edge, and a thicker XP line.)
+		circle.Size = UDim2.fromOffset(LEVEL_BADGE, LEVEL_BADGE)
+		circle.BackgroundColor3 = Theme.role("info").bottom
+		circle.BackgroundTransparency = 0
+		local edge = circle:FindFirstChildOfClass("UIStroke")
+		if edge then
+			edge.Color = P.ink
+			edge.Thickness = 2
+		end
+		text.Position = UDim2.fromScale(0.08, 0.12)
+		text.Size = UDim2.fromScale(0.84, 0.76)
+		KitStyle.fit(text, 20, 14)
+		track.Size = UDim2.fromOffset(100, 5)
+		track.BackgroundTransparency = 0.25
+		fill.BackgroundColor3 = Theme.role("info").top
+	end
 	circle.Parent = g
 	g.Parent = player:WaitForChild("PlayerGui")
 	levelGui = g
@@ -473,7 +505,11 @@ local function drawLevel()
 	local n, into, span = Level.of(Level.xp(s.takedowns or 0, played))
 	local t, f = levelText, xpFill
 	if t and t.Text ~= tostring(n) then
-		t.Text = tostring(n) -- (a level up is silent now: the owner wants the game in front)
+		if KitStyle.V2 then
+			KitStyle.countUp(t, n) -- (UI v2: it counts and pops, still silent)
+		else
+			t.Text = tostring(n) -- (a level up is silent now: the owner wants the game in front)
+		end
 	end
 	if f then
 		f.Size = UDim2.fromScale(math.clamp(into / math.max(1, span), 0, 1), 1)
@@ -491,6 +527,10 @@ local function followBar()
 	local barGui = pg and pg:FindFirstChild("ToyBar")
 	local bar = barGui and barGui:FindFirstChild("Bar")
 	local shown = bar ~= nil and bar:IsA("GuiObject") and barGui:IsA("ScreenGui") and barGui.Enabled and bar.Visible and bar.AbsoluteSize.X > 0
+	-- (UI v2: a phone's first QUIET_START s show at most seven things: the level waits.)
+	if KitStyle.V2 and shown and time() < Config.QUIET_START and HudSlots.context(ViewMode.isTouch(), ViewMode.isLab()).phone then
+		shown = false
+	end
 	lg.Enabled = shown
 	if not shown or not bar or not bar:IsA("GuiObject") then
 		return
@@ -503,8 +543,9 @@ local function followBar()
 	end
 	local track = xpTrack
 	if track then
-		track.Position = UDim2.fromOffset(at.X + 18, at.Y - 4)
-		track.Size = UDim2.fromOffset(math.clamp(size.X * 0.15, 40, 110), 3)
+		local thick = if KitStyle.V2 then 5 else 3
+		track.Position = UDim2.fromOffset(at.X + (if KitStyle.V2 then 22 else 18), at.Y - 2 - thick)
+		track.Size = UDim2.fromOffset(math.clamp(size.X * 0.15, 40, 110), thick)
 	end
 end
 

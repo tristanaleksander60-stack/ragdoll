@@ -20,7 +20,7 @@ local GuiService = game:GetService("GuiService")
 
 local Theme = {}
 
-export type RoleName = "go" | "neutral" | "premium" | "danger" | "info" | "done" | "locked"
+export type RoleName = "go" | "neutral" | "premium" | "danger" | "info" | "done" | "locked" | "accent"
 export type ThemeName = "shop" | "codes" | "rebirth" | "settings" | "daily" | "neutral"
 export type TextStyleName = "display" | "title" | "button" | "number" | "small" | "body" | "caption"
 
@@ -125,6 +125,13 @@ local ROLES: { [RoleName]: Swatch } = {
 		shade = hex("#7C828C"),
 		text = hex("#16181D"),
 		textStroke = nil,
+	},
+	accent = { -- UI v2: the game's own colour (havoc orange), for the one hero action
+		top = hex("#FF9A4D"),
+		bottom = hex("#F2621F"),
+		shade = hex("#8F2C05"),
+		text = hex("#FFFFFF"),
+		textStroke = hex("#050608"),
 	},
 	locked = { -- not yet available: the darkest slab (white, stroked text: still readable)
 		top = hex("#2E323B"),
@@ -263,6 +270,11 @@ Theme.Motion = {
 	sunburstPeriod = 16, -- seconds per full turn
 	staggerStep = 0.04,
 	shakeStep = 0.04,
+	-- Shared by every hand-built piece (KitStyle.pop / press / countUp read these).
+	popFrom = 0.6, -- scale a pop starts at
+	popTime = 0.28,
+	countTime = 0.55, -- a number counting up to its new value
+	countTimeMax = 1.1,
 }
 
 -- Optional sound slots. Empty = silent. Fill with YOUR uploaded audio ids,
@@ -277,6 +289,129 @@ local SOUNDS: { [string]: string } = {
 	error = "", -- left silent
 }
 Theme.Sounds = SOUNDS
+
+-- Icon sizes (design units) and the drop shadow under raised surfaces (UI v2 turns it on).
+Theme.IconSize = { xs = 20, sm = 28, md = 40, lg = 56, xl = 72 }
+Theme.Shadow = { enabled = false, offset = 5, transparency = 0.55, color = Theme.Palette.ink }
+-- The gamepad / keyboard focus ring.
+Theme.Focus = { color = Theme.Palette.white, thickness = 3, grow = 10 }
+
+---------------------------------------------------------------------------
+-- UI v2 (Config.UI_V2, 19 Nov 2026): "Havoc". The same components and rules, retuned: a deep navy
+-- canvas instead of grey glass, the game's own havoc orange as the accent, livelier role colours,
+-- Fredoka One for titles and buttons with Builder Sans for the rest, rounder corners, solid
+-- surfaces with a drop shadow, a 0.92 press squish, and a text floor that draws 14 px on a phone
+-- (17 design units x the 0.85 touch floor). Everything is a token change: switch UI_V2 off and the
+-- dark-glass look above comes back untouched.
+---------------------------------------------------------------------------
+local function uiV2(): boolean
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	-- (Replicated before any script runs; the short waits only guard a slow join.)
+	local shared = ReplicatedStorage:WaitForChild("Shared", 5)
+	local config = shared and shared:WaitForChild("Config", 5)
+	if not config or not config:IsA("ModuleScript") then
+		return false
+	end
+	local ok, value = pcall(function(): any
+		return (require(config) :: any).UI_V2
+	end)
+	return ok and value == true
+end
+Theme.V2 = uiV2()
+
+if Theme.V2 then
+	local Pa = Theme.Palette :: any
+	Pa.ink = hex("#090A14")
+	Pa.dusk = hex("#141A2C") -- navy canvas (15.9:1 under white text)
+	Pa.duskRaised = hex("#1C2440")
+	Pa.duskRaisedHi = hex("#283357")
+	Pa.duskSunken = hex("#0A0E1B")
+	Pa.line = hex("#35426C")
+	Pa.textMid = hex("#DDE4F5") -- 13.1:1 on the canvas
+	Pa.textLow = hex("#AEB8D3") -- 8.0:1
+	Pa.gold = hex("#FFC83D")
+	Pa.slab = hex("#1E2742")
+	Pa.go = hex("#1DB857")
+	Pa.stageTop = hex("#2D3A68")
+	Pa.stageBottom = hex("#141A30")
+	Pa.accent = hex("#FF6A26") -- havoc orange: the game's own colour
+	Pa.accentHi = hex("#FFA25A")
+	Pa.focus = hex("#FFE15C") -- the gamepad ring (bright on every surface)
+
+	local function set(name: RoleName, top: string, bottom: string, shade: string, text: string?, stroke: string?)
+		ROLES[name] = {
+			top = hex(top),
+			bottom = hex(bottom),
+			shade = hex(shade),
+			text = hex(text or "#FFFFFF"),
+			textStroke = if stroke == "none" then nil else hex(stroke or "#090A14"),
+		}
+	end
+	set("go", "#62F29F", "#17B054", "#0A6630")
+	set("neutral", "#35416C", "#232C4B", "#0C1022")
+	set("premium", "#FFE27A", "#FFB120", "#9E5A00")
+	set("danger", "#FF6E84", "#E0284F", "#7C0E27")
+	set("info", "#55D6FF", "#1F8EEA", "#0D4A8A")
+	set("done", "#E9EEF8", "#C4CCDD", "#7D8699", "#141A2C", "none")
+	set("locked", "#2B3352", "#1D243C", "#0A0E1C", "#DDE4F5")
+	set("accent", "#FFA25A", "#F2621F", "#8F2C05")
+
+	-- Headers: the navy slab with a clear tint of the menu's own colour (identity at a glance).
+	local top, bottom, shade = hex("#2A3459"), hex("#1A2140"), hex("#090C18")
+	for name, color in Theme.Accents :: any do
+		MENUS[name :: ThemeName] = {
+			top = top:Lerp(color, 0.32),
+			bottom = bottom:Lerp(color, 0.2),
+			shade = shade,
+			text = hex("#FFFFFF"),
+			textStroke = hex("#090A14"),
+		}
+	end
+
+	Theme.Glass.panel = 0.04 -- (solid surfaces read as finished; the backdrop dims the world)
+	Theme.Glass.card = 0.05
+
+	local Fo = Theme.Fonts :: any
+	Fo.display = Font.new("rbxasset://fonts/families/FredokaOne.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+	Fo.body = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+	Fo.bodySemi = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal)
+	-- (Fredoka One is round and heavy: outlines at about 6 percent, so 0, a and e keep their holes.)
+	local TX = TEXT :: any
+	TX.display = { font = Fo.display, size = 36, stroke = 2 }
+	TX.title = { font = Fo.display, size = 25, stroke = 1.5 }
+	TX.button = { font = Fo.display, size = 23, stroke = 1.5 }
+	TX.number = { font = Fo.display, size = 28, stroke = 1.5 }
+	TX.small = { font = Fo.display, size = 18, stroke = 1 }
+	TX.body = { font = Fo.body, size = 19, stroke = 0 }
+	TX.caption = { font = Fo.bodySemi, size = 17, stroke = 0 }
+	Theme.MinDrawnText = 14
+	Theme.MinTextSize = 17 -- x the 0.85 touch floor = 14.5 px drawn
+
+	Theme.Radius.panel = 18
+	Theme.Radius.header = 12
+	Theme.Radius.card = 14
+	Theme.Radius.button = 12
+	Theme.Radius.input = 10
+
+	Theme.Stroke.panel = 3
+	Theme.Stroke.card = 2
+	Theme.Stroke.button = 2.5
+	Theme.Stroke.input = 2
+
+	Theme.Size.depth = 5
+	Theme.Size.depthSmall = 4
+
+	local Mo = Theme.Motion :: any
+	Mo.openTime = 0.26
+	Mo.openFrom = 0.8
+	Mo.hoverScale = 1.05
+	Mo.pressScale = 0.92 -- the press squish
+	Mo.pressTime = 0.06
+	Mo.releaseTime = 0.2
+
+	Theme.Shadow = { enabled = true, offset = 6, transparency = 0.5, color = Pa.ink }
+	Theme.Focus = { color = Pa.focus, thickness = 3, grow = 12 }
+end
 
 ---------------------------------------------------------------------------
 -- Helpers

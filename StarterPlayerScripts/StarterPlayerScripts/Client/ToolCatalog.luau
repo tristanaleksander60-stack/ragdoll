@@ -16,6 +16,8 @@ local Offers = require(Shared:WaitForChild("Offers"))
 local Net = require(Shared:WaitForChild("Net"))
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
 local Toast = require(script.Parent:WaitForChild("Toast"))
+local KitStyle = require(script.Parent:WaitForChild("KitStyle"))
+local UiRarity = require(Shared:WaitForChild("UiRarity"))
 local ToolPicture = require(script.Parent:WaitForChild("ToolPicture"))
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -29,7 +31,7 @@ local C = require(UI:WaitForChild("LihFolkUIComponents"))
 local Controller = require(UI:WaitForChild("LihFolkUIController"))
 
 local SP = Theme.Space
-local CARD = Vector2.new(182, 316) -- (the weapon's 3D model on a stage on top: the picture is what young players read first)
+local CARD = Vector2.new(182, if KitStyle.V2 then 346 else 316) -- (UI v2: a third stat row, SPEED) -- (the weapon's 3D model on a stage on top: the picture is what young players read first)
 
 -- Phones (shorter side 500 px or less) see the window at the touch floor's scale, about 335 design
 -- units tall: there the instruction line is left out and EQUIP sits right under the tool's name, so
@@ -171,6 +173,10 @@ local function priceText(tierKey: string): (string, boolean)
 end
 
 local tryButtons: { [string]: TextButton } = {}
+local rarityTags: { [string]: GuiObject } = {} -- UI v2: the rarity word on each picture
+local compactNow = false -- the phone layout is on (setCompact)
+local veils: { [string]: GuiObject } = {} -- UI v2: the dark veil over a locked weapon's picture
+local edges: { [string]: { stroke: UIStroke, rarity: Color3, color: Color3 } } = {} -- UI v2: each card's outline
 -- The weapon on a free try now (nil: none).
 local function trialRunning(): string?
 	local id = Players.LocalPlayer:GetAttribute("TrialWeapon")
@@ -219,7 +225,7 @@ local function refreshEquip()
 			button.setEnabled(priced)
 		elseif state == "locked" then
 			-- Nearly earned (never sold), or not on sale yet: the button says how close it is.
-			button.setIcon(nil)
+			button.setIcon(if KitStyle.V2 then "lock" else nil) -- (UI v2: the padlock beside the word)
 			button.setEnabled(true)
 			button.setText("LOCKED")
 			button.setRole("locked")
@@ -229,7 +235,8 @@ local function refreshEquip()
 			button.setText("LOADING...")
 			button.setRole("locked")
 		else
-			button.setIcon(nil)
+			-- (UI v2: EQUIPPED carries a tick, so the state reads without its colour.)
+			button.setIcon(if KitStyle.V2 and inBar then "check" else nil)
 			button.setEnabled(true)
 			-- (Round 5, like the big ragdoll games: EQUIP, or EQUIPPED in green once it is on the bar;
 			-- tapping EQUIPPED takes it off again, unless it is the bar's last tool.)
@@ -241,10 +248,26 @@ local function refreshEquip()
 		if lock then
 			lock.Visible = state == "locked"
 		end
+		-- (UI v2: a locked weapon's picture sits behind a dark veil; the card's edge says
+		-- EQUIPPED in green, otherwise its rarity's colour.)
+		local veil = veils[id]
+		if veil then
+			veil.Visible = state == "locked"
+		end
+		local edge = edges[id]
+		if edge then
+			edge.color = if inBar and state == "open" then Theme.role("go").bottom else edge.rarity
+			edge.stroke.Color = edge.color
+		end
 		-- TRY FREE on a locked one, while no other try runs (round 5).
 		local tryButton = tryButtons[id]
 		if tryButton then
 			tryButton.Visible = state == "locked" and trialRunning() == nil
+		end
+		-- (A phone's picture is too short for both: TRY FREE wins, the outline keeps the colour.)
+		local rarityTag = rarityTags[id]
+		if rarityTag then
+			rarityTag.Visible = not (compactNow and (tryButton and tryButton.Visible) == true)
 		end
 		if state == "open" and trialRunning() ~= id then
 			ownedCount += 1
@@ -269,7 +292,7 @@ local pictureMakers: { [string]: () -> () } = {} -- cards whose 3D picture is no
 local function showShelf(category: string)
 	current = category
 	for name, tab in tabs do
-		tab.setRole(if name == category then "info" else "neutral")
+		tab.setRole(if name == category then (if KitStyle.V2 then "accent" else "info") else "neutral") -- (UI v2: the shelf you are on in the game's colour)
 	end
 	local frame = shelf
 	if not frame then
@@ -287,6 +310,76 @@ local function showShelf(category: string)
 			end
 		end
 	end
+end
+
+-- UI v2: a stat row that reads as a scale: the name, a bar with a tick at every tenth, and the
+-- value "7" on 1..10 against the best weapon on the same shelf (UiRarity.stats).
+local function statRow(label: string, value: number, order: number, parent: Instance, color: Color3)
+	local P = Theme.Palette
+	local row = Instance.new("Frame")
+	row.Name = label
+	row.BackgroundTransparency = 1
+	row.Size = UDim2.new(1, 0, 0, 22)
+	row.LayoutOrder = order
+	row.Parent = parent
+	local name = C.Text("small", label, {
+		color = P.textMid,
+		align = Enum.TextXAlignment.Left,
+		scaled = true,
+		size = UDim2.new(0, 62, 1, 0),
+		parent = row :: Instance,
+	})
+	name.Name = "Name"
+	local track = Instance.new("Frame")
+	track.Name = "Track"
+	track.BackgroundColor3 = P.duskSunken
+	track.BorderSizePixel = 0
+	track.AnchorPoint = Vector2.new(0, 0.5)
+	track.Position = UDim2.new(0, 64, 0.5, 0)
+	track.Size = UDim2.new(1, -64 - 26, 0, 12)
+	local round = Instance.new("UICorner")
+	round.CornerRadius = UDim.new(0.5, 0)
+	round.Parent = track
+	local edge = Instance.new("UIStroke")
+	edge.Color = P.ink
+	edge.Thickness = 1.5
+	edge.Parent = track
+	local fill = Instance.new("Frame")
+	fill.Name = "Fill"
+	fill.BackgroundColor3 = color
+	fill.BorderSizePixel = 0
+	fill.Size = UDim2.fromScale(value / UiRarity.SCALE, 1)
+	local fillRound = Instance.new("UICorner")
+	fillRound.CornerRadius = UDim.new(0.5, 0)
+	fillRound.Parent = fill
+	local shine = Instance.new("UIGradient")
+	shine.Rotation = 90
+	shine.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(180, 180, 190))
+	shine.Parent = fill
+	fill.Parent = track
+	for i = 1, UiRarity.SCALE - 1 do
+		local tick = Instance.new("Frame")
+		tick.Name = "Tick"
+		tick.BackgroundColor3 = P.ink
+		tick.BackgroundTransparency = 0.45
+		tick.BorderSizePixel = 0
+		tick.AnchorPoint = Vector2.new(0.5, 0)
+		tick.Position = UDim2.fromScale(i / UiRarity.SCALE, 0)
+		tick.Size = UDim2.new(0, 1, 1, 0)
+		tick.ZIndex = fill.ZIndex + 1
+		tick.Parent = track
+	end
+	track.Parent = row
+	local number = C.Text("small", tostring(value), {
+		color = P.textHi,
+		align = Enum.TextXAlignment.Right,
+		scaled = true,
+		size = UDim2.new(0, 22, 1, 0),
+		position = UDim2.fromScale(1, 0),
+		anchor = Vector2.new(1, 0),
+		parent = row :: Instance,
+	})
+	number.Name = "Value"
 end
 
 local function statBar(label: string, value: number, order: number, parent: Instance)
@@ -420,6 +513,17 @@ local function build()
 	end)
 	for index, toy in order do
 		local card = C.Card({ name = toy.id, gap = SP.xs, layoutOrder = index, parent = grid })
+		local rarity = UiRarity.of(toy)
+		card.root:SetAttribute("Rarity", rarity.key)
+		if KitStyle.V2 then
+			-- (UI v2: the card's outline in its rarity's colour; EQUIPPED turns it green.)
+			local cardStroke = card.root:FindFirstChildOfClass("UIStroke")
+			if cardStroke then
+				cardStroke.Color = rarity.color
+				cardStroke.Thickness = if rarity.rank >= 4 then 3 else 2.5
+				edges[toy.id] = { stroke = cardStroke, rarity = rarity.color, color = rarity.color }
+			end
+		end
 		local iconSlot = Instance.new("Frame")
 		iconSlot.Name = "IconSlot"
 		-- The stage: a lighter well at the top of the card, lit from above, the model on it.
@@ -433,7 +537,9 @@ local function build()
 		stageCorner.Parent = iconSlot
 		local stageLight = Instance.new("UIGradient")
 		stageLight.Rotation = 90
-		stageLight.Color = ColorSequence.new(Theme.Palette.stageTop, Theme.Palette.stageBottom)
+		stageLight.Color = if KitStyle.V2
+			then ColorSequence.new(Theme.Palette.stageTop:Lerp(rarity.color, 0.4), Theme.Palette.stageBottom) -- (lit in its rarity's colour)
+			else ColorSequence.new(Theme.Palette.stageTop, Theme.Palette.stageBottom)
 		stageLight.Parent = iconSlot
 		local stageEdge = Instance.new("UIStroke")
 		stageEdge.Color = Theme.Palette.line
@@ -466,6 +572,50 @@ local function build()
 		lock.Visible = false
 		lock.Parent = iconSlot
 		locks[toy.id] = lock
+		if KitStyle.V2 then
+			-- (UI v2: the padlock is on the button; the picture goes dark behind a veil instead.)
+			lock.Size = UDim2.fromOffset(0, 0)
+			local veil = Instance.new("Frame")
+			veil.Name = "Veil"
+			veil.BackgroundColor3 = Theme.Palette.ink
+			veil.BackgroundTransparency = 0.45
+			veil.BorderSizePixel = 0
+			veil.Size = UDim2.fromScale(1, 1)
+			veil.ZIndex = icon.ZIndex + 1
+			veil.Visible = false
+			local veilCorner = Instance.new("UICorner")
+			veilCorner.CornerRadius = UDim.new(0, Theme.Radius.card - 2)
+			veilCorner.Parent = veil
+			veil.Parent = iconSlot
+			veils[toy.id] = veil
+			-- The rarity tag, top right of the stage: a word on its colour (never colour alone).
+			local tag = Instance.new("TextLabel")
+			tag.Name = "Rarity"
+			tag.AnchorPoint = Vector2.new(1, 1)
+			tag.Position = UDim2.new(1, -4, 1, -4) -- (bottom right: TRY FREE has the top left)
+			tag.Size = UDim2.fromOffset(0, 22)
+			tag.AutomaticSize = Enum.AutomaticSize.X
+			tag.BackgroundColor3 = rarity.color
+			tag.TextColor3 = if KitStyle.lightFace(rarity.color) then Theme.Palette.ink else Color3.new(1, 1, 1)
+			tag.FontFace = Theme.Fonts.display
+			tag.TextSize = 17
+			tag.Text = rarity.label
+			tag.ZIndex = icon.ZIndex + 4
+			local tagCorner = Instance.new("UICorner")
+			tagCorner.CornerRadius = UDim.new(0.5, 0)
+			tagCorner.Parent = tag
+			local tagEdge = Instance.new("UIStroke")
+			tagEdge.Color = Theme.Palette.ink
+			tagEdge.Thickness = 1.5
+			tagEdge.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+			tagEdge.Parent = tag
+			local tagPad = Instance.new("UIPadding")
+			tagPad.PaddingLeft = UDim.new(0, 8)
+			tagPad.PaddingRight = UDim.new(0, 8)
+			tagPad.Parent = tag
+			tag.Parent = iconSlot
+			rarityTags[toy.id] = tag
+		end
 		-- TRY FREE (round 5): a locked weapon for two minutes, once a day each (TrialService).
 		local try = Instance.new("TextButton")
 		try.Name = "TryFree"
@@ -495,6 +645,21 @@ local function build()
 		try.Activated:Connect(function()
 			Net.event(Net.Names.Trial):FireServer("Try", tryId)
 		end)
+		if KitStyle.V2 then
+			-- (UI v2: the kit's green with its light from above, the press squish and a click;
+			-- the word fitted, never under the floor.)
+			try.BackgroundColor3 = Theme.role("go").bottom
+			try.Size = UDim2.fromOffset(84, 24)
+			try.Text = "TRY FREE"
+			KitStyle.fit(try, 17)
+			try.TextStrokeTransparency = 0.2
+			try.TextStrokeColor3 = Theme.Palette.ink
+			local tryShade = Instance.new("UIGradient")
+			tryShade.Rotation = 90
+			tryShade.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(200, 205, 215))
+			tryShade.Parent = try
+			KitStyle.press(try)
+		end
 		try.Parent = iconSlot
 		tryButtons[toy.id] = try
 		-- Phase K: the picture comes alive under the pointer or a tap (a little hop and wiggle).
@@ -540,6 +705,13 @@ local function build()
 			statLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 			statLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 			C.Pill("HELPER", { role = "go", parent = stats })
+		elseif KitStyle.V2 then
+			-- (UI v2: on a 1-10 scale against the shelf's best, with the number: UiRarity.stats.)
+			local scaled = UiRarity.stats(toy)
+			stats.Size = UDim2.new(1, 0, 0, 74)
+			statRow("POWER", scaled.power, 1, stats, Theme.role("premium").bottom)
+			statRow("SPEED", scaled.speed, 2, stats, Theme.role("info").bottom)
+			statRow("CHAOS", scaled.chaos, 3, stats, Theme.role("danger").bottom)
 		else
 			statBar("POWER", toy.power, 1, stats)
 			statBar("CHAOS", toy.chaos, 2, stats)
@@ -556,7 +728,13 @@ local function build()
 		-- (Its words stay inside the 24 px bar, outline and all.)
 		local killsText = progressRow:FindFirstChild("Label", true)
 		local killsFit = killsText and killsText:FindFirstChildOfClass("UITextSizeConstraint")
-		if killsFit then
+		if killsFit and KitStyle.V2 then
+			-- (UI v2: a taller bar, the words at 14-16: never under the floor.)
+			progressRow.Size = UDim2.new(1, 0, 0, 26)
+			killsFit.MinTextSize = 1
+			killsFit.MaxTextSize = 16
+			killsFit.MinTextSize = 14
+		elseif killsFit then
 			killsFit.MaxTextSize = 13
 		end
 		progressBars[toy.id] = { row = progressRow, bar = killsBar }
@@ -638,6 +816,7 @@ end
 -- The phone layout (see the top): no instruction line, EQUIP under the name. LayoutCheck switches
 -- it on a PC to measure where EQUIP lands.
 function ToolCatalog.setCompact(on: boolean)
+	compactNow = on
 	if intro then
 		intro.Visible = not on
 	end
@@ -654,6 +833,10 @@ function ToolCatalog.setCompact(on: boolean)
 		parts.progress.LayoutOrder = if on then 4 else 5
 		parts.blurb.LayoutOrder = if on then 5 else 3
 		parts.stats.LayoutOrder = if on then 6 else 4
+	end
+	if next(rarityTags) ~= nil then
+		table.clear(shownAs)
+		refreshEquip()
 	end
 end
 

@@ -80,7 +80,10 @@ local function redraw()
 		local todayIndex = if s.dailyToday then ((math.max(1, streak) - 1) % 7) + 1 else (streak % 7) + 1
 		for i, pip in days do
 			local done = s.dailyToday and i <= todayIndex or (not s.dailyToday and i < todayIndex)
-			pip.frame.BackgroundColor3 = if i == todayIndex then Color3.fromRGB(255, 154, 205) elseif done then Color3.fromRGB(70, 140, 90) else Color3.fromRGB(46, 40, 70)
+			pip.frame.BackgroundColor3 = if i == todayIndex then Color3.fromRGB(255, 154, 205)
+				elseif done then (if Theme.V2 then Theme.role("go").bottom else Color3.fromRGB(70, 140, 90))
+				elseif Theme.V2 then Theme.Palette.duskRaised -- (UI v2: the kit's raised navy)
+				else Color3.fromRGB(46, 40, 70)
 		end
 		local list = if s.goals and type(s.goals.list) == "table" then s.goals.list else {}
 		for i, row in dareRows do
@@ -142,7 +145,7 @@ local function build()
 		local f = Instance.new("Frame")
 		f.Name = "Day" .. i
 		f.Size = UDim2.new(1 / 7, -SP.xs, 1, 0)
-		f.BackgroundColor3 = Color3.fromRGB(46, 40, 70)
+		f.BackgroundColor3 = if Theme.V2 then Theme.Palette.duskRaised else Color3.fromRGB(46, 40, 70)
 		f.LayoutOrder = i
 		local corner = Instance.new("UICorner")
 		corner.CornerRadius = UDim.new(0, 10)

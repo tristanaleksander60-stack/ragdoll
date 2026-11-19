@@ -15,6 +15,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local Theme = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUITheme"))
 
 local ToolPicture = require(script.Parent:WaitForChild("ToolPicture"))
+local KitStyle = require(script.Parent:WaitForChild("KitStyle"))
 
 local NextUnlocks = {}
 
@@ -121,6 +122,9 @@ local function makeCard(id: string, parent: Instance): Card
 	nf.MaxTextSize = 14
 	nf.MinTextSize = 8
 	nf.Parent = name
+	if KitStyle.V2 then
+		KitStyle.fitOrHide(name, 16) -- (UI v2: 14 px or hidden: the picture and padlock still say it)
+	end
 	name.Parent = root
 	local count = Instance.new("TextLabel")
 	count.Name = "Count"
@@ -134,6 +138,9 @@ local function makeCard(id: string, parent: Instance): Card
 	cf.MaxTextSize = 14
 	cf.MinTextSize = 9
 	cf.Parent = count
+	if KitStyle.V2 then
+		KitStyle.fitOrHide(count, 16) -- (the gold bar under it shows the same)
+	end
 	count.Parent = root
 	local track = Instance.new("Frame")
 	track.Name = "Progress"

@@ -474,12 +474,14 @@ local function buildUi()
 	gui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets -- the same frame as the kit (HudSlots)
 
 	modeButton = button("Mode", "BUILD", UDim2.fromOffset(92, 56), KitStyle.GO)
+	KitStyle.icon(modeButton, KitStyle.HUD_ICONS.Mode, "top") -- (UI v2: the crate over the word)
 	modeButton.AnchorPoint = Vector2.new(0, 1)
 	modeButton.Position = UDim2.new(0, 14, 1, -14)
 	modeButton.Visible = false
 	modeButton.Parent = gui
 
 	playButton = button("Play", "PLAY", UDim2.fromOffset(92, 56), KitStyle.GO)
+	KitStyle.icon(playButton, KitStyle.HUD_ICONS.Play, "top")
 	playButton.AnchorPoint = Vector2.new(0, 1)
 	playButton.Position = UDim2.new(0, 14, 1, -80)
 	playButton.Visible = false

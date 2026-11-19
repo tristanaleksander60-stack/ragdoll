@@ -382,12 +382,22 @@ function PlayerBody.highlight()
 	if not b then
 		return
 	end
-	local scale = Instance.new("UIScale")
-	scale.Parent = b
-	local tween = TweenService:Create(scale, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 8, true), { Scale = 1.15 })
+	-- (On the slot's own UIScale, back to its resting scale after: never a second UIScale.)
+	local found = b:FindFirstChild("HudScale")
+	local scale: UIScale
+	if found and found:IsA("UIScale") then
+		scale = found
+	else
+		scale = Instance.new("UIScale")
+		scale.Name = "HudScale"
+		scale.Parent = b
+	end
+	local base = b:GetAttribute("KitBase")
+	local rest = if type(base) == "number" then base else 1
+	local tween = TweenService:Create(scale, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 8, true), { Scale = rest * 1.15 })
 	tween:Play()
 	tween.Completed:Once(function()
-		scale:Destroy()
+		scale.Scale = rest
 	end)
 end
 
@@ -695,15 +705,9 @@ local function buildButton()
 	b.TextSize = 16
 	b.AutoButtonColor = true
 	KitStyle.button(b)
+	KitStyle.icon(b, KitStyle.HUD_ICONS.Ragdoll, "top") -- (UI v2: a drawn icon over the word: the slot is narrow)
 	b.Activated:Connect(function()
-		local s = Instance.new("UIScale")
-		s.Scale = 0.88
-		s.Parent = b
-		local t = TweenService:Create(s, TweenInfo.new(0.16, Enum.EasingStyle.Back), { Scale = 1 })
-		t:Play()
-		t.Completed:Once(function()
-			s:Destroy()
-		end)
+		KitStyle.pop(b, 0.88) -- (on the slot's own UIScale: never a second one)
 		PlayerBody.toggle()
 	end)
 	b.Parent = gui

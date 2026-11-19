@@ -27,6 +27,7 @@ local ReplayController = require(Client:WaitForChild("ReplayController"))
 local ToolCatalog = require(Client:WaitForChild("ToolCatalog"))
 local ViewMode = require(Client:WaitForChild("ViewMode"))
 local Toast = require(Client:WaitForChild("Toast"))
+local KitStyle = require(Client:WaitForChild("KitStyle"))
 
 local ExperimentCard = {}
 ExperimentCard.showEconomy = function(_d: any) end -- (set below; phase 2)
@@ -41,6 +42,7 @@ local challenge: { toy: string, score: number }? = nil
 local windowText: TextLabel? = nil
 local ecoText: TextLabel? = nil
 local buyButton: any = nil
+local boltsText: TextLabel? = nil -- UI v2: the balance on its own line
 
 -- A friend's code: the toy and the score to beat (nil: not a code).
 function ExperimentCard.challengeOf(code: string): (string?, number?)
@@ -79,6 +81,10 @@ local function shown(): boolean
 end
 
 local function pop(b: GuiObject)
+	if KitStyle.V2 then
+		KitStyle.pop(b, 1.15) -- (UI v2: on the object's one UIScale)
+		return
+	end
 	local s = Instance.new("UIScale")
 	s.Scale = 1.15
 	s.Parent = b
@@ -119,9 +125,24 @@ function ExperimentCard.combo(text: string, n: number)
 	limit.MaxTextSize = 40
 	limit.MinTextSize = 16
 	limit.Parent = label
+	if KitStyle.V2 then
+		-- (UI v2: bigger, an ink outline that holds over any scene, a tilt and a stronger pop.)
+		label.TextStrokeColor3 = Theme.Palette.ink
+		limit.MaxTextSize = 48
+		local outline = Instance.new("UIStroke")
+		outline.Color = Theme.Palette.ink
+		outline.Thickness = 3
+		outline.LineJoinMode = Enum.LineJoinMode.Round
+		outline.Parent = label
+		label.Rotation = if n % 2 == 0 then 3 else -3
+	end
 	label.Parent = host
 	comboLabel = label
-	pop(label)
+	if KitStyle.V2 then
+		KitStyle.pop(label, 0.4)
+	else
+		pop(label)
+	end
 	comboToken += 1
 	local token = comboToken
 	task.delay(1.8, function()
@@ -195,6 +216,10 @@ local function buildWindow()
 	-- (EconomyService State). Lines of text and two buttons: nothing here can be typed but a code.
 	if Config.ECONOMY then
 		local remote = Net.event(Net.Names.Economy)
+		if KitStyle.V2 then
+			-- (UI v2: the BOLTS balance big, counting up when it grows.)
+			boltsText = C.Text("number", "\u{1F529} 0 BOLTS", { color = Theme.Palette.gold, size = UDim2.new(1, 0, 0, 40), layoutOrder = 0, parent = window.body :: Instance }) -- (top of the window)
+		end
 		ecoText = C.Text("body", "", { wrap = true, size = UDim2.new(1, 0, 0, 230), layoutOrder = 6, parent = window.body })
 		buyButton = C.Button({
 			text = "BUY NEXT WEAPON",
@@ -249,7 +274,16 @@ end
 
 -- The economy part of the window from the server's State.
 ExperimentCard.showEconomy = function(d: any)
-	local lines = { string.format("\u{1F529} %d BOLTS", tonumber(d.bolts) or 0) }
+	local bolts = tonumber(d.bolts) or 0
+	local lines = {}
+	local big = boltsText
+	if big then
+		KitStyle.countUp(big, bolts, function(n: number): string
+			return string.format("\u{1F529} %d BOLTS", n)
+		end)
+	else
+		table.insert(lines, string.format("\u{1F529} %d BOLTS", bolts))
+	end
 	if type(d.nextName) == "string" then
 		table.insert(lines, string.format("Next weapon: %s for %d BOLTS", d.nextName, tonumber(d.price) or 0))
 	end
@@ -320,6 +354,22 @@ local function build()
 	b.Activated:Connect(function()
 		Controller.toggle("Experiments")
 	end)
+	if KitStyle.V2 then
+		-- (UI v2: the kit's navy slab lit from above, the daily menu's pink edge, text never under
+		-- 14 px, the press squish and a click.)
+		b.BackgroundColor3 = KitStyle.SLAB
+		stroke.Color = Theme.Accents.daily
+		stroke.Thickness = 2.5
+		corner.CornerRadius = UDim.new(0, Theme.Radius.button)
+		limit.MinTextSize = 14
+		b.TextStrokeTransparency = 0.2
+		b.TextStrokeColor3 = Theme.Palette.ink
+		local shine = Instance.new("UIGradient")
+		shine.Rotation = 90
+		shine.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(200, 205, 220))
+		shine.Parent = b
+		KitStyle.press(b)
+	end
 	b.Parent = gui
 	gui.Parent = player:WaitForChild("PlayerGui")
 	card = b

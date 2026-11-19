@@ -29,6 +29,8 @@ local Toys = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Toys
 local ToolCatalog = require(script.Parent:WaitForChild("ToolCatalog")) :: any
 local FriendsUI = require(script.Parent:WaitForChild("FriendsUI")) :: any
 local CreatorUI = require(script.Parent:WaitForChild("CreatorUI")) :: any
+local KitStyle = require(script.Parent:WaitForChild("KitStyle"))
+local UiRarity = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("UiRarity"))
 
 local LayoutCheck = {}
 
@@ -716,7 +718,26 @@ function LayoutCheck.run(): string
 	-- The tool bar's slab labels with their pictures: beside the word on a wide slab, above it on a
 	-- narrow one (PokeController.STACK_BELOW); the longest word at the 12 px floor must fit the room
 	-- left in every screen and bar state.
-	do
+	-- (UI v2: the floor is PokeController.SLAB_MIN_TEXT, 14; a slab whose word cannot fit shows its
+	-- picture alone (PokeController.iconOnly): counted, not a problem. Below, the v2 section.)
+	if KitStyle.V2 then
+		local iconOnly, states = 0, 0
+		for _, s in LayoutCheck.SCREENS do
+			for _, lab in { false, true } do
+				for _, withTools in { false, true } do
+					local plan = PokeController.plan(s.size, s.touch, lab, withTools, Toys.SLOTS)
+					states += 1
+					for _, toy in Toys.list do
+						if PokeController.iconOnly(plan.cell.X, plan.cell.Y, toy.short) then
+							iconOnly += 1
+							break
+						end
+					end
+				end
+			end
+		end
+		table.insert(lines, string.format("UI v2 tool bar: words at %d px or the picture alone; %d of %d screen states show some slab as a picture only", PokeController.SLAB_MIN_TEXT, iconOnly, states))
+	else
 		local longestWord, longestW = "", 0
 		for _, toy in Toys.list do
 			local w = widthOf(toy.short, 12)
@@ -743,6 +764,7 @@ function LayoutCheck.run(): string
 			end
 		end
 		table.insert(lines, string.format("tool bar slabs: the longest word \"%s\" (%d px at 12): %s", longestWord, longestW, if tight == 0 then "fits beside or under its picture on every screen" else (tight .. " screen states too tight")))
+		-- (end of the v1 slab check)
 	end
 	-- The bar's first slab (round 2, N5): WEAPONS (CANCEL while picking) at its 10 px floor, on the
 	-- narrowest full bar.
@@ -755,8 +777,8 @@ function LayoutCheck.run(): string
 		end
 		local need = math.max(widthOf("WEAPONS", PokeController.TOOLS_MIN_TEXT), widthOf("CANCEL", PokeController.TOOLS_MIN_TEXT))
 		local room = narrowest - 6
-		if need > room then
-			problems += 1
+		if need > room and not KitStyle.V2 then
+			problems += 1 -- (UI v2: too narrow means the drawn toolbox alone, not a cut word)
 		end
 		table.insert(lines, string.format("WEAPONS slab: %d px of %d at %d px on the narrowest bar: %s", need, room, PokeController.TOOLS_MIN_TEXT, if need <= room then "fits" else "TOO WIDE"))
 	end
@@ -964,7 +986,222 @@ function LayoutCheck.run(): string
 		problems += #hits
 		table.insert(lines, if #hits == 0 then "UI size SMALL / NORMAL / LARGE: the launchers clear of everything on every screen" else "UI size: " .. table.concat(hits, "; "))
 	end
+	if KitStyle.V2 then
+		problems += LayoutCheck.uiV2(lines, widthOf, boldWidthOf)
+	end
 	table.insert(lines, string.format("%d problems (overlaps with outlines and a 4 px gap, taps under 44 px, off screen, toast text, catalog fit, contrast)", problems))
+	return table.concat(lines, "\n")
+end
+
+---------------------------------------------------------------------------------------------------
+-- UI v2 (Config.UI_V2): the look's own rules, measured.
+--   * every kit text style draws 14 px or more at the touch scale floor (Theme.MinDrawnText)
+--   * every role's text on its face: 4.5:1, or 3:1 with its ink outline
+--   * every rarity colour against the navy card: 3:1 (and the tag's word on it: 4.5:1)
+--   * every HUD and MENU icon the v2 look names is a drawn icon (not the emoji fallback)
+--   * the weapon card's stat names, value and rarity tags fit their boxes at their floor
+--   * a portrait phone's first minute shows at most 7 of our things (Roblox's stick and jump aside)
+--   * the level badge's number and the HUD's icon buttons keep 14 px words
+LayoutCheck.FIRST_MINUTE_MAX = 7
+
+local function luminance(c: Color3): number
+	local function lin(v: number): number
+		return if v <= 0.03928 then v / 12.92 else ((v + 0.055) / 1.055) ^ 2.4
+	end
+	return 0.2126 * lin(c.R) + 0.7152 * lin(c.G) + 0.0722 * lin(c.B)
+end
+function LayoutCheck.contrast(a: Color3, b: Color3): number
+	local x, y = luminance(a), luminance(b)
+	return (math.max(x, y) + 0.05) / (math.min(x, y) + 0.05)
+end
+
+-- A portrait phone, the player view, the first QUIET_START s: what shows (bar = one group).
+function LayoutCheck.firstMinuteNames(screen: Vector2): { string }
+	local ctx = ctxOf(screen, true, false)
+	local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
+	local HudMenu = require(script.Parent:WaitForChild("HudMenu")) :: any
+	local shown = {}
+	-- (The G17 is picked: SHOOT shows, GRAB / THROW / ZOOM do not; BUILD lives in MENU on a phone;
+	-- the chaos meter waits for a prop; the replay button for a replay; the WEAPONS button gives
+	-- its place to the experiment card, which waits out the first minute.)
+	for _, name in { "Ragdoll", "Shoot", "View", "Sprint" } do
+		if HudSlots.shownNow(name, ctx, 0, Config.QUIET_START) then
+			table.insert(shown, name)
+		end
+	end
+	if not (ctx.phone and Config.PHONE_HUD_MAX7) then
+		table.insert(shown, "Weapons")
+	end
+	table.insert(shown, "Bar")
+	table.insert(shown, "Hint")
+	for launcher in (if ctx.phone then HudMenu.PHONE_KEEP else HudMenu.KEEP) do
+		table.insert(shown, "Launcher:" .. launcher)
+	end
+	table.insert(shown, "Launcher:Menu")
+	if not (KitStyle.V2 and ctx.phone) then
+		table.insert(shown, "Level") -- (UI v2: a phone's level badge waits out the quiet start)
+	end
+	return shown
+end
+
+function LayoutCheck.uiV2(lines: { string }, widthOf: (string, number) -> number, boldWidthOf: (string, number) -> number): number
+	local problems = 0
+	local S = Theme.Size
+	local floorScale = S.touchDrawnMin / S.touchMin
+	-- Text styles at the touch floor.
+	local small = {}
+	for name, spec in Theme.Text do
+		local drawn = spec.size * floorScale
+		if drawn < Theme.MinDrawnText then
+			problems += 1
+			table.insert(small, string.format("%s %.1f", name, drawn))
+		end
+	end
+	local floorDrawn = Theme.MinTextSize * floorScale
+	if floorDrawn < Theme.MinDrawnText then
+		problems += 1
+	end
+	table.insert(lines, string.format("UI v2 text: every kit style and the fitted floor (%d units = %.1f px) at the touch scale %.2f: %s",
+		Theme.MinTextSize, floorDrawn, floorScale, if #small == 0 and floorDrawn >= Theme.MinDrawnText then "14 px or more" else "UNDER: " .. table.concat(small, ", ")))
+	-- Role contrast (text on the face's bottom colour; a stroked text needs 3:1).
+	local weak = {}
+	for name, role in Theme.Roles do
+		local need = if role.textStroke then 3 else 4.5
+		local ratio = LayoutCheck.contrast(role.text, role.bottom)
+		if ratio < need then
+			problems += 1
+			table.insert(weak, string.format("%s %.1f", name, ratio))
+		end
+	end
+	table.insert(lines, "UI v2 roles: text on every button face " .. (if #weak == 0 then "reads (4.5:1, or 3:1 outlined)" else "TOO WEAK: " .. table.concat(weak, ", ")))
+	-- Rarity colours.
+	local card = Theme.Palette.duskRaised
+	local rare = {}
+	for _, r in UiRarity.LIST do
+		local onCard = LayoutCheck.contrast(r.color, card)
+		local word = if KitStyle.lightFace(r.color) then Theme.Palette.ink else Color3.new(1, 1, 1)
+		local tag = LayoutCheck.contrast(word, r.color)
+		if onCard < 3 or tag < 4.5 then
+			problems += 1
+			table.insert(rare, string.format("%s %.1f/%.1f", r.label, onCard, tag))
+		end
+		local w = widthOf(r.label, 17) + 16
+		if w > ToolCatalog.CARD.X - 24 - 8 then
+			problems += 1
+			table.insert(rare, r.label .. " tag too wide")
+		end
+	end
+	table.insert(lines, "UI v2 rarity: colours on the card (3:1) and their tags' words (4.5:1) " .. (if #rare == 0 then "read" else "FAIL: " .. table.concat(rare, ", ")))
+	-- Drawn icons for the v2 look's names.
+	local Icons = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIIcons")) :: any
+	local HudMenu = require(script.Parent:WaitForChild("HudMenu")) :: any
+	local missing = {}
+	for _, name in KitStyle.HUD_ICONS do
+		if not Icons.has(name) then
+			table.insert(missing, name)
+		end
+	end
+	for _, name in HudMenu.ICONS do
+		if not Icons.has(name) then
+			table.insert(missing, name)
+		end
+	end
+	problems += #missing
+	table.insert(lines, "UI v2 icons: HUD buttons and MENU entries " .. (if #missing == 0 then "all drawn (DrawnIcons)" else "EMOJI FALLBACK: " .. table.concat(missing, ", ")))
+	-- The weapon card's stat row: names at their floor in 62 units, the value in 22.
+	local statOk = widthOf("POWER", Theme.MinTextSize) <= 62 and widthOf("SPEED", Theme.MinTextSize) <= 62 and widthOf("CHAOS", Theme.MinTextSize) <= 62 and widthOf("10", Theme.MinTextSize) <= 22
+	if not statOk then
+		problems += 1
+	end
+	table.insert(lines, string.format("UI v2 weapon cards: POWER %d / CHAOS %d units of 62, \"10\" %d of 22 at %d: %s", widthOf("POWER", Theme.MinTextSize), widthOf("CHAOS", Theme.MinTextSize), widthOf("10", Theme.MinTextSize), Theme.MinTextSize, if statOk then "fit" else "TOO WIDE"))
+	-- HUD icon buttons: the word beside (LAB VIEW, RAGDOLL) or under (BUILD, GRAB, THROW, RUN, SHOOT)
+	-- its icon keeps 14 px.
+	local tight = {}
+	local function room(name: string, word: string, placement: string, w: number, h: number)
+		local px = if placement == "top" then math.floor(math.min(w, h) * 0.38) else math.floor(math.min(h - 14, Theme.IconSize.sm - 2))
+		local roomW = if placement == "top" then w - 6 else w - (px + 10) - 8
+		local roomH = if placement == "top" then h - (px + 2) - 4 else h - 10
+		local needW = widthOf(word, 14)
+		if needW > roomW * 2 or roomH < 14 or (needW > roomW and roomH < 2 * 14 * 1.15) then
+			table.insert(tight, string.format("%s %dx%d", name, roomW, roomH))
+		end
+	end
+	for _, sc in LayoutCheck.SCREENS do
+		local ctx = ctxOf(sc.size, sc.touch, false)
+		local function slotSize(n: string): Vector2
+			local _, size = HudSlots.rect(n, ctx, sc.size)
+			return size
+		end
+		local v, r = slotSize("View"), slotSize("Ragdoll")
+		room("LAB VIEW", "LAB VIEW", "left", v.X, v.Y)
+		room("RAGDOLL", "RAGDOLL", "top", r.X, r.Y)
+		if sc.touch then
+			local g, t, run, sh = slotSize("Grab"), slotSize("Throw"), slotSize("Sprint"), slotSize("Shoot")
+			room("GRAB", "GRAB", "top", g.X, g.Y)
+			room("THROW", "THROW", "top", t.X, t.Y)
+			room("RUN", "RUN", "top", run.X, run.Y)
+			room("SHOOT", "SHOOT", "top", sh.X, sh.Y)
+		end
+	end
+	problems += #tight
+	table.insert(lines, "UI v2 HUD icon buttons: words at 14 px beside or under their icons " .. (if #tight == 0 then "fit on every screen" else "TIGHT: " .. table.concat(tight, "; ")))
+	-- The level badge.
+	local HudPlus = require(script.Parent:WaitForChild("HudPlus")) :: any
+	local levelText = HudPlus.LEVEL_BADGE * 0.76
+	if levelText < 14 then
+		problems += 1
+	end
+	table.insert(lines, string.format("UI v2 level badge: %d px, its number up to %.0f px: %s", HudPlus.LEVEL_BADGE, levelText, if levelText >= 14 then "readable" else "TOO SMALL"))
+	-- The first minute on an upright phone.
+	for _, sc in LayoutCheck.SCREENS do
+		if sc.touch and sc.size.Y > sc.size.X then
+			local names = LayoutCheck.firstMinuteNames(sc.size)
+			if #names > LayoutCheck.FIRST_MINUTE_MAX then
+				problems += 1
+			end
+			table.insert(lines, string.format("%-18s first minute: %d things (%s): %s", sc.name, #names, table.concat(names, ", "),
+				if #names <= LayoutCheck.FIRST_MINUTE_MAX then "at most " .. LayoutCheck.FIRST_MINUTE_MAX else "TOO MANY"))
+		end
+	end
+	local _ = boldWidthOf
+	return problems
+end
+
+-- The live screen's words (UI v2): every visible text on our layers, drawn size against the
+-- 14 px floor (a fitted text: its drawn bounds), and any that does not fit its box. Run with the
+-- screens open that should be checked (the catalog, SHOP, MENU...). Roblox's own guis are skipped.
+function LayoutCheck.textLive(): string
+	local lines = {}
+	local problems = 0
+	local seen = 0
+	for _, object in Players.LocalPlayer.PlayerGui:GetDescendants() do
+		if (object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")) and object.Text ~= "" then
+			local gui = object:FindFirstAncestorWhichIsA("LayerCollector")
+			local visible = gui ~= nil and (not gui:IsA("ScreenGui") or gui.Enabled)
+			local a: Instance? = object
+			while visible and a and a ~= gui do
+				if a:IsA("GuiObject") and not a.Visible then
+					visible = false
+				end
+				a = a.Parent
+			end
+			local hidden = object:GetAttribute("KitFitOrHide") == true and object.TextTransparency >= 1
+			if visible and not hidden and object.TextTransparency < 1 and object.AbsoluteSize.Y > 0 then
+				seen += 1
+				local lineCount = math.max(1, math.floor(object.TextBounds.Y / math.max(1, object.TextSize * 1.1) + 0.5))
+				local drawn = if object.TextScaled then object.TextBounds.Y / lineCount else object.TextSize * (object.AbsoluteSize.Y / math.max(1, object.Size.Y.Offset))
+				if object.Size.Y.Offset == 0 and not object.TextScaled then
+					drawn = object.TextSize
+				end
+				local cut = not object.TextFits
+				if drawn < 13.5 or cut then
+					problems += 1
+					table.insert(lines, string.format("%s: %s%s \"%s\"", object:GetFullName(), if drawn < 13.5 then string.format("%.1f px ", drawn) else "", if cut then "DOES NOT FIT" else "", string.sub(object.Text, 1, 32)))
+				end
+			end
+		end
+	end
+	table.insert(lines, string.format("%d texts on screen, %d under 14 px or not fitting", seen, problems))
 	return table.concat(lines, "\n")
 end
 

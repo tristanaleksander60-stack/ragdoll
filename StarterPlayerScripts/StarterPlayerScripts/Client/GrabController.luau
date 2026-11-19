@@ -19,7 +19,6 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local ContextActionService = game:GetService("ContextActionService")
 local GuiService = game:GetService("GuiService")
-local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -564,14 +563,7 @@ local function roundButton(name: string, text: string, size: number, color: Colo
 end
 
 local function pop(object: GuiObject)
-	local s = Instance.new("UIScale")
-	s.Scale = 0.86
-	s.Parent = object
-	local t = TweenService:Create(s, TweenInfo.new(0.16, Enum.EasingStyle.Back), { Scale = 1 })
-	t:Play()
-	t.Completed:Once(function()
-		s:Destroy()
-	end)
+	KitStyle.pop(object, 0.86) -- (on the slot's own UIScale: never a second one)
 end
 
 local placePad: () -> () -- below, with the numbers
@@ -616,6 +608,7 @@ local function buildPad()
 	buttonsGui = buttons
 
 	local g = roundButton("Grab", "GRAB", 76, KitStyle.GO)
+	KitStyle.icon(g, KitStyle.HUD_ICONS.Grab, "top") -- (UI v2: the drawn glove over the word)
 	g.Parent = holder
 	g.Activated:Connect(function()
 		pop(g)
@@ -639,6 +632,7 @@ local function buildPad()
 	grabButton = g
 
 	local t = roundButton("Throw", "THROW", 60, KitStyle.SLAB)
+	KitStyle.icon(t, KitStyle.HUD_ICONS.Throw, "top")
 	t.Parent = holder
 	t.Activated:Connect(function()
 		pop(t)

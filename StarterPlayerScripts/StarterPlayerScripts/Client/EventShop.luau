@@ -27,6 +27,7 @@ local Toast = require(Client:WaitForChild("Toast"))
 local ScheduleUI = require(Client:WaitForChild("ScheduleUI"))
 local RobuxPrice = require(Client:WaitForChild("RobuxPrice"))
 local HudSlots = require(Client:WaitForChild("HudSlots"))
+local KitStyle = require(Client:WaitForChild("KitStyle"))
 
 local player = Players.LocalPlayer
 local SP = Theme.Space
@@ -110,6 +111,17 @@ end
 local offerButtons: { [string]: any } = {}
 local offerRemote: RemoteEvent? = nil
 local offerLockedUntil = 0
+-- UI v2: each offer's drawn picture (DrawnIcons names).
+local OFFER_ICONS: { [string]: string } = {
+	EntryPack = "gift",
+	AllMelee = "tool_Punch",
+	AllExplosives = "tool_TNT",
+	DoubleBolts = "star",
+	VipLab = "crown",
+	EventsPass = "event_MegaBomb",
+	Everything = "toolbox",
+}
+
 local function refreshOffers()
 	for key, button in offerButtons do
 		local offer: any = nil
@@ -121,6 +133,14 @@ local function refreshOffers()
 		if offer then
 			local mine = offer.kind == "pass" and player:GetAttribute("Offer_" .. key) == true
 			button.setRole(if mine then "done" else "premium")
+			if KitStyle.V2 then
+				-- (UI v2: OWNED with a tick, BUY with the Robux mark: never colour alone.)
+				button.setIcon(if mine then "check" else "robux")
+				local mark = button.root:FindFirstChild("Icon_robux", true)
+				if mark and mark:IsA("ImageLabel") then
+					mark.ImageColor3 = Theme.Palette.ink
+				end
+			end
 			if mine then
 				button.setText("OWNED")
 			elseif offer.id == 0 then
@@ -148,7 +168,7 @@ local function buildOffers(window: any)
 	grid.Size = UDim2.fromScale(1, 0)
 	grid.AutomaticSize = Enum.AutomaticSize.Y
 	grid.LayoutOrder = -5
-	C.Grid(grid, Vector2.new(CARD.X, 200), SP.md)
+	C.Grid(grid, Vector2.new(CARD.X, if KitStyle.V2 then 272 else 200), SP.md) -- (UI v2: room for the picture)
 	grid.Parent = window.body
 	header.Visible = anyShown
 	grid.Visible = anyShown
@@ -161,6 +181,16 @@ local function buildOffers(window: any)
 	for index, offer in Shop.OFFERS do
 		local card = C.Card({ name = "Offer_" .. offer.key, gap = SP.xs, layoutOrder = index, parent = grid })
 		card.root.Visible = offer.id ~= 0 or studio
+		if KitStyle.V2 then
+			-- (UI v2: a drawn picture for what it gives, and the best value marked in gold.)
+			local pic = Icons.make(OFFER_ICONS[offer.key] or "gift", UDim2.fromOffset(52, 52))
+			pic.LayoutOrder = -1
+			pic.Parent = card.content
+			if offer.key == "Everything" then
+				card.setFeatured(true)
+				C.Pill("BEST VALUE", { role = "premium", layoutOrder = 0, parent = card.content :: Instance })
+			end
+		end
 		C.Text("title", offer.name, { scaled = true, size = UDim2.new(1, 0, 0, 34), layoutOrder = 1, parent = card.content })
 		C.Text("body", offer.gives, { wrap = true, size = UDim2.new(1, 0, 0, 56), layoutOrder = 2, parent = card.content })
 		local key = offer.key
