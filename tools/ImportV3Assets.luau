@@ -17,11 +17,44 @@
 
 local ServerStorage = game:GetService("ServerStorage")
 
-type Pick = { role: string, id: number, backup: number?, yaw: number? }
+-- single: the asset is a pack of several models: keep only its first model (the PC session may
+-- change which one by name: childName).
+type Pick = { role: string, id: number, backup: number?, yaw: number?, single: boolean?, childName: string? }
 
 -- Filled from docs/V3_ASSETS.md (role = the name the game code asks for).
 local PICKS: { Pick } = {
-	-- PICKS_START
+	-- PICKS_START (docs/V3_ASSETS.md, 19 Nov 2026; yaw: fill in after looking, so the front faces -Z)
+	-- Used by the game code now:
+	{ role = "Cannon", id = 4558839272, backup = 18435394013 },
+	{ role = "Car", id = 6418239833, backup = 6418234850 }, -- Roblox Sedan (its A-Chassis scripts go)
+	{ role = "MonsterTruck", id = 1222491712, backup = 6418225759 },
+	{ role = "Gorilla", id = 10594810401, backup = 1421609150 },
+	{ role = "Bull", id = 5035521514, backup = 11162919482 }, -- (a bison: no real bull exists)
+	{ role = "BigFan", id = 104680325645946, backup = 290574315 },
+	{ role = "Rocket", id = 220664616, backup = 5380747922 },
+	{ role = "Barrel", id = 9021582812, backup = 14452389275 },
+	{ role = "Crate", id = 8458216263, backup = 3272950683, single = true },
+	{ role = "Bench", id = 185280084, backup = 14874085291 },
+	{ role = "StreetLamp", id = 11146095708, backup = 404475960 },
+	{ role = "Cone", id = 23153487, backup = 12094920818 },
+	{ role = "Fence", id = 9083814252, backup = 4831942116 },
+	{ role = "TreeRound", id = 3755594081 },
+	{ role = "TreePine", id = 11664016667, backup = 5392132809, single = true },
+	{ role = "Bush", id = 8647777369, backup = 8344171779 },
+	{ role = "Rock", id = 1192366796, backup = 8421400545, single = true },
+	-- For the maps (Phase B) and later:
+	{ role = "Tank", id = 1379706428, backup = 11036026075 }, -- (check the hull for insignia)
+	{ role = "SlideTower", id = 3699248235, backup = 5706899551 },
+	{ role = "BoxingRing", id = 10218162623, backup = 1404734428 },
+	{ role = "CastleTower", id = 899477954, backup = 101559450428915 },
+	{ role = "Train", id = 302873713, backup = 10570360936 },
+	{ role = "Rails", id = 925820578, backup = 388174618, single = true },
+	{ role = "Barrier", id = 8325588430, backup = 2766525411 },
+	{ role = "Trampoline", id = 7829441554, backup = 89910882365911 },
+	{ role = "BigButton", id = 14087568246, backup = 15240203293 },
+	{ role = "TreePalm", id = 1567799120, backup = 10562894034, single = true },
+	{ role = "Mountain", id = 10606824320, backup = 8761896930 },
+	{ role = "BrickWall", id = 1425120075, backup = 104053043839965 },
 	-- PICKS_END
 }
 
@@ -95,6 +128,25 @@ for _, pick in PICKS do
 		warn("[V3Import] could not load " .. pick.role .. " (" .. pick.id .. ")")
 		continue
 	end
+	if pick.single then
+		-- (A pack: the named model, else the first model in it, alone.)
+		local one: Instance? = nil
+		for _, d in model:GetDescendants() do
+			if d:IsA("Model") and (pick.childName == nil or d.Name == pick.childName) then
+				one = d
+				break
+			end
+		end
+		if one then
+			local keep = Instance.new("Model")
+			for _, c in one:GetChildren() do
+				c.Parent = keep
+			end
+			model:Destroy()
+			model = keep
+		end
+	end
+	assert(model)
 	local removed = clean(model, pick.role)
 	settle(model, pick.yaw)
 	model.Name = pick.role

@@ -792,6 +792,15 @@ local function buildBigButton()
 		end
 	end)
 	sign("BIG RED BUTTON", base, 4.5, WHITE)
+	-- v3: the Creator Store button when the place has it (the code-built one stays, see-through,
+	-- holding the prompt).
+	local look = require(script.Parent.V3Assets).place("BigButton", folder, at(x, 0, z), { size = 6.5, collide = true, name = "BigButtonLook" })
+	if look then
+		base.Transparency = 1
+		base.CanCollide = false
+		button.Transparency = 1
+		lit = Color3.fromRGB(220, 30, 30)
+	end
 end
 
 function Playground.build(labOrigin: Vector3, name: string?)
