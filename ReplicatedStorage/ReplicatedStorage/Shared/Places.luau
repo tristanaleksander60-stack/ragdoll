@@ -20,6 +20,7 @@ export type Place = {
 	glyph: string, -- its picture (a colour emoji, unique among places; T21 checks)
 	outdoor: boolean?, -- v3 phase B: an open-air map (terrain, sky, no ceiling) in the outdoor row
 	row: number?, -- its place in the outdoor row (1..n)
+	arrive: number?, -- an outdoor map's arrival pad, studs south of its middle (else by the south edge)
 }
 
 local Places = {}
@@ -44,7 +45,7 @@ Places.list = table.freeze({
 	{ id = "Metro", name = "Metro Station", blurb = "Platform 1. The 8:15 is late again.", slot = 8, size = Vector3.new(140, 30, 96), crowd = 10, roles = { "Office", "Traveler", "Tourist", "Guard" }, light = "Cool", color = "#3A7BD5", glyph = "🚇" },
 	{ id = "Arena", name = "Game Arena", blurb = "Red light, green light and Shoot 'em. Beat your best!", slot = 7, size = Vector3.new(120, 40, 140), crowd = 0, roles = {}, light = "Cool", color = "#F2C230", glyph = "🎮" },
 	-- v3 phase B: open-air maps, in their own row (OutdoorMaps builds them).
-	{ id = "Island", name = "Tropical Island", blurb = "Sand, palms, a cliff to dive off and a catapult.", slot = 101, size = Vector3.new(360, 80, 360), crowd = 6, roles = { "Tourist", "Traveler" }, light = "Lab", color = "#2EC4B6", glyph = "\u{1F3DD}\u{FE0F}", outdoor = true, row = 1 },
+	{ id = "Island", name = "Tropical Island", blurb = "Sand, palms, a cliff to dive off and a catapult.", slot = 101, size = Vector3.new(360, 80, 360), crowd = 6, roles = { "Tourist", "Traveler" }, light = "Lab", color = "#2EC4B6", glyph = "\u{1F3DD}\u{FE0F}", outdoor = true, row = 1, arrive = 110 },
 } :: { Place })
 
 Places.byId = {} :: { [string]: Place }

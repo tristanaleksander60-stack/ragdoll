@@ -761,7 +761,7 @@ local function arrivalOf(player: Player?, id: string): CFrame?
 	if not place or not centre then
 		return nil
 	end
-	local at = centre + Vector3.new(0, 3, -place.size.Z / 2 + ARRIVE_BACK)
+	local at = centre + Vector3.new(0, if place.outdoor then 8 else 3, if place.outdoor then OutdoorMaps.arriveZ(place) else -place.size.Z / 2 + ARRIVE_BACK)
 	return CFrame.lookAt(at, at + Vector3.new(0, 0, 1))
 end
 

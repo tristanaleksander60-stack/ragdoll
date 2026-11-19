@@ -16,6 +16,11 @@ local OutdoorMaps = {}
 local ARRIVE_BACK = 12 -- like WorldMaps: the pad, studs in from the south edge
 local EDGE_WALL = 4
 
+-- Where the arrival pad is: `arrive` studs south of the middle (Places), else by the south edge.
+function OutdoorMaps.arriveZ(place: any): number
+	return if type(place.arrive) == "number" then -place.arrive else -place.size.Z / 2 + ARRIVE_BACK
+end
+
 local function part(parent: Instance, name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?, collide: boolean?): Part
 	local p = Instance.new("Part")
 	p.Name = name
@@ -61,7 +66,7 @@ local function frame(m: Instance, place: any, c: Vector3, floorColor: Color3, fl
 		wall.Transparency = 1
 		wall.CastShadow = false
 	end
-	local pad = part(m, "Arrival", Vector3.new(8, 0.1, 8), CFrame.new(c + Vector3.new(0, 0.05, -s.Z / 2 + ARRIVE_BACK)), Color3.fromHex(place.color), Enum.Material.SmoothPlastic, false)
+	local pad = part(m, "Arrival", Vector3.new(8, 0.1, 8), CFrame.new(c + Vector3.new(0, 0.05, OutdoorMaps.arriveZ(place))), Color3.fromHex(place.color), Enum.Material.SmoothPlastic, false)
 	pad.Transparency = 0.45
 	pad:SetAttribute("Arrival", place.id)
 end
@@ -102,18 +107,54 @@ local BUILDERS: { [string]: (Model, any, Vector3) -> () } = {}
 -- ISLAND: a sand island in a blue sea, palms and rocks, a grassy middle, a cliff to dive off, a
 -- wooden jetty with a boat, beach huts and a striped lighthouse.
 
-BUILDERS.Island = function(m, place, c)
+BUILDERS.Island = function(m, place, mid)
+	-- (Terrain fills on a 4-stud grid and its top lands a few studs off the asked height, more so
+	-- where fills overlap: PC check 19 Nov. So the land is filled first, its real top measured, and
+	-- the floor and every piece stand on that.)
+	local c = mid
 	local s = place.size
 	local terrain = Workspace.Terrain
-	frame(m, place, c, rgb(222, 205, 160), Enum.Material.Sand, false)
 	-- The sea (a wide shallow block, its top a little under the beach) and the island on it.
-	terrain:FillBlock(CFrame.new(c - Vector3.new(0, 10, 0)), Vector3.new(s.X + 400, 16, s.Z + 400), Enum.Material.Water)
-	terrain:FillBlock(CFrame.new(c - Vector3.new(0, 22, 0)), Vector3.new(s.X + 400, 8, s.Z + 400), Enum.Material.Sand)
-	terrain:FillCylinder(CFrame.new(c - Vector3.new(0, 6, 0)), 12, s.X * 0.42, Enum.Material.Sand)
-	terrain:FillCylinder(CFrame.new(c - Vector3.new(0, 5.5, 0)), 11, s.X * 0.3, Enum.Material.Grass)
+	terrain:FillBlock(CFrame.new(c - Vector3.new(0, 14, 0)), Vector3.new(s.X + 1800, 16, s.Z + 1800), Enum.Material.Water) -- (top about 4 under the beach)
+	terrain:FillBlock(CFrame.new(c - Vector3.new(0, 26, 0)), Vector3.new(s.X + 1800, 8, s.Z + 1800), Enum.Material.Sand)
+	terrain:FillCylinder(CFrame.new(c - Vector3.new(0, 8, 0)), 12, s.X * 0.42, Enum.Material.Sand)
+	terrain:FillCylinder(CFrame.new(c - Vector3.new(0, 8, 0)), 12, s.X * 0.3, Enum.Material.Grass)
+	-- (A round island reads as code-built: coves and points along the shore, and the grass in lobes.)
+	do
+		local rng = Random.new(77)
+		for i = 1, 14 do
+			local a = (i / 14) * math.pi * 2 + rng:NextNumber(-0.2, 0.2)
+			local r = s.X * rng:NextNumber(0.36, 0.44)
+			local at = c + Vector3.new(math.cos(a) * r, -8, math.sin(a) * r)
+			terrain:FillCylinder(CFrame.new(at), 12, rng:NextNumber(18, 38), Enum.Material.Sand)
+		end
+		for i = 1, 9 do
+			local a = (i / 9) * math.pi * 2 + rng:NextNumber(-0.3, 0.3)
+			local r = s.X * rng:NextNumber(0.2, 0.3)
+			local at = c + Vector3.new(math.cos(a) * r, -8, math.sin(a) * r)
+			terrain:FillCylinder(CFrame.new(at), 12, rng:NextNumber(16, 30), Enum.Material.Grass)
+		end
+	end
+	-- A soft grass hill north-west of the middle.
+	terrain:FillBall(c + Vector3.new(-40, -14, 40), 26, Enum.Material.Grass)
+	do
+		local only = RaycastParams.new()
+		only.FilterType = Enum.RaycastFilterType.Include
+		only.FilterDescendantsInstances = { terrain }
+		local hit = Workspace:Raycast(mid + Vector3.new(30, 80, -60), Vector3.new(0, -160, 0), only)
+		if hit then
+			c = Vector3.new(mid.X, hit.Position.Y, mid.Z)
+		end
+	end
+	frame(m, place, c, rgb(222, 205, 160), Enum.Material.Sand, false)
 	-- The cliff (north-east): a rock mound with a flat top 34 studs up, to dive off into the sea.
 	local cliff = c + Vector3.new(s.X * 0.28, 0, s.Z * 0.3)
 	terrain:FillBall(cliff + Vector3.new(0, 4, 0), 38, Enum.Material.Rock)
+	-- (Not one dome: a ridge of boulders round it, and grass on its shoulders.)
+	for _, b in { { Vector3.new(-26, -6, 14), 24 }, { Vector3.new(22, -4, -18), 26 }, { Vector3.new(10, 8, 26), 20 }, { Vector3.new(-14, 14, -10), 18 }, { Vector3.new(28, 2, 20), 22 } } do
+		terrain:FillBall(cliff + b[1], b[2], Enum.Material.Rock)
+	end
+	terrain:FillBall(cliff + Vector3.new(-30, -10, -22), 20, Enum.Material.Grass)
 	terrain:FillBlock(CFrame.new(cliff + Vector3.new(0, 44, 0)), Vector3.new(90, 16, 90), Enum.Material.Air)
 	local top = part(m, "CliffTop", Vector3.new(26, 2, 26), CFrame.new(cliff + Vector3.new(0, 35, 0)), rgb(120, 112, 100), Enum.Material.Slate)
 	top:SetAttribute("Activity", "CliffDive")
@@ -167,15 +208,15 @@ BUILDERS.Island = function(m, place, c)
 	-- Palms round the beach, bushes and rocks: real models.
 	local avoid = {
 		{ at = cliff, r = 46 }, { at = jetty, r = 16 }, { at = lh, r = 14 }, { at = cat, r = 16 },
-		{ at = c + Vector3.new(0, 0, -s.Z / 2 + ARRIVE_BACK), r = 20 }, { at = c + Vector3.new(46, 0, -s.Z * 0.26), r = 26 },
+		{ at = c + Vector3.new(0, 0, OutdoorMaps.arriveZ(place)), r = 20 }, { at = c + Vector3.new(-40, 0, 40), r = 24 }, { at = c + Vector3.new(46, 0, -s.Z * 0.26), r = 26 },
 	}
-	for i, p in scatter(11, c, 16, s.X * 0.28, s.X * 0.4, avoid) do
+	for i, p in scatter(11, c, 28, s.X * 0.28, s.X * 0.4, avoid) do
 		prop(m, "TreePalm", p, (i * 47) % 360, 26 + (i % 4) * 4)
 	end
-	for i, p in scatter(23, c, 10, 10, s.X * 0.26, avoid) do
+	for i, p in scatter(23, c, 18, 10, s.X * 0.26, avoid) do
 		prop(m, "Bush", p, (i * 61) % 360, 3 + (i % 3))
 	end
-	for i, p in scatter(37, c, 8, s.X * 0.36, s.X * 0.44, avoid) do
+	for i, p in scatter(37, c, 14, s.X * 0.36, s.X * 0.44, avoid) do
 		prop(m, "Rock", p, (i * 83) % 360, 4 + (i % 3) * 2, nil, true)
 	end
 	for i, p in scatter(41, c, 4, 14, s.X * 0.22, avoid) do
