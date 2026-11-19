@@ -39,6 +39,27 @@ return {
 		task.wait(0.1)
 		assert(#(folder :: Instance):GetChildren() == 0, "animals left behind")
 		assert(bulls >= 1, "no bull ran")
+		-- Phase C disasters: the tornado wanders, the meteors land and leave a scorch, nothing stays.
+		assert(Events.byId.Tornado and Events.byId.MeteorShower, "disaster events missing")
+		local stopTornado = Creatures.tornado(center)
+		local tw = (folder :: Instance):WaitForChild("Tornado", 2) :: Model
+		assert(tw, "no tornado")
+		local t0 = tw:GetPivot().Position
+		task.wait(0.8)
+		local wandered = (tw:GetPivot().Position - t0).Magnitude
+		stopTornado()
+		assert(wandered > 3, string.format("the tornado moved %.1f studs", wandered))
+		local stopMeteors = Creatures.meteors(center)
+		local sawScorch = false
+		local waited = os.clock()
+		while os.clock() - waited < 3 and not sawScorch do
+			sawScorch = (folder :: Instance):FindFirstChild("Scorch") ~= nil
+			task.wait(0.1)
+		end
+		stopMeteors()
+		task.wait(0.1)
+		assert(sawScorch, "no meteor landed")
+		assert(#(folder :: Instance):GetChildren() == 0, "disasters left something behind")
 		-- The button in every lab.
 		local buttons = 0
 		local playground = Workspace:FindFirstChild("Playground")
@@ -49,6 +70,6 @@ return {
 				buttons += 1
 			end
 		end
-		return string.format("gorilla moved %.1f studs, %d bull(s), %d buttons", moved, bulls, buttons)
+		return string.format("gorilla moved %.1f studs, %d bull(s); tornado wandered %.1f studs, a meteor landed; %d buttons", moved, bulls, wandered, buttons)
 	end,
 }

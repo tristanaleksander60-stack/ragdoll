@@ -320,4 +320,200 @@ function Creatures.bulls(center: Vector3): () -> ()
 	end
 end
 
+------------------------------------------------------------------------------------------------
+-- v3 Phase C disasters (19 Nov 2026): a tornado that wanders the lab and spins everything into the
+-- sky, and a meteor shower that craters it. Pictures and pushes only (nothing stays behind).
+
+Creatures.TORNADO_SPEED = 14 -- studs/s
+Creatures.TORNADO_REACH = 16 -- studs: inside this a body is lifted
+Creatures.TORNADO_LIFT = 70 -- studs/s up (plus a spin of half that)
+Creatures.METEOR_GAP = 0.55 -- s between two meteors
+Creatures.METEOR_FALL = 1.1 -- s from the sky to the ground
+Creatures.METEOR_REACH = 15
+Creatures.METEOR_THROW = 75
+
+local function tornadoModel(): Model
+	local m = Instance.new("Model")
+	m.Name = "Tornado"
+	-- A funnel of faint thin rings (narrow at the ground, wide at the top) wrapped in swirling dust:
+	-- the dust makes the shape; the rings only hint at it. (PC look 19 Nov: thick grey disks read
+	-- as code-built.)
+	local root: BasePart? = nil
+	for i = 0, 15 do
+		local w = 4 + i * 2.4
+		local ring = block(m, "Funnel", Vector3.new(1.2, w, w), CFrame.new(0, 1.5 + i * 2.8, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(130, 124, 116), Enum.PartType.Cylinder)
+		ring.Material = Enum.Material.SmoothPlastic
+		ring.Transparency = 0.78 + i * 0.008
+		ring.CastShadow = false
+		root = root or ring
+		if i % 3 == 0 then
+			local dust = Instance.new("ParticleEmitter")
+			dust.Texture = "rbxasset://textures/particles/smoke_main.dds"
+			dust.Color = ColorSequence.new(Color3.fromRGB(150, 140, 125), Color3.fromRGB(100, 94, 86))
+			dust.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2 + i * 0.4), NumberSequenceKeypoint.new(1, 6 + i * 0.8) })
+			dust.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 1) })
+			dust.Lifetime = NumberRange.new(0.8, 1.4)
+			dust.Rate = 26
+			dust.Shape = Enum.ParticleEmitterShape.Cylinder
+			dust.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
+			dust.Speed = NumberRange.new(2, 5)
+			dust.RotSpeed = NumberRange.new(-260, 260)
+			dust.Rotation = NumberRange.new(0, 360)
+			dust.Parent = ring
+		end
+	end
+	m.PrimaryPart = root
+	return m
+end
+
+-- A tornado wandering the lab around `center` for `seconds`.
+function Creatures.tornado(center: Vector3, seconds: number?): () -> ()
+	local m = tornadoModel()
+	m.Parent = folder()
+	local parts: { [BasePart]: CFrame } = {}
+	for _, p in m:GetChildren() do
+		if p:IsA("BasePart") then
+			parts[p] = p.CFrame
+		end
+	end
+	local at = center + Vector3.new(-Creatures.HALF + 10, 0, -30)
+	local goal = center
+	local t = 0
+	local spun: { [Model]: number } = {}
+	local scanned = -1
+	local bodies: { Body } = {}
+	local lifted: { [Player]: number } = {}
+	FxService.hit(at, 80, "BigBoom")
+	local c = RunService.Heartbeat:Connect(function(dt)
+		t += dt
+		-- Wander: a new goal in the lab every few seconds.
+		if (goal - at).Magnitude < 6 then
+			goal = center + Vector3.new(math.random(-Creatures.HALF + 10, Creatures.HALF - 10), 0, math.random(-80, 60))
+		end
+		local step = goal - at
+		at += step.Unit * math.min(step.Magnitude, Creatures.TORNADO_SPEED * dt)
+		local spin = CFrame.Angles(0, t * 6, 0)
+		for p, cf in parts do
+			local wobble = math.sin(t * 3 + cf.Position.Y * 0.2) * 1.5
+			p.CFrame = CFrame.new(at + Vector3.new(wobble, 0, 0)) * spin * cf
+		end
+		if t - scanned > 0.15 then
+			scanned = t
+			bodies = dummiesIn(center)
+		end
+		for _, d in bodies do
+			if not d.pelvis.Parent then
+				continue
+			end
+			local o = d.pelvis.Position - at
+			local flat = Vector3.new(o.X, 0, o.Z)
+			if flat.Magnitude < Creatures.TORNADO_REACH and (not spun[d.model] or t - spun[d.model] > 1.2) then
+				spun[d.model] = t
+				local around = Vector3.new(-flat.Z, 0, flat.X).Unit
+				local mass = (d.model:GetAttribute("Mass") :: number?) or 10
+				local v = Vector3.new(0, Creatures.TORNADO_LIFT, 0) + around * Creatures.TORNADO_LIFT * 0.5 - flat.Unit * 6
+				DummyControl.hit(d.model, d.pelvis, v * mass, d.pelvis.Position)
+			end
+		end
+		for _, player in Players:GetPlayers() do
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			if root and root:IsA("BasePart") and math.abs(root.Position.Y - center.Y) < 30 then
+				local o = root.Position - at
+				local flat = Vector3.new(o.X, 0, o.Z)
+				if flat.Magnitude < Creatures.TORNADO_REACH and (not lifted[player] or t - lifted[player] > 2.5) then
+					lifted[player] = t
+					PlayerRagdoll.knock(player, Vector3.new(0, Creatures.TORNADO_LIFT, 0) + Vector3.new(-flat.Z, 0, flat.X).Unit * 30)
+				end
+			end
+		end
+	end)
+	local function stop()
+		c:Disconnect()
+		if m.Parent then
+			m:Destroy()
+		end
+	end
+	if seconds then
+		task.delay(seconds, stop)
+	end
+	return stop
+end
+
+-- Meteors falling on the lab around `center`: a glowing rock, a trail, a crater-flash and a blast.
+function Creatures.meteors(center: Vector3): () -> ()
+	local running = true
+	local made: { Instance } = {}
+	task.spawn(function()
+		while running do
+			local target = center + Vector3.new(math.random(-Creatures.HALF + 6, Creatures.HALF - 6), 0, math.random(-85, 65))
+			local rock = Instance.new("Part")
+			rock.Name = "Meteor"
+			rock.Shape = Enum.PartType.Ball
+			rock.Size = Vector3.new(4.5, 4.5, 4.5)
+			rock.Material = Enum.Material.Neon
+			rock.Color = Color3.fromRGB(255, 120, 40)
+			rock.Anchored = true
+			rock.CanCollide = false
+			rock.CanQuery = false
+			rock.CanTouch = false
+			local fire = Instance.new("Fire")
+			fire.Size = 9
+			fire.Heat = 12
+			fire.Parent = rock
+			local from = target + Vector3.new(math.random(-40, 40), 160, math.random(-40, 40))
+			rock.Position = from
+			rock.Parent = folder()
+			table.insert(made, rock)
+			task.spawn(function()
+				local t0 = os.clock()
+				while running and rock.Parent do
+					local a = math.min(1, (os.clock() - t0) / Creatures.METEOR_FALL)
+					rock.Position = from:Lerp(target + Vector3.new(0, 2, 0), a * a)
+					if a >= 1 then
+						break
+					end
+					RunService.Heartbeat:Wait()
+				end
+				if not running then
+					return
+				end
+				rock:Destroy()
+				FxService.hit(target + Vector3.new(0, 1, 0), 140, "BigBoom")
+				-- A scorch mark that fades.
+				local scorch = Instance.new("Part")
+				scorch.Name = "Scorch"
+				scorch.Shape = Enum.PartType.Cylinder
+				scorch.Size = Vector3.new(0.2, 12, 12)
+				scorch.CFrame = CFrame.new(target + Vector3.new(0, 0.12, 0)) * CFrame.Angles(0, 0, math.rad(90))
+				scorch.Color = Color3.fromRGB(30, 22, 18)
+				scorch.Material = Enum.Material.Slate
+				scorch.Anchored = true
+				scorch.CanCollide = false
+				scorch.CanQuery = false
+				scorch.CanTouch = false
+				scorch.Parent = folder()
+				table.insert(made, scorch)
+				task.delay(4, function()
+					scorch:Destroy()
+				end)
+				for _, d in dummiesIn(center) do
+					if (d.pelvis.Position - target).Magnitude < Creatures.METEOR_REACH then
+						knock(d.model, target, Creatures.METEOR_THROW, 1.4)
+					end
+				end
+				knockPlayers(target, Creatures.METEOR_REACH, Creatures.METEOR_THROW, 1.4, center)
+			end)
+			task.wait(Creatures.METEOR_GAP)
+		end
+	end)
+	return function()
+		running = false
+		for _, x in made do
+			if x.Parent then
+				x:Destroy()
+			end
+		end
+	end
+end
+
 return Creatures

@@ -361,6 +361,14 @@ handlers.GorillaRampage = function(job, onEnd)
 	onEnd(Creatures.gorilla(labMiddle(job)))
 end
 
+handlers.Tornado = function(job, onEnd)
+	onEnd(Creatures.tornado(labMiddle(job)))
+end
+
+handlers.MeteorShower = function(job, onEnd)
+	onEnd(Creatures.meteors(labMiddle(job)))
+end
+
 handlers.BullRun = function(job, onEnd)
 	onEnd(Creatures.bulls(labMiddle(job)))
 end
