@@ -14,6 +14,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
 local Net = require(Shared:WaitForChild("Net"))
 local Assets = require(Shared:WaitForChild("Assets"))
+local V2 = require(Shared:WaitForChild("Config")).UI_V2 == true -- (UI v2: the 14 px text floor)
 
 local Client = script.Parent
 local ReplayController = require(Client:WaitForChild("ReplayController"))
@@ -121,9 +122,9 @@ local function build()
 	label.Name = "Title"
 	label.BackgroundTransparency = 1
 	label.Position = UDim2.fromOffset(12, 5)
-	label.Size = UDim2.fromOffset(90, 16)
+	label.Size = UDim2.fromOffset(90, if V2 then 18 else 16)
 	label.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Heavy)
-	label.TextSize = 13
+	label.TextSize = if V2 then 15 else 13 -- (UI v2: 14 px drawn at the touch HUD scale)
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.TextColor3 = Color3.fromRGB(255, 255, 255)
 	label.Text = "CHAOS"
@@ -133,9 +134,9 @@ local function build()
 	countLabel.Name = "Count"
 	countLabel.BackgroundTransparency = 1
 	countLabel.Position = UDim2.fromOffset(102, 5)
-	countLabel.Size = UDim2.fromOffset(60, 16)
+	countLabel.Size = UDim2.fromOffset(60, if V2 then 18 else 16)
 	countLabel.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Heavy)
-	countLabel.TextSize = 13
+	countLabel.TextSize = if V2 then 15 else 13
 	countLabel.TextXAlignment = Enum.TextXAlignment.Right
 	countLabel.TextColor3 = Color3.fromRGB(200, 200, 210)
 	countLabel.Text = "0/10"

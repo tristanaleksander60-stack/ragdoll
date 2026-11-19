@@ -88,6 +88,33 @@ function KitStyle.fit(object: TextButton | TextLabel, cap: number, floor: number
 	o.TextWrapped = true
 end
 
+-- As fit, but a word that cannot fit at the floor is hidden rather than drawn too small or cut
+-- (a short card where the picture and the bar still say it). Shown again when it fits.
+function KitStyle.fitOrHide(label: TextLabel, cap: number, floor: number?)
+	KitStyle.fit(label, cap, floor)
+	label:SetAttribute("KitFitOrHide", true)
+	local pending = false
+	local function check()
+		if pending then
+			return
+		end
+		pending = true
+		task.defer(function()
+			pending = false
+			if label.Parent then
+				label.TextTransparency = if label.TextFits then 0 else 1
+				local stroke = label:FindFirstChildOfClass("UIStroke")
+				if stroke then
+					stroke.Enabled = label.TextFits
+				end
+			end
+		end)
+	end
+	label:GetPropertyChangedSignal("AbsoluteSize"):Connect(check)
+	label:GetPropertyChangedSignal("Text"):Connect(check)
+	check()
+end
+
 local function text(object: TextButton | TextLabel, size: number)
 	local o = object :: any
 	o.FontFace = Theme.Fonts.display

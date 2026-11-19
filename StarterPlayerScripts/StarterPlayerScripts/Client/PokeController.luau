@@ -910,7 +910,7 @@ local function makeSlab(id: string, text: string, swatch: Theme.Swatch, parent: 
 	number.BackgroundTransparency = 0.1
 	number.TextColor3 = WHITE
 	number.FontFace = Theme.Fonts.display
-	number.TextSize = 13
+	number.TextSize = if KitStyle.V2 then 14 else 13
 	number.Text = ""
 	number.ZIndex = 7
 	number.Visible = false
@@ -1042,7 +1042,7 @@ local function buildUi()
 	})
 	local fit = label:FindFirstChildOfClass("UITextSizeConstraint")
 	if fit then
-		fit.MinTextSize = 12 -- a long tool name on a phone still fits the chip
+		fit.MinTextSize = if KitStyle.V2 then 14 else 12 -- a long tool name on a phone still fits the chip
 	end
 	label.ZIndex = 8
 	pickLabel = label

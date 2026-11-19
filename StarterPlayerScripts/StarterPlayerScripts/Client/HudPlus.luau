@@ -315,11 +315,11 @@ local function buildWeapons(parent: ScreenGui)
 				t.Name = "Tag"
 				t.AnchorPoint = Vector2.new(1, 0.5)
 				t.Position = UDim2.new(1, -8, 0, 0)
-				t.Size = UDim2.fromOffset(72, 15)
+				t.Size = UDim2.fromOffset(if KitStyle.V2 then 82 else 72, if KitStyle.V2 then 18 else 15)
 				t.BackgroundColor3 = P.gold
 				t.TextColor3 = P.ink
 				t.FontFace = Theme.Fonts.display
-				t.TextSize = 13
+				t.TextSize = if KitStyle.V2 then 14 else 13
 				t.ZIndex = 21
 				round(t, UDim.new(1, 0))
 				stroke(t, 1.5)
