@@ -18,6 +18,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Toys = require(Shared:WaitForChild("Toys"))
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
+local Config = require(Shared:WaitForChild("Config"))
 local PadMap = require(Shared:WaitForChild("PadMap"))
 
 local Client = script.Parent
@@ -33,6 +34,11 @@ local Theme = require(game:GetService("ReplicatedStorage"):WaitForChild("LihFolk
 local HudSlots = require(Client:WaitForChild("HudSlots"))
 
 local player = Players.LocalPlayer
+
+-- Phase 0: a tip waits at least `delay` s, and until the quiet start (Config.QUIET_START) is over.
+local function afterQuiet(delay: number, fn: () -> ())
+	task.delay(math.max(delay, Config.QUIET_START - time()), fn)
+end
 
 -- Phase 0: the button's name when the last input was a gamepad (Shared\PadMap), else nil.
 local function padGlyph(name: string): string?
@@ -90,7 +96,7 @@ local function release()
 	-- (10 Nov 2026: the game's picture is bodies flying over lava and spikes. A new player is pointed
 	-- at the lab's own: after the unlock and the gift's line.)
 	if player:GetAttribute("Returning") ~= true then
-		task.delay(HAZARD_TIP_DELAY, function()
+		afterQuiet(HAZARD_TIP_DELAY, function()
 			-- (Only with a lab of their own: the hazards are in the labs, not the plaza.)
 			local plot = player:GetAttribute("LabPlot")
 			if not ReplayController.isPlaying() and type(plot) == "number" and plot > 0 then
@@ -158,6 +164,13 @@ local function showHint(text: string)
 	label.Parent = gui
 	pulse(label)
 	hint = label
+	-- (Phase 0: one hint at a time: the first minute's line steps aside while a toast shows.)
+	task.spawn(function()
+		while hint == label and label.Parent do
+			label.Visible = gui:GetAttribute("HitLine") ~= true and not Toast.isShowing()
+			task.wait(0.15)
+		end
+	end)
 end
 
 local function clearHint()
@@ -216,7 +229,7 @@ local function onBigEvent(_toyId: string, at: number, _position: Vector3)
 		replayQueued = true -- the view card waits for it (and for the unlock toast after it)
 		task.spawn(playReplay, at, true)
 		-- The next verb, taught only to those who have not found it: your own body is a ragdoll too.
-		task.delay(RAGDOLL_TIP_DELAY, function()
+		afterQuiet(RAGDOLL_TIP_DELAY, function()
 			if not PlayerBody.hasGoneLimp() and not ViewMode.isLab() then
 				local b = padGlyph("Ragdoll")
 				Toast.show(if b then "Press " .. b .. " to ragdoll yourself!" elseif ViewMode.isTouch() then "Tap RAGDOLL to flop yourself!" else "Press F to ragdoll yourself!")
@@ -390,6 +403,11 @@ local askChoice: () -> ()
 function askChoice()
 	if choiceAsked or player:GetAttribute("Returning") == true then
 		return -- once, and only for new players
+	end
+	if not Config.VIEW_CARD then
+		choiceAsked = true -- (phase 0: no card; the player view, LAB VIEW stays a button)
+		choicePending = false
+		return
 	end
 	-- Not over a replay, nor one about to start (asked after it), and not while the player is busy
 	-- tapping (a moment later).

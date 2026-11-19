@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
 local Net = require(Shared:WaitForChild("Net"))
 local Progress = require(Shared:WaitForChild("Progress"))
 local Toys = require(Shared:WaitForChild("Toys"))
@@ -332,6 +333,7 @@ end
 -- picking a slot, and neither it nor Rank & Eggs open already.
 local function calm(): boolean
 	return freeNow
+		and time() >= Config.QUIET_START -- (phase 0: never in a visit's first 90 s)
 		and not opening
 		and not PokeController.firstMinute()
 		and not PokeController.isPicking() -- (a won weapon waits for its slot on a full bar)
@@ -568,7 +570,7 @@ function ProgressUI.start()
 		elseif kind == "AutoEgg" then
 			-- The first egg opens by itself (round 5, phase 00), once the first minute's bar is free.
 			OnboardingController.whenFree(function()
-				task.wait(0.5)
+				task.wait(math.max(0.5, Config.QUIET_START - time())) -- (phase 0: after the quiet start)
 				if Controller.isOpen("EggReady") then
 					Controller.close("EggReady")
 				end

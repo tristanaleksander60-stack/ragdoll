@@ -1616,7 +1616,7 @@ end
 -- Round 5, phase 00: the first egg opens by itself (no new player had opened one). A minute into a
 -- visit, a player who has never opened an egg (no weapon owned, no hat) gets one if they have none,
 -- and the client opens it at once (its WOW weapon goes on the bar). Later eggs use the card as before.
-ProgressService.FIRST_EGG_AFTER = 60
+ProgressService.FIRST_EGG_AFTER = math.max(60, Config.QUIET_START + 5) -- (phase 0: after the quiet start)
 function ProgressService.neverOpened(player: Player): boolean
 	local p = profiles[player]
 	return p ~= nil and loaded[player] == true and not readFailed[player] and next(p.owned) == nil and next(p.hats) == nil

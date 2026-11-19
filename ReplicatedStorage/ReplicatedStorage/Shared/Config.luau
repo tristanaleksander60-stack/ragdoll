@@ -15,6 +15,9 @@ local Config = {
 	-- card, no egg window, at most one hint at a time; tips and gift notes wait until after it. On a
 	-- phone LAB VIEW and RUN wait too (HudSlots.PHONE_LATER).
 	QUIET_START = 90,
+	-- The "Walk, or view from above?" card (74 % never answered it): off; everyone starts in the
+	-- player view and LAB VIEW stays a button (MENU's on a phone after the quiet start).
+	VIEW_CARD = false,
 }
 
 return table.freeze(Config)

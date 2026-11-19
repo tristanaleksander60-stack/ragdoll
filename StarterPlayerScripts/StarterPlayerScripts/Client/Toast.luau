@@ -173,6 +173,11 @@ function showNext()
 end
 
 -- Whether something holds toasts back for this reason now ("card": the view card is up).
+-- Whether a toast is on screen now (phase 0: the first minute's hint steps aside for it).
+function Toast.isShowing(): boolean
+	return current ~= nil
+end
+
 function Toast.isHeld(reason: string): boolean
 	return holds[reason] == true
 end

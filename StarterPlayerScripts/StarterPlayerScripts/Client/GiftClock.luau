@@ -11,6 +11,7 @@ local Client = script.Parent
 local PokeController = require(Client:WaitForChild("PokeController"))
 local OnboardingController = require(Client:WaitForChild("OnboardingController"))
 local Toast = require(Client:WaitForChild("Toast"))
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 
 local GiftClock = {}
 
@@ -58,7 +59,7 @@ function GiftClock.start()
 		end
 	end)
 	OnboardingController.whenFree(function()
-		task.wait(GiftClock.INTRO_AFTER)
+		task.wait(math.max(GiftClock.INTRO_AFTER, Config.QUIET_START - time())) -- (phase 0: after the quiet start)
 		local left = secondsLeft()
 		if left and left > 5 then
 			local minutes = math.max(1, math.ceil(left / 60))
