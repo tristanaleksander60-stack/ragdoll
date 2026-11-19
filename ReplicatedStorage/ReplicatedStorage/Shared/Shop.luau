@@ -57,6 +57,17 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.19.0",
+		lines = {
+			"EXPERIMENTS: a quick goal card with a timer and stars. Three DAILY EXPERIMENTS, the same for everyone",
+			"X-RAY REPLAY: see the bones fly, get a score and a SHARE CODE for your friends",
+			"BOLTS: earn them from experiments and playing, spend them on the next weapon",
+			"BONE JOURNAL: 15 pages to fill",
+			"PRANK PARTY: friends in your lab share one experiment",
+			"Controllers work now, and phones held upright get their own layout",
+		},
+	},
+	{
 		version = "0.13.0",
 		lines = {
 			"WEAPONS: Melee, Guns, Explosives and Specials. New: crowbar, Deagle, axe, cleaver, shotgun, katana, chainsaw and a plasma blade",

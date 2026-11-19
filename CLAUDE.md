@@ -98,6 +98,12 @@ Talk to the owner in Danish, short and plain.
 - Shop.OFFERS: the monetisation ladder as data, ids 0 (owner creates them). DoubleBolts attribute doubles bolts.
 - Tests T63_Economy, T64_Ladder, T65_OffersCodes; T43 runs with RATION off. TEST-FASE2.md.
 
+## Phase 3 (19 Nov 2026, branch `fase3`, v0.19.0)
+- Christmas from 1 Dec (`CHRISTMAS_FROM_DEC1`, Christmas.FIRST_START); Christmas lab (`CHRISTMAS_LAB`): Playground builds "ChristmasLab" per lab (chimney launcher, present trap, sleigh ramp; Playground.CHRISTMAS_SPOTS), shown while Workspace "Christmas"; events Chimney/Present. Advent (`ADVENT`): Experiments.advent(day) first in the daily deck 1-24 Dec.
+- Prank Party (`PRANK_PARTY`, `PARTY_MAX` 6): PartyService (Lab.ownerAt groups every 5 s) -> ExperimentService.startParty: one shared card, everyone's events count, everyone paid. `SERVER_SIZE` 6 is documentation for the dashboard setting.
+- Update rhythm: `UPDATE_TITLE`, `UPDATE_DAYS`; Shop.WHATS_NEW[1].version must equal Config.Version (T66). docs/CREATOR_KIT.md.
+- T66_ChristmasParty; T40, T58, T63 adjusted. TEST-FASE3.md.
+
 ## M10 progress (9 Nov 2026, NOT yet tested in Studio)
 **M10 PASSED (9 Nov 2026): blind review 8.75 after fix round 1.** Latest backup: `Documents\RagdollLab-backups\2026-11-09-m10-done` (pre-M10: `2026-11-08-baseline`). Full suite 44/46 before the fixes; the two failures were fixed (T40 Golf grip, T38 quiet-mode) except T37, which fails at ~24 Hz on this PC with the pre-M10 code too (environmental). Golf grip and Tip were moved onto the handle/head in the place (N7Assets) with welds rebuilt: the place must be saved. MAX_CORPSES = 16 server-wide. Scope cuts (owner may ask later): per-weapon Palm attachments, two-handed left-hand stance retune, server movement guard for sprint, client-side sprint self-test.
 Notes below are the pre-test M10 log.

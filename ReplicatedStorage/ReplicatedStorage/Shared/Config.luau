@@ -5,7 +5,7 @@ local Config = {
 	GameName = "Ragdoll Havoc", -- (the owner's name for the game, 10 Nov 2026)
 	-- Bumped with every change that goes live (round 5): SessionStats keeps it per visit, so the
 	-- numbers of one build can be told from another's.
-	Version = "0.18.0", -- (phase 0, 19 Nov 2026; SessionStats also keeps game.PlaceVersion)
+	Version = "0.19.0", -- (0.18.0 phase 0; 0.19.0 phases 1-3, 19 Nov 2026; SessionStats also keeps game.PlaceVersion)
 	Phase = 3,
 	-- Heavy weapons and close blasts can cut a limb off (round 2, N2). Roblox lists severed body
 	-- parts as Restricted (18+, ID-checked players only): switching this off keeps the game at a
@@ -67,6 +67,23 @@ local Config = {
 		table.freeze({ likes = 500, code = "", bolts = 200, live = false }),
 		table.freeze({ likes = 1000, code = "", bolts = 400, live = false }),
 	}),
+	-- Phase 3 (social, Christmas, rhythm):
+	--   PRANK_PARTY: 2..PARTY_MAX players in one lab share an experiment card (PartyService).
+	--   SERVER_SIZE: what the owner sets as the place's max players on the Creator Dashboard (it is not
+	--   settable from code; PortalService's own servers and the tests read it). The plan: try 6.
+	PRANK_PARTY = true,
+	PARTY_MAX = 6,
+	SERVER_SIZE = 6,
+	--   CHRISTMAS_FROM_DEC1: the season starts 1 December (it was on since 7 November 2026; Santa hats
+	--   in mid-November read as stale). CHRISTMAS_LAB: the chimney launcher, the present trap and the
+	--   sleigh ramp in every lab while the season is on; ADVENT: a daily advent experiment 1-24 Dec.
+	CHRISTMAS_FROM_DEC1 = true,
+	CHRISTMAS_LAB = true,
+	ADVENT = true,
+	-- Update rhythm: what the title shows in an update week, and the days updates go out. The newest
+	-- entry of Shop.WHATS_NEW must carry Config.Version (T67 checks it).
+	UPDATE_TITLE = "[UPD] Ragdoll Havoc \u{1F4A5}",
+	UPDATE_DAYS = table.freeze({ "Thursday", "Saturday" }),
 	-- Extra ragdolls a device simulates for its own lab (Shared\DeviceTier: phone low, tablet and
 	-- console mid, computer high).
 	DEVICE_CAPS = table.freeze({

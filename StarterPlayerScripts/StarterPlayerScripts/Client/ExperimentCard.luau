@@ -35,6 +35,8 @@ local player = Players.LocalPlayer
 local card: TextButton? = nil
 local current: any = nil -- the server's Card data
 local endsAt = 0
+local party: any = nil -- phase 3: the Prank Party's shared card (shown first)
+local partyEnds = 0
 local challenge: { toy: string, score: number }? = nil
 local windowText: TextLabel? = nil
 local ecoText: TextLabel? = nil
@@ -67,7 +69,7 @@ local function shown(): boolean
 	local gui = player:FindFirstChild("PlayerGui")
 	local chase = gui and gui:FindFirstChild("ChaseHud")
 	local arena = gui and gui:FindFirstChild("MinigameHud")
-	return current ~= nil
+	return (current ~= nil or party ~= nil)
 		and not PokeController.firstMinute()
 		and not PokeController.isPicking()
 		and not ReplayController.isPlaying()
@@ -298,10 +300,24 @@ function ExperimentCard.start()
 				pop(b)
 			end
 		elseif kind == "Done" then
-			current = nil
+			if d.party then
+				party = nil
+			else
+				current = nil
+			end
 			Toast.show(string.format("\u{2B50} Experiment done! +%d star%s", d.stars or 1, if d.stars == 1 then "" else "s"), Color3.fromRGB(255, 210, 74))
 		elseif kind == "Late" then
 			current = nil
+		elseif kind == "Party" and type(d.text) == "string" then
+			local fresh = party == nil
+			party = d
+			partyEnds = os.clock() + (tonumber(d.left) or 0)
+			local b = card
+			if b and fresh then
+				pop(b)
+			end
+		elseif kind == "PartyEnd" then
+			party = nil
 		end
 	end)
 	RunService.Heartbeat:Connect(function()
@@ -314,7 +330,13 @@ function ExperimentCard.start()
 			b.Visible = show
 		end
 		local d = current
-		if show and d then
+		local pd = party
+		if show and pd then
+			local text = "\u{1F389} " .. lineOf(pd, math.max(0, math.floor(partyEnds - os.clock())))
+			if b.Text ~= text then
+				b.Text = text
+			end
+		elseif show and d then
 			local text = lineOf(d, math.max(0, math.floor(endsAt - os.clock())))
 			if b.Text ~= text then
 				b.Text = text

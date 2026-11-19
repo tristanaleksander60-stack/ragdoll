@@ -32,6 +32,10 @@ type Player_ = {
 }
 
 local players: { [Player]: Player_ } = {}
+-- Phase 3: Prank Party cards, by the lab owner; partyOf: a member's owner.
+type Party = { state: Experiments.State, members: { Player } }
+local parties: { [Player]: Party } = {}
+local partyOf: { [Player]: Player } = {}
 local remote: RemoteEvent? = nil
 
 local function send(player: Player, kind: string, data: any)
@@ -104,6 +108,10 @@ function ExperimentService.event(player: Player, kind: string, n: number?)
 	if hook then
 		task.spawn(hook, player, kind, n or 1)
 	end
+	local owner = partyOf[player]
+	if owner then
+		ExperimentService.partyEvent(owner, kind, n or 1)
+	end
 	local p = players[player]
 	local s = p and p.state
 	if not p or not s then
@@ -115,6 +123,66 @@ function ExperimentService.event(player: Player, kind: string, n: number?)
 	elseif kind == s.def.kind then
 		send(player, "Card", cardData(s, os.clock()))
 	end
+end
+
+-- Phase 3 (Prank Party): one card for everyone in a lab. Ends the owner's party first if one runs.
+function ExperimentService.startParty(owner: Player, members: { Player }, def: Experiments.Def)
+	ExperimentService.endParty(owner)
+	local party: Party = { state = { def = def, count = 0, startedAt = os.clock() }, members = table.clone(members) }
+	parties[owner] = party
+	for _, m in members do
+		partyOf[m] = owner
+		send(m, "Party", cardData(party.state, os.clock()))
+	end
+end
+
+function ExperimentService.endParty(owner: Player)
+	local party = parties[owner]
+	if not party then
+		return
+	end
+	parties[owner] = nil
+	for _, m in party.members do
+		if partyOf[m] == owner then
+			partyOf[m] = nil
+		end
+		send(m, "PartyEnd", {})
+	end
+end
+
+function ExperimentService.partyEvent(owner: Player, kind: string, n: number)
+	local party = parties[owner]
+	if not party then
+		return
+	end
+	local result = Experiments.step(party.state, kind, n, os.clock())
+	if result == "done" then
+		local def = party.state.def
+		for _, m in party.members do
+			local p = players[m]
+			if p and m.Parent then
+				p.stars += def.stars
+				m:SetAttribute("Stars", ((m:GetAttribute("Stars") :: number?) or 0) + def.stars)
+				send(m, "Done", { id = def.id, stars = def.stars, total = p.stars, party = true })
+				local reward = ExperimentService.onReward
+				if reward then
+					task.spawn(reward, m, def)
+				end
+			end
+		end
+		ExperimentService.endParty(owner)
+	elseif result == "late" then
+		ExperimentService.endParty(owner)
+	elseif kind == party.state.def.kind then
+		for _, m in party.members do
+			send(m, "Party", cardData(party.state, os.clock()))
+		end
+	end
+end
+
+-- Tests / PartyService: the owner's party (nil: none).
+function ExperimentService.partyOf(owner: Player): Party?
+	return parties[owner]
 end
 
 -- Phase 2: cards to deal first (today's Daily Experiments).
@@ -158,6 +226,8 @@ function ExperimentService.start()
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		players[player] = nil
+		ExperimentService.endParty(player)
+		partyOf[player] = nil
 	end)
 	;(remote :: RemoteEvent).OnServerEvent:Connect(function(player: Player, kind: unknown)
 		local p = players[player]

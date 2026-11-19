@@ -37,7 +37,9 @@ end
 
 local function dates(results: { string })
 	local cases = {
-		{ d(2026, 11, 6), false }, { d(2026, 11, 7), true }, { d(2026, 12, 24), true },
+		-- (Phase 3: Config.CHRISTMAS_FROM_DEC1 moves the first day to 1 December 2026.)
+		{ d(2026, 11, 6), false }, { d(2026, 11, 7), Christmas.FIRST_START.month == 11 }, { d(2026, 12, 24), true },
+		{ d(2026, 11, 30), Christmas.FIRST_START.month == 11 }, { d(2026, 12, 1), true },
 		{ d(2027, 1, 6), true }, { d(2027, 1, 7), false }, { d(2027, 6, 1), false },
 		{ d(2027, 11, 30), false }, { d(2027, 12, 1), true }, { d(2028, 1, 6), true },
 		{ d(2028, 1, 7), false }, { d(2026, 1, 3), false }, { d(2025, 12, 25), false },
@@ -143,7 +145,7 @@ return {
 		local p = Players:GetPlayers()[1]
 		local ok, err = pcall(function()
 			-- Today (7 November 2026 or later in the season) it is on, from the start of the suite.
-			ChristmasService.setDateForTest(d(2026, 11, 7))
+			ChristmasService.setDateForTest(d(2026, 12, 1)) -- (in the season either way: phase 3)
 			local parts, garlands = plazaOn()
 			local worn = dressed(true)
 			table.insert(results, string.format("on: the plaza dressed (%d parts, none loose; %d garland beads on the lamps), %d dummies in hats and scarves", parts, garlands, worn))

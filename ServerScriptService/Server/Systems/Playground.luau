@@ -21,6 +21,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Log = require(Shared.Log)
+local Config = require(Shared.Config)
 
 local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
 local FxService = require(script.Parent.FxService)
@@ -616,6 +617,67 @@ local function buildStations()
 	sign("CRASH WALL", wall, 9, YELLOW)
 end
 
+-- Phase 3 (Config.CHRISTMAS_LAB): the Christmas lab, in every lab while the season is on
+-- (Workspace "Christmas"): a CHIMNEY that launches you up out of it, a PRESENT that bursts and throws
+-- you, and a SLEIGH RAMP. Built once with the lab into "ChristmasLab", which leaves the world out of
+-- season. The spots are clear of the rest of the lab (T66 checks it in a play test).
+Playground.CHRISTMAS_SPOTS = { Chimney = Vector2.new(60, 40), Present = Vector2.new(-56, 46), Sleigh = Vector2.new(62, -12) }
+local BRICK = Color3.fromRGB(150, 50, 40)
+local XMAS_GREEN = Color3.fromRGB(40, 150, 70)
+local GOLD = Color3.fromRGB(255, 200, 60)
+local christmasFolders: { Folder } = {}
+
+local function buildChristmas(): Folder
+	local saved = folder
+	local x = Instance.new("Folder")
+	x.Name = "ChristmasLab"
+	folder = x
+	local spots = Playground.CHRISTMAS_SPOTS
+	-- The chimney: walk into the hearth at its foot, come out of the top.
+	local c = spots.Chimney
+	local stack = part("Chimney", Vector3.new(7, 14, 7), at(c.X, 7, c.Y), BRICK, Enum.Material.Brick)
+	sign("CHIMNEY", stack, 10, WHITE)
+	local hearth = part("ChimneyPad", Vector3.new(7, 0.6, 5), at(c.X, 0.3, c.Y - 6), RED, Enum.Material.Neon)
+	throwOnTouch(hearth, 1.5, 120, "CannonPad", function()
+		return Vector3.new(0, 200, 0)
+	end, function(player: Player)
+		ExperimentService.event(player, "Chimney", 1)
+	end)
+	-- The present: a big box with a gold ribbon that throws whoever opens it.
+	local p = spots.Present
+	local box = part("PresentTrap", Vector3.new(6, 6, 6), at(p.X, 3, p.Y), XMAS_GREEN)
+	part("Ribbon", Vector3.new(6.2, 6.2, 1.2), at(p.X, 3, p.Y), GOLD)
+	part("Ribbon", Vector3.new(1.2, 6.2, 6.2), at(p.X, 3, p.Y), GOLD)
+	sign("PRESENT", box, 6, GOLD)
+	throwOnTouch(box, 2, 110, "CannonPad", function(root: BasePart)
+		local away = root.Position - box.Position
+		local flat = Vector3.new(away.X, 0, away.Z)
+		local dir = if flat.Magnitude > 0.1 then flat.Unit else Vector3.new(1, 0, 0)
+		return dir * 90 + Vector3.new(0, 110, 0)
+	end, function(player: Player)
+		ExperimentService.event(player, "Present", 1)
+	end)
+	-- The sleigh ramp: a wedge up to a red sleigh at the top edge.
+	local s = spots.Sleigh
+	local ramp = part("SleighRamp", Vector3.new(8, 6, 16), at(s.X, 3, s.Y), WHITE, Enum.Material.Ice)
+	ramp.Shape = Enum.PartType.Wedge
+	part("Sleigh", Vector3.new(6, 2, 4), at(s.X, 7, s.Y - 6), RED)
+	sign("SLEIGH RAMP", ramp, 8, WHITE)
+	folder = saved
+	x.Parent = if Workspace:GetAttribute("Christmas") == true then saved else nil
+	table.insert(christmasFolders, x)
+	return x
+end
+
+-- In season the Christmas lab is in the world; out of season it waits (the Touched links stay).
+function Playground.showChristmas(on: boolean)
+	for _, x in christmasFolders do
+		local labFolder = x:GetAttribute("Lab")
+		local home = if type(labFolder) == "string" and root then root:FindFirstChild(labFolder) else nil
+		x.Parent = if on and home then home else nil
+	end
+end
+
 -- Builds a playground round a lab's (or the plaza's) spawn point.
 function Playground.build(labOrigin: Vector3, name: string?)
 	if not root then
@@ -652,6 +714,16 @@ function Playground.build(labOrigin: Vector3, name: string?)
 		end
 	end
 	folder.Parent = root
+	if lab and Config.CHRISTMAS_LAB then
+		local x = buildChristmas()
+		x:SetAttribute("Lab", folder.Name)
+		x.Parent = if Workspace:GetAttribute("Christmas") == true then folder else nil
+		if #christmasFolders == 1 then
+			Workspace:GetAttributeChangedSignal("Christmas"):Connect(function()
+				Playground.showChristmas(Workspace:GetAttribute("Christmas") == true)
+			end)
+		end
+	end
 	buildWreckingBall() -- after parenting: the swinging parts need to be in the world to be owned
 	if lab then
 		buildMace() -- (moving too: after parenting)

@@ -52,6 +52,7 @@ end
 SessionStats.start()
 require(Systems:WaitForChild("ExperimentService")).start() -- phase 1: Experiment cards (Shared\Experiments)
 require(Systems:WaitForChild("EconomyService")).start() -- phase 2: bolts, bone journal, daily experiments, codes
+require(Systems:WaitForChild("PartyService")).start() -- phase 3: Prank Party shared experiment cards
 FxService.start()
 VitalsService.start() -- blood, pulse and wounds (round 2, N2)
 DummyControl.start()

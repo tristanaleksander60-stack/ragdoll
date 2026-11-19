@@ -47,7 +47,7 @@ return {
 		local eco = live :: Economy.Eco
 		local saved = Economy.clean(eco) -- (put back after)
 		local today = EconomyService.dailyToday()
-		assert(#today == Config.DAILY_COUNT, "not the day's daily experiments")
+		assert(#today >= Config.DAILY_COUNT, "not the day's daily experiments") -- (+1 advent card in December)
 		eco.daily = {}
 		local before = eco.bolts
 		EconomyService.experimentDone(player, today[1])

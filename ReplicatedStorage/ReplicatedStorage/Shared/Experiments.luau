@@ -33,10 +33,46 @@ local LIST: { Def } = {
 	{ id = "Cannon3", text = "Blast off the CANNON 3 times", kind = "Cannon", target = 3, seconds = 150, stars = 2 },
 }
 Experiments.LIST = table.freeze(LIST)
-Experiments.KINDS = table.freeze({ Takedown = true, Cannon = true, Bullseye = true, Hazard = true, Egg = true })
+Experiments.KINDS = table.freeze({ Takedown = true, Cannon = true, Bullseye = true, Hazard = true, Egg = true, Chimney = true, Present = true })
+
+-- Phase 3: Prank Party (2-6 players in one lab): one shared card, everyone's events count, everyone
+-- gets the stars (ExperimentService.startParty; PartyService deals it).
+Experiments.PARTY = table.freeze({
+	{ id = "PartyDown", text = "TOGETHER: take down 15 dummies", kind = "Takedown", target = 15, seconds = 120, stars = 2 },
+	{ id = "PartyCannon", text = "TOGETHER: 5 cannon shots", kind = "Cannon", target = 5, seconds = 120, stars = 2 },
+	{ id = "PartyTraps", text = "TOGETHER: get thrown by 6 traps", kind = "Hazard", target = 6, seconds = 150, stars = 2 },
+} :: { Def })
+
+-- Phase 3: the daily advent experiment, 1-24 December (Christmas lab: CHIMNEY launcher and the
+-- PRESENT trap). Kinds go round so every day differs from the day before.
+local ADVENT_KINDS = {
+	{ "Chimney", "Go up the CHIMNEY", 1 },
+	{ "Present", "Open the PRESENT trap", 1 },
+	{ "Takedown", "Take down 12 dummies", 12 },
+	{ "Cannon", "Blast off the CANNON twice", 2 },
+	{ "Bullseye", "Land on the BULLSEYE", 1 },
+	{ "Chimney", "Go up the CHIMNEY 3 times", 3 },
+}
+function Experiments.advent(day: number): Def?
+	if day < 1 or day > 24 then
+		return nil
+	end
+	local k = ADVENT_KINDS[((day - 1) % #ADVENT_KINDS) + 1]
+	return {
+		id = "Advent" .. day,
+		text = string.format("\u{1F381} Day %d: %s", day, k[2]),
+		kind = k[1],
+		target = k[3],
+		seconds = 300,
+		stars = 3,
+	}
+end
 
 Experiments.byId = {} :: { [string]: Def }
 for _, def in LIST do
+	Experiments.byId[def.id] = def
+end
+for _, def in Experiments.PARTY do
 	Experiments.byId[def.id] = def
 end
 

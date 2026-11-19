@@ -32,7 +32,16 @@ local function today(): number
 end
 
 function EconomyService.dailyToday(): { Experiments.Def }
-	return Experiments.daily(today(), Config.DAILY_COUNT)
+	local list = Experiments.daily(today(), Config.DAILY_COUNT)
+	-- (Phase 3: 1-24 December, with the Christmas theme on, the day's advent card comes first.)
+	local date = os.date("!*t")
+	if Config.ADVENT and game:GetService("Workspace"):GetAttribute("Christmas") == true and date.month == 12 then
+		local advent = Experiments.advent(date.day)
+		if advent then
+			table.insert(list, 1, advent)
+		end
+	end
+	return list
 end
 
 local function state(player: Player): any?

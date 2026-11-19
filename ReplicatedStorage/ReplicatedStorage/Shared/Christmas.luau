@@ -13,7 +13,9 @@ export type Mode = "auto" | "on" | "off"
 Christmas.MODES = { "auto", "on", "off" } :: { Mode }
 
 -- The first season starts the day the owner asked for it.
-Christmas.FIRST_START = { year = 2026, month = 11, day = 7 }
+-- (Phase 3, Config.CHRISTMAS_FROM_DEC1: from 1 December 2026 instead of 7 November.)
+local Config = require(script.Parent:WaitForChild("Config"))
+Christmas.FIRST_START = if Config.CHRISTMAS_FROM_DEC1 then { year = 2026, month = 12, day = 1 } else { year = 2026, month = 11, day = 7 }
 Christmas.SEASON_START = { month = 12, day = 1 } -- every year after the first
 Christmas.SEASON_END = { month = 1, day = 6 } -- (the last day it is on, inclusive)
 

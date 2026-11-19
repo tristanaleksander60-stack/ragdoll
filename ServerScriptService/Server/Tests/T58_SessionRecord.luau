@@ -25,7 +25,8 @@ return {
 		assert(SessionStats.inputOf(fake(false, false, false, true)) == "touch", "touch only")
 		assert(SessionStats.inputOf(fake(true, true, false, false)) == "mixed", "pad + keys")
 		assert(SessionStats.inputOf(fake(false, false, false, false)) == "none", "nothing used")
-		assert(Config.Version == "0.18.0", "Config.Version should be 0.18.0 for phase 0, is " .. Config.Version)
+		-- (Every build has its own version and What's New entry: T67.)
+		assert(Config.Version ~= "0.17.2", "Config.Version was not bumped past 0.17.2")
 
 		local player = Players:GetPlayers()[1]
 		local started = os.clock()
