@@ -538,7 +538,8 @@ local function refresh()
 	end
 	local d = deal
 	if d then
-		d.Visible = not phone and not first and not busy
+		-- (Phase 0: no "SOON" card for a product that does not exist yet: Shop.STARTER_PACK 0 hides it.)
+		d.Visible = Shop.STARTER_PACK ~= 0 and not phone and not first and not busy
 	end
 	for name, b in sandbox do
 		b.Visible = not touch and not first and not busy

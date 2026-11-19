@@ -115,6 +115,7 @@ local function buildPasses(window: any)
 	grid.Parent = window.body
 	for index, pass in Shop.PASSES do
 		local card = C.Card({ name = pass.key, featured = index == 1, gap = SP.xs, layoutOrder = index, parent = grid })
+		card.root.Visible = pass.id ~= 0 or RunService:IsStudio() -- (phase 0: no "SOON" card)
 		local title = C.Text("title", pass.name, { scaled = true, size = UDim2.new(1, 0, 0, 34), layoutOrder = 1, parent = card.content })
 		title.TextColor3 = Color3.fromHex(pass.color)
 		passBlurbs[pass.key] = C.Text("body", pass.blurb, { wrap = true, size = UDim2.new(1, 0, 0, 40), layoutOrder = 2, parent = card.content })
@@ -310,6 +311,7 @@ local function buildPacks()
 		robux.Position = UDim2.new(0, 5, 0.5, 0)
 		robux.Parent = pill
 		local forSale = event.productId ~= 0
+		card.Visible = forSale or studio -- (phase 0: no "SOON" card for a product not made yet)
 		local price = C.Text("small", if forSale then "..." elseif studio then "TEST" else "SOON", {
 			name = "Amount",
 			scaled = true,
@@ -415,6 +417,7 @@ local function buildShop()
 			parent = card.content,
 		})
 		local forSale = event.productId ~= 0
+		card.root.Visible = forSale or studio -- (phase 0: no "SOON" card for a product not made yet)
 		local eventId = event.id
 		local price = C.CurrencyButton({
 			price = if forSale then "..." elseif studio then "TEST" else "SOON",

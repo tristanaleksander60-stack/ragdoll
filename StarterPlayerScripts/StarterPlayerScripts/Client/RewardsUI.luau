@@ -48,6 +48,7 @@ local trophyLabel: TextLabel? = nil
 local trophyBar: any = nil
 local groupText: TextLabel? = nil
 local groupButton: any = nil
+local groupParts: { GuiObject } = {} -- (phase 0: the section hides while Shop.GROUP_ID is 0)
 
 -- What can be claimed now (the launcher's number).
 function RewardsUI.claimable(): number
@@ -103,6 +104,9 @@ local function redraw()
 		trophyBar.setValue(math.clamp((rewards.trophies or 0) / math.max(1, rewards.trophiesTotal or 1), 0, 1))
 	end
 	if groupText and groupButton then
+		for _, part in groupParts do
+			part.Visible = rewards.groupId ~= 0 -- (phase 0: no "SOON" section)
+		end
 		if rewards.groupId == 0 then
 			groupText.Text = "Join our Roblox group for a FREE weapon egg"
 			groupButton.setText("SOON")
@@ -185,8 +189,9 @@ local function build()
 	trophyLabel = C.Text("title", "TROPHIES", { scaled = true, size = UDim2.new(1, 0, 0, 26), layoutOrder = 1, parent = trophyCard.content })
 	trophyBar = C.ProgressBar({ layoutOrder = 2, parent = trophyCard.content })
 	-- Group gift.
-	C.SectionHeader("GROUP GIFT", "daily", 12, window.body)
+	local groupHeader = C.SectionHeader("GROUP GIFT", "daily", 12, window.body)
 	local groupCard = C.Card({ name = "Group", gap = SP.xs, layoutOrder = 13, parent = window.body, size = UDim2.new(1, 0, 0, 70) })
+	groupParts = { groupHeader, groupCard.root }
 	local groupLine = C.Row({ height = 48, gap = SP.sm, layoutOrder = 1, parent = groupCard.content })
 	groupText = C.Text("body", "", { wrap = true, size = UDim2.new(1, -132, 1, 0), layoutOrder = 1, parent = groupLine })
 	groupButton = C.Button({ text = "SOON", role = "locked", size = UDim2.fromOffset(120, 44), layoutOrder = 2, parent = groupLine, onActivated = function()
