@@ -779,6 +779,13 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	buildWreckingBall() -- after parenting: the swinging parts need to be in the world to be owned
 	if lab then
 		buildMace() -- (moving too: after parenting)
+		-- v3 Phase C: a car and a monster truck on the east side (after parenting: they move).
+		local ok, err = pcall(function()
+			require(script.Parent.VehicleService).build(folder, origin)
+		end)
+		if not ok then
+			log.warn("Vehicles failed in " .. folder.Name .. ": " .. tostring(err))
+		end
 	end
 	-- World/Feel v2: the dressing over it all (pictures only: WorldDress). A failure there never
 	-- costs the playground itself.

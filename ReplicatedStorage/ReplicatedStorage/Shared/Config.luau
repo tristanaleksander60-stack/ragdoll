@@ -164,6 +164,15 @@ local Config = {
 	LOOK_V3_DUMMY = Color3.fromRGB(240, 240, 238), -- the plain white of a test mannequin
 	LOOK_V3_DUMMY_LOW = Color3.fromRGB(232, 232, 230), -- forearms and shins, a hair darker
 	LOOK_V3_DUMMY_ENDS = Color3.fromRGB(222, 222, 220), -- hands and feet
+	-- v3 Phase C: cars in every lab (VehicleService builds them, VehicleClient drives them on the
+	-- driver's screen). Speeds in studs/s; a hit over HitMath.MACHINE_MIN_SPEED knocks a dummy.
+	VEHICLES = table.freeze({
+		enabled = true,
+		Car = table.freeze({ speed = 62, reverse = 22, accel = 2.2, turn = 1.9 }),
+		Truck = table.freeze({ speed = 52, reverse = 18, accel = 1.8, turn = 1.5 }),
+		flippedReset = 4, -- s an empty flipped or fallen car waits before it goes home
+		idleReset = 30, -- s an empty car left away from its pad waits before it goes home
+	}),
 	-- All UI 3D and interactive (19 Nov 2026, the owner): turning weapon models on the cards and the
 	-- bar, tilt and depth on the HUD buttons, windows that swing in (Client\Ui3D). Live (turning)
 	-- viewports at once per device tier; the rest are drawn once and left still.
