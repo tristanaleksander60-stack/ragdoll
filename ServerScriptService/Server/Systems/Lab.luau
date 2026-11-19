@@ -71,6 +71,7 @@ local SCARE_HIT = 14 -- ... a hard hit
 local SOURCE_RANGE = 120 -- studs: a bang's maker this close is who it runs from (else the bang)
 
 local Lab = {}
+Lab.DUMMY_COUNT = DUMMY_COUNT -- (World/Feel v2: T80 adds it to a device's ragdoll budget)
 
 Lab.PLOT_COUNT = 10 -- labs on one server (the place's server size should be 10)
 Lab.PLOT_SPACING = 170 -- studs between the middles of two neighbouring labs (and the plaza)

@@ -104,6 +104,32 @@ local Config = {
 		mid = table.freeze({ visitors = 2, chasers = 7 }),
 		high = table.freeze({ visitors = 3, chasers = 10 }),
 	}),
+	-- World/Feel v2 (19 Nov 2026, branch world-polish; nothing of it play-tested in Studio yet):
+	--   WORLD_V2: every lab and the plaza get a code-built dressing on top of what was there (a
+	--   backdrop wall, a gantry over the test zone, signposts to the cannon and the hazards, a dashed
+	--   flight line from the cannon to the bullseye, light towers, crates, barrels, tyres, cables,
+	--   framed station boards, warning signs; a nicer chimney, present and sleigh), and the dummies a
+	--   test-suit colour and a chest number. Pictures only: not one new part collides, is hit by a ray
+	--   or listens for a touch, so play is the same with it off (WorldDress). false = the 0.20 look.
+	--   FEEL_V2: hit feel on this screen (a trauma shake from one strength value, a hit-stop on big
+	--   moments, star/dust/spark bursts, flop sounds by landing speed, speed trails on launched and
+	--   thrown bodies, a slow-mo beat on big combos, muzzle flash, casings and recoil per gun) and the
+	--   ragdoll guard (limbs never fly off the body: ActiveRagdoll). false = the 0.20 feel.
+	WORLD_V2 = true,
+	FEEL_V2 = true,
+	-- What one device draws at most (Shared\FeelTuning reads it; DeviceTier picks the tier):
+	--   lights: world lamps lit at once (the nearest; WorldLights), flashes: muzzle-flash lights at
+	--   once, particles: particles one burst may emit, trails: speed trails at once, casings: shell
+	--   casings in the air at once, ragdolls: bodies this device simulates for its own lab (the 6 lab
+	--   dummies + visitors, VIP LAB's extra ones included, + chasers; T80 checks DEVICE_CAPS fits under it).
+	FX_CAPS = table.freeze({
+		low = table.freeze({ lights = 4, flashes = 1, particles = 10, trails = 3, casings = 6, ragdolls = 14 }),
+		mid = table.freeze({ lights = 8, flashes = 2, particles = 18, trails = 6, casings = 12, ragdolls = 18 }),
+		high = table.freeze({ lights = 14, flashes = 4, particles = 30, trails = 10, casings = 24, ragdolls = 22 }),
+	}),
+	WORLD_V2_LAB_PARTS = 320, -- parts one lab's WORLD_V2 dressing may add (T81)
+	WORLD_V2_LAB_LIGHTS = 12, -- lights one lab's dressing may hold (only FX_CAPS[tier].lights are lit)
+	COMBO_SLOWMO = 5, -- a combo of this many (and every this-many after) gets the slow-mo beat
 }
 
 return table.freeze(Config)

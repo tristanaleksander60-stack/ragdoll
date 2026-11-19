@@ -29,6 +29,7 @@ local ProgressService = require(script.Parent.ProgressService)
 local ExperimentService = require(script.Parent.ExperimentService)
 local BadgeAwards = require(script.Parent.BadgeAwards)
 local Finish = require(script.Parent.Finish)
+local WorldDress = require(script.Parent.WorldDress)
 
 local log = Log.new("Playground")
 
@@ -675,6 +676,16 @@ local function buildChristmas(): Folder
 	part("Sleigh", Vector3.new(6, 2, 4), at(s.X, 7, s.Y - 6), RED)
 	sign("SLEIGH RAMP", ramp, 8, WHITE)
 	folder = saved
+	-- World/Feel v2: a cap and snow on the chimney, a bow, the sleigh's runners (in this folder:
+	-- they come and go with it; pictures only).
+	if Config.WORLD_V2 then
+		local ok, err = pcall(function()
+			WorldDress.dressChristmas(x, origin, spots :: any)
+		end)
+		if not ok then
+			log.warn("WORLD_V2 Christmas dressing failed: " .. tostring(err))
+		end
+	end
 	x.Parent = if Workspace:GetAttribute("Christmas") == true then saved else nil
 	table.insert(christmasFolders, x)
 	return x
@@ -738,6 +749,27 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	buildWreckingBall() -- after parenting: the swinging parts need to be in the world to be owned
 	if lab then
 		buildMace() -- (moving too: after parenting)
+	end
+	-- World/Feel v2: the dressing over it all (pictures only: WorldDress). A failure there never
+	-- costs the playground itself.
+	if Config.WORLD_V2 then
+		local into = folder
+		local ok, err = pcall(function()
+			local plan = if lab
+				then {
+					cannonPad = Vector3.new(48, 1, 6),
+					landing = Playground.cannonLanding(origin + Vector3.new(48, 1, 6)) - origin,
+					velocity = CANNON_DIRECTION * CANNON_SPEED,
+					gravity = Workspace.Gravity,
+					stations = STATIONS,
+					maxLights = Config.WORLD_V2_LAB_LIGHTS,
+				}
+				else nil
+			WorldDress.dress(into, origin, plan :: any)
+		end)
+		if not ok then
+			log.warn("WORLD_V2 dressing failed in " .. into.Name .. ": " .. tostring(err))
+		end
 	end
 	log.info("built " .. folder.Name)
 end

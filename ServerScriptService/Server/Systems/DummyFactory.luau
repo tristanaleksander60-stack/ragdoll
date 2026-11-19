@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ActiveRagdoll = require(ReplicatedStorage.Shared.Ragdoll.ActiveRagdoll)
 local Assets = require(ReplicatedStorage.Shared.Assets)
 local DummyControl = require(script.Parent.DummyControl)
+local Config = require(ReplicatedStorage.Shared.Config)
 
 local DummyFactory = {}
 
@@ -199,6 +200,51 @@ function DummyFactory.removeMarks(model: Model)
 	end
 end
 
+-- World/Feel v2 (Config.WORLD_V2): every dummy a test suit (the torso in one of the lab's colours,
+-- by turns, never green: green is dead) and a big test number on its back, so a row reads as six
+-- different test subjects. Named CrashMark: the crowd takes it off with the other marks. The
+-- colour is the parts' own, so the sculpted skins wear it (DummySkins) and the dead green gives it
+-- back (VitalsService.paintDead).
+DummyFactory.SUITS = table.freeze({
+	Color3.fromRGB(236, 128, 44), -- safety orange
+	Color3.fromRGB(62, 132, 222), -- lab blue
+	Color3.fromRGB(234, 190, 46), -- crash yellow
+	Color3.fromRGB(222, 225, 232), -- test white
+	DummyFactory.SHELL, -- plain grey
+})
+local suitTurn = 0
+local function suit(model: Model)
+	suitTurn += 1
+	local color = DummyFactory.SUITS[(suitTurn - 1) % #DummyFactory.SUITS + 1]
+	for _, name in { "UpperTorso", "LowerTorso" } do
+		local p = model:FindFirstChild(name)
+		if p and p:IsA("BasePart") then
+			p.Color = color
+		end
+	end
+	local back = model:FindFirstChild("UpperTorso")
+	if back and back:IsA("BasePart") then
+		local gui = Instance.new("SurfaceGui")
+		gui.Name = "CrashMark"
+		gui.Face = Enum.NormalId.Back
+		gui.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
+		gui.CanvasSize = Vector2.new(128, 128)
+		gui.LightInfluence = 1
+		gui.MaxDistance = MARK_DISTANCE
+		gui.ResetOnSpawn = false
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.fromScale(0.8, 0.6)
+		label.Position = UDim2.fromScale(0.1, 0.15)
+		label.BackgroundTransparency = 1
+		label.Font = Enum.Font.GothamBlack
+		label.TextScaled = true
+		label.TextColor3 = INK
+		label.Text = string.format("%02d", (suitTurn - 1) % 99 + 1)
+		label.Parent = gui
+		gui.Parent = back
+	end
+end
+
 local function container(): Folder
 	local f = Workspace:FindFirstChild("Dummies")
 	if f and f:IsA("Folder") then
@@ -239,6 +285,9 @@ function DummyFactory.spawn(at: Vector3, lookAt: Vector3?, owner: Player?, lift:
 	giveExpressiveFace(model)
 	giveMarks(model)
 	segment(model)
+	if Config.WORLD_V2 then
+		suit(model)
+	end
 
 	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart
 	-- The root is an invisible box inside the torso that the ragdoll leaves behind. Clicks, grabs and
