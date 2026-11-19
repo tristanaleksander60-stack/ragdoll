@@ -40,6 +40,10 @@ local Shared = ReplicatedStorage.Shared
 local Anatomy = require(Shared.Anatomy)
 local Toys = require(Shared.Toys)
 local Config = require(Shared.Config)
+-- (Release fix: with Config.MILD_TEXT the hit line names the body region, "Chest" for the heart.)
+local function shownAs(zoneId: string): string
+	return if Config.MILD_TEXT then Anatomy.mildLabel(zoneId) else zoneId
+end
 
 local function waitFor(check: () -> boolean, timeout: number): boolean
 	local started = os.clock()
@@ -109,7 +113,7 @@ local function run(results: { string }, player: Player)
 	assert(state, "the shot did not land")
 	local line, zone = VitalsService.wound(dummy, chest, at(chest, -0.2, 0.2, -0.95), nil, 1)
 	assert(zone and zone.id == "Heart", "the second shot was not on the heart")
-	assert(line and string.match(line, "^Heart \u{00B7} %d+%% blood \u{00B7} pulse %d+$"), "the line reads: " .. tostring(line))
+	assert(line and string.match(line, "^" .. shownAs("Heart") .. " \u{00B7} %d+%% blood \u{00B7} pulse %d+$"), "the line reads: " .. tostring(line))
 	local blood0 = dummy:GetAttribute("Blood") :: number
 	assert(blood0 < 100 and blood0 > 60, "blood after two heart shots: " .. tostring(blood0))
 	assert(string.find(dummy:GetAttribute("Wounds") :: string, "Heart@", 1, true), "the wound is not listed")
@@ -144,7 +148,7 @@ local function run(results: { string }, player: Player)
 	-- No waitFor loop here — the attributes must already read Dead by the time wound() returns.
 	local head2 = part(dummy, "Head")
 	local brainLine = VitalsService.wound(dummy, head2, at(head2, 0, 0.7, -0.9), nil, 1)
-	assert(brainLine and string.find(brainLine, "Brain", 1, true), "not the brain: " .. tostring(brainLine))
+	assert(brainLine and string.find(brainLine, shownAs("Brain"), 1, true), "not the brain: " .. tostring(brainLine))
 	assert(dummy:GetAttribute("Vital") == "Dead", "a brain shot did not kill this update (Vital=" .. tostring(dummy:GetAttribute("Vital")) .. ")")
 	assert(dummy:GetAttribute("Pulse") == 0, "a brain shot left the pulse at " .. tostring(dummy:GetAttribute("Pulse")) .. ", not 0")
 	assert(dummy:GetAttribute("DiedAt") ~= nil, "a brain shot did not stamp DiedAt (the monitor flatlines from this)")
