@@ -143,12 +143,18 @@ local Config = {
 	LOOK_V3 = true,
 	MAP_ACTIVITIES = true, -- v3 phase C: launchers on the open-air maps (Server/Systems/MapActivities)
 	NPC_COMMANDS = true, -- v4 B4: talk to NPCs (E): follow, stay, attack with your weapons (Server/Systems/NpcCommand, Client/NpcTalk)
+	SLOWMO_V2 = true, -- v4 C5: smooth client slow motion (Client/SlowMotion): bodies keep SLOWMO_SCALE of each speed change, grade/blur/vignette/pitch/trails
+	SLOWMO_SCALE = 0.25, -- time in a slow-mo bubble runs at this speed
+	SLOWMO_AUTO_GAP = 8, -- s between automatic slow moments on big hits
+	LAB_SURPRISES = true, -- v4 C4: a short surprise (Surprises.MINI) by itself now and then in your own lab
+	LAB_SURPRISE_GAP = Vector2.new(150, 240), -- s between them (random in the range)
 	-- v4 A5 (owner): bodies die from enough hits, not only headshots. Every hit adds damage =
 	-- weapon power x DAMAGE_PER_POWER x the region (head, limbs) x DAMAGE_BLUNT for blows; BODY_HP of it
 	-- kills (about 6 Popper rounds to the body, about 10 punches). Headshots stay instant.
 	-- v4 A3: the sound mix (Client/SoundMix): each group's volume under the player's Effects setting.
 	SOUND_MIX = table.freeze({ Weapons = 0.95, Impacts = 0.8, Blasts = 1, World = 0.7, UI = 0.45, Ambient = 0.5 }),
 	BODY_HP = 100,
+	DAMAGE_DECAY = 2, -- damage points a body heals per second (100 in 50 s)
 	DAMAGE_PER_POWER = 17,
 	DAMAGE_HEAD = 1.5,
 	DAMAGE_LIMB = 0.6,
@@ -184,6 +190,11 @@ local Config = {
 		Truck = table.freeze({ speed = 52, reverse = 18, accel = 1.8, turn = 1.5 }),
 		flippedReset = 4, -- s an empty flipped or fallen car waits before it goes home
 		idleReset = 30, -- s an empty car left away from its pad waits before it goes home
+		-- v4 C2: sounds (free Creator Store audio): engine loop (Roblox Resources), horn, crash.
+		engineSound = 80317022777602,
+		hornSound = 127513531122725,
+		crashSound = 70951531892215,
+		feel = true, -- spinning/steering wheels, body roll, lights, engine pitch, dust (Client/VehicleFeel)
 	}),
 	BIG_BUTTON_GAP = 75, -- s between two presses of a lab's BIG RED BUTTON (a random free event)
 	LAB_CONTROLS_GAP = 8, -- s: the same with the Lab Controls pass (its owner, in their own lab)

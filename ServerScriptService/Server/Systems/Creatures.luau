@@ -599,4 +599,7 @@ function Creatures.train(center: Vector3): () -> ()
 	end
 end
 
+-- v4 C4: the helpers the lab surprises (Surprises) share.
+Creatures.util = table.freeze({ block = block, folder = folder, knock = knock, knockPlayers = knockPlayers, dummiesIn = dummiesIn })
+
 return Creatures

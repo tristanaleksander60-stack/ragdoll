@@ -15,17 +15,27 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local SoundManifest = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("SoundManifest"))
 
 local Client = script.Parent
 local Settings = require(Client:WaitForChild("Settings"))
 
 local SoundMix = {}
 
-local DEFAULT_MIX = { Weapons = 0.95, Impacts = 0.8, Blasts = 1, World = 0.7, UI = 0.45, Ambient = 0.5 }
-local MIX: { [string]: number } = (Config :: any).SOUND_MIX or DEFAULT_MIX
+
+local MIX: { [string]: number } = (Config :: any).SOUND_MIX -- (one source: Config)
 
 local BY_BANK: { [string]: string } = {}
-for _, b in { "deagle", "shotgun", "shotgunPump", "dryfire", "revolver", "ak", "lmg", "minigun", "tommy", "smg", "dmr", "doubleBarrel", "sniper", "flare", "laser", "rail", "nail", "crossbow" } do
+-- (Every gun's own banks, read from the manifest so a new gun lands in Weapons by itself.)
+for _, gun in SoundManifest.GUNS :: any do
+	for _, key in { "fire", "dry", "reload" } do
+		local bank = gun[key]
+		if type(bank) == "string" then
+			BY_BANK[bank] = "Weapons"
+		end
+	end
+end
+for _, b in { "shotgunPump", "dryfire", "nail", "crossbow" } do
 	BY_BANK[b] = "Weapons"
 end
 for _, b in { "hit", "land", "flesh", "slam", "bat", "golf", "chop", "saw", "clang", "ricMetal", "ricHard", "shatter", "arrow", "noodle" } do

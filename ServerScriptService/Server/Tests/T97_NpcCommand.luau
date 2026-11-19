@@ -40,7 +40,8 @@ return {
 			assert(NpcCommand.refusal(player, "Attack", a, char, "Punch") ~= nil, "a player was accepted as a target")
 			assert(NpcCommand.refusal(player, "Attack", a, b, "NoSuchTool") ~= nil, "an unknown weapon was accepted")
 			assert(NpcCommand.refusal(player, "Attack", a, a, "Punch") ~= nil, "a body was told to attack itself")
-			-- Follow.
+			-- Follow (its own Home comes back after a goodbye).
+			local home = a:GetAttribute("Home")
 			local fine, why = NpcCommand.command(player, "Follow", a, nil, nil)
 			assert(fine, "Follow refused: " .. tostring(why))
 			assert(a:GetAttribute("CommandedBy") == player.UserId and a:GetAttribute("Command") == "Follow", "Follow did not mark the body")
@@ -52,9 +53,17 @@ return {
 			local hit, whyHit = NpcCommand.command(player, "Attack", a, b, "Punch")
 			assert(hit, "Attack with Punch refused: " .. tostring(whyHit))
 			assert(a:GetAttribute("Command") == "Attack", "Attack did not mark the body")
+			-- The attack lands: the target takes damage within a few seconds.
+			local waited = os.clock()
+			while (b:GetAttribute("Damage") or 0) == 0 and os.clock() - waited < 8 do
+				task.wait(0.25)
+			end
+			assert(((b:GetAttribute("Damage") or 0) :: number) > 0, "the NPC never hit its target")
+			assert(a:FindFirstChild("HeldByNpc") ~= nil or b:GetAttribute("Vital") == "Dead", "the NPC does not hold the weapon")
 			-- Bye.
 			assert(NpcCommand.command(player, "Bye", a, nil, nil), "Bye refused")
 			assert(a:GetAttribute("CommandedBy") == nil, "Bye did not let the body go")
+			assert(home == nil or a:GetAttribute("Home") == home, "Bye did not give the body its own Home back")
 			NpcCommand.command(player, "Bye", made[3], nil, nil)
 			NpcCommand.command(player, "Bye", made[4], nil, nil)
 		end)

@@ -222,7 +222,7 @@ local function endSocial(slot: Slot)
 	slot.socialKind = nil
 	slot.socialUntil = 0
 	slot.nextSocialAt = os.clock() + math.random(CHAT_EVERY_MIN, CHAT_EVERY_MAX)
-	if model and model.Parent then
+	if model and model.Parent and model:GetAttribute("CommandedBy") == nil then -- (v4 B4: a player's command walks it now)
 		model:SetAttribute("Home", slot.homeAttr)
 		model:SetAttribute("HomeLook", slot.homeLook)
 		model:SetAttribute("Chatting", nil)
@@ -255,6 +255,11 @@ local function watchSlot(plot: Plot, slot: Slot, dt: number)
 	end
 	local pelvis = model:FindFirstChild("LowerTorso") :: BasePart?
 	if not pelvis then
+		return
+	end
+	-- v4 B4: a body a player commands (NpcCommand) is not "lost": it is not walked or sent home.
+	if model:GetAttribute("CommandedBy") ~= nil then
+		slot.awayTime = 0
 		return
 	end
 	local state = model:GetAttribute("RagdollState")
@@ -361,7 +366,7 @@ end
 local function atHome(slot: Slot): boolean
 	local model = slot.model
 	local pelvis = model and model:FindFirstChild("LowerTorso")
-	return not slot.target and model ~= nil and model:GetAttribute("RagdollState") == "Standing" and upright(model)
+	return not slot.target and model ~= nil and model:GetAttribute("CommandedBy") == nil and model:GetAttribute("RagdollState") == "Standing" and upright(model)
 		and pelvis ~= nil and pelvis:IsA("BasePart")
 		and Vector3.new(pelvis.Position.X - slot.position.X, 0, pelvis.Position.Z - slot.position.Z).Magnitude <= AWAY_DISTANCE
 end

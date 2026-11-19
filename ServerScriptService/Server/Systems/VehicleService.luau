@@ -34,6 +34,8 @@ VehicleService.SPECS = {
 	Truck = { label = "Monster Truck", body = Vector3.new(7.5, 2.2, 12), color = Color3.fromRGB(46, 112, 64), wheel = 6, lift = 3.6, pad = Vector2.new(68, -32) } :: Spec,
 }
 
+VehicleService.HORN_GAP = 0.8 -- s between two honks
+
 local DARK = Color3.fromRGB(26, 26, 30)
 local GLASS = Color3.fromRGB(150, 190, 220)
 
@@ -67,6 +69,44 @@ local function piece(model: Model, body: BasePart, name: string, size: Vector3, 
 end
 
 -- One car, built facing -Z (towards the dummies) at `home` (the body's middle).
+-- v4 C2: which wheel a piece of a car model belongs to ("FL", "FR", "RL", "RR"), or nil when it is
+-- not a wheel. A piece is a wheel when it or a parent (up to the model) is named like one (wheel,
+-- tire, tyre, rim, hub, a corner name, the truck pack's "CCW" rims) and sits out at a side.
+local WHEEL_WORDS = { "wheel", "tire", "tyre", "rim", "hub", "ccw" }
+local CORNER_NAMES = { fl = true, fr = true, rl = true, rr = true, lf = true, rf = true, lr = true }
+function VehicleService.wheelCorner(part: BasePart, body: BasePart): string?
+	local named = false
+	local node: Instance? = part
+	for _ = 1, 4 do
+		if not node or node.Name == "Look" then
+			break
+		end
+		local n = string.lower(node.Name)
+		if CORNER_NAMES[n] then
+			named = true
+			break
+		end
+		for _, word in WHEEL_WORDS do
+			if string.find(n, word, 1, true) and not string.find(n, "steering", 1, true) then
+				named = true
+				break
+			end
+		end
+		if named then
+			break
+		end
+		node = node.Parent
+	end
+	if not named then
+		return nil
+	end
+	local at = body.CFrame:PointToObjectSpace(part.Position)
+	if math.abs(at.X) < body.Size.X * 0.22 or math.abs(at.Z) < body.Size.Z * 0.12 then
+		return nil -- (in the middle: a steering wheel, a spare, an axle)
+	end
+	return (if at.Z < 0 then "F" else "R") .. (if at.X < 0 then "L" else "R")
+end
+
 local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	local spec = VehicleService.SPECS[kind]
 	local model = Instance.new("Model")
@@ -159,12 +199,107 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	local bottom = home * CFrame.new(0, -b.Y / 2 - spec.lift, 0)
 	local look = V3Assets.place(role, model, bottom, { size = b.Z + 1.5, collide = false, anchored = false, name = "Look" })
 	if look then
+		-- v4 C2: the wheels hang on Welds (each screen turns and steers them: Client/VehicleFeel) and
+		-- the rest of the shell on one invisible root whose Weld the screens tilt a little (body roll
+		-- and dive). Pictures only; the code-built box does the physics.
+		local root = Instance.new("Part")
+		root.Name = "LookRoot"
+		root.Size = Vector3.new(1, 1, 1)
+		root.CFrame = body.CFrame
+		root.Transparency = 1
+		root.CanCollide = false
+		root.CanQuery = false
+		root.CanTouch = false
+		root.Massless = true
+		root.Parent = model
+		local rollWeld = Instance.new("Weld")
+		rollWeld.Name = "RollWeld"
+		rollWeld.Part0 = body
+		rollWeld.Part1 = root
+		rollWeld.Parent = root
+		local corners: { [string]: { min: Vector3, max: Vector3 } } = {}
 		for _, shell in look:GetDescendants() do
 			if shell:IsA("BasePart") then
 				shell.Massless = true
-				weld(body, shell)
+				local corner = VehicleService.wheelCorner(shell, body)
+				if corner then
+					local w = Instance.new("Weld")
+					w.Name = "WheelWeld"
+					w.Part0 = body
+					w.Part1 = shell
+					w.C0 = body.CFrame:ToObjectSpace(shell.CFrame)
+					w:SetAttribute("Corner", corner)
+					w:SetAttribute("BaseC0", w.C0)
+					w.Parent = shell
+					local local_ = body.CFrame:PointToObjectSpace(shell.Position)
+					local half = shell.Size / 2
+					local box = corners[corner] or { min = local_, max = local_ }
+					box.min = box.min:Min(local_ - Vector3.new(0, half.Y, 0))
+					box.max = box.max:Max(local_ + Vector3.new(0, half.Y, 0))
+					corners[corner] = box
+				else
+					weld(root, shell)
+				end
 			end
 		end
+		-- v4 C2: the driver sits in the model's own driver's seat (not on the box's roof).
+		local driverSpot: BasePart? = nil
+		for _, d in look:GetDescendants() do
+			if d:IsA("BasePart") and (d.Name == "VehicleSeat" or d.Name == "DriveSeat" or d.Name == "SeatFL" or d.Name == "DriverSeat") then
+				driverSpot = d
+				break
+			end
+		end
+		if driverSpot then
+			for _, c in seat:GetChildren() do
+				if c:IsA("WeldConstraint") then
+					c:Destroy()
+				end
+			end
+			local at = body.CFrame:PointToObjectSpace(driverSpot.Position)
+			seat.CFrame = body.CFrame * CFrame.new(at + Vector3.new(0, 0.2, 0))
+			weld(body, seat)
+		end
+		-- Each wheel's axle (body space) and radius, for the screens.
+		for corner, box in corners do
+			model:SetAttribute("Axle" .. corner, (box.min + box.max) / 2)
+			model:SetAttribute("Radius" .. corner, math.max(0.5, (box.max.Y - box.min.Y) / 2))
+		end
+		-- Lights: two headlamps and a brake glow (the screens switch them by distance and braking).
+		local b2 = spec.body
+		for _, side in { -1, 1 } do
+			local a = Instance.new("Attachment")
+			a.Name = "HeadlampAt"
+			a.Position = Vector3.new(side * (b2.X / 2 - 0.9), 0.2, -b2.Z / 2 - 0.3)
+			a.Parent = body
+			local lamp = Instance.new("SpotLight")
+			lamp.Name = "Headlamp"
+			lamp.Face = Enum.NormalId.Front
+			lamp.Angle = 70
+			lamp.Range = 28
+			lamp.Brightness = 2.5
+			lamp.Color = Color3.fromRGB(255, 244, 220)
+			lamp.Enabled = false
+			lamp.Parent = a
+		end
+		local rear = Instance.new("Attachment")
+		rear.Name = "BrakeAt"
+		rear.Position = Vector3.new(0, 0.2, b2.Z / 2 + 0.4)
+		rear.Parent = body
+		local brake = Instance.new("PointLight")
+		brake.Name = "BrakeLight"
+		brake.Color = Color3.fromRGB(255, 40, 30)
+		brake.Range = 10
+		brake.Brightness = 0
+		brake.Enabled = false
+		brake.Parent = rear
+		-- The horn (the server plays it, so everyone near hears it: VehicleService "Horn").
+		local horn = Instance.new("Sound")
+		horn.Name = "Horn"
+		horn.SoundId = "rbxassetid://" .. tostring((Config.VEHICLES :: any).hornSound)
+		horn.Volume = 0.8
+		horn.RollOffMaxDistance = 220
+		horn.Parent = body
 		for _, p in model:GetChildren() do
 			if p:IsA("BasePart") and p ~= seat then
 				p.Transparency = 1
@@ -172,6 +307,7 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 		end
 	end
 	model:SetAttribute("Vehicle", kind)
+	game:GetService("CollectionService"):AddTag(model, "LabVehicle") -- (v4 C2: Client/VehicleFeel finds them by it)
 	return model, body, seat
 end
 
@@ -235,6 +371,31 @@ function VehicleService.start()
 	end
 	started = true
 	local Lab = require(script.Parent.Lab)
+	-- v4 C2: the horn (H, or the HORN button): only from the driver's seat, at most once per HORN_GAP.
+	local Net = require(ReplicatedStorage.Shared.Net)
+	local lastHorn: { [Player]: number } = {}
+	Net.event(Net.Names.VehicleHorn).OnServerEvent:Connect(function(player: Player)
+		local now = os.clock()
+		if now - (lastHorn[player] or -math.huge) < VehicleService.HORN_GAP then
+			return
+		end
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local seat = humanoid and humanoid.SeatPart
+		if not (seat and seat:IsA("VehicleSeat") and seat:GetAttribute("LabCar") ~= nil) then
+			return
+		end
+		lastHorn[player] = now
+		local car = seat.Parent
+		local body = car and car:FindFirstChild("Body")
+		local horn = body and body:FindFirstChild("Horn")
+		if horn and horn:IsA("Sound") then
+			horn:Play()
+		end
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		lastHorn[player] = nil
+	end)
 	local acc = 0
 	RunService.Heartbeat:Connect(function(dt)
 		acc += dt

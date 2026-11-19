@@ -21,6 +21,8 @@ local Config = require(Shared:WaitForChild("Config"))
 local CrowdService = require(script.Parent.CrowdService)
 local HitService = require(script.Parent.HitService)
 local ProgressService = require(script.Parent.ProgressService)
+local Lab = require(script.Parent.Lab)
+local LoadoutStore = require(script.Parent.LoadoutStore)
 
 local NpcCommand = {}
 
@@ -33,7 +35,7 @@ NpcCommand.STRIKE_REACH = 6 -- studs: close enough to hit
 NpcCommand.STRIKE_GAP_MIN = 0.7 -- s between an NPC's hits (a fast gun is slowed to this)
 NpcCommand.TICK = 0.25
 
-type Order = { owner: Player, mode: string, target: Model?, toy: Toys.Toy?, nextHit: number, place: unknown, held: Model? }
+type Order = { owner: Player, mode: string, target: Model?, toy: Toys.Toy?, nextHit: number, place: unknown, held: Model?, home: unknown, homeLook: unknown }
 local orders: { [Model]: Order } = {}
 local lastRequest: { [Player]: number } = {}
 local remote: RemoteEvent
@@ -47,8 +49,9 @@ local function bodyOf(inst: unknown): Model?
 	if not folder or not m:IsA("Model") or m.Parent ~= folder then
 		return nil
 	end
-	-- (Not the arena's runners, a chase's chasers or a greeter: their own games drive them.)
-	if m:GetAttribute("Minigame") or m:GetAttribute("Chaser") or m:GetAttribute("Greeter") then
+	-- (Not the arena's runners, a chase's chasers, a greeter, a lab visitor or a horde runner: their
+	-- own games drive them.)
+	if m:GetAttribute("Minigame") or m:GetAttribute("Chaser") or m:GetAttribute("Greeter") or m:GetAttribute("Visitor") or m:GetAttribute("Horde") then
 		return nil
 	end
 	if m:GetAttribute("Vital") == "Dead" or not m:FindFirstChild("LowerTorso") then
@@ -92,6 +95,11 @@ local function release(m: Model)
 	if m.Parent then
 		m:SetAttribute("CommandedBy", nil)
 		m:SetAttribute("Command", nil)
+		-- (Its own Home back: a lab dummy walks back to its place.)
+		if o and typeof(o.home) == "Vector3" then
+			m:SetAttribute("Home", o.home)
+			m:SetAttribute("HomeLook", o.homeLook)
+		end
 	end
 end
 
@@ -147,15 +155,57 @@ local function hold(m: Model, toyId: string): Model?
 	return copy
 end
 
--- Weapons a player may hand an NPC: owned (or trial/pass) tools that hit.
+-- Weapons a player may hand an NPC: owned (or trial/pass) tools that hit, the ones on their bar
+-- first, then the rest by unlock (the biggest first).
 function NpcCommand.weaponsOf(player: Player): { string }
-	local out = {}
-	for _, toy in Toys.list do
-		if toy.kind == "hit" and ProgressService.isUnlocked(player, toy) then
-			table.insert(out, toy.id)
+	local out, seen = {}, {}
+	local bar = LoadoutStore.get(player) or {}
+	for _, id in bar do
+		local toy = Toys.byId[id]
+		if toy and toy.kind == "hit" and not seen[id] and ProgressService.isUnlocked(player, toy) then
+			seen[id] = true
+			table.insert(out, id)
 		end
 	end
+	local rest = {}
+	for _, toy in Toys.list do
+		if toy.kind == "hit" and not seen[toy.id] and ProgressService.isUnlocked(player, toy) then
+			table.insert(rest, toy)
+		end
+	end
+	table.sort(rest, function(a, b)
+		return a.unlockAt > b.unlockAt
+	end)
+	for _, toy in rest do
+		table.insert(out, toy.id)
+	end
 	return out
+end
+
+-- A body an NPC may be sent at: any living NPC (visitors, chasers and greeters too) in the same lab
+-- or open area as the NPC, never an arena runner or someone else's commanded NPC.
+local function targetOf(player: Player, inst: unknown, npc: Model): Model?
+	if typeof(inst) ~= "Instance" then
+		return nil
+	end
+	local folder = Workspace:FindFirstChild("Dummies")
+	local t = inst :: Instance
+	if not folder or not t:IsA("Model") or t.Parent ~= folder or t == npc then
+		return nil
+	end
+	local tm = t :: Model
+	if tm:GetAttribute("Minigame") or tm:GetAttribute("Vital") == "Dead" then
+		return nil
+	end
+	local by = tm:GetAttribute("CommandedBy")
+	if by ~= nil and by ~= player.UserId then
+		return nil
+	end
+	local tp, np = pelvisOf(tm), pelvisOf(npc)
+	if not tp or not np or Lab.ownerAt(tp.Position) ~= Lab.ownerAt(np.Position) then
+		return nil
+	end
+	return tm
 end
 
 -- Why a command is refused (nil: it may go). Exposed for the tests.
@@ -180,7 +230,7 @@ function NpcCommand.refusal(player: Player, action: unknown, npcInst: unknown, t
 		return string.format("You already lead %d people", NpcCommand.MAX_FOLLOWERS)
 	end
 	if action == "Attack" then
-		local target = bodyOf(targetInst)
+		local target = targetOf(player, targetInst, m)
 		if not target or target == m then
 			return "Pick someone to attack"
 		end
@@ -211,7 +261,7 @@ function NpcCommand.command(player: Player, action: string, npcInst: unknown, ta
 	end
 	local o = orders[m]
 	if not o then
-		o = { owner = player, mode = action, nextHit = 0, place = player:GetAttribute("Place") }
+		o = { owner = player, mode = action, nextHit = 0, place = player:GetAttribute("Place"), home = m:GetAttribute("Home"), homeLook = m:GetAttribute("HomeLook") }
 		orders[m] = o
 	end
 	local order = o :: Order
@@ -225,7 +275,7 @@ function NpcCommand.command(player: Player, action: string, npcInst: unknown, ta
 		local p = pelvisOf(m) :: BasePart
 		goTo(m, p.Position, p.Position + p.CFrame.LookVector)
 	elseif action == "Attack" then
-		order.target = bodyOf(targetInst)
+		order.target = targetOf(player, targetInst, m)
 		order.toy = Toys.byId[toyId :: string]
 		order.held = hold(m, toyId :: string)
 	end
@@ -246,7 +296,7 @@ local function step(now: number)
 				goTo(m, behind, root.Position)
 			end
 		elseif o.mode == "Attack" then
-			local target = o.target and bodyOf(o.target)
+			local target = o.target and targetOf(o.owner, o.target, m)
 			local tp = target and pelvisOf(target)
 			if not target or not tp then
 				-- (Down for good or gone: the job is done; it stays where it is.)
@@ -305,8 +355,8 @@ function NpcCommand.start()
 		if not m:IsA("Model") or m:FindFirstChild("TalkPrompt", true) or m:GetAttribute("Minigame") or m:GetAttribute("Chaser") then
 			return
 		end
-		local head = m:FindFirstChild("Head")
-		if not head or not head:IsA("BasePart") then
+		local head = m:WaitForChild("Head", 5)
+		if not head or not head:IsA("BasePart") or not m.Parent or head:FindFirstChild("TalkPrompt") then
 			return
 		end
 		local prompt = Instance.new("ProximityPrompt")
@@ -314,11 +364,24 @@ function NpcCommand.start()
 		prompt.ActionText = "Talk"
 		prompt.ObjectText = tostring(m:GetAttribute("PersonName") or "Dummy")
 		prompt.KeyboardKeyCode = Enum.KeyCode.E
+		prompt.GamepadKeyCode = Enum.KeyCode.ButtonL3 -- (X is grab/throw on a pad)
 		prompt.MaxActivationDistance = 9
 		prompt.HoldDuration = 0
 		prompt.RequiresLineOfSight = false
 		prompt.Style = Enum.ProximityPromptStyle.Default
 		prompt.Parent = head
+		-- Usable only while the body can take commands (alive, not in a game of its own): the
+		-- attribute "Talkable" tells the clients (NpcTalk keeps it hidden in the lab view and Build).
+		local function refresh()
+			local ok = bodyOf(m) ~= nil
+			prompt:SetAttribute("Talkable", ok)
+		end
+		refresh()
+		m.AttributeChanged:Connect(function(name: string)
+			if name == "Vital" or name == "Minigame" or name == "Chaser" or name == "Greeter" or name == "Visitor" or name == "Horde" then
+				refresh()
+			end
+		end)
 		prompt.Triggered:Connect(function(player: Player)
 			local body = bodyOf(m)
 			local root = rootOf(player)
@@ -330,9 +393,9 @@ function NpcCommand.start()
 			local near: { { model: Model, name: string, d: number } } = {}
 			local folder = Workspace:FindFirstChild("Dummies")
 			for _, other in if folder then folder:GetChildren() else {} do
-				local ob = bodyOf(other)
+				local ob = targetOf(player, other, body)
 				local op = ob and pelvisOf(ob)
-				if ob and op and ob ~= body then
+				if ob and op then
 					local d = (op.Position - pelvis.Position).Magnitude
 					if d <= NpcCommand.TARGET_REACH then
 						table.insert(near, { model = ob, name = tostring(ob:GetAttribute("PersonName") or "Dummy"), d = d })
@@ -346,7 +409,7 @@ function NpcCommand.start()
 			for i = 1, math.min(5, #near) do
 				table.insert(targets, { model = near[i].model, name = near[i].name })
 			end
-			remote:FireClient(player, "Open", { npc = body, name = prompt.ObjectText, targets = targets, weapons = NpcCommand.weaponsOf(player), mode = body:GetAttribute("Command") })
+			remote:FireClient(player, "Open", { npc = body, name = prompt.ObjectText, targets = targets, weapons = NpcCommand.weaponsOf(player), mode = if body:GetAttribute("CommandedBy") == player.UserId then body:GetAttribute("Command") else nil })
 		end)
 	end
 	task.spawn(function()

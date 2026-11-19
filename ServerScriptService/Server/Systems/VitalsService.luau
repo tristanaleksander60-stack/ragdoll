@@ -97,6 +97,7 @@ type Vitals = {
 	weak: number, -- bpm every round so far took off the pulse for good (only patching up resets it)
 	ceiling: number?, -- after a round: the pulse never climbs above where that round left it
 	damage: number?, -- v4 A5: hits so far (Config.BODY_HP of it kills); patching up clears it
+	damageAt: number?, -- os.clock() of the last damage (it wears off by Config.DAMAGE_DECAY a second)
 }
 
 local vitals: { [Model]: Vitals } = {}
@@ -495,9 +496,14 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 		-- Region and weapon set the share; the body shows it as today (knocked out, dead green, revive).
 		if v.state ~= "Dead" then
 			local region = if head then Config.DAMAGE_HEAD elseif zone.limb then Config.DAMAGE_LIMB else 1
-			v.damage = (v.damage or 0) + power * Config.DAMAGE_PER_POWER * region * (if blunt then Config.DAMAGE_BLUNT else 1)
+			-- (Damage wears off by Config.DAMAGE_DECAY a second, so a punch an hour ago does not count.)
+			local nowT = os.clock()
+			local worn = math.max(0, (v.damage or 0) - (nowT - (v.damageAt or nowT)) * Config.DAMAGE_DECAY)
+			v.damageAt = nowT
+			v.damage = worn + power * Config.DAMAGE_PER_POWER * region * (if blunt then Config.DAMAGE_BLUNT else 1)
 			model:SetAttribute("Damage", math.floor(v.damage :: number))
-			if not quiet() and (v.damage :: number) >= Config.BODY_HP then
+			-- (A hit that already took all the blood dies of that: the heart gives out, in step.)
+			if not quiet() and (v.damage :: number) >= Config.BODY_HP and v.blood > Anatomy.DEAD_AT then
 				v.pulse = 0
 				v.lethalAt = now
 				setState(model, v, "Dead", "Wounds")

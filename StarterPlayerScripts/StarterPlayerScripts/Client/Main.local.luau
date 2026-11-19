@@ -49,6 +49,8 @@ PlotPrivacy.start() -- (first: other labs leave this screen before anything draw
 task.spawn(require(Client:WaitForChild("DummySkins")).start) -- the dummies' sculpted mannequin bodies
 require(Client:WaitForChild("SoundMix")).start() -- v4 A3: the mix's groups and compressor
 task.spawn(require(Client:WaitForChild("NpcTalk")).start) -- v4 B4: the talk panel
+task.spawn(require(Client:WaitForChild("SlowMotion")).start) -- v4 C5: smooth slow motion
+task.spawn(require(Client:WaitForChild("VehicleFeel")).start) -- v4 C2: wheels, lean, lights, engine, horn
 FxController.start()
 AvatarMoves.start()
 

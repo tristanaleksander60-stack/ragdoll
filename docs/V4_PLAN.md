@@ -265,3 +265,41 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
   - Commanded crowd bodies skip CrowdService.think and walk via `CrowdService.goTo`.
   - Attack holds the weapon model in the right hand and hits through HitService with no requester (the server pushes, and an NPC's hits never count as your takedowns).
   - Seen in Studio: the panel, and a Punch attack that walked up and dealt damage 10→60. T97_NpcCommand passes (+ T36/T40).
+- 20 Nov (PC): **full suite after phase B: 80/83.**
+  - T32 is flaky.
+  - T26 (sleepy) passes alone.
+  - T34 is fixed: a hit that takes all the blood dies of blood loss, not "Wounds".
+- **Blind review A+B: system 7.6, UI 6.5. Fix round 1 done:**
+  - **Commands win over the other systems.** Lab social, the lost-dummy return and VisitorService skip `CommandedBy`. Visitors and horde runners can't be commanded. "Let go" gives the body its own Home back.
+  - **GroundGuard** counts only terrain or anchored parts as ground, ignores water, bodies and players.
+  - **SoundMix** builds the Weapons group from `SoundManifest.GUNS`, so G17 and M4 are now in Weapons.
+  - **NpcTalk:**
+    - pad selection, and B/Esc close;
+    - a CLOSE button, and BACK goes back one page;
+    - closes when you walk away, respawn or change place;
+    - sits right of the crosshair;
+    - prompts hidden in the lab view and Build;
+    - pad key L3.
+  - **Weapons:** the bar's weapons come first. A trial that ends stops the attack.
+  - **Targets:** must be in the same lab or area, and never someone else's follower.
+  - **Prompts:** "Talkable" switches them by Vital and game flags.
+  - **Damage** wears off (`DAMAGE_DECAY` 2/s).
+  - **T97** checks that a hit lands and that Home comes back.
+  - No re-review yet.
+- **C5 slow-mo:** `Client/SlowMotion` (`Config.SLOWMO_V2`).
+  - Bodies in a bubble keep SLOWMO_SCALE 0.25 of every speed change, on the client that simulates them. They get their speed back on the way out.
+  - Effects: grade, blur (not on phones), vignette, FOV ease, pitch shift on Effects, heartbeat, and trails (not on phones).
+  - BigHit ≥ 0.95 gives a 0.9 s auto moment (gap 8 s).
+  - The server bubble is tagged `SlowmoBubble` (Radius/Ends) and no longer nudges bodies a client owns. The replay already plays at 0.3x.
+- **C4 events:** `Server/Systems/Surprises` has 11 events: UfoBeam, BowlingAvalanche, RocketRain, MagnetStorm, LightningStorm, Sinkhole, Earthquake, FanBlast, MoonGravity, BalloonDrop, GiantDummy.
+  - Each has an Events entry (productId 0) and a handler, and all are in the BIG RED BUTTON pool.
+  - `Config.LAB_SURPRISES`: a 7 s mini surprise in your own lab every 150-240 s. Never during the quiet start, an event or self-tests.
+  - T98_Surprises: all start, build and clean up.
+  - Card pictures (`event_*` icons) are not drawn yet: the glyph shows.
+- **C2 cars:**
+  - The model's wheels hang on Welds: they roll with speed and the front ones steer. The shell sits on LookRoot/RollWeld (lean and dive).
+  - Headlamps and a brake glow.
+  - Sounds (Config.VEHICLES): engine loop 80317022777602 (Roblox Resources) with pitch by speed, horn 127513531122725 (H / pad DPad right, remote VehicleHorn, server plays it), crash 70951531892215.
+  - Tyre dust.
+  - The driver sits in the model's own seat.
+  - `Client/VehicleFeel`. Seen in Studio.

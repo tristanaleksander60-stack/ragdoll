@@ -36,6 +36,7 @@ local PlayerRagdoll = require(Systems.PlayerRagdoll)
 local Purchases = require(Systems.Purchases)
 local Lab = require(Systems.Lab)
 local Creatures = require(Systems.Creatures)
+local Surprises = require(Systems.Surprises)
 
 local log = Log.new("Events")
 
@@ -377,6 +378,14 @@ handlers.BullRun = function(job, onEnd)
 	onEnd(Creatures.bulls(labMiddle(job)))
 end
 
+-- v4 C4: the lab surprises (Surprises), each in the host's lab.
+for _, id in { "UfoBeam", "BowlingAvalanche", "RocketRain", "MagnetStorm", "LightningStorm", "Sinkhole", "Earthquake", "FanBlast", "MoonGravity", "BalloonDrop", "GiantDummy" } do
+	handlers[id] = function(job, onEnd)
+		local fn = (Surprises :: any)[id] :: (Vector3, Player?) -> () -> ()
+		onEnd(fn(labMiddle(job), hostOf(job)))
+	end
+end
+
 for _, event in Events.list do
 	assert(handlers[event.id], "no handler for the event " .. event.id)
 end
@@ -604,10 +613,49 @@ local function onBuy(player: Player, id: unknown)
 	end
 end
 
+
+-- v4 C4: now and then a short surprise by itself in a player's own lab (Config.LAB_SURPRISES), so no
+-- two minutes are the same: only in their own lab, never while an event runs or waits, never in a
+-- new visit's quiet start, at most one per LAB_SURPRISE_GAP (random in the range) per player.
+local nextSurprise: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
+function EventService.surpriseNow(player: Player, id: string?): string?
+	if not Lab.plotIndex(player) then
+		return nil
+	end
+	local name = Surprises.mini(labMiddle({ id = "Surprise", by = player.DisplayName, source = "Free" :: any, hostId = player.UserId }), player, id)
+	local event = Events.byId[name]
+	notify(player, string.format("SURPRISE! %s", if event then event.name else name), "ok")
+	return name
+end
+local function surpriseLoop()
+	local gap = Config.LAB_SURPRISE_GAP :: Vector2
+	while true do
+		task.wait(10)
+		if game:GetService("ServerStorage"):GetAttribute("RunSelfTest") == true then
+			continue -- (never while the self-tests run: they count on still bodies)
+		end
+		local now = os.clock()
+		for _, player in Players:GetPlayers() do
+			local due = nextSurprise[player]
+			if not due then
+				nextSurprise[player] = now + math.max(Config.QUIET_START, gap.X)
+				continue
+			end
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			if now >= due and current == nil and #queue == 0 and root and root:IsA("BasePart") and Lab.ownerAt(root.Position) == player then
+				nextSurprise[player] = now + math.random(math.floor(gap.X), math.floor(gap.Y))
+				pcall(EventService.surpriseNow, player)
+			end
+		end
+	end
+end
 function EventService.start()
 	stateRemote = Net.event(Net.Names.EventState)
 	noticeRemote = Net.event(Net.Names.EventNotice)
 	Net.event(Net.Names.EventBuy).OnServerEvent:Connect(onBuy)
+	if Config.LAB_SURPRISES then
+		task.spawn(surpriseLoop)
+	end
 	for _, event in Events.list do
 		local eventId = event.id
 		-- Orders arrive from a new purchase, or owed from a server that closed or that the buyer left.

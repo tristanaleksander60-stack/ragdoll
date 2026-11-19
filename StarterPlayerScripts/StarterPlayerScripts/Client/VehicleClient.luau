@@ -71,7 +71,7 @@ function VehicleClient.start()
 					return require(script.Parent:WaitForChild("Toast")) :: any
 				end)
 				if ok and Toast then
-					Toast.show("W/S to drive, A/D to steer, Space to get out", Color3.fromRGB(255, 205, 64))
+					Toast.show("W/S to drive, A/D to steer, H to honk, Space to get out", Color3.fromRGB(255, 205, 64))
 				end
 			end
 			drive(seat, dt)

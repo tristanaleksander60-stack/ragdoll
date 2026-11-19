@@ -4,6 +4,7 @@
 -- above its pelvis within LOOK_UP studs, the body is buried in it, and is lifted to stand on top.
 -- Only a short look up (not from the sky), so a body under a stair or a table is left alone.
 
+local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local GroundGuard = {}
@@ -14,16 +15,25 @@ GroundGuard.BURIED_BY = 0.6 -- studs: ground this far over the pelvis counts as 
 GroundGuard.REST_SPEED = 4 -- studs/s: only bodies at rest (a flying body passes through floors by itself)
 GroundGuard.lifted = 0 -- (tests and the log)
 
+-- Ground is terrain or an anchored, colliding part (never another body, a player, a car or water:
+-- a pile of ragdolls or a body afloat at the Island is left as it is).
+local function isGround(inst: Instance): boolean
+	if inst:IsA("Terrain") then
+		return true
+	end
+	return inst:IsA("BasePart") and inst.CanCollide and inst.Anchored
+end
+
 local function solidHit(from: Vector3, dir: Vector3, params: RaycastParams): RaycastResult?
-	-- (Past see-through, non-colliding pieces: snow, signs, glass.)
+	-- (Past see-through, non-colliding or moving pieces: snow, signs, glass, bodies, cars.)
 	local ignore = params.FilterDescendantsInstances
-	for _ = 1, 4 do
+	for _ = 1, 6 do
 		local hit = Workspace:Raycast(from, dir, params)
 		if not hit then
 			return nil
 		end
 		local inst = hit.Instance
-		if inst:IsA("Terrain") or (inst:IsA("BasePart") and inst.CanCollide) then
+		if isGround(inst) then
 			return hit
 		end
 		table.insert(ignore, inst)
@@ -43,7 +53,19 @@ function GroundGuard.check(model: Model): boolean
 	end
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { model }
+	params.IgnoreWater = true
+	-- (Every body and every player: only real ground counts.)
+	local skip: { Instance } = { model }
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if dummies then
+		table.insert(skip, dummies)
+	end
+	for _, p in Players:GetPlayers() do
+		if p.Character then
+			table.insert(skip, p.Character)
+		end
+	end
+	params.FilterDescendantsInstances = skip
 	local from = pelvis.Position + Vector3.new(0, GroundGuard.LOOK_UP, 0)
 	local hit = solidHit(from, Vector3.new(0, -GroundGuard.LOOK_UP - 1, 0), params)
 	if hit and hit.Position.Y > pelvis.Position.Y + GroundGuard.BURIED_BY then

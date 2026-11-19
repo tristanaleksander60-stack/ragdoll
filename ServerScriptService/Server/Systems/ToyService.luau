@@ -20,6 +20,7 @@ local HitMath = require(Shared.HitMath)
 local Dummies = require(Shared.Dummies)
 local Net = require(Shared.Net)
 local NORMAL_GRAVITY = require(Shared.Ragdoll.Config).NORMAL_GRAVITY
+local GameConfig = require(Shared:WaitForChild("Config")) :: any
 local DummyControl = require(script.Parent.DummyControl)
 local FxService = require(script.Parent.FxService)
 local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
@@ -1006,6 +1007,11 @@ local function slowmo(player: Player?, at: Vector3, _facing: Vector3)
 	bubble.CanTouch = false
 	bubble.Transparency = 0.25
 	bubble.CFrame = CFrame.new(centre)
+	-- v4 C5: the clients draw the slow motion (Client/SlowMotion) and slow the bodies they simulate.
+	bubble:SetAttribute("Radius", SLOWMO_RADIUS)
+	bubble:SetAttribute("Ends", Workspace:GetServerTimeNow() + SLOWMO_TIME)
+	CollectionService:AddTag(bubble, "SlowmoBubble")
+	local clientSide = GameConfig.SLOWMO_V2 == true
 	own(player, bubble, SLOWMO_TIME + 0.5)
 	FxService.hit(centre, 30, "BlackHole")
 	local g = Workspace.Gravity
@@ -1015,7 +1021,7 @@ local function slowmo(player: Player?, at: Vector3, _facing: Vector3)
 			local now = os.clock()
 			for _, dummy in Blasts.dummiesNear(centre, SLOWMO_RADIUS) do
 				local pelvis = dummy:FindFirstChild("LowerTorso") :: BasePart?
-				if pelvis and now - (slowedAt[dummy] or -math.huge) >= SLOWMO_TICK * 0.9 then
+				if pelvis and not (clientSide and DummyControl.ownerOf(dummy)) and now - (slowedAt[dummy] or -math.huge) >= SLOWMO_TICK * 0.9 then
 					slowedAt[dummy] = now
 					local v = pelvis.AssemblyLinearVelocity
 					local slowed = -v * (1 - SLOWMO_KEEP) + Vector3.new(0, g * SLOWMO_TICK * SLOWMO_FALL, 0)
