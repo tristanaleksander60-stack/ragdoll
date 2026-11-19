@@ -32,6 +32,7 @@ local Config = require(script.Parent.Config)
 local Poses = require(script.Parent.Poses)
 local Anatomy = require(script.Parent.Parent.Anatomy)
 local GunThreat = require(script.Parent.Parent.GunThreat)
+local GameConfig = require(script.Parent.Parent.Config)
 
 export type State = "Standing" | "Walking" | "Fleeing" | "Crawling" | "Flinch" | "Stumble" | "Ragdoll" | "Out" | "GettingUp" | "Recovering" | "Frozen"
 
@@ -353,6 +354,48 @@ local function clampVelocities(rig: Rig)
 		local w = part.AssemblyAngularVelocity
 		if w.Magnitude > MAX_ANGULAR_SPEED then
 			part.AssemblyAngularVelocity = w.Unit * MAX_ANGULAR_SPEED
+		end
+	end
+end
+
+-- World/Feel v2 (Config.FEEL_V2): the limb guard, every step on the machine that simulates the body.
+-- The genre's top complaint is a ragdoll that "explodes" or flings a limb into the sky: one limb
+-- (its own assembly, on its ball socket) gets a speed the rest of the body does not have, from a
+-- deep overlap or a solver kick. A limb may move at most LIMB_REL_MAX studs/s against the pelvis and
+-- spin at most LIMB_SPIN_MAX rad/s; the whole body keeps its own speed (a launch flies as before).
+-- Not while held (a grab drags a limb on purpose) or frozen (welded ice). A body whose pelvis has
+-- no sane velocity (NaN) is left alone (Lab brings lost bodies home), and so is one with a limb cut
+-- off (Config.SEVERING).
+local LIMB_GUARD = GameConfig.FEEL_V2 == true
+local LIMB_REL_MAX = 110
+local LIMB_SPIN_MAX = 32
+ActiveRagdoll.LIMB_REL_MAX = LIMB_REL_MAX
+ActiveRagdoll.LIMB_SPIN_MAX = LIMB_SPIN_MAX
+local function guardLimbs(rig: Rig)
+	if not LIMB_GUARD or rig.held > 0 or rig.state == "Frozen" then
+		return
+	end
+	-- (A limb cut off flies on its own: a body with one is left as it is.)
+	local severed = rig.model:GetAttribute("Severed")
+	if type(severed) == "string" and severed ~= "" then
+		return
+	end
+	local base = rig.pelvis.AssemblyLinearVelocity
+	if base.Magnitude ~= base.Magnitude then
+		return
+	end
+	for _, part in rig.parts do
+		if part ~= rig.pelvis and part ~= rig.root and not part.Anchored then
+			local rel = part.AssemblyLinearVelocity - base
+			local speed = rel.Magnitude
+			if speed > LIMB_REL_MAX and speed == speed then
+				part.AssemblyLinearVelocity = base + rel.Unit * LIMB_REL_MAX
+			end
+			local w = part.AssemblyAngularVelocity
+			local spin = w.Magnitude
+			if spin > LIMB_SPIN_MAX and spin == spin then
+				part.AssemblyAngularVelocity = w.Unit * LIMB_SPIN_MAX
+			end
 		end
 	end
 end
@@ -1208,6 +1251,7 @@ local function update(dt: number)
 		end
 		rig.stateTime += dt
 		governSpeed(rig)
+		guardLimbs(rig)
 		local state = rig.state
 		if state ~= "Ragdoll" and state ~= "Out" and state ~= "Frozen" and rig.held == 0 and vitalDown(rig) then
 			enter(rig, "Ragdoll")

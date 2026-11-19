@@ -93,6 +93,7 @@ HudMenu.start()
 ProgressUI.start()
 require(Client:WaitForChild("FirstPerson")).start() -- V: first person (round 5)
 require(Client:WaitForChild("Viewmodel")).start()
+require(Client:WaitForChild("FeelV2")).start() -- World/Feel v2: trails, casings, recoil, combo beat, world lamps (Config.FEEL_V2)
 require(Client:WaitForChild("ChaseHud")).start()
 require(Client:WaitForChild("NpcGlow")).start()
 require(Client:WaitForChild("PortalUI")).start() -- SINGLEPLAYER / MULTIPLAYER portals, the server list (round 5) -- the dummies' slow purple glow (round 5) -- the health bar in an NPC Chase (round 5) -- the weapon in front of the camera in first person

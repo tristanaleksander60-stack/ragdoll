@@ -24,6 +24,9 @@ local PlotPrivacy = require(script.Parent:WaitForChild("PlotPrivacy"))
 local BulletHoles = require(script.Parent:WaitForChild("BulletHoles"))
 local DummyLife = require(script.Parent:WaitForChild("DummyLife"))
 local Settings = require(script.Parent:WaitForChild("Settings"))
+-- World/Feel v2 (Config.FEEL_V2): the trauma shake, particle bursts, flops, trails, muzzle flash and
+-- casings, the combo beat. Every v2 layer is behind FeelV2.ON; off, this file plays as in 0.20.
+local FeelV2 = require(script.Parent:WaitForChild("FeelV2"))
 
 -- Round 4, M10: every bank comes from the manifest (ids, titles and sources live there). A bank
 -- loses an id whose asset fails to load (start), so a blocked upload never plays silence.
@@ -300,6 +303,10 @@ local MAX_SPARKS = 140 -- live spark parts at once (phones): a burst over budget
 local liveSparks = 0
 
 local function sparks(position: Vector3, count: number, power: number, palette: { Color3 }?)
+	if FeelV2.ON then
+		FeelV2.sparks(position, count, power, palette) -- (pooled particles, not a part per spark)
+		return
+	end
 	count = math.min(count, MAX_SPARKS - liveSparks)
 	for _ = 1, count do
 		liveSparks += 1
@@ -741,6 +748,9 @@ local function dart(position: Vector3, sourceUserId: number?, toyId: string?, no
 	local from, feet = gunOf(shooter and shooter.Character)
 	local real = REAL_GUNS[toyId or ""]
 	fireGun(toyId or "", start0(from, position), feet, priority)
+	if FeelV2.ON and from and toyId and (from.Position - position).Magnitude < 400 then
+		FeelV2.muzzle(toyId, from, position, shooter == nil or shooter.UserId == localUserId)
+	end
 	local start = if from then from.Position else nil
 	if not start or (start - position).Magnitude > 400 then
 		return
@@ -973,6 +983,11 @@ local function styleLayer(position: Vector3, toyId: string, power: number, near:
 	end
 end
 
+-- (v2: a hit-stop for a big moment that is not a blow by hand; set once hitStop exists, below.)
+local bigStop: (length: number) -> () = function(_length: number) end
+-- (v2: the hits that send a body flying from a launcher: it streaks at once, FeelV2.noteLaunch.)
+local LAUNCHERS: { [string]: string } = { CannonPad = "Launch", Throw = "Throw", SpringPad = "Launch", Trampoline = "Launch", Launch = "Launch", Uppercut = "Launch" }
+
 -- The moment a blow lands: the thud, the weapon's own sound, sparks, shake and blood.
 local function impact(position: Vector3, speed: number, toyId: string, priority: boolean)
 	local power = math.clamp(speed / 40, 0.2, 2.5)
@@ -986,6 +1001,19 @@ local function impact(position: Vector3, speed: number, toyId: string, priority:
 	end
 	sparks(position, math.floor(4 + 4 * power), 0.8 + 0.6 * power)
 	shakeAmount = math.max(shakeAmount, near * 0.35 * power)
+	if FeelV2.ON then
+		local tool = Toys.byId[toyId]
+		local kind = if toyId == "TNT" or toyId == "BigBoom" or toyId == "StickyBomb" or toyId == "Cannon" then "Blast"
+			elseif tool and tool.fx == "Clang" then "Clang"
+			else "Hit"
+		local stop = FeelV2.impact(position, speed, near, kind)
+		if stop > 0 and not (tool and tool.byHand) then
+			bigStop(stop) -- (a blow by hand already had its own stop: PokeController)
+		end
+		if power >= 1.2 and not LAUNCHERS[toyId] then
+			FeelV2.noteLaunch(position, "Hit") -- knocked flying: the body streaks where it goes
+		end
+	end
 	-- Cartoon blood from anything that really hurts (a wind gust or a gentle nudge does not).
 	-- (Not at the middle of a pop or a ring of air, where nobody need be standing.)
 	-- (Never on a player: in the plaza players knock each other over, nobody bleeds.)
@@ -1046,6 +1074,9 @@ local function onFx(kind: string, position: Vector3, speed: number, toyId: strin
 		end
 	end
 	local near = nearness(position)
+	if kind == "Hit" and FeelV2.ON and LAUNCHERS[toyId] then
+		FeelV2.noteLaunch(position, LAUNCHERS[toyId])
+	end
 	if kind == "Hit" then
 		if toyId == "Grab" then
 			play("whoosh", position, 0.25, 1.6) -- a light "fwip" as the grip takes hold
@@ -1147,6 +1178,9 @@ local function onFx(kind: string, position: Vector3, speed: number, toyId: strin
 		sparks(position, math.floor(3 + 3 * power), 0.6 + 0.4 * power)
 		shakeAmount = math.max(shakeAmount, near * 0.25 * power)
 		BloodFx.landing(position, speed)
+		if FeelV2.ON then
+			FeelV2.flop(position, speed, near)
+		end
 	elseif kind == "Used" then
 		-- Someone else threw or put something down: their avatar throws it.
 		local thrower = sourceUserId and sourceUserId ~= localUserId and Players:GetPlayerByUserId(sourceUserId)
@@ -1177,6 +1211,9 @@ local function onFx(kind: string, position: Vector3, speed: number, toyId: strin
 		play("land", position, 0.3 + 0.4 * power, 1.1 - 0.15 * power)
 		sparks(position, math.floor(3 + 3 * power), 0.6 + 0.4 * power)
 		shakeAmount = math.max(shakeAmount, near * 0.25 * power)
+		if FeelV2.ON then
+			FeelV2.flop(position, speed, near)
+		end
 	end
 end
 
@@ -1209,6 +1246,18 @@ local function onRender(dt: number)
 	if not camera then
 		return
 	end
+	if FeelV2.ON then
+		-- v2: what was asked for this frame becomes trauma; the shake drawn is its square, smooth
+		-- noise, with gun recoil (FeelV2.cameraStep reads the SETTINGS switch itself).
+		if shakeAmount > 0.001 then
+			FeelV2.addTrauma(shakeAmount * 0.45)
+			shakeAmount = 0
+		end
+		local offset = FeelV2.cameraStep(dt)
+		if offset ~= CFrame.identity then
+			camera.CFrame = camera.CFrame * offset
+		end
+	end
 	if shakeAmount > 0.001 and not Settings.shake() then
 		shakeAmount = 0 -- (SETTINGS: camera shake off)
 	end
@@ -1221,7 +1270,7 @@ local function onRender(dt: number)
 	-- (The only writer of FieldOfView: a hit's kick and the sprint's widening add up here.)
 	baseFov = baseFov or camera.FieldOfView
 	fovKick = math.max(0, fovKick - dt * 30)
-	local target = (baseFov :: number) + FxController.fovExtra + FxController.fovZoom + (if fovKick > 0.01 then fovKick else 0)
+	local target = (baseFov :: number) + FxController.fovExtra + FxController.fovZoom + (if fovKick > 0.01 then fovKick else 0) + (if FeelV2.ON then FeelV2.fovBeat else 0)
 	if math.abs(camera.FieldOfView - target) > 0.01 then
 		camera.FieldOfView = target
 	end
@@ -1358,6 +1407,10 @@ local function hitStop(length: number)
 	end
 end
 
+bigStop = function(length: number)
+	hitStop(FxController.takeHitStop(length))
+end
+
 -- Plays a hit effect immediately for the local player's own tap (server echo is then skipped).
 -- stop: the hit-stop (s) granted for this hit (FxController.takeHitStop).
 function FxController.predictHit(position: Vector3, speed: number, toyId: string, direction: Vector3?, stop: number?, byHand: boolean?)
@@ -1423,6 +1476,9 @@ function FxController.start()
 		end)
 	end)
 
+	FeelV2.play = function(bank: string, position: Vector3, volume: number, pitch: number)
+		play(bank, position, volume, pitch)
+	end
 	Net.event(Net.Names.Fx).OnClientEvent:Connect(onFx)
 	RunService:BindToRenderStep("RagdollLabFx", Enum.RenderPriority.Camera.Value + 1, onRender)
 	-- The hit-stop holds the camera still for its few frames (after every other camera update).
