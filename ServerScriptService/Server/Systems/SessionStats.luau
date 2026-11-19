@@ -25,6 +25,7 @@ SessionStats.STORE = "Session_v1"
 
 export type Record = {
 	v: string, -- Config.Version
+	pv: number, -- phase 0: game.PlaceVersion (the published build; 0 in Studio)
 	joined: number, -- os.time()
 	plat: string, -- "phone" | "tablet" | "pc" | "console" | "?"
 	touch: boolean?,
@@ -44,6 +45,15 @@ export type Record = {
 	autoEgg: boolean, -- the first egg opened by itself
 	lab: boolean, -- had a lab of their own
 	left: number?, -- s from join to leave
+	-- Phase 0: what was really used this visit (not only what the device has), and the onboarding
+	-- funnel's furthest step (1 Joined ... 5 ThreeToys, 6 SixToys, 7 TenToys; new players only).
+	usedPad: boolean,
+	usedKeys: boolean,
+	usedMouse: boolean,
+	usedTouch: boolean,
+	input: string?, -- "pad" | "kbm" | "touch" | "mixed" | "none", set on leave
+	portrait: boolean?,
+	step: number,
 }
 
 local records: { [Player]: Record } = {}
@@ -64,6 +74,7 @@ local function begin(player: Player)
 	joinedAt[player] = os.clock()
 	records[player] = {
 		v = Config.Version,
+		pv = game.PlaceVersion,
 		joined = os.time(),
 		plat = "?",
 		shots = 0,
@@ -74,7 +85,31 @@ local function begin(player: Player)
 		eggOpened = 0,
 		autoEgg = false,
 		lab = false,
+		usedPad = false,
+		usedKeys = false,
+		usedMouse = false,
+		usedTouch = false,
+		step = 0,
 	}
+end
+
+-- Phase 0: the input mix in one word, from what was used.
+function SessionStats.inputOf(r: Record): string
+	local n = (if r.usedPad then 1 else 0) + (if r.usedKeys or r.usedMouse then 1 else 0) + (if r.usedTouch then 1 else 0)
+	if n == 0 then
+		return "none"
+	elseif n > 1 then
+		return "mixed"
+	end
+	return if r.usedPad then "pad" elseif r.usedTouch then "touch" else "kbm"
+end
+
+-- Phase 0: the onboarding funnel's step reached (OnboardingService); the record keeps the furthest.
+function SessionStats.step(player: Player, n: number)
+	local r = records[player]
+	if r and n > r.step then
+		r.step = n
+	end
 end
 
 local function since(player: Player): number
@@ -135,7 +170,7 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 	-- (A handful of messages a visit at most: a client that floods is ignored from then on.)
 	local n = (messages[player] or 0) + 1
 	messages[player] = n
-	if n > 12 then
+	if n > 20 then -- (phase 0: up to four "Used" messages more)
 		return
 	end
 	if kind == "Hello" and type(data) == "table" and r.plat == "?" then
@@ -146,10 +181,22 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 		r.w = clean(d.w, 0, 10000)
 		r.h = clean(d.h, 0, 10000)
 		r.boot = clean(d.boot, 0, 600)
+		r.portrait = (r.h or 0) > (r.w or 0)
 		local short = math.min(r.w or 0, r.h or 0)
 		r.plat = if r.touch and not r.keys then (if short > 0 and short <= 500 then "phone" else "tablet")
 			elseif r.pad and not r.keys then "console"
 			else "pc"
+	elseif kind == "Used" and type(data) == "string" then
+		-- (Phase 0: the first time this visit an input family is really used.)
+		if data == "pad" then
+			r.usedPad = true
+		elseif data == "keys" then
+			r.usedKeys = true
+		elseif data == "mouse" then
+			r.usedMouse = true
+		elseif data == "touch" then
+			r.usedTouch = true
+		end
 	elseif kind == "EggCard" then
 		r.eggCard = true
 	elseif kind == "FirstShot" and r.clientShot == nil then
@@ -164,6 +211,7 @@ local function write(player: Player)
 		return
 	end
 	r.left = since(player)
+	r.input = SessionStats.inputOf(r)
 	joinedAt[player] = nil
 	messages[player] = nil
 	local hasLab = SessionStats.hasLab

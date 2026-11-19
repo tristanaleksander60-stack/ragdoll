@@ -23,6 +23,7 @@ local Net = require(Shared.Net)
 local Log = require(Shared.Log)
 local Toys = require(Shared.Toys)
 local GreeterService = require(script.Parent.GreeterService)
+local SessionStats = require(script.Parent.SessionStats)
 
 local log = Log.new("Onboarding")
 
@@ -243,6 +244,9 @@ local function reach(player: Player, step: number)
 	end
 	local was = p.step
 	p.step = step
+	if not p.returning then
+		SessionStats.step(player, step) -- (phase 0: the visit record keeps the furthest step)
+	end
 	if step == 3 then
 		p.firstToyAt = os.clock()
 	end

@@ -40,9 +40,33 @@ end
 -- Seconds from the client starting the game to its first shot (nil: none yet).
 SessionClient.bootSeconds = 0
 
+-- Phase 0: each input family once, the first time it is really used ("pad", "keys", "mouse",
+-- "touch"), so the record tells a pad on a PC from a keyboard.
+local usedSent: { [string]: boolean } = {}
+local function familyOf(kind: Enum.UserInputType): string?
+	if kind == Enum.UserInputType.Touch then
+		return "touch"
+	elseif kind == Enum.UserInputType.Keyboard then
+		return "keys"
+	elseif kind == Enum.UserInputType.MouseButton1 or kind == Enum.UserInputType.MouseButton2 or kind == Enum.UserInputType.MouseWheel then
+		return "mouse"
+	elseif string.sub(kind.Name, 1, 7) == "Gamepad" then
+		return "pad"
+	end
+	return nil
+end
+local function noteInput(input: InputObject)
+	local family = familyOf(input.UserInputType)
+	if family and not usedSent[family] then
+		usedSent[family] = true
+		send("Used", family)
+	end
+end
+
 function SessionClient.start()
 	SessionClient.bootSeconds = time()
 	remote = Net.event(Net.Names.Session)
+	UserInputService.InputBegan:Connect(noteInput)
 	task.spawn(function()
 		-- (The first frames report a tiny viewport: wait for a real one.)
 		local camera = workspace.CurrentCamera
