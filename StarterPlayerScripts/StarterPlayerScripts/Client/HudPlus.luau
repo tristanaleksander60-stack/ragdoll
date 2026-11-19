@@ -421,7 +421,7 @@ local function buildSandbox(parent: ScreenGui)
 			-- (UI v2: the HUD's slab colour lit from above, the press squish and a click.)
 			b.BackgroundColor3 = KitStyle.SLAB
 			round(b, UDim.new(0, Theme.Radius.button))
-			KitStyle.fit(b, 18)
+			KitStyle.fit(b, 18, 11) -- (PC-only column keeps the old floor, so "SLOW-MO" is not cut)
 			KitStyle.press(b)
 		end
 		b.Parent = parent
