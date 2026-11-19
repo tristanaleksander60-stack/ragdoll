@@ -45,7 +45,7 @@ Experiments.PARTY = table.freeze({
 
 -- Phase 3: the daily advent experiment, 1-24 December (Christmas lab: CHIMNEY launcher and the
 -- PRESENT trap). Kinds go round so every day differs from the day before.
-local ADVENT_KINDS = {
+local ADVENT_KINDS: { { any } } = {
 	{ "Chimney", "Go up the CHIMNEY", 1 },
 	{ "Present", "Open the PRESENT trap", 1 },
 	{ "Takedown", "Take down 12 dummies", 12 },
@@ -61,8 +61,8 @@ function Experiments.advent(day: number): Def?
 	return {
 		id = "Advent" .. day,
 		text = string.format("\u{1F381} Day %d: %s", day, k[2]),
-		kind = k[1],
-		target = k[3],
+		kind = k[1] :: string,
+		target = k[3] :: number,
 		seconds = 300,
 		stars = 3,
 	}

@@ -26,7 +26,8 @@ return {
 			assert(Toys.byId.Minigun.unlockAt < Toys.byId.Deagle.unlockAt and Toys.byId.Railgun.unlockAt < Toys.byId.GoldenDeagle.unlockAt, "the order changed")
 			assert(Toys.byId.Bat.unlockAt == 2 and Toys.byId.Grenade.unlockAt == 10, "the first rungs moved")
 			-- Prices: the old tier bounds moved with the ladder.
-			assert(Toys.priceTier(Toys.byId.GoldenDeagle).robux == 199 and Toys.priceTier(Toys.byId.Bat).robux == 25, "price tiers moved")
+			local top, low = Toys.priceTier(Toys.byId.GoldenDeagle), Toys.priceTier(Toys.byId.Bat)
+			assert(top and low and top.robux == 199 and low.robux == 25, "price tiers moved")
 		end
 		return string.format("%d rungs, the fifth at %d, the top at %d", #rungs, rungs[5], rungs[#rungs])
 	end,

@@ -78,7 +78,7 @@ function PadMap.handle(actions: Actions, action: string, state: Enum.UserInputSt
 	local stop = state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel
 	-- Held buttons: always let go (a window may have opened while R2 was down).
 	if action == "PadFire" or action == "PadAim" then
-		local fn = if action == "PadFire" then actions.fire else actions.aim
+		local fn: (boolean) -> () = if action == "PadFire" then actions.fire else actions.aim
 		if stop then
 			fn(false)
 			return PASS

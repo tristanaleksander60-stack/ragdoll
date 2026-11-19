@@ -230,6 +230,7 @@ function ExperimentService.start()
 		partyOf[player] = nil
 	end)
 	;(remote :: RemoteEvent).OnServerEvent:Connect(function(player: Player, kind: unknown)
+		-- lihfolk-ignore: remote-unvalidated-args (kind is compared with "Skip" below; nothing else is read)
 		local p = players[player]
 		if not p or kind ~= "Skip" then
 			return

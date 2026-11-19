@@ -122,7 +122,7 @@ end
 
 -- A like-milestone code: its bolts if it is live and not used yet by this profile.
 function Economy.redeem(e: Eco, text: string): number?
-	local code = string.upper(string.gsub(text, "%s", ""))
+	local code = string.upper((string.gsub(text, "%s", "")))
 	if #code < 3 or #code > 24 or e.codes[code] then
 		return nil
 	end

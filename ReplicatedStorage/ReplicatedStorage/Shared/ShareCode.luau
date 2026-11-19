@@ -37,7 +37,7 @@ end
 
 -- Returns the toy index and the score, or nil for anything that is not a valid code.
 function ShareCode.decode(text: string): (number?, number?)
-	local code = string.upper(string.gsub(text, "[%s%-]", ""))
+	local code = string.upper((string.gsub(text, "[%s%-]", "")))
 	if #code ~= 6 then
 		return nil, nil
 	end

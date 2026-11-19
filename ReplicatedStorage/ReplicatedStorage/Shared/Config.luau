@@ -81,7 +81,7 @@ local Config = {
 	CHRISTMAS_LAB = true,
 	ADVENT = true,
 	-- Update rhythm: what the title shows in an update week, and the days updates go out. The newest
-	-- entry of Shop.WHATS_NEW must carry Config.Version (T67 checks it).
+	-- entry of Shop.WHATS_NEW must carry Config.Version (T66 checks it).
 	UPDATE_TITLE = "[UPD] Ragdoll Havoc \u{1F4A5}",
 	UPDATE_DAYS = table.freeze({ "Thursday", "Saturday" }),
 	-- Extra ragdolls a device simulates for its own lab (Shared\DeviceTier: phone low, tablet and

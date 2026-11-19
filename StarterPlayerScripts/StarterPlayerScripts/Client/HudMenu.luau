@@ -14,7 +14,7 @@ local Controller = require(UI:WaitForChild("LihFolkUIController"))
 
 local HudMenu = {}
 
-local ENTRIES = {
+local ENTRIES: { any } = {
 	-- (One colour for going somewhere; green where something waits to be claimed; red is the kit's
 	-- close and delete, never a place to go.)
 	{ window = "Maps", text = "PLACES", role = "info", phoneOnly = true }, -- (off a phone PLACES is on the left edge)

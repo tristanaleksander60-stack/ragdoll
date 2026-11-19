@@ -118,7 +118,7 @@ local function buildWindow()
 	box.Parent = window.body
 	box:GetPropertyChangedSignal("Text"):Connect(function()
 		-- (Codes only: six letters from the code alphabet, nothing else can be typed.)
-		local clean = string.sub(string.upper(string.gsub(box.Text, "[^%w]", "")), 1, 6)
+		local clean = string.sub(string.upper((string.gsub(box.Text, "[^%w]", ""))), 1, 6)
 		if clean ~= box.Text then
 			box.Text = clean
 		end
@@ -171,7 +171,7 @@ local function buildWindow()
 		codeBox.TextColor3 = Color3.new(1, 1, 1)
 		codeBox.Parent = window.body
 		codeBox:GetPropertyChangedSignal("Text"):Connect(function()
-			local clean = string.sub(string.upper(string.gsub(codeBox.Text, "[^%w]", "")), 1, 24)
+			local clean = string.sub(string.upper((string.gsub(codeBox.Text, "[^%w]", ""))), 1, 24)
 			if clean ~= codeBox.Text then
 				codeBox.Text = clean
 			end
