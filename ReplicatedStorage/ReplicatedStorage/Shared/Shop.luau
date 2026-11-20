@@ -29,7 +29,7 @@ Shop.PASSES = table.freeze({
 		-- ragdolls"; Config.GOD_PASS, DummySpawn). 0 until it is created on the dashboard (199 Robux):
 		-- while it is 0 live, spawning stays free for everyone as before.
 		key = "God",
-		id = 0,
+		id = 2093692966, -- the GOD MODE game pass (21 Nov 2026)
 		name = "GOD MODE",
 		blurb = "Create life! Spawn ragdolls anywhere in your lab.",
 		perks = { "Spawn ragdolls: tiny, heavy, bouncy, floppy", "Twice as many at once", "Each one comes down in a beam of light" },
@@ -212,28 +212,28 @@ Shop.WHATS_NEW = table.freeze({
 -- shown as TEST in Studio). No paid random items here (no eggs: no odds needed), and slow-mo and
 -- the replay are never sold.
 Shop.OFFERS = table.freeze({
-	table.freeze({ key = "EntryPack", kind = "product", name = "Starter Crate", robux = 49, id = 0, gives = "300 BOLTS and the Rattler" }),
-	table.freeze({ key = "AllMelee", kind = "pass", name = "All Melee", robux = 69, id = 0, gives = "Every melee toy" }),
-	table.freeze({ key = "AllExplosives", kind = "pass", name = "All Explosives", robux = 99, id = 0, gives = "Every explosive" }),
-	table.freeze({ key = "AllGuns", kind = "pass", name = "All Guns", robux = 149, id = 0, gives = "Every gun" }),
-	table.freeze({ key = "LabControls", kind = "pass", name = "Lab Controls", robux = 179, id = 0, gives = "BIG RED BUTTON every 8 s in your lab" }),
-	table.freeze({ key = "DoubleBolts", kind = "pass", name = "2x BOLTS", robux = 129, id = 0, gives = "Double BOLTS from everything" }),
-	table.freeze({ key = "VipLab", kind = "pass", name = "VIP Lab", robux = 199, id = 0, gives = "More dummies roaming your lab" }),
-	table.freeze({ key = "EventsPass", kind = "pass", name = "Events Pass", robux = 249, id = 0, gives = "Every server event, free, all season" }),
-	table.freeze({ key = "Everything", kind = "pass", name = "Everything", robux = 699, id = 0, gives = "Every toy, 2x BOLTS, VIP Lab, Events Pass and Lab Controls" }),
+	table.freeze({ key = "EntryPack", kind = "product", name = "Starter Crate", robux = 49, id = 3733992321, gives = "300 BOLTS and the Rattler" }),
+	table.freeze({ key = "AllMelee", kind = "pass", name = "All Melee", robux = 69, id = 2093740978, gives = "Every melee toy" }),
+	table.freeze({ key = "AllExplosives", kind = "pass", name = "All Explosives", robux = 99, id = 2093020938, gives = "Every explosive" }),
+	table.freeze({ key = "AllGuns", kind = "pass", name = "All Guns", robux = 149, id = 2091832962, gives = "Every gun" }),
+	table.freeze({ key = "LabControls", kind = "pass", name = "Lab Controls", robux = 179, id = 2093398948, gives = "BIG RED BUTTON every 8 s in your lab" }),
+	table.freeze({ key = "DoubleBolts", kind = "pass", name = "2x BOLTS", robux = 129, id = 2094556882, gives = "Double BOLTS from everything" }),
+	table.freeze({ key = "VipLab", kind = "pass", name = "VIP Lab", robux = 199, id = 2094598991, gives = "More dummies roaming your lab" }),
+	table.freeze({ key = "EventsPass", kind = "pass", name = "Events Pass", robux = 249, id = 2095884979, gives = "Every server event, free, all season" }),
+	table.freeze({ key = "Everything", kind = "pass", name = "Everything", robux = 699, id = 2094550832, gives = "Every toy, 2x BOLTS, VIP Lab, Events Pass and Lab Controls" }),
 	-- V6-7: things sold in showcase booths on the maps (MapShopService): `show` is the model on the
 	-- pedestal, `places` where its booths stand, `pitch` the one line under its name. Each has a
 	-- 60 s free TRY. Ids 0 = no booth live (shown as TEST in Studio).
-	table.freeze({ key = "RainbowTrail", kind = "pass", name = "Rainbow Trail", robux = 49, id = 0, gives = "A rainbow trail behind you", map = true, show = "Trail", pitch = "Leave a rainbow wherever you fly", places = { "Plaza", "Island" } }),
-	table.freeze({ key = "FireTrail", kind = "pass", name = "Fire Trail", robux = 79, id = 0, gives = "Flames at your feet and a fire trail", map = true, show = "Fire", pitch = "Run, fly and land in flames", places = { "Plaza", "Military" } }),
-	table.freeze({ key = "CrashSuit", kind = "pass", name = "Crash-Test Suit", robux = 99, id = 0, gives = "The yellow and black crash-test suit", map = true, show = "Suit", pitch = "Dress like the real crash dummies", places = { "Plaza", "Site" } }),
-	table.freeze({ key = "GoldDummies", kind = "pass", name = "Gold Dummies", robux = 149, id = 0, gives = "Every dummy in your lab in shining gold", map = true, show = "GoldDummy", pitch = "Your lab, all in gold", places = { "Plaza", "City" } }),
-	table.freeze({ key = "RobotDog", kind = "pass", name = "Robot Dog", robux = 129, id = 0, gives = "A robot dog that follows you everywhere", map = true, show = "PetRobotDog", pitch = "A loyal metal friend at your heels", places = { "Plaza", "City", "Farm" } }),
-	table.freeze({ key = "Parrot", kind = "pass", name = "Parrot", robux = 99, id = 0, gives = "A macaw on your shoulder", map = true, show = "PetParrot", pitch = "A bright macaw that rides along", places = { "Island", "Farm" } }),
-	table.freeze({ key = "MegaTrampoline", kind = "pass", name = "Mega Trampoline", robux = 149, id = 0, gives = "A giant trampoline in your lab", map = true, show = "Trampoline", pitch = "Bounce dummies (and you) sky high", places = { "Plaza", "Site" } }),
-	table.freeze({ key = "GiantFan", kind = "pass", name = "Giant Fan", robux = 179, id = 0, gives = "A giant fan that blows your lab away", map = true, show = "BigFan", pitch = "Blow every dummy across your lab", places = { "Plaza", "Military" } }),
-	table.freeze({ key = "SpiderDeluxe", kind = "pass", name = "Spider Deluxe", robux = 199, id = 0, gives = "A golden spider that spits twice as far", map = true, show = "MSpider", pitch = "Your lab's spider, golden and stronger", places = { "Plaza", "Farm" } }),
-	table.freeze({ key = "BoltCrate", kind = "product", name = "Bolt Crate", robux = 49, id = 0, gives = "500 BOLTS", map = true, show = "Crate", pitch = "500 BOLTS for your next weapons", places = { "Plaza", "City", "Island" } }),
+	table.freeze({ key = "RainbowTrail", kind = "pass", name = "Rainbow Trail", robux = 49, id = 2093129058, gives = "A rainbow trail behind you", map = true, show = "Trail", pitch = "Leave a rainbow wherever you fly", places = { "Plaza", "Island" } }),
+	table.freeze({ key = "FireTrail", kind = "pass", name = "Fire Trail", robux = 79, id = 2096742839, gives = "Flames at your feet and a fire trail", map = true, show = "Fire", pitch = "Run, fly and land in flames", places = { "Plaza", "Military" } }),
+	table.freeze({ key = "CrashSuit", kind = "pass", name = "Crash-Test Suit", robux = 99, id = 2092577039, gives = "The yellow and black crash-test suit", map = true, show = "Suit", pitch = "Dress like the real crash dummies", places = { "Plaza", "Site" } }),
+	table.freeze({ key = "GoldDummies", kind = "pass", name = "Gold Dummies", robux = 149, id = 2094202879, gives = "Every dummy in your lab in shining gold", map = true, show = "GoldDummy", pitch = "Your lab, all in gold", places = { "Plaza", "City" } }),
+	table.freeze({ key = "RobotDog", kind = "pass", name = "Robot Dog", robux = 129, id = 2092618946, gives = "A robot dog that follows you everywhere", map = true, show = "PetRobotDog", pitch = "A loyal metal friend at your heels", places = { "Plaza", "City", "Farm" } }),
+	table.freeze({ key = "Parrot", kind = "pass", name = "Parrot", robux = 99, id = 2096880821, gives = "A macaw on your shoulder", map = true, show = "PetParrot", pitch = "A bright macaw that rides along", places = { "Island", "Farm" } }),
+	table.freeze({ key = "MegaTrampoline", kind = "pass", name = "Mega Trampoline", robux = 149, id = 2093254944, gives = "A giant trampoline in your lab", map = true, show = "Trampoline", pitch = "Bounce dummies (and you) sky high", places = { "Plaza", "Site" } }),
+	table.freeze({ key = "GiantFan", kind = "pass", name = "Giant Fan", robux = 179, id = 2093398946, gives = "A giant fan that blows your lab away", map = true, show = "BigFan", pitch = "Blow every dummy across your lab", places = { "Plaza", "Military" } }),
+	table.freeze({ key = "SpiderDeluxe", kind = "pass", name = "Spider Deluxe", robux = 199, id = 2097418264, gives = "A golden spider that spits twice as far", map = true, show = "MSpider", pitch = "Your lab's spider, golden and stronger", places = { "Plaza", "Farm" } }),
+	table.freeze({ key = "BoltCrate", kind = "product", name = "Bolt Crate", robux = 49, id = 3733992403, gives = "500 BOLTS", map = true, show = "Crate", pitch = "500 BOLTS for your next weapons", places = { "Plaza", "City", "Island" } }),
 })
 
 return table.freeze(Shop)

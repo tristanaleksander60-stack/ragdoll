@@ -52,7 +52,9 @@ return {
 			end
 		end
 		assert(booths >= #MapShopService.ITEMS, "too few booths")
-		-- TRY: once, 60 s, never for a product.
+		-- TRY: once, 60 s, never for a product. (With real ids the game's creator owns every pass in
+		-- Studio, and an owned pass is never tried: start from owning none.)
+		OfferService.resetForTest(p)
 		MapShopService.resetForTest(p)
 		assert(MapShopService.try(p, "BoltCrate") == "junk", "a product could be tried")
 		assert(MapShopService.try(p, "RainbowTrail") == nil, "the first try was refused")
@@ -62,11 +64,13 @@ return {
 			local c = p.Character
 			return c ~= nil and c:FindFirstChild("RainbowTrail", true) ~= nil
 		end, 3), "no rainbow trail on the player")
-		-- A Studio TEST purchase and its effects.
+		-- A purchase's delivery and its effects. (21 Nov 2026: with real ids a buy opens Roblox's own
+		-- prompt, so the test delivers the way a finished purchase does: OfferService.grantPass.)
 		OfferService.resetForTest(p)
-		assert(MapShopService.buy(p, "RobotDog") == "test", "the Studio purchase did not run")
+		OfferService.grantPass(p, "RobotDog")
+		OfferService.grantPass(p, "MegaTrampoline")
 		task.wait(1.1) -- (one buy a second per player)
-		assert(MapShopService.buy(p, "MegaTrampoline") == "test", "the Studio purchase did not run")
+		assert(MapShopService.buy(p, "RobotDog") == "owned", "an owned pass was sold again")
 		assert(MapShopService.buy(p, "Parrot") == "paced", "two buys within a second were both taken")
 		task.wait(1.1)
 		assert(p:GetAttribute("Offer_RobotDog") == true, "the dog was not delivered")
@@ -76,13 +80,12 @@ return {
 		assert(waitFor(function()
 			return Workspace:FindFirstChild("MegaTrampoline", true) ~= nil
 		end, 3), "no mega trampoline in the lab")
-		assert(MapShopService.buy(p, "RobotDog") == "owned", "an owned pass was sold again")
 		-- Gone again with the pass.
 		OfferService.resetForTest(p)
 		MapShopService.resetForTest(p)
 		assert(waitFor(function()
 			return Workspace:FindFirstChild("PetRobotDog") == nil and Workspace:FindFirstChild("MegaTrampoline", true) == nil
 		end, 3), "the dog or trampoline stayed after the pass went")
-		return string.format("%d items, %d booths; try once, test purchase delivered, effects on and off", #MapShopService.ITEMS, booths)
+		return string.format("%d items, %d booths; try once, a purchase delivered, owned never sold again, effects on and off", #MapShopService.ITEMS, booths)
 	end,
 }
