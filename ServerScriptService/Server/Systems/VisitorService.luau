@@ -130,6 +130,184 @@ local function fill(player: Player)
 	end
 end
 
+------------------------------------------------------------------------------------------------
+-- V9-0j (owner, 21 Nov 2026: "make sure ragdolls walk round your lab so there is always one to
+-- shoot"): while you are in your own lab, at least Config.LAB_MIN_TARGETS bodies (by device tier)
+-- stand in it: the row, the visitors and your GOD MODE ones together. When fewer stand (knocked out,
+-- in a creature, thrown away), a new one walks in from the hub's rim with a puff, heading for a spot
+-- in front of you, then goes about the lab like any visitor. One pool with the visitors; all bodies of
+-- the lab stay under the device's ragdoll cap (Config.FX_CAPS) and the server's room. A visitor that
+-- lies or is gone from the lab for STILL_RECYCLE s is recycled.
+
+VisitorService.KEEP_EVERY = 1.5 -- s between checks
+VisitorService.WALK_IN_RIM = 60 -- studs from the lab's spawn: where a walker comes in
+VisitorService.WALK_IN_AT_ONCE = 2 -- walkers a check may bring
+VisitorService.STILL_RECYCLE = 30 -- s a visitor may lie still or be out of the lab before it goes
+
+local downSince: { [Model]: number } = {}
+
+-- A body that counts as a target: up (standing, walking or running off), alive, not in a machine
+-- or in someone's hands.
+function VisitorService.standing(model: Model): boolean
+	if not model.Parent or model:GetAttribute("Vital") == "Dead" then
+		return false
+	end
+	if model:GetAttribute("InMachine") or model:GetAttribute("MachineHidden") or model:GetAttribute("Held") then
+		return false
+	end
+	local s = model:GetAttribute("RagdollState")
+	return s == nil or s == "Standing" or s == "Fleeing" or s == "Walking"
+end
+
+local function tierOf(player: Player): DeviceTier.Tier
+	local record = SessionStats.recordFor(player)
+	return DeviceTier.of(record and record.plat)
+end
+
+-- The bodies of a player's lab: the row, the visitors, the GOD MODE ones.
+function VisitorService.bodiesOf(player: Player): { Model }
+	local out: { Model } = {}
+	for _, m in Lab.dummiesOf(player) do
+		table.insert(out, m)
+	end
+	for _, v in visitors[player] or {} do
+		if v.model.Parent then
+			table.insert(out, v.model)
+		end
+	end
+	pcall(function()
+		for _, m in (require(script.Parent:WaitForChild("DummySpawn")) :: any).of(player) do
+			table.insert(out, m)
+		end
+	end)
+	return out
+end
+
+local function puff(at: Vector3)
+	local ball = Instance.new("Part")
+	ball.Name = "WalkInPuff"
+	ball.Shape = Enum.PartType.Ball
+	ball.Anchored = true
+	ball.CanCollide = false
+	ball.CanQuery = false
+	ball.CanTouch = false
+	ball.CastShadow = false
+	ball.Material = Enum.Material.SmoothPlastic
+	ball.Color = Color3.new(1, 1, 1)
+	ball.Transparency = 0.2
+	ball.Size = Vector3.one * 2
+	ball.Position = at
+	ball.Parent = Workspace
+	game:GetService("TweenService"):Create(ball, TweenInfo.new(0.45), { Size = Vector3.one * 7, Transparency = 1 }):Play()
+	game:GetService("Debris"):AddItem(ball, 0.6)
+end
+
+-- One walker in from the rim, heading for a spot in front of the player.
+local function walkIn(player: Player, list: { Visitor })
+	local origin = Lab.originFor(player)
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	local facing = Lab.SPAWN_FACING
+	if root and root:IsA("BasePart") then
+		local look = root.CFrame.LookVector
+		facing = if Vector3.new(look.X, 0, look.Z).Magnitude > 0.1 then Vector3.new(look.X, 0, look.Z).Unit else facing
+	end
+	-- (In from the rim ahead of the player, a little to one side, so it walks into view.)
+	local a = math.rad(math.random(-35, 35))
+	local dir = Vector3.new(facing.X * math.cos(a) - facing.Z * math.sin(a), 0, facing.X * math.sin(a) + facing.Z * math.cos(a))
+	local at = Vector3.new(origin.X, origin.Y + 3, origin.Z) + dir * VisitorService.WALK_IN_RIM
+	local here = if root and root:IsA("BasePart") then root.Position else origin
+	local goal = here + facing * math.random(18, 30) + Vector3.new(facing.Z, 0, -facing.X) * math.random(-10, 10)
+	puff(at)
+	local model = DummyFactory.spawn(at, goal, player)
+	model.Name = "Visitor"
+	model:SetAttribute("Visitor", player.UserId)
+	model:SetAttribute("WalkIn", true)
+	model:SetAttribute("Personality", "Brave")
+	model:SetAttribute("Home", Vector3.new(goal.X, at.Y, goal.Z))
+	model:SetAttribute("HomeLook", here)
+	local shirt = SHIRTS[(#list) % #SHIRTS + 1]
+	for _, d in model:GetChildren() do
+		if d:IsA("BasePart") and string.find(d.Name, "Torso") then
+			d.Color = shirt
+		end
+	end
+	local v: Visitor = { model = model, pickedAt = os.clock() }
+	table.insert(list, v)
+	local wasDown = false
+	model:GetAttributeChangedSignal("RagdollState"):Connect(function()
+		local s = model:GetAttribute("RagdollState")
+		local down = s == "Ragdoll" or s == "Out"
+		if wasDown and s == "Standing" then
+			task.delay(1.5, function()
+				if model.Parent then
+					pick(player, v)
+				end
+			end)
+		end
+		wasDown = down
+	end)
+end
+
+-- Keeps at least the minimum standing in the player's own lab (nothing while they are elsewhere).
+-- Returns how many walked in.
+function VisitorService.keepTargets(player: Player): number
+	if not inOwnLab(player) or not (Config :: any).LAB_MIN_TARGETS then
+		return 0
+	end
+	-- (A newcomer's first minute stays as V8 made it: the row and the greeter, calm.)
+	local spawnedAt = player:GetAttribute("SpawnedAt")
+	if player:GetAttribute("Newcomer") == true and type(spawnedAt) == "number" and Workspace:GetServerTimeNow() - spawnedAt < (Config.QUIET_START or 60) then
+		return 0
+	end
+	local list = visitors[player] or {}
+	visitors[player] = list
+	local now = os.clock()
+	-- Recycle a visitor that lies, is held in a machine or left the lab for too long.
+	for i = #list, 1, -1 do
+		local m = list[i].model
+		if not m.Parent then
+			table.remove(list, i)
+			downSince[m] = nil
+			continue
+		end
+		local pelvis = m:FindFirstChild("LowerTorso")
+		local away = pelvis and pelvis:IsA("BasePart") and Lab.ownerAt(pelvis.Position) ~= player
+		if VisitorService.standing(m) and not away then
+			downSince[m] = nil
+		else
+			downSince[m] = downSince[m] or now
+			if now - downSince[m] > VisitorService.STILL_RECYCLE and not m:GetAttribute("InMachine") then
+				downSince[m] = nil
+				m:Destroy()
+				table.remove(list, i)
+			end
+		end
+	end
+	local tier = tierOf(player)
+	local want = ((Config :: any).LAB_MIN_TARGETS :: any)[tier] or 5
+	local cap = ((Config :: any).FX_CAPS :: any)[tier].ragdolls
+	local bodies = VisitorService.bodiesOf(player)
+	local up = 0
+	-- (A walker that just came in counts as up while it lands from its puff: no second one for it.)
+	local fresh: { [Model]: boolean } = {}
+	for _, v in list do
+		if v.model:GetAttribute("WalkIn") and now - v.pickedAt < 3 then
+			fresh[v.model] = true
+		end
+	end
+	for _, m in bodies do
+		if fresh[m] or VisitorService.standing(m) then
+			up += 1
+		end
+	end
+	local room = math.min(cap - #bodies, EventService.dummyRoom() - VisitorService.ROOM_KEEP)
+	local n = math.min(want - up, room, VisitorService.WALK_IN_AT_ONCE)
+	for _ = 1, n do
+		walkIn(player, list)
+	end
+	return math.max(0, n)
+end
+
 -- Tests: a player's visitors now.
 function VisitorService.of(player: Player): { Model }
 	local out = {}
@@ -151,6 +329,18 @@ VisitorService.clearForTest = clear
 
 function VisitorService.start()
 	Players.PlayerRemoving:Connect(clear)
+	-- (V9-0j: always a target, checked often and cheaply; idle for anyone not in their own lab.)
+	task.spawn(function()
+		while true do
+			task.wait(VisitorService.KEEP_EVERY)
+			if game:GetService("RunService"):IsStudio() and game:GetService("ServerStorage"):GetAttribute("RunSelfTest") == true then
+				continue -- (the tests set their own scenes: keepTargets)
+			end
+			for _, player in Players:GetPlayers() do
+				pcall(VisitorService.keepTargets, player)
+			end
+		end
+	end)
 	task.spawn(function()
 		while true do
 			task.wait(4)

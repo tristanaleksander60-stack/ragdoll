@@ -975,16 +975,17 @@ function LayoutCheck.run(): string
 				if w <= s.size.X - margin + 1 and h <= s.size.Y - margin + 1 then "fits, body scrolls" else "TOO BIG"))
 		end
 	end
-	-- V9-0i: the SHOP window (ShopV9) as the kit fits it on each touch screen: two cards a row on a
-	-- phone, the cards wide enough to read, every tap (tabs, price, BACK) 44 px or more.
+	-- V9-0i: the SHOP window (ShopV9) as the kit fits it on every screen: two cards a row on a phone,
+	-- the cards wide enough to read, every tap (tabs, price, BACK) 44 px or more on touch. (The built
+	-- window itself is measured by ShopV9.selfCheck: the DevShopCheck hook.)
 	if (Config :: any).SHOP_V9 then
 		local ShopV9 = require(script.Parent:WaitForChild("ShopV9")) :: any
 		for _, s in LayoutCheck.SCREENS do
-			if s.touch then
+			do
 				local margin = (size.screenMargin or 16) * 2
 				local design = ShopV9.SIZE
 				local fit = math.min((s.size.X - margin) / design.X, (s.size.Y - margin) / design.Y)
-				local floor = size.touchDrawnMin / size.touchMin
+				local floor = if s.touch then size.touchDrawnMin / size.touchMin else 0
 				local scale = math.max(math.min(1, fit), floor)
 				local w = math.min(design.X, (s.size.X - margin) / scale)
 				local phoneScreen = math.min(s.size.X, s.size.Y) <= 500
@@ -992,7 +993,7 @@ function LayoutCheck.run(): string
 				local cols = if phoneScreen then 2 else math.clamp(math.floor((bodyW + ShopV9.GAP) / (ShopV9.CARD.X + ShopV9.GAP)), 2, 5)
 				local cellW = (bodyW - ShopV9.GAP * (cols - 1)) / cols
 				local tap = math.min(52, ShopV9.TAB_H) * scale
-				local ok = tap >= 43.5 and cellW >= 140
+				local ok = (tap >= 43.5 or not s.touch) and cellW >= 140 and w * scale <= s.size.X - margin + 1
 				if not ok then
 					problems += 1
 				end

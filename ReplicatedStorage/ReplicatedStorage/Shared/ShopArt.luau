@@ -145,7 +145,7 @@ function ShopArt.items(): { Item }
 			id = e.productId,
 			name = e.name,
 			line = e.blurb,
-			bullets = { e.blurb, string.format("%d seconds for the whole server", e.duration), "Everyone sees it, with your name on it" },
+			bullets = { e.blurb, string.format("%d seconds of it where you are: your lab or the plaza", e.duration), "Your name on the banner for the whole server" }, -- (V9-0i review: what really happens)
 			picture = ShopArt.pictureOf("event", e.id),
 			tab = "EVENTS",
 			robux = 49,

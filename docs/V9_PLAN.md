@@ -1455,3 +1455,18 @@ Write the baseline into `docs/PERF.md`.
     - LayoutCheck 0 problems, with a new shop section: 2 cards a row on phones, taps ≥ 44 px on every touch screen;
     - captures: PC (FEATURED, PASSES, ITEMS, EVENTS, BOLTS, detail, celebration) and iPhone 17 Pro landscape.
   - **Studio hooks:** `DevShopCheck` = true / "tab:<NAME>" / "open:<key>" / "celebrate:<key>".
+- 21 Nov 2026, V9-0i review 8.4. Fix round 1 (PC):
+  - **CODES:** the shop's CODES button is labelled (a phone's only way to codes).
+  - **YOURS!** follows V9-0g on a phone (a small pill), and a pass says it once (no second thank-you toast; a pass landing twice celebrates once).
+  - **Event pictures** drift only while the shop is open.
+  - **TRY** has its own pacing, so a BUY right after it is never swallowed.
+  - **A page's 3D** is built one card a frame, in order, so opening never stalls.
+  - **An event on two cards** (FEATURED and EVENTS): every card follows the one entry (price, queue).
+  - **Truthful event lines:** "where you are: your lab or the plaza", "your name on the banner for the whole server".
+  - **A cancelled prompt** forgets the BUY, so there is never a late YOURS!.
+  - **Checks:** the self-check measures the built window (names, prices and tabs fit; tabs ≥ 44 px on touch): 48 cards, 0 problems. The LayoutCheck shop section runs on all screens: 0 problems.
+- 21 Nov 2026, V9-0j DONE (PC): always a ragdoll to shoot.
+  - **The rule:** `Config.LAB_MIN_TARGETS` (low 4, mid 5, high 6). `VisitorService.keepTargets` runs every 1.5 s and only in the owner's own lab; a newcomer's first minute stays calm.
+  - **Counting:** row + visitors + GOD MODE bodies, standing ones only (not dead, not in a machine, not held). When too few stand, up to 2 walkers a check come in from the hub's rim with a puff, ahead of the player, heading for a spot in front of them; then they are visitors (one pool).
+  - **Caps:** all the lab's bodies stay under `FX_CAPS[tier].ragdolls` and the server's room. A visitor lying still or out of the lab for 30 s is recycled. A fresh walker counts as up while it lands.
+  - **Tests:** T166_AlwaysTargets (the row out of play: 6 standing again within 3 s, 12 bodies under the cap 22, nothing walks in while out of the lab). Live in Studio: the row out, 7 walked in within 6 s (before the landing fix).

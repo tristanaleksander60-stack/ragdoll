@@ -75,6 +75,7 @@ type Card = {
 	ribbon: TextLabel?,
 	robux: number?,
 	live3D: boolean,
+	name: TextLabel?,
 }
 
 local api: Api
@@ -92,6 +93,7 @@ local detailBuy: any = nil
 local detailTry: any = nil
 local blur: BlurEffect? = nil
 local scroller: ScrollingFrame? = nil
+local drifts: { Tween } = {} -- the event pictures' slow zooms (played only while the shop is open)
 
 -- A controller is in use (the focus ring is for pads only).
 function ShopV9.pad(): boolean
@@ -218,6 +220,7 @@ local function confetti(into: GuiObject, from: Vector2)
 		b.Size = UDim2.fromOffset(8, 12)
 		b.AnchorPoint = Vector2.new(0.5, 0.5)
 		b.Position = UDim2.fromScale(from.X, from.Y)
+		-- lihfolk-ignore: paid-random-no-policy (confetti angles only; nothing random is sold here)
 		b.Rotation = math.random(0, 360)
 		b.ZIndex = 80
 		b.Parent = into
@@ -281,16 +284,25 @@ local function fly(item: any, fromObject: GuiObject?)
 end
 
 -- A purchase of `key` landed: only when this screen asked for it (a pass set on joining is quiet).
-function ShopV9.celebrate(key: string)
+-- True when it celebrated (the caller then says nothing more).
+local celebrated: { [string]: number } = {} -- key -> os.clock it was just celebrated
+function ShopV9.celebrate(key: string): boolean
+	-- (A pass lands twice, its attribute and MoneyService's "Owned": one celebration, and the second
+	-- caller stays quiet too.)
+	local last = celebrated[key]
+	if last and os.clock() - last < 10 then
+		return true
+	end
 	local at = asked[key]
 	if not at or os.clock() - at > ShopV9.BUY_MEMORY then
-		return
+		return false
 	end
 	asked[key] = nil
 	local item = ShopArt.byKey(key)
 	if not item then
-		return
+		return false
 	end
+	celebrated[key] = os.clock()
 	local list = byKey[key]
 	local card = list and list[1]
 	if window and Controller.isOpen("Events") then
@@ -303,11 +315,18 @@ function ShopV9.celebrate(key: string)
 	end
 	fly(item, if detail and detail.Visible then detail else (card and card.media))
 	pcall(function()
-		local Banner = require(Client:WaitForChild("Banner")) :: any
 		local rarity = ShopArt.rarity(item.robux, item.kind)
-		Banner.show({ title = "YOURS!", sub = item.name, color = rarity.color, icon = item.picture, emoji = "\u{1F389}", priority = 4 })
+		-- (V9-0g on a phone: a small pill, never the full banner.)
+		local compact = (require(Client:WaitForChild("NoticeState")) :: any).compact()
+		if compact then
+			(require(Client:WaitForChild("Toast")) :: any).show("YOURS! " .. item.name, rarity.color)
+		else
+			local Banner = require(Client:WaitForChild("Banner")) :: any
+			Banner.show({ title = "YOURS!", sub = item.name, color = rarity.color, icon = item.picture, emoji = "\u{1F389}", priority = 4 })
+		end
 	end)
 	refreshAll()
+	return true
 end
 
 ------------------------------------------------------------------------------------------------
@@ -361,8 +380,19 @@ local function media(item: any, size: UDim2, big: boolean, allow3D: boolean?): G
 		end
 		pic.Parent = holder
 		if item.kind == "event" then
+			-- (Drifts only while the shop is open: ShopV9.drift starts and stops them all.)
 			local t = TweenService:Create(pic, TweenInfo.new(6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Size = UDim2.fromScale(1.14, 1.14), Position = UDim2.fromScale(0.47, 0.53) })
-			t:Play()
+			table.insert(drifts, t)
+			if Controller.isOpen("Events") then
+				t:Play()
+			end
+			pic.Destroying:Connect(function()
+				t:Cancel()
+				local i = table.find(drifts, t)
+				if i then
+					table.remove(drifts, i)
+				end
+			end)
 		end
 	end
 	return holder
@@ -546,7 +576,7 @@ local function makeCard(item: any, parent: Instance, order: number): Card
 	price.root.AnchorPoint = Vector2.new(0.5, 1)
 	price.root.Position = UDim2.new(0.5, 0, 1, -8)
 	price.setIcon("robux")
-	local card: Card = { item = item, root = root, media = stageBack, scale = scale, stroke = stroke, price = price, hit = hit, ribbon = ribbon, robux = nil, live3D = false }
+	local card: Card = { item = item, root = root, media = stageBack, scale = scale, stroke = stroke, price = price, hit = hit, ribbon = ribbon, robux = nil, live3D = false, name = nameLabel }
 	-- Feel: lift and tilt toward the pointer, glow; the kit's hover tick.
 	local function lift(on: boolean)
 		TweenService:Create(scale, TweenInfo.new(0.14, Enum.EasingStyle.Quad), { Scale = if on then 1.045 else 1 }):Play()
@@ -740,12 +770,26 @@ local function show(tab: string)
 	for name, page in pages do
 		page.Visible = name == tab
 	end
+	-- (V9-0i review: the page's 3D comes one card a frame, in order, so opening never stalls.)
 	local page = pages[tab]
+	local todo: { Card } = {}
 	for _, card in cards do
-		if page and card.root:IsDescendantOf(page) then
-			upgrade(card)
+		if page and card.root:IsDescendantOf(page) and not card.live3D then
+			table.insert(todo, card)
 		end
 	end
+	table.sort(todo, function(a, b)
+		return a.root.LayoutOrder < b.root.LayoutOrder
+	end)
+	task.spawn(function()
+		for _, card in todo do
+			if current ~= tab then
+				return
+			end
+			upgrade(card)
+			RunService.Heartbeat:Wait()
+		end
+	end)
 	for name, button in tabs do
 		button.setRole(if name == tab then "premium" else "neutral")
 	end
@@ -776,11 +820,12 @@ function ShopV9.build(win: any, given: Api)
 	row.Parent = body
 	C.list(row, Enum.FillDirection.Horizontal, 6, Enum.HorizontalAlignment.Center)
 	for i, tab in ShopArt.TABS do
-		tabs[tab] = C.Button({ name = "Tab_" .. tab, text = tab, role = if tab == current then "premium" else "neutral", size = UDim2.new(0.178, -6, 1, 0), layoutOrder = i, parent = row, onActivated = function()
+		tabs[tab] = C.Button({ name = "Tab_" .. tab, text = tab, role = if tab == current then "premium" else "neutral", size = UDim2.new(0.17, -6, 1, 0), layoutOrder = i, parent = row, onActivated = function()
 			show(tab)
 		end })
 	end
-	local code = C.Button({ name = "HaveCode", text = "", role = "info", size = UDim2.new(0.09, -6, 1, 0), layoutOrder = 10, parent = row, onActivated = function()
+	-- (V9-0i review: labelled: on a phone this is the only way to CODES.)
+	local code = C.Button({ name = "HaveCode", text = "CODES", role = "info", size = UDim2.new(0.13, -6, 1, 0), layoutOrder = 10, parent = row, onActivated = function()
 		Controller.open("Codes")
 	end })
 	code.setIcon("present")
@@ -885,6 +930,25 @@ function ShopV9.build(win: any, given: Api)
 		end
 	end
 	player:GetAttributeChangedSignal("GodTrialUntil"):Connect(refreshAll)
+	-- (A prompt closed without buying: no YOURS! later for it, even if a slow ownership check lands.)
+	local MarketplaceService = game:GetService("MarketplaceService")
+	local function cancelled(id: number)
+		for _, item in items do
+			if item.id == id then
+				asked[item.key] = nil
+			end
+		end
+	end
+	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(_, passId: number, bought: boolean)
+		if not bought then
+			cancelled(passId)
+		end
+	end)
+	MarketplaceService.PromptProductPurchaseFinished:Connect(function(_, productId: number, bought: boolean)
+		if not bought then
+			cancelled(productId)
+		end
+	end)
 	-- Opening: the world behind softly blurred; X buys the focused card on a pad.
 	blur = Instance.new("BlurEffect")
 	local b = blur :: BlurEffect
@@ -896,6 +960,13 @@ function ShopV9.build(win: any, given: Api)
 			return
 		end
 		TweenService:Create(b, TweenInfo.new(0.25), { Size = if open then 10 else 0 }):Play()
+		for _, t in drifts do
+			if open then
+				t:Play()
+			else
+				t:Pause()
+			end
+		end
 		if open then
 			show(current)
 			ContextActionService:BindActionAtPriority("ShopV9Buy", function(_, state)
@@ -959,6 +1030,22 @@ function ShopV9.selfCheck(): string
 		end
 		if not DrawnIcons.ASSETS[card.item.picture] then
 			table.insert(problems, card.item.key .. " has no picture " .. card.item.picture)
+		end
+		-- (Measured on this screen: the name and the price fit their boxes.)
+		local nameLabel = card.name
+		if nameLabel and nameLabel.AbsoluteSize.X > 0 and not nameLabel.TextFits then
+			table.insert(problems, card.item.key .. "'s name does not fit")
+		end
+		if card.price.label.AbsoluteSize.X > 0 and not card.price.label.TextFits then
+			table.insert(problems, card.item.key .. "'s price does not fit")
+		end
+	end
+	for name, tab in tabs do
+		if tab.label.AbsoluteSize.X > 0 and not tab.label.TextFits then
+			table.insert(problems, "the tab " .. name .. " does not fit")
+		end
+		if UserInputService.TouchEnabled and tab.hit.AbsoluteSize.Y > 0 and tab.hit.AbsoluteSize.Y < 43.5 then
+			table.insert(problems, "the tab " .. name .. " is under 44 px")
 		end
 	end
 	local first = cards[1]

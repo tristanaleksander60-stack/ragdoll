@@ -80,7 +80,7 @@ local function refreshButtons()
 		label.Text = if full
 			then "The event queue is full. Try again in a moment."
 			elseif state.queued > 0 then string.format("%d event%s waiting to go off.", state.queued, if state.queued == 1 then "" else "s")
-			else "Everyone in the server sees your event, with your name on it."
+			else "Your event happens where you are, and the whole server sees your name on its banner."
 	end
 end
 
@@ -566,19 +566,46 @@ local function buildShopV9()
 			if not event then
 				return
 			end
+			-- (V9-0i review: an event on two cards, FEATURED and EVENTS: one entry, every card follows it.)
+			local existing = buttons[eventId] :: any
+			if existing and existing.fans then
+				table.insert(existing.fans, { setText = setText, setEnabled = setEnabled })
+				setText(existing.shown)
+				setEnabled(existing.ready and not existing.locked)
+				return
+			end
 			local forSale = event.productId ~= 0
-			local entry: Entry = { button = { setEnabled = setEnabled }, ready = studio and not forSale, locked = false, why = if forSale then "asking" elseif studio then nil else "soon" }
+			local fans = { { setText = setText, setEnabled = setEnabled } }
+			local entry: any = nil
+			local function allText(text: string)
+				entry.shown = text
+				for _, f in fans do
+					f.setText(text)
+				end
+			end
+			entry = {
+				button = { setEnabled = function(on: boolean)
+					for _, f in fans do
+						f.setEnabled(on)
+					end
+				end },
+				ready = studio and not forSale,
+				locked = false,
+				why = if forSale then "asking" elseif studio then nil else "soon",
+				fans = fans,
+				shown = "...",
+			}
 			buttons[eventId] = entry
-			setText(if forSale then "..." elseif studio then "TEST" else "SOON")
+			allText(if forSale then "..." elseif studio then "TEST" else "SOON")
 			if forSale then
 				local function ask()
 					if entry.why == "asking" and entry.ask then
 						return
 					end
 					entry.why = "asking"
-					setText("...")
+					allText("...")
 					RobuxPrice.get(event.productId, function(robux: number?)
-						setText(RobuxPrice.text(robux))
+						allText(RobuxPrice.text(robux))
 						local p = packs[eventId]
 						if p then
 							p.price.Text = RobuxPrice.text(robux)
@@ -1594,11 +1621,11 @@ function EventShop.start()
 			end
 		elseif kind == "Owned" then
 			local pass = Shop.byKey[tostring(d.key)]
-			Toast.show(string.format("%s is yours! Thank you!", if pass then pass.name else "It"), Color3.fromRGB(255, 210, 74))
-			refreshPasses()
-			if ShopV9 then
-				ShopV9.celebrate(tostring(d.key)) -- (V9-0i: the card bursts, YOURS!)
+			-- (V9-0i: the SHOP's card bursts and says YOURS!; otherwise the thank-you line. Never both.)
+			if not (ShopV9 and ShopV9.celebrate(tostring(d.key))) then
+				Toast.show(string.format("%s is yours! Thank you!", if pass then pass.name else "It"), Color3.fromRGB(255, 210, 74))
 			end
+			refreshPasses()
 		elseif kind == "Free" then
 			freeEnds = tonumber(d.ends) or (Workspace:GetServerTimeNow() + (tonumber(d.seconds) or 180))
 			local seconds = tonumber(d.seconds) or 180

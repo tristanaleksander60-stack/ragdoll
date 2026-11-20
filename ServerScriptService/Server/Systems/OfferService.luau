@@ -62,6 +62,7 @@ end
 local remote: RemoteEvent? = nil
 local owned: { [Player]: { [string]: boolean } } = {}
 local lastBuy: { [Player]: number } = {}
+local lastTry: { [Player]: number } = {} -- (V9-0i: the SHOP's TRY, paced apart from BUY)
 
 local function refuse(player: Player, text: string)
 	local r = remote
@@ -203,9 +204,10 @@ local function onBuy(player: Player, kind: unknown, key: unknown)
 	-- (V9-0i: the SHOP's detail view asks for a map item's 60 s TRY: the booth's own rules,
 	-- MapShopService.try: a known pass item, once a visit, never cutting one that is on.)
 	if kind == "Try" and type(key) == "string" and #key <= 32 then
+		-- (Its own pacing: a BUY right after a TRY is never swallowed by it.)
 		local now = os.clock()
-		if now - (lastBuy[player] or -math.huge) >= OfferService.BUY_GAP then
-			lastBuy[player] = now
+		if now - (lastTry[player] or -math.huge) >= OfferService.BUY_GAP then
+			lastTry[player] = now
 			pcall(function()
 				(require(script.Parent:WaitForChild("MapShopService")) :: any).try(player, key)
 			end)
@@ -276,6 +278,7 @@ function OfferService.start()
 	Players.PlayerRemoving:Connect(function(player)
 		owned[player] = nil
 		lastBuy[player] = nil
+		lastTry[player] = nil
 	end)
 end
 

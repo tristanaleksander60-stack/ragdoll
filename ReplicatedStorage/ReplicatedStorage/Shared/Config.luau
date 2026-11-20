@@ -346,6 +346,9 @@ local Config = {
 	-- (Client/ShopV9): tabs, 3D cards with their own pictures, a detail view, a purchase celebration.
 	-- false = the old shop list, untouched.
 	SHOP_V9 = true,
+	-- V9-0j (owner, 21 Nov 2026: "always a ragdoll to shoot"): bodies standing in your own lab at least, by
+	-- device tier (VisitorService.keepTargets: walkers come in from the rim; all under FX_CAPS.ragdolls).
+	LAB_MIN_TARGETS = table.freeze({ low = 4, mid = 5, high = 6 }),
 	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges
 	-- (V3Assets VergeBushRound/Leafy, VergeFlowers*; tools/ImportV9Foliage.luau). false = the old balls and blocks.
