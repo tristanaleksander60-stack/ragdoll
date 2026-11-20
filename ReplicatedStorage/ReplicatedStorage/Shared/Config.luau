@@ -16,14 +16,18 @@ local Config = {
 	-- Phase 0 (19 Nov 2026): nothing that interrupts in a new visit's first QUIET_START s: no view
 	-- card, no egg window, at most one hint at a time; tips and gift notes wait until after it. On a
 	-- phone LAB VIEW and RUN wait too (HudSlots.PHONE_LATER).
-	QUIET_START = 90,
+	-- (20 Nov 2026, Session_v1: the median visit on 0.24 left at about 120 s, before the HUD's 90 s
+	-- reveal, the 110 s wow and the 120 s mission had come. The hooks now land inside the first two
+	-- minutes, one about every 30-40 s: HUD 35, mission 40, wow 45, next weapons 45, surprise 80+,
+	-- chase 100, play gift 120.)
+	QUIET_START = 35,
 	-- The "Walk, or view from above?" card (74 % never answered it): off; everyone starts in the
 	-- player view and LAB VIEW stays a button (MENU's on a phone after the quiet start).
 	VIEW_CARD = false,
 	-- The three locked "next weapon" cards on the bar (0.15) wait until a player has this many
 	-- takedowns AND this many seconds of the visit have passed (BarRules.nextUnlocksShown).
-	NEXT_UNLOCKS_MIN_TAKEDOWNS = 25,
-	NEXT_UNLOCKS_AFTER = 180,
+	NEXT_UNLOCKS_MIN_TAKEDOWNS = 5, -- (was 25: a goal to chase from the first minute)
+	NEXT_UNLOCKS_AFTER = 45, -- (was 180)
 	-- Mild content (phase 0; the owner's earlier choices stay one switch away):
 	--   BLOOD "off": hits show cartoon stars, sparks and dust (HitFxConfig "Stylised"), and the
 	--   Settings row is hidden; "purple": the owner's purple cartoon blood, players may turn it off.
@@ -41,7 +45,7 @@ local Config = {
 	--   PHONE_HUD_MAX7: a phone shows the experiment card in the big WEAPONS button's place (the bar
 	--   keeps its own WEAPONS slab): fire, stick, bar, experiment, SHOP, MENU, RAGDOLL
 	EXPERIMENTS = true,
-	EXPERIMENT_FIRST_AT = 120, -- (audit area 1: the leaders show no card before the HUD comes in at 90 s; was 30) -- s into a visit (the first-minute bar must be free too)
+	EXPERIMENT_FIRST_AT = 40, -- (20 Nov: just after the 35 s reveal; was 120, then 30) -- s into a visit (the first-minute bar must be free too)
 	XRAY_REPLAY = true,
 	PHONE_HUD_MAX7 = true,
 	-- Phase 2 (reasons to stay): BOLTS, the BONE JOURNAL, Daily Experiments, rationed eggs, the
@@ -148,7 +152,8 @@ local Config = {
 	SLOWMO_AUTO_GAP = 8, -- s between automatic slow moments on big hits
 	LAB_SURPRISES = true, -- v4 C4: a short surprise (Surprises.MINI) by itself now and then in your own lab
 	LAB_SURPRISE_GAP = Vector2.new(150, 240), -- s between them (random in the range)
-	FIRST_WOW_AT = 110, -- s into a visit: a UFO over your own lab once (audit area 1: after the 90 s reveal, never during the first-shot minute; was 50)
+	LAB_SURPRISE_FIRST = Vector2.new(80, 110), -- s into a visit for the first one (20 Nov: was 150-240, after most visits ended)
+	FIRST_WOW_AT = 45, -- s into a visit: a UFO over your own lab once (20 Nov: was 110, after most visits ended; first 50)
 	FIRST_VISIT = true, -- audit area 1: the first-visit flow (Client/FirstVisit): a bare screen and one objective line, the HUD slides in at QUIET_START
 	NEWCOMER_SECONDS = 300, -- played in all under this = a newcomer (the first-visit flow)
 	-- V6-1 notification centre (Client/Notify, Shared/NotifyRules): one big pop-up at a time, gaps by

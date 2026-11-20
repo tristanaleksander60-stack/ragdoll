@@ -23,7 +23,14 @@ return {
 	timeout = 3,
 	run = function(): string?
 		local quiet = Config.QUIET_START
-		assert(type(quiet) == "number" and quiet >= 90, "Config.QUIET_START must be 90 s or more")
+		-- (20 Nov 2026, Session_v1: the median visit ended at about 120 s, so the quiet start is short
+		-- and the first hooks land well before that: the HUD, a mission, a wow, the next weapons.)
+		assert(type(quiet) == "number" and quiet >= 20 and quiet <= 45, "Config.QUIET_START must be 20-45 s")
+		for _, key in { "EXPERIMENT_FIRST_AT", "FIRST_WOW_AT", "NEXT_UNLOCKS_AFTER" } do
+			local at = (Config :: any)[key]
+			assert(type(at) == "number" and at >= quiet and at <= 60, key .. " must land between the quiet start and 60 s")
+		end
+		assert(ChaseService.FIRST_AFTER <= 110, "the NPC Chase starts after most visits have ended")
 		assert(Config.VIEW_CARD == false, "the view card should be off (Config.VIEW_CARD)")
 		assert(ProgressService.FIRST_EGG_AFTER >= quiet, "the first egg opens itself inside the quiet start")
 		assert(ChaseService.FIRST_AFTER > quiet, "the NPC Chase starts inside the quiet start")

@@ -666,7 +666,8 @@ local function surpriseLoop()
 			local due = nextSurprise[player]
 			if not due then
 				-- (Each player's first one falls at a random time, so a fresh server never fires them all at once.)
-				nextSurprise[player] = now + math.max(Config.QUIET_START, math.random(math.floor(gap.X), math.floor(gap.Y)))
+				local first = ((Config :: any).LAB_SURPRISE_FIRST or gap) :: Vector2
+				nextSurprise[player] = now + math.max(Config.QUIET_START, math.random(math.floor(first.X), math.floor(first.Y)))
 				continue
 			end
 			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
