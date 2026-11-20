@@ -16,6 +16,7 @@ local Theme = require(UI:WaitForChild("LihFolkUITheme"))
 
 local PokeController = require(script.Parent:WaitForChild("PokeController"))
 local Toast = require(script.Parent:WaitForChild("Toast"))
+local Notify = require(script.Parent:WaitForChild("Notify")) :: any -- V6-1
 local ReplayController = require(script.Parent:WaitForChild("ReplayController"))
 
 local LikePrompt = {}
@@ -105,10 +106,18 @@ function LikePrompt.start()
 			while PokeController.firstMinute() or ReplayController.isPlaying() or player:GetAttribute("Building") == true or Controller.getCurrent() ~= nil do
 				task.wait(1)
 			end
-			Controller.open("Like")
+			-- (V6-1: through the notification centre: one big pop-up at a time.)
+			if Notify.waitBig("Like", 300) then
+				if Controller.getCurrent() == nil then
+					Controller.open("Like")
+				else
+					Notify.releaseBig("Like")
+				end
+			end
 		end)
 	end
 	local function wow()
+		Notify.goodMoment() -- (V6-1: a good moment may ask for Roblox notifications, once, late)
 		if not asked and played >= LikePrompt.MIN_PLAYED then
 			task.delay(LikePrompt.WOW_DELAY, ask)
 		end

@@ -535,7 +535,7 @@ local function buildRecenterButton()
 	viewButton = view
 	-- Placed again when the screen settles or changes (the first frames report a tiny viewport, which
 	-- would leave the phone-sized button on a PC).
-	HudSlots.watch(function()
+	local function placeView()
 		local ctx = HudSlots.context(ViewMode.isTouch(), ViewMode.isLab())
 		HudSlots.apply(view, "View", ctx)
 		-- (Phase 0: a phone shows LAB VIEW after the quiet start, HudSlots.PHONE_LATER; the lab view
@@ -546,10 +546,16 @@ local function buildRecenterButton()
 		if key and key:IsA("GuiObject") then
 			key.Visible = not ctx.phone
 		end
-	end)
-
-	task.delay(math.max(0, Config.QUIET_START - time()) + 0.1, function()
-		view.Visible = true
+	end
+	HudSlots.watch(placeView)
+	-- (Audit area 1: placed again when the newcomer answer comes or the reveal moves, and once the
+	-- player's own quiet start is over: QUIET_START, or a newcomer's later reveal.)
+	HudSlots.newcomerChanged.Event:Connect(placeView)
+	task.spawn(function()
+		while time() < HudSlots.quietUntil(Config.QUIET_START) + 0.1 do
+			task.wait(0.5)
+		end
+		placeView()
 	end)
 	gui.Parent = player:WaitForChild("PlayerGui")
 	recenterButton = button

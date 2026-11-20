@@ -94,10 +94,10 @@ end
 function ChristmasFx.start()
 	Workspace:GetAttributeChangedSignal("Christmas"):Connect(refresh)
 	-- A present drop (every 10 minutes while it is on): said once, wherever you are.
-	local Toast = require(script.Parent:WaitForChild("Toast"))
+	local Notify = require(script.Parent:WaitForChild("Notify")) :: any -- V6-1
 	Workspace:GetAttributeChangedSignal("GiftDrop"):Connect(function()
 		if Workspace:GetAttribute("Christmas") == true then
-			Toast.show("Presents are falling in the plaza! Grab one for an egg", Color3.fromRGB(255, 205, 70))
+			Notify.say("info", "Presents are falling in the plaza! Grab one for an egg", Color3.fromRGB(255, 205, 70))
 		end
 	end)
 	refresh()

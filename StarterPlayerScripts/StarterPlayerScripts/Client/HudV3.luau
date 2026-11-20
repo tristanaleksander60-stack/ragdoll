@@ -420,7 +420,13 @@ local function step()
 		c.Visible = on and UserInputService.KeyboardEnabled and not ViewMode.isTouch() and not held.Chips
 	end
 	if leftCol then
-		leftCol.Visible = not held.Left
+		-- (Audit area 1: a newcomer keeps WEAPONS from the first second, research spec 0-5 s; Shop
+		-- and Lab wait for the reveal.)
+		for _, child in leftCol:GetChildren() do
+			if child:IsA("GuiObject") and child.Name ~= "Weapons" then
+				child.Visible = not held.Left
+			end
+		end
 	end
 	if rightCol then
 		rightCol.Visible = not held.Right

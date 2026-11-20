@@ -216,6 +216,17 @@ HudSlots.PHONE_LATER = { View = true, Sprint = true }
 -- on every screen until the HUD comes in.
 HudSlots.NEWCOMER_LATER = { View = true, MouseHelp = true, Replay = true }
 HudSlots.newcomerUntil = 0
+-- (Fired when newcomerUntil changes: buttons placed while it was held place themselves again.)
+HudSlots.newcomerChanged = Instance.new("BindableEvent")
+function HudSlots.setNewcomerUntil(t: number)
+	HudSlots.newcomerUntil = t
+	HudSlots.newcomerChanged:Fire()
+end
+-- When this player's quiet start ends (a newcomer's reveal may be later than QUIET_START).
+function HudSlots.quietUntil(quietStart: number): number
+	local n = HudSlots.newcomerUntil
+	return if n == math.huge then quietStart else math.max(quietStart, n)
+end
 function HudSlots.shownNow(name: string, ctx: Context, now: number, quietStart: number): boolean
 	if HudSlots.NEWCOMER_LATER[name] and now < HudSlots.newcomerUntil then
 		return false

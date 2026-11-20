@@ -210,3 +210,19 @@ Phases 0-4b, A-M, N1-N5, N7 (graphics accepted as is), M1-M8 done. M9 was under 
     - A+B 7.6/6.5, fixed;
     - C 7.5, fixed;
     - no re-reviews run.
+
+## V6 (20 Nov 2026, PC, branch `release`; plan docs/V6_PLAN.md)
+- **V5 is closed.** Its leftovers went into V6-4 and V6-8.
+- **V6-1, the notification centre** (`Config.NOTIFY`): `Shared/NotifyRules` (pure, T100) and `Client/Notify`.
+  - API:
+    - `Notify.say(kind, text, color)` / `push`, with kind critical, reward, info or tip;
+    - `Notify.waitBig(name)` / `releaseBig` for windows that open by themselves;
+    - `Notify.goodMoment()` for the Roblox Experience Notifications opt-in (`EXPERIENCE_NOTIFY`, after 8 min and a wow).
+  - Unsolicited toasts and the EggReady, AutoEgg, Like and WhatsNew pop-ups go through it. Replies to the player's own presses still call Toast. Toast takes an icon and closes on a tap.
+- **The audit's first visit** (`Client/FirstVisit`, docs/AUDIT.md area 1):
+  - Server attributes:
+    - `Newcomer`: set only on a real profile read, and not after a teleport;
+    - `CannonShots` and `ThrownBy_<part>`, set by Playground.
+  - Client: the player attribute `NewcomerUntil`, plus HudSlots `setNewcomerUntil`, `newcomerChanged` and `quietUntil`.
+  - The HUD is held from frame 0; on PC, WEAPONS stays.
+  - Studio hooks: player attribute `DevLayoutCheck` (runs LayoutCheck in the real client) and ServerStorage `StudioFresh`.

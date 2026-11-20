@@ -11,7 +11,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Schedule = require(Shared:WaitForChild("Schedule"))
 local Toys = require(Shared:WaitForChild("Toys"))
-local Toast = require(script.Parent:WaitForChild("Toast"))
+local Notify = require(script.Parent:WaitForChild("Notify")) :: any -- V6-1
 
 local ScheduleUI = {}
 
@@ -49,7 +49,7 @@ function ScheduleUI.start()
 		local toy = if type(id) == "string" then Toys.byId[id] else nil
 		if toy and not told["free" .. id] then
 			told["free" .. id] = true
-			Toast.show(string.format("FREE THIS WEEKEND: the %s! Find it in WEAPONS", toy.label), Color3.fromRGB(120, 230, 140))
+			Notify.say("info", string.format("FREE THIS WEEKEND: the %s! Find it in WEAPONS", toy.label), Color3.fromRGB(120, 230, 140))
 		end
 	end
 	Workspace:GetAttributeChangedSignal("FreeWeapon"):Connect(weekend)
@@ -58,7 +58,7 @@ function ScheduleUI.start()
 		local untilAt = Workspace:GetAttribute("PassesFreeUntil")
 		if type(untilAt) == "number" and untilAt > Workspace:GetServerTimeNow() and not told["launch" .. untilAt] then
 			told["launch" .. untilAt] = true
-			Toast.show("LAUNCH PARTY: ULTRA and faster eggs FREE for all until " .. tostring(os.date("%a %d %b", untilAt)) .. "!", GOLD)
+			Notify.say("info", "LAUNCH PARTY: ULTRA and faster eggs FREE for all until " .. tostring(os.date("%a %d %b", untilAt)) .. "!", GOLD)
 		end
 	end
 	Workspace:GetAttributeChangedSignal("PassesFreeUntil"):Connect(launch)
@@ -69,10 +69,10 @@ function ScheduleUI.start()
 		local on = Workspace:GetAttribute("OwnerParty") == true
 		if on and not partyTold then
 			partyTold = true
-			Toast.show("THE OWNER IS IN YOUR SERVER! Every weapon is yours while you play with them. Open WEAPONS!", Color3.fromRGB(255, 90, 90))
+			Notify.say("info", "THE OWNER IS IN YOUR SERVER! Every weapon is yours while you play with them. Open WEAPONS!", Color3.fromRGB(255, 90, 90))
 		elseif not on and partyTold then
 			partyTold = false
-			Toast.show("The owner's free weapons have ended. Thanks for playing with them!")
+			Notify.say("info", "The owner's free weapons have ended. Thanks for playing with them!")
 		end
 	end
 	Workspace:GetAttributeChangedSignal("OwnerParty"):Connect(party)
@@ -91,13 +91,13 @@ function ScheduleUI.start()
 					local key = string.format("%d@%d", s, at)
 					if left <= s and left > s - 30 and not told[key] then
 						told[key] = true
-						Toast.show(string.format("THE ADMIN SHOW starts in %d minute%s: free events for everyone!", s // 60, if s >= 120 then "s" else ""), GOLD)
+						Notify.say("info", string.format("THE ADMIN SHOW starts in %d minute%s: free events for everyone!", s // 60, if s >= 120 then "s" else ""), GOLD)
 					end
 				end
 				local key = "on@" .. at
 				if left <= 0 and left > -30 and not told[key] then
 					told[key] = true
-					Toast.show("THE ADMIN SHOW IS ON! Free events for everyone", GOLD)
+					Notify.say("info", "THE ADMIN SHOW IS ON! Free events for everyone", GOLD)
 				end
 			end
 		end

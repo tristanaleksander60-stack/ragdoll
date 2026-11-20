@@ -151,6 +151,12 @@ local Config = {
 	FIRST_WOW_AT = 110, -- s into a visit: a UFO over your own lab once (audit area 1: after the 90 s reveal, never during the first-shot minute; was 50)
 	FIRST_VISIT = true, -- audit area 1: the first-visit flow (Client/FirstVisit): a bare screen and one objective line, the HUD slides in at QUIET_START
 	NEWCOMER_SECONDS = 300, -- played in all under this = a newcomer (the first-visit flow)
+	-- V6-1 notification centre (Client/Notify, Shared/NotifyRules): one big pop-up at a time, gaps by
+	-- kind, dedupe, quiet after windows; false = every message straight to Toast as before.
+	NOTIFY = true,
+	NOTIFY_BIG_AFTER_REVEAL = 20, -- s after a newcomer's HUD reveal before the first big pop-up
+	EXPERIENCE_NOTIFY = true, -- ask for Roblox Experience Notifications opt-in after a wow moment
+	NOTIFY_OPTIN_AFTER = 480, -- s of play before that ask (never on join)
 	LAB_ZONES = true, -- v4 C1: lab zones, today's machine, NEW tags (Server/Systems/LabZones)
 	UI_CLEAN = true, -- v4 D2: calm hand-made look (leaderboards as wall panels, no neon frames/crowns/glow; see LeaderboardService.STYLE)
 	ARENA_V2 = true, -- v4 D1: the Game Arena as a sports hall (track floor, lanes, concrete, padding) instead of the pink room

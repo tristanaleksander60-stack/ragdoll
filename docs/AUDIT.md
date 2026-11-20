@@ -75,3 +75,20 @@
   - Dummy chatter waits (`NewcomerUntil`). The help line grows back at the reveal (`PokeController.refreshHelp`). Pad text: "(R2)" and "(Y)".
   - Seen in Studio: a newcomer's cannon (real pad touch) and wrecking-ball hits advance the line; the line hides until 90 s; at 105 s the HUD, chips and full help are in on "Open WEAPONS for more"; a returning player gets the full HUD with no line.
   - LayoutCheck in the game's own client (`DevLayoutCheck`): 0 problems. T23/T38/T45/T55/T60/T90/T98 pass.
+- **Area 1, re-review 7.2 → fix round 2** (done together with V6-1, the notification centre):
+  - The 90 s reveal is staged: the left cards at 90 s, the right column +5 s, the key chips +15 s. WEAPONS stays on a newcomer's PC HUD from 0 s.
+  - Big pop-ups wait their turn (Notify.waitBig): the first one 20 s after the reveal, then 40 s apart.
+  - News and tips wait for the reveal; rewards (the first unlock) come through one at a time.
+  - LAB VIEW comes back at once for a returning player (`HudSlots.newcomerChanged`).
+  - No newcomer flow after a teleport. The cannon step outlines the pad and the cannon. The line hides while a machine is looked up. The reveal is scheduled before anything that could fail, and the steps run in a pcall. The pill refits on rotation, and a gamepad text follows the device.
+  - Measured timeline, a new player in Studio:
+    - 0-90 s: only the line;
+    - 90 s: Shop/Lab, the gift-clock tip;
+    - 94 s: daily egg;
+    - 105 s: key chips;
+    - 110 s: auto egg;
+    - 115/120/140 s: rewards;
+    - 152 s: egg card.
+  - A returning player gets the full HUD and LAB VIEW at once.
+  - LayoutCheck 0 problems; T23/T38/T45/T55/T60/T100 pass.
+  - Score 7.2 → about 9 (my estimate; the 2 review rounds are used up). Left: the steps are still "you ride the machines", not the spec's "put a dummy in the machine"; there is no BULLSEYE step; the reveal toggles rather than slides.

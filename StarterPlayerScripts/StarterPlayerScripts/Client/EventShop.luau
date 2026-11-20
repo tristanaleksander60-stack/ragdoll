@@ -25,6 +25,7 @@ local Controller = require(UI:WaitForChild("LihFolkUIController"))
 local Client = script.Parent
 local FxController = require(Client:WaitForChild("FxController"))
 local Toast = require(Client:WaitForChild("Toast"))
+local Notify = require(Client:WaitForChild("Notify")) :: any -- V6-1
 local ScheduleUI = require(Client:WaitForChild("ScheduleUI"))
 local RobuxPrice = require(Client:WaitForChild("RobuxPrice"))
 local HudSlots = require(Client:WaitForChild("HudSlots"))
@@ -1099,13 +1100,20 @@ function EventShop.start()
 				else string.format("5 MINUTES GIFT: FREE ULTRA for %d minutes! No waiting: spam away!", math.floor(seconds / 60)), Color3.fromRGB(255, 160, 60))
 		elseif kind == "FreeOver" then
 			freeEnds = 0
-			Toast.show("Your free ULTRA is over. Get it to keep the speed!", Color3.fromRGB(255, 160, 60))
+			Notify.say("info", "Your free ULTRA is over. Get it to keep the speed!", Color3.fromRGB(255, 160, 60))
 		elseif kind == "Notice" and type(d.text) == "string" then
 			Toast.show(d.text)
 		elseif kind == "WhatsNew" then
-			if not Controller.isOpen("WhatsNew") then
-				Controller.open("WhatsNew")
-			end
+			-- (V6-1: What's New waits its turn like every big pop-up.)
+			task.spawn(function()
+				if Notify.waitBig("WhatsNew", 600) then
+					if Controller.getCurrent() == nil then
+						Controller.open("WhatsNew")
+					else
+						Notify.releaseBig("WhatsNew")
+					end
+				end
+			end)
 		elseif kind == "Admin" then
 			Toast.show(string.format(if d.queued then "ADMIN ABUSE! %s queued %s for everyone!" else "ADMIN ABUSE! %s started %s for everyone!", tostring(d.by), tostring(d.event)), Color3.fromRGB(255, 110, 110), belowBanner)
 		elseif kind == "Refused" and type(d.text) == "string" then

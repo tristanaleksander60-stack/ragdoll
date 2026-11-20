@@ -27,6 +27,7 @@ local ToolCatalog = require(Client:WaitForChild("ToolCatalog"))
 local FxController = require(Client:WaitForChild("FxController"))
 local ReplayController = require(Client:WaitForChild("ReplayController"))
 local Toast = require(Client:WaitForChild("Toast"))
+local Notify = require(Client:WaitForChild("Notify")) :: any -- V6-1: what pops up by itself goes through the notification centre
 local PlayerBody = require(Client:WaitForChild("PlayerBody"))
 local ViewMode = require(Client:WaitForChild("ViewMode"))
 local KitStyle = require(Client:WaitForChild("KitStyle"))
@@ -100,7 +101,7 @@ local function release()
 			-- (Only with a lab of their own: the hazards are in the labs, not the plaza.)
 			local plot = player:GetAttribute("LabPlot")
 			if not ReplayController.isPlaying() and type(plot) == "number" and plot > 0 then
-				Toast.show("Jump in the LAVA or blast off the CANNON at the BULLSEYE!", Color3.fromRGB(255, 140, 40))
+				Notify.say("tip", "Jump in the LAVA or blast off the CANNON at the BULLSEYE!", Color3.fromRGB(255, 140, 40))
 			end
 		end)
 	end
@@ -193,7 +194,7 @@ local function playReplay(at: number, first: boolean)
 			while time() < HudSlots.newcomerUntil do
 				task.wait(0.5)
 			end
-			Toast.show(Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
+			Notify.say("reward", Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
 		end)
 		PokeController.highlightTools()
 	end
@@ -242,7 +243,7 @@ local function onBigEvent(_toyId: string, at: number, _position: Vector3)
 		afterQuiet(RAGDOLL_TIP_DELAY, function()
 			if not PlayerBody.hasGoneLimp() and not ViewMode.isLab() then
 				local b = padGlyph("Ragdoll")
-				Toast.show(if b then "Press " .. b .. " to ragdoll yourself!" elseif ViewMode.isTouch() then "Tap RAGDOLL to flop yourself!" else "Press F to ragdoll yourself!")
+				Notify.say("tip", if b then "Press " .. b .. " to ragdoll yourself!" elseif ViewMode.isTouch() then "Tap RAGDOLL to flop yourself!" else "Press F to ragdoll yourself!")
 				PlayerBody.highlight()
 			end
 		end)
@@ -540,7 +541,7 @@ local function onUsed(toyId: string, _position: Vector3)
 	if not tried[toyId] then
 		tried[toyId] = true
 		if stage ~= "Spawn" and toyId ~= "Blaster" then
-			Toast.show("New tool: " .. Toys.byId[toyId].label .. "!")
+			Notify.say("reward", "New tool: " .. Toys.byId[toyId].label .. "!")
 		end
 	end
 end
@@ -568,7 +569,7 @@ local function unlockFallback()
 			while time() < HudSlots.newcomerUntil do
 				task.wait(0.5)
 			end
-			Toast.show(Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
+			Notify.say("reward", Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
 		end)
 		PokeController.highlightTools()
 	end
@@ -601,7 +602,7 @@ local function startReturning()
 	stopWatchingGreeter()
 	release()
 	PokeController.setEnabled(true)
-	Toast.show("Welcome back!", Color3.fromRGB(120, 230, 140))
+	Notify.say("info", "Welcome back!", Color3.fromRGB(120, 230, 140))
 end
 
 local viewPickedHere = false -- the player switched the view themselves this visit

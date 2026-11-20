@@ -9,8 +9,8 @@
 --     launcher columns (PC) or SHOP/MENU (phone), the key chips, LAB VIEW, the replay button, the
 --     long help line, the lab's signs, dummy chatter and the news toasts wait; then they come in one
 --     piece at a time (key chips last);
---   * toasts wait until the reveal (Toast.hold "newcomer"); later ones sit below the line
---     (Toast.setGoalTop), never on it.
+--   * news and tips wait for the reveal (Client/Notify, V6-1), rewards come one at a time; toasts
+--     sit below the line (Toast.setGoalTop), never on it.
 -- The HUD is held from the first frame and let go at once when the server says "not a newcomer",
 -- so a returning player never sees it vanish, and a newcomer never sees it flash.
 -- Step completion comes from the server (player attributes): Takedowns, CannonShots (Playground's
@@ -37,11 +37,12 @@ local FirstVisit = {}
 
 FirstVisit.GIVE_UP = 300 -- s: the line goes away after this whatever is left
 FirstVisit.MIN_QUIET = 45 -- s: a flow that starts late (slow load) still gets this much quiet
+FirstVisit.REVEAL_GAP = 5 -- s between the pieces of the reveal (left, right, then the key chips at 2x)
 FirstVisit.ANSWER_WAIT = 20 -- s: no server answer by then = treated as a returning player
 FirstVisit.PHONE_HELD = { "Shop", "Menu" } -- the phone's launchers held with the rest
 FirstVisit.STEPS = table.freeze({
 	{ id = "Takedown", text = "Knock a dummy over!", pad = "Knock a dummy over! (R2)" },
-	{ id = "Cannon", text = "Fire yourself from the CANNON", target = "CannonModel", attr = "CannonShots" },
+	{ id = "Cannon", text = "Fire yourself from the CANNON", target = "CannonPad", glow2 = "CannonModel", attr = "CannonShots" },
 	{ id = "Wrecking", text = "Get hit by the WRECKING BALL", target = "SwingBall", attr = "ThrownBy_SwingBall" },
 	{ id = "Weapons", text = "Open WEAPONS for more", pad = "Open WEAPONS for more (Y)" },
 })
@@ -191,27 +192,54 @@ function FirstVisit.start()
 	hud = if ok then HudV3 else nil
 	-- Held from the first frame: a newcomer never sees the HUD flash, a returning player gets it
 	-- back the moment the server answers (usually well under a second).
-	HudSlots.newcomerUntil = math.huge
+	HudSlots.setNewcomerUntil(math.huge)
 	holdHud(true)
 	local t0 = os.clock()
 	while player:GetAttribute("Newcomer") == nil and os.clock() - t0 < FirstVisit.ANSWER_WAIT do
 		task.wait(0.1)
 	end
 	if player:GetAttribute("Newcomer") ~= true then
-		HudSlots.newcomerUntil = 0
+		HudSlots.setNewcomerUntil(0)
 		holdHud(false)
 		return
 	end
 	local revealAt = math.max(Config.QUIET_START, time() + FirstVisit.MIN_QUIET)
-	HudSlots.newcomerUntil = revealAt
+	HudSlots.setNewcomerUntil(revealAt)
 	-- (For modules that cannot require HudSlots: DummyLife, ProgressUI.)
 	player:SetAttribute("NewcomerUntil", revealAt)
-	-- (No toast over the first objective: they queue, the newest few show fresh at the reveal.)
-	Toast.hold("newcomer", true)
+
 
 	-- The lab's signs (today's machine, NEW tags) wait too: the first screen is the dummies.
 	local hiddenSigns: { BillboardGui } = {}
 	local hiddenLight: { BasePart } = {}
+	-- The reveal is scheduled first, so nothing below can leave the HUD held for good. It comes in
+	-- piece by piece (research: one new thing at a time): the signs and the left cards, the right
+	-- column REVEAL_GAP later, the key chips last.
+	task.delay(math.max(0, revealAt - time()), function()
+		for _, s in hiddenSigns do
+			if s.Parent then
+				s.Enabled = true
+			end
+		end
+		for _, p in hiddenLight do
+			if p.Parent then
+				p.LocalTransparencyModifier = 0
+			end
+		end
+		holdHud(false, "Left")
+		HudSlots.newcomerChanged:Fire() -- (LAB VIEW and the rest place themselves again)
+		pcall(function()
+			-- (The help line grows back to its full text with the HUD.)
+			local Poke = require(Client:WaitForChild("PokeController")) :: any
+			if Poke.refreshHelp then
+				Poke.refreshHelp()
+			end
+		end)
+		task.wait(FirstVisit.REVEAL_GAP)
+		holdHud(false, "Right")
+		task.wait(FirstVisit.REVEAL_GAP * 2)
+		holdHud(false, "Chips")
+	end)
 	local pgFolder = Workspace:FindFirstChild("Playground")
 	for _, d in if pgFolder then pgFolder:GetDescendants() else {} do
 		if d:IsA("BillboardGui") and d.Name == "ZoneSign" and d.Enabled then
@@ -230,86 +258,92 @@ function FirstVisit.start()
 		end
 		return line.Position.Y.Offset + line.AbsoluteSize.Y + 8
 	end)
-
-	-- The reveal: the signs, then one side, the other, the key chips last.
-	task.delay(math.max(0, revealAt - time()), function()
-		for _, s in hiddenSigns do
-			if s.Parent then
-				s.Enabled = true
-			end
+	local wanted = "" -- the step text as written (the pill shows it, fitted)
+	local function refit()
+		line.Position = UDim2.new(0.5, 0, 0, if phone() then 48 else 14)
+		if wanted ~= "" then
+			setText(line, wanted)
 		end
-		for _, p in hiddenLight do
-			if p.Parent then
-				p.LocalTransparencyModifier = 0
-			end
-		end
-		holdHud(false, "Left")
-		task.wait(1)
-		holdHud(false, "Right")
-		Toast.hold("newcomer", false)
-		-- (The help line grows back to its full text with the HUD.)
-		pcall(function()
-			local Poke = require(Client:WaitForChild("PokeController")) :: any
-			if Poke.refreshHelp then
-				Poke.refreshHelp()
-			end
-		end)
-		task.wait(9)
-		holdHud(false, "Chips")
-	end)
+	end
+	local cam = Workspace.CurrentCamera
+	local viewConn = if cam then cam:GetPropertyChangedSignal("ViewportSize"):Connect(refit) else nil
+	local function say(text: string)
+		wanted = text
+		line.Visible = true
+		setText(line, text)
+	end
 
 	local started = time()
-	for _, step in FirstVisit.STEPS do
-		-- (The lab streams in: look again for a while before giving a machine up.)
-		local target: Instance? = nil
-		if step.target then
-			local waitUntil = os.clock() + 15
-			repeat
-				local lab = myLab()
-				target = if lab then lab:FindFirstChild(step.target, true) else nil
-				if not target then
-					task.wait(0.5)
-				end
-			until target or os.clock() > waitUntil
-			if not target then
-				continue -- (no such machine here)
+	local ok2, err = pcall(function()
+		for _, step in FirstVisit.STEPS do
+			-- (The Weapons step waits for the HUD: WEAPONS is the thing it points at.)
+			if step.id == "Weapons" and time() < revealAt + 1 then
+				line.Visible = false
+				task.wait(math.max(0, revealAt + 1 - time()))
 			end
-		end
-		setText(line, if onPad() and step.pad then step.pad else step.text)
-		local hl = glow(target)
-		local startCount = if step.attr then ((player:GetAttribute(step.attr) :: number?) or 0) else 0
-		local startTakedowns = (player:GetAttribute("Takedowns") :: number?) or 0
-		local done = false
-		while not done and time() - started <= FirstVisit.GIVE_UP do
-			if step.id == "Takedown" then
-				done = ((player:GetAttribute("Takedowns") :: number?) or 0) > startTakedowns
-			elseif step.attr then
-				done = ((player:GetAttribute(step.attr) :: number?) or 0) > startCount
-			elseif step.id == "Weapons" then
-				local ok2, ToolCatalog = pcall(function()
-					return require(Client:WaitForChild("ToolCatalog")) :: any
-				end)
-				done = ok2 and ToolCatalog.isOpen()
+			-- (The lab streams in: look again for a while before giving a machine up; the line hides
+			-- while it looks.)
+			local target: Instance? = nil
+			if step.target then
+				local waitUntil = os.clock() + 15
+				repeat
+					local lab = myLab()
+					target = if lab then lab:FindFirstChild(step.target, true) else nil
+					if not target then
+						line.Visible = false
+						task.wait(0.5)
+					end
+				until target or os.clock() > waitUntil
+				if not target then
+					continue -- (no such machine here)
+				end
+			end
+			local padNow = onPad()
+			say(if padNow and step.pad then step.pad else step.text)
+			local hl = glow(target)
+			local lab = myLab()
+			local hl2 = if step.glow2 and lab then glow(lab:FindFirstChild(step.glow2, true)) else nil
+			local startCount = if step.attr then ((player:GetAttribute(step.attr) :: number?) or 0) else 0
+			local startTakedowns = (player:GetAttribute("Takedowns") :: number?) or 0
+			local done = false
+			while not done and time() - started <= FirstVisit.GIVE_UP do
+				if step.id == "Takedown" then
+					done = ((player:GetAttribute("Takedowns") :: number?) or 0) > startTakedowns
+				elseif step.attr then
+					done = ((player:GetAttribute(step.attr) :: number?) or 0) > startCount
+				elseif step.id == "Weapons" then
+					local okCat, ToolCatalog = pcall(function()
+						return require(Client:WaitForChild("ToolCatalog")) :: any
+					end)
+					done = okCat and ToolCatalog.isOpen()
+				end
+				if not done then
+					-- (A pad plugged in or out mid-step: the button name follows.)
+					if onPad() ~= padNow and step.pad then
+						padNow = onPad()
+						say(if padNow then step.pad else step.text)
+					end
+					task.wait(0.2)
+				end
+			end
+			for _, h in { hl, hl2 } do
+				if h then
+					h:Destroy()
+				end
 			end
 			if not done then
-				task.wait(0.2)
+				break
 			end
+			-- A short "done" beat before the next line.
+			say("\u{2713} Nice!")
+			task.wait(1.4)
 		end
-		if hl then
-			hl:Destroy()
-		end
-		if not done then
-			break
-		end
-		-- A short "done" beat before the next line.
-		setText(line, "\u{2713} Nice!")
-		task.wait(1.4)
-		-- (The Weapons step waits for the HUD to come in.)
-		if step.id == "Wrecking" and time() < revealAt then
-			line.Visible = false
-			task.wait(math.max(0, revealAt + 2 - time()))
-			line.Visible = true
-		end
+	end)
+	if not ok2 then
+		warn("[FirstVisit] " .. tostring(err))
+	end
+	if viewConn then
+		viewConn:Disconnect()
 	end
 	Toast.setGoalTop(nil)
 	gui:Destroy()

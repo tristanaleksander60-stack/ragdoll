@@ -29,7 +29,7 @@ local PORTRAIT_HEIGHT_MAX = 110 -- phase 0: four lines at 18 px across an uprigh
 
 local Toast = {}
 
-type Item = { text: string, color: Color3, top: (() -> number)?, at: number, pinned: boolean? }
+type Item = { text: string, color: Color3, top: (() -> number)?, at: number, pinned: boolean?, icon: string?, onTap: (() -> ())? }
 
 local gui: ScreenGui? = nil
 local floor: (() -> number)? = nil -- the lowest a toast's bottom may reach (above the bar's chip)
@@ -144,6 +144,34 @@ function showNext()
 	pad.PaddingTop = UDim.new(0, 10)
 	pad.PaddingBottom = UDim.new(0, 10)
 	pad.Parent = label
+	-- (V6-1: a small picture left of the line, and a tap takes the card away.)
+	local iconId = item.icon
+	if iconId and iconId ~= "" then
+		pad.PaddingLeft = UDim.new(0, 48)
+		local pic = Instance.new("ImageLabel")
+		pic.Name = "Icon"
+		pic.BackgroundTransparency = 1
+		pic.Image = iconId
+		pic.ScaleType = Enum.ScaleType.Fit
+		pic.AnchorPoint = Vector2.new(0, 0.5)
+		pic.Size = UDim2.fromOffset(28, 28)
+		pic.Position = UDim2.new(0, -38, 0.5, 0)
+		pic.Parent = label
+	end
+	local tap = Instance.new("TextButton")
+	tap.Name = "Dismiss"
+	tap.Text = ""
+	tap.BackgroundTransparency = 1
+	tap.Size = UDim2.fromScale(1, 1) -- (scale only: it must not grow the auto-sized card)
+	tap.ZIndex = 5
+	tap.Parent = label
+	tap.Activated:Connect(function()
+		local fn = item.onTap
+		if fn then
+			task.spawn(fn)
+		end
+		hide(label)
+	end)
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, Theme.Radius.card)
 	corner.Parent = label
@@ -293,7 +321,8 @@ end
 
 -- top: the lowest screen Y (AbsolutePosition space) it may sit at, asked when it shows; for
 -- messages that must clear something else at the top of the screen (the event banner).
-function Toast.show(text: string, color: Color3?, top: (() -> number)?)
+-- icon: an image id drawn left of the text (V6-1). onTap: called when the player taps it away.
+function Toast.show(text: string, color: Color3?, top: (() -> number)?, icon: string?, onTap: (() -> ())?)
 	local elsewhere = redirect
 	if elsewhere then
 		elsewhere(text, color) -- (a bar has the toast's place: it shows the message itself)
@@ -317,7 +346,7 @@ function Toast.show(text: string, color: Color3?, top: (() -> number)?)
 			end
 		end
 	end
-	table.insert(queue, { text = text, color = color or Theme.Palette.gold, top = top, at = os.clock() })
+	table.insert(queue, { text = text, color = color or Theme.Palette.gold, top = top, at = os.clock(), icon = icon, onTap = onTap })
 	if not showing then
 		showNext()
 	end

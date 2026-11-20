@@ -24,7 +24,7 @@ local Icons = require(UI:WaitForChild("LihFolkUIIcons"))
 local Controller = require(UI:WaitForChild("LihFolkUIController"))
 
 local Client = script.Parent
-local Toast = require(Client:WaitForChild("Toast"))
+local Notify = require(Client:WaitForChild("Notify")) :: any -- V6-1: what pops up by itself goes through the notification centre
 local KitStyle = require(Client:WaitForChild("KitStyle"))
 local ToolPicture = require(script.Parent:WaitForChild("ToolPicture"))
 local HudMenu = require(Client:WaitForChild("HudMenu"))
@@ -377,6 +377,14 @@ function offerEgg(force: boolean)
 				then "You have a FREE egg!"
 				else string.format("You have %d FREE eggs!", state.eggs)
 		end
+		-- (V6-1: one big pop-up at a time, a gap between them, never over a window the player opened.)
+		if not Notify.waitBig("EggReady", 180) then
+			return
+		end
+		if state.eggs <= 0 or Controller.isOpen("EggReady") then
+			Notify.releaseBig("EggReady")
+			return
+		end
 		Controller.open("EggReady")
 	end)
 end
@@ -543,7 +551,7 @@ function ProgressUI.start()
 				offerEgg(false) -- (a new egg: offered when the moment is calm)
 			end
 		elseif kind == "Egg" then
-			Toast.show("You found an egg!", Color3.fromRGB(255, 154, 205))
+			Notify.say("reward", "You found an egg!", Color3.fromRGB(255, 154, 205))
 		elseif kind == "Daily" and type(data) == "table" then
 			local d = data :: any
 			local streak = tonumber(d.streak) or 1
@@ -554,7 +562,7 @@ function ProgressUI.start()
 				OnboardingController.whenFree(function()
 					PokeController.autoEquip(id)
 				end)
-				Toast.show(string.format("DAY %d GIFT: the %s is yours! It's on your bar.", streak, string.upper(weapon.label)), Color3.fromRGB(120, 230, 140))
+				Notify.say("reward", string.format("DAY %d GIFT: the %s is yours! It's on your bar.", streak, string.upper(weapon.label)), Color3.fromRGB(120, 230, 140))
 				C.playSound("reward")
 			end
 			-- (Audit area 1: a newcomer's first 90 s carry one objective only; the daily news waits.)
@@ -563,18 +571,18 @@ function ProgressUI.start()
 			if time() < newcomerUntil then
 				task.wait(newcomerUntil - time() + 3)
 			end
-			Toast.show(if streak <= 1
+			Notify.say("reward", if streak <= 1
 				then "Daily egg! Come back tomorrow for another."
 				else string.format("Daily egg%s! Day %d in a row. Come back tomorrow!", if (tonumber(d.eggs) or 1) > 1 then "s" else "", streak), Color3.fromRGB(255, 154, 205))
 		elseif kind == "Notice" and type(data) == "string" then
-			Toast.show(data)
+			Notify.say("reward", data) -- (gifts, journal pages, codes: rewards and answers, never held long)
 		elseif kind == "GoalDone" and type(data) == "string" then
 			-- (V5 first visit: never on top of an egg card or another reward: it waits a few seconds.)
 			task.wait(6)
-			Toast.show("Goal done: " .. data .. "! Claim your egg in Rank & Eggs", Color3.fromRGB(255, 154, 205))
+			Notify.say("reward", "Goal done: " .. data .. "! Claim your egg in Rank & Eggs", Color3.fromRGB(255, 154, 205))
 			C.playSound("reward")
 		elseif kind == "Rank" and type(data) == "string" then
-			Toast.show("Rank up: " .. string.upper(data) .. "!", Color3.fromRGB(255, 210, 74))
+			Notify.say("reward", "Rank up: " .. string.upper(data) .. "!", Color3.fromRGB(255, 210, 74))
 		elseif kind == "Combo" and type(data) == "table" then
 			-- (Round 2: no COMBO on the screen, the owner's wish. Round 5, phase 00: in the first
 			-- minutes of a visit every takedown pops a big "+1 TAKEDOWN", so a new player sees the
@@ -587,6 +595,9 @@ function ProgressUI.start()
 			-- The first egg opens by itself (round 5, phase 00), once the first minute's bar is free.
 			OnboardingController.whenFree(function()
 				task.wait(math.max(0.5, Config.QUIET_START - time())) -- (phase 0: after the quiet start)
+				-- (V6-1 / audit area 1: the self-opening egg is a big pop-up too: it waits its turn, and a
+				-- newcomer's comes NOTIFY_BIG_AFTER_REVEAL s after the HUD is in.)
+				Notify.waitBig("AutoEgg", 240)
 				if Controller.isOpen("EggReady") then
 					Controller.close("EggReady")
 				end
@@ -613,14 +624,14 @@ function ProgressUI.start()
 					local id = toy.id
 					OnboardingController.whenFree(function()
 						if PokeController.autoEquip(id) then
-							Toast.show(string.format("Your %s is on the bar. Try it!", string.upper(toy.label)), Color3.fromRGB(120, 230, 140))
+							Notify.say("reward", string.format("Your %s is on the bar. Try it!", string.upper(toy.label)), Color3.fromRGB(120, 230, 140))
 						end
 					end)
 				else
 					onBar = PokeController.autoEquip(toy.id)
 				end
 			end
-			Toast.show(if onBar
+			Notify.say("reward", if onBar
 				then string.format("NEW: %s! It's on your bar. Try it!", string.upper(tostring(d.name)))
 				else string.format("UNLOCKED: %s! Find it in WEAPONS.", string.upper(tostring(d.name))), Color3.fromRGB(120, 230, 140))
 			C.playSound("reward")

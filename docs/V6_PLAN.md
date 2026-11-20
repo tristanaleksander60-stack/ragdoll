@@ -202,3 +202,27 @@ What to do:
 
 ## State
 - 20 Nov 2026: plan written (cloud). Nothing of V6 started.
+- **V5 closed** (20 Nov). Its leftovers are in V6-4 (lab clutter) and V6-8 (map passes, 3 event cards).
+- **V6-1 notifications (20 Nov, PC; `Config.NOTIFY`):**
+  - **Rules:** `Shared/NotifyRules` (pure, T100), applied by `Client/Notify`.
+    - Kinds: critical, reward, info, tip.
+    - Gaps since the last unsolicited message: reward 4 s, info 20 s, tip 45 s.
+    - The same message is dropped within 120 s. A message expires after its max wait (info 45 s, tip 90 s, reward 120 s).
+    - Only rewards and critical get through during a newcomer's first visit (`NewcomerUntil`).
+    - 3 s of quiet after any window closes.
+    - Big pop-ups (windows and cards that open by themselves): one at a time, 40 s apart, never over a window the player opened, and a newcomer's first one 20 s after the HUD reveal.
+  - **Routed through Notify:**
+    - small messages: the unsolicited toasts in ProgressUI, ScheduleUI, OnboardingController, GiftClock, ChristmasFx, ExperimentCard and EventShop (free ULTRA over);
+    - big pop-ups: the egg card (EggReady), the auto egg, the favourite window (Like) and What's New.
+    - Replies to the player's own presses still use Toast directly.
+  - **Look:** Toast cards take an optional icon and close on a tap. A tapped tip stays away for the visit. Rewards and critical play a soft click through the UI mix group.
+  - **Experience Notifications:** `EXPERIENCE_NOTIFY`, `NOTIFY_OPTIN_AFTER` 480. After a wow moment (LikePrompt's wow) and 8 min of play, the game asks once through Roblox's own opt-in prompt (`ExperienceNotificationService:PromptOptIn`). **Owner, dashboard:** create the notification strings ("Your daily reward is ready", "A new update is out") under Engagement → Notifications. Sending them needs the Open Cloud user-notification API with a key (not set up).
+  - The audit's area 1 round 2 goes in here too:
+    - a staged reveal (left cards, then the right column +5 s, then the key chips +10 s);
+    - WEAPONS stays on a newcomer's PC HUD from 0 s;
+    - LAB VIEW comes back at once for a returning player (`HudSlots.newcomerChanged`, `quietUntil`);
+    - no newcomer flow after a teleport;
+    - the cannon step outlines the pad and the cannon;
+    - the line hides while a machine is looked up;
+    - the reveal is scheduled before anything that could fail;
+    - the pill refits on rotation.

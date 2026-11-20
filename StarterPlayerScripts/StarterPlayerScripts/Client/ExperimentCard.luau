@@ -27,6 +27,7 @@ local ReplayController = require(Client:WaitForChild("ReplayController"))
 local ToolCatalog = require(Client:WaitForChild("ToolCatalog"))
 local ViewMode = require(Client:WaitForChild("ViewMode"))
 local Toast = require(Client:WaitForChild("Toast"))
+local Notify = require(Client:WaitForChild("Notify")) :: any -- V6-1: what pops up by itself goes through the notification centre
 local KitStyle = require(Client:WaitForChild("KitStyle"))
 
 local ExperimentCard = {}
@@ -59,7 +60,7 @@ function ExperimentCard.scored(score: number)
 	local c = challenge
 	if c and score > c.score then
 		challenge = nil
-		Toast.show(string.format("\u{1F3C6} You beat your friend's %d!", c.score), Color3.fromRGB(120, 230, 140))
+		Notify.say("reward", string.format("\u{1F3C6} You beat your friend's %d!", c.score), Color3.fromRGB(120, 230, 140))
 	end
 end
 
@@ -404,7 +405,7 @@ function ExperimentCard.start()
 			else
 				current = nil
 			end
-			Toast.show(string.format("\u{2B50} Experiment done! +%d star%s", d.stars or 1, if d.stars == 1 then "" else "s"), Color3.fromRGB(255, 210, 74))
+			Notify.say("reward", string.format("\u{2B50} Experiment done! +%d star%s", d.stars or 1, if d.stars == 1 then "" else "s"), Color3.fromRGB(255, 210, 74))
 		elseif kind == "Late" then
 			current = nil
 		elseif kind == "Party" and type(d.text) == "string" then

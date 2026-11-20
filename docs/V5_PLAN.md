@@ -70,3 +70,4 @@ Ordered by how much of a player's screen time each one covers. Every step:
   - At ~90 s the auto egg's reward card and the "Goal done… claim your egg" toast came at once. The toast now waits 6 s.
   - (A "left your bar" toast seen at join was a StudioFresh leftover from my saved loadout, now fixed.)
   - Deep research on the top ragdoll games' first sessions is running (docs/RESEARCH_FIRST_SESSION.md).
+- **V5 closed (20 Nov, /klar):** what is left moves into V6. The crash-test dummy look is skipped (the owner's v3 choice: white dummies). The lab clutter goes into V6-4 (the bigger, landscaped lab). The Island, Site and Farm map passes go into V6-8. The 3 event cards without a picture (RocketRain, Earthquake, MeteorShower) go into V6-8 too.

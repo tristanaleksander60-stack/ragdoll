@@ -10,7 +10,7 @@ local Players = game:GetService("Players")
 local Client = script.Parent
 local PokeController = require(Client:WaitForChild("PokeController"))
 local OnboardingController = require(Client:WaitForChild("OnboardingController"))
-local Toast = require(Client:WaitForChild("Toast"))
+local Notify = require(Client:WaitForChild("Notify")) :: any -- V6-1: what pops up by itself goes through the notification centre
 local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 
 local GiftClock = {}
@@ -65,7 +65,7 @@ function GiftClock.start()
 			local minutes = math.max(1, math.ceil(left / 60))
 			-- (Release fix: with Config.EGG_RATION the play gift is BOLTS, so the note says so.)
 			local prize = if Config.EGG_RATION and Config.ECONOMY then string.format("%d FREE BOLTS", Config.PLAYTIME_BOLTS) else "a FREE weapon egg"
-			Toast.show(string.format("\u{1F381} Play %d more min for %s! The clock is on WEAPONS.", minutes, prize), Color3.fromRGB(255, 210, 74))
+			Notify.say("tip", string.format("\u{1F381} Play %d more min for %s! The clock is on WEAPONS.", minutes, prize), Color3.fromRGB(255, 210, 74))
 		end
 	end)
 end
