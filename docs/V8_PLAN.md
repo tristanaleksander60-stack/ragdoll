@@ -1575,3 +1575,9 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - 6.3 needs CI tools that are not on this PC (no lune, selene or luau-lsp);
   - 6.4, 6.5, 6.7 and 6.8 are large rebuilds (a test arena and multiplayer runner, journey tests, one HUD, ProfileStore), each its own session;
   - 6.6 needs the ConfigService decision (owner).
+- **0.27.0 ready (21 Nov):**
+  - **Full suite:** 105 pass, 1 fail (T24, known flaky), 2 skip (T102 no player, T104 birds off).
+  - **LayoutCheck:** the CRASH card first gave 114 problems. It is now compact (84 px, AGAIN on the right), never shows during a chase (a toast instead), and the experiment card steps aside while it shows. Result: 0 problems.
+  - **Clean:** 0 client errors; BootFailed and ClientBootFailed are nil.
+  - **Sync check:** see below; the place is saved.
+  - **Not yet:** 0.26.0 and 0.27.0 wait for the owner's Alt+P. Then restart the servers through Open Cloud.

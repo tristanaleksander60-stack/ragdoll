@@ -79,6 +79,7 @@ local function shown(): boolean
 	local chase = gui and gui:FindFirstChild("ChaseHud")
 	local arena = gui and gui:FindFirstChild("MinigameHud")
 	return (current ~= nil or party ~= nil)
+		and not (gui and gui:FindFirstChild("StuntCard")) -- (V8-1.1: the CRASH card has the top for a moment)
 		and not PokeController.firstMinute()
 		and not PokeController.isPicking()
 		and not PokeController.isDoctor() -- (rests with the tools while the monitor has the bar's place)

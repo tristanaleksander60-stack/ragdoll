@@ -124,7 +124,7 @@ local NEVER_TOGETHER: { [string]: { [string]: boolean } } = {
 	-- phone has the lane top (Toast.topY; EventShop tickBannerV7).)
 	EventCard = { EventChip = true, Toast = true, HordeToast = true, Nuke = true, NukeHorde = true, GameBar = true, Choice = true, Light = true, Mode = true, Play = true },
 	-- (V8-1.1: the CRASH card holds the toast lane: Toast.hold("Stunt").)
-	StuntCard = { EventCard = true, EventChip = true, Toast = true, HordeToast = true, Nuke = true, NukeHorde = true, GameBar = true, Choice = true, Light = true, Mode = true, Play = true },
+	StuntCard = { EventCard = true, EventChip = true, Toast = true, HordeToast = true, Nuke = true, NukeHorde = true, GameBar = true, Choice = true, Light = true, Mode = true, Play = true, Chase = true, Experiment = true }, -- (a toast in a chase; the experiment card steps aside)
 	EventChip = { EventCard = true, Toast = true, HordeToast = true, Nuke = true, NukeHorde = true, GameBar = true, Choice = true, Light = true, Mode = true, Play = true },
 	-- (Round 2, N5: the Robux packs step aside while Streamer Mode's gift guide is up.)
 	Packs = { Guide = true },
@@ -462,7 +462,7 @@ function LayoutCheck.run(): string
 				-- V8-1.1: the CRASH card (StuntHud) holds the toast lane while it shows.
 				if (Config :: any).STUNT_SCORE then
 					local sw = math.min(tw, 380)
-					table.insert(all, { x = centre - sw / 2, y = ty or 10, w = sw, h = 128, name = "StuntCard" })
+					table.insert(all, { x = centre - sw / 2, y = ty or 10, w = sw, h = 84, name = "StuntCard" })
 				end
 				-- During a horde toasts go on below the game bar (Toast.setMinTop); a phone shows them
 				-- in the bar's points line instead (MinigameHud setBar), so it has no such box.

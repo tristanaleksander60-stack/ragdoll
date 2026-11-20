@@ -2,8 +2,8 @@
 -- V8-6.2 (build stamp): written by tools/stamp.pl, never by hand. The commit this build sits on,
 -- when it was made, and every synced script's checksum (tools/SyncCheck.luau compares them).
 return table.freeze({
-	commit = "2d320e7",
-	made = "2026-11-20 16:33 UTC",
+	commit = "43daebf",
+	made = "2026-11-20 16:50 UTC",
 	scripts = table.freeze({
 		["ReplicatedStorage.LihFolkUI.LihFolkUIComponents"] = 3868685012,
 		["ReplicatedStorage.LihFolkUI.LihFolkUIController"] = 1243885188,
@@ -271,7 +271,7 @@ return table.freeze({
 		["StarterPlayer.StarterPlayerScripts.Client.DummySim"] = 232432605,
 		["StarterPlayer.StarterPlayerScripts.Client.DummySkins"] = 610731441,
 		["StarterPlayer.StarterPlayerScripts.Client.EventShop"] = 751657178,
-		["StarterPlayer.StarterPlayerScripts.Client.ExperimentCard"] = 2091658999,
+		["StarterPlayer.StarterPlayerScripts.Client.ExperimentCard"] = 1046568217,
 		["StarterPlayer.StarterPlayerScripts.Client.FeelBus"] = 2667913594,
 		["StarterPlayer.StarterPlayerScripts.Client.FeelV2"] = 1229975646,
 		["StarterPlayer.StarterPlayerScripts.Client.FirstPerson"] = 1257855354,
@@ -295,7 +295,7 @@ return table.freeze({
 		["StarterPlayer.StarterPlayerScripts.Client.HudV3Layout"] = 976264444,
 		["StarterPlayer.StarterPlayerScripts.Client.KitStyle"] = 1819899806,
 		["StarterPlayer.StarterPlayerScripts.Client.LabCamera"] = 4204988733,
-		["StarterPlayer.StarterPlayerScripts.Client.LayoutCheck"] = 106591855,
+		["StarterPlayer.StarterPlayerScripts.Client.LayoutCheck"] = 391281888,
 		["StarterPlayer.StarterPlayerScripts.Client.LikePrompt"] = 610684121,
 		["StarterPlayer.StarterPlayerScripts.Client.Main"] = 4131128167,
 		["StarterPlayer.StarterPlayerScripts.Client.MinigameHud"] = 2506371577,
@@ -325,7 +325,7 @@ return table.freeze({
 		["StarterPlayer.StarterPlayerScripts.Client.SpawnKey"] = 1778415740,
 		["StarterPlayer.StarterPlayerScripts.Client.Spectate"] = 1362961147,
 		["StarterPlayer.StarterPlayerScripts.Client.Sprint"] = 2506476910,
-		["StarterPlayer.StarterPlayerScripts.Client.StuntHud"] = 2894625091,
+		["StarterPlayer.StarterPlayerScripts.Client.StuntHud"] = 3249016391,
 		["StarterPlayer.StarterPlayerScripts.Client.Toast"] = 663038380,
 		["StarterPlayer.StarterPlayerScripts.Client.ToolCatalog"] = 488853545,
 		["StarterPlayer.StarterPlayerScripts.Client.ToolPicture"] = 74955260,

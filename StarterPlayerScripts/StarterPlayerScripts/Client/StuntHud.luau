@@ -29,6 +29,7 @@ local StuntHud = {}
 StuntHud.SLOW_K = 0.35 -- the slow-mo beat's time scale
 StuntHud.SLOW_FOR = 1.0 -- s of real time the beat lasts (1.0: about 2.8 s in the air in all; 0.7 gave 2.3-2.5)
 StuntHud.CARD_FOR = 6 -- s the landing card stays
+StuntHud.CARD_H = 84 -- px tall (LayoutCheck's StuntCard box)
 
 local player = Players.LocalPlayer
 local remote: RemoteEvent? = nil
@@ -241,6 +242,13 @@ end
 
 local function showCard(d: any)
 	closeCard()
+	-- (During a chase the chase bar has the top: the score is a toast line instead.)
+	if player:GetAttribute("ChaseLeft") ~= nil then
+		pcall(function()
+			(require(Client:WaitForChild("Toast")) :: any).show(string.format("CRASH %s%s", StuntMath.format(tonumber(d.score) or 0), if d.newBest then "  NEW BEST!" else ""))
+		end)
+		return
+	end
 	cardToken += 1
 	local token = cardToken
 	local HudSlots = require(Client:WaitForChild("HudSlots")) :: any
@@ -256,7 +264,7 @@ local function showCard(d: any)
 	local f = Instance.new("Frame")
 	f.AnchorPoint = Vector2.new(0.5, 0)
 	f.Position = UDim2.fromOffset(centre, top or 10)
-	f.Size = UDim2.fromOffset(w, if d.again then 128 else 92)
+	f.Size = UDim2.fromOffset(w, StuntHud.CARD_H) -- (compact: AGAIN on the right; LayoutCheck checks this height)
 	f.BackgroundColor3 = Color3.fromRGB(22, 26, 44)
 	f.BackgroundTransparency = 0.08
 	local corner = Instance.new("UICorner")
@@ -270,7 +278,8 @@ local function showCard(d: any)
 		local t = Instance.new("TextLabel")
 		t.BackgroundTransparency = 1
 		t.Position = UDim2.fromOffset(12, y)
-		t.Size = UDim2.new(1, -24, 0, h)
+		t.Size = UDim2.new(1, if d.again then -136 else -24, 0, h)
+		t.TextXAlignment = Enum.TextXAlignment.Left
 		t.Font = font
 		t.TextSize = size
 		t.TextColor3 = color
@@ -280,15 +289,15 @@ local function showCard(d: any)
 		t.Parent = f
 		return t
 	end
-	local scoreLine = label("CRASH 0", 6, 36, 30, Color3.fromRGB(255, 214, 64), Enum.Font.FredokaOne)
+	local scoreLine = label("CRASH 0", 4, 34, 28, Color3.fromRGB(255, 214, 64), Enum.Font.FredokaOne)
 	local tricks = if type(d.tricks) == "table" then table.concat(d.tricks, "  \u{00B7}  ") else ""
-	label(if tricks ~= "" then tricks else string.format("%.1f s in the air", tonumber(d.air) or 0), 42, 20, 16, Color3.new(1, 1, 1), Enum.Font.GothamBold)
-	label(if d.newBest then "NEW BEST!" else "Best " .. StuntMath.format(tonumber(d.best) or 0), 62, 22, 16, if d.newBest then Color3.fromRGB(120, 230, 140) else Color3.fromRGB(190, 196, 214), Enum.Font.GothamBold)
+	label(if tricks ~= "" then tricks else string.format("%.1f s in the air", tonumber(d.air) or 0), 38, 20, 14, Color3.new(1, 1, 1), Enum.Font.GothamBold)
+	label(if d.newBest then "NEW BEST!" else "Best " .. StuntMath.format(tonumber(d.best) or 0), 60, 18, 14, if d.newBest then Color3.fromRGB(120, 230, 140) else Color3.fromRGB(190, 196, 214), Enum.Font.GothamBold)
 	if d.again then
 		local b = Instance.new("TextButton")
-		b.AnchorPoint = Vector2.new(0.5, 1)
-		b.Position = UDim2.new(0.5, 0, 1, -8)
-		b.Size = UDim2.fromOffset(160, 36)
+		b.AnchorPoint = Vector2.new(1, 0.5)
+		b.Position = UDim2.new(1, -10, 0.5, 0)
+		b.Size = UDim2.fromOffset(112, 48)
 		b.BackgroundColor3 = Color3.fromRGB(255, 140, 40)
 		b.Font = Enum.Font.FredokaOne
 		b.TextSize = 22
