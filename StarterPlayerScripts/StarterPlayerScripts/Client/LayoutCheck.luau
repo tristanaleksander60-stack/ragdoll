@@ -1115,12 +1115,13 @@ function LayoutCheck.uiV2(lines: { string }, widthOf: (string, number) -> number
 	end
 	problems += #missing
 	table.insert(lines, "UI v2 icons: HUD buttons and MENU entries " .. (if #missing == 0 then "all drawn (DrawnIcons)" else "EMOJI FALLBACK: " .. table.concat(missing, ", ")))
-	-- The weapon card's stat row: names at their floor in 62 units, the value in 22.
-	local statOk = widthOf("POWER", Theme.MinTextSize) <= 62 and widthOf("SPEED", Theme.MinTextSize) <= 62 and widthOf("CHAOS", Theme.MinTextSize) <= 62 and widthOf("10", Theme.MinTextSize) <= 22
+	-- The weapon card's stat row: names at their floor in 70 units (with 15 % room: the rendered bold
+	-- face runs wider than the measure; V5 found POWER cut at 62), the value in 22.
+	local statOk = widthOf("POWER", Theme.MinTextSize) * 1.15 <= 70 and widthOf("SPEED", Theme.MinTextSize) * 1.15 <= 70 and widthOf("CHAOS", Theme.MinTextSize) * 1.15 <= 70 and widthOf("10", Theme.MinTextSize) <= 22
 	if not statOk then
 		problems += 1
 	end
-	table.insert(lines, string.format("UI v2 weapon cards: POWER %d / CHAOS %d units of 62, \"10\" %d of 22 at %d: %s", widthOf("POWER", Theme.MinTextSize), widthOf("CHAOS", Theme.MinTextSize), widthOf("10", Theme.MinTextSize), Theme.MinTextSize, if statOk then "fit" else "TOO WIDE"))
+	table.insert(lines, string.format("UI v2 weapon cards: POWER %d / CHAOS %d units (+15%%) of 70, \"10\" %d of 22 at %d: %s", widthOf("POWER", Theme.MinTextSize), widthOf("CHAOS", Theme.MinTextSize), widthOf("10", Theme.MinTextSize), Theme.MinTextSize, if statOk then "fit" else "TOO WIDE"))
 	-- HUD icon buttons: the word beside (LAB VIEW, RAGDOLL) or under (BUILD, GRAB, THROW, RUN, SHOOT)
 	-- its icon keeps 14 px.
 	local tight = {}

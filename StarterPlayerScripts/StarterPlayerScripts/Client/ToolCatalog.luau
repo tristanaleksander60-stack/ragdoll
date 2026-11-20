@@ -327,7 +327,7 @@ local function statRow(label: string, value: number, order: number, parent: Inst
 		color = P.textMid,
 		align = Enum.TextXAlignment.Left,
 		scaled = true,
-		size = UDim2.new(0, 62, 1, 0),
+		size = UDim2.new(0, 70, 1, 0), -- (V5: "POWER" at the 17-unit floor needs more than 62)
 		parent = row :: Instance,
 	})
 	name.Name = "Name"
@@ -336,8 +336,8 @@ local function statRow(label: string, value: number, order: number, parent: Inst
 	track.BackgroundColor3 = P.duskSunken
 	track.BorderSizePixel = 0
 	track.AnchorPoint = Vector2.new(0, 0.5)
-	track.Position = UDim2.new(0, 64, 0.5, 0)
-	track.Size = UDim2.new(1, -64 - 26, 0, 12)
+	track.Position = UDim2.new(0, 72, 0.5, 0)
+	track.Size = UDim2.new(1, -72 - 26, 0, 12)
 	local round = Instance.new("UICorner")
 	round.CornerRadius = UDim.new(0.5, 0)
 	round.Parent = track

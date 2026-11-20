@@ -40,3 +40,12 @@ Ordered by how much of a player's screen time each one covers. Every step:
   - The Christmas hat is a real soft Santa hat mesh (ServerStorage.V3Assets.SantaHat = Creator Store 1055416490 "Cool Santa (Hat only)", no scripts, place file only, saved v534), sized to the head. The stacked cylinders stay as the fallback.
   - The scarf tail is thinner and red.
   - T40 passes. The white dummies stay (the owner's v3 choice).
+- **V5-3 done (20 Nov):** with UI_CLEAN there is a calm token layer in LihFolkUITheme (`Theme.Clean`):
+  - neutral slate canvas;
+  - quieter role colours, each at least 4.5:1 under white text (T90 checks it);
+  - Builder Sans ExtraBold titles instead of Fredoka, with no outlined lettering;
+  - thin 1 px strokes, radii 8-12, a lighter shadow, press 0.96.
+  - Every window, card and HUD piece follows it.
+  - Bug fixed: the weapon cards read "POWE". The stat names now get 70 units, and LayoutCheck measures with a 15 % margin.
+  - Studio-only capture hook: the player attribute `DevOpen` = a window name opens it ("Weapons" opens the catalog).
+  - T90 updated (press 0.96 under Clean); T21/T35/T90 pass.

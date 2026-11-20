@@ -123,3 +123,20 @@ end)
 HospitalCharts.onChanged = function()
 	ToolCatalog.refreshHospital()
 end
+
+-- V5 (Studio only): a capture hook for the UI review. Setting the player's "DevOpen" attribute to a
+-- window's name opens it ("Weapons" opens the catalog); "" closes all. Never active in a live game.
+if game:GetService("RunService"):IsStudio() then
+	local devPlayer = game:GetService("Players").LocalPlayer
+	devPlayer:GetAttributeChangedSignal("DevOpen"):Connect(function()
+		local name = devPlayer:GetAttribute("DevOpen")
+		local Ctl = require(game:GetService("ReplicatedStorage"):WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIController")) :: any
+		if name == "Weapons" then
+			require(Client:WaitForChild("ToolCatalog")).toggle()
+		elseif type(name) == "string" and name ~= "" then
+			Ctl.open(name)
+		else
+			Ctl.closeAll()
+		end
+	end)
+end

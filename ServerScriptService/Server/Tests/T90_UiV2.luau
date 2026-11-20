@@ -91,7 +91,9 @@ return {
 			for name, spec in Theme.Text do
 				assert(spec.size * floorScale >= 14, "text style " .. name .. " draws under 14 px on a phone")
 			end
-			assert(math.abs(Theme.Motion.pressScale - 0.92) < 1e-6, "the press squish is not 0.92")
+			-- (V5 UI_CLEAN: a gentler press, 0.96; V2 alone: 0.92.)
+			local squish = if (Theme :: any).Clean then 0.96 else 0.92
+			assert(math.abs(Theme.Motion.pressScale - squish) < 1e-6, "the press squish is not " .. squish)
 			for name, role in Theme.Roles do
 				local need = if role.textStroke then 3 else 4.5
 				assert(contrast(role.text, role.bottom) >= need, "role " .. name .. ": its text does not read on its face")

@@ -414,6 +414,101 @@ if Theme.V2 then
 end
 
 ---------------------------------------------------------------------------
+-- V5 (Config.UI_CLEAN, 20 Nov 2026; the owner: "UI that does not look AI-made"): a calm layer over
+-- V2. Neutral slate instead of navy, quieter role colours (each still 4.5:1 under white text), one
+-- plain grotesque for titles (Builder Sans, not the round Fredoka), no outlined lettering, thin
+-- strokes, smaller radii and a gentler press. Tokens only; switch UI_CLEAN off for the V2 look.
+---------------------------------------------------------------------------
+local function uiClean(): boolean
+	local ok, value = pcall(function()
+		local shared = game:GetService("ReplicatedStorage"):FindFirstChild("Shared")
+		local config = shared and shared:FindFirstChild("Config")
+		if not config then
+			return false
+		end
+		return (require(config) :: any).UI_CLEAN
+	end)
+	return ok and value == true
+end
+Theme.Clean = Theme.V2 and uiClean()
+
+if Theme.Clean then
+	local Pa = Theme.Palette :: any
+	Pa.ink = hex("#0C0D10")
+	Pa.dusk = hex("#17191E")
+	Pa.duskRaised = hex("#202329")
+	Pa.duskRaisedHi = hex("#2A2D35")
+	Pa.duskSunken = hex("#0F1114")
+	Pa.line = hex("#363A44")
+	Pa.textMid = hex("#E4E5E9")
+	Pa.textLow = hex("#A9AEB8")
+	Pa.slab = hex("#22252C")
+	Pa.stageTop = hex("#2B2F38")
+	Pa.stageBottom = hex("#17191E")
+	Pa.accent = hex("#D86A33")
+	Pa.accentHi = hex("#EE9461")
+
+	local function set(name: RoleName, top: string, bottom: string, shade: string, text: string?, stroke: string?)
+		ROLES[name] = {
+			top = hex(top),
+			bottom = hex(bottom),
+			shade = hex(shade),
+			text = hex(text or "#FFFFFF"),
+			textStroke = if stroke then hex(stroke) else nil,
+		}
+	end
+	set("go", "#38A866", "#1F7A46", "#11472A")
+	set("neutral", "#3B404B", "#2B2F38", "#14161A")
+	set("premium", "#F0CF78", "#D6A43C", "#80560F", "#17191E")
+	set("danger", "#D85454", "#A8343A", "#5E171B")
+	set("info", "#4795D8", "#2A69AA", "#183E66")
+	set("done", "#E6E7EA", "#C3C6CD", "#7A7F8A", "#17191E")
+	set("locked", "#2E323B", "#22252C", "#0F1114", "#C9CCD3")
+	set("accent", "#E07E46", "#B5531F", "#6A2C0C")
+
+	local top, bottom, shade = hex("#2A2D35"), hex("#202329"), hex("#0F1114")
+	for name, color in Theme.Accents :: any do
+		MENUS[name :: ThemeName] = {
+			top = top:Lerp(color, 0.12),
+			bottom = bottom:Lerp(color, 0.06),
+			shade = shade,
+			text = hex("#F2F2EF"),
+			textStroke = nil,
+		}
+	end
+
+	local Fo = Theme.Fonts :: any
+	Fo.display = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.ExtraBold, Enum.FontStyle.Normal)
+	local TX = TEXT :: any
+	TX.display = { font = Fo.display, size = 32, stroke = 0 }
+	TX.title = { font = Fo.display, size = 24, stroke = 0 }
+	TX.button = { font = Fo.display, size = 21, stroke = 0 }
+	TX.number = { font = Fo.display, size = 26, stroke = 0 }
+	TX.small = { font = Fo.display, size = 18, stroke = 0 }
+
+	Theme.Radius.panel = 12
+	Theme.Radius.header = 8
+	Theme.Radius.card = 10
+	Theme.Radius.button = 8
+	Theme.Radius.input = 8
+
+	Theme.Stroke.panel = 1
+	Theme.Stroke.card = 1
+	Theme.Stroke.button = 1
+	Theme.Stroke.input = 1
+
+	Theme.Size.depth = 3
+	Theme.Size.depthSmall = 2
+
+	local Mo = Theme.Motion :: any
+	Mo.hoverScale = 1.02
+	Mo.pressScale = 0.96
+	Mo.openFrom = 0.92
+
+	Theme.Shadow = { enabled = true, offset = 4, transparency = 0.6, color = Pa.ink }
+end
+
+---------------------------------------------------------------------------
 -- Helpers
 ---------------------------------------------------------------------------
 local reducedMotionOverride: boolean? = nil
