@@ -4,50 +4,84 @@
 -- (server attribute Newcomer: under Config.NEWCOMER_SECONDS played in all), on every platform:
 --   * one objective line at the top, walking the lab's best moments in the order players find them:
 --     knock a dummy over, fire yourself from the cannon, ride the wrecking ball, open WEAPONS;
---   * the machine the line is about wears a soft yellow outline (no arrows across the map);
---   * until Config.QUIET_START the left and right launcher columns, the key chips, LAB VIEW, the
---     replay button and the long help line wait; then they slide in one a second (key chips last).
--- Returning players see none of it. Config.FIRST_VISIT switches it off.
+--   * the machine the line is about wears a soft pulsing yellow outline (no arrows across the map);
+--   * until the reveal (Config.QUIET_START, at least FirstVisit.MIN_QUIET after the flow starts) the
+--     launcher columns (PC) or SHOP/MENU (phone), the key chips, LAB VIEW, the replay button, the
+--     long help line, the lab's signs, dummy chatter and the news toasts wait; then they come in one
+--     piece at a time (key chips last);
+--   * toasts wait until the reveal (Toast.hold "newcomer"); later ones sit below the line
+--     (Toast.setGoalTop), never on it.
+-- The HUD is held from the first frame and let go at once when the server says "not a newcomer",
+-- so a returning player never sees it vanish, and a newcomer never sees it flash.
+-- Step completion comes from the server (player attributes): Takedowns, CannonShots (Playground's
+-- cannon) and ThrownBy_SwingBall (the wrecking ball's throwOnTouch). Config.FIRST_VISIT switches
+-- it all off.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
+local TextService = game:GetService("TextService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local Theme = require(UI:WaitForChild("LihFolkUITheme")) :: any
+local Controller = require(UI:WaitForChild("LihFolkUIController")) :: any
 
 local Client = script.Parent
 local HudSlots = require(Client:WaitForChild("HudSlots"))
+local Toast = require(Client:WaitForChild("Toast")) :: any
 
 local FirstVisit = {}
 
 FirstVisit.GIVE_UP = 300 -- s: the line goes away after this whatever is left
+FirstVisit.MIN_QUIET = 45 -- s: a flow that starts late (slow load) still gets this much quiet
+FirstVisit.ANSWER_WAIT = 20 -- s: no server answer by then = treated as a returning player
+FirstVisit.PHONE_HELD = { "Shop", "Menu" } -- the phone's launchers held with the rest
 FirstVisit.STEPS = table.freeze({
-	{ id = "Takedown", text = "Knock a dummy over!" },
-	{ id = "Cannon", text = "Fire yourself from the CANNON", target = "CannonPad", glow = "CannonModel" },
-	{ id = "Wrecking", text = "Get hit by the WRECKING BALL", target = "SwingBall" },
-	{ id = "Weapons", text = "Open WEAPONS for more" },
+	{ id = "Takedown", text = "Knock a dummy over!", pad = "Knock a dummy over! (R2)" },
+	{ id = "Cannon", text = "Fire yourself from the CANNON", target = "CannonModel", attr = "CannonShots" },
+	{ id = "Wrecking", text = "Get hit by the WRECKING BALL", target = "SwingBall", attr = "ThrownBy_SwingBall" },
+	{ id = "Weapons", text = "Open WEAPONS for more", pad = "Open WEAPONS for more (Y)" },
 })
 
 local player = Players.LocalPlayer
 
-local function myLab(root: BasePart): Instance?
+-- The player's own lab: the Playground folder whose plot the player owns (Lab sets the plot
+-- folder's Owner and the player's LabOrigin; the Playground lab sits on that origin).
+local function myLab(): Instance?
 	local pg = Workspace:FindFirstChild("Playground")
+	if not pg then
+		return nil
+	end
+	local origin = player:GetAttribute("LabOrigin")
 	local best, bestD = nil, math.huge
-	for _, f in if pg then pg:GetChildren() else {} do
-		if f.Name ~= "Plaza" then
+	for _, f in pg:GetChildren() do
+		if f.Name ~= "Plaza" and f.Name ~= "Labs" then
+			if f:GetAttribute("Owner") == player.UserId then
+				return f
+			end
 			local pad = f:FindFirstChild("CannonPad")
-			if pad and pad:IsA("BasePart") then
-				local d = (pad.Position - root.Position).Magnitude
+			if typeof(origin) == "Vector3" and pad and pad:IsA("BasePart") then
+				local d = Vector2.new(pad.Position.X - origin.X, pad.Position.Z - origin.Z).Magnitude
 				if d < bestD then
 					best, bestD = f, d
 				end
 			end
 		end
 	end
-	return best
+	return if bestD < 400 then best else nil
+end
+
+local function onPad(): boolean
+	return UserInputService.GamepadEnabled and not UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+end
+
+local function phone(): boolean
+	local cam = Workspace.CurrentCamera
+	local v = if cam then cam.ViewportSize else Vector2.new(1280, 720)
+	return UserInputService.TouchEnabled and math.min(v.X, v.Y) < 600
 end
 
 local function buildLine(): (ScreenGui, TextLabel)
@@ -59,19 +93,15 @@ local function buildLine(): (ScreenGui, TextLabel)
 	local pill = Instance.new("TextLabel")
 	pill.Name = "Goal"
 	pill.AnchorPoint = Vector2.new(0.5, 0)
-	pill.Position = UDim2.new(0.5, 0, 0, 14)
-	pill.Size = UDim2.fromOffset(0, 40)
-	pill.AutomaticSize = Enum.AutomaticSize.X
+	-- (A phone keeps its top-left counter: the line goes under it.)
+	pill.Position = UDim2.new(0.5, 0, 0, if phone() then 48 else 14)
+	pill.Size = UDim2.fromOffset(200, 40)
 	pill.BackgroundColor3 = Theme.Palette.dusk or Color3.fromRGB(23, 25, 30)
 	pill.BackgroundTransparency = 0.12
 	pill.TextColor3 = Color3.fromRGB(245, 244, 240)
 	pill.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
 	pill.TextSize = 20
 	pill.Text = ""
-	local pad = Instance.new("UIPadding")
-	pad.PaddingLeft = UDim.new(0, 18)
-	pad.PaddingRight = UDim.new(0, 18)
-	pad.Parent = pill
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 10)
 	corner.Parent = pill
@@ -84,6 +114,32 @@ local function buildLine(): (ScreenGui, TextLabel)
 	pill.Parent = gui
 	gui.Parent = player:WaitForChild("PlayerGui")
 	return gui, pill
+end
+
+-- Sets the line's text and fits the pill to it: never wider than the screen less 16 px a side,
+-- the text shrinking down to 14 px before that (narrow phones).
+local function setText(pill: TextLabel, text: string)
+	pill.Text = text
+	local gui = pill.Parent :: ScreenGui
+	local maxW = math.max(160, gui.AbsoluteSize.X - 32)
+	local size = 20
+	local w = 0
+	while true do
+		local params = Instance.new("GetTextBoundsParams")
+		params.Text = text
+		params.Font = pill.FontFace
+		params.Size = size
+		params.Width = 10000
+		local ok, b = pcall(TextService.GetTextBoundsAsync, TextService, params)
+		w = (if ok then b.X else #text * size * 0.55) + 36
+		if w <= maxW or size <= 14 then
+			break
+		end
+		size -= 1
+	end
+	pill.TextSize = size
+	pill.TextWrapped = w > maxW
+	pill.Size = UDim2.fromOffset(math.min(w, maxW), if w > maxW then 58 else 40)
 end
 
 local function glow(target: Instance?): Highlight?
@@ -100,33 +156,59 @@ local function glow(target: Instance?): Highlight?
 	h.Adornee = target
 	h.Parent = target
 	-- (A slow pulse: it catches the eye without shouting.)
-	game:GetService("TweenService"):Create(h, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { OutlineTransparency = 0.7, FillTransparency = 0.95 }):Play()
+	TweenService:Create(h, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { OutlineTransparency = 0.7, FillTransparency = 0.95 }):Play()
 	return h
+end
+
+-- The HUD hold: PC (HudV3 columns and chips) and phone (the kit's SHOP/MENU launchers).
+local hud: any = nil
+local function holdHud(on: boolean, which: string?)
+	if hud and hud.hold then
+		if which == nil or which == "Left" then
+			hud.hold("Left", on)
+		end
+		if which == nil or which == "Right" then
+			hud.hold("Right", on)
+		end
+		if which == nil or which == "Chips" then
+			hud.hold("Chips", on)
+		end
+	end
+	if which == nil or which == "Left" then
+		for _, label in FirstVisit.PHONE_HELD do
+			pcall(Controller.setHudShown, label, not on)
+		end
+	end
 end
 
 function FirstVisit.start()
 	if not (Config :: any).FIRST_VISIT then
 		return
 	end
-	-- Wait for the server's answer about this player.
-	local t0 = os.clock()
-	while player:GetAttribute("Newcomer") == nil and os.clock() - t0 < 30 do
-		task.wait(0.25)
-	end
-	if player:GetAttribute("Newcomer") ~= true then
-		return
-	end
-	local revealAt = math.max(time(), 0) + math.max(0, Config.QUIET_START - time())
-	HudSlots.newcomerUntil = revealAt
 	local ok, HudV3 = pcall(function()
 		return require(Client:WaitForChild("HudV3", 5)) :: any
 	end)
-	local hud = if ok then HudV3 else nil
-	if hud and hud.hold then
-		hud.hold("Left", true)
-		hud.hold("Right", true)
-		hud.hold("Chips", true)
+	hud = if ok then HudV3 else nil
+	-- Held from the first frame: a newcomer never sees the HUD flash, a returning player gets it
+	-- back the moment the server answers (usually well under a second).
+	HudSlots.newcomerUntil = math.huge
+	holdHud(true)
+	local t0 = os.clock()
+	while player:GetAttribute("Newcomer") == nil and os.clock() - t0 < FirstVisit.ANSWER_WAIT do
+		task.wait(0.1)
 	end
+	if player:GetAttribute("Newcomer") ~= true then
+		HudSlots.newcomerUntil = 0
+		holdHud(false)
+		return
+	end
+	local revealAt = math.max(Config.QUIET_START, time() + FirstVisit.MIN_QUIET)
+	HudSlots.newcomerUntil = revealAt
+	-- (For modules that cannot require HudSlots: DummyLife, ProgressUI.)
+	player:SetAttribute("NewcomerUntil", revealAt)
+	-- (No toast over the first objective: they queue, the newest few show fresh at the reveal.)
+	Toast.hold("newcomer", true)
+
 	-- The lab's signs (today's machine, NEW tags) wait too: the first screen is the dummies.
 	local hiddenSigns: { BillboardGui } = {}
 	local hiddenLight: { BasePart } = {}
@@ -140,7 +222,16 @@ function FirstVisit.start()
 			table.insert(hiddenLight, d)
 		end
 	end
-	-- The reveal: one piece a second, the key chips last.
+
+	local gui, line = buildLine()
+	Toast.setGoalTop(function(): number
+		if not line.Parent or not line.Visible then
+			return 0
+		end
+		return line.Position.Y.Offset + line.AbsoluteSize.Y + 8
+	end)
+
+	-- The reveal: the signs, then one side, the other, the key chips last.
 	task.delay(math.max(0, revealAt - time()), function()
 		for _, s in hiddenSigns do
 			if s.Parent then
@@ -152,20 +243,21 @@ function FirstVisit.start()
 				p.LocalTransparencyModifier = 0
 			end
 		end
-		if hud and hud.hold then
-			hud.hold("Left", false)
-			task.wait(1)
-			hud.hold("Right", false)
-			task.wait(9)
-			hud.hold("Chips", false)
-		end
+		holdHud(false, "Left")
+		task.wait(1)
+		holdHud(false, "Right")
+		Toast.hold("newcomer", false)
+		-- (The help line grows back to its full text with the HUD.)
+		pcall(function()
+			local Poke = require(Client:WaitForChild("PokeController")) :: any
+			if Poke.refreshHelp then
+				Poke.refreshHelp()
+			end
+		end)
+		task.wait(9)
+		holdHud(false, "Chips")
 	end)
 
-	local _, line = buildLine()
-	local character = player.Character or player.CharacterAdded:Wait()
-	local root = character:WaitForChild("HumanoidRootPart", 10) :: BasePart?
-	local lab = if root then myLab(root) else nil
-	local startTakedowns = (player:GetAttribute("Takedowns") :: number?) or 0
 	local started = time()
 	for _, step in FirstVisit.STEPS do
 		-- (The lab streams in: look again for a while before giving a machine up.)
@@ -173,72 +265,54 @@ function FirstVisit.start()
 		if step.target then
 			local waitUntil = os.clock() + 15
 			repeat
-				local r0 = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-				if not lab and r0 and r0:IsA("BasePart") then
-					lab = myLab(r0)
-				end
+				local lab = myLab()
 				target = if lab then lab:FindFirstChild(step.target, true) else nil
 				if not target then
 					task.wait(0.5)
 				end
 			until target or os.clock() > waitUntil
-		end
-		if step.target and not target then
-			continue -- (no such machine here)
-		end
-		line.Text = step.text
-		local glowAt: Instance? = if target and target:IsA("BasePart") then target else nil
-		if step.glow and lab then
-			glowAt = lab:FindFirstChild(step.glow, true) or glowAt
-		end
-		local hl = glow(glowAt)
-		local done = false
-		while not done do
-			if time() - started > FirstVisit.GIVE_UP then
-				break
+			if not target then
+				continue -- (no such machine here)
 			end
-			local r = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		end
+		setText(line, if onPad() and step.pad then step.pad else step.text)
+		local hl = glow(target)
+		local startCount = if step.attr then ((player:GetAttribute(step.attr) :: number?) or 0) else 0
+		local startTakedowns = (player:GetAttribute("Takedowns") :: number?) or 0
+		local done = false
+		while not done and time() - started <= FirstVisit.GIVE_UP do
 			if step.id == "Takedown" then
 				done = ((player:GetAttribute("Takedowns") :: number?) or 0) > startTakedowns
-			elseif step.id == "Cannon" and target and r and r:IsA("BasePart") and target:IsA("BasePart") then
-				-- (Fired: high above the pad, near it.)
-				local flat = Vector2.new(r.Position.X - target.Position.X, r.Position.Z - target.Position.Z).Magnitude
-				done = r.Position.Y > target.Position.Y + 18 and flat < 120
-			elseif step.id == "Wrecking" and target and r and r:IsA("BasePart") and target:IsA("BasePart") then
-				done = (r.Position - target.Position).Magnitude < 8
+			elseif step.attr then
+				done = ((player:GetAttribute(step.attr) :: number?) or 0) > startCount
 			elseif step.id == "Weapons" then
-				-- (Only once the HUD is in; the catalog open is the end of the tour.)
 				local ok2, ToolCatalog = pcall(function()
 					return require(Client:WaitForChild("ToolCatalog")) :: any
 				end)
 				done = ok2 and ToolCatalog.isOpen()
 			end
-			RunService.Heartbeat:Wait()
-			if done then
-				break
+			if not done then
+				task.wait(0.2)
 			end
-			task.wait(0.2)
 		end
 		if hl then
 			hl:Destroy()
 		end
-		if time() - started > FirstVisit.GIVE_UP then
+		if not done then
 			break
 		end
 		-- A short "done" beat before the next line.
-		if done then
-			line.Text = "\u{2713} Nice!"
-			task.wait(1.4)
-		end
+		setText(line, "\u{2713} Nice!")
+		task.wait(1.4)
 		-- (The Weapons step waits for the HUD to come in.)
 		if step.id == "Wrecking" and time() < revealAt then
-			line.Text = ""
 			line.Visible = false
 			task.wait(math.max(0, revealAt + 2 - time()))
 			line.Visible = true
 		end
 	end
-	line.Parent:Destroy()
+	Toast.setGoalTop(nil)
+	gui:Destroy()
 end
 
 return FirstVisit

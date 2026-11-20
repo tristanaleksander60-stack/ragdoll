@@ -36,6 +36,7 @@ local floor: (() -> number)? = nil -- the lowest a toast's bottom may reach (abo
 local paused = false -- something sits where toasts go (the view choice card): they wait
 local holds: { [string]: boolean } = {} -- who holds them back (each lets go on its own)
 local minTop: (() -> number)? = nil -- a bar at the top of the screen: toasts sit below it
+local goalTop: (() -> number)? = nil -- the first-visit objective line: toasts sit below it too (Audit area 1)
 local current: TextLabel? = nil -- the toast on screen
 local currentItem: Item? = nil
 local queue: { Item } = {}
@@ -168,6 +169,13 @@ function showNext()
 		y = math.max(y, boxTop)
 	end
 	local under = minTop
+	local goal = goalTop
+	if goal then
+		local prev = under
+		under = function(): number
+			return math.max(goal(), if prev then prev() else 0)
+		end
+	end
 	if under then
 		y = math.max(y, under())
 	end
@@ -203,6 +211,13 @@ end
 -- Where a toast's top goes now (gui-space y): the top, or under a bar that has the top (horde).
 function Toast.topY(): number
 	local under = minTop
+	local goal = goalTop
+	if goal then
+		local prev = under
+		under = function(): number
+			return math.max(goal(), if prev then prev() else 0)
+		end
+	end
 	return if under then math.max(TOP, under()) else TOP
 end
 
@@ -219,6 +234,10 @@ function Toast.isRedirected(): boolean
 end
 
 -- Toasts sit below a bar at the top (the horde's) while fn is set (gui-space y), or at the top.
+function Toast.setGoalTop(fn: (() -> number)?)
+	goalTop = fn
+end
+
 function Toast.setMinTop(fn: (() -> number)?)
 	minTop = fn
 end

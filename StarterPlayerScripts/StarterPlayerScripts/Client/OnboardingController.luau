@@ -189,7 +189,10 @@ local function playReplay(at: number, first: boolean)
 		Net.event(Net.Names.Onboarding):FireServer(if completed then "ReplayDone" else "ReplaySkipped")
 		release()
 		-- (Audit area 1: a newcomer hears this once the HUD is in, never over the first objective.)
-		task.delay(math.max(0, HudSlots.newcomerUntil - time()), function()
+		task.spawn(function()
+			while time() < HudSlots.newcomerUntil do
+				task.wait(0.5)
+			end
 			Toast.show(Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
 		end)
 		PokeController.highlightTools()
@@ -561,7 +564,10 @@ local function unlockFallback()
 		Net.event(Net.Names.Onboarding):FireServer("ReplaySkipped")
 		release()
 		-- (Audit area 1: a newcomer hears this once the HUD is in, never over the first objective.)
-		task.delay(math.max(0, HudSlots.newcomerUntil - time()), function()
+		task.spawn(function()
+			while time() < HudSlots.newcomerUntil do
+				task.wait(0.5)
+			end
 			Toast.show(Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
 		end)
 		PokeController.highlightTools()

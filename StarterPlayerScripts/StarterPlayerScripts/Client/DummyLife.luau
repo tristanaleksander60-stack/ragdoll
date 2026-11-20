@@ -1100,7 +1100,9 @@ local function updateLine(life: Life, now: number)
 	end
 	if not life.lineKind and life.state == "Standing" and now >= life.idleAt then
 		life.idleAt = now + rng:NextNumber(DummyLines.IDLE_GAP.X, DummyLines.IDLE_GAP.Y)
-		if idleShown < DummyLines.IDLE_MAX then
+		-- (Audit area 1: no chatter in a newcomer's first 90 s; FirstVisit sets NewcomerUntil.)
+		local quietUntil = (game:GetService("Players").LocalPlayer:GetAttribute("NewcomerUntil") :: number?) or 0
+		if idleShown < DummyLines.IDLE_MAX and time() >= quietUntil then
 			showLine(life, "Idle", now)
 		end
 	end

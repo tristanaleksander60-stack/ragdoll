@@ -1727,7 +1727,8 @@ local function onJoin(player: Player)
 	-- went out: BarRules.)
 	-- Audit area 1 (research: the leaders show a new player almost nothing for 90 s): a player with
 	-- under NEWCOMER_SECONDS played in all gets the first-visit flow (FirstVisit on the client).
-	player:SetAttribute("Newcomer", ((profile.playSeconds or 0) < (Config :: any).NEWCOMER_SECONDS))
+	-- (Only on a real read: a failed load defaults playSeconds to 0 and must not treat a veteran as new.)
+	player:SetAttribute("Newcomer", ok == true and ((profile.playSeconds or 0) < (Config :: any).NEWCOMER_SECONDS))
 	player:SetAttribute("ProgressLoaded", ok == true)
 	sendState(player)
 	ProgressService.sendPrefs(player)

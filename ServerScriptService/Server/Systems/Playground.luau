@@ -213,6 +213,8 @@ local function buildCannon()
 		lastFired[player] = now
 		PlayerRagdoll.launch(player, CANNON_DIRECTION * CANNON_SPEED)
 		ExperimentService.event(player, "Cannon", 1, "the CANNON")
+		-- (Audit area 1: the first-visit objective line waits on this, not on a height guess.)
+		player:SetAttribute("CannonShots", ((player:GetAttribute("CannonShots") :: number?) or 0) + 1)
 		FxService.hit(padPart.Position + Vector3.new(0, 3, 0), 120, "CannonPad")
 		-- A lab's bullseye (where the shot comes down): landing on it is told (watchBullseye).
 		local target = mine:FindFirstChild("Bullseye")
@@ -255,6 +257,8 @@ local function throwOnTouch(p: BasePart, cooldown: number, fxSpeed: number, fxId
 		PlayerRagdoll.launch(player, velocityFor(root))
 		FxService.hit(root.Position, fxSpeed, fxId)
 		ExperimentService.event(player, "Hazard", 1, what)
+		-- (Audit area 1: which machine threw this player, for the first-visit objective line.)
+		player:SetAttribute("ThrownBy_" .. p.Name, ((player:GetAttribute("ThrownBy_" .. p.Name) :: number?) or 0) + 1)
 		if after then
 			task.spawn(after, player, root)
 		end

@@ -558,7 +558,8 @@ function ProgressUI.start()
 				C.playSound("reward")
 			end
 			-- (Audit area 1: a newcomer's first 90 s carry one objective only; the daily news waits.)
-			local newcomerUntil = if game:GetService("Players").LocalPlayer:GetAttribute("Newcomer") == true then Config.QUIET_START else 0
+			local lp = game:GetService("Players").LocalPlayer
+			local newcomerUntil = (lp:GetAttribute("NewcomerUntil") :: number?) or (if lp:GetAttribute("Newcomer") == true then Config.QUIET_START else 0)
 			if time() < newcomerUntil then
 				task.wait(newcomerUntil - time() + 3)
 			end

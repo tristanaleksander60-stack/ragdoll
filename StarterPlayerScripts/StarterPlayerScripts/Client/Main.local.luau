@@ -129,6 +129,21 @@ end
 -- window's name opens it ("Weapons" opens the catalog); "" closes all. Never active in a live game.
 if game:GetService("RunService"):IsStudio() then
 	local devPlayer = game:GetService("Players").LocalPlayer
+	-- ("DevLayoutCheck" = true runs LayoutCheck in this real client, with every icon registered, and
+	-- prints each line tagged [LayoutCheck].)
+	devPlayer:GetAttributeChangedSignal("DevLayoutCheck"):Connect(function()
+		if devPlayer:GetAttribute("DevLayoutCheck") == true then
+			local ok, res = pcall(function()
+				return require(Client:WaitForChild("LayoutCheck")).run()
+			end)
+			for line in string.gmatch(tostring(res), "[^\n]+") do
+				print("[LayoutCheck] " .. line)
+			end
+			if not ok then
+				warn("[LayoutCheck] failed: " .. tostring(res))
+			end
+		end
+	end)
 	devPlayer:GetAttributeChangedSignal("DevOpen"):Connect(function()
 		local name = devPlayer:GetAttribute("DevOpen")
 		local Ctl = require(game:GetService("ReplicatedStorage"):WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIController")) :: any

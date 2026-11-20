@@ -393,6 +393,7 @@ local function refreshHelp()
 		label.Text = PokeController.helpText(selected, ViewMode.isLab())
 	end
 end
+PokeController.refreshHelp = refreshHelp -- (FirstVisit: the full help line comes back with the HUD)
 
 -- Fired when what the hand can do changes (the tool picked, the bar on or off, doctor mode,
 -- picking a slot): the crosshair listens instead of looking all the time.

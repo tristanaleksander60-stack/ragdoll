@@ -65,3 +65,13 @@
   - The phone tier cannot be emulated over MCP. A real phone test is the owner's.
   - Score 5 → 7.
 - Area 7: card pictures for GiantDummy and TrainRun. 13 of 18 events have a real picture; RocketRain, Earthquake and MeteorShower show a word.
+- **Area 1, blind review 6.5 → fix round 1:**
+  - Step completion comes from the server: player attributes `CannonShots` (Playground's cannon) and `ThrownBy_<part>` (every throwOnTouch machine, e.g. the wrecking ball). No more height or distance guesses (the stairs used to count as "the cannon").
+  - The lab is the plot the player owns (Owner, or the nearest to LabOrigin), looked up for each step.
+  - The HUD is held from the first frame and let go at once for a returning player (no flash, no missed flow). The window is at least 45 s from the start (`MIN_QUIET`).
+  - `Newcomer` is only set on a real profile read (a failed load no longer treats a veteran as new).
+  - Toasts: all held until the reveal (`Toast.hold "newcomer"`; the newest 4 show fresh afterwards), later ones sit under the line (`Toast.setGoalTop`).
+  - Phone: SHOP/MENU wait too; the line sits under the counter (y 48) and fits the width (text down to 14 px, then wraps).
+  - Dummy chatter waits (`NewcomerUntil`). The help line grows back at the reveal (`PokeController.refreshHelp`). Pad text: "(R2)" and "(Y)".
+  - Seen in Studio: a newcomer's cannon (real pad touch) and wrecking-ball hits advance the line; the line hides until 90 s; at 105 s the HUD, chips and full help are in on "Open WEAPONS for more"; a returning player gets the full HUD with no line.
+  - LayoutCheck in the game's own client (`DevLayoutCheck`): 0 problems. T23/T38/T45/T55/T60/T90/T98 pass.
