@@ -37,3 +37,6 @@
 - P1: an idle PC player gets no nudge to shoot beyond the help line (touch has the TAP A DUMMY hand).
 - P2: the help line packs four hints into one line.
 - Good: the greeter is at your side in under 5 s; the gun is ready; the dummies react (hands up); the first wow is a UFO at 50 s; a free rare weapon at ~90 s.
+
+## Fixes
+- Area 7: the Giant Dummy (4x) stands. A soft upright hold on the chest and a vertical-only hold on the pelvis keep it on its feet until something knocks it over (Ragdoll/Flying/Out after 2 s); then both let go and it topples. Before, it folded or fell at once. Seen in Studio (about 21 studs tall, walking).

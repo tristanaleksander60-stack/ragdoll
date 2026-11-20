@@ -646,6 +646,59 @@ function Surprises.GiantDummy(center: Vector3, owner: Player?): Stop
 		end)
 		body:SetAttribute("Mass", ((body:GetAttribute("Mass") :: number?) or 10) * 40)
 		body:SetAttribute("Home", center + Vector3.new(0, 4, 0))
+		local t0Giant = os.clock()
+		-- (A ragdoll four times the size cannot keep its balance: a soft upright hold keeps it on its
+		-- feet until something really knocks it over; then it lets go and the giant topples.)
+		local chest = body:FindFirstChild("UpperTorso")
+		if chest and chest:IsA("BasePart") then
+			local a = Instance.new("Attachment")
+			a.Name = "GiantUpright"
+			a.Axis = Vector3.yAxis -- (the align keeps this axis, the chest's up, pointing up)
+			a.SecondaryAxis = Vector3.new(0, 0, -1)
+			a.Parent = chest
+			local hold = Instance.new("AlignOrientation")
+			hold.Name = "GiantUpright"
+			hold.Mode = Enum.OrientationAlignmentMode.OneAttachment
+			hold.Attachment0 = a
+			hold.CFrame = CFrame.lookAt(Vector3.zero, Vector3.new(0, 0, -1))
+			hold.AlignType = Enum.AlignType.PrimaryAxisParallel
+			hold.PrimaryAxis = Vector3.yAxis
+			hold.MaxTorque = 4e6
+			hold.Responsiveness = 25
+			hold.Parent = chest
+			-- (And the pelvis held at standing height, up and down only, so the legs do not fold.)
+			local pelvis = body:FindFirstChild("LowerTorso")
+			local lift: AlignPosition? = nil
+			local pa: Attachment? = nil
+			if pelvis and pelvis:IsA("BasePart") then
+				local att = Instance.new("Attachment")
+				att.Name = "GiantStand"
+				att.Parent = pelvis
+				local ap = Instance.new("AlignPosition")
+				ap.Name = "GiantStand"
+				ap.Mode = Enum.PositionAlignmentMode.OneAttachment
+				ap.Attachment0 = att
+				ap.Position = pelvis.Position
+				ap.ForceLimitMode = Enum.ForceLimitMode.PerAxis
+				ap.MaxAxesForce = Vector3.new(0, 6e6, 0)
+				ap.Responsiveness = 20
+				ap.Parent = pelvis
+				lift, pa = ap, att
+			end
+			body:GetAttributeChangedSignal("RagdollState"):Connect(function()
+				local s = body:GetAttribute("RagdollState")
+				if hold.Parent and t0Giant and os.clock() - t0Giant > 2 and (s == "Ragdoll" or s == "Flying" or s == "Out") then
+					hold:Destroy()
+					a:Destroy()
+					if lift then
+						lift:Destroy()
+					end
+					if pa then
+						pa:Destroy()
+					end
+				end
+			end)
+		end
 		table.insert(made, body)
 		FxService.hit(at, 120, "Anvil")
 	end
