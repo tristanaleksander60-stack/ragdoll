@@ -764,10 +764,32 @@ BUILDERS.Military = function(m, place, mid)
 		part(box, "Body", Vector3.new(8, 8.5, 20), CFrame.new(c + at + Vector3.new(0, 4.25, 0)), colour, Enum.Material.CorrodedMetal)
 		box.Parent = m
 	end
-	for i, p in scatter(73, c, 30, 30, half - 25, { { at = c + Vector3.new(-80, 0, 60), r = 60 }, { at = heli, r = 26 }, { at = range, r = 40 }, { at = course, r = 36 }, { at = c + Vector3.new(80, 0, 40), r = 50 }, { at = c + Vector3.new(0, 0, OutdoorMaps.arriveZ(place)), r = 20 } }) do
-		local roles = { "Crate", "Barrel", "Barrier", "Crate" }
-		prop(m, roles[(i - 1) % 4 + 1], p, i * 33, if i % 4 == 3 then 3.2 else 4.4, nil, true)
+	-- V5-5 (owner: "no AI slop"; props were sprinkled over the grass and the road): four supply
+	-- depots instead, each laid out like a real store: crates in a 3x2 block (some stacked two
+	-- high), a row of barrels, a pair of barriers in front. Away from the road (x 0), the pads and
+	-- the buildings.
+	local function depot(at: Vector3, yaw: number)
+		local base = CFrame.new(c + at) * CFrame.Angles(0, math.rad(yaw), 0)
+		for gx = 0, 2 do
+			for gz = 0, 1 do
+				local p = (base * CFrame.new(gx * 4.8 - 4.8, 0, gz * 4.8)).Position
+				prop(m, "Crate", p, yaw, 4.4, nil, true)
+				if (gx + gz) % 2 == 0 then
+					prop(m, "Crate", p + Vector3.new(0, 4.4, 0), yaw + 90, 4.2, nil, true)
+				end
+			end
+		end
+		for k = 0, 3 do
+			prop(m, "Barrel", (base * CFrame.new(-6 + k * 3.4, 0, -6)).Position, k * 40, 3.2, nil, true)
+		end
+		for _, sx in { -4, 4 } do
+			prop(m, "Barrier", (base * CFrame.new(sx, 0, -11)).Position, yaw, 4.4, nil, true)
+		end
 	end
+	depot(Vector3.new(-60, 0, -130), 0)
+	depot(Vector3.new(140, 0, 60), 180)
+	depot(Vector3.new(-140, 0, -20), 90)
+	depot(Vector3.new(60, 0, -120), 0)
 	for x = -half + 6, half - 6, 12 do
 		for _, z in { -half + 3, half - 3 } do
 			V3Assets.place("Fence", m, CFrame.new(c + Vector3.new(x, 0, z)), { size = 12, collide = true })

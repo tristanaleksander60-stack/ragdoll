@@ -58,3 +58,6 @@ Ordered by how much of a player's screen time each one covers. Every step:
   - **Card pictures:** 4 more (FanBlast, Sinkhole, BalloonDrop, MoonGravity), so 11 of 18 have one.
   - **Still a word on the card:** RocketRain, Earthquake, GiantDummy, MeteorShower and TrainRun. The meteor falls too fast to catch, and the 4x giant falls over.
   - **Seen:** the first-wow UFO came by itself at 50 s.
+- **V5-5 (part):**
+  - Army Base: the 30 crates, barrels and barriers sprinkled over the grass and the road are replaced by 4 tidy supply depots (a 3x2 crate block with some stacked, a barrel row, barriers in front), away from the road, pads and buildings. Seen.
+  - Downtown checked: real models, road marks, trees, lamps, cars. No change needed.
