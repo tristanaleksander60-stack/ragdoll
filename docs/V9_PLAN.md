@@ -3,11 +3,46 @@
 ## The owner's words (verbatim)
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
-## How it runs
-- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0t, V9-0u, V9-0w, V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0v, V9-0x, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
-- **Then** go back to V8 at its State line.
+## How it runs (reordered 21 Nov, owner: "the correct order, fastest and best")
+**Already done:** V9-0, 0a, 0b, 0c, 0d, 0f, 0g, 0h, 0i, 0j, 0k (finish its blind review first), 0s, 0t, 0u.
+
+Do the rest **in this order**. Each phase builds on the one before: things are first made at their final size, then placed, then labelled, then sold. Nothing is done twice.
+
+**Phase A: quick wins, no layout needed** (players feel them at once)
+1. **V9-0o** grey matte dummies. Every later capture uses them.
+2. **V9-0w** first shot → first person.
+3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning.
+4. **V9-3b** wider unlock gaps (Config and tests only).
+5. **V9-2c** the Z time dial and bubble.
+6. **Publish** through `docs/RELEASE.md` (milestone 1).
+
+**Phase B: build every thing at its final size, before anything is placed**
+7. **V9-0r** hero scale **together with V9-3** lab machines (the same objects: size, animation and sound in one pass).
+8. **V9-3c** the rocket pad and **V9-0m** the compressor (new hero machines, at hero scale).
+9. **V9-1** the aquarium with whale and shark, then **V9-2** every creature (the juicy eating), then **V9-2b** the feed terminals.
+10. **V9-0y + V9-0x** cars: bigger, more of them, fun to drive into dummies, and they react to shots and blasts (one cars pass).
+
+**Phase C: place and label everything** (only now, when all sizes are final)
+11. **V9-0n** the placement pass for the lab, with **V9-0e** portals and the Map Board as part of the spawn area.
+12. **V9-0v** physical signs, with **V9-0q** (visible) and **V9-0p** (moving creatures; the vacuum gets its mounted flag and smoothed motion) in the same pass.
+13. **Publish** (milestone 2).
+
+**Phase D: money and the maps**
+14. **V9-4** every Robux item perfect, then **V9-4b** the booth cards.
+15. **V9-5** event models, then **V9-5c** the free things on every map.
+
+**Phase E: polish and ship**
+16. **V9-5b** the performance pass. It is measured last, on the finished content.
+17. **V9-6** the final check, then **publish** (milestone 3). Then back to V8 at its State line.
+
+**Rules for the run:**
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
-- **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
+- **Milestone publishes:** each goes through the full RELEASE.md gate. If a gate fails, do not publish; carry on and publish at the next milestone.
+- **Speed without losing quality:**
+  - one blind reviewer per phase (not per step), and fix rounds only where the score is under 8.5;
+  - reuse the patterns already built (terminals, LabGuide, Ui3D, Notify, NoticeRules);
+  - run only the affected tests while working, and the full suite at each milestone.
+- **Ids:** if ids arrive in chat, paste them in and carry on.
 
 ## Rules for every step
 - **The look:**
@@ -732,6 +767,68 @@ A full placement pass for the lab hub (V9-0h) and every map, done as a designer 
 - A driver hit by a blast is ejected only in a lab, not on the plaza.
 
 **Capture:** a 4-frame grenade sequence and the shot sparks.
+
+## V9-0y Bigger, better cars, more of them, and great fun to drive into dummies (owner, 21 Nov)
+> "Gør bilerne større, bedre og lav flere biler og gør det sjovere at køre folk ned."
+
+Do this as one cars pass with V9-0x (shots and blasts) and on top of V9-0c (straight driving, speedometer).
+
+**Bigger and better:**
+- **Size:** each vehicle at a satisfying size, about 1.3-1.6x today and judged against the hub. Big chunky wheels, a readable silhouette from the spawn.
+- **Models:** real, high-quality Creator Store models with the malware pass, no brands or logos, in the V9 look. Each has:
+  - working wheels that spin and steer (VehicleFeel);
+  - lights, a horn, an engine sound per vehicle;
+  - suspension bounce;
+  - seats that fit the R15 player.
+
+**More cars:** a **garage row** of about 6-8 vehicles at the hub rim (V9-0n places them), each with its own feel:
+- a sports car (fast and twitchy);
+- the monster truck (huge wheels, bounces over dummies);
+- a tank (slow, unstoppable, turret turns);
+- a go-kart (tiny, fast, low);
+- a bulldozer with a blade that pushes rows of dummies;
+- a big school-bus-style bus that bowls them;
+- a golf cart (silly);
+- an ice-cream truck playing a jingle.
+
+They stay kid-safe and cartoon. Every car has its own top speed, mass and handling in Config.
+
+**Driving into dummies is the fun part:**
+- **The hit:**
+  - dummies fly with a big, satisfying arc (an impulse from the car's speed and mass, capped);
+  - spin and a trail;
+  - a "BONK!" or "STRIKE!" sticker;
+  - a small hit-stop and camera punch at high speed;
+  - the first big hit of a visit gets the slow-mo beat.
+- **Combos:**
+  - several dummies in one run count up ("×3 STRIKE!") on a small pill (V9-0g sizes);
+  - a "Bowling" experiment card ("Hit 10 dummies in one run");
+  - a best-run score on the lab board.
+- **Toys to drive through:**
+  - a **dummy bowling setup:** a button on a terminal lines 10 dummies up as pins at the end of a lane;
+  - **ramps and a jump** with a landing zone of dummies;
+  - **boost pads** that give a short speed burst with a whoosh.
+- **The horn:** it makes nearby dummies turn, flail and run a little (so you can chase them), within V8's coward rules.
+- **Fair:**
+  - the hits work on dummies; on players only inside their own or a party lab (cartoon ragdoll, no damage), never on the plaza;
+  - no car leaves the lab or flies over the hedge;
+  - the cars reset to the garage when left.
+
+**Rules:**
+- the server decides the impulses;
+- the drivers own their car's physics (as now);
+- one remote family through `Net`;
+- every vehicle passes the V9-0c straight-driving test;
+- the phone budget holds (LOD, sounds within SoundMix).
+
+**Tests:** T153 extended to every vehicle; new T177_CarFun.
+- A car at speed through a row of 5 dummies launches all 5 with a combo count.
+- The bowling setup lines up and resets.
+- The boost pads stay within the cap.
+- No dummy or car leaves the lab bounds.
+- Player hits only in labs.
+
+**Capture:** the garage row from the spawn, a bowling strike sequence and a ramp jump, PC and phone.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
