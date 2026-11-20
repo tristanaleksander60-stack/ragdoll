@@ -37,7 +37,7 @@ The owner types **`/tjek`** (`.claude/commands/tjek.md`) for a full quality audi
 
 ## Open with the owner
 - Create developer products (weapon tiers 25/49/99/199, event packs) and gamepasses ULTRA/VIP; send IDs.
-- Publish with "Shut Down All Servers"; server size 6 (`Config.SERVER_SIZE`, release 0.20.0; was 10).
+- Publishing: since 20 Nov 2026 the `/klar` run publishes by itself at the end of a whole plan, through `docs/RELEASE.md` (gate, backup, publish, restart old servers, check). Server size 6 (`Config.SERVER_SIZE`, release 0.20.0; was 10).
 
 ## 10 Nov 2026
 - M11 PASSED (blind review 9.2 system / 9.2 UI): real Roblox clothes + hair on the crowd (CrowdService), small quiet bubbles (DummyLife), auto dead-body monitor beside the mouse (HospitalCharts, Settings "Dead monitor").

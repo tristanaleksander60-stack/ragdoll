@@ -18,11 +18,15 @@
 | 5 | Every ragdoll must look better: clothes, details, everything | V7-4 |
 | 6 | The notices that pop up (e.g. "<player> sent ZERO G", your next mission) must look much nicer | V7-5 |
 | 7 | Judge everything on the screen: is it in the right place on every platform (phone, console, PC and so on)? | V7-6 |
+| 8 | Publish automatically when done, and run the whole plan in one go on "klar" | Release (`docs/RELEASE.md`) |
 
 **Order:**
 1. V7 goes first, even though V6-8 (graphics) is under way. Commit and push what is done of V6-8, and note it in V6 State.
 2. Then V7-1 to V7-6.
 3. Then back to V6-8 in `docs/V6_PLAN.md`.
+4. Then the release: `docs/RELEASE.md` (gate → publish by itself → restart old servers → check → Danish report).
+
+One `/klar` runs all of this in one go, without waiting for the owner between steps (owner order 20 Nov 2026).
 
 V7 is small and visible, so it goes before the big graphics pass.
 

@@ -64,7 +64,7 @@ Den kører din fix-liste (`docs/V4_PLAN.md`) trin for trin fra der, hvor den sid
   - Store images and claims must be true.
   - No gambling-style odds without the disclosure.
 - **Never:**
-  - publish (the owner publishes with "Shut Down All Servers");
+  - publish, except through `docs/RELEASE.md` at the very end of a whole plan run, with every gate passed (owner order 20 Nov 2026);
   - write to live DataStores;
   - rename remotes without updating `CLAUDE.md`;
   - force-push;
@@ -87,11 +87,17 @@ Den kører din fix-liste (`docs/V4_PLAN.md`) trin for trin fra der, hvor den sid
    - **Lavet:** what was done, with before/after captures.
    - **Test selv:** 1-3 things to try.
    - **Brug for fra dig:** for example save the place, product ids, a decision, a capture from a phone.
-4. Go straight on to the next step until the plan is done or the owner stops you.
+4. Go straight on to the next step until the plan is done or the owner stops you. Do not wait for the owner between steps: a `/klar` runs the whole plan in one go (owner order 20 Nov 2026). Only something only the owner can give (ids, a decision) may pause a step; park that step in State and go on with the next.
 
-### 6. When everything in V4 is done
-Do steps E2 and E3:
-1. Make the icon and 3-5 thumbnails from real staged captures for A/B testing.
-2. Bump the version and update What's New and the store text.
-3. Ask the owner to publish and to redo the maturity questionnaire (target: all ages).
-4. The day after, read `Session_v1` and write the next plan from the data.
+### 6. When the whole plan is done: release
+Run `docs/RELEASE.md`:
+1. the gate (tests, LayoutCheck, play sessions, Studio-only flags off, version, What's New);
+2. the backup;
+3. **publish by yourself**;
+4. restart the old servers;
+5. the check after publishing;
+6. the Danish report.
+
+If a gate fails, do not publish; write why in State and tell the owner in one line.
+
+The day after a release, read `Session_v1` and write the next plan from the data.
