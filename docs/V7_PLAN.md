@@ -250,3 +250,33 @@ They lead from the spawn or arrival to each thing you can do there.
   - The audit table is in docs/AUDIT.md ("V7-6").
   - LayoutCheck shows 0 problems.
   - **Left:** a device-emulator capture grid and a real-console check (owner, or a later session).
+- **Blind review of V7 (20 Nov):**
+  - V7-1 9.0 PASS; V7-2 5.5; V7-3 8.0; V7-4 4.0; V7-5 6.0; V7-6 5.0.
+  - **Fix round 1 (acd8e33):**
+    - the chest target faces out;
+    - the joint rings sit on the skin;
+    - round pebbles;
+    - the map-path floor ray never lands on roofs;
+    - the bird ray skips respawned and newly joined characters;
+    - the banner's mode tween is cancelled before a new one starts;
+    - toasts sit at the banner's rest spot while it slides in;
+    - no duplicate "is starting!" line under the banner.
+
+    The fix round is not yet run in Studio (see below).
+  - **Open from the review:**
+    - V7-2: the lab paths read as a code-built "spider" from one hub, and some routes cross the ramp, mace and pads. `PathPlan.clear` is not used by T106. There is no vehicles route. The terrain repaint has 4-stud block edges.
+    - V7-4: only the mannequins got details. Not done: crowd outfits per role, visitors, chasers, LOD.
+    - V7-5: only the event banner is done. Not done: the next-mission card, the toasts and the pops. The sound is still the old "Event" sound. The chip is not in LayoutCheck.
+    - V7-6: not done: console glyph and focus checks, a capture grid, 4K, notched phones and tablet portrait in LayoutCheck.
+- **Release 0.25.0: NOT published (20 Nov).** The gate failed on these points:
+  1. The full suite did not finish: Studio closed and restarted midway (an update). After reopening, Script Sync did not reconnect, so the latest code is not in Studio.
+  2. The 2-client test cannot be started from the MCP (`TestService.NumberOfPlayers` has no effect on `start_stop_play`), and the phone-emulator play cannot be switched from here.
+  3. V7-2, V7-4, V7-5 and V7-6 are below the review bar of 8.5, with leftovers listed above.
+
+  Version 0.25.0 and What's New are prepared in the code. **Next time:**
+  - reconnect Script Sync in Studio;
+  - run the full suite;
+  - do fix round 2 (the paths first);
+  - have the owner start Test → Clients and Servers → 2 players, while the session reads both outputs;
+  - then run the gate again.
+- **State:** V7-1 to V7-6 are built, and fix round 1 is pushed. Next: the Studio check of the fix round, then fix round 2. V6-8 waits on the owner's sign-off on the maps.
