@@ -765,3 +765,11 @@ Write the baseline into `docs/PERF.md`.
   - **Settings:** "Notices" AUTO / NORMAL / SMALL / MINIMAL, saved in the profile (ProgressService SETTING_CHOICES).
   - **Checks:** T162_PhoneNotices passes; T100/T147/T45 pass; LayoutCheck shows 0 problems. In the phone simulator (iPhone 17 Pro landscape, 750x381) the BULLSEYE line is a small top pill and 5 KOs read "KO x5".
   - **Left:** a LayoutCheck "notice lane" rule; the event card's chip-first on phones; the egg offer card (it opens only when calm) is unchanged.
+- 21 Nov 2026, V9-0h DONE (PC), the core of it (`Config.LAYOUT_V3`):
+  - **Floor:** the lab core is one open floor of big light tiles. A texture (`LAYOUT_V3_FLOOR`, art/icons/floor_tile.png, 14-stud tiles, a light grey tint) draws the tiles, so no parts lie on the floor.
+  - **Paths:** no paths, verges, lamps, plaza or signposts on the floor. PathPlan V3 keeps only the yard road (from the floor's back edge) and the garden round.
+  - **Spawn circle:** 40 studs (`PathPlan.HUB_CLEAR`) are kept clear.
+  - **The rim:** the dummies' test row and mat sit behind the bullseye (`PathPlan.ROW_Z` -60, a 40-degree arc at r 58). The BIG RED BUTTON (`PathPlan.BUTTON_AT` (-34, 24)) and the car ramp (`RAMP_AT` (34, 34)) are out on the rim. The lab boards are the bigger wall (20x26).
+  - **Tests:** T163_HubLayout passes (16 attractions on the rim at 42-82 studs). T150 accepts a path end on the floor's edge. T112/T106/T36/T50/T103/T45/T147 pass.
+  - **Captures:** spawn and top-down.
+  - **Left for V9-0e and later:** the Maps board near the spawn (V9-0e), a cosy deck corner, angling the board wall at the spawn, the 6+ attractions-in-one-frame check on a phone.

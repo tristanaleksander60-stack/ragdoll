@@ -319,6 +319,15 @@ local Config = {
 	-- hang together"): the lava moves west with the tower (out of the spawn's first view), the mace back,
 	-- the paths a network of loops (PathPlan), the garden walks join the yard road. false = the old lab.
 	LAYOUT_V2 = true,
+	-- V9-0h (owner, 21 Nov 2026: "analyse deeply what they do with map placement, where things stand and
+	-- how big it is, and do the same"; art/store/look_target/leader_hub.webp): the lab core is one big
+	-- open floor of large light tiles (LAYOUT_V3_FLOOR, a texture: no parts to flicker), no paths,
+	-- verges or lamps inside it, a 40-stud clear circle round the spawn and every attraction on the
+	-- rim: the dummy row moves behind the bullseye as a test ring, the BIG RED BUTTON and the ramp
+	-- step out to 40+ studs, the lab boards grow. Paths stay outside the floor (yard, gardens).
+	-- false = LAYOUT_V2.
+	LAYOUT_V3 = true,
+	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges
 	-- (V3Assets VergeBushRound/Leafy, VergeFlowers*; tools/ImportV9Foliage.luau). false = the old balls and blocks.
 	FOLIAGE_V9 = true,

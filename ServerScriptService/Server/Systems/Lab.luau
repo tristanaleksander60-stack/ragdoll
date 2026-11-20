@@ -27,6 +27,7 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared") -- (V9-0h: PathPlan)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
@@ -142,10 +143,13 @@ end
 
 local function slotPosition(origin: Vector3, index: number): Vector3
 	-- An arc in front of the plot's spawn point (towards -Z), facing it.
-	local spread = math.rad(70)
+	-- (V9-0h, Config.LAYOUT_V3: on the rim, a test row behind the bullseye: a narrower arc further out.)
+	local v3 = (Config :: any).LAYOUT_V3 == true
+	local radius = if v3 then -(require(Shared:WaitForChild("PathPlan")) :: any).ROW_Z - 2 else RADIUS
+	local spread = math.rad(if v3 then 40 else 70)
 	local t = if DUMMY_COUNT > 1 then (index - 1) / (DUMMY_COUNT - 1) else 0.5
 	local angle = -spread / 2 + spread * t
-	return origin + Vector3.new(math.sin(angle) * RADIUS, 0, -math.cos(angle) * RADIUS)
+	return origin + Vector3.new(math.sin(angle) * radius, 0, -math.cos(angle) * radius)
 end
 
 local function poof(at: Vector3)
@@ -743,9 +747,24 @@ local function dressPlot(plot: Plot)
 	local folder = plot.folder
 	-- The floor (the whole plot, within its markings): tiled lab concrete (Finish).
 	local floor = paint(folder, "LabFloor", Vector3.new(Lab.CORE_HALF * 2 - 12, 0.04, 165), Vector3.new(o.X, ground + 0.02, o.Z - 11.5), Color3.fromRGB(176, 180, 188), Enum.Material.Concrete)
-	Finish.apply(floor, "Floor")
+	local look3 = (Config :: any).LAYOUT_V3 and (Config :: any).LAYOUT_V3_FLOOR
+	if look3 then
+		-- (V9-0h: the leader's hub floor: big light tiles with thin joints, drawn by a texture on the
+		-- floor itself, so nothing lies on it to flicker.)
+		floor.Color = look3.color
+		local tiles = Instance.new("Texture")
+		tiles.Name = "Tiles"
+		tiles.Face = Enum.NormalId.Top
+		tiles.Texture = look3.texture
+		tiles.StudsPerTileU = look3.tile
+		tiles.StudsPerTileV = look3.tile
+		tiles.Color3 = Color3.fromRGB(206, 206, 202) -- (a light grey in the bright sun, never glaring white)
+		tiles.Parent = floor
+	else
+		Finish.apply(floor, "Floor")
+	end
 	-- The test zone under the row: a black rubber safety mat.
-	local rowZ = o.Z - 20
+	local rowZ = o.Z + (require(Shared:WaitForChild("PathPlan")) :: any).ROW_Z -- (V9-0h: behind the bullseye under LAYOUT_V3)
 	local mat = paint(folder, "TestZone", Vector3.new(42, 0.05, 16), Vector3.new(o.X, ground + 0.045, rowZ), Color3.fromRGB(52, 54, 60), Enum.Material.Concrete)
 	Finish.apply(mat, "Rubber")
 	local yellow = Color3.fromRGB(245, 200, 40)

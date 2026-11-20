@@ -451,11 +451,12 @@ local function buildWreckingBall()
 end
 
 local function buildRamp()
+	local RAMP = (require(Shared:WaitForChild("PathPlan")) :: any).RAMP_AT -- (V9-0h: on the rim under LAYOUT_V3)
 	local ramp = Instance.new("WedgePart")
 	ramp.Name = "Ramp"
 	ramp.Size = Vector3.new(10, 7, 18)
 	-- The wedge rises towards its -Z face: run at it from +Z.
-	ramp.CFrame = at(26, 3.5, 30) * CFrame.Angles(0, math.pi, 0)
+	ramp.CFrame = at(RAMP.X, 3.5, RAMP.Y) * CFrame.Angles(0, math.pi, 0)
 	ramp.Anchored = true
 	if (Config :: any).UI_CLEAN then
 		-- V5-1: a steel ramp (diamond plate) with hazard-striped side rails and a painted lip, not a
@@ -467,20 +468,20 @@ local function buildRamp()
 			local rail = Instance.new("WedgePart")
 			rail.Name = "RampRail"
 			rail.Size = Vector3.new(0.5, 7.4, 18.2)
-			rail.CFrame = at(26 + sx, 3.7, 30) * CFrame.Angles(0, math.pi, 0)
+			rail.CFrame = at(RAMP.X + sx, 3.7, RAMP.Y) * CFrame.Angles(0, math.pi, 0)
 			rail.Color = YELLOW
 			rail.Material = Enum.Material.Metal
 			rail.Anchored = true
 			rail.CanCollide = false
 			rail.Parent = folder
 		end
-		part("RampStripe", Vector3.new(10.2, 0.2, 1), at(26, 7.1, 21.5), WHITE, Enum.Material.SmoothPlastic).CanCollide = false
+		part("RampStripe", Vector3.new(10.2, 0.2, 1), at(RAMP.X, 7.1, RAMP.Y - 8.5), WHITE, Enum.Material.SmoothPlastic).CanCollide = false
 		return
 	end
 	ramp.Color = YELLOW
 	Finish.apply(ramp, "Painted")
 	ramp.Parent = folder
-	part("RampStripe", Vector3.new(10.2, 0.2, 1), at(26, 7.1, 21.5), WHITE, Enum.Material.Neon).CanCollide = false
+	part("RampStripe", Vector3.new(10.2, 0.2, 1), at(RAMP.X, 7.1, RAMP.Y - 8.5), WHITE, Enum.Material.Neon).CanCollide = false
 end
 
 ------------------------------------------------------------------------------------------------
@@ -970,7 +971,8 @@ end
 -- them away every 75 s.)
 local BUTTON_EVENTS = { "GorillaRampage", "BullRun", "Tornado", "MeteorShower", "TrainRun", "UfoBeam", "BowlingAvalanche", "RocketRain", "MagnetStorm", "LightningStorm", "Sinkhole", "Earthquake", "FanBlast", "MoonGravity", "BalloonDrop", "GiantDummy" } -- (v4 C4: + the surprises)
 local function buildBigButton()
-	local x, z = 14, 14
+	local spot = (require(Shared:WaitForChild("PathPlan")) :: any).BUTTON_AT -- (V9-0h: on the rim under LAYOUT_V3)
+	local x, z = spot.X, spot.Y
 	local base = part("BigButtonBase", Vector3.new(1.6, 6, 6), at(x, 0.8, z) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 200, 205), Enum.Material.Metal, Enum.PartType.Cylinder)
 	local button = part("BigButton", Vector3.new(1, 4.4, 4.4), at(x, 2, z) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(220, 30, 30), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
 	local lit = Color3.fromRGB(220, 30, 30)

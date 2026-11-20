@@ -472,7 +472,7 @@ end
 -- spawn so they are the first thing seen; bigger than the plaza's, in a glowing frame with a gold
 -- crown, lit from below. Inside the lab's folder (Workspace.Labs.LabN): a lab you may not enter
 -- hides them with the rest of it (PlotPrivacy).
-local LAB_BOARD = Vector3.new(14, 18, 0.6)
+local LAB_BOARD = if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAYOUT_V3 then Vector3.new(20, 26, 0.6) else Vector3.new(14, 18, 0.6) -- (V9-0h: a board wall like the leader's)
 local LAB_BOARD_IDS = { "Takedowns", "Time" }
 local FRAME_GLOW = Color3.fromRGB(140, 110, 255)
 

@@ -103,6 +103,9 @@ return {
 				assert(target, "the path end " .. name .. " leads nowhere (no END_TARGETS entry)")
 				local at = o2 + PathPlan.LAB_POINTS[name]
 				local best = math.huge
+				if target.kind == "floor" then
+					best = 0 -- (V9-0h: it starts on the open floor's edge: the floor is the path)
+				end
 				for _, d in lab:GetDescendants() do
 					if target.kind == "part" and d.Name == target.name and (d:IsA("Model") or d:IsA("BasePart")) then
 						local p = (d :: any):GetPivot().Position

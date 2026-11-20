@@ -869,7 +869,7 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 		end
 	end
 	local dressState: any = { lamps = 0, lights = 0, parts = 0 }
-	if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 then
+	if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 and not (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V3 then
 		dressState.hub = o2 + PathPlan.LAB_HUB -- (dressLine keeps bushes and lamps off the plaza)
 	end
 	-- (21 Nov 2026: lamps, tufts and flowers also keep off the two garden walks: LabGarden lays them.)
@@ -896,7 +896,7 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 			count += PathBuilder.dressLine(folder, allLines[i], floorY, walkWidth(), i, avoid, dressState)
 		end
 	end
-	if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 then
+	if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 and not (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V3 then
 		PathBuilder.addDisc(folder, o2 + PathPlan.LAB_HUB, 9.6) -- (the plaza ring's outer edge)
 	end
 	-- (V9-0 review: one kerb pass for the lab's paths and its garden's walks, so neither lays a kerb
@@ -904,7 +904,7 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 	count += PathBuilder.finishKerbs(folder, if garden then { garden } else nil)
 	-- (21 Nov 2026, Config.LAYOUT_V2: the spawn is the hub, a round paved square where the ways meet:
 	-- a node, not a knot of path ends. Flat paving only: the keep-clear circle allows it.)
-	if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 then
+	if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 and not (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V3 then -- (V9-0h: no plaza on the open floor)
 		local hub = o2 + PathPlan.LAB_HUB
 		local flat = CFrame.Angles(0, 0, math.rad(90))
 		deco(folder, "PlazaSoil", Vector3.new(0.12, 21.8, 21.8), CFrame.new(hub.X, floorY + 0.06, hub.Y) * flat, PathBuilder.SOIL, Enum.Material.Ground, Enum.PartType.Cylinder)

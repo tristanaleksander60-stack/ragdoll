@@ -263,6 +263,58 @@ if LAYOUT_V2 then
 	PathPlan.OBSTACLES = table.freeze(list)
 end
 
+-- Where the BIG RED BUTTON and the car ramp stand (lab x, z): Playground builds them there,
+-- LabZones marks the button's pad. V9-0h (LAYOUT_V3) moves both onto the rim, out of the spawn's
+-- 40-stud clear circle.
+PathPlan.BUTTON_AT = Vector2.new(14, 14)
+PathPlan.RAMP_AT = Vector2.new(26, 30)
+PathPlan.ROW_Z = -20 -- (the dummy row's test zone centre; Lab)
+PathPlan.HUB_CLEAR = 0 -- (V9-0h: the radius of floor round the spawn kept free of every attraction)
+
+-- V9-0h (Config.LAYOUT_V3, owner 21 Nov 2026, the leader's hub): one big open tiled floor. The paths
+-- inside the core go (the floor is the path); what stays is the road out to the creature yard and
+-- the round through both gardens, starting at the floor's back edge.
+local LAYOUT_V3 = (require(script.Parent:WaitForChild("Config")) :: any).LAYOUT_V3 == true
+if LAYOUT_V3 then
+	PathPlan.BUTTON_AT = Vector2.new(-34, 24)
+	PathPlan.RAMP_AT = Vector2.new(34, 34)
+	PathPlan.ROW_Z = -60
+	PathPlan.HUB_CLEAR = 40
+	PathPlan.LAB_POINTS = table.freeze({
+		Spawn = Vector2.new(0, 0),
+		YardIn = Vector2.new(-6, 70), -- (on the floor's back edge: the floor itself leads here)
+		Yard = Vector2.new(-6, 80),
+		YP1 = Vector2.new(-60, 78),
+		YP2 = Vector2.new(45, 78),
+		GardenWestEnd = Vector2.new(-PathPlan.GARDEN_WALK_X, PathPlan.GARDEN_WALK_SOUTH),
+		GardenEastEnd = Vector2.new(PathPlan.GARDEN_WALK_X, PathPlan.GARDEN_WALK_SOUTH),
+	})
+	PathPlan.LAB_SEGMENTS = table.freeze({
+		{ "YardIn", "Yard", true },
+		{ "Yard", "YP1", true },
+		{ "YP1", "GardenWestEnd", true },
+		{ "Yard", "YP2", true },
+		{ "YP2", "GardenEastEnd", true },
+	})
+	PathPlan.LAB_ROUTES = table.freeze({
+		{ name = "Yard", to = PathPlan.LAB_POINTS.Yard },
+		{ name = "GardenWestEnd", to = PathPlan.LAB_POINTS.GardenWestEnd },
+		{ name = "GardenEastEnd", to = PathPlan.LAB_POINTS.GardenEastEnd },
+	})
+	PathPlan.LABELS = table.freeze({})
+	PathPlan.SIGNS = table.freeze({})
+	PathPlan.END_TARGETS = table.freeze({
+		YardIn = { kind = "floor", reach = 3 },
+		GardenWestEnd = { kind = "path", reach = 3 },
+		GardenEastEnd = { kind = "path", reach = 3 },
+	})
+	local list: { Obstacle } = {}
+	for _, o in PathPlan.OBSTACLES do
+		table.insert(list, if o.name == "Button" then { name = "Button", at = PathPlan.BUTTON_AT, radius = 4.5 } else o)
+	end
+	PathPlan.OBSTACLES = table.freeze(list)
+end
+
 -- Terrain material per open-air place (what the grass under a path turns into).
 PathPlan.TERRAIN = table.freeze({
 	Plaza = "Cobblestone",
