@@ -25,6 +25,7 @@
 -- through onTransition so the server can mirror it (see Topology) and replication stays exact.
 
 local RunService = game:GetService("RunService")
+local CollectionService = game:GetService("CollectionService")
 local Workspace = game:GetService("Workspace")
 
 local Tone = require(script.Parent.Tone)
@@ -725,6 +726,35 @@ local function flat(v: Vector3): Vector3
 	return Vector3.new(v.X, 0, v.Z)
 end
 
+-- Places a fleeing body never runs into (tag DummyAvoid: the lab's lava pit). Before, a coward shot
+-- at from the front ran straight into the lava, was thrown, got up at its rim and was thrown again.
+local AVOID_MARGIN = 3 -- studs round each place
+local function inAvoid(p: Vector3): boolean
+	for _, part in CollectionService:GetTagged("DummyAvoid") do
+		if part:IsA("BasePart") then
+			local rel = part.CFrame:PointToObjectSpace(p)
+			if math.abs(rel.X) < part.Size.X / 2 + AVOID_MARGIN and math.abs(rel.Z) < part.Size.Z / 2 + AVOID_MARGIN then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- The run direction turned the least that keeps a body out of the places it avoids, a few studs ahead.
+local function clearRun(here: Vector3, run: Vector3): Vector3
+	if not inAvoid(here + run * 6) then
+		return run
+	end
+	for _, turn in { 50, -50, 100, -100, 150, -150 } do
+		local r = CFrame.Angles(0, math.rad(turn), 0):VectorToWorldSpace(run)
+		if not inAvoid(here + r * 6) then
+			return r
+		end
+	end
+	return run
+end
+
 -- The nearest person within reach, if any.
 local function nearestPerson(rig: Rig, reach: number): Vector3?
 	local best: Vector3? = nil
@@ -1038,6 +1068,7 @@ local function updateMoving(rig: Rig, dt: number)
 				local zig = math.sin(now * 5.2 + seed * 3) * 0.75 + math.sin(now * 1.7 + seed) * 0.45
 				run = CFrame.Angles(0, zig, 0):VectorToWorldSpace(run)
 			end
+			run = clearRun(here, run)
 			goal = here + run * 10
 		end
 	elseif home then

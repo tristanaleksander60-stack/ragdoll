@@ -15,6 +15,7 @@
 -- startup ("Plaza") and one in every lab the first time someone owns it ("Lab1", "Lab2", ...). The
 -- parts clients react to are named like the Workshop's (TrampolinePad) or CannonPad.
 
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
@@ -565,6 +566,7 @@ local function buildLava()
 	local x, z, w, d = -27.5, -41, 21, 18
 	local pool = part("LavaPool", Vector3.new(w, 0.4, d), at(x, 0.2, z), LAVA, Enum.Material.CrackedLava)
 	pool:SetAttribute("LaunchVelocity", Vector3.new(0, 105, 0)) -- (dummies too: PropContacts)
+	CollectionService:AddTag(pool, "DummyAvoid") -- (a fleeing dummy turns aside: ActiveRagdoll)
 	hazardRim(x, z, w, d, 0.6)
 	for _, spot in { Vector3.new(-6, 0, -4), Vector3.new(5, 0, 3), Vector3.new(-2, 0, 6) } do
 		local flame = Instance.new("Fire")

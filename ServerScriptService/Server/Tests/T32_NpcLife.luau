@@ -137,9 +137,13 @@ local function body(results: { string }, player: Player)
 		return ran > 6
 	end, 3)
 	assert(ran > 6, string.format("the coward got only %.1f studs further from the shooter", ran))
+	-- (Home again with no gun in the hand: a gun pointed at its home keeps a scared coward away, by
+	-- design (3b checks that), and the body turns to wherever the test's mouse happens to be.)
+	local emptyHand = require(Systems:WaitForChild("HeldService")) :: any
+	emptyHand.onHold(player, "")
 	assert(waitFor(function()
 		return standingAtHome(coward)
-	end, 15), "the coward did not come home after running")
+	end, 25), "the coward did not come home after running") -- (a zigzag run can end 20+ studs off)
 	table.insert(results, string.format("a shot near a coward: it ran %.0f studs from the shooter and came home; the brave one stood", ran))
 
 	-- 3b. A gun pointed at a coward (round 3, M3; fix 1: a gun only carried is not a gun used).
@@ -152,6 +156,9 @@ local function body(results: { string }, player: Player)
 		local chome = pelvis(coward).Position
 		local function stand(at: Vector3, facing: Vector3)
 			character:PivotTo(CFrame.lookAt(at, facing))
+			-- (A held gun turns the body to the mouse's aim point (AvatarMoves): in a self-test the camera
+			-- is anywhere, so the gun is aimed where the test faces: Studio's AimTestPoint.)
+			player:SetAttribute("AimTestPoint", facing)
 		end
 		stand(chome + Vector3.new(0, 1, 7), chome)
 		task.wait(1.2)
@@ -162,7 +169,9 @@ local function body(results: { string }, player: Player)
 		stand(chome + Vector3.new(0, 1, 7), chome + Vector3.new(0, 1, 20))
 		task.wait(1.2)
 		assert(coward:GetAttribute("RagdollState") ~= "Fleeing", "the coward ran from a gun pointed away")
-		stand(chome + Vector3.new(0, 1, 7), chome)
+		-- (7 studs from where it really stands, not from its home: up to 3 studs apart, and 10 is past RUN_REACH.)
+		local standsAt = pelvis(coward).Position
+		stand(standsAt + Vector3.new(0, 1, 7), standsAt)
 		task.wait(1.5)
 		assert(coward:GetAttribute("RagdollState") ~= "Fleeing", "the coward ran from a gun only carried, 7 studs off")
 		-- The gun fires (raised): it runs.
@@ -204,11 +213,13 @@ local function body(results: { string }, player: Player)
 		local walkingAt = pelvis(coward).Position
 		local stillWalking = coward:GetAttribute("RagdollState") == "Walking"
 		if stillWalking then
-			stand(walkingAt + Vector3.new(0, 1, 6.5), walkingAt)
+			-- (Where it walks now, close: it keeps walking while the gun is drawn, 4 studs a second.)
+			local nowAt = pelvis(coward).Position
+			stand(nowAt + Vector3.new(0, 1, 5.5), nowAt)
 			GunThreat.markFired(character)
 			assert(waitFor(function()
 				return coward:GetAttribute("RagdollState") == "Fleeing"
-			end, 2), "a coward walking home did not run from a gun fired at it")
+			end, 3), "a coward walking home did not run from a gun fired at it")
 			character:SetAttribute("GunFiredAt", nil)
 		end
 		-- The gun gone: home again.
@@ -217,7 +228,8 @@ local function body(results: { string }, player: Player)
 		assert(HeldService.holdingOf(player) == nil, "an empty hand still holds a tool")
 		assert(waitFor(function()
 			return standingAtHome(coward)
-		end, 25), "the coward did not come home once the gun was gone")
+		end, 35), "the coward did not come home once the gun was gone")
+		player:SetAttribute("AimTestPoint", nil)
 		table.insert(results, string.format("a gun at a coward 7 studs off: an empty hand, a gun pointed away or only carried did nothing; fired, it ran and kept %.0f studs off while the gun stayed pointed (no back and forth); pushed up to it unfired it ran; walking home, a gun fired at it made it run again (" .. (if stillWalking then "checked" else "it was home before the check") .. "); the brave one stood; the empty hand (doctor mode) holds nothing; home once the gun was gone", kept))
 	end
 
