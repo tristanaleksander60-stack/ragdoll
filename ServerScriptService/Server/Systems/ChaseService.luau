@@ -47,6 +47,24 @@ type Chase = { player: Player, chasers: { Chaser }, endsAt: number, done: boolea
 local chases: { [Player]: Chase } = {}
 local nextAt: { [Player]: number } = {}
 
+-- V8-0.6 (Config.V8_CALM_START): no chase for a newcomer before CALM_CHASE_AFTER s in the game and
+-- CALM_CHASE_KOS takedowns this visit, both (the simulated players called the chase at 100 s "an
+-- ambush"; with the first hits landing, "or 15 KOs" alone would bring it back at 60-90 s).
+local startTakedowns: { [Player]: number } = {}
+function ChaseService.calmAllows(player: Player, takedowns: number): boolean
+	local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
+	if not Config.V8_CALM_START or player:GetAttribute("Newcomer") ~= true then
+		return true
+	end
+	local first = startTakedowns[player]
+	if first == nil then
+		first = takedowns
+		startTakedowns[player] = first
+	end
+	local joined = (player:GetAttribute("V8JoinedAt") :: number?) or Workspace:GetServerTimeNow()
+	return Workspace:GetServerTimeNow() - joined >= Config.CALM_CHASE_AFTER and takedowns - first >= Config.CALM_CHASE_KOS
+end
+
 local function rootOf(player: Player): BasePart?
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
@@ -235,6 +253,7 @@ function ChaseService.start_()
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		nextAt[player] = nil
+		startTakedowns[player] = nil
 		local c = chases[player]
 		if c then
 			finish(c, "Left")
@@ -250,7 +269,7 @@ function ChaseService.start_()
 			for _, player in Players:GetPlayers() do
 				local due = nextAt[player]
 				local td = ProgressService.takedownsOf(player)
-				if due and os.clock() >= due and not busy and not chases[player] and td ~= nil and td < ChaseService.NEW_TAKEDOWNS then
+				if due and os.clock() >= due and not busy and not chases[player] and td ~= nil and td < ChaseService.NEW_TAKEDOWNS and ChaseService.calmAllows(player, td) then
 					if ChaseService.start(player) then
 						nextAt[player] = os.clock() + math.random(ChaseService.EVERY_MIN, ChaseService.EVERY_MAX)
 					else

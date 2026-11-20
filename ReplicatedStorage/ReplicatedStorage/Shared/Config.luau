@@ -267,6 +267,13 @@ local Config = {
 	-- disagree); one toast per 15 s in the first 3 minutes (NotifyRules.EARLY_GAP); no signpost at
 	-- the spawn (PathPlan.SPAWN_CLEAR); the spawn turned 40 degrees so the cannon is in view (Lab).
 	V8_ONE_VOICE = true,
+	-- V8-0.6 (a calm first three minutes): a newcomer gets no NPC chase before CALM_CHASE_AFTER s and
+	-- CALM_CHASE_KOS takedowns this visit (both; ChaseService.calmAllows), and no window opens by
+	-- itself before CALM_MODALS_AFTER s (Notify.waitBig: egg card, auto egg, What's New, favourite).
+	V8_CALM_START = true,
+	CALM_CHASE_AFTER = 300,
+	CALM_CHASE_KOS = 15,
+	CALM_MODALS_AFTER = 180,
 }
 
 return table.freeze(Config)

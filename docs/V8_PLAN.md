@@ -1420,3 +1420,12 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - **FirstVisit:** one reveal number (QUIET_START); per step, a "follow the glow" nudge at 20 s and a skip at 45 s.
   - **Tests:** T112 passes; T55, T45, T100, T106, T109 and T23 pass.
   - **Left for V8-1** (one voice in full): the edge arrow, the experiment card waiting for FirstVisit, the touch hand only after 6 s, the reward notices all through Notify, T111 (timeline), LayoutCheck for FirstVisitGoal.
+- **V8-0.6 done in part (code; switch `V8_CALM_START`):**
+  - **Chase:** a newcomer gets no NPC chase before 300 s in the game and 15 takedowns this visit, both (ChaseService.calmAllows). T123 passes.
+  - **Pop-ups:** no window opens by itself for a newcomer before 180 s (Notify.waitBig floor: egg card, auto egg, What's New, favourite).
+  - **T43:** passes with StudioFresh off. Owner-only tests (T43, T71, T101) must run without play-as-newcomer mode, which strips owner perks on purpose.
+  - **Left for V8-1:**
+    - the What's New chip for returners (non-modal, from the first frame);
+    - the first WOW toy as a 1.5 s reveal into the hand;
+    - the first-wow UFO only inside the spawn view;
+    - T111.

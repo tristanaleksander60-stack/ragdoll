@@ -217,6 +217,11 @@ function Notify.waitBig(name: string, maxWait: number?): boolean
 		-- (A newcomer's first big pop-up comes NOTIFY_BIG_AFTER_REVEAL s after the HUD is in, not with it.)
 		local reveal = player:GetAttribute("NewcomerUntil")
 		local bigFrom = if type(reveal) == "number" then reveal + ((Config :: any).NOTIFY_BIG_AFTER_REVEAL or 20) else 0
+		-- (V8-0.6: no window opens by itself for a newcomer before CALM_MODALS_AFTER s: the egg
+		-- card, What's New and the favourite ask blocked play at 60-70 s.)
+		if (Config :: any).V8_CALM_START and player:GetAttribute("Newcomer") == true then
+			bigFrom = math.max(bigFrom, (Config :: any).CALM_MODALS_AFTER)
+		end
 		if NotifyRules.bigAllowed(state, os.clock()) and time() >= bigFrom then
 			break
 		end
