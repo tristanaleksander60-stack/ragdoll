@@ -11,7 +11,7 @@ PathPlan.STEP = 2.4 -- studs between two path stones (they overlap well: smooth 
 PathPlan.WIDTH_MIN = 4.6
 PathPlan.WIDTH_MAX = 5.6
 PathPlan.BOW = 0.08 -- how far a path bows sideways, as a share of its length (at most 4 studs)
-PathPlan.BUDGET = 400 -- stones per lab at most (phones: flat, anchored, no shadows, no collisions)
+PathPlan.BUDGET = 480 -- path parts per lab at most (walkway slabs, joints, kerbs; phones: flat, anchored, no shadows, no collisions)
 
 -- The lab: x, z from the lab's origin (measured from the built lab, 20 Nov 2026). Not a fan from
 -- one point (that read as a code-built "spider", review fix round 2): a tree. A trunk leaves the

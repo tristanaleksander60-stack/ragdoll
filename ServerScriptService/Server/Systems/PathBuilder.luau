@@ -34,7 +34,7 @@ local function stone(into: Instance, at: Vector3, width: number, color: Color3, 
 end
 
 -- One path of stones from a to b (world x, z) at height y (the garden's cobbled walks use it).
-function PathBuilder.trail(into: Instance, a: Vector2, b: Vector2, y: number, color: Color3, material: Enum.Material, seed: number): number
+function PathBuilder.trailStones(into: Instance, a: Vector2, b: Vector2, y: number, color: Color3, material: Enum.Material, seed: number): number
 	local n = 0
 	for i, s in PathPlan.curve(a, b, seed) do
 		stone(into, Vector3.new(s.at.X, y + (i % 4) * 0.004, s.at.Y), s.width, color, material)
@@ -44,7 +44,7 @@ function PathBuilder.trail(into: Instance, a: Vector2, b: Vector2, y: number, co
 end
 
 -- The lab's paths, into its Playground folder; `floorY` is the top of the lab floor.
-function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folder
+function PathBuilder.labStones(into: Instance, origin: Vector3, floorY: number): Folder
 	local folder = Instance.new("Folder")
 	folder.Name = "Paths"
 	local stones = PathPlan.lab()
@@ -195,6 +195,93 @@ function PathBuilder.start(labOrigin: Vector3)
 			end
 		end
 	end)
+end
+
+-- 20 Nov 2026 (the owner: "fix the paths"; the overlapping discs read as spilt mud): a real
+-- walkway. Straight slabs from point to point along the curve, a round disc at every joint (no notch
+-- on a bend), and a darker kerb a hair wider underneath: a gravel path with a stone edge in the lab,
+-- cobbles in the garden. Pictures only, like before.
+PathBuilder.WALK_WIDTH = 4.4
+PathBuilder.GRAVEL = Color3.fromRGB(171, 158, 132)
+PathBuilder.KERB = Color3.fromRGB(96, 92, 86)
+PathBuilder.EVERY = 3 -- (one corner every this many plan points: about 7 studs, still a smooth curve)
+
+local function flatPart(into: Instance, name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, round: boolean)
+	local p = Instance.new("Part")
+	p.Name = name
+	if round then
+		p.Shape = Enum.PartType.Cylinder
+	end
+	p.Size = size
+	p.CFrame = cf
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.CastShadow = false
+	p.Color = color
+	p.Material = material
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.Parent = into
+end
+
+-- A walkway through the points (world x, z) at height y: slabs, round joints, and a kerb under it.
+function PathBuilder.walkway(into: Instance, points: { Vector2 }, y: number, width: number, color: Color3, material: Enum.Material, kerb: Color3?): number
+	local n = 0
+	local flat = CFrame.Angles(0, 0, math.rad(90))
+	for i, a in points do
+		flatPart(into, "PathJoint", Vector3.new(0.06, width, width), CFrame.new(a.X, y - 0.003, a.Y) * flat, color, material, true)
+		n += 1
+		if kerb then
+			flatPart(into, "PathKerb", Vector3.new(0.05, width + 0.7, width + 0.7), CFrame.new(a.X, y - 0.016, a.Y) * flat, kerb, Enum.Material.Slate, true)
+			n += 1
+		end
+		local b = points[i + 1]
+		if b and (b - a).Magnitude > 0.05 then
+			local mid = (a + b) / 2
+			local cf = CFrame.lookAt(Vector3.new(mid.X, y, mid.Y), Vector3.new(b.X, y, b.Y))
+			local len = (b - a).Magnitude
+			flatPart(into, "PathSlab", Vector3.new(width, 0.06, len), cf, color, material, false)
+			n += 1
+			if kerb then
+				flatPart(into, "PathKerb", Vector3.new(width + 0.7, 0.05, len), cf - Vector3.new(0, 0.013, 0), kerb, Enum.Material.Slate, false)
+				n += 1
+			end
+		end
+	end
+	return n
+end
+
+-- Every EVERY-th point of a planned curve, and its end.
+local function corners(stones: { PathPlan.Stone }, offset: Vector2): { Vector2 }
+	local out: { Vector2 } = {}
+	for k, s in stones do
+		if (k - 1) % PathBuilder.EVERY == 0 or k == #stones then
+			table.insert(out, offset + s.at)
+		end
+	end
+	return out
+end
+
+-- One walkway from a to b (world x, z) at height y (the garden's cobbled walks use it).
+function PathBuilder.trail(into: Instance, a: Vector2, b: Vector2, y: number, color: Color3, material: Enum.Material, seed: number): number
+	return PathBuilder.walkway(into, corners(PathPlan.curve(a, b, seed), Vector2.zero), y, PathBuilder.WALK_WIDTH, color, material, PathBuilder.KERB)
+end
+
+-- The lab's paths, into its Playground folder; `floorY` is the top of the lab floor.
+function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folder
+	local folder = Instance.new("Folder")
+	folder.Name = "Paths"
+	local count = 0
+	local o2 = Vector2.new(origin.X, origin.Z)
+	for i in PathPlan.LAB_SEGMENTS do
+		-- (Each segment a hair apart in height: where two meet they never flicker.)
+		count += PathBuilder.walkway(folder, corners(PathPlan.segment(i), o2), floorY + 0.04 + (i % 3) * 0.003, PathBuilder.WALK_WIDTH, PathBuilder.GRAVEL, Enum.Material.Pebble, PathBuilder.KERB)
+	end
+	folder:SetAttribute("Stones", count)
+	folder.Parent = into
+	return folder
 end
 
 return PathBuilder
