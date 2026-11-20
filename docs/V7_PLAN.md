@@ -216,3 +216,10 @@ They lead from the spawn or arrival to each thing you can do there.
   - Everything is pictures only: no collision, no query, no touch.
   - **Tests:** T106 passes (every route reaches its goal, within budget, non-colliding, painted on every place); T26/T31 pass.
   - **Captures:** v7_2_lab_top, v7_2_lab_eye2, v7_2_farm.
+- **V7-3 done (20 Nov):**
+  - A walking bird stands on its feet: its pivot is lifted by its own measured feet offset (`Birds.feetOffset`, the bounding box at its size) instead of sitting at ground + 0.05. Before, the pigeons sank to mid-body.
+  - The ground ray now skips the birds, every player, the dummies, and any see-through or walk-through part (up to 4 layers down), so a bird stands on the real floor or the terrain.
+  - Flying birds keep ground + 8.
+  - **Tests:** T104 checks that a grounded bird's lowest point is within 0.15 studs of the floor. Passes.
+  - **Capture:** v7_3_pigeon.
+  - Not built: perching on roofs, fences and wires (the birds never perch yet, so none sinks into a roof).

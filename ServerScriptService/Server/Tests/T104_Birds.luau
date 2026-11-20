@@ -29,6 +29,20 @@ return {
 				n += def.count
 			end
 		end
+		-- V7-3: a grounded bird stands on its feet: placed by feetOffset, its lowest point is on the floor.
+		for _, def in Birds.FLOCKS.Plaza do
+			if def.ground then
+				local m = ((models :: Instance):FindFirstChild(def.model) :: Model):Clone()
+				m:ScaleTo(m:GetScale() * (def.size or 1))
+				local floorY = 100
+				local feet = Birds.feetOffset(m)
+				m:PivotTo(CFrame.new(0, floorY + feet, 0))
+				local cf, size = m:GetBoundingBox()
+				local bottom = cf.Position.Y - size.Y / 2
+				m:Destroy()
+				assert(math.abs(bottom - floorY) < 0.15, string.format("a %s stands %.2f studs off the floor", def.model, bottom - floorY))
+			end
+		end
 		local caps = Config.BIRDS_MAX
 		assert(caps and caps.phone < caps.tablet and caps.tablet <= caps.pc, "bird budgets are not phone < tablet <= pc")
 		return string.format("%d flock birds over %d models; budgets pc %d / tablet %d / phone %d", n, #(models :: Instance):GetChildren(), caps.pc, caps.tablet, caps.phone)

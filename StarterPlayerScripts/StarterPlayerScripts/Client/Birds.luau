@@ -51,6 +51,7 @@ type Bird = {
 	ground: boolean,
 	bones: { Bone },
 	baseC0: { CFrame },
+	feet: number, -- (V7-3: from the pivot down to the lowest point of the model: its feet)
 }
 type Flock = { def: any, birds: { Bird }, centre: Vector3, scatterUntil: number, scatterFrom: Vector3 }
 
@@ -84,7 +85,18 @@ end
 local params = RaycastParams.new()
 params.FilterType = Enum.RaycastFilterType.Exclude
 local function refreshFilter()
-	params.FilterDescendantsInstances = { folder(), player.Character :: any }
+	-- (V7-3: never the birds, a dummy or any player: the real floor or the terrain only.)
+	local skip: { Instance } = { folder() }
+	for _, pl in Players:GetPlayers() do
+		if pl.Character then
+			table.insert(skip, pl.Character)
+		end
+	end
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if dummies then
+		table.insert(skip, dummies)
+	end
+	params.FilterDescendantsInstances = skip
 end
 
 local function makeBird(def: any, at: Vector3): Bird?
@@ -125,6 +137,7 @@ local function makeBird(def: any, at: Vector3): Bird?
 		ground = def.ground == true,
 		bones = bones,
 		baseC0 = base,
+		feet = Birds.feetOffset(m),
 	}
 end
 
@@ -183,8 +196,27 @@ end
 
 -- The ground under a point (grounded pigeons stand on it).
 local function groundY(p: Vector3, fallback: number): number
-	local hit = Workspace:Raycast(p + Vector3.new(0, 40, 0), Vector3.new(0, -160, 0), params)
-	return if hit then hit.Position.Y else fallback -- (no ground under it: the caller's own floor)
+	-- (V7-3: a see-through or walk-through part (a sign, a light, a path stone's neighbour) is
+	-- not ground: the ray goes on below it, up to 4 times.)
+	local from = p + Vector3.new(0, 40, 0)
+	for _ = 1, 4 do
+		local hit = Workspace:Raycast(from, Vector3.new(0, -160, 0), params)
+		if not hit then
+			return fallback
+		end
+		local part = hit.Instance
+		if part:IsA("Terrain") or (part:IsA("BasePart") and part.CanCollide and part.Transparency < 0.9) or part.Name == "PathStone" then
+			return hit.Position.Y
+		end
+		from = hit.Position - Vector3.new(0, 0.05, 0)
+	end
+	return fallback
+end
+
+-- How far a model's lowest point is below its pivot (its feet stand on the ground from there).
+function Birds.feetOffset(m: Model): number
+	local cf, size = m:GetBoundingBox()
+	return m:GetPivot().Position.Y - (cf.Position.Y - size.Y / 2)
 end
 
 -- (Review fix: a bird's ground is looked up about 7 times a second, not every frame.)
@@ -245,7 +277,7 @@ local function step(dt: number)
 				end
 				local p = b.pos + b.vel * dt
 				-- (Back from the air it glides down, never pops to the ground.)
-				local gy = cachedGround(b, p, p.Y) + 0.05
+				local gy = cachedGround(b, p, p.Y - b.feet) + b.feet + 0.02 -- (V7-3: feet on the ground, not the pivot)
 				p = Vector3.new(p.X, math.max(gy, b.pos.Y - 12 * dt), p.Z)
 				b.pos = p
 				local look = if b.vel.Magnitude > 0.1 then b.vel.Unit else b.model:GetPivot().LookVector
