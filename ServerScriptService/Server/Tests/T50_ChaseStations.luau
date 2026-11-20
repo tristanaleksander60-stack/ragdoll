@@ -47,6 +47,9 @@ local function body(player: Player): string
 	table.insert(results, "chase: 4 chasers come for you, a health bar, one at a time, gone after")
 	-- Visitors (phase 3): in your lab they come, each heading for a thing to try; gone when you go.
 	local VisitorService = require(Systems:WaitForChild("VisitorService"))
+	-- (With live ids the creator owns VIP Lab in Studio: +VIP_LAB_VISITORS. Count the plain number.)
+	local OfferService = require(Systems:WaitForChild("OfferService")) :: any
+	OfferService.resetForTest(player)
 	VisitorService.tickForTest(player)
 	local list = VisitorService.of(player)
 	assert(#list == VisitorService.VISITORS, #list .. " visitors (want " .. VisitorService.VISITORS .. ")")

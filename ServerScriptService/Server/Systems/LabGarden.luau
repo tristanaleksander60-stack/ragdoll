@@ -93,6 +93,23 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 	for _, side in { 1, -1 } do
 		local xMid = side * (inner + outer) / 2
 		local pathX = side * (inner + width * 0.45)
+		-- (V9-0 F2: where the walk's centre really is at a given z: the walk curves gently, and its lamps,
+		-- benches, beds and trees follow it so none stands on the paving.)
+		local walkPts: { Vector2 }? = nil
+		local function walkX(z: number): number
+			local pts = walkPts
+			if not pts then
+				return pathX
+			end
+			local wz = origin.Z + z
+			for i = 1, #pts - 1 do
+				local a, b = pts[i], pts[i + 1]
+				if (wz - a.Y) * (wz - b.Y) <= 0 and math.abs(b.Y - a.Y) > 0.001 then
+					return a.X + (b.X - a.X) * (wz - a.Y) / (b.Y - a.Y) - origin.X
+				end
+			end
+			return pathX
+		end
 		-- Grass and the path (thin, a hair above the ground so nothing flickers).
 		part(folder, "GardenGrass", Vector3.new(width, 0.2, depth), CFrame.new(origin + Vector3.new(xMid, 0.1, zMid)), GRASS, Enum.Material.Grass)
 		if (require(Shared:WaitForChild("Config")) :: any).PATHS then
@@ -107,6 +124,9 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 			local walkColor = if v2 then PathBuilder.PAVING_V3 else PATH
 			local northZ = if v2 then PathPlan.GARDEN_WALK_NORTH else LabGarden.Z_BACK + 4
 			PathBuilder.trail(folder, o2 + Vector2.new(pathX, northZ), o2 + Vector2.new(pathX, LabGarden.Z_FRONT - 3), origin.Y + 0.24, walkColor, Enum.Material.Cobblestone, if side > 0 then 101 else 102)
+			if v2 then
+				walkPts = PathBuilder.trailPoints(o2 + Vector2.new(pathX, northZ), o2 + Vector2.new(pathX, LabGarden.Z_FRONT - 3), if side > 0 then 101 else 102)
+			end
 			for k, z in if v2 then (if side > 0 then { 30 } else {}) else { -30, 30 } do
 				PathBuilder.trail(folder, o2 + Vector2.new(side * (inner - 1), z), o2 + Vector2.new(pathX, z), origin.Y + 0.25, walkColor, Enum.Material.Cobblestone, 110 + k + (if side > 0 then 0 else 5))
 			end
@@ -132,23 +152,27 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 		local i = 0
 		for tz = LabGarden.Z_BACK + 14, LabGarden.Z_FRONT - 8, 26 do
 			i += 1
-			place(folder, if i % 2 == 0 then "TreePine" else "TreeRound", origin + Vector3.new(side * (half - 13), 0, tz), (i * 47) % 360, if i % 2 == 0 then 0.55 else 0.75, true)
+			place(folder, if i % 2 == 0 then "TreePine" else "TreeRound", origin + Vector3.new(side * math.max(half - 13, math.abs(walkX(tz)) + 8.5), 0, tz), (i * 47) % 360, if i % 2 == 0 then 0.55 else 0.75, true)
 		end
+		-- (V9-0 F2: the walks are wider since 0.30 (Config.LAYOUT_V2): beds, benches, lamps and the shed
+		-- step back so nothing stands on the paving.)
+		local wideWalk = (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 == true
+		local bedOff, benchOff, lampOff = if wideWalk then 10.5 else 9, if wideWalk then 7 else 6, if wideWalk then 5.3 else 4.5
 		-- Flower beds along the path's inner side, benches and lamps on its outer side.
 		-- (20 Nov: the spider and the plant live at z -70, the frog at -5: their beds made room.)
 		for _, fz in if side > 0 then { -45, 10, 50 } else { -45, 50 } do
-			place(folder, "FlowerBed", origin + Vector3.new(pathX - side * 9, 0.2, fz), 0, 0.8)
+			place(folder, "FlowerBed", origin + Vector3.new(walkX(fz) - side * bedOff, 0.2, fz), 0, 0.8)
 		end
 		for _, bz in { -12, 45 } do
-			place(folder, "Bench", origin + Vector3.new(pathX + side * 6, 0.2, bz), if side > 0 then -90 else 90, 1.1, true)
+			place(folder, "Bench", origin + Vector3.new(walkX(bz) + side * benchOff, 0.2, bz), if side > 0 then -90 else 90, 1.1, true)
 		end
 		for _, lz in { -78, -40, 0, 40 } do
-			place(folder, "StreetLamp", origin + Vector3.new(pathX + side * 4.5, 0.2, lz), if side > 0 then 180 else 0, 0.8, true)
+			place(folder, "StreetLamp", origin + Vector3.new(walkX(lz) + side * lampOff, 0.2, lz), if side > 0 then 180 else 0, 0.8, true)
 		end
 		if side > 0 then
-			place(folder, "GardenFountain", origin + Vector3.new(side * (inner + 9.5), 0.2, 24), 0, 0.9, true)
+			place(folder, "GardenFountain", origin + Vector3.new(side * (inner + 9.5), 0.2, if wideWalk then 16 else 24), 0, 0.9, true) -- (V9-0: clear of the crossing at z 30)
 		else
-			place(folder, "GardenShed", origin + Vector3.new(pathX - 4, 0.2, LabGarden.Z_BACK + 14), 90, 1.1, true)
+			place(folder, "GardenShed", origin + Vector3.new(if wideWalk then pathX + side * 11 else pathX - 4, 0.2, LabGarden.Z_BACK + 14), 90, 1.1, true)
 		end
 		place(folder, "Rock", origin + Vector3.new(side * (half - 20), 0, LabGarden.Z_FRONT - 18), 30, 0.35, true)
 	end

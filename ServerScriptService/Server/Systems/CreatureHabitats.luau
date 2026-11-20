@@ -70,6 +70,19 @@ local function prop(into: Instance, name: string, at: CFrame, yaw: number, size:
 			d:Destroy()
 		end
 	end
+	-- (V9-0 F2, owner 21 Nov 2026: nothing stands on a path: a prop over the lab's paving is left out.)
+	local lab: Instance? = into
+	while lab and lab.Parent and lab.Parent.Name ~= "Playground" do
+		lab = lab.Parent
+	end
+	if lab then
+		local PathBuilder = require(script.Parent:WaitForChild("PathBuilder")) :: any
+		local bcf, bsize = m:GetBoundingBox()
+		if PathBuilder.overPaving(PathBuilder.pavingIn(lab), bcf, bsize, 0.2) then
+			m:Destroy()
+			return nil
+		end
+	end
 	m.Parent = into
 	return m
 end
@@ -147,7 +160,8 @@ end
 
 DRESS.Vacuum = function(f, at)
 	-- The robot's living-room corner: a soft rug under its round, and its charging dock.
-	local rug = part(f, "Habitat_Rug", Vector3.new(52, 0.08, 22), at * CFrame.new(0, 0.26, 0), Color3.fromRGB(150, 130, 108), Enum.Material.Fabric)
+	local rug = part(f, "Habitat_Rug", Vector3.new(52, 0.08, 22), at * CFrame.new(0, 0.2, 0), -- (V9-0: under the yard road, never level with it: no flicker)
+		 Color3.fromRGB(150, 130, 108), Enum.Material.Fabric)
 	part(f, "Habitat_RugBorder", Vector3.new(54, 0.06, 24), rug.CFrame * CFrame.new(0, -0.02, 0), Color3.fromRGB(96, 80, 66), Enum.Material.Fabric)
 	local dock = at * CFrame.new(0, 0, 12.5)
 	part(f, "Habitat_Dock", Vector3.new(3, 1.6, 1.2), dock * CFrame.new(0, 0.8, 0), Color3.fromRGB(40, 42, 48), Enum.Material.SmoothPlastic)

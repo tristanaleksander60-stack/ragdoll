@@ -92,7 +92,7 @@ function LabDress.dress(into: Instance, origin: Vector3)
 	-- (21 Nov 2026, Config.LAYOUT_V2: the two benches by the yard move clear of the mace's sweep, the
 	-- Christmas chimney and the wide yard road.)
 	local v2 = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAYOUT_V2 == true
-	local MOVED: { [string]: Vector2 } = { ["-40,66"] = Vector2.new(-46, 68), ["40,66"] = Vector2.new(28, 68) }
+	local MOVED: { [string]: Vector2 } = { ["-40,66"] = Vector2.new(-46, 68), ["40,66"] = Vector2.new(28, 68), ["-78,68"] = Vector2.new(-78, 61), ["78,68"] = Vector2.new(78, 61) } -- (V9-0 F2: the corner lamps clear of the wide yard road)
 	for _, s0 in LabDress.SPOTS do
 		local s = s0
 		local to = if v2 then MOVED[s0.x .. "," .. s0.z] else nil

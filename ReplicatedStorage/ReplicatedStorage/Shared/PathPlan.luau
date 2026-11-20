@@ -173,7 +173,7 @@ PathPlan.OBSTACLES = table.freeze({
 local LAYOUT_V2 = (require(script.Parent:WaitForChild("Config")) :: any).LAYOUT_V2 == true
 -- The garden's long walks (LabGarden): their x, and where they now start and end.
 PathPlan.GARDEN_WALK_X = 99.8
-PathPlan.GARDEN_WALK_NORTH = -66
+PathPlan.GARDEN_WALK_NORTH = -62 -- (V9-0 F2: was -66; its end joint ran into the plant's planter)
 PathPlan.GARDEN_WALK_SOUTH = 67
 if LAYOUT_V2 then
 	-- (21 Nov 2026, round 2, the owner: "the paths are far too narrow and still stick out at the bullseye":
@@ -241,6 +241,15 @@ if LAYOUT_V2 then
 		GardenEast = "GARDEN",
 	})
 	PathPlan.SIGNS = table.freeze({ "E", "W", "SW" })
+	-- (V9-0 F3, owner 21 Nov 2026: "the path also stops": what every end leads to. T150 checks each end is
+	-- at its thing: a lab part by name (within `reach` studs), or the garden's own walks ("path").)
+	PathPlan.END_TARGETS = table.freeze({
+		TS = { kind = "part", name = "StairEdge", reach = 6 },
+		P1 = { kind = "part", name = "PortalSolo", reach = 12 },
+		GardenEast = { kind = "path", reach = 3 },
+		GardenWestEnd = { kind = "path", reach = 3 },
+		GardenEastEnd = { kind = "path", reach = 3 },
+	})
 	-- The mace and the Christmas present moved back to make room; the lava's box takes in its rocks.
 	local moved: { [string]: Obstacle } = {
 		Lava = { name = "Lava", min = Vector2.new(-41, -53), max = Vector2.new(-14, -29) },

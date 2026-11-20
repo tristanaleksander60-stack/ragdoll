@@ -12,6 +12,29 @@ local Workspace = game:GetService("Workspace")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local PathPlan = require(Shared:WaitForChild("PathPlan"))
 
+-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): with Config.FOLIAGE_V9 and the V3Assets roles
+-- (toolsImportV9Foliage.luau) the verge gets real bushes and mesh flowers, no balls or blocks.
+local function realFoliage(): boolean
+	local V3Assets = require(script.Parent:WaitForChild("V3Assets")) :: any
+	return (require(Shared:WaitForChild("Config")) :: any).FOLIAGE_V9 == true and V3Assets.has("VergeBushRound") and V3Assets.has("VergeFlowersRed")
+end
+local FLOWER_ROLES = { "VergeFlowersRed", "VergeFlowersYellow", "VergeFlowersWhite" }
+-- One real foliage model at `at` (lab x,z), standing on `top`, sunk a little, at any yaw. Parts used.
+local function foliage(into: Instance, role: string, at: Vector2, top: number, height: number, yaw: number): number
+	local V3Assets = require(script.Parent:WaitForChild("V3Assets")) :: any
+	local m = V3Assets.place(role, into, CFrame.new(at.X, top - height * 0.1, at.Y) * CFrame.Angles(0, yaw, 0), { height = height, collide = false, name = "Path" .. role })
+	if not m then
+		return 0
+	end
+	local parts = 0
+	for _, d in m:GetDescendants() do
+		if d:IsA("BasePart") then
+			parts += 1
+		end
+	end
+	return parts
+end
+
 local PathBuilder = {}
 
 PathBuilder.EARTH = Color3.fromRGB(122, 98, 72)
@@ -213,7 +236,7 @@ local function walkWidth(): number
 end
 PathBuilder.walkWidth = walkWidth
 PathBuilder.GRAVEL = Color3.fromRGB(176, 160, 136) -- (the paving's stone)
-PathBuilder.KERB = Color3.fromRGB(112, 108, 102)
+PathBuilder.KERB = Color3.fromRGB(150, 122, 90) -- (V9-0 F2: a warm edging stone, never a grey line)
 PathBuilder.KERB_W = 0.45
 PathBuilder.KERB_H = 0.34
 PathBuilder.PAVE_H = 0.16
@@ -240,8 +263,8 @@ local function flatPart(into: Instance, name: string, size: Vector3, cf: CFrame,
 end
 
 -- Walkways drawn into a folder whose kerbs are still to be laid (PathBuilder.finishKerbs).
-type Kerb = { cf: CFrame, size: Vector3, color: Color3, line: number, samples: { Vector2 } }
-local pending: { [Instance]: { lines: { { points: { Vector2 }, width: number } }, kerbs: { Kerb } } } = {}
+type Kerb = { cf: CFrame, size: Vector3, color: Color3, line: number, samples: { Vector2 }, a: Vector2, b: Vector2, y: number }
+local pending: { [Instance]: { lines: { { points: { Vector2 }, width: number } }, kerbs: { Kerb }, discs: { { at: Vector2, radius: number } } } } = {}
 
 -- A walkway through the points (world x, z), its floor at height y: raised paving slabs from
 -- point to point, a round paving disc at every joint (no notch on a bend), and a raised stone kerb
@@ -250,7 +273,7 @@ function PathBuilder.walkway(into: Instance, points: { Vector2 }, y: number, wid
 	local n = 0
 	local flat = CFrame.Angles(0, 0, math.rad(90))
 	local h = PathBuilder.PAVE_H
-	local state = pending[into] or { lines = {}, kerbs = {} }
+	local state = pending[into] or { lines = {}, kerbs = {}, discs = {} }
 	pending[into] = state
 	table.insert(state.lines, { points = points, width = width })
 	local lineIndex = #state.lines
@@ -279,6 +302,9 @@ function PathBuilder.walkway(into: Instance, points: { Vector2 }, y: number, wid
 						color = kerb,
 						line = lineIndex,
 						samples = { c2, c2 - dir * (len / 2), c2 + dir * (len / 2) },
+						a = c2 - dir * (len / 2 + 0.25),
+						b = c2 + dir * (len / 2 + 0.25),
+						y = at.Position.Y,
 					})
 				end
 			end
@@ -311,27 +337,94 @@ function PathBuilder.finishKerbs(into: Instance): number
 	end
 	pending[into] = nil
 	local n = 0
-	for _, k in state.kerbs do
-		local inside = false
+	-- (V9-0 F2, owner 21 Nov 2026: "grey things running through the path": a kerb is walked in half-stud
+	-- steps and laid only in the runs that lie outside every other walkway and every round square
+	-- (PathBuilder.addDisc), so no grey strip ever crosses paving.)
+	local function inside(p: Vector2, own: number): boolean
 		for li, line in state.lines do
-			if li ~= k.line then
-				for _, s in k.samples do
-					if toLine(s, line.points) < line.width / 2 + 0.1 then
-						inside = true
-						break
-					end
-				end
-			end
-			if inside then
-				break
+			if li ~= own and toLine(p, line.points) < line.width / 2 + 0.15 then
+				return true
 			end
 		end
-		if not inside then
-			flatPart(into, "PathKerb", k.size, k.cf, k.color, Enum.Material.Slate, false)
-			n += 1
+		for _, d in state.discs do
+			if (p - d.at).Magnitude < d.radius + 0.15 then
+				return true
+			end
+		end
+		return false
+	end
+	local function lay(k: Kerb, from: Vector2, to: Vector2)
+		local len = (to - from).Magnitude
+		if len < 0.6 then
+			return
+		end
+		local mid = (from + to) / 2
+		local cf = CFrame.lookAt(Vector3.new(mid.X, k.y, mid.Y), Vector3.new(to.X, k.y, to.Y))
+		flatPart(into, "PathKerb", Vector3.new(k.size.X, k.size.Y, len), cf, k.color, Enum.Material.Slate, false)
+		n += 1
+	end
+	for _, k in state.kerbs do
+		local len = (k.b - k.a).Magnitude
+		local steps = math.max(1, math.ceil(len / 0.5))
+		local runStart: Vector2? = nil
+		local last = k.a
+		for i = 0, steps do
+			local p = k.a:Lerp(k.b, i / steps)
+			if inside(p, k.line) then
+				if runStart then
+					lay(k, runStart, last)
+					runStart = nil
+				end
+			elseif not runStart then
+				runStart = p
+			end
+			last = p
+		end
+		if runStart then
+			lay(k, runStart, k.b)
 		end
 	end
 	return n
+end
+
+-- V9-0 F2: whether a box (a model's bounding box) covers any paving already laid in a lab's folder
+-- (its Paths and Garden): props that would stand on a path are left out by their builders.
+local PAVING_NAMES = { PathSlab = true, PathJoint = true, Plaza = true, GardenPath = true }
+function PathBuilder.pavingIn(lab: Instance): { BasePart }
+	local out: { BasePart } = {}
+	for _, name in { "Paths", "Garden" } do
+		local f = lab:FindFirstChild(name)
+		for _, d in if f then f:GetDescendants() else {} do
+			if d:IsA("BasePart") and PAVING_NAMES[d.Name] then
+				table.insert(out, d)
+			end
+		end
+	end
+	return out
+end
+function PathBuilder.overPaving(paving: { BasePart }, cf: CFrame, size: Vector3, margin: number): boolean
+	for i = -1, 1 do
+		for j = -1, 1 do
+			local w = cf * Vector3.new(i * size.X / 2, 0, j * size.Z / 2)
+			for _, pv in paving do
+				local l = pv.CFrame:PointToObjectSpace(Vector3.new(w.X, pv.Position.Y, w.Z))
+				local round = pv:IsA("Part") and pv.Shape == Enum.PartType.Cylinder
+				if round and Vector2.new(l.Y, l.Z).Magnitude < pv.Size.Y / 2 + margin then
+					return true
+				elseif not round and math.abs(l.X) < pv.Size.X / 2 + margin and math.abs(l.Z) < pv.Size.Z / 2 + margin then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+-- A round paved square (the spawn's plaza) drawn into `into`: kerbs stop at its edge.
+function PathBuilder.addDisc(into: Instance, at: Vector2, radius: number)
+	local state = pending[into] or { lines = {}, kerbs = {}, discs = {} }
+	pending[into] = state
+	table.insert(state.discs, { at = at, radius = radius })
 end
 
 -- A wooden signpost at a fork: a post with one arrow board per way out, each pointing along its
@@ -465,6 +558,11 @@ end
 function PathBuilder.trail(into: Instance, a: Vector2, b: Vector2, y: number, color: Color3, material: Enum.Material, seed: number): number
 	return PathBuilder.walkway(into, corners(PathPlan.curve(a, b, seed), Vector2.zero), y, walkWidth(), color, material, PathBuilder.KERB)
 end
+-- V9-0 F2: the centre line a trail with these ends and seed lays (LabGarden puts its lamps, benches
+-- and trees beside the real, gently curving walk, not beside a straight line).
+function PathBuilder.trailPoints(a: Vector2, b: Vector2, seed: number): { Vector2 }
+	return corners(PathPlan.curve(a, b, seed), Vector2.zero)
+end
 
 -- 21 Nov 2026 (Config.PATHS_V3, the owner: "make the paths round the lab much nicer"). Vault (Roads,
 -- Rivers and Paths; Teaching Through Level Design): a wider, lower shoulder under the paving, lamps
@@ -533,8 +631,19 @@ end
 
 -- The shoulder, lamps and tufts of one lab path (its points in world x, z; y its floor). `state`
 -- carries the lamp count and the light budget across the lab's paths.
-function PathBuilder.dressLine(into: Instance, points: { Vector2 }, y: number, width: number, own: number, lines: { { Vector2 } }, state: { lamps: number, lights: number, parts: number }): number
+function PathBuilder.dressLine(into: Instance, points: { Vector2 }, y: number, width: number, own: number, lines: { { Vector2 } }, state: { lamps: number, lights: number, parts: number, hub: Vector2? }): number
 	local n = 0
+	-- (V9-0 F2: a thing of radius r beside the path stays off all paving: every line, its own too (its
+	-- bends), and the round plaza.)
+	local function offPaving(p: Vector2, r: number): boolean
+		for _, pts in lines do
+			if toLine(p, pts) < width / 2 + PathBuilder.KERB_W + r then
+				return false
+			end
+		end
+		local hub = state.hub
+		return hub == nil or (p - hub).Magnitude > 9.6 + r
+	end
 	local function room(k: number): boolean
 		return state.parts + n + k <= PathBuilder.DRESS_MAX
 	end
@@ -576,7 +685,27 @@ function PathBuilder.dressLine(into: Instance, points: { Vector2 }, y: number, w
 				bushAt += PathBuilder.BUSH_GAP.X + (PathBuilder.BUSH_GAP.Y - PathBuilder.BUSH_GAP.X) * r
 				local side = if r < 0.5 then 1 else -1
 				local spot = at + across * side * (width / 2 + PathBuilder.KERB_W + PathBuilder.SHOULDER_W * 0.7)
-				if room(4) and not onOtherPath(spot, lines, own, width / 2 + 1.4) then
+				if realFoliage() then
+					-- (V9-0 F1/F2: one or two real bushes, mixed kinds, size +-20 %, any yaw, each standing
+					-- just off the paving by its own footprint (offPaving: every line and the plaza);
+					-- now and then a clump of mesh flowers beside them.)
+					local count = if r > 0.66 then 2 else 1
+					for k = 1, count do
+						local role = if (k + math.floor(r * 10)) % 2 == 0 then "VergeBushRound" else "VergeBushLeafy"
+						local h = 2 * (0.8 + 0.4 * hash(at.X + k, at.Y, 7))
+						local radius = (if role == "VergeBushLeafy" then 5.9 else 4) / 3 * h * 0.5 * 1.15
+						local p = at + across * side * (width / 2 + PathBuilder.KERB_W + radius + 0.15) + dir * ((k - (count + 1) / 2) * 2.4)
+						if room(2) and offPaving(p, radius) then
+							n += foliage(into, role, p, y + lift, h, hash(at.Y, at.X + k, 11) * math.pi * 2)
+						end
+					end
+					if r > 0.55 and room(4) then
+						local p = at + across * side * (width / 2 + PathBuilder.KERB_W + 1.35) + dir * (count * 1.4 + 1)
+						if offPaving(p, 1.3) then
+							n += foliage(into, FLOWER_ROLES[1 + math.floor(r * 37) % #FLOWER_ROLES], p, y + lift, 0.9, math.atan2(dir.X, dir.Y) + (r - 0.5) * 0.2)
+						end
+					end
+				elseif room(4) and not onOtherPath(spot, lines, own, width / 2 + 1.4) then
 					local count = if r > 0.66 then 3 else 2
 					for k = 1, count do
 						local size = 1.3 + hash(at.X + k, at.Y, 7) * 0.9
@@ -614,7 +743,7 @@ function PathBuilder.dressLine(into: Instance, points: { Vector2 }, y: number, w
 					state.lamps += 1
 					local side = if state.lamps % 2 == 0 then 1 else -1
 					local spot = at + across * side * (width / 2 + PathBuilder.KERB_W + 0.9)
-					if room(4) and not onOtherPath(spot, lines, own, width / 2 + 1.2) then
+					if room(4) and not onOtherPath(spot, lines, own, width / 2 + 1.2) and offPaving(spot, 0.5) then
 						local post = deco(into, "PathLampPost", Vector3.new(0.4, 6, 0.4), CFrame.new(spot.X, y + 3, spot.Y), PathBuilder.LAMP_POST, Enum.Material.Metal)
 						post.CastShadow = true
 						deco(into, "PathLampCap", Vector3.new(1.3, 0.3, 1.3), CFrame.new(spot.X, y + 6.85, spot.Y), PathBuilder.LAMP_POST, Enum.Material.Metal)
@@ -637,7 +766,15 @@ function PathBuilder.dressLine(into: Instance, points: { Vector2 }, y: number, w
 					nextTuft += PathBuilder.TUFT_GAP.X + (PathBuilder.TUFT_GAP.Y - PathBuilder.TUFT_GAP.X) * r
 					local side = if r < 0.5 then 1 else -1
 					local spot = at + across * side * edge
-					if room(5) and not onOtherPath(spot, lines, own, width / 2 + 0.8) then
+					if realFoliage() then
+						-- (V9-0 F1: no blocks for grass. Every other tuft spot gets a small clump of real
+						-- flowers on the verge instead; the verge's own grass is the rest.)
+						-- (On the verge's middle, long side along the path, so no flower leans onto paving.)
+						local mid = at + across * side * (width / 2 + PathBuilder.KERB_W + 1.35)
+						if hash(at.Y, at.X, own + 7) < 0.5 and room(4) and offPaving(mid, 1.3) then
+							n += foliage(into, FLOWER_ROLES[1 + math.floor(hash(at.X, at.Y, 3) * 30) % #FLOWER_ROLES], mid, y + lift, 0.75 + 0.2 * r, math.atan2(dir.X, dir.Y) + (r - 0.5) * 0.2)
+						end
+					elseif room(5) and not onOtherPath(spot, lines, own, width / 2 + 0.8) then
 						-- A tuft: three blades of grass leaning out, and every third one a flower.
 						for k = 1, 3 do
 							local lean = (k - 2) * 18 + r * 10
@@ -677,13 +814,20 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 			allLines[i] = corners(stones, o2)
 		end
 	end
-	local dressState = { lamps = 0, lights = 0, parts = 0 }
+	local dressState: any = { lamps = 0, lights = 0, parts = 0 }
+	if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 then
+		dressState.hub = o2 + PathPlan.LAB_HUB -- (dressLine keeps bushes and lamps off the plaza)
+	end
 	-- (21 Nov 2026: lamps, tufts and flowers also keep off the two garden walks: LabGarden lays them.)
 	local avoid: { { Vector2 } } = table.clone(allLines)
 	if PathPlan.GARDEN_WALK_X then
 		for _, sx in { -1, 1 } do
 			local x = sx * PathPlan.GARDEN_WALK_X
 			table.insert(avoid, { o2 + Vector2.new(x, PathPlan.GARDEN_WALK_NORTH), o2 + Vector2.new(x, PathPlan.GARDEN_WALK_SOUTH) })
+		end
+		-- (V9-0 F2: and the east garden's crossing at z 30, which GardenEast joins: LabGarden.)
+		if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 then
+			table.insert(avoid, { o2 + Vector2.new(78, 30), o2 + Vector2.new(PathPlan.GARDEN_WALK_X, 30) })
 		end
 	end
 	for i in PathPlan.LAB_SEGMENTS do
@@ -694,6 +838,9 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 		if v3 then
 			count += PathBuilder.dressLine(folder, allLines[i], floorY, walkWidth(), i, avoid, dressState)
 		end
+	end
+	if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 then
+		PathBuilder.addDisc(folder, o2 + PathPlan.LAB_HUB, 9.6) -- (the plaza ring's outer edge)
 	end
 	count += PathBuilder.finishKerbs(folder)
 	-- (21 Nov 2026, Config.LAYOUT_V2: the spawn is the hub, a round paved square where the ways meet:
@@ -706,7 +853,7 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 		deco(folder, "PlazaRing", Vector3.new(0.3, 19.2, 19.2), CFrame.new(hub.X, floorY + 0.16, hub.Y) * flat, PathBuilder.KERB, Enum.Material.Slate, Enum.PartType.Cylinder)
 		deco(folder, "Plaza", Vector3.new(0.34, 18, 18), CFrame.new(hub.X, floorY + 0.18, hub.Y) * flat, PathBuilder.PAVING_V3, Enum.Material.Cobblestone, Enum.PartType.Cylinder)
 		-- A rosette set into it: a darker ring and a centre stone.
-		deco(folder, "PlazaRose", Vector3.new(0.36, 9, 9), CFrame.new(hub.X, floorY + 0.19, hub.Y) * flat, PathBuilder.PAVING_V3:Lerp(PathBuilder.KERB, 0.35), Enum.Material.Cobblestone, Enum.PartType.Cylinder)
+		deco(folder, "PlazaRose", Vector3.new(0.36, 9, 9), CFrame.new(hub.X, floorY + 0.19, hub.Y) * flat, PathBuilder.PAVING_V3:Lerp(PathBuilder.KERB, 0.14), Enum.Material.Cobblestone, Enum.PartType.Cylinder) -- (V9-0 F2: a soft tone, not a grey ring)
 		deco(folder, "PlazaHeart", Vector3.new(0.38, 7.2, 7.2), CFrame.new(hub.X, floorY + 0.2, hub.Y) * flat, PathBuilder.PAVING_V3, Enum.Material.Cobblestone, Enum.PartType.Cylinder)
 		count += 6
 	end

@@ -284,6 +284,9 @@ local Config = {
 	-- hang together"): the lava moves west with the tower (out of the spawn's first view), the mace back,
 	-- the paths a network of loops (PathPlan), the garden walks join the yard road. false = the old lab.
 	LAYOUT_V2 = true,
+	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges
+	-- (V3Assets VergeBushRound/Leafy, VergeFlowers*; tools/ImportV9Foliage.luau). false = the old balls and blocks.
+	FOLIAGE_V9 = true,
 	-- GOD MODE (21 Nov 2026, the owner: "a pass called God: it gives access to creating life"): spawning
 	-- ragdolls is the GOD pass's (Shop.PASSES God), with a free 60 s trial a visit; while the pass id is
 	-- 0 live, spawning stays free. Client/GodMode is its window and launcher. false = free for all.

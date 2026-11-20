@@ -72,3 +72,13 @@ Ids are not secrets; they can be pasted in chat.
 ## State
 - 21 Nov 2026: plan written (cloud).
 - 21 Nov 2026 (cloud): F5 pictures done by `art/tools/build-product-icons.py`. It writes 19 offers to `art/shop/<key>.png`, 16 events to `art/shop/event_<id>.png` and 3 badges to `art/badges/badge_*.png`, and a contact sheet to `art/shop/_sheet.png`. Only the id paste-in and the STARTER_PACK/event-cut check are left in F5.
+- 21 Nov 2026 (PC, V9-0) DONE for the lab; the plaza's and maps' old stone-disc paths (MapPaths) go to V9-0d:
+  - **F1:** real bushes and mesh flowers on every verge (`Config.FOLIAGE_V9`). These are the V3Assets roles VergeBushRound (Esiduff 14614766320), VergeBushLeafy (14522316811) and VergeFlowersRed/White/Yellow (Pack_CR 11269785138), cleaned by `tools/ImportV9Foliage.luau` (place file v683). One more pick ("Cartoon Bush", 89092131033371) carried the known "Runtime"/"ScreenBuilder" malware and was deleted. The old V3Assets "Bush" is a leafy mesh (not a box) and stays.
+  - **F2:**
+    - Kerbs are walked in half-stud runs and laid only outside every other walkway and the plaza disc (`PathBuilder.addDisc`). Kerbs are a warm edging stone (150,122,90), and the plaza rosette is a soft tone.
+    - Verge plants and lamps stand off all paving by their own footprint (`offPaving`, own bends and the plaza included).
+    - Habitat props over paving are left out (`PathBuilder.overPaving`), and the vacuum rug sits under the yard road.
+    - The garden's lamps, benches, beds and trees follow the walk's real curve (`PathBuilder.trailPoints`). The fountain is at z 16, the shed on the walk's outer side, and the yard-corner lamps at z 61; the garden walk now starts at z -62.
+  - **F3:** `PathPlan.END_TARGETS`. Every end leads to its thing (the tower stairs, the portals, the garden walks).
+  - **Tests:** T150_PathEnds (ends, nothing on the paving in the lab and plaza, real plants). T50 counts visitors without the creator's VIP Lab.
+  - **F5:** the ids are live (0.30.0); `STARTER_PACK` stays 0, hidden; V8-2.9 may cut events later (owner list).
