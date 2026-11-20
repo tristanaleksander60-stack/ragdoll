@@ -1842,7 +1842,7 @@ function ProgressService.start(labOrigin: Vector3)
 	local testing = ServerStorage:GetAttribute("RunSelfTest") == true
 	if not RunService:IsStudio() then
 		store = DataStoreService:GetDataStore(STORE)
-	elseif not testing then
+	elseif not testing and ServerStorage:GetAttribute("StudioFresh") ~= true then -- (Studio only: StudioFresh = a brand-new player, never saved)
 		local usable = pcall(function()
 			DataStoreService:GetDataStore(STORE):GetAsync("probe")
 		end)

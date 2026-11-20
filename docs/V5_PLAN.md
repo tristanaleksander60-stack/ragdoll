@@ -61,3 +61,12 @@ Ordered by how much of a player's screen time each one covers. Every step:
 - **V5-5 (part):**
   - Army Base: the 30 crates, barrels and barriers sprinkled over the grass and the road are replaced by 4 tidy supply depots (a 3x2 crate block with some stacked, a barrel row, barriers in front), away from the road, pads and buildings. Seen.
   - Downtown checked: real models, road marks, trees, lamps, cars. No change needed.
+- **Owner, 20 Nov:**
+  - The red spike plates are gone (`SPIKE_BLOCKS` false; LabZones no longer features them).
+  - The wrecking ball is rebuilt (`WRECKING_V2`): a worn steel ball with a lug on a chain, a yellow A-frame gantry with braces, concrete feet, an I-beam and a pulley, over a hazard-striped run. The physics parts are unchanged.
+- **First session, recorded with `StudioFresh`** (ServerStorage attribute, Studio only: a brand-new profile and loadout, never saved):
+  - The 30 s experiment card still said "hit the SPIKES". It now reads "Jump in the LAVA or ride the WRECKING BALL".
+  - The first-wow UFO came down out of view. It now hovers first 25 studs in front of the owner.
+  - At ~90 s the auto egg's reward card and the "Goal done… claim your egg" toast came at once. The toast now waits 6 s.
+  - (A "left your bar" toast seen at join was a StudioFresh leftover from my saved loadout, now fixed.)
+  - Deep research on the top ragdoll games' first sessions is running (docs/RESEARCH_FIRST_SESSION.md).

@@ -563,6 +563,8 @@ function ProgressUI.start()
 		elseif kind == "Notice" and type(data) == "string" then
 			Toast.show(data)
 		elseif kind == "GoalDone" and type(data) == "string" then
+			-- (V5 first visit: never on top of an egg card or another reward: it waits a few seconds.)
+			task.wait(6)
 			Toast.show("Goal done: " .. data .. "! Claim your egg in Rank & Eggs", Color3.fromRGB(255, 154, 205))
 			C.playSound("reward")
 		elseif kind == "Rank" and type(data) == "string" then

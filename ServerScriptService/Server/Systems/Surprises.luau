@@ -123,7 +123,7 @@ end
 ------------------------------------------------------------------------------------------------
 -- UFO beam
 
-function Surprises.UfoBeam(center: Vector3): Stop
+function Surprises.UfoBeam(center: Vector3, owner: Player?): Stop
 	local ufo = model("Ufo")
 	local h = 40
 	local base = CFrame.new(center + Vector3.new(0, h, 0))
@@ -141,6 +141,14 @@ function Surprises.UfoBeam(center: Vector3): Stop
 	ufo.WorldPivot = base -- (the pivot plain at the saucer's middle: PivotTo then never turns it)
 	FxService.hit(center + Vector3.new(0, h, 0), 30, "BlackHole")
 	local from, to = center, spot(center, 14)
+	-- (With its owner in the lab it first comes over 25 studs in front of them: a wow they see.)
+	local ownerRoot = owner and owner.Character and owner.Character:FindFirstChild("HumanoidRootPart")
+	if ownerRoot and ownerRoot:IsA("BasePart") then
+		local ahead = ownerRoot.Position + ownerRoot.CFrame.LookVector * 25
+		local o = ahead - center
+		from = center + Vector3.new(math.clamp(o.X, -Surprises.HALF + 14, Surprises.HALF - 14), 0, math.clamp(o.Z, Surprises.Z_MIN + 14, Surprises.Z_MAX - 14))
+		to = from
+	end
 	local legT, leg = 0, 4
 	local pulse = every(0.15)
 	local zap = every(1.4)

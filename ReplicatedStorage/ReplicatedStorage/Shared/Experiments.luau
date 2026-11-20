@@ -25,7 +25,7 @@ export type Def = {
 local LIST: { Def } = {
 	{ id = "Takedown3", text = "Take down 3 dummies", kind = "Takedown", target = 3, seconds = 60, stars = 1 },
 	{ id = "Cannon", text = "Blast off the CANNON", kind = "Cannon", target = 1, seconds = 90, stars = 1 },
-	{ id = "Lava", text = "Jump in the LAVA or hit the SPIKES", kind = "Hazard", target = 1, seconds = 90, stars = 1 },
+	{ id = "Lava", text = "Jump in the LAVA or ride the WRECKING BALL", kind = "Hazard", target = 1, seconds = 90, stars = 1 },
 	{ id = "Bullseye", text = "Fly from the CANNON onto the BULLSEYE", kind = "Bullseye", target = 1, seconds = 120, stars = 2 },
 	{ id = "Takedown10", text = "Take down 10 dummies", kind = "Takedown", target = 10, seconds = 120, stars = 2 },
 	{ id = "Egg", text = "Open a toy egg", kind = "Egg", target = 1, seconds = 120, stars = 1 },

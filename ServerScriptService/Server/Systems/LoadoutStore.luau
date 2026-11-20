@@ -183,7 +183,7 @@ function LoadoutStore.start()
 	if not RunService:IsStudio() then
 		store = DataStoreService:GetDataStore(STORE) -- live servers: never wait on a probe at boot
 	else
-		local testing = game:GetService("ServerStorage"):GetAttribute("RunSelfTest") == true
+		local testing = game:GetService("ServerStorage"):GetAttribute("RunSelfTest") == true or game:GetService("ServerStorage"):GetAttribute("StudioFresh") == true -- (StudioFresh: a brand-new player)
 		local usable = not testing and pcall(function()
 			DataStoreService:GetDataStore(STORE):GetAsync("probe")
 		end)
