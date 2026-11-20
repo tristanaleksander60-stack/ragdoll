@@ -776,7 +776,7 @@ local function signText(owner: Player?): string
 	if not owner then
 		return "FREE LAB"
 	end
-	return string.upper(owner.DisplayName) .. "'S LAB"
+	return (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("MachineNames")) :: any).labOf(owner.DisplayName) -- (V8-2.8: "JONAS' LAB")
 end
 
 -- Which way an avatar faces at the lab's spawn (V8-0.4: 50 degrees right of -Z, towards the cannon; T112 measured the cannon at 42 degrees and the middle dummies at -37..-19 in the follow camera, inside 1920x1080 (49) and a landscape phone (55)).

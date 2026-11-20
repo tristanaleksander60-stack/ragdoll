@@ -1541,3 +1541,9 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
     - the Director loads only once the player is the owner.
   - **Not built:** replay to own-lab bodies only, lazy sound banks, ActiveRagdoll caching and sleeping, windows built on first open, streaming radius. These need phone fps and memory measurements first (Session_v1 records them since 0.25.1).
 - **V8-1.8 (owner/playtest):** the orientation decision and playtest round 2 wait for the owner and real phone data.
+- **V8-2.5 done in part (switch `DUMMY_TYPES`):**
+  - **Spawning:** H (Keybinds "SpawnDummy"; G is Grab here) drops a dummy where you aim in your own lab. Pressing again within 3 s picks the next type: MINI (small, light), HEAVY (big, dense), BOUNCY (elastic) or FLOPPY (very light). Each wears its type on a chest plate.
+  - **Server checks** (`Server/Systems/DummySpawn`, remote Spawn): a known type, your own lab, within 80 studs, one per 1.5 s, at most 3 on a phone, 5 on a tablet and 6 on PC or console (the oldest goes). Reset and leaving remove them. T128 passes.
+  - **Not built:** a phone "+DUMMY" button, R revive under the crosshair (R is reload), types as an unlock track.
+- **V8-2.8 done in part:** `Shared/MachineNames` names machines and labs, "JONAS' LAB" instead of "JONAS'S", on the lab sign and the privacy fence. T31 updated. The 3-labels-at-once rule is not built.
+- **V8-2.1/2.2/2.3/2.4/2.6/2.7/2.9/2.10 waiting:** these are the identity choice (owner), the lab re-layout, prop and sound art, voices, the creature and event lists (owner) and the maps. They are world and art work that needs the owner's identity sentence (2.1) first.

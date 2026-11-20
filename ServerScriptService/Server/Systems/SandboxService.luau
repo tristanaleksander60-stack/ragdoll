@@ -68,6 +68,9 @@ function SandboxService.run(player: Player, action: unknown): string?
 		notice(player, if n > 0 then "Everyone is back on their feet!" else "Nobody needs a doctor")
 		return "revived " .. n
 	elseif action == "Reset" then
+		pcall(function()
+			(require(script.Parent:WaitForChild("DummySpawn")) :: any).clear(player) -- (V8-2.5: the spawned ones go)
+		end)
 		local n = Lab.rewind(player)
 		return "reset " .. n
 	end

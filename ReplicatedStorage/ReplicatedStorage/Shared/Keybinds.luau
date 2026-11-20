@@ -42,6 +42,7 @@ Keybinds.ACTIONS = table.freeze({
 	{ id = "ReviveAll", label = "Revive all (your lab)", context = "Play", default = "X", group = "PLAY" },
 	{ id = "Reload", label = "Reload", context = "Play", default = "R", group = "PLAY" },
 	{ id = "Grab", label = "Grab", context = "Play", default = "G", group = "PLAY" },
+	{ id = "SpawnDummy", label = "Spawn a dummy (press again: next type)", context = "Play", default = "H", group = "PLAY" }, -- (V8-2.5)
 	{ id = "CamLeft", label = "Lab view: turn left", context = "Play", default = "Q", group = "PLAY" },
 	{ id = "CamRight", label = "Lab view: turn right", context = "Play", default = "E", group = "PLAY" },
 	{ id = "Recenter", label = "Lab view: back to the middle", context = "Play", default = "Home", group = "PLAY" },

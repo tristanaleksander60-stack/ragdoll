@@ -307,6 +307,9 @@ local Config = {
 	-- throws you; a burst when you clear it.
 	CHASE_V8 = true,
 	CHASE_V8_COUNT = 2,
+	-- V8-2.5 (dummy types and a SPAWN key): H drops a MINI, HEAVY, BOUNCY or FLOPPY dummy where you aim
+	-- in your own lab (server-checked, a cap per device, Reset removes them: DummySpawn, SpawnKey).
+	DUMMY_TYPES = true,
 }
 
 return table.freeze(Config)

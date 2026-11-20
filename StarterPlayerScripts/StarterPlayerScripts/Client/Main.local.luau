@@ -146,6 +146,7 @@ safe("Viewmodel", function() require(Client:WaitForChild("Viewmodel")).start() e
 safe("FeelV2", function() require(Client:WaitForChild("FeelV2")).start() end) -- World/Feel v2: trails, casings, recoil, combo beat, world lamps (Config.FEEL_V2)
 safe("ChaseHud", function() require(Client:WaitForChild("ChaseHud")).start() end)
 safe("StuntHud", function() require(Client:WaitForChild("StuntHud")).start() end) -- V8-1.1: the CRASH score, the cannon's slow-mo beat, AGAIN
+safe("SpawnKey", function() require(Client:WaitForChild("SpawnKey")).start() end) -- V8-2.5: H drops a dummy of a type where you aim
 safe("NpcGlow", function() require(Client:WaitForChild("NpcGlow")).start() end)
 safe("PortalUI", function() require(Client:WaitForChild("PortalUI")).start() end) -- SINGLEPLAYER / MULTIPLAYER portals, the server list (round 5)
 safe("HudPlus", function() require(Client:WaitForChild("HudPlus")).start() end) -- big WEAPONS, LEVEL, today's deal, sandbox column (round 5)

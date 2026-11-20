@@ -222,7 +222,9 @@ local function makeWall(index: number): Model
 	local h = PlotPrivacy.FENCE_HEIGHT
 	local metal = Color3.fromRGB(58, 62, 74)
 	local owner = ownerOf(index)
-	local text = if owner then string.format("%s'S LAB\nPRIVATE: ask for an invite", string.upper(owner.DisplayName)) else "FREE LAB\nClosed until someone owns it"
+	-- (V8-2.8: one way to name a lab: "JONAS' LAB", not "JONAS'S".)
+	local labName = if owner then (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("MachineNames")) :: any).labOf(owner.DisplayName) else ""
+	local text = if owner then labName .. "\nPRIVATE: ask for an invite" else "FREE LAB\nClosed until someone owns it"
 	for _, side in { -1, 1 } do
 		local neighbourX = x + side * Zones.PLOT_SPACING
 		local neighbour = Zones.plotAt(Vector3.new(neighbourX, y + 1, midZ))

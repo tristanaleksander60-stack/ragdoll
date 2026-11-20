@@ -50,6 +50,7 @@ Net.Names = table.freeze({
 	Rewards = "Rewards", -- both ways: client Hello / ClaimGroup; server State (round 5, RewardsService)
 	Session = "Session", -- client -> server: Hello (device, screen, boot time) / EggCard / FirstShot (round 5, SessionStats)
 	Stunt = "Stunt", -- server -> client: Begin / Live (score) / Land (score, tricks, best); client -> server: Again (V8-1.1, StuntScore)
+	Spawn = "Spawn", -- client -> server: Spawn (type, at); server -> client: Refused (why) (V8-2.5, DummySpawn)
 	Aim = "Aim", -- client -> server (unreliable, ~10/s): where your gun points (pitch, yaw); the server shares it as the character's Aim attribute
 	Experiment = "Experiment", -- server -> client: Card (def, count, ends) / Done (stars) / Late; client -> server: Skip (phase 1)
 	Offers = "Offers", -- client -> server: Buy (an offer key); server -> client: Refused (release 0.20.0, OfferService)
