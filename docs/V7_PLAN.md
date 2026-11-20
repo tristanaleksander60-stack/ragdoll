@@ -223,3 +223,12 @@ They lead from the spawn or arrival to each thing you can do there.
   - **Tests:** T104 checks that a grounded bird's lowest point is within 0.15 studs of the floor. Passes.
   - **Capture:** v7_3_pigeon.
   - Not built: perching on roofs, fences and wires (the birds never perch yet, so none sinks into a roof).
+- **V7-4 done (part, 20 Nov):** the lab mannequins (and every body made by DummyFactory with `Mannequin`: GiantDummy, DummyRain, the event guests) are crash-test dummies now (`DummySkins.DETAILS`). Client-side and welded, so there is no network or physics change:
+  - thin dark rings at the elbows, knees and ankles;
+  - a belt at the waist;
+  - the yellow and black crash-test target on both sides of the head and on the chest (art/dummy/target.png, asset 91578612138787).
+
+  They stay white (the owner's v3 choice). The rings hide with the body in a lab creature (MachineHidden) and the dead green still reads.
+  - **Tests:** T36/T40/T91 pass.
+  - **Captures:** v7_4_before, v7_4_after2.
+  - **Left:** the map crowds keep their M11 role outfits (real Roblox clothes and hair per role). A new per-role accessory pass (hard hats, straw hats, helmets, sunglasses) and a LOD for the rings are not done.

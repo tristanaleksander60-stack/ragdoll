@@ -15,6 +15,8 @@ local Workspace = game:GetService("Workspace")
 local DummySkins = {}
 
 DummySkins.OVERLAP = 1.12 -- each skin this much longer than its limb: the joints close up
+DummySkins.DETAILS = true -- V7-4: crash-test joint rings, belt and test targets on the mannequins
+DummySkins.TARGET = "rbxassetid://91578612138787" -- the yellow and black crash-test target (art/dummy/target.png)
 
 local template: Instance? = nil
 local skins: { [BasePart]: MeshPart } = {}
@@ -80,6 +82,73 @@ local function dress(model: Model)
 					skin.Color = d.Color
 				end)
 			end
+		end
+	end
+	-- V7-4 (the owner: "every ragdoll must look better, details and all"): the white mannequin gets
+	-- crash-test details: dark joint rings at the shoulders, elbows, wrists, hips, knees and ankles,
+	-- a belt at the waist, and the yellow and black test targets on both sides of the head and on
+	-- the chest. All of it welded to the limbs on this screen only (no network, no physics).
+	if DummySkins.DETAILS then
+		local DARK = Color3.fromRGB(56, 60, 68)
+		local function ring(limbName: string, top: boolean, thick: number, grow: number)
+			local limb = model:FindFirstChild(limbName)
+			if not limb or not limb:IsA("BasePart") then
+				return
+			end
+			local d = math.min(limb.Size.X, limb.Size.Z) * grow
+			local r = Instance.new("Part")
+			r.Name = "JointRing"
+			r.Shape = Enum.PartType.Cylinder
+			r.Size = Vector3.new(thick, d, d)
+			r.CFrame = limb.CFrame * CFrame.new(0, (if top then 1 else -1) * (limb.Size.Y / 2 - thick / 2), 0) * CFrame.Angles(0, 0, math.rad(90))
+			r.Color = DARK
+			r.Material = Enum.Material.SmoothPlastic
+			r.Reflectance = 0.06
+			r.CanCollide, r.CanQuery, r.CanTouch, r.Massless, r.Anchored = false, false, false, true, false
+			r.CastShadow = false
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = limb
+			w.Part1 = r
+			w.Parent = r
+			r.Parent = folder
+		end
+		for _, side in { "Left", "Right" } do
+			ring(side .. "LowerArm", true, 0.14, 1.02) -- elbow
+			ring(side .. "LowerLeg", true, 0.16, 1.02) -- knee
+			ring(side .. "Foot", true, 0.12, 1.0) -- ankle
+		end
+		ring("LowerTorso", true, 0.2, 0.98) -- the belt
+		-- The test targets: thin plates with the target picture.
+		local function mark(limbName: string, offset: CFrame, size: number)
+			local limb = model:FindFirstChild(limbName)
+			if not limb or not limb:IsA("BasePart") then
+				return
+			end
+			local p = Instance.new("Part")
+			p.Name = "TestMark"
+			p.Size = Vector3.new(size, size, 0.04)
+			p.Transparency = 1
+			p.CFrame = limb.CFrame * offset
+			p.CanCollide, p.CanQuery, p.CanTouch, p.Massless, p.Anchored = false, false, false, true, false
+			local decal = Instance.new("Decal")
+			decal.Texture = DummySkins.TARGET
+			decal.Face = Enum.NormalId.Front
+			decal.Parent = p
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = limb
+			w.Part1 = p
+			w.Parent = p
+			p.Parent = folder
+		end
+		local head = model:FindFirstChild("Head")
+		if head and head:IsA("BasePart") then
+			local hx = head.Size.X / 2 + 0.03
+			mark("Head", CFrame.new(-hx, 0.05, 0) * CFrame.Angles(0, math.rad(90), 0), math.min(head.Size.Y, head.Size.Z) * 0.62)
+			mark("Head", CFrame.new(hx, 0.05, 0) * CFrame.Angles(0, math.rad(-90), 0), math.min(head.Size.Y, head.Size.Z) * 0.62)
+		end
+		local chest = model:FindFirstChild("UpperTorso")
+		if chest and chest:IsA("BasePart") then
+			mark("UpperTorso", CFrame.new(chest.Size.X * 0.22, chest.Size.Y * 0.12, -(chest.Size.Z / 2 + 0.06)) * CFrame.Angles(0, math.rad(180), 0), chest.Size.Y * 0.32)
 		end
 	end
 	folder.Parent = model
