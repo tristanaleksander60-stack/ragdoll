@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0t, V9-0u, V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0t, V9-0u, V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0v, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -651,6 +651,36 @@ A full placement pass for the lab hub (V9-0h) and every map, done as a designer 
 - T171_HeroScale: every hero thing is inside its size band, every trigger contains its drop point, every launch lands on the floor, every thing has its own animation set and sound ids (none shared).
 
 **Capture:** the spawn view and a close-up of each hero thing in action, before and after.
+
+## V9-0v Real, physical signs instead of floating holograms (owner, 21 Nov)
+> "Alle de her forskellige ikoner skal ikke være hologrammer, de skal være fysiske, så tilføj så de hænger ned fra et træ eller en lygtepæl eller sådan noget, hvad der lige passer ved det specifikke sted hvor ikonet er på mappet, gør dette overalt i ens lab."
+
+**Now** (`art/store/look_target/holo_signs_now.webp`): the round icon badges (`Playground.iconBadge`, the station signs with "17 / 17", the LabGuide "FEED ME!" cards, today's machine star, the NEW tags and the PathBuilder signposts' icons) float in the air as BillboardGuis that face the camera.
+
+**Change:** every such icon becomes **a real object in the world**, fitted to its spot (`Config.PHYSICAL_SIGNS`):
+- **Hanging from a lamp post arm:** a wooden or metal sign board on two short chains, swinging gently in the wind (client-side, small). Use it by paths and the hub rim.
+- **Hanging from a tree branch:** a rustic wooden board on ropes. Use it in the garden and the creature yard (the spider, plant, frog and slingshot).
+- **On a post:** a sturdy sign post with the board at eye height (about 6-8 studs), like a park or road sign. Use it beside machines on open floor (cannon, bullseye, trampoline, compressor, rocket pad).
+- **Mounted on the thing itself:** a painted metal plate bolted to the machine (the crash wall, the stations' frames, the gantry), or a plate on the terminal (V9-2b).
+- **Over the yard:** an arch or banner board over an entrance (the creature yard, the aquarium).
+
+**Rules:**
+- **Real parts and models:** posts, brackets, chains, rope and boards (Creator Store sign kits or simple well-made models with the malware pass), in one style: warm wood plus dark painted metal, matching the lab look.
+- **The picture on the board:** the drawn icon is on the board through a SurfaceGui on its face, or a Decal, never a floating billboard. A counter (like "17 / 10") is a small painted or flip-number plate on the same board.
+- **Readable** (V9-0q): the board faces the main approach (path or spawn), at eye height, big enough to read at about 25 studs, and never hidden by leaves or the thing it names. Where one face is not enough (a thing seen from two sides), use a two-faced board or two boards.
+- **The drop rings** (the cyan dashed holograms) become **painted target circles or a rope ring** on the ground or pad. A soft glow shows only while the player carries a dummy (the LabGuide "DROP HERE" moment), then it fades.
+- **Moving creatures** (the vacuum, V9-0p): the sign is a small flag or board mounted on the robot itself, not floating.
+- **Kept as holograms:** nothing permanent. Only short-lived feedback may float (KO stamps, combo numbers, "+1"), and it stays small (V9-0g).
+- **Everywhere in the lab:** every machine, creature, station, terminal, booth (V9-4b) and signpost. The same idea on the plaza and the maps, where the boards fit.
+- **Physics:** the signs are anchored or welded, CanCollide off where players walk, and do not block launches or landing zones (V9-0n).
+- **Performance:** the sway is client-only, stops past 80 studs, and stays within the phone budget.
+
+**Tests:** T174_PhysicalSigns.
+- No permanent BillboardGui is left on guide, station or machine signs (only the allowed short-lived ones).
+- Every sign has a support (post, chain to an arm or branch, or a mount) and faces within 45° of its approach.
+- Each sign is readable from the approach (the V9-0q ray check).
+
+**Capture:** the owner's angle before and after, plus the spider, the cannon, a station and the vacuum.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
