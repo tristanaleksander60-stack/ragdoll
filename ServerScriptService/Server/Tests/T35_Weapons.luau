@@ -319,7 +319,9 @@ local function buying(results: { string }, player: Player, profile: any)
 		end
 		local eggsBefore = profile.eggs
 		local r3 = WeaponShop.deliver(player, TEST_TIER, "t35-c-" .. id1, false, true)
-		assert(r3 == "eggs" and profile.eggs == math.min(Progress.MAX_EGGS, eggsBefore + 2), "with all owned a purchase gave " .. r3)
+		-- (V8-0.7, MILD_V8: fixed BOLTS instead of eggs: no paid random items.)
+		local mild = (require(game:GetService("ReplicatedStorage").Shared.Config) :: any).MILD_V8
+		assert((mild and r3 == "bolts" and profile.eggs == eggsBefore) or (not mild and r3 == "eggs" and profile.eggs == math.min(Progress.MAX_EGGS, eggsBefore + 2)), "with all owned a purchase gave " .. r3)
 		-- A weapon nearly earned is never sold.
 		ProgressService.setOwnedForTest(player, {})
 		profile.pending = {}

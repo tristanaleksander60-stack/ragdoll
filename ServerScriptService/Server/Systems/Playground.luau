@@ -857,7 +857,9 @@ end
 -- Builds a playground round a lab's (or the plaza's) spawn point.
 -- v3 Phase C (19 Nov 2026, like the leader's big red button): press it and a random event happens
 -- in this lab, free, once every Config.BIG_BUTTON_GAP s per lab. Anyone in the lab may press it.
-local BUTTON_EVENTS = { "GorillaRampage", "BullRun", "Tornado", "MeteorShower", "TrainRun", "MegaBomb", "DummyRain", "UfoBeam", "BowlingAvalanche", "RocketRain", "MagnetStorm", "LightningStorm", "Sinkhole", "Earthquake", "FanBlast", "MoonGravity", "BalloonDrop", "GiantDummy" } -- (v4 C4: + the surprises)
+-- (V8-0.7: the events sold as products, Mega Bomb and Dummy Rain, left the free pool: the button gave
+-- them away every 75 s.)
+local BUTTON_EVENTS = { "GorillaRampage", "BullRun", "Tornado", "MeteorShower", "TrainRun", "UfoBeam", "BowlingAvalanche", "RocketRain", "MagnetStorm", "LightningStorm", "Sinkhole", "Earthquake", "FanBlast", "MoonGravity", "BalloonDrop", "GiantDummy" } -- (v4 C4: + the surprises)
 local function buildBigButton()
 	local x, z = 14, 14
 	local base = part("BigButtonBase", Vector3.new(1.6, 6, 6), at(x, 0.8, z) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 200, 205), Enum.Material.Metal, Enum.PartType.Cylinder)

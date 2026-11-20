@@ -70,6 +70,9 @@ function WeaponShop.deliver(player: Player, tierKey: string, purchaseId: string,
 		tell(player, "Bought", { id = id, name = toy.label, earlier = earlier == true })
 	elseif result == "eggs" then
 		tell(player, "Bought", { eggs = 2, earlier = earlier == true })
+	elseif result == "bolts" then -- (V8-0.7: fixed BOLTS, no paid random items)
+		local C = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
+		tell(player, "Bought", { bolts = 2 * C.PLAYTIME_BOLTS, earlier = earlier == true })
 	end
 	task.spawn(settle, player, purchaseId, direct == true)
 	return result, id

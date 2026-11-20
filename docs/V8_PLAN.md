@@ -1429,3 +1429,18 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
     - the first WOW toy as a 1.5 s reveal into the hand;
     - the first-wow UFO only inside the spawn view;
     - T111.
+- **V8-0.7 done in part (code; switch `MILD_V8`):**
+  - **Words and pool:**
+    - "kills" became "KOs" on screen (the next-weapon line, the WEAPONS window, the try-over toast);
+    - the paid events Mega Bomb and Dummy Rain left the BIG RED BUTTON's free pool.
+  - **Notifications and sharing:**
+    - `EXPERIENCE_NOTIFY = false`;
+    - no share prompt for clips, which is 16+ on Roblox; save-to-gallery stays.
+  - **No paid random items:** a Robux weapon with the tier all owned pays 2 × PLAYTIME_BOLTS as fixed BOLTS, not 2 eggs (T35 updated).
+  - **Tests:** T21, T29, T63, T68 and T98 pass. T35 passes alone; after T29 it fails "Blaster is not in the hand", an old coupling between the two tests.
+  - **Parked for the owner (Sitting 1):** KO stars instead of green, removing Doctor/HospitalCharts, TOY_NAMES, the VIP egg perk text.
+  - **Left for V8-1:**
+    - the banned-word scan (T115) waits for the Doctor decision, since pulse/organ/blood live in the Doctor UI;
+    - mild blurbs, the hit card pop, NPC taunts;
+    - global build codes and the streamer section owner-only;
+    - LIKE_CODES as update codes.

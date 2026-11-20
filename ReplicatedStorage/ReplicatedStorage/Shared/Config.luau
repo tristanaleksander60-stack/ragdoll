@@ -171,7 +171,7 @@ local Config = {
 	BANNER_CHIP_AFTER = 3, -- seconds the full banner shows before it becomes a chip
 	NOTIFY_BIG_AFTER_REVEAL = 20, -- s after a newcomer's HUD reveal before the first big pop-up
 	NOTIFY_REVEAL_KEEP = 2, -- rewards that waited through a newcomer's quiet: only the newest this many show
-	EXPERIENCE_NOTIFY = true, -- ask for Roblox Experience Notifications opt-in after a wow moment
+	EXPERIENCE_NOTIFY = false, -- (V8-0.7: off until the sender is live, V8-3.5: the once-per-30-days opt-in was spent for nothing)
 	NOTIFY_OPTIN_AFTER = 480, -- s of play before that ask (never on join)
 	LAB_ZONES = true, -- v4 C1: lab zones, today's machine, NEW tags (Server/Systems/LabZones)
 	ZONE_FLOOR = false, -- V7-1: the painted zone boxes on the lab floor (tints, edges, names, parking lines); off by the owner's wish
@@ -274,6 +274,10 @@ local Config = {
 	CALM_CHASE_AFTER = 300,
 	CALM_CHASE_KOS = 15,
 	CALM_MODALS_AFTER = 180,
+	-- V8-0.7 (mild and honest): "KO" for kills on screen; the events sold as products are out of the
+	-- BIG RED BUTTON's free pool; EXPERIENCE_NOTIFY off; no share prompt for clips (16+ on Roblox);
+	-- a Robux weapon with everything owned pays fixed BOLTS, not eggs (no paid random items).
+	MILD_V8 = true,
 }
 
 return table.freeze(Config)

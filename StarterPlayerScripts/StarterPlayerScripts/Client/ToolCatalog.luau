@@ -113,7 +113,7 @@ end
 
 -- The kills line on a locked card: "(43/100) Kills".
 function ToolCatalog.killsText(have: number, need: number): string
-	return string.format("(%d/%d) Kills", math.min(have, need), need)
+	return string.format("(%d/%d) KOs", math.min(have, need), need) -- (V8-0.7: KO, not kills)
 end
 
 local function iconName(id: string): string
@@ -284,7 +284,7 @@ local function refreshEquip()
 	-- The header line (round 5): how many are yours, and the ways to the rest.
 	local line = intro
 	if line then
-		line.Text = string.format("%d/%d OWNED  ·  Locked: earn kills, BUY, or TRY FREE for 2 min", ownedCount, #Toys.list)
+		line.Text = string.format("%d/%d OWNED  ·  Locked: earn KOs, BUY, or TRY FREE for 2 min", ownedCount, #Toys.list)
 	end
 end
 
@@ -954,7 +954,7 @@ function ToolCatalog.start(barApi: Bar)
 			local id = toy.id
 			task.delay(120, function()
 				if Players.LocalPlayer:GetAttribute("TrialWeapon") ~= id or ToolCatalog.stateOf(id) == "locked" then
-					Toast.show(string.format("The free try is over. Earn the %s with kills, or BUY it in WEAPONS!", toy.label))
+					Toast.show(string.format("The free try is over. Earn the %s with KOs, or BUY it in WEAPONS!", toy.label))
 				end
 			end)
 		elseif kind == "Refused" and type(d.text) == "string" then
@@ -975,6 +975,8 @@ function ToolCatalog.start(barApi: Bar)
 				Toast.show(string.format(if d.earlier then "Your %s from last time is here. EQUIP it!" else "The %s is yours. EQUIP it!", Toys.byId[d.id].label))
 			elseif type(d.eggs) == "number" then
 				Toast.show(string.format("You own every weapon! %d eggs instead", d.eggs))
+			elseif type(d.bolts) == "number" then
+				Toast.show(string.format("You own every weapon! +%d BOLTS instead", d.bolts))
 			end
 			refreshEquip()
 		elseif kind == "Refused" and type(d.text) == "string" then

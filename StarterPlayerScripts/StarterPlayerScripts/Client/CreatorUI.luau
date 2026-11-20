@@ -127,12 +127,16 @@ local function offerCapture(capture: any)
 					end
 				end
 			end
-			Toast.show(if saved then "Saved to your Captures!" else "Not saved. Your clip is still yours to share")
-			pcall(function()
-				CaptureService:PromptShareCapture(capture, "clip", function()
-					Toast.show("Shared! Your friends get an invite to Ragdoll Havoc")
-				end, function() end)
-			end)
+			-- (V8-0.7: no share prompt: media sharing is a 16+ feature on Roblox; save-to-gallery stays.)
+			local share = not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).MILD_V8
+			Toast.show(if saved then "Saved to your Captures!" elseif share then "Not saved. Your clip is still yours to share" else "Not saved this time")
+			if share then
+				pcall(function()
+					CaptureService:PromptShareCapture(capture, "clip", function()
+						Toast.show("Shared! Your friends get an invite to Ragdoll Havoc")
+					end, function() end)
+				end)
+			end
 		end)
 	end)
 	if not ok then

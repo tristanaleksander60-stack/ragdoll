@@ -204,7 +204,7 @@ local function drawWeapons(takedowns: number)
 		title.TextColor3 = if toy then Color3.fromRGB(255, 226, 120) else Color3.new(1, 1, 1)
 	end
 	if t then
-		t.Text = if toy then string.format("%d kill%s to go!", left, if left == 1 then "" else "s") else "Every weapon is yours!"
+		t.Text = if toy then string.format("%d KO%s to go!", left, if left == 1 then "" else "s") else "Every weapon is yours!"
 	end
 	if fill then
 		local k = if toy then math.clamp((takedowns - from) / math.max(1, toy.unlockAt - from), 0, 1) else 1

@@ -1158,6 +1158,21 @@ function ProgressService.deliverWeapon(player: Player, tierKey: string, purchase
 		p.pending[tierKey] = "" -- (used: "" so a save clears the stored one too; never read back)
 	end
 	if not toy then
+		-- (V8-0.7, Config.MILD_V8: no paid random items. With every weapon of the tier owned, the
+		-- purchase pays a fixed number of BOLTS, the worth of the two eggs it used to give.)
+		local C = Config :: any
+		if C.MILD_V8 and C.ECONOMY then
+			local bolts = 2 * C.PLAYTIME_BOLTS
+			local okGive, gave = pcall(function()
+				return (require(script.Parent:WaitForChild("EconomyService")) :: any).give(player, bolts, nil, true)
+			end)
+			if okGive and gave == true then
+				Metrics.event(player, "Weapon_Bought_Bolts")
+				scheduleSave(player)
+				sendState(player)
+				return "bolts", nil
+			end
+		end
 		p.eggs = math.min(Progress.MAX_EGGS, p.eggs + 2)
 		Metrics.event(player, "Weapon_Bought_Eggs")
 		scheduleSave(player)
