@@ -974,6 +974,14 @@ end
 -- (V8-0.7: the events sold as products, Mega Bomb and Dummy Rain, left the free pool: the button gave
 -- them away every 75 s.)
 local BUTTON_EVENTS = { "GorillaRampage", "BullRun", "Tornado", "MeteorShower", "TrainRun", "UfoBeam", "BowlingAvalanche", "RocketRain", "MagnetStorm", "LightningStorm", "Sinkhole", "Earthquake", "FanBlast", "MoonGravity", "BalloonDrop", "GiantDummy" } -- (v4 C4: + the surprises)
+-- (V9-0u: no UFO while it is hidden.)
+if not (Config :: any).UFO_ENABLED then
+	local i = table.find(BUTTON_EVENTS, "UfoBeam")
+	if i then
+		table.remove(BUTTON_EVENTS, i)
+	end
+end
+Playground.BUTTON_EVENTS = BUTTON_EVENTS -- (tests: what the button can start)
 local function buildBigButton()
 	local spot = (require(Shared:WaitForChild("PathPlan")) :: any).BUTTON_AT -- (V9-0h: on the rim under LAYOUT_V3)
 	local x, z = spot.X, spot.Y

@@ -1,6 +1,6 @@
 --!strict
 -- V9-0t (owner, 21 Nov 2026: "add codes we can advertise in the description"): the game's codes. Pure:
--- the server's EconomyService redeems them, the CODES window (Client/CodesWindow) sends them, T169
+-- the server's EconomyService redeems them, the CODES window (Client/CodesWindow) sends them, T173
 -- checks them. A code is case-insensitive and spaces are ignored; each player may use each code once
 -- (the profile's eco.codes); outside its dates it answers that it has expired. Never tied to likes
 -- or favourites (Roblox rules: the old Config.LIKE_CODES stay off).

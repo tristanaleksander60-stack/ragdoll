@@ -22,11 +22,9 @@ local ExperimentService = require(script.Parent.ExperimentService)
 
 local EconomyService = {}
 
-EconomyService.REDEEM_GAP = 2 -- s between code tries
-EconomyService.REDEEM_MAX = 10 -- tries a visit
-
 local remote: RemoteEvent? = nil
 local tries: { [Player]: { number } } = {} -- (V9-0t: when each recent code try was)
+local perkWatch: { [Player]: RBXScriptConnection } = {} -- (V9-0t: a normal try's end restarts a code's)
 
 local function today(): number
 	return os.time() // 86400
@@ -162,7 +160,7 @@ end
 -- V9-0t: a code from Shared/Codes. Returns whether it worked and the line to show (the reward, or why
 -- not). At most Codes.RATE tries a minute; no hint which codes exist; each one once per profile.
 EconomyService.REDEEM_WINDOW = 60 -- s
-function EconomyService.redeem(player: Player, text: string): (boolean, string)
+function EconomyService.redeem(player: Player, text: string, nowForTest: number?): (boolean, string)
 	local Codes = require(Shared:WaitForChild("Codes")) :: any
 	local now = os.clock()
 	local list = tries[player] or {}
@@ -178,7 +176,7 @@ function EconomyService.redeem(player: Player, text: string): (boolean, string)
 	if not e then
 		return false, "Your progress is still loading. Try again in a moment"
 	end
-	local entry, why = Codes.check(text, e.codes, os.time(), Config.BETA == true)
+	local entry, why = Codes.check(text, e.codes, nowForTest or os.time(), Config.BETA == true)
 	if not entry then
 		return false, Codes.MESSAGES[why or "invalid"]
 	end
@@ -192,7 +190,10 @@ function EconomyService.redeem(player: Player, text: string): (boolean, string)
 		if toy then
 			weaponName = toy.label
 			if not ProgressService.isUnlocked(player, toy, true) then
-				(require(script.Parent:WaitForChild("TrialService")) :: any).grant(player, toy.id, (entry.trialMinutes or 30) * 60)
+				-- (Kept in eco.perks: it carries on after a rejoin, and waits for a try already running.)
+				local key = "Trial:" .. toy.id
+				local untilT = Workspace:GetServerTimeNow() + (entry.trialMinutes or 30) * 60
+				e.perks[key] = math.max(e.perks[key] or 0, untilT)
 			end
 		end
 	end
@@ -210,8 +211,39 @@ function EconomyService.redeem(player: Player, text: string): (boolean, string)
 		end
 	end
 	ProgressService.ecoChanged(player)
+	EconomyService.applyPerks(player)
 	EconomyService.send(player)
 	return true, Codes.describe(entry, weaponName, cosmeticName)
+end
+
+-- V9-0t: a code's timed gifts in eco.perks, put on the player (on joining, after a redeem, and when a
+-- normal try ends): a cosmetic is MapShopService's Try_<key>; "Trial:<weapon>" is a TrialService try
+-- for the time left (only when no other try runs, and only while the weapon is not owned). Ended
+-- ones are dropped.
+function EconomyService.applyPerks(player: Player)
+	local e = ProgressService.ecoOf(player)
+	if not e then
+		return
+	end
+	local now = Workspace:GetServerTimeNow()
+	local TrialService = require(script.Parent:WaitForChild("TrialService")) :: any
+	for key, untilT in e.perks do
+		if untilT <= now then
+			e.perks[key] = nil
+			continue
+		end
+		local weapon = string.match(key, "^Trial:(.+)$")
+		if weapon then
+			local toy = Toys.byId[weapon]
+			if not toy or ProgressService.isUnlocked(player, toy, true) then
+				e.perks[key] = nil
+			elseif not TrialService.running(player) then
+				TrialService.grant(player, toy.id, untilT - now)
+			end
+		elseif player:GetAttribute("Offer_" .. key) ~= true then
+			player:SetAttribute("Try_" .. key, untilT)
+		end
+	end
 end
 
 local function loaded(player: Player)
@@ -221,14 +253,15 @@ local function loaded(player: Player)
 	end
 	Economy.rollDay(e, today())
 	player:SetAttribute("Bolts", e.bolts)
-	-- (V9-0t: a code's timed cosmetic carries on across visits until it ends: MapShopService's Try_<key>.)
-	local serverNow = Workspace:GetServerTimeNow()
-	for key, untilT in e.perks do
-		if untilT > serverNow then
-			player:SetAttribute("Try_" .. key, untilT)
-		else
-			e.perks[key] = nil
-		end
+	-- (V9-0t: a code's timed gifts carry on across visits until they end; a code's weapon try picks up
+	-- again when a normal try ends.)
+	EconomyService.applyPerks(player)
+	if not perkWatch[player] then
+		perkWatch[player] = player:GetAttributeChangedSignal("TrialWeapon"):Connect(function()
+			if player:GetAttribute("TrialWeapon") == nil then
+				EconomyService.applyPerks(player)
+			end
+		end)
 	end
 	local deck = {}
 	for _, def in EconomyService.dailyToday() do
@@ -257,6 +290,11 @@ function EconomyService.start()
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		tries[player] = nil
+		local watch = perkWatch[player]
+		if watch then
+			watch:Disconnect()
+			perkWatch[player] = nil
+		end
 	end)
 	-- lihfolk-ignore: remote-unvalidated-args (kind is only compared with fixed strings; arg is type- and length-checked)
 	;(remote :: RemoteEvent).OnServerEvent:Connect(function(player: Player, kind: unknown, arg: unknown)

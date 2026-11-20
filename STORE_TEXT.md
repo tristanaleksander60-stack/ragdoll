@@ -27,6 +27,9 @@ build is live. Written fresh; nothing is taken from another game's page.
 🗺️ 5 MAPS
 • Tropical Island, Downtown, Building Site, Old Farm and Army Base
 
+🎁 CODES (More → CODES): RELEASE · BETA · RAGDOLL
+(From 1 December add CHRISTMAS. The list and the rewards: docs/CODES.md.)
+
 🎮 Computer, phone, tablet and controller
 
 ⭐ Favorite so you can find your lab again!
@@ -39,7 +42,7 @@ Cartoon effects only: stars and sparks, no blood.
 
 🦍 NEW IN THIS UPDATE
 • A real gorilla and a stampeding bull herd
-• 11 surprises: UFO beam, lightning storm, sinkhole, magnet storm, giant fan, moon gravity, bowling avalanche and more
+• 10 surprises: lightning storm, sinkhole, magnet storm, giant fan, moon gravity, bowling avalanche and more
 • Talk to people: press E and they follow you, stay put or take on another dummy
 • Cars with spinning wheels, lights, engine sound and a horn
 • Smooth slow-mo, and a new machine in the spotlight every day

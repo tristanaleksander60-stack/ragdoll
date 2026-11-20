@@ -88,7 +88,6 @@ local function photo(prompt: ProximityPrompt)
 	-- the photo counts as on.
 	local gui = player:WaitForChild("PlayerGui")
 	local intent: { [ScreenGui]: boolean } = {}
-	local watches: { RBXScriptConnection } = {}
 	local function sweep()
 		for _, g in gui:GetChildren() do
 			if g:IsA("ScreenGui") and g.Name ~= "PhotoFlash" then
@@ -151,9 +150,6 @@ local function photo(prompt: ProximityPrompt)
 		RunService:UnbindFromRenderStep("PlazaPhoto")
 		camera.CameraType = oldType
 		camera.FieldOfView = oldFov
-		for _, c in watches do
-			c:Disconnect()
-		end
 		for g, on in intent do
 			if g.Parent then
 				g.Enabled = on

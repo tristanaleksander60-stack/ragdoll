@@ -13,6 +13,7 @@ local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Net")
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local Theme = require(UI:WaitForChild("LihFolkUITheme"))
 local C = require(UI:WaitForChild("LihFolkUIComponents"))
+local Icons = require(UI:WaitForChild("LihFolkUIIcons"))
 local Controller = require(UI:WaitForChild("LihFolkUIController"))
 
 local Toast = require(script.Parent:WaitForChild("Toast"))
@@ -30,6 +31,7 @@ local window: any = nil
 local input: any = nil
 local redeemButton: any = nil
 local result: TextLabel? = nil
+local resultIcon: GuiObject? = nil
 local waiting = false
 
 -- A short burst of confetti over the window body (pictures only).
@@ -69,8 +71,11 @@ end
 local function show(ok: boolean, text: string)
 	local line = result
 	if window and Controller.isOpen(CodesWindow.WINDOW) and line then
-		line.Text = (if ok then "\u{2714} " else "") .. text
+		line.Text = text
 		line.TextColor3 = if ok then GOOD else BAD
+		if resultIcon then
+			resultIcon.Visible = ok -- (the reward's present beside the line)
+		end
 		if ok then
 			C.playSound("purchase")
 			confetti(window.body)
@@ -145,18 +150,33 @@ function CodesWindow.start()
 		parent = window.body,
 		onActivated = send,
 	})
+	local row = Instance.new("Frame")
+	row.Name = "ResultRow"
+	row.BackgroundTransparency = 1
+	row.Size = UDim2.new(1, 0, 0, 34)
+	row.LayoutOrder = 4
+	row.Parent = window.body
+	local icon = Icons.make("present", UDim2.fromOffset(30, 30))
+	icon.AnchorPoint = Vector2.new(0, 0.5)
+	icon.Position = UDim2.new(0, 0, 0.5, 0)
+	icon.Visible = false
+	icon.Parent = row
+	resultIcon = icon
 	result = C.Text("body", "", {
 		name = "Result",
 		wrap = true,
-		size = UDim2.new(1, 0, 0, 30),
-		layoutOrder = 4,
-		parent = window.body,
+		size = UDim2.new(1, -38, 1, 0),
+		position = UDim2.new(0, 38, 0, 0),
+		parent = row,
 	})
 	window.defaultSelection = redeemButton.hit
 	Controller.register(window)
 	Controller.onChanged(function(name: string, open: boolean)
 		if name == CodesWindow.WINDOW and open and result then
 			result.Text = ""
+			if resultIcon then
+				resultIcon.Visible = false
+			end
 		end
 	end)
 	Net.event(Net.Names.Economy).OnClientEvent:Connect(function(kind: unknown, data: unknown)

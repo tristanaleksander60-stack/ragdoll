@@ -655,7 +655,8 @@ local function surpriseLoop()
 		end
 		local now = os.clock()
 		for _, player in Players:GetPlayers() do
-			-- v4 E1 (research: the first wow by 60 s): once a visit, at Config.FIRST_WOW_AT s, a UFO
+			-- v4 E1 (research: the first wow by 60 s): once a visit, at Config.FIRST_WOW_AT s, FIRST_WOW_EVENT
+			-- (V9-0u: a balloon dropping new dummies in; it was a UFO)
 			-- comes over the player's own lab (no pop-up, the quiet start holds; nothing if busy).
 			local joined = firstWow[player]
 			if joined == nil then
@@ -665,7 +666,7 @@ local function surpriseLoop()
 				local free = current == nil and #queue == 0 and os.clock() >= miniUntil and player:GetAttribute("PartyLab") == nil
 				if r and r:IsA("BasePart") and free and Lab.ownerAt(r.Position) == player then
 					firstWow[player] = false
-					pcall(EventService.surpriseNow, player, "UfoBeam", true)
+					pcall(EventService.surpriseNow, player, (Config :: any).FIRST_WOW_EVENT or "BalloonDrop", true)
 				elseif now - joined > 180 then
 					firstWow[player] = false -- (never found them free in their lab: let it go)
 				end

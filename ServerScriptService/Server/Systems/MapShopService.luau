@@ -346,6 +346,11 @@ function MapShopService.try(player: Player, key: string): string?
 		lazy("ProgressService").notice(player, "You own the " .. o.name .. " already!")
 		return "owned"
 	end
+	-- (V9-0t review: already on, from a code's timed gift or a try: a TRY never cuts it short.)
+	if MapShopService.has(player, key) then
+		lazy("ProgressService").notice(player, "Your " .. o.name .. " is on already!")
+		return "on"
+	end
 	local mine = tried[player] or {}
 	tried[player] = mine
 	if mine[key] then

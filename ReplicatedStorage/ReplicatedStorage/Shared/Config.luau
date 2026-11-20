@@ -153,7 +153,7 @@ local Config = {
 	LAB_SURPRISES = true, -- v4 C4: a short surprise (Surprises.MINI) by itself now and then in your own lab
 	LAB_SURPRISE_GAP = Vector2.new(150, 240), -- s between them (random in the range)
 	LAB_SURPRISE_FIRST = Vector2.new(80, 110), -- s into a visit for the first one (20 Nov: was 150-240, after most visits ended)
-	FIRST_WOW_AT = 45, -- s into a visit: a UFO over your own lab once (20 Nov: was 110, after most visits ended; first 50)
+	FIRST_WOW_AT = 45, -- s into a visit: FIRST_WOW_EVENT over your own lab once (V9-0u: was a UFO) (20 Nov: was 110, after most visits ended; first 50)
 	FIRST_VISIT = true, -- audit area 1: the first-visit flow (Client/FirstVisit): a bare screen and one objective line, the HUD slides in at QUIET_START
 	NEWCOMER_SECONDS = 300, -- played in all under this = a newcomer (the first-visit flow)
 	-- V6-1 notification centre (Client/Notify, Shared/NotifyRules): one big pop-up at a time, gaps by
@@ -337,6 +337,11 @@ local Config = {
 	ARENA_ENABLED = false,
 	-- V9-0t: the game is in beta (the BETA code works while true; V9-0l's free GOD MODE reads it too).
 	BETA = true,
+	-- V9-0u (owner, 21 Nov 2026: "remove the UFO"): hidden, the code stays. false: the UfoBeam event is in no
+	-- list (shop, Events window, button, roulette, surprises, admin), nothing starts it, and the first wow
+	-- at FIRST_WOW_AT is FIRST_WOW_EVENT instead. Set its developer product to "not for sale".
+	UFO_ENABLED = false,
+	FIRST_WOW_EVENT = "BalloonDrop", -- (V9-0u: a balloon drifts over your lab and drops new dummies in)
 	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges
 	-- (V3Assets VergeBushRound/Leafy, VergeFlowers*; tools/ImportV9Foliage.luau). false = the old balls and blocks.

@@ -34,7 +34,7 @@ local ENTRIES: { any } = {
 	-- there SETTINGS had no way in at all.)
 	{ window = "Settings", text = "SETTINGS", role = "neutral", phoneOnly = true, columnToo = true },
 	{ window = "Like", text = "\u{2B50} FAVORITE", role = "go" }, -- (round 4: LikePrompt)
-	{ window = "Codes", text = "CODES", role = "go" }, -- (V9-0t: codes from the game page: CodesWindow)
+	{ window = "Codes", text = "CODES", role = "go", notPhone = true }, -- (V9-0t: codes from the game page: CodesWindow. A phone's MENU is full, LayoutCheck: there it is SHOP's "HAVE A CODE?")
 	{ window = "Controls", text = "KEYS", role = "neutral", keyboardOnly = true },
 }
 -- UI v2: the drawn icon for each MENU entry (DrawnIcons names; the same pictures as the launchers).

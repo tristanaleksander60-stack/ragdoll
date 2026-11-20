@@ -59,7 +59,8 @@ return {
 		assert(MapShopService.try(p, "BoltCrate") == "junk", "a product could be tried")
 		assert(MapShopService.try(p, "RainbowTrail") == nil, "the first try was refused")
 		assert(MapShopService.has(p, "RainbowTrail"), "the try did not give it")
-		assert(MapShopService.try(p, "RainbowTrail") == "tried", "a second try was given")
+		local second = MapShopService.try(p, "RainbowTrail")
+		assert(second == "tried" or second == "on", "a second try was given") -- (V9-0t: "on" while the first still runs)
 		assert(waitFor(function()
 			local c = p.Character
 			return c ~= nil and c:FindFirstChild("RainbowTrail", true) ~= nil

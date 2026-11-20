@@ -46,6 +46,15 @@ local list: { Event } = {
 	{ id = "GiantDummy", name = "Giant Dummy", blurb = "A giant dummy walks in to be knocked down", duration = 25, productId = 3733992658, icon = "event_GiantDummy", glyph = "\u{1F9CD}", color = "#9AA0A8" },
 }
 
+-- V9-0u: the UFO is hidden while Config.UFO_ENABLED is false: in no list, never started.
+if not (require(script.Parent:WaitForChild("Config")) :: any).UFO_ENABLED then
+	for i = #list, 1, -1 do
+		if list[i].id == "UfoBeam" then
+			table.remove(list, i)
+		end
+	end
+end
+
 local byId: { [string]: Event } = {}
 for _, event in list do
 	byId[event.id] = table.freeze(event)

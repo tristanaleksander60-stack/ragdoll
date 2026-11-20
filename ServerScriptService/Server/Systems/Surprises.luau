@@ -716,7 +716,15 @@ end
 ------------------------------------------------------------------------------------------------
 -- The short surprises that happen by themselves (Config.LAB_SURPRISES).
 
-Surprises.MINI = table.freeze({ "RocketRain", "LightningStorm", "UfoBeam", "Earthquake", "FanBlast", "MoonGravity", "Sinkhole" })
+do
+	-- (V9-0u: no UFO while Config.UFO_ENABLED is false.)
+	local ufo = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).UFO_ENABLED == true
+	local mini = { "RocketRain", "LightningStorm", "Earthquake", "FanBlast", "MoonGravity", "Sinkhole" }
+	if ufo then
+		table.insert(mini, 3, "UfoBeam")
+	end
+	Surprises.MINI = table.freeze(mini)
+end
 Surprises.MINI_TIME = 7 -- s
 
 function Surprises.mini(center: Vector3, owner: Player?, id: string?): string

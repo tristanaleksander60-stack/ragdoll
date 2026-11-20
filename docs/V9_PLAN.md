@@ -1410,3 +1410,18 @@ Write the baseline into `docs/PERF.md`.
   - **Client:** `CodesWindow`, a small window: text box, REDEEM, a result line (green with confetti and the purchase sound, red with a shake). It opens from MENU "CODES" and SHOP "HAVE A CODE?". A reply while it is shut is a toast (the old EXPERIMENTS box).
   - **Tests:** T169_Codes passes; saves in tests go to the memory store.
   - **For the store description:** the codes RELEASE, BETA and RAGDOLL now; CHRISTMAS from 1 Dec.
+- 21 Nov 2026: V9-0d PASSED (re-review 3: 8.8). V9-0t review 8.3. Fix round 1 (PC):
+  - **Gifts are not cut short:** a booth TRY no longer cuts a code's gift short (`MapShopService.try` answers "on" while the item is on).
+  - **The code's weapon try survives:** it is kept in `eco.perks` ("Trial:Railgun"), comes back after a rejoin, and waits for a normal try that is running. `EconomyService.applyPerks` runs on joining, after a redeem, and when TrialWeapon clears.
+  - **Docs:** `docs/CODES.md` lists every code, its reward and dates, and the line for the game description. STORE_TEXT v5 has the codes line.
+  - **T173_Codes** (renamed from T169, as in the plan) covers the whole path: RELEASE exact, BETA's 30-minute Railgun, CHRISTMAS's 24-hour Fire Trail on 5 Dec, the booth not cutting it, both back after a rejoin, the rate limit. The profile and attributes are put back, the Bolts display included.
+  - **Small fixes:** the result line shows the present icon; the dead REDEEM_GAP/MAX are gone; T105 accepts "on".
+  - **LayoutCheck 0 problems:**
+    - The phone MENU stays at 8: on a phone CODES is SHOP's "HAVE A CODE?".
+    - The compact-pill check now mirrors Toast's cap to the lane. The first version measured a box the pill can never reach.
+- 21 Nov 2026, V9-0u DONE (PC): the UFO is hidden.
+  - **The switch:** `Config.UFO_ENABLED = false`. `Events` leaves UfoBeam out of the list and byId, so it is not in the SHOP, Events window, roulette or admin lists. It is not in the BIG RED BUTTON pool (`Playground.BUTTON_EVENTS`) or the lab surprises (`Surprises.MINI`).
+  - **The first wow** at FIRST_WOW_AT 45 s is `Config.FIRST_WOW_EVENT` = BalloonDrop (a balloon drops new dummies into your lab).
+  - **Texts:** What's New and STORE_TEXT have no UFO.
+  - **Tests:** T98 skips UfoBeam and checks no reachable list holds it; T107 shows 20 events; T21, T66, T92 and T97 pass.
+  - **For the owner:** set the UFO Beam developer product (3733992609) to "not for sale" on the dashboard.
