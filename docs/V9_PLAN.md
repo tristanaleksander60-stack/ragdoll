@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0t, V9-0u, V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0v, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0t, V9-0u, V9-0w, V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0v, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -136,6 +136,27 @@ Remove every UFO from play, behind a switch (`Config.UFO_ENABLED = false`; the c
   - T98_Surprises and the event tests skip UfoBeam while it is off;
   - T107 checks the 20 remaining events;
   - a new check makes sure no list the players can reach contains "UfoBeam".
+
+## V9-0w The first shot shows first person (owner, 21 Nov; quick)
+> "Gør så når man skyder for første gang at man bliver sendt i first person så man finder ud af at man kan det."
+
+**Behaviour** (`Config.FIRST_SHOT_FP`):
+- On the player's **first shot ever** (a profile flag, so it happens only once, not every visit), the camera glides smoothly into first person (`Client/FirstPerson`, `Viewmodel`) over about 0.4 s. The shot itself still lands; the switch never eats the click.
+- **Hint:**
+  - a small pill appears for about 4 s (V9-0g sizes): **"First person! V to switch back"**; on a pad "Select to switch back"; on a phone "Tap 👁 to switch back";
+  - on touch screens, a small eye button by the fire button pulses once.
+- **The player chooses:** they stay in first person until they switch back themselves. If they never touch it, after about 20 s of play the camera does **not** jump back on its own (no surprise camera moves). The hint shows once more only if they stay in third person all visit.
+- **Never during:** the newcomer's guided first step (V8 FirstVisit: it waits until that step is done), driving, the lab view, Build, Director mode, the time-bubble menu or an open window. In those cases it happens on the next normal shot instead.
+- **Settings:** a "Start in first person" choice in Settings, and "first person on first shot" can be turned off there.
+
+**Measure:** Session_v1 logs `fpAuto` and how long players stay in first person. If early leaves rise for that cohort, the PC session turns the switch off and notes it.
+
+**Tests:** T175_FirstShotFP.
+- The first shot of a fresh profile switches to first person once.
+- A second visit does not.
+- Not while driving or in the lab view.
+- V returns to third person.
+- The hint shows the right key per input type.
 
 ## V9-0a Hitting a ragdoll never opens Talk (owner, 21 Nov; do it first, it is quick)
 > "Fiks så at når man forsøger at slå en ragdoll at man ikke åbner talk menuen hele tiden."
