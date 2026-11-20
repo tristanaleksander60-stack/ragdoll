@@ -98,11 +98,15 @@ local function floorText(parent: Instance, text: string, at: Vector3, width: num
 	t.Parent = g
 end
 
+LabZones.PX_PER_STUD = 19 -- a sign designed in px: its size in studs (260 px = 13.7 studs)
+
 local function sign(parent: Instance, adornee: BasePart, text: string, color: Color3, offset: number, size: Vector2)
 	local g = Instance.new("BillboardGui")
 	g.Name = "ZoneSign"
 	g.Adornee = adornee
-	g.Size = UDim2.fromOffset(size.X, size.Y)
+	-- (UI audit 21 Nov 2026: in studs, a sign in the world that gets smaller with distance, not a
+	-- pixel card that sat on top of the HUD's mission card from across the lab.)
+	g.Size = UDim2.fromScale(size.X / LabZones.PX_PER_STUD, size.Y / LabZones.PX_PER_STUD)
 	g.StudsOffsetWorldSpace = Vector3.new(0, offset, 0)
 	g.MaxDistance = 140
 	g.LightInfluence = 0

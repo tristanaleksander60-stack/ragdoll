@@ -12,13 +12,14 @@ local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local C = require(UI:WaitForChild("LihFolkUIComponents"))
 local Controller = require(UI:WaitForChild("LihFolkUIController"))
 local Theme = require(UI:WaitForChild("LihFolkUITheme"))
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 
 local HudMenu = {}
 
 local ENTRIES: { any } = {
 	-- (One colour for going somewhere; green where something waits to be claimed; red is the kit's
 	-- close and delete, never a place to go.)
-	{ window = "Maps", text = "PLACES", role = "info", phoneOnly = true }, -- (off a phone PLACES is on the left edge)
+	{ window = "Maps", text = "MAPS", role = "info", phoneOnly = true }, -- (off a phone MAPS is a square on the right; UI audit 21 Nov: one name, MAPS, everywhere)
 	-- (Phase 0: SANDBOX had slipped onto the line above, behind its comment, so a phone had no way
 	-- to build; it is back, and a phone's BUILD button now lives here.)
 	{ window = "Sandbox", text = "SANDBOX", role = "go", phoneOnly = true }, -- (HudMenu.onSandbox)
@@ -37,7 +38,7 @@ local ENTRIES: { any } = {
 local MENU_ICONS: { [string]: string } = {
 	Maps = "map",
 	Sandbox = "sandbox",
-	Rewards = "gift",
+	Rewards = "present",
 	Eggs = "crown",
 	Experiments = "star",
 	Friends = "friends",
@@ -114,6 +115,7 @@ HudMenu.WINDOW = Vector2.new(420, 400) -- (four rows of two and its header: eigh
 -- over the 44 px a tap needs.)
 HudMenu.CELL = Vector2.new(172, 46)
 HudMenu.GAP = 8
+HudMenu.HEAD = 130 -- design units over and under the rows (header, padding)
 
 -- Another launcher's badge (shown on MENU too).
 function HudMenu.setBadge(window: string, on: boolean)
@@ -122,7 +124,7 @@ function HudMenu.setBadge(window: string, on: boolean)
 end
 
 function HudMenu.start()
-	local window = C.Window({ name = "Menu", title = "Menu", theme = "neutral", icon = "settings", size = HudMenu.WINDOW })
+	local window = C.Window({ name = "Menu", title = if Config.V8_FIRST_HIT then "More" else "Menu", theme = "neutral", icon = "settings", size = HudMenu.WINDOW })
 	-- Two to a row: the seven a phone shows are four rows (HudMenu.CELL), inside the body a phone's
 	-- window has at its smallest, so none is below the fold (LayoutCheck measures it).
 	local grid = Instance.new("Frame")
@@ -194,6 +196,28 @@ function HudMenu.start()
 		end
 	end
 	Controller.register(window)
+	-- (UI audit 21 Nov 2026: off a phone the window is as tall as its rows; three rows in a window
+	-- made for four left a dark empty half. A phone keeps the full height LayoutCheck measures.)
+	local function fitHeight()
+		local shown = 0
+		for _, child in grid:GetChildren() do
+			if child:IsA("GuiObject") and child.Visible then
+				shown += 1
+			end
+		end
+		local rows = math.max(1, math.ceil(shown / 2))
+		local tall = if isPhone() then HudMenu.WINDOW.Y else math.min(HudMenu.WINDOW.Y, HudMenu.HEAD + rows * (HudMenu.CELL.Y + HudMenu.GAP))
+		if window.designSize.Y ~= tall then
+			window.designSize = Vector2.new(HudMenu.WINDOW.X, tall)
+			Controller.refresh()
+		end
+	end
+	for _, child in grid:GetChildren() do
+		if child:IsA("GuiObject") then
+			child:GetPropertyChangedSignal("Visible"):Connect(fitHeight)
+		end
+	end
+	fitHeight()
 	Controller.COLUMN_KEEP = HudMenu.KEEP
 	Controller.PHONE_KEEP = HudMenu.PHONE_KEEP
 	hud = Controller.addHudButton({ window = "Menu", label = Controller.MENU_LAUNCHER, icon = "settings", theme = "neutral", layoutOrder = 9 })

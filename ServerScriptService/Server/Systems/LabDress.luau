@@ -5,6 +5,7 @@
 -- play is the same); placed only for the roles the place has, nothing code-built.
 
 local V3Assets = require(script.Parent.V3Assets)
+local Knockables = require(script.Parent.Knockables)
 
 local LabDress = {}
 
@@ -91,7 +92,11 @@ function LabDress.dress(into: Instance, origin: Vector3)
 	for _, s in LabDress.SPOTS do
 		if V3Assets.has(s.role) then
 			local at = CFrame.new(origin + Vector3.new(s.x, 0, s.z)) * CFrame.Angles(0, math.rad(s.yaw), 0)
-			V3Assets.place(s.role, folder, at, { size = s.size, height = s.height, collide = s.collide == true })
+			local placed = V3Assets.place(s.role, folder, at, { size = s.size, height = s.height, collide = s.collide == true })
+			-- (UI audit 21 Nov 2026: barrels, crates and cones are things you can knock over, not scenery.)
+			if placed and Knockables.ROLES[s.role] then
+				Knockables.make(placed, s.role)
+			end
 		end
 	end
 	if V3Assets.has("Fence") then

@@ -196,7 +196,7 @@ function go(id: string)
 end
 
 local function build()
-	local window = C.Window({ name = "Maps", title = "Places", theme = "codes", icon = "map" })
+	local window = C.Window({ name = "Maps", title = "Maps", theme = "codes", icon = "map" })
 	C.Text("caption", "Your lab, the plaza, other players' labs, the arena and five big maps.", {
 		color = Theme.Palette.textMid,
 		wrap = true,

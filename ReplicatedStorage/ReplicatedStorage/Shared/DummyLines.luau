@@ -119,10 +119,10 @@ DummyLines.BOX_COLOR = Color3.fromRGB(16, 16, 18)
 DummyLines.BOX_ALPHA = 0.12 -- the box's transparency
 DummyLines.HOLD = 2.6 -- s a line stays up
 DummyLines.IDLE_GAP = Vector2.new(18, 40) -- s between one dummy's idle lines (random in the range)
-DummyLines.IDLE_MAX = 2 -- idle lines on one screen at once
+DummyLines.IDLE_MAX = 1 -- idle lines on one screen at once (UI audit 21 Nov 2026: 2 -> 1, fewer floating words)
 DummyLines.OUCH_WINDOW = 1.5 -- s after getting up an ouch line may show
 DummyLines.OUCH_CHANCE = 0.45
-DummyLines.DISTANCE = 60 -- studs: further away no line is drawn
+DummyLines.DISTANCE = 45 -- studs: further away no line is drawn (UI audit 21 Nov 2026: 60 -> 45)
 
 -- One line of a list, picked by a seed (the same dummy does not say the same thing twice in a row:
 -- the turn moves on each time).

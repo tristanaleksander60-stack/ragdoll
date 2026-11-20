@@ -246,3 +246,33 @@ Phases 0-4b, A-M, N1-N5, N7 (graphics accepted as is), M1-M8 done. M9 was under 
   - There are 10 `map = true` Shop.OFFERS (ids 0 until the owner creates them) with TRY 60 s.
   - Pets are PetRobotDog and PetParrot in V3Assets.
 - **V6-8:** all 18 event cards have pictures, there is less outdoor haze, and version 0.24.0.
+
+## UI audit before the ads (21 Nov 2026, release 0.27.1)
+- **The owner asked for:**
+  - check everything visually;
+  - question every piece of UI;
+  - keep only what is needed, in the right place;
+  - make everything 3D and interactive.
+- **What it covered:** PC (1043x635), iPhone 17 Pro landscape and portrait (Device Simulator plus the workspace attribute **DevTouch**, Studio only: `ViewMode.isTouch` treats the simulator as a real phone), and every window.
+- **HUD:**
+  - **One WEAPONS:** only the bar slab. HudV3's left squares are `HudV3Layout.LEFT` = Shop, Lab.
+  - **Chips:** three key chips: F Ragdoll, C Lab view, Z Slow-mo.
+  - **Lab view on PC (big HUD):** a key; the button shows only as WALK, in the lab view.
+  - **Help line:** only the tool's hint, and only as wide as its words.
+  - **Level badge:** off under LOOK_V3, phones too.
+  - **Ammo counter:** off the slot on touch (it is by the crosshair) and hidden while a window is open.
+  - **Gift button:** a drawn present (`present` in DrawnIcons, art\icons\present.png).
+  - **Window names:** Maps opens "Maps" and More opens "More". The More window is as tall as its rows off a phone (`HudMenu.HEAD`).
+  - **Weapon cards:** POWER/SPEED/CHAOS name box is 84 units wide; EQUIPPED has no tick.
+- **One voice at the start:**
+  - Touch: no top pill for step 1 (TouchShoot's "TAP A DUMMY!" hand says it).
+  - The mission card waits while `FirstVisitGoal` exists.
+  - A newcomer's launch gift comes at `LaunchGift.NEWCOMER_AT` 120 s, and the weekend news at `ScheduleUI.NEWS_AFTER` 200 s.
+- **Windows:** a tap on a HudV3 square while a window is open switches to its window (`LihFolkUIController.passThrough`, set by HudV3).
+- **3D:**
+  - The selected bar slot shows the weapon's real model, turning (`PokeController` live3D, Ui3D budget, drawn icon on low end).
+  - World signs are in studs: `LabZones.PX_PER_STUD`, the spider's HUNGRY, and dummy lines (`IDLE_MAX` 1, `DISTANCE` 45).
+- **Knockables:** `Server/Systems/Knockables`. The lab's barrels, crates and cones (LabDress) are solid things.
+  - What knocks them: a touch at 14+ studs/s, a shot (`HitService` onShot), a blast (`Blasts`).
+  - The server simulates them; they go home after 10 s still (30 s at most) and on RESET (`SandboxService`).
+  - Test: T146_UiAudit.

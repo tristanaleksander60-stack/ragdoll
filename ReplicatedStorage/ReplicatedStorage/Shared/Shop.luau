@@ -57,6 +57,15 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.27.1",
+		lines = {
+			"KNOCK IT OVER: barrels, crates and cones in your lab fly when you hit them",
+			"The weapon in your hand turns in 3D on your bar",
+			"A cleaner screen: one WEAPONS button, keys at the bottom, one goal at a time",
+			"Tap a button while a window is open to switch straight to it",
+		},
+	},
+	{
 		version = "0.27.0",
 		lines = {
 			"THE CANNON: a huge arc with slow-mo, a CRASH score, your best and AGAIN",

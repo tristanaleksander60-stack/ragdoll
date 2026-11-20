@@ -536,8 +536,9 @@ local function followBar()
 	if KitStyle.V2 and shown and time() < Config.QUIET_START and HudSlots.context(ViewMode.isTouch(), ViewMode.isLab()).phone then
 		shown = false
 	end
-	if HudV3.active() then
-		shown = false -- (LOOK_V3: the top bar's Next pill says it)
+	if HudV3.active() or Config.LOOK_V3 then
+		shown = false -- (LOOK_V3: the top bar's Next pill says it; UI audit 21 Nov 2026: on a phone too, where
+		-- the lone "1" by the bar read as nothing)
 	end
 	lg.Enabled = shown
 	if not shown or not bar or not bar:IsA("GuiObject") then

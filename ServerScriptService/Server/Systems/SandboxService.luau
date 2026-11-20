@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Net"))
 local Lab = require(script.Parent.Lab)
+local Knockables = require(script.Parent.Knockables)
 local ToyService = require(script.Parent.ToyService)
 local VitalsService = require(script.Parent.VitalsService)
 
@@ -72,6 +73,10 @@ function SandboxService.run(player: Player, action: unknown): string?
 			(require(script.Parent:WaitForChild("DummySpawn")) :: any).clear(player) -- (V8-2.5: the spawned ones go)
 		end)
 		local n = Lab.rewind(player)
+		local origin = player:GetAttribute("LabOrigin")
+		if typeof(origin) == "Vector3" then
+			Knockables.resetNear(origin, 140) -- (UI audit 21 Nov 2026: the knocked barrels go back too)
+		end
 		return "reset " .. n
 	end
 	return nil

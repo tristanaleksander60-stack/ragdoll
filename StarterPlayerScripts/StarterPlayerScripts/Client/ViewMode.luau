@@ -7,6 +7,7 @@
 --            pinch zooms, and taps act wherever you point.
 
 local UserInputService = game:GetService("UserInputService")
+local isStudio = game:GetService("RunService"):IsStudio()
 
 export type Mode = "Player" | "Lab"
 
@@ -39,6 +40,11 @@ end
 
 -- A phone or tablet without a mouse: thumbstick, jump button and screen-centre aiming.
 function ViewMode.isTouch(): boolean
+	-- (Studio only: the device simulator keeps the PC mouse, so a phone there reads as a touch laptop;
+	-- the workspace attribute DevTouch makes it a real phone for screenshots.)
+	if isStudio and workspace:GetAttribute("DevTouch") == true then
+		return UserInputService.TouchEnabled
+	end
 	return UserInputService.TouchEnabled and not UserInputService.MouseEnabled
 end
 

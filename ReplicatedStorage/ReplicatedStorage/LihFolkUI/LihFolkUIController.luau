@@ -54,6 +54,9 @@ type Entry = {
 }
 
 local Controller = {}
+-- The game's hook for a tap on the dimmer: the screen point and the window that was open; it may
+-- act on a HUD button under that point (nil: the tap only closes).
+Controller.passThrough = nil :: ((Vector2, string?) -> ())?
 
 local M = Theme.Motion
 local S = Theme.Size
@@ -478,9 +481,16 @@ function Controller.start(options: StartOptions?)
 	d.BorderSizePixel = 0
 	d.Visible = false
 	d.Parent = back
-	d.Activated:Connect(function()
+	d.Activated:Connect(function(input: InputObject?)
 		if closeOnBackdrop and current ~= nil then
+			local was = current
 			closeWindow(nil)
+			-- (A tap on a HUD button under the dimmer: the game may act on it too, so one tap switches
+			-- windows instead of only closing this one. Controller.passThrough, set by the game.)
+			local pass = Controller.passThrough
+			if pass and input then
+				pass(Vector2.new(input.Position.X, input.Position.Y), was)
+			end
 		end
 	end)
 	dim = d

@@ -15,6 +15,9 @@ HudV3Layout.MARGIN = 12
 HudV3Layout.UNDER_RAGDOLL = 10 -- px between RAGDOLL's bottom and the Maps/Menu row
 HudV3Layout.TOAST_GAP = 12 -- px between the top-left row and the toast lane
 HudV3Layout.ROW_MIN = 0.75 -- the top-left row shrinks to fit left of the toasts, never under this
+-- The left squares (UI audit 21 Nov 2026: WEAPONS lives only on the bar, next to the weapons; the
+-- square was the same button twice).
+HudV3Layout.LEFT = { "Shop", "Lab" }
 
 export type Rect = { x: number, y: number, w: number, h: number, name: string }
 
@@ -42,18 +45,19 @@ function HudV3Layout.rowScale(screen: Vector2, toastLeft: number?): number
 	end
 	local k = HudV3Layout.scale(screen)
 	local m = HudV3Layout.MARGIN * k
-	local row = (3 * HudV3Layout.CARD.X + 2 * HudV3Layout.GAP) * k
+	local n = #HudV3Layout.LEFT
+	local row = (n * HudV3Layout.CARD.X + (n - 1) * HudV3Layout.GAP) * k
 	return math.clamp((toastLeft - HudV3Layout.TOAST_GAP - m) / row, HudV3Layout.ROW_MIN, 1)
 end
 
--- The five squares on a touch screen.
+-- The squares on a touch screen (LEFT, then Maps and Menu).
 function HudV3Layout.touchRects(screen: Vector2, ragdollBottom: number?, toastLeft: number?): { Rect }
 	local k = HudV3Layout.scale(screen)
 	local cw, ch = HudV3Layout.CARD.X * k, HudV3Layout.CARD.Y * k
 	local gap, m = HudV3Layout.GAP * k, HudV3Layout.MARGIN * k
 	local f = HudV3Layout.rowScale(screen, toastLeft)
 	local rects: { Rect } = {}
-	for i, name in { "Shop", "Weapons", "Lab" } do
+	for i, name in HudV3Layout.LEFT do
 		table.insert(rects, { x = m + (i - 1) * (cw + gap) * f, y = m, w = cw * f, h = ch * f, name = "V3" .. name })
 	end
 	local top = HudV3Layout.rightTop(screen, ragdollBottom)

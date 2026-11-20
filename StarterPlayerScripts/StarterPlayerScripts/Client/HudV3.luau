@@ -34,6 +34,8 @@ HudV3.MARGIN = 12
 HudV3.GLASS = Color3.fromRGB(18, 18, 22)
 HudV3.GLASS_ALPHA = 0.22
 HudV3.CHIPS_H = 50
+-- (UI audit 21 Nov 2026: Shop and Lab only; WEAPONS is the bar's own slab, one button, not two.)
+local LEFT_N = #require(script.Parent:WaitForChild("HudV3Layout")).LEFT
 
 local player = Players.LocalPlayer
 
@@ -89,6 +91,12 @@ local function depth(button: GuiButton, shadow: Frame)
 	end)
 end
 
+-- (UI audit 21 Nov 2026: a square tapped while a window is open switches to its window in one tap;
+-- the kit's dimmer used to eat that tap and only close. LihFolkUIController.passThrough asks here.)
+local tapActions: { [GuiObject]: () -> () } = {}
+local tapWindows: { [GuiObject]: string } = {} -- (the window a square opens: a tap on the open one only closes)
+local CARD_WINDOWS: { [string]: string } = { Shop = "Events", Lab = "Lab", Maps = "Maps", Menu = "Menu" }
+
 local function card(name: string, word: string, icon: string, parent: Instance, onActivated: () -> ()): TextButton
 	local Icons = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIIcons"))
 	local b = Instance.new("TextButton")
@@ -133,6 +141,8 @@ local function card(name: string, word: string, icon: string, parent: Instance, 
 		depth(b, shadow)
 	end
 	b.Activated:Connect(onActivated)
+	tapActions[b] = onActivated
+	tapWindows[b] = CARD_WINDOWS[name]
 	b.Parent = parent
 	return b
 end
@@ -190,7 +200,11 @@ local function drawChips()
 		end
 	end
 	local order = 0
-	for _, pair in { { "Ragdoll", "Ragdoll" }, { "ReviveAll", "Revive" }, { "SlowMo", "Slow-mo" }, { "FirstPerson", "View" } } do
+	-- (UI audit 21 Nov 2026: Lab view joins the keys; its top-right button only shows as WALK, the way
+	-- back, so the PC top right is the gift and the next weapon.)
+	-- Three keys only: 1st person and revive all are in the LAB window and KEYS; five chips ran
+	-- into the help line on a small window.
+	for _, pair in { { "Ragdoll", "Ragdoll" }, { "View", "Lab view" }, { "SlowMo", "Slow-mo" } } do
 		local key = keyOf(pair[1])
 		if key then
 			order += 1
@@ -228,7 +242,7 @@ local function buildTop(onRewards: () -> ())
 	gift.BackgroundTransparency = 0.1
 	gift.AutoButtonColor = true
 	corner(gift, 22)
-	local gp = Icons.make("gift", UDim2.fromOffset(26, 26), Color3.new(1, 1, 1))
+	local gp = Icons.make(if Icons.has("present") then "present" else "gift", UDim2.fromOffset(28, 28), Color3.new(1, 1, 1))
 	gp.AnchorPoint = Vector2.new(0.5, 0.5)
 	gp.Position = UDim2.fromScale(0.5, 0.5)
 	gp.Parent = gift
@@ -248,6 +262,8 @@ local function buildTop(onRewards: () -> ())
 	corner(clock, 8)
 	clock.Parent = gift
 	gift.Activated:Connect(onRewards)
+	tapActions[gift] = onRewards
+	tapWindows[gift] = "Rewards"
 	gift.Parent = row
 	local pill = Instance.new("Frame")
 	pill.Name = "Next"
@@ -501,7 +517,8 @@ local function step()
 			;(row :: UIScale).Scale = Layout.rowScale(screen, if okT and centre and tw then centre - tw / 2 else nil)
 			l.AnchorPoint = Vector2.zero
 			l.Position = UDim2.fromOffset(HudV3.MARGIN, HudV3.MARGIN)
-			l.Size = UDim2.fromOffset(3 * HudV3.CARD.X + 2 * HudV3.GAP, HudV3.CARD.Y)
+			local n = #Layout.LEFT
+			l.Size = UDim2.fromOffset(n * HudV3.CARD.X + (n - 1) * HudV3.GAP, HudV3.CARD.Y)
 			ll.FillDirection = Enum.FillDirection.Horizontal
 			ll.VerticalAlignment = Enum.VerticalAlignment.Top
 			r.Position = UDim2.new(1, -HudV3.MARGIN, 0, Layout.rightTop(screen, bottom) / k)
@@ -512,7 +529,7 @@ local function step()
 			end
 			l.AnchorPoint = Vector2.new(0, 1)
 			l.Position = UDim2.new(0, HudV3.MARGIN, 1, -(HudV3.MARGIN + HudV3.CHIPS_H + 8))
-			l.Size = UDim2.fromOffset(HudV3.CARD.X, 3 * HudV3.CARD.Y + 2 * HudV3.GAP)
+			l.Size = UDim2.fromOffset(HudV3.CARD.X, LEFT_N * HudV3.CARD.Y + (LEFT_N - 1) * HudV3.GAP)
 			ll.FillDirection = Enum.FillDirection.Vertical
 			ll.VerticalAlignment = Enum.VerticalAlignment.Bottom
 			r.Position = UDim2.new(1, -HudV3.MARGIN, 0, 150)
@@ -530,6 +547,27 @@ function HudV3.start()
 	local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 	local Controller = require(UI:WaitForChild("LihFolkUIController"))
 	local PokeController = require(Client:WaitForChild("PokeController"))
+	-- (UI audit 21 Nov 2026: a tap on a square under the dimmer opens that square's window at once.)
+	Controller.passThrough = function(at: Vector2, was: string?)
+		local g = gui
+		local pg = player:FindFirstChildOfClass("PlayerGui")
+		if not (pg and g and g.Enabled) then
+			return
+		end
+		for _, hit in pg:GetGuiObjectsAtPosition(at.X, at.Y) do
+			local node: Instance? = hit
+			while node and not node:IsA("LayerCollector") do
+				local act = tapActions[node :: GuiObject]
+				if act then
+					if tapWindows[node :: GuiObject] ~= was then
+						task.defer(act)
+					end
+					return
+				end
+				node = node.Parent
+			end
+		end
+	end
 	local ProgressUI = require(Client:WaitForChild("ProgressUI"))
 	buildLab()
 	local g = Instance.new("ScreenGui")
@@ -556,7 +594,7 @@ function HudV3.start()
 	left.BackgroundTransparency = 1
 	left.AnchorPoint = Vector2.new(0, 1)
 	left.Position = UDim2.new(0, HudV3.MARGIN, 1, -(HudV3.MARGIN + HudV3.CHIPS_H + 8))
-	left.Size = UDim2.fromOffset(HudV3.CARD.X, 3 * HudV3.CARD.Y + 2 * HudV3.GAP)
+	left.Size = UDim2.fromOffset(HudV3.CARD.X, LEFT_N * HudV3.CARD.Y + (LEFT_N - 1) * HudV3.GAP)
 	left.Parent = root
 	leftCol = left
 	local ll = Instance.new("UIListLayout")
@@ -568,12 +606,6 @@ function HudV3.start()
 	card("Shop", "Shop", "shop", left, function()
 		Controller.toggle("Events")
 	end).LayoutOrder = 1
-	card("Weapons", "Weapons", "toolbox", left, function()
-		local open = (PokeController :: any).openCatalog
-		if type(open) == "function" then
-			open()
-		end
-	end).LayoutOrder = 2
 	card("Lab", "Lab", "sandbox", left, function()
 		Controller.toggle("Lab")
 	end).LayoutOrder = 3

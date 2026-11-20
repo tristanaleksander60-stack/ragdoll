@@ -9,6 +9,7 @@ local Workspace = game:GetService("Workspace")
 
 local DummyControl = require(script.Parent.DummyControl)
 local FxService = require(script.Parent.FxService)
+local Knockables = require(script.Parent.Knockables)
 local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
 local Props = require(script.Parent.Props)
 local VitalsService = require(script.Parent.VitalsService)
@@ -177,6 +178,8 @@ function Blasts.blast(center: Vector3, kind: Blast, exclude: Instance?, source: 
 			end
 		end
 	end
+	-- (UI audit 21 Nov 2026: the lab's barrels, crates and cones fly too.)
+	Knockables.blast(center, radius)
 	-- Props in reach fly too, and other TNT goes off a beat later: chain reactions.
 	for _, near in Props.near(center, radius, exclude) do
 		local prop = near.prop

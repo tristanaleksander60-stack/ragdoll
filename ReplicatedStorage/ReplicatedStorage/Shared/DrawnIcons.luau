@@ -17,6 +17,7 @@ DrawnIcons.ASSETS = {
 	settings = "rbxassetid://93865298232808",
 	sandbox = "rbxassetid://91079374186462",
 	gift = "rbxassetid://121323709806351",
+	present = "rbxassetid://100227731520689", -- (UI audit 21 Nov 2026: REWARDS, a present)
 	star = "rbxassetid://75052165451326",
 	crown = "rbxassetid://97120792689619",
 	toolbox = "rbxassetid://87530964149060",

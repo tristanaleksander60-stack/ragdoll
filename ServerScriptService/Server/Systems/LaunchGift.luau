@@ -21,6 +21,7 @@ local LaunchGift = {}
 LaunchGift.UNTIL = os.time({ year = 2026, month = 12, day = 10, hour = 23, min = 59, sec = 0 }) -- (server UTC)
 -- (V8-0.4: no button named that may be hidden; the egg card offers it by itself.)
 LaunchGift.TEXT = "LAUNCH GIFT! A free weapon egg for everyone who plays now!"
+LaunchGift.NEWCOMER_AT = 120 -- s after a newcomer's progress loads (after QUIET_START, before the calm modals)
 local STORE = "LaunchGift_v1"
 
 local store: DataStore? = nil
@@ -85,6 +86,11 @@ local function onLoaded(player: Player)
 	end
 end
 
+-- (A newcomer waits out the first minutes: NEWCOMER_AT; anyone else gets it after 6 s.)
+local function delayFor(player: Player): number
+	return if player:GetAttribute("Newcomer") == true then LaunchGift.NEWCOMER_AT else 6
+end
+
 function LaunchGift.start()
 	if ProgressService.usesDataStores() then
 		local ok, ds = pcall(function()
@@ -93,13 +99,14 @@ function LaunchGift.start()
 		store = if ok then ds else nil
 	end
 	ProgressService.onLoaded(function(player: Player, _first: boolean)
-		-- (A beat after the first seconds: the gift's line is not lost among the welcome messages.)
-		task.delay(6, onLoaded, player)
+		-- (A beat after the first seconds: the gift's line is not lost among the welcome messages. UI audit
+		-- 21 Nov 2026: a newcomer's first minute and a half is the first hits alone; the gift comes after.)
+		task.delay(delayFor(player), onLoaded, player)
 	end)
 	-- (Anyone whose progress was read before this started: the first player of a server.)
 	for _, player in game:GetService("Players"):GetPlayers() do
 		if ProgressService.isLoaded(player) then
-			task.delay(6, onLoaded, player)
+			task.delay(delayFor(player), onLoaded, player)
 		end
 	end
 	log.info("ready" .. (if LaunchGift.running() then "" else " (the launch is over)"))

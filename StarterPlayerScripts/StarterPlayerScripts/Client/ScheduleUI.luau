@@ -6,6 +6,7 @@
 --   The FREE WEEKEND: a toast when it starts (and on joining during it): which weapon is free.
 --   The LAUNCH (the owner's free passes): a toast when it starts (and on joining during it).
 
+local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
@@ -42,6 +43,8 @@ function ScheduleUI.line(): string
 	return string.format("THE ADMIN SHOW: free events for everyone, %s (in %s)", tostring(localTime), clock(start - nowServer))
 end
 
+ScheduleUI.NEWS_AFTER = 200 -- s into a newcomer's first visit before news like the weekend's free weapon
+
 function ScheduleUI.start()
 	local told: { [string]: boolean } = {}
 	local function weekend()
@@ -49,7 +52,12 @@ function ScheduleUI.start()
 		local toy = if type(id) == "string" then Toys.byId[id] else nil
 		if toy and not told["free" .. id] then
 			told["free" .. id] = true
-			Notify.say("info", string.format("FREE THIS WEEKEND: the %s! Find it in WEAPONS", toy.label), Color3.fromRGB(120, 230, 140))
+			-- (UI audit 21 Nov 2026: a newcomer's first minutes are the first hits; the weekend news waits
+			-- until NEWS_AFTER s.)
+			local newcomer = Players.LocalPlayer:GetAttribute("Newcomer") == true
+			task.delay(if newcomer then math.max(0, ScheduleUI.NEWS_AFTER - time()) else 0, function()
+				Notify.say("info", string.format("FREE THIS WEEKEND: the %s! Find it in WEAPONS", toy.label), Color3.fromRGB(120, 230, 140))
+			end)
 		end
 	end
 	Workspace:GetAttributeChangedSignal("FreeWeapon"):Connect(weekend)

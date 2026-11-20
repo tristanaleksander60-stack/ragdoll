@@ -18,6 +18,7 @@ local Keybinds = require(Shared:WaitForChild("Keybinds"))
 local Toys = require(Shared:WaitForChild("Toys"))
 
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
+local Controller = require(UI:WaitForChild("LihFolkUIController")) :: any
 local Theme = require(UI:WaitForChild("LihFolkUITheme"))
 
 local Client = script.Parent
@@ -179,7 +180,8 @@ local function frame()
 	local id = AmmoClient.getSelected and AmmoClient.getSelected() or ""
 	local toy = Toys.byId[id]
 	local text = if toy and toy.gun then AmmoClient.text(id) else nil
-	c.Visible = text ~= nil
+	-- (UI audit 21 Nov 2026: not over an open window; the count belongs to aiming.)
+	c.Visible = text ~= nil and Controller.getCurrent() == nil
 	local now = os.clock()
 	-- (A reload that ran out: the magazine is full again, said once.)
 	for gunId in wasReloading do
@@ -214,9 +216,12 @@ local function frame()
 			NumberSequenceKeypoint.new(1, 1),
 		})
 	end
+	-- (UI audit 21 Nov 2026: on a touch screen the slot is narrow and the count covered the weapon's
+	-- name; the count by the crosshair in the middle says it there.)
 	local label = slabLabel(id)
 	if label then
 		label.Text = text :: string
+		label.Visible = not ViewMode.isTouch()
 	end
 end
 

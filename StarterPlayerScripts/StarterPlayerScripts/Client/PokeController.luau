@@ -50,6 +50,7 @@ local ToolCatalog = require(Client:WaitForChild("ToolCatalog"))
 local Icons = require(UI:WaitForChild("LihFolkUIIcons"))
 local KitStyle = require(Client:WaitForChild("KitStyle"))
 local HudSlots = require(Client:WaitForChild("HudSlots")) -- (audit area 1: the newcomer window)
+local HudGate = require(Client:WaitForChild("HudGate"))
 local Toast = require(Client:WaitForChild("Toast"))
 local ToolPicture = require(script.Parent:WaitForChild("ToolPicture"))
 local NextUnlocks = require(script.Parent:WaitForChild("NextUnlocks"))
@@ -382,6 +383,11 @@ function PokeController.helpText(id: string, lab: boolean): string
 	if time() < HudSlots.newcomerUntil then
 		return first
 	end
+	-- (UI audit 21 Nov 2026: with the big HUD the keys are its chips and the slot numbers; the line
+	-- says only what the tool in your hand does.)
+	if HudGate.active() then
+		return first
+	end
 	-- The keys as they are bound now (a part whose key is unbound is left out).
 	local parts = { first }
 	-- (1-6 only while the slots are on 1 to 6; rebound, each slot shows its own key instead.)
@@ -407,6 +413,12 @@ local function refreshHelp()
 	local label = helpLabel
 	if label then
 		label.Text = PokeController.helpText(selected, ViewMode.isLab())
+		local parent = label.Parent
+		if parent and parent:IsA("LayerCollector") then
+			local room = PokeController.helpWidth(parent.AbsoluteSize)
+			local words = TextService:GetTextSize(label.Text, 15, Enum.Font.GothamBold, Vector2.new(10000, PokeController.HELP_H)).X
+			label.Size = UDim2.fromOffset(math.min(room, words + 28), PokeController.HELP_H)
+		end
 	end
 end
 PokeController.refreshHelp = refreshHelp -- (FirstVisit: the full help line comes back with the HUD)
@@ -415,6 +427,47 @@ PokeController.refreshHelp = refreshHelp -- (FirstVisit: the full help line come
 -- picking a slot): the crosshair listens instead of looking all the time.
 local changedEvent = Instance.new("BindableEvent")
 PokeController.changed = changedEvent.Event
+
+-- UI audit 21 Nov 2026 (the owner: "everything 3D and interactive"): the weapon in your hand shows
+-- as its real 3D model on its slab, turning slowly (faster under the pointer, a drag turns it:
+-- Ui3D); the others keep their drawn pictures. One live model at a time, none on a low-end device
+-- (ToolPicture falls back to the drawing by itself).
+local function live3D(slab: any, id: string, on: boolean)
+	local pic = slab.picture
+	if not pic then
+		return
+	end
+	local live = pic:FindFirstChild("Live3D")
+	if on and not live then
+		local turning = ToolPicture.make(id, UDim2.fromScale(1, 1), nil, true)
+		if not turning:FindFirstChild("View") then
+			turning:Destroy() -- (no model, or a low-end device: the drawing stays)
+			return
+		end
+		turning.Name = "Live3D"
+		turning.AnchorPoint = Vector2.zero
+		turning.Position = UDim2.fromScale(0, 0)
+		turning.ZIndex = 5
+		for _, d in turning:GetDescendants() do
+			if d:IsA("GuiObject") then
+				d.ZIndex = 5
+			end
+		end
+		for _, child in pic:GetChildren() do
+			if child:IsA("GuiObject") then
+				child.Visible = false
+			end
+		end
+		turning.Parent = pic
+	elseif not on and live then
+		live:Destroy()
+		for _, child in pic:GetChildren() do
+			if child:IsA("GuiObject") then
+				child.Visible = true
+			end
+		end
+	end
+end
 
 local function refresh()
 	changedEvent:Fire()
@@ -429,6 +482,7 @@ local function refresh()
 	for id, slab in slabs do
 		local toy = Toys.byId[id]
 		local lit = id == selected and not picking
+		live3D(slab, id, lit and Config.UI_3D == true)
 		slab.button.setSwatch(swatchFor(toy.color, lit))
 		-- Colour plus one more cue: the selected tool (or, while picking, every slot) has a ring.
 		slab.ring.Enabled = lit or picking
@@ -654,7 +708,10 @@ local function layout()
 	frame.Visible = not catalogOpen
 	local help = helpLabel
 	if help then
-		help.Size = UDim2.fromOffset(PokeController.helpWidth(gui.AbsoluteSize), PokeController.HELP_H)
+		-- (UI audit 21 Nov 2026: as wide as its words, never a long empty strip under other things.)
+		local room = PokeController.helpWidth(gui.AbsoluteSize)
+		local words = TextService:GetTextSize(help.Text, 15, Enum.Font.GothamBold, Vector2.new(10000, PokeController.HELP_H)).X
+		help.Size = UDim2.fromOffset(math.min(room, words + 28), PokeController.HELP_H)
 		help.Visible = not touch and not catalogOpen and withTools
 	end
 

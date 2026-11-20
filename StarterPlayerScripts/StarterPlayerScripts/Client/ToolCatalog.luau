@@ -235,8 +235,9 @@ local function refreshEquip()
 			button.setText("LOADING...")
 			button.setRole("locked")
 		else
-			-- (UI v2: EQUIPPED carries a tick, so the state reads without its colour.)
-			button.setIcon(if KitStyle.V2 and inBar then "check" else nil)
+			-- (UI audit 21 Nov 2026: no tick beside EQUIPPED; the word already differs from EQUIP, and with
+			-- the tick it was cut to "EQUIPPE" on a small window.)
+			button.setIcon(nil)
 			button.setEnabled(true)
 			-- (Round 5, like the big ragdoll games: EQUIP, or EQUIPPED in green once it is on the bar;
 			-- tapping EQUIPPED takes it off again, unless it is the bar's last tool.)
@@ -327,7 +328,7 @@ local function statRow(label: string, value: number, order: number, parent: Inst
 		color = P.textMid,
 		align = Enum.TextXAlignment.Left,
 		scaled = true,
-		size = UDim2.new(0, 70, 1, 0), -- (V5: "POWER" at the 17-unit floor needs more than 62)
+		size = UDim2.new(0, 84, 1, 0), -- (V5: "POWER" at the 17-unit floor needs more than 62; UI audit 21 Nov: the floor is in screen px, so a window drawn at 0.7 needs 80)
 		parent = row :: Instance,
 	})
 	name.Name = "Name"
@@ -336,8 +337,8 @@ local function statRow(label: string, value: number, order: number, parent: Inst
 	track.BackgroundColor3 = P.duskSunken
 	track.BorderSizePixel = 0
 	track.AnchorPoint = Vector2.new(0, 0.5)
-	track.Position = UDim2.new(0, 72, 0.5, 0)
-	track.Size = UDim2.new(1, -72 - 26, 0, 12)
+	track.Position = UDim2.new(0, 86, 0.5, 0)
+	track.Size = UDim2.new(1, -86 - 26, 0, 12)
 	local round = Instance.new("UICorner")
 	round.CornerRadius = UDim.new(0.5, 0)
 	round.Parent = track

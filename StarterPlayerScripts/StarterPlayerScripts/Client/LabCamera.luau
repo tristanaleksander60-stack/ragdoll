@@ -40,6 +40,7 @@ local ViewMode = require(Client:WaitForChild("ViewMode"))
 local MoveStick = require(Client:WaitForChild("MoveStick"))
 local KitStyle = require(Client:WaitForChild("KitStyle"))
 local HudSlots = require(Client:WaitForChild("HudSlots"))
+local HudGate = require(Client:WaitForChild("HudGate"))
 local Theme = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUITheme"))
 
 local player = Players.LocalPlayer
@@ -540,7 +541,10 @@ local function buildRecenterButton()
 		HudSlots.apply(view, "View", ctx)
 		-- (Phase 0: a phone shows LAB VIEW after the quiet start, HudSlots.PHONE_LATER; the lab view
 		-- itself always keeps its way back.)
-		view.Visible = ViewMode.isLab() or HudSlots.shownNow("View", ctx, time(), Config.QUIET_START)
+		-- (UI audit 21 Nov 2026: on a computer with the big HUD the lab view is a key, C, in the chips and
+		-- the LAB window; the button only shows as WALK, the way back.)
+		local pcBig = not ViewMode.isTouch() and HudGate.active()
+		view.Visible = ViewMode.isLab() or (HudSlots.shownNow("View", ctx, time(), Config.QUIET_START) and not pcBig)
 		-- The V badge only fits the wide button (off phones).
 		local key = view:FindFirstChild("Key")
 		if key and key:IsA("GuiObject") then
@@ -548,6 +552,9 @@ local function buildRecenterButton()
 		end
 	end
 	HudSlots.watch(placeView)
+	ViewMode.onChanged(function()
+		placeView() -- (WALK shows in the lab view and goes again when you walk)
+	end)
 	-- (Audit area 1: placed again when the newcomer answer comes or the reveal moves, and once the
 	-- player's own quiet start is over: QUIET_START, or a newcomer's later reveal.)
 	HudSlots.newcomerChanged.Event:Connect(placeView)

@@ -31,6 +31,7 @@ local Controller = require(UI:WaitForChild("LihFolkUIController")) :: any
 
 local Client = script.Parent
 local HudSlots = require(Client:WaitForChild("HudSlots"))
+local ViewMode = require(Client:WaitForChild("ViewMode"))
 local Toast = require(Client:WaitForChild("Toast")) :: any
 
 local FirstVisit = {}
@@ -303,6 +304,12 @@ function FirstVisit.start()
 			end
 			local padNow = onPad()
 			say(if padNow and step.pad then step.pad else step.text)
+			-- (UI audit 21 Nov 2026: on a touch screen the first step is TouchShoot's "TAP A DUMMY!" hand over
+			-- the dummy itself; the same words at the top too were the same order twice. The nudge still
+			-- brings the line if the step drags on.)
+			if step.id == "Takedown" and ViewMode.isTouch() and not padNow then
+				line.Visible = false
+			end
 			local hl = glow(target)
 			local lab = myLab()
 			local hl2 = if step.glow2 and lab then glow(lab:FindFirstChild(step.glow2, true)) else nil

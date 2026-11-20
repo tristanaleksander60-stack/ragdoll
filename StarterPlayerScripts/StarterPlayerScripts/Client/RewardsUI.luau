@@ -137,7 +137,7 @@ local function redraw()
 end
 
 local function build()
-	local window = C.Window({ name = "Rewards", title = "Rewards", theme = "daily", icon = "gift", size = RewardsUI.WINDOW })
+	local window = C.Window({ name = "Rewards", title = "Rewards", theme = "daily", icon = "present", size = RewardsUI.WINDOW })
 	-- Daily gift: the calendar.
 	C.SectionHeader("DAILY GIFT", "daily", 1, window.body)
 	local row = C.Row({ height = 66, gap = SP.xs, layoutOrder = 2, parent = window.body })
@@ -207,7 +207,7 @@ local function build()
 	end })
 	window.defaultSelection = dareRows[1].claim.hit
 	Controller.register(window)
-	hud = Controller.addHudButton({ window = "Rewards", label = "Rewards", icon = "gift", theme = "daily", layoutOrder = 2 })
+	hud = Controller.addHudButton({ window = "Rewards", label = "Rewards", icon = "present", theme = "daily", layoutOrder = 2 })
 end
 
 -- The play gift's line, every half second.

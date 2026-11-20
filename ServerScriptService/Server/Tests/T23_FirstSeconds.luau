@@ -48,7 +48,11 @@ local function scene(player: Player, root: BasePart, g: Model): string
 			table.insert(bits, k .. "=" .. tostring(v))
 		end
 	end
-	local pelvis = g:FindFirstChild("LowerTorso") :: BasePart
+	local pelvis = g:FindFirstChild("LowerTorso") :: BasePart?
+	if not pelvis then
+		table.insert(bits, "the greeter has no LowerTorso (gone or rebuilt)")
+		return table.concat(bits, ", ")
+	end
 	local from, to = flat(pelvis.Position), flat(root.Position)
 	for _, m in workspace:GetDescendants() do
 		if m:IsA("Model") and m ~= g and m ~= character and m:FindFirstChild("LowerTorso") then
