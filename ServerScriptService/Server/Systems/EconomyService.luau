@@ -8,6 +8,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
@@ -25,7 +26,7 @@ EconomyService.REDEEM_GAP = 2 -- s between code tries
 EconomyService.REDEEM_MAX = 10 -- tries a visit
 
 local remote: RemoteEvent? = nil
-local tries: { [Player]: { n: number, at: number } } = {}
+local tries: { [Player]: { number } } = {} -- (V9-0t: when each recent code try was)
 
 local function today(): number
 	return os.time() // 86400
@@ -153,24 +154,64 @@ function EconomyService.buyNext(player: Player): string?
 	return id
 end
 
-function EconomyService.redeem(player: Player, code: string): number?
+-- Tests: forget a player's recent code tries.
+function EconomyService.resetCodesForTest(player: Player)
+	tries[player] = nil
+end
+
+-- V9-0t: a code from Shared/Codes. Returns whether it worked and the line to show (the reward, or why
+-- not). At most Codes.RATE tries a minute; no hint which codes exist; each one once per profile.
+EconomyService.REDEEM_WINDOW = 60 -- s
+function EconomyService.redeem(player: Player, text: string): (boolean, string)
+	local Codes = require(Shared:WaitForChild("Codes")) :: any
 	local now = os.clock()
-	local t: { n: number, at: number } = tries[player] or { n = 0, at = -math.huge }
-	tries[player] = t
-	if t.n >= EconomyService.REDEEM_MAX or now - t.at < EconomyService.REDEEM_GAP then
-		return nil
+	local list = tries[player] or {}
+	tries[player] = list
+	while #list > 0 and now - list[1] > EconomyService.REDEEM_WINDOW do
+		table.remove(list, 1)
 	end
-	t.n += 1
-	t.at = now
+	if #list >= Codes.RATE then
+		return false, Codes.MESSAGES.slow
+	end
+	table.insert(list, now)
 	local e = ProgressService.ecoOf(player)
 	if not e then
-		return nil
+		return false, "Your progress is still loading. Try again in a moment"
 	end
-	local bolts = Economy.redeem(e, code)
-	if bolts then
-		EconomyService.give(player, bolts, string.format("Code! +%d BOLTS", bolts))
+	local entry, why = Codes.check(text, e.codes, os.time(), Config.BETA == true)
+	if not entry then
+		return false, Codes.MESSAGES[why or "invalid"]
 	end
-	return bolts
+	e.codes[entry.code] = true
+	local weaponName: string?, cosmeticName: string? = nil, nil
+	if entry.bolts then
+		EconomyService.give(player, entry.bolts, nil, true) -- (exact: a code is never doubled)
+	end
+	if entry.trialWeapon then
+		local toy = Toys.byId[entry.trialWeapon]
+		if toy then
+			weaponName = toy.label
+			if not ProgressService.isUnlocked(player, toy, true) then
+				(require(script.Parent:WaitForChild("TrialService")) :: any).grant(player, toy.id, (entry.trialMinutes or 30) * 60)
+			end
+		end
+	end
+	if entry.cosmetic then
+		local key = entry.cosmetic :: string
+		for _, offer in (require(Shared:WaitForChild("Shop")) :: any).OFFERS do
+			if offer.key == key then
+				cosmeticName = offer.name
+			end
+		end
+		if player:GetAttribute("Offer_" .. key) ~= true then
+			local untilT = Workspace:GetServerTimeNow() + (entry.cosmeticHours or 24) * 3600
+			e.perks[key] = math.max(e.perks[key] or 0, untilT)
+			player:SetAttribute("Try_" .. key, e.perks[key])
+		end
+	end
+	ProgressService.ecoChanged(player)
+	EconomyService.send(player)
+	return true, Codes.describe(entry, weaponName, cosmeticName)
 end
 
 local function loaded(player: Player)
@@ -180,6 +221,15 @@ local function loaded(player: Player)
 	end
 	Economy.rollDay(e, today())
 	player:SetAttribute("Bolts", e.bolts)
+	-- (V9-0t: a code's timed cosmetic carries on across visits until it ends: MapShopService's Try_<key>.)
+	local serverNow = Workspace:GetServerTimeNow()
+	for key, untilT in e.perks do
+		if untilT > serverNow then
+			player:SetAttribute("Try_" .. key, untilT)
+		else
+			e.perks[key] = nil
+		end
+	end
 	local deck = {}
 	for _, def in EconomyService.dailyToday() do
 		if not e.daily[def.id] then
@@ -217,10 +267,9 @@ function EconomyService.start()
 			if not id then
 				ProgressService.notice(player, "Not enough BOLTS yet. Do experiments!")
 			end
-		elseif kind == "Redeem" and type(arg) == "string" and #arg <= 24 then
-			if not EconomyService.redeem(player, arg) then
-				ProgressService.notice(player, "That code does not work (or you used it)")
-			end
+		elseif kind == "Redeem" and type(arg) == "string" and #arg <= 40 then
+			local ok, line = EconomyService.redeem(player, arg)
+			;(remote :: RemoteEvent):FireClient(player, "Code", { ok = ok, text = line })
 		end
 	end)
 end

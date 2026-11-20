@@ -207,7 +207,10 @@ local function paint(a: Vector3, b: Vector3, material: Enum.Material, seed: numb
 			local d1, d2 = slabPoints[k] - slabPoints[k - 1], slabPoints[k + 1] - slabPoints[k]
 			local turn = if d1.Magnitude > 0.01 and d2.Magnitude > 0.01 then math.acos(math.clamp(d1.Unit:Dot(d2.Unit), -1, 1)) else 0
 			local gap = (slabPoints[k] - last).Magnitude
-			if gap >= 12 or (turn > math.rad(10) and gap >= 4) then
+			-- (V9-0d review: a step in the floor keeps the points either side of it, so the slab across it
+			-- splits within a stud of the real step.)
+			local step = math.abs(slabHeights[k + 1] - slabHeights[k]) > 0.3 or math.abs(slabHeights[k] - slabHeights[k - 1]) > 0.3
+			if gap >= 12 or (turn > math.rad(10) and gap >= 4) or step then
 				table.insert(thin, slabPoints[k])
 				table.insert(thinH, slabHeights[k])
 				last = slabPoints[k]

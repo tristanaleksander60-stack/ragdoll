@@ -81,37 +81,29 @@ local function photo(prompt: ProximityPrompt)
 	pcall(function()
 		humanoid:PlayEmote("wave")
 	end)
-	-- The clean frame: every ScreenGui off while the photo is up. What each one's owner wants meanwhile
-	-- (on or off) is followed and put back after: never a stale window brought back, never one lost.
+	-- The clean frame: every ScreenGui off while the photo is up, and each one put back as it should
+	-- be. (V9-0d review: no Enabled signals: they run deferred, after our own write, and read it as the
+	-- owner's.) One look a frame instead: a gui found on again was switched on by its owner, so it
+	-- comes back on; one that stays off comes back as it was before the photo. A new gui made during
+	-- the photo counts as on.
 	local gui = player:WaitForChild("PlayerGui")
 	local intent: { [ScreenGui]: boolean } = {}
-	local writing = false
 	local watches: { RBXScriptConnection } = {}
-	local function keepOff(g: ScreenGui)
-		if g.Enabled then
-			writing = true
-			g.Enabled = false
-			writing = false
-		end
-	end
-	local function track(g: Instance)
-		if not g:IsA("ScreenGui") or g.Name == "PhotoFlash" or intent[g] ~= nil then
-			return
-		end
-		intent[g] = g.Enabled
-		table.insert(watches, g:GetPropertyChangedSignal("Enabled"):Connect(function()
-			if writing then
-				return
+	local function sweep()
+		for _, g in gui:GetChildren() do
+			if g:IsA("ScreenGui") and g.Name ~= "PhotoFlash" then
+				if intent[g] == nil then
+					intent[g] = g.Enabled
+				elseif g.Enabled then
+					intent[g] = true
+				end
+				if g.Enabled then
+					g.Enabled = false
+				end
 			end
-			intent[g] = g.Enabled -- (its owner turned it on or off while the photo was up)
-			keepOff(g)
-		end))
-		keepOff(g)
+		end
 	end
-	for _, g in gui:GetChildren() do
-		track(g)
-	end
-	table.insert(watches, gui.ChildAdded:Connect(track))
+	sweep()
 	-- Roblox's own pieces (chat, player list, backpack...), each put back as it was.
 	local core: { [Enum.CoreGuiType]: boolean } = {}
 	for _, kind in Enum.CoreGuiType:GetEnumItems() do
@@ -133,6 +125,7 @@ local function photo(prompt: ProximityPrompt)
 	camera.FieldOfView = 50
 	RunService:BindToRenderStep("PlazaPhoto", Enum.RenderPriority.Camera.Value + 1, function()
 		camera.CFrame = CFrame.lookAt(cameraAt, lookAt)
+		sweep()
 	end)
 	-- The shutter: a white flash.
 	local flashGui = Instance.new("ScreenGui")
@@ -176,6 +169,8 @@ local function photo(prompt: ProximityPrompt)
 		busy = false
 	end)
 end
+
+PlazaClient.photo = photo -- (the photo spot's action: also the Studio check of the clean frame)
 
 local function sounds()
 	task.spawn(function()

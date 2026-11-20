@@ -530,6 +530,18 @@ end
 
 local function buildShop()
 	local window = C.Window({ name = "Events", title = "Shop", theme = "shop", icon = "shop" })
+	-- (V9-0t: "Have a code?" opens the CODES window: codes from the game page.)
+	C.Button({
+		name = "HaveCode",
+		text = "HAVE A CODE?",
+		role = "info",
+		size = UDim2.new(0, 220, 0, 44),
+		layoutOrder = -20,
+		parent = window.body,
+		onActivated = function()
+			Controller.open("Codes")
+		end,
+	})
 	buildOffers(window) -- (release 0.20.0)
 	buildPasses(window)
 	queueLabel = C.Text("caption", "", {

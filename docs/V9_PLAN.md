@@ -1369,3 +1369,25 @@ Write the baseline into `docs/PERF.md`.
   - **Tests:** T94 SKIPs with the reason; T27 checks the refusal instead.
   - **T26:** its sleepy-crowd check was chance-dependent (a passer-by could start a chat). The person is now kept to itself (`CrowdService.aloneForTest`).
   - **To bring it back:** set `ARENA_ENABLED = true`.
+- 21 Nov 2026, V9-0d re-review 2: 7.9 (the photo left the HUD off: Enabled signals run deferred). V9-0s 8.8 (pass). Fix round 3 (PC):
+  - **The photo:** no signals. One sweep a frame keeps every ScreenGui off and notes any its owner switched on; at the end each goes back to its state before the photo, or on if its owner switched it on (a gui made during the photo counts as on). Live check in Studio: 22 guis on before, 1 (the flash) during, 23 after, none missing. `PlazaClient.photo` is public for this check.
+  - **A floor step** keeps the walkway points either side of it, so the split lands within a stud of the step.
+  - **The maps at 4000 studs**, captured on the Island: sky and clouds above, the sea to the horizon, nothing under the map.
+  - **Arena goals:** daily goals are derived (`DailyGoals.forDay`) from the filtered pool, so none sticks. Only a slot's progress on publish day can carry to the new goal in that slot.
+  - **Tests:** T47 and T63 judge a player without passes (`OfferService.resetForTest`; the creator owns all passes in Studio).
+- 21 Nov 2026, V9-0t DONE (PC): codes.
+  - **The codes:** `Shared/Codes` (pure), case- and space-blind, one use per profile (`eco.codes`):
+    - RELEASE: 500 BOLTS;
+    - BETA: 300 BOLTS + Railgun free 30 min, only while `Config.BETA`;
+    - RAGDOLL: 250 BOLTS;
+    - CHRISTMAS: 750 BOLTS + Fire Trail 24 h, 1-31 Dec UTC.
+  - **Rules:** none tied to likes (LIKE_CODES stay off). A code before its start answers like an unknown one (no hint); after its end, "This code has expired".
+  - **Server** (`EconomyService.redeem`):
+    - 5 tries a minute;
+    - BOLTS exact (never doubled);
+    - the try via `TrialService.grant(player, id, seconds)`;
+    - the cosmetic via MapShopService's `Try_<key>`, kept in the new `eco.perks` so it carries across visits;
+    - the reply goes to the client as Economy "Code" {ok, text}.
+  - **Client:** `CodesWindow`, a small window: text box, REDEEM, a result line (green with confetti and the purchase sound, red with a shake). It opens from MENU "CODES" and SHOP "HAVE A CODE?". A reply while it is shut is a toast (the old EXPERIMENTS box).
+  - **Tests:** T169_Codes passes; saves in tests go to the memory store.
+  - **For the store description:** the codes RELEASE, BETA and RAGDOLL now; CHRISTMAS from 1 Dec.

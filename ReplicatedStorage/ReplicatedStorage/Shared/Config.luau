@@ -335,6 +335,8 @@ local Config = {
 	-- Places (so not on the Map Board, the portal, the Maps window or MENU), not built, no arena games,
 	-- invites or daily arena goals, and no trip goes there. true brings it all back.
 	ARENA_ENABLED = false,
+	-- V9-0t: the game is in beta (the BETA code works while true; V9-0l's free GOD MODE reads it too).
+	BETA = true,
 	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges
 	-- (V3Assets VergeBushRound/Leafy, VergeFlowers*; tools/ImportV9Foliage.luau). false = the old balls and blocks.

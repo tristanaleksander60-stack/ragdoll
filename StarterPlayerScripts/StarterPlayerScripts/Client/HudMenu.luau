@@ -34,6 +34,7 @@ local ENTRIES: { any } = {
 	-- there SETTINGS had no way in at all.)
 	{ window = "Settings", text = "SETTINGS", role = "neutral", phoneOnly = true, columnToo = true },
 	{ window = "Like", text = "\u{2B50} FAVORITE", role = "go" }, -- (round 4: LikePrompt)
+	{ window = "Codes", text = "CODES", role = "go" }, -- (V9-0t: codes from the game page: CodesWindow)
 	{ window = "Controls", text = "KEYS", role = "neutral", keyboardOnly = true },
 }
 -- UI v2: the drawn icon for each MENU entry (DrawnIcons names; the same pictures as the launchers).
@@ -48,6 +49,7 @@ local MENU_ICONS: { [string]: string } = {
 	Creator = "camera",
 	Settings = "settings",
 	Like = "star",
+	Codes = "gift",
 	Controls = "keys",
 }
 HudMenu.ICONS = MENU_ICONS

@@ -125,17 +125,19 @@ end
 
 -- V6-2: the owner gives a player a free try from the admin menu (no store, no daily limit; the
 -- same attributes and timer as a normal try, so it ends the same way).
-function TrialService.grant(player: Player, id: string): boolean
+-- (V9-0t: `seconds` for a code's longer try; TRIAL_SECONDS when nil.)
+function TrialService.grant(player: Player, id: string, seconds: number?): boolean
 	local toy = Toys.byId[id]
 	if not toy or toy.unlockAt <= 0 then
 		return false
 	end
+	local length = seconds or TrialService.SECONDS
 	local prev = player:GetAttribute("TrialToken")
 	local token = (if type(prev) == "number" then prev else 0) + 1
 	player:SetAttribute("TrialToken", token)
 	player:SetAttribute("TrialWeapon", toy.id)
-	player:SetAttribute("TrialUntil", Workspace:GetServerTimeNow() + TrialService.SECONDS)
-	task.delay(TrialService.SECONDS, finish, player, token)
+	player:SetAttribute("TrialUntil", Workspace:GetServerTimeNow() + length)
+	task.delay(length, finish, player, token)
 	return true
 end
 

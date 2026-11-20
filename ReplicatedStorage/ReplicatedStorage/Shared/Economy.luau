@@ -17,7 +17,8 @@ export type Eco = {
 	journal: { [string]: boolean },
 	day: number, -- the UTC day `daily` belongs to
 	daily: { [string]: boolean }, -- today's daily experiments done
-	codes: { [string]: boolean }, -- like-milestone codes redeemed
+	codes: { [string]: boolean }, -- codes redeemed (V9-0t: Shared/Codes)
+	perks: { [string]: number }, -- V9-0t: a code's timed cosmetic (map-shop key) -> server time it ends
 	got: { string }, -- release 0.20.0: purchase ids of offers already granted (OfferService; newest last)
 }
 
@@ -62,7 +63,7 @@ end
 
 -- A stored eco table (or nothing) checked into a clean one.
 function Economy.clean(raw: unknown): Eco
-	local e: Eco = { bolts = 0, counts = {}, journal = {}, day = 0, daily = {}, codes = {}, got = {} }
+	local e: Eco = { bolts = 0, counts = {}, journal = {}, day = 0, daily = {}, codes = {}, perks = {}, got = {} }
 	if type(raw) ~= "table" then
 		return e
 	end
@@ -74,6 +75,14 @@ function Economy.clean(raw: unknown): Eco
 			local n = num(v, 0, 1e9)
 			if type(k) == "string" and #k <= 16 and n then
 				e.counts[k] = n
+			end
+		end
+	end
+	if type(t.perks) == "table" then
+		for k, v in t.perks do
+			local n = num(v, 0, 1e11)
+			if type(k) == "string" and #k <= 24 and n then
+				e.perks[k] = n
 			end
 		end
 	end

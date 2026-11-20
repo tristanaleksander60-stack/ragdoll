@@ -16,6 +16,8 @@ local function body(player: Player): string
 	assert(p, "no profile")
 	local keep = { takedowns = p.takedowns, owned = table.clone(p.owned) }
 	player:SetAttribute("UnlockAll", nil)
+	-- (With live ids the creator owns every pass in Studio: judge a player with none.)
+	;(require(script.Parent.Parent:WaitForChild("Systems"):WaitForChild("OfferService")) :: any).resetForTest(player)
 	p.takedowns = 0
 	ProgressService.setOwnedForTest(player, {})
 	TrialService.resetForTest(player)

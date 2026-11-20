@@ -46,6 +46,8 @@ return {
 		assert(live, "the profile's economy is not there")
 		local eco = live :: Economy.Eco
 		local saved = Economy.clean(eco) -- (put back after)
+		-- (With live ids the creator owns 2x BOLTS in Studio: judge a player without passes.)
+		;(require(script.Parent.Parent:WaitForChild("Systems"):WaitForChild("OfferService")) :: any).resetForTest(player)
 		local today = EconomyService.dailyToday()
 		assert(#today >= Config.DAILY_COUNT, "not the day's daily experiments") -- (+1 advent card in December)
 		eco.daily = {}
