@@ -32,7 +32,6 @@ LabZones.MACHINES = table.freeze({
 	{ part = "CannonPad", label = "HUMAN CANNON" },
 	{ part = "Bullseye", label = "BULLSEYE" },
 	{ part = "LavaPool", label = "LAVA PIT" },
-	{ part = "SpikeBlock", label = "SPIKE BLOCKS" },
 	{ part = "MaceBall", label = "SPINNING MACE" },
 	{ part = "SwingBall", label = "WRECKING BALL" },
 	{ part = "TrampolinePad", label = "TRAMPOLINE" },

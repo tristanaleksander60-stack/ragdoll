@@ -267,8 +267,8 @@ end
 local function buildWreckingBall()
 	local x, z = 40, -38
 	local height = 24
-	part("Post", Vector3.new(2, height, 2), at(x - 8, height / 2, z), DARK, Enum.Material.Metal)
-	part("Post", Vector3.new(2, height, 2), at(x + 8, height / 2, z), DARK, Enum.Material.Metal)
+	local postA = part("Post", Vector3.new(2, height, 2), at(x - 8, height / 2, z), DARK, Enum.Material.Metal)
+	local postB = part("Post", Vector3.new(2, height, 2), at(x + 8, height / 2, z), DARK, Enum.Material.Metal)
 	local beam = part("Beam", Vector3.new(18, 2, 2), at(x, height + 1, z), DARK, Enum.Material.Metal)
 	-- Walkway under it, in the direction it swings.
 	part("Walkway", Vector3.new(6, 0.4, 30), at(x, 0.2, z), YELLOW)
@@ -290,6 +290,76 @@ local function buildWreckingBall()
 	weld.Part0 = arm
 	weld.Part1 = ball
 	weld.Parent = arm
+	if (Config :: any).WRECKING_V2 then
+		-- Owner, 20 Nov 2026: "make the swinging ball much nicer". The physics stay the same parts
+		-- (arm, ball, hinge); only the look changes: a dark worn steel ball with a lifting lug on a
+		-- real chain, hung from a yellow A-frame gantry with braces, an I-beam and concrete feet,
+		-- over a hazard-striped run. Pictures are weightless and never collide.
+		local STEEL = Color3.fromRGB(46, 48, 53)
+		local PAINT = Color3.fromRGB(232, 176, 38)
+		local function deco(name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, onto: BasePart?, shape: Enum.PartType?): Part
+			local p = part(name, size, cf, color, material, shape)
+			p.CanCollide = false
+			p.CanQuery = false
+			p.CanTouch = false
+			p.CastShadow = true
+			if onto then
+				p.Anchored = false
+				p.Massless = true
+				local w = Instance.new("WeldConstraint")
+				w.Part0 = onto
+				w.Part1 = p
+				w.Parent = p
+			end
+			return p
+		end
+		-- The ball: worn dark steel, a ring band and a lug on top.
+		ball.Color = STEEL
+		ball.Material = Enum.Material.Metal
+		ball.Reflectance = 0.06
+		local top = pivot - Vector3.new(0, armLength - 1, 0)
+		deco("BallBand", Vector3.new(1.1, 8.3, 8.3), CFrame.new(pivot - Vector3.new(0, armLength + 3, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(34, 35, 39), Enum.Material.Metal, ball, Enum.PartType.Cylinder)
+		deco("Lug", Vector3.new(1.6, 1.4, 0.7), CFrame.new(top - Vector3.new(0, 0.3, 0)), Color3.fromRGB(70, 72, 78), Enum.Material.Metal, ball)
+		deco("LugPin", Vector3.new(0.5, 2.2, 2.2), CFrame.new(top + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(90, 92, 98), Enum.Material.Metal, ball, Enum.PartType.Cylinder)
+		-- The chain: links turned in turn, along the (now hidden) arm.
+		arm.Transparency = 1
+		local n = 0
+		for y = 0.6, armLength - 1, 1.05 do
+			n += 1
+			local turn = if n % 2 == 0 then math.rad(90) else 0
+			local c = CFrame.new(pivot - Vector3.new(0, y, 0)) * CFrame.Angles(0, turn, 0)
+			deco("LinkA", Vector3.new(0.22, 1.25, 0.22), c * CFrame.new(-0.28, 0, 0), Color3.fromRGB(64, 66, 72), Enum.Material.Metal, arm)
+			deco("LinkB", Vector3.new(0.22, 1.25, 0.22), c * CFrame.new(0.28, 0, 0), Color3.fromRGB(64, 66, 72), Enum.Material.Metal, arm)
+		end
+		-- The gantry: an A-frame each side (two legs leaning in, a brace), feet, an I-beam, a pulley.
+		for _, sx in { -8, 8 } do
+			local foot = at(x + sx, 0.5, z).Position
+			for _, sz in { -4.5, 4.5 } do
+				local base = foot + Vector3.new(0, 0, sz)
+				local head = (at(x + sx, height, z)).Position
+				local mid = (base + head) / 2
+				deco("Leg", Vector3.new(1.4, (head - base).Magnitude, 1.4), CFrame.lookAt(mid, head) * CFrame.Angles(math.rad(90), 0, 0), PAINT, Enum.Material.Metal)
+				deco("Footing", Vector3.new(3, 1, 3), CFrame.new(base), Color3.fromRGB(150, 150, 146), Enum.Material.Concrete)
+			end
+			deco("Brace", Vector3.new(0.8, 0.8, 7), CFrame.new(foot + Vector3.new(0, height * 0.42, 0)), PAINT, Enum.Material.Metal)
+		end
+		beam.Transparency = 1
+		postA.Transparency = 1 -- (they still stop a body; the A-frames are the picture)
+		postB.Transparency = 1
+		local beamAt = at(x, height + 1, z)
+		deco("BeamWeb", Vector3.new(19, 1.6, 0.5), beamAt, Color3.fromRGB(58, 60, 66), Enum.Material.Metal)
+		deco("BeamFlange", Vector3.new(19, 0.3, 1.8), beamAt * CFrame.new(0, 0.95, 0), Color3.fromRGB(58, 60, 66), Enum.Material.Metal)
+		deco("BeamFlange", Vector3.new(19, 0.3, 1.8), beamAt * CFrame.new(0, -0.95, 0), Color3.fromRGB(58, 60, 66), Enum.Material.Metal)
+		deco("Pulley", Vector3.new(1, 2.4, 2.4), CFrame.new(pivot + Vector3.new(0, 0.2, 0)), PAINT, Enum.Material.Metal, nil, Enum.PartType.Cylinder)
+		-- The run under it: black and yellow hazard stripes, not a yellow plank.
+		local walk = folder:FindFirstChild("Walkway")
+		if walk and walk:IsA("BasePart") then
+			walk.Transparency = 1
+		end
+		for k = 0, 9 do
+			deco("RunStripe", Vector3.new(6, 0.42, 3), at(x, 0.21, z - 13.5 + k * 3), if k % 2 == 0 then PAINT else Color3.fromRGB(28, 28, 30), Enum.Material.SmoothPlastic)
+		end
+	end
 	-- A servo hinge along X: it swings along Z, across the walkway.
 	local a0 = Instance.new("Attachment")
 	a0.Parent = beam
@@ -872,7 +942,9 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	if lab then
 		buildLava()
 		buildBullseye()
-		buildSpikes()
+		if (Config :: any).SPIKE_BLOCKS ~= false then
+			buildSpikes() -- (owner, 20 Nov 2026: the red spike plates are gone: Config.SPIKE_BLOCKS)
+		end
 		buildStations() -- (round 5: PUT RAGDOLL HERE)
 		buildBigButton() -- (v3 Phase C)
 		-- Round 5, phase 3: round pedestals under the things to try.
