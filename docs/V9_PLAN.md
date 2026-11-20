@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -284,6 +284,40 @@ So a player can stand there with no standing target.
 - With no owner in the lab, the loop is idle.
 
 **Capture:** after 20 s of nonstop shooting, standing dummies are still in view, on PC and phone.
+
+## V9-0k The hub floor as soft 3D pads, not flat white tiles (owner, 21 Nov)
+> "Gulvet ligner lige nu hvide fliser, det skal mere ligne 3d puder agtig."
+
+**Now:** V9-0h laid the hub floor as a light tile texture on a flat part, so it reads as flat white bathroom tiles.
+
+**Target** (as in the leader's hub, `leader_hub.webp`): big square slabs that look **3D and soft, like padded cushions or rounded concrete pads**:
+- each slab slightly raised, with a rounded/bevelled edge catching the light;
+- a dark groove between slabs;
+- a light warm grey, not pure white;
+- a tiny colour and roughness variation per slab.
+
+**How** (pick the cheapest that really looks 3D; check it on the low tier):
+1. **Real geometry, instanced:** one rounded-slab MeshPart (a Creator Store bevelled tile/pad mesh, or a rounded box) reused for every slab.
+   - The same MeshId, so Roblox instances it cheaply.
+   - About 12-16 studs per slab, about 0.6-1 stud thick, with a 0.3-0.5 stud groove.
+   - Anchored, CanQuery/CanTouch off on the visual slabs. One flat invisible collision floor underneath keeps the physics and the ragdolls exactly as now (no bumps).
+   - Only the owner's lab is drawn (PlotPrivacy), so the part count stays low. Use a slab budget per lab in Config.
+2. **Or a PBR MaterialVariant with a strong pillow normal map:** a ColorMap + NormalMap + RoughnessMap of rounded pads, `StudsPerTile` = the slab size, uploaded through Studio MCP like the icons. Use it if 1 costs too much on phones.
+3. **Possibly both:** real slabs near the spawn, the MaterialVariant further out.
+
+**Rules:**
+- **Light:** the light shading comes from the bevel. It must read in the V9-0b bright light and still let white dummies stand out (a greyscale check: dummies brighter than the floor).
+- **No z-fighting or shimmer** (V9-0d scan = 0).
+- **Ground level:** cars drive smoothly; the trampoline, ring and machines sit flush on it.
+- **Christmas:** snow from 1 Dec lies lightly on top.
+- **Switch:** `Config.HUB_FLOOR_PADS`.
+
+**Tests:** T163 extended.
+- The floor collision is one flat surface.
+- The slab count is within the budget.
+- No overlap pairs.
+
+**Capture:** spawn view, close-up and top-down, before and after, PC and phone, next to the leader's floor.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
