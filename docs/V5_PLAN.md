@@ -49,3 +49,4 @@ Ordered by how much of a player's screen time each one covers. Every step:
   - Bug fixed: the weapon cards read "POWE". The stat names now get 70 units, and LayoutCheck measures with a 15 % margin.
   - Studio-only capture hook: the player attribute `DevOpen` = a window name opens it ("Weapons" opens the catalog).
   - T90 updated (press 0.96 under Clean); T21/T35/T90 pass.
+- **V5-4 (part):** the lightning storm's cloud is a volume of dark smoke puffs (a particle emitter in a flat box), not plastic balls. Seen in Studio.

@@ -328,12 +328,28 @@ end
 function Surprises.LightningStorm(center: Vector3): Stop
 	local cloud = model("StormCloud")
 	local h = 55
-	for i = 1, 9 do
-		local p = block(cloud, "Puff", Vector3.one * rng:NextNumber(16, 26), CFrame.new(center + Vector3.new(rng:NextNumber(-34, 34), h + rng:NextNumber(-2, 4), rng:NextNumber(-40, 30))), Color3.fromRGB(70, 74, 86), Enum.PartType.Ball)
-		p.Material = Enum.Material.SmoothPlastic
-		p.Transparency = 0.1
-		p.CastShadow = false
-	end
+	-- V5-4: a soft storm cloud of smoke puffs filling a wide flat box (balls read as plastic): an
+	-- invisible slab with a volume emitter, dark and slow; it is there from the first second.
+	local slab = block(cloud, "CloudBody", Vector3.new(78, 8, 74), CFrame.new(center + Vector3.new(0, h, -5)), Color3.fromRGB(60, 62, 70))
+	slab.Transparency = 1
+	slab.CastShadow = false
+	local puffs = Instance.new("ParticleEmitter")
+	puffs.Name = "Puffs"
+	puffs.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	puffs.Shape = Enum.ParticleEmitterShape.Box
+	puffs.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+	puffs.Color = ColorSequence.new(Color3.fromRGB(62, 64, 74), Color3.fromRGB(88, 90, 100))
+	puffs.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.2, 0.15), NumberSequenceKeypoint.new(0.8, 0.2), NumberSequenceKeypoint.new(1, 1) })
+	puffs.Size = NumberSequence.new(22, 30)
+	puffs.Lifetime = NumberRange.new(5, 7)
+	puffs.Rate = 22
+	puffs.Speed = NumberRange.new(0.5, 1.5)
+	puffs.SpreadAngle = Vector2.new(180, 180)
+	puffs.RotSpeed = NumberRange.new(-6, 6)
+	puffs.Rotation = NumberRange.new(0, 360)
+	puffs.LightInfluence = 0.6
+	puffs.Parent = slab
+	puffs:Emit(60)
 	local made: { Instance } = { cloud }
 	local cloudPivot = cloud:GetPivot()
 	local strike = every(0.7)
