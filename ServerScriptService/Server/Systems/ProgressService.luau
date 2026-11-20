@@ -1725,6 +1725,9 @@ local function onJoin(player: Player)
 	showStats(player)
 	-- (The client trusts what is locked only from here, after the real takedowns and owned tools
 	-- went out: BarRules.)
+	-- Audit area 1 (research: the leaders show a new player almost nothing for 90 s): a player with
+	-- under NEWCOMER_SECONDS played in all gets the first-visit flow (FirstVisit on the client).
+	player:SetAttribute("Newcomer", ((profile.playSeconds or 0) < (Config :: any).NEWCOMER_SECONDS))
 	player:SetAttribute("ProgressLoaded", ok == true)
 	sendState(player)
 	ProgressService.sendPrefs(player)

@@ -43,3 +43,18 @@
 - Area 6: the Island's beach huts are real huts: stilts, deck and step, pastel plank walls with white trim, a gable roof with overhang, a framed door and a shuttered window. Before, they were flat boxes with lids.
 - Area 6, finding (P1): from the Island, Downtown's skyline shows across the sea (the maps are 1200 studs apart). Needs per-map haze or a sea horizon.
 - Area 6 (fixed): the open-air maps have their own light profile "Outdoor" with a thicker sea haze (Atmosphere density +0.18), so the next map's skyline fades out across the water.
+- **Area 1: the first visit, copied from the leaders** (docs/RESEARCH_FIRST_SESSION.md; `Config.FIRST_VISIT`, `NEWCOMER_SECONDS` 300, server attribute `Newcomer`).
+  - **Client/FirstVisit:** one objective line at the top.
+    - Steps: "Knock a dummy over!", then "Fire yourself from the CANNON" (the cannon gets a pulsing yellow outline), then "Get hit by the WRECKING BALL", then after the HUD comes in "Open WEAPONS for more".
+    - It looks the lab up again while the lab streams in.
+  - **Held back until QUIET_START (90 s)** for a newcomer:
+    - on PC: the left and right launcher columns, the key chips, LAB VIEW, the replay button and the long help line (now just "Click a dummy to use the Popper");
+    - the lab's signs (today's machine light and sign, NEW tags);
+    - the daily-egg and "N weapons unlocked" toasts.
+  - **Then** the HUD slides in one piece a second, with the key chips about 10 s later.
+  - **Timings:**
+    - the first experiment card at 120 s (was 30);
+    - the first-wow UFO at 110 s (was 50; no event before the reveal).
+  - Returning players see none of this.
+  - Tests: T23/T38/T45/T55/T60/T98 pass. Captures FV_10s and FV_cannon3.
+- **Area 1 score: 5 → 8.** Left: a phone check of the objective line's spot; a real cannon/wrecking ride through the steps (MCP cannot press keys).

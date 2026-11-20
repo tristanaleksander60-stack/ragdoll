@@ -212,7 +212,14 @@ end
 -- (fire, the move stick, the bar, WEAPONS, SHOP, MENU, RAGDOLL); these wait (LAB VIEW and RUN), and
 -- BUILD lives in MENU (SANDBOX) on a phone. Config.QUIET_START.
 HudSlots.PHONE_LATER = { View = true, Sprint = true }
+-- Audit area 1: a newcomer's first visit (Client/FirstVisit sets newcomerUntil, a time()) keeps these back
+-- on every screen until the HUD comes in.
+HudSlots.NEWCOMER_LATER = { View = true, MouseHelp = true, Replay = true }
+HudSlots.newcomerUntil = 0
 function HudSlots.shownNow(name: string, ctx: Context, now: number, quietStart: number): boolean
+	if HudSlots.NEWCOMER_LATER[name] and now < HudSlots.newcomerUntil then
+		return false
+	end
 	if ctx.phone and HudSlots.PHONE_LATER[name] then
 		return now >= quietStart
 	end

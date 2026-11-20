@@ -48,6 +48,7 @@ local ViewMode = require(Client:WaitForChild("ViewMode"))
 local ToolCatalog = require(Client:WaitForChild("ToolCatalog"))
 local Icons = require(UI:WaitForChild("LihFolkUIIcons"))
 local KitStyle = require(Client:WaitForChild("KitStyle"))
+local HudSlots = require(Client:WaitForChild("HudSlots")) -- (audit area 1: the newcomer window)
 local Toast = require(Client:WaitForChild("Toast"))
 local ToolPicture = require(script.Parent:WaitForChild("ToolPicture"))
 local NextUnlocks = require(script.Parent:WaitForChild("NextUnlocks"))
@@ -360,6 +361,10 @@ function PokeController.helpText(id: string, lab: boolean): string
 		first = "Click the ground to put down the " .. toy.label
 	else
 		first = "Click a dummy to use the " .. toy.label
+	end
+	-- (Audit area 1: a newcomer's first visit shows only what to do now, until the HUD comes in.)
+	if time() < HudSlots.newcomerUntil then
+		return first
 	end
 	-- The keys as they are bound now (a part whose key is unbound is left out).
 	local parts = { first }

@@ -47,6 +47,13 @@ local nextLabel: TextLabel? = nil
 local nextCount: TextLabel? = nil
 local nextFill: Frame? = nil
 local chips: Frame? = nil
+-- Audit area 1: the first-visit flow (FirstVisit) holds parts back until it reveals them.
+local leftCol: Frame? = nil
+local rightCol: Frame? = nil
+local held: { [string]: boolean } = {}
+function HudV3.hold(name: string, on: boolean)
+	held[name] = if on then true else nil
+end
 
 local function corner(parent: Instance, r: number)
 	local c = Instance.new("UICorner")
@@ -384,7 +391,7 @@ local function step()
 		g.Enabled = on
 	end
 	if tg then
-		tg.Enabled = on
+		tg.Enabled = on and not held.Top
 	end
 	local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 	local Controller = require(UI:WaitForChild("LihFolkUIController"))
@@ -410,7 +417,13 @@ local function step()
 	end
 	local c = chips
 	if c then
-		c.Visible = on and UserInputService.KeyboardEnabled and not ViewMode.isTouch()
+		c.Visible = on and UserInputService.KeyboardEnabled and not ViewMode.isTouch() and not held.Chips
+	end
+	if leftCol then
+		leftCol.Visible = not held.Left
+	end
+	if rightCol then
+		rightCol.Visible = not held.Right
 	end
 	local s = scaleObj
 	if s then
@@ -457,6 +470,7 @@ function HudV3.start()
 	left.Position = UDim2.new(0, HudV3.MARGIN, 1, -(HudV3.MARGIN + HudV3.CHIPS_H + 8))
 	left.Size = UDim2.fromOffset(HudV3.CARD.X, 3 * HudV3.CARD.Y + 2 * HudV3.GAP)
 	left.Parent = root
+	leftCol = left
 	local ll = Instance.new("UIListLayout")
 	ll.Padding = UDim.new(0, HudV3.GAP)
 	ll.SortOrder = Enum.SortOrder.LayoutOrder
@@ -481,6 +495,7 @@ function HudV3.start()
 	right.Position = UDim2.new(1, -HudV3.MARGIN, 0, 150)
 	right.Size = UDim2.fromOffset(2 * HudV3.CARD.X + HudV3.GAP, HudV3.CARD.Y)
 	right.Parent = root
+	rightCol = right
 	local rl = Instance.new("UIListLayout")
 	rl.FillDirection = Enum.FillDirection.Horizontal
 	rl.HorizontalAlignment = Enum.HorizontalAlignment.Right

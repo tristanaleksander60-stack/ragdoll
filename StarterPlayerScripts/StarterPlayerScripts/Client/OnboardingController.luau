@@ -188,12 +188,19 @@ local function playReplay(at: number, first: boolean)
 		askChoiceLater() -- the card that waited (also when the replay had too little to show)
 		Net.event(Net.Names.Onboarding):FireServer(if completed then "ReplayDone" else "ReplaySkipped")
 		release()
-		Toast.show(Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
+		-- (Audit area 1: a newcomer hears this once the HUD is in, never over the first objective.)
+		task.delay(math.max(0, HudSlots.newcomerUntil - time()), function()
+			Toast.show(Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
+		end)
 		PokeController.highlightTools()
 	end
 end
 
 local function offerReplay(at: number)
+	-- (Audit area 1: not in a newcomer's first 90 s: one objective, nothing else to press.)
+	if not HudSlots.shownNow("Replay", HudSlots.context(ViewMode.isTouch(), ViewMode.isLab()), time(), Config.QUIET_START) then
+		return
+	end
 	offeredAt = at
 	if not replayButton then
 		-- Top right, under LAB VIEW (HudSlots keeps it clear of everything else).
@@ -553,7 +560,10 @@ local function unlockFallback()
 		stopWatchingGreeter()
 		Net.event(Net.Names.Onboarding):FireServer("ReplaySkipped")
 		release()
-		Toast.show(Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
+		-- (Audit area 1: a newcomer hears this once the HUD is in, never over the first objective.)
+		task.delay(math.max(0, HudSlots.newcomerUntil - time()), function()
+			Toast.show(Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
+		end)
 		PokeController.highlightTools()
 	end
 end

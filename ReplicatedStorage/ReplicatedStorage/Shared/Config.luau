@@ -41,7 +41,7 @@ local Config = {
 	--   PHONE_HUD_MAX7: a phone shows the experiment card in the big WEAPONS button's place (the bar
 	--   keeps its own WEAPONS slab): fire, stick, bar, experiment, SHOP, MENU, RAGDOLL
 	EXPERIMENTS = true,
-	EXPERIMENT_FIRST_AT = 30, -- s into a visit (the first-minute bar must be free too)
+	EXPERIMENT_FIRST_AT = 120, -- (audit area 1: the leaders show no card before the HUD comes in at 90 s; was 30) -- s into a visit (the first-minute bar must be free too)
 	XRAY_REPLAY = true,
 	PHONE_HUD_MAX7 = true,
 	-- Phase 2 (reasons to stay): BOLTS, the BONE JOURNAL, Daily Experiments, rationed eggs, the
@@ -148,7 +148,9 @@ local Config = {
 	SLOWMO_AUTO_GAP = 8, -- s between automatic slow moments on big hits
 	LAB_SURPRISES = true, -- v4 C4: a short surprise (Surprises.MINI) by itself now and then in your own lab
 	LAB_SURPRISE_GAP = Vector2.new(150, 240), -- s between them (random in the range)
-	FIRST_WOW_AT = 50, -- s into a visit: a UFO over your own lab once (v4 E1: the first wow by 60 s)
+	FIRST_WOW_AT = 110, -- s into a visit: a UFO over your own lab once (audit area 1: after the 90 s reveal, never during the first-shot minute; was 50)
+	FIRST_VISIT = true, -- audit area 1: the first-visit flow (Client/FirstVisit): a bare screen and one objective line, the HUD slides in at QUIET_START
+	NEWCOMER_SECONDS = 300, -- played in all under this = a newcomer (the first-visit flow)
 	LAB_ZONES = true, -- v4 C1: lab zones, today's machine, NEW tags (Server/Systems/LabZones)
 	UI_CLEAN = true, -- v4 D2: calm hand-made look (leaderboards as wall panels, no neon frames/crowns/glow; see LeaderboardService.STYLE)
 	ARENA_V2 = true, -- v4 D1: the Game Arena as a sports hall (track floor, lanes, concrete, padding) instead of the pink room

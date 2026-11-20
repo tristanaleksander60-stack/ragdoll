@@ -557,6 +557,11 @@ function ProgressUI.start()
 				Toast.show(string.format("DAY %d GIFT: the %s is yours! It's on your bar.", streak, string.upper(weapon.label)), Color3.fromRGB(120, 230, 140))
 				C.playSound("reward")
 			end
+			-- (Audit area 1: a newcomer's first 90 s carry one objective only; the daily news waits.)
+			local newcomerUntil = if game:GetService("Players").LocalPlayer:GetAttribute("Newcomer") == true then Config.QUIET_START else 0
+			if time() < newcomerUntil then
+				task.wait(newcomerUntil - time() + 3)
+			end
 			Toast.show(if streak <= 1
 				then "Daily egg! Come back tomorrow for another."
 				else string.format("Daily egg%s! Day %d in a row. Come back tomorrow!", if (tonumber(d.eggs) or 1) > 1 then "s" else "", streak), Color3.fromRGB(255, 154, 205))
