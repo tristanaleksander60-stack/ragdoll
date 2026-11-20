@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -71,6 +71,27 @@ Run all of `docs/FIX_PATHS_SHOP.md`:
 **Test:** T158_HitNotTalk.
 - 30 quick clicks/taps on a dummy at 3-8 studs open the Talk panel 0 times.
 - E (or a hold on touch) next to a calm dummy still opens it.
+
+## V9-0f GOD MODE lives in the SHOP like every other pass (owner, 21 Nov; quick, do it next)
+> "Fiks så at god menuen ikke er synlig for alle men bare er i shop som de andre passes."
+
+**Now (0.30.0):** GOD MODE has its own HudV3 square between Shop and Lab off phones, and a MENU entry on phones. Every player sees it.
+
+**Change:**
+- **No GOD MODE square or MENU entry for players without the pass.** HudV3Layout.LEFT goes back to Shop, Lab. The God window (`Client/GodMode`) is not reachable from the HUD for them.
+- **In the SHOP:**
+  - GOD MODE is a normal pass card among the others, in the same style and order as `Shop.PASSES` / OFFERS: picture `art/icons/god.png`, name, one line ("Spawn dummies anywhere, twice as many, with a golden beam"), price R$199, BUY.
+  - It has a **TRY 60 s** button on the card that starts the existing free trial (`DummySpawn.startTrial`, once a visit) and opens the God window for those 60 s.
+- **Owners of the pass** (player attribute `God`): the God window opens from a small GOD button. It shows **only for them**, in the HUD square off phones and as a MENU entry on phones. They can also open it from their owned card in SHOP ("OPEN").
+- **During a trial:** the same small button shows with a countdown, then it disappears again.
+- **Unchanged:** the server rules stay as they are (`godGated` / `mayCreate`, the trial once a visit, the device caps).
+- **Gamepad:** reaches the card and the button.
+- **Layout:** LayoutCheck shows 0 problems with and without the pass.
+
+**Tests:** update T148_GodMode.
+- Without the pass and the trial: no GOD launcher in the HUD or MENU, and the card is in SHOP.
+- TRY opens the window and starts the trial.
+- With the pass (`OfferService.grantPass`): the launcher shows and the window opens.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
