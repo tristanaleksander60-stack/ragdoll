@@ -1481,3 +1481,6 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - **Leaving:** the last admin to leave resets gravity, time, weather and spawned bodies.
   - **Never admin:** a play-as-newcomer visit.
   - **Tests:** T124 passes; T101, T71, T43 and T29 pass.
+- **V8-0.1 prepared (21 Nov):** `docs/SITTING1.md`, checked against the code. It holds the honest description; the product texts (Dummy Rain and Mega Bomb happen in the buyer's lab; Zero-G, Bouncy Floor and Flash Freeze hit the whole server; the weapon tiers pay 80 BOLTS when all are owned); events; the audience/maturity steps; and the owner's decisions A-G.
+  - **Captures:** left to the owner's Director (F8/H). A Studio capture showed the HUD, real usernames on the leaderboards and the owner's name on the lab sign.
+  - **Place:** saved with the admin feature. 0.26.0 still waits for Alt+P.
