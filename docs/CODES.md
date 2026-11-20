@@ -1,6 +1,6 @@
 # Ragdoll Havoc codes
 
-The codes live in `ReplicatedStorage/ReplicatedStorage/Shared/Codes.luau` (V9-0t). Players type them in **More → CODES** or **SHOP → HAVE A CODE?**.
+The codes live in `ReplicatedStorage/ReplicatedStorage/Shared/Codes.luau` (V9-0t). Players type them in **SHOP → HAVE A CODE?** (every device) or **More → CODES** (computer, tablet, console).
 
 - Upper and lower case are the same, and spaces are ignored.
 - Each player can use each code once.
@@ -30,13 +30,13 @@ The codes live in `ReplicatedStorage/ReplicatedStorage/Shared/Codes.luau` (V9-0t
 Now:
 
 ```
-🎁 CODES (More → CODES): RELEASE · BETA · RAGDOLL
+🎁 CODES (SHOP → HAVE A CODE?): RELEASE · BETA · RAGDOLL
 ```
 
 From 1 December:
 
 ```
-🎁 CODES (More → CODES): RELEASE · BETA · RAGDOLL · CHRISTMAS
+🎁 CODES (SHOP → HAVE A CODE?): RELEASE · BETA · RAGDOLL · CHRISTMAS
 ```
 
 ## Adding a code

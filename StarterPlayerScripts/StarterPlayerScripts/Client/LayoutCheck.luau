@@ -455,8 +455,8 @@ function LayoutCheck.run(): string
 				-- box covers it; the check below makes sure the cap holds.)
 				if phone then
 					local NoticeRules = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("NoticeRules")) :: any
-					local pw, ph = NoticeRules.smallBox(s.size, s.size.Y > s.size.X)
-					if math.min(tw, pw) > tw or ph > toastH(s.size) then
+					local _, ph = NoticeRules.smallBox(s.size, s.size.Y > s.size.X)
+					if ph > toastH(s.size) then -- (its width is capped to the lane by Toast)
 						problems += 1
 						table.insert(lines, s.name .. ": the compact notice pill is bigger than the toast lane")
 					end

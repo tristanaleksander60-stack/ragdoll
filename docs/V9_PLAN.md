@@ -1425,3 +1425,9 @@ Write the baseline into `docs/PERF.md`.
   - **Texts:** What's New and STORE_TEXT have no UFO.
   - **Tests:** T98 skips UfoBeam and checks no reachable list holds it; T107 shows 20 events; T21, T66, T92 and T97 pass.
   - **For the owner:** set the UFO Beam developer product (3733992609) to "not for sale" on the dashboard.
+- 21 Nov 2026: V9-0t PASSED (8.8), V9-0u PASSED (8.7). Loose ends fixed:
+  - The description's codes line says "SHOP → HAVE A CODE?", which works on every device.
+  - The pill check only tests the height; Toast caps the width.
+  - A UfoBeam order still owed delivers a Balloon Drop with a note (`Events.hidden`, EventService).
+  - T173 leaves the creator without passes for the rest of the run, like T47, T50, T63 and T105 (`OfferService.resetForTest` has no undo).
+- 21 Nov 2026, V9-0i started (PC): the 21 shop pictures are uploaded (art/shop) and in DrawnIcons as `shop_<key>`. Events keep `event_<id>`, GOD MODE keeps `god`.

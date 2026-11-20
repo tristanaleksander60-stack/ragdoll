@@ -47,9 +47,12 @@ local list: { Event } = {
 }
 
 -- V9-0u: the UFO is hidden while Config.UFO_ENABLED is false: in no list, never started.
+local hidden: { { id: string, productId: number, instead: string } } = {}
 if not (require(script.Parent:WaitForChild("Config")) :: any).UFO_ENABLED then
 	for i = #list, 1, -1 do
 		if list[i].id == "UfoBeam" then
+			-- (Its product is still owed to anyone who paid before: EventService delivers `instead`.)
+			table.insert(hidden, { id = "UfoBeam", productId = list[i].productId, instead = "BalloonDrop" })
 			table.remove(list, i)
 		end
 	end
@@ -63,6 +66,7 @@ end
 return table.freeze({
 	list = table.freeze(list),
 	byId = table.freeze(byId),
+	hidden = table.freeze(hidden), -- (V9-0u: hidden events whose products may still be owed)
 	MAX_QUEUE = 4, -- events waiting; a purchase prompt is refused while the queue is full
 	GAP = 3, -- s between two events
 })

@@ -27,7 +27,7 @@ build is live. Written fresh; nothing is taken from another game's page.
 🗺️ 5 MAPS
 • Tropical Island, Downtown, Building Site, Old Farm and Army Base
 
-🎁 CODES (More → CODES): RELEASE · BETA · RAGDOLL
+🎁 CODES (SHOP → HAVE A CODE?): RELEASE · BETA · RAGDOLL
 (From 1 December add CHRISTMAS. The list and the rewards: docs/CODES.md.)
 
 🎮 Computer, phone, tablet and controller

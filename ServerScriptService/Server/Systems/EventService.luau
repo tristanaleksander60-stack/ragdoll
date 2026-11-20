@@ -710,6 +710,21 @@ function EventService.start()
 			notify(player, string.format(if earlier then "Your %s from last time %s" else "Thanks! Your %s %s", event.name, placeOf(place)), nil, place <= 1 and not current)
 		end)
 	end
+	-- (V9-0u: a hidden event's product, still owed to someone who paid before: its stand-in instead.)
+	for _, gone in (Events :: any).hidden or {} do
+		local instead = Events.byId[gone.instead]
+		if instead and gone.productId ~= 0 then
+			Purchases.register("Event:" .. gone.id, gone.productId, function(player: Player, order)
+				local place = EventService.trigger(instead.id, player.DisplayName, "Robux", true, {
+					purchaseId = order.p,
+					userId = player.UserId,
+				})
+				if place then
+					notify(player, string.format("The UFO is away for now: your %s %s", instead.name, placeOf(place)), nil, place <= 1 and not current)
+				end
+			end)
+		end
+	end
 	-- Every player gets the state as they join (the banner of an event already running), then
 	-- anything they are still owed.
 	local state = stateRemote :: RemoteEvent
