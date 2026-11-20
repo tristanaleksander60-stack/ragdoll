@@ -490,6 +490,13 @@ function EventService.trigger(id: string, by: string, source: Source, force: boo
 	if not Events.byId[id] then
 		return nil
 	end
+	-- (V8-0.8: an event a player set off counts as used in their visit record.)
+	local host = if hostId then Players:GetPlayerByUserId(hostId) else nil
+	if host then
+		pcall(function()
+			(require(script.Parent:WaitForChild("SessionStats")) :: any).used(host, "Event:" .. id)
+		end)
+	end
 	if paid and isClosing() then
 		-- Too late for this server: the buyer gets it in the next one.
 		giveBack({ { id = id, by = by, source = source, paid = paid } })

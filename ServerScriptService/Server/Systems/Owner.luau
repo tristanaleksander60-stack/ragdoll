@@ -10,6 +10,10 @@ local Owner = {}
 Owner.studioOwnerForTest = true
 
 function Owner.isOwner(player: Player): boolean
+	-- (V8-0.8: a play-as-newcomer visit, in Studio too, gets no owner perks.)
+	if (require(script.Parent:WaitForChild("TestAccount")) :: any).is(player) then
+		return false
+	end
 	if RunService:IsStudio() then
 		return Owner.studioOwnerForTest
 	end

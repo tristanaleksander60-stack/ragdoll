@@ -440,6 +440,10 @@ local function keepUnknown(old: unknown, doc: { [string]: any }): { [string]: an
 end
 
 local function save(player: Player, profile: Profile): boolean
+	-- (V8-0.8: a play-as-newcomer visit is never saved over the account's real profile.)
+	if (require(script.Parent:WaitForChild("TestAccount")) :: any).is(player) then
+		return true
+	end
 	local waited = 0
 	while saveBusy[player] and waited < SAVE_QUEUE_WAIT do
 		waited += task.wait(0.2)
@@ -1664,7 +1668,12 @@ local function onJoin(player: Player)
 			ProgressService.firstEgg(player)
 		end
 	end)
-	local ok, stored = load(player.UserId)
+	local testVisit = (require(script.Parent:WaitForChild("TestAccount")) :: any).is(player)
+	-- (V8-0.8: a play-as-newcomer visit starts from a blank profile, read as "nothing stored yet".)
+	local ok, stored = true, (nil :: any)
+	if not testVisit then
+		ok, stored = load(player.UserId)
+	end
 	local told = false
 	-- Until Roblox answers, play goes on (a fresh profile, nothing saved over the stored one); the
 	-- read is tried again every READ_RETRY_GAP s for as long as the player stays.

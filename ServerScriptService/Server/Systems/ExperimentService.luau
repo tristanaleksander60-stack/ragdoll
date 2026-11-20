@@ -91,6 +91,9 @@ local function finish(player: Player, p: Player_, result: string)
 	p.state = nil
 	p.done += 1
 	if result == "done" then
+		pcall(function()
+			(require(script.Parent:WaitForChild("SessionStats")) :: any).mark(player, "firstMissionDoneAt")
+		end)
 		p.stars += s.def.stars
 		player:SetAttribute("Stars", ((player:GetAttribute("Stars") :: number?) or 0) + s.def.stars)
 		send(player, "Done", { id = s.def.id, stars = s.def.stars, total = p.stars })
@@ -149,6 +152,14 @@ ExperimentService.tossComboForTest = tossCombo
 -- Something a card may count happened (kind: Shared\Experiments.KINDS). `what` names the place for
 -- a TOSS COMBO pop ("the LAVA"; release 0.20).
 function ExperimentService.event(player: Player, kind: string, n: number?, what: string?)
+	-- (V8-0.8: the first use of each machine and creature this visit, for the visit record.)
+	pcall(function()
+		local SessionStats = require(script.Parent:WaitForChild("SessionStats")) :: any
+		SessionStats.used(player, kind)
+		if kind == "Cannon" then
+			SessionStats.mark(player, "firstLaunchAt")
+		end
+	end)
 	if tossed[player] and ExperimentService.COMBO_KINDS[kind] then
 		tossCombo(player, kind, what)
 	end

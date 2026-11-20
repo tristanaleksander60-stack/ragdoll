@@ -1352,3 +1352,11 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
 ## State
 - 20 Nov 2026: plan written. Nothing of V8 started.
 - 20 Nov 2026: plan revised after review: Day 1 orientation check and a no-gameplay 0.25.1 (telemetry, safe boot, store truth) before the 0.26 bundle; a named must-ship core for 1 Dec; one gate table with defined denominators, baselines rebased on 0.24 (owner out) and a playtest fallback per gate; the play-as-newcomer mode for round 1; a pad pass and J6; cannon in view (V8-0.4) and cannon flight (V8-1.1); chase only after 300 s and 15 KOs; owner decisions and per-build publishing asked in Sitting 1; one blind review per phase. Nothing of V8 started.
+- **Day 1 (21 Nov):** `StarterGui.ScreenOrientation` = **Sensor** (the phone may turn freely, so upright play is possible). V8-0.5 waits for `orient30/60` from 0.25.1. Sitting 1 (V8-0.1) is parked with the owner: per-build publishing is not yet approved, so V8-0 publishes once at its end (the 20 Nov order).
+- **V8-0.8 done (code):**
+  - **Visit record:** new fields (`owner`, `test`, `newPlayer`, `frame0`, `orient10/30/60` + `rot`, `errs`/`errSig`, `fpsP50`/`fpsP5`, `memMb`, `vol`, `firstKnockAt`, `firstLaunchAt`, `firstMissionDoneAt`, `used`, `friendsMax`, `screen`) and the V8 funnel `stage` 1-8 (SessionStats, SessionClient, hooks in ExperimentService and EventService).
+  - **Play-as-newcomer mode:** `TestAccount` + `Config.TEST_ACCOUNTS` (3037725863; the owner confirms in Sitting 1); StudioFresh does the same in Studio. Blank profile never saved, passes ignored, no owner perks.
+    - Other stores are not blanked (daily, playtime and launch gifts may be claimed by a test visit).
+  - **tools/SessionReport:** the gone-by curve from the first frame, D1, used, on-screen at leave.
+  - **Tests:** T113 passes; T58/T29/T68/T23/T45 pass.
+  - **Live baseline (21 Nov, owner and test out):** 368 visits. D1 = **1 %** of 290 first-time players. 0.17.1: 44-50 % gone by 30 s. 0.25.0: 3 visits so far.

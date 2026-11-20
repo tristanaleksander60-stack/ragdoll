@@ -54,6 +54,29 @@ export type Record = {
 	input: string?, -- "pad" | "kbm" | "touch" | "mixed" | "none", set on leave
 	portrait: boolean?,
 	step: number,
+	-- V8-0.8 (see why they leave): times are seconds from the server's join, like firstShot;
+	-- frame0 is when the client drew its first frame, so a report subtracts it.
+	owner: boolean?, -- the game's creator (reports leave these out)
+	test: boolean?, -- a play-as-newcomer visit (TestAccount; reports leave these out)
+	newPlayer: boolean?, -- Newcomer was set (a first visit by play time)
+	frame0: number?,
+	orient10: string?, -- "p" upright or "l" sideways, read again 10, 30 and 60 s after the first frame
+	orient30: string?,
+	orient60: string?,
+	rot: number?, -- orientation changes this visit
+	errs: number?, -- client script errors this visit
+	errSig: string?, -- the first 3 error heads
+	fpsP50: number?,
+	fpsP5: number?,
+	memMb: number?,
+	vol: number?, -- master volume bucket 0-3 (0 muted)
+	firstKnockAt: number?,
+	firstLaunchAt: number?,
+	firstMissionDoneAt: number?,
+	used: { [string]: number }?, -- first-use second per machine, creature, map and event
+	friendsMax: number?, -- most Roblox friends in the server at once
+	screen: string?, -- what was on screen last: "play", "window", "chase", "objective"
+	stage: number?, -- V8 funnel: 1 Joined, 2 FirstHit, 3 FirstKO, 4 FirstLaunch, 5 FirstMission, 6 Min3, 7 Min5, 8 Min10
 }
 
 local records: { [Player]: Record } = {}
@@ -132,6 +155,37 @@ function SessionStats.count(player: Player, key: string, n: number?)
 	local r = recordOf(player) :: any
 	if r and type(r[key]) == "number" then
 		r[key] += n or 1
+		if key == "knocks" and r.firstKnockAt == nil then
+			r.firstKnockAt = since(player)
+		end
+	end
+end
+
+-- V8-0.8: the first time something happened this visit ("firstLaunchAt", "firstMissionDoneAt").
+function SessionStats.mark(player: Player, key: string)
+	local r = recordOf(player) :: any
+	if r and r[key] == nil then
+		r[key] = since(player)
+	end
+end
+
+-- V8-0.8: the first use of a machine, creature, map or event this visit (at most 40 names).
+SessionStats.USED_MAX = 40
+function SessionStats.used(player: Player, name: string)
+	local r = recordOf(player)
+	if not r or type(name) ~= "string" or #name > 40 then
+		return
+	end
+	local u = r.used or {}
+	r.used = u
+	if u[name] == nil then
+		local n = 0
+		for _ in u do
+			n += 1
+		end
+		if n < SessionStats.USED_MAX then
+			u[name] = since(player)
+		end
 	end
 end
 
@@ -170,7 +224,7 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 	-- (A handful of messages a visit at most: a client that floods is ignored from then on.)
 	local n = (messages[player] or 0) + 1
 	messages[player] = n
-	if n > 20 then -- (phase 0: up to four "Used" messages more)
+	if n > 120 then -- (V8-0.8: the client paces Orient, Perf and Screen itself; this is the flood guard)
 		return
 	end
 	if kind == "Hello" and type(data) == "table" and r.plat == "?" then
@@ -201,7 +255,82 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 		r.eggCard = true
 	elseif kind == "FirstShot" and r.clientShot == nil then
 		r.clientShot = clean(data, 0, 36000)
+	-- V8-0.8: the first frame, the orientation after load, the client's health and what is on screen.
+	elseif kind == "Frame0" and r.frame0 == nil then
+		r.frame0 = since(player)
+	elseif kind == "Orient" and type(data) == "table" then
+		local d = data :: any
+		local o = if d.p == true then "p" elseif d.p == false then "l" else nil
+		if o and d.t == 10 then
+			r.orient10 = o
+		elseif o and d.t == 30 then
+			r.orient30 = o
+		elseif o and d.t == 60 then
+			r.orient60 = o
+		elseif d.t == "rot" then
+			r.rot = math.min((r.rot or 0) + 1, 50)
+		end
+	elseif kind == "Perf" and type(data) == "table" then
+		local d = data :: any
+		r.fpsP50 = clean(d.p50, 0, 240)
+		r.fpsP5 = clean(d.p5, 0, 240)
+		r.memMb = clean(d.mem, 0, 20000)
+		r.errs = clean(d.errs, 0, 100000)
+		r.vol = clean(d.vol, 0, 3)
+		if type(d.sig) == "string" then
+			r.errSig = string.sub(d.sig, 1, 300)
+		end
+	elseif kind == "Screen" and type(data) == "string" then
+		if data == "play" or data == "window" or data == "chase" or data == "objective" then
+			r.screen = data
+		end
 	end
+end
+
+-- V8-0.8: the furthest V8 funnel stage a record reached (1 Joined, 2 FirstHit, 3 FirstKO,
+-- 4 FirstLaunch, 5 FirstMission, 6 Min3, 7 Min5, 8 Min10; played time from the first frame).
+function SessionStats.stageOf(r: Record): number
+	local played = (r.left or 0) - (r.frame0 or 0)
+	if played >= 600 then
+		return 8
+	elseif played >= 300 then
+		return 7
+	elseif played >= 180 then
+		return 6
+	elseif r.firstMissionDoneAt then
+		return 5
+	elseif r.firstLaunchAt then
+		return 4
+	elseif r.knocks > 0 or r.firstKnockAt then
+		return 3
+	elseif r.hits > 0 then
+		return 2
+	end
+	return 1
+end
+
+-- V8-0.8: how many of a player's Roblox friends are in this server now (asked once per pair).
+local friendCache: { [string]: boolean } = {}
+local function friendsHere(player: Player): number
+	local n = 0
+	for _, other in Players:GetPlayers() do
+		if other ~= player then
+			local a, b = math.min(player.UserId, other.UserId), math.max(player.UserId, other.UserId)
+			local key = a .. "_" .. b
+			local yes = friendCache[key]
+			if yes == nil then
+				local ok, result = pcall(function()
+					return player:IsFriendsWith(other.UserId)
+				end)
+				yes = ok and result == true
+				friendCache[key] = yes
+			end
+			if yes then
+				n += 1
+			end
+		end
+	end
+	return n
 end
 
 local function write(player: Player)
@@ -212,6 +341,11 @@ local function write(player: Player)
 	end
 	r.left = since(player)
 	r.input = SessionStats.inputOf(r)
+	-- V8-0.8: who it was (the owner and test visits are left out of reports) and the funnel stage.
+	r.owner = player.UserId == game.CreatorId
+	r.test = (require(script.Parent:WaitForChild("TestAccount")) :: any).is(player) or nil
+	r.newPlayer = player:GetAttribute("Newcomer") == true
+	r.stage = SessionStats.stageOf(r)
 	joinedAt[player] = nil
 	messages[player] = nil
 	local hasLab = SessionStats.hasLab
@@ -256,6 +390,39 @@ function SessionStats.start()
 				r.lab = r.lab or (ok and yes == true)
 			end
 		end)
+	end)
+	-- V8-0.8: maps visited (the Place attribute) and friends in the server (every 30 s, and when
+	-- someone joins).
+	local function watchPlace(player: Player)
+		player:GetAttributeChangedSignal("Place"):Connect(function()
+			local place = player:GetAttribute("Place")
+			if type(place) == "string" then
+				SessionStats.used(player, "Map:" .. place)
+			end
+		end)
+	end
+	Players.PlayerAdded:Connect(watchPlace)
+	for _, player in Players:GetPlayers() do
+		watchPlace(player)
+	end
+	local function countFriends()
+		for player, r in records do
+			if player.Parent then
+				local n = friendsHere(player)
+				if n > (r.friendsMax or 0) then
+					r.friendsMax = n
+				end
+			end
+		end
+	end
+	Players.PlayerAdded:Connect(function()
+		task.delay(5, countFriends)
+	end)
+	task.spawn(function()
+		while true do
+			task.wait(30)
+			pcall(countFriends)
+		end
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		task.spawn(write, player)

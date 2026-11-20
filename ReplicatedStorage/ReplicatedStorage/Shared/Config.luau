@@ -241,6 +241,10 @@ local Config = {
 	WORLD_V2_LAB_PARTS = 320, -- parts one lab's WORLD_V2 dressing may add (T81)
 	WORLD_V2_LAB_LIGHTS = 12, -- lights one lab's dressing may hold (only FX_CAPS[tier].lights are lit)
 	COMBO_SLOWMO = 5, -- a combo of this many (and every this-many after) gets the slow-mo beat
+	-- V8-0.8: adult test accounts that join the live game as a brand-new player every visit (TestAccount;
+	-- never the owner's own). 3037725863 is the second account seen on the owner's phone: the owner
+	-- confirms or replaces it in Sitting 1.
+	TEST_ACCOUNTS = table.freeze({ 3037725863 }),
 }
 
 return table.freeze(Config)

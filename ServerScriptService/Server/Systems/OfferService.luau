@@ -51,6 +51,11 @@ OfferService.complete = function(userId: number, purchaseId: string)
 	Purchases.complete(userId, purchaseId)
 end
 OfferService.askOwns = function(userId: number, passId: number): boolean
+	-- (V8-0.8: a play-as-newcomer visit owns no pass, so it sees what a new player sees.)
+	local who = game:GetService("Players"):GetPlayerByUserId(userId)
+	if who and (require(script.Parent:WaitForChild("TestAccount")) :: any).is(who) then
+		return false
+	end
 	return MarketplaceService:UserOwnsGamePassAsync(userId, passId)
 end
 
