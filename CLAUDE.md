@@ -4,7 +4,7 @@ Studio place: "[💥] Ragdoll Havoc", placeId 126037745825106. Game name: **Ragd
 Talk to the owner in Danish, short and plain.
 
 ## How every session runs (owner order, 19 Nov 2026)
-The owner types **`/klar`** (`.claude/commands/klar.md`) or **"klar"**. Then follow `docs/MASTER_PROMPT.md` ("The prompt"): the newest plan with unfinished steps (now `docs/V8_PLAN.md`, the new Ragdoll Havoc from 2/10 to 10/10, evidence in `docs/V8_EVIDENCE.md`; V7/V6/V5/V4/V3 hold the history), step by step from its State line: automatically and without questions; quality first, then speed, then cost. The PC session (Studio + Roblox Studio MCP) is the main one. A cloud session (no Studio) only does research and code, and lists the Studio steps under PC TODO.
+The owner types **`/klar`** (`.claude/commands/klar.md`) or **"klar"**. Then follow `docs/MASTER_PROMPT.md` ("The prompt"): the newest plan with unfinished steps (now `docs/V9_PLAN.md` first (creatures, machines and Robux items; includes `docs/FIX_PATHS_SHOP.md`), then `docs/V8_PLAN.md`, the new Ragdoll Havoc from 2/10 to 10/10, evidence in `docs/V8_EVIDENCE.md`; V7/V6/V5/V4/V3 hold the history), step by step from its State line: automatically and without questions; quality first, then speed, then cost. The PC session (Studio + Roblox Studio MCP) is the main one. A cloud session (no Studio) only does research and code, and lists the Studio steps under PC TODO.
 
 The owner types **`/tjek`** (`.claude/commands/tjek.md`) for a full quality audit of the whole game on every parameter, then fixes to 9/10+ per area (`docs/AUDIT_PROMPT.md`, results in `docs/AUDIT.md`).
 
