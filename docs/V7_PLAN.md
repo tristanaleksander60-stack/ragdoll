@@ -16,9 +16,9 @@
 | 5 | Every ragdoll must look better: clothes, details, everything | V7-4 |
 
 **Order:**
-1. Finish any half-done V6 step first.
+1. V7 goes first, even though V6-8 (graphics) is under way. Commit and push what is done of V6-8, and note it in V6 State.
 2. Then V7-1 to V7-4.
-3. Then V6-8 (graphics), which is still open in `docs/V6_PLAN.md`.
+3. Then back to V6-8 in `docs/V6_PLAN.md`.
 
 V7 is small and visible, so it goes before the big graphics pass.
 
@@ -126,4 +126,4 @@ They lead from the spawn or arrival to each thing you can do there.
 - the dummy and crowd tests pass (T36, T40 and the others that touch looks).
 
 ## State
-- 20 Nov 2026: plan written (cloud). Nothing of V7 started. V6-1..V6-7 done (see `docs/V6_PLAN.md`); V6-8 waits until V7 is done.
+- 20 Nov 2026: plan written (cloud). Nothing of V7 started. V6-1..V6-7 done and V6-8 started (see `docs/V6_PLAN.md`); V6-8 waits until V7 is done.
