@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -450,6 +450,38 @@ A full placement pass for the lab hub (V9-0h) and every map, done as a designer 
 - No sign overlaps another in the spawn view.
 
 **Capture and review:** spawn view (PC and phone), top-down with the loop drawn, and a walk-through of 6 frames. The blind reviewer scores the layout ≥ 8.5. The owner signs off.
+
+## V9-0o Grey, matte ragdolls that read in the bright sun (owner, 21 Nov; quick, do it next)
+> "Gør ragdolls mere grå så de er lettere at se og gør dem mere matte fordi solen skinner jo meget nu."
+
+**Problem:** under the bright V9-0b light (LOOK_THUMB), the white dummies blow out (clip to white), shine and blend with the light floor and sky.
+
+**Change** (`Config.DUMMY_TONE`; the old white is one switch away):
+- **Colour:** a **mid-light grey**, about RGB 165-180 (a soft neutral or slightly warm grey), not white.
+  - The crash-test details stay: the yellow and black target, the dark joint rings, the belt.
+  - The dead/KO green still reads clearly against the grey.
+  - Gold Dummies and the crash suit keep their own looks.
+- **Matte:**
+  - SmoothPlastic → **Plastic or a matte MaterialVariant** (roughness about 0.85-0.95, no specular hot spots);
+  - `Reflectance` 0 on every skin part;
+  - check `DummySkins` (the client skin from ReplicatedStorage.DummySkin) and `DummyFactory` (the server body colours) both follow it.
+- **Contrast check:**
+  - In the bright light, from the spawn and at 60 studs, on PC and phone (quality 1 and max), the dummies must stand out from:
+    - the hub floor pads (V9-0k);
+    - the grass;
+    - the sky.
+  - The floor stays a bit lighter or warmer than the dummies, or add a soft contact shadow so they pop.
+  - A greyscale capture shows clear separation.
+- **All dummies:** the lab dummies, walkers and visitors, GOD MODE spawns, event dummies, the greeter, the compressor pancakes. The crowd NPCs in clothes are not touched.
+- **Settings:** if a player picked a dummy skin later (paid skins), that skin wins.
+
+**Tests:** T36/T91 updated.
+- Skin colour within the grey range.
+- Reflectance 0.
+- A matte material.
+- The KO green still differs.
+
+**Capture:** before/after in the sun at the spawn and close up, PC and phone, plus the greyscale check.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
