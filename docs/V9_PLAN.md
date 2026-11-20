@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -318,6 +318,61 @@ So a player can stand there with no standing target.
 - No overlap pairs.
 
 **Capture:** spawn view, close-up and top-down, before and after, PC and phone, next to the leader's floor.
+
+## V9-0l GOD MODE free for everyone in the beta, fully 3D, and easy to spawn many where you aim (owner, 21 Nov)
+> "Gør så alle får GODMODE efter nogle sekunder hvor det passer ind, og så skal den opgraderes til komplet 3d interaktiv og flot og stå som gratis fordi vi lige er åbnet og stadig er i beta selvfølgelig på engelsk. Gør også godmode meget bedre så det lettere at spawne fx. 10 hurtigt hvor man vil, ikke bare random steder."
+
+**1. Free for everyone during the beta** (`Config.GOD_FREE_BETA` = true):
+- **Who:** every player gets GOD MODE free, server-side (the same path as owning the pass: the player attribute `God`, the caps, the gold beam).
+- **When "it fits"** (V8 calm rules, V9-0g phone sizes):
+  - **a newcomer:** after their first wow (the first 3-5 KOs or the first cannon launch), or at about 90 s at the latest, at a calm moment (no shot for 2 s);
+  - **a returning player:** about 10 s after joining.
+- **The reveal:** a short golden reveal, "GOD MODE unlocked: FREE during beta!", with the God icon flying into its HUD button and a chime. Small on phones. Once per player: it is remembered on the profile, so later visits only get a tiny "God Mode is still free in beta" chip once a day at most.
+- **Shop:**
+  - the GOD MODE card shows **"FREE · BETA"** (English) instead of a price, with an OPEN button;
+  - it is not sold while free: hide BUY, so nobody pays for what is free;
+  - the 60 s trial logic is skipped while it is free.
+- **People who already bought the pass** get something extra so they never feel cheated: a "Founder" gold name tag or title and a gold God beam colour no one else has, and they keep GOD MODE for good after the beta.
+- **When the beta ends** (the owner flips the switch): pass owners keep it; everyone else goes back to the trial plus BUY. An in-game note comes a few days before (the What's New rhythm), never a surprise.
+- **All texts in English.**
+
+**2. The God window, fully 3D and beautiful:**
+- **Look:**
+  - a sleek panel (UI v2 tokens);
+  - each dummy kind (TINY, HEAVY, BOUNCY, FLOPPY plus any V8 types) shown as a **live turning 3D dummy** in a ViewportFrame, tilting on hover, with a rarity glow and its name;
+  - a gold header with the God icon and "FREE · BETA".
+- **Controls:**
+  - **Kind:** pick the dummy kind.
+  - **Amount:** a quick picker **1 · 5 · 10 · 25** (within the device cap) and a slider.
+  - **Pattern:** **Point · Line · Circle · Grid · Tower · Rain**.
+  - **Spacing:** a small slider.
+  - **CLEAR MINE:** removes the dummies you spawned.
+- **Keyboard:** G toggles the window or the placing mode; the mouse wheel changes the amount; Q/E rotate the pattern; R/F change the spacing.
+
+**3. Spawning where you want, fast:**
+- **Placing mode:** a ghost preview of the whole pattern follows the aim point on the floor (raycast; it snaps to surfaces, in your own or a party lab only). It shows how many and where, green when the spot is valid and red when not (inside a wall or a machine, outside the lab).
+- **Click / tap / RT** spawns the whole pattern at once, with the gold beam and a satisfying pop per dummy (staggered over about 0.3 s). **Hold and drag** "paints" dummies along the drag (rate-limited).
+- **Phones:**
+  - tap the floor to place;
+  - a big SPAWN button repeats at the last spot;
+  - the pattern and amount sit in a compact bar (44 px targets, out of the thumb zone).
+- **Pads:** the aim point at the screen centre, RT spawns, and the D-pad changes the amount and pattern.
+- **Server:**
+  - checks every request: the place is in your lab, the amount is within the tier cap (twice the cap with God);
+  - a rate limit;
+  - the oldest of your spawned dummies are recycled when the cap is hit (never an error spam).
+  - The remote goes through `Net` with a validator and is listed in CLAUDE.md.
+
+**Tests:** T148 updated and a new T167_GodSpawn.
+- With `GOD_FREE_BETA`, every player has God after the grant moment, and newcomers not before their first wow or 90 s.
+- The shop shows FREE · BETA with no BUY.
+- Pass owners get the Founder extra.
+- A 10-dummy line spawns where aimed, with all 10 inside the lab.
+- A spot outside the lab is refused.
+- The cap and the rate limit hold.
+- The window fits on 16 LayoutCheck screens.
+
+**Capture:** the reveal, the 3D window, a 10-dummy line and a ring being placed, on PC and phone.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
