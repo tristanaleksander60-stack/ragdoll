@@ -355,3 +355,4 @@ They lead from the spawn or arrival to each thing you can do there.
     - **T108:** all 9 take, work and let go a body.
   - **Tests and output:** T23/T45/T55/T66/T99/T100/T103/T104/T106/T107/T108 pass; 0 errors.
   - **Release 0.25.0** (What's New updated) is saved as v602. **Not published yet:** a publish needs Studio's Publish (Alt+P). The MCP has no publish, and Open Cloud does not take an .rbxl from here.
+- **Closed 20 Nov 2026.** The owner asked for a whole new version ("2/10 -> 10/10"). V7's leftovers (the map paths, perching, the people outfits, the next-mission card, the console glyph check, the bullseye snag) are now inside `docs/V8_PLAN.md`. Birds are off (`Config.BIRDS = false`, the owner).
