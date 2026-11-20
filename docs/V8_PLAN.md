@@ -1587,3 +1587,10 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - **Servers:** the old ones were restarted through Open Cloud (`restartServers` 200).
   - **Backup:** `RagdollLab-backups/2026-11-21-pre-publish-0.27.0`.
   - **Next:** read Session_v1 for v 0.27.0 and pv 642 after 15-30 min, then after 48 h (D1, CRASH and missions).
+- **0.29.0 published (21 Nov).**
+  - **What it holds:** 0.27.1 (UI audit), 0.28.0 (sounds, banners, lab guide) and 0.29.0 (the new lab: connected paths, verges, lava pit, icons, a full start bar).
+  - **Gate:**
+    - Full suite 106 pass. T24 (flaky) failed and passed alone; T50 was updated for icon signs.
+    - LayoutCheck 0, SyncCheck 0 of 341.
+  - **Release:** place v667 shows `published: true`; servers restarted (`restartServers`).
+  - **Backup:** `2026-11-21-pre-publish-0.29.0`.
