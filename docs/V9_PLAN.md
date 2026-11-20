@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -373,6 +373,83 @@ So a player can stand there with no standing target.
 - The window fits on 16 LayoutCheck screens.
 
 **Capture:** the reveal, the 3D window, a 10-dummy line and a ring being placed, on PC and phone.
+
+## V9-0m The Compressor: a hydraulic press that flattens ragdolls (owner, 21 Nov)
+> "Tilføj en compressor som fladmasser ragdolls."
+
+**The machine:**
+- **Model:** a big industrial hydraulic press: a steel frame with pistons, a heavy press plate, warning stripes, a lit "PRESS" lamp and a small conveyor or plate where the body lies. A real model with the malware pass, in the V9 style.
+- **Terminal:** a feed/launch computer like V9-2b / V9-3c, with a big **PRESS** button. Spam is allowed within the rate limit.
+
+**One press:**
+1. The nearest free dummy is carried onto the plate, or a player drops one there (LabGuide ring "DROP HERE").
+2. The lamp blinks and hydraulic hiss plays.
+3. The plate slams down with a heavy THUD, a camera punch nearby, dust and a comic "SQUISH!" sticker.
+4. **Cartoon flattening:** the dummy becomes a flat pancake. It is done visually on the client: the body's skin is scaled to about 15 % height and widened, with the server marking the state; it is not physics damage, and there is no gore.
+5. It lies there as a flat pancake for 2 s. Then the plate lifts, and the pancake **pops back to shape** with a boing and wobbles (squash and stretch), and walks off dizzy (stars round the head).
+6. A player may also flatten themselves, in their own lab or a party lab (the same cartoon effect).
+
+**Extras:**
+- a "PANCAKE ×N" counter on the terminal screen;
+- an experiment card "Flatten 5 dummies" and a journal page;
+- the first press of a visit gets the slow-mo beat.
+
+**Rules:**
+- server-checked (owner or party, near the terminal);
+- a cooldown of about 2.5 s per press, with spam queued up to 3;
+- the body physics stays the same after it pops back;
+- the phone budget is held.
+
+**Tests:** T168_Compressor.
+- A press flattens and restores the dummy.
+- No body is stuck under the plate.
+- Spam respects the cooldown and queue.
+- Strangers are refused.
+
+## V9-0n Every machine and creature placed where it works best (owner, 21 Nov)
+> "Alle maskiner og dyr står stadig dårlig, sørg for alt er placeret psykologisk bedst i forhold til mappet osv."
+
+A full placement pass for the lab hub (V9-0h) and every map, done as a designer would, with these rules written into `docs/STYLE_LAB.md` and checked in captures:
+
+- **The spawn view sells the game.** The first frame shows the 3-4 most fun things (cannon + bullseye, the rocket, the spider/aquarium, the compressor) and at least 2 standing dummies. Big landmark silhouettes stand at the back (the rocket), action in the middle, the dummies near.
+- **One landmark ("weenie") pulls you in.** The tallest thing (the rocket tower) stands at the far end of the main view line, so players walk across the hub, passing everything else.
+- **A loop, not a dead end.** The attractions sit in a clockwise loop round the hub: spawn → cannon/bullseye → compressor → rocket → creatures/aquarium → vehicles → back to spawn. Each one is visible from the one before ("what's next?" pulls the player on).
+- **Group by verb.**
+  - Launchers together: cannon, rocket, trampoline, stations.
+  - Crushers and hazards together: compressor, mace, wrecking ball, lava.
+  - Feeders together: creatures, aquarium.
+  - Drivers together: the vehicle row with open floor in front to drive into dummies.
+
+  The groups are spaced so their action radii never overlap: a launched body must not land in another machine.
+- **Distances by use.**
+  - Most-used machines (Session_v1 `used`) within about 20-45 studs of the spawn, rarer ones on the outer ring.
+  - The walk between neighbours is at most about 6-8 s.
+- **Facing.** Every machine and creature faces the player's approach: the terminal on the near side, the screen toward the path, the creature's face toward the spawn. Nothing shows its back.
+- **Landing zones.** Every launcher points its flight into open floor or the bullseye, in view of the camera that launched it; never over the hedge or behind a building.
+- **Readable at a glance.** Each attraction has room round it (negative space), its LabGuide ring and one icon sign. No two signs overlap from the spawn view.
+- **Social and shop anchors.**
+  - The leaderboard wall and the Places portal by the spawn (V9-0h / V9-0e).
+  - Seating at the edge of the action, so friends can watch.
+  - The map-shop booths on the walk between attractions, seen but never in the way, and never in the spawn's first frame for a newcomer (V8 fair shop).
+- **Ground and scale.**
+  - Everything stands on the floor (no floating or sinking), at a real scale against a 5-stud player.
+  - Big things far, small things near.
+  - No machine hides another from the spawn camera.
+- **Maps too.** On each open-air map, arrive 15-20 studs in front of its hero activity (V8-2.10), with the other activities in a loop and the portal home in view.
+
+**How:**
+- Draw the top-down plan first (a capture with the loop and the radii marked), then move the things (positions in one data table per place, so tests can read them).
+- Update PathPlan, LabGuide, VehicleService, the Christmas spots and the tests that hold positions.
+- Use the data: after release, compare `used` shares and the walk heatmap (if logged) and adjust.
+
+**Tests:** T163 extended.
+- Every attraction lies inside its band.
+- No action radius overlaps another attraction.
+- Every launcher's landing point is on the open floor.
+- Every machine faces within 45° of the spawn or path.
+- No sign overlaps another in the spawn view.
+
+**Capture and review:** spawn view (PC and phone), top-down with the loop drawn, and a walk-through of 6 frames. The blind reviewer scores the layout ≥ 8.5. The owner signs off.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
