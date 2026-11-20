@@ -465,12 +465,26 @@ function PathBuilder.walkway(into: Instance, points: { Vector2 }, y: number, wid
 		local b = points[i + 1]
 		if b and (b - a).Magnitude > 0.05 then
 			local mid = (a + b) / 2
-			local yb = if heights then math.max(ya, heights[i + 1] or ya) else y
+			local yNext = if heights then heights[i + 1] or ya else ya
+			local yb = math.max(ya, yNext)
 			local sy = yb + h / 2
 			local cf = CFrame.lookAt(Vector3.new(mid.X, sy, mid.Y), Vector3.new(b.X, sy, b.Y))
 			local len = (b - a).Magnitude
-			flatPart(into, "PathSlab", Vector3.new(width, h, len), cf, color, material, false)
-			n += 1
+			if math.abs(ya - yNext) > 0.3 then
+				-- (V9-0d review: over a step, a kerb or a raised walk, each half on its own floor: never a
+				-- slab hanging in the air over the lower one.)
+				for half, hy in { ya, yNext } do
+					local from = if half == 1 then a else mid
+					local to = if half == 1 then mid else b
+					local c = (from + to) / 2
+					local y2 = hy + h / 2
+					flatPart(into, "PathSlab", Vector3.new(width, h, len / 2 + 0.05), CFrame.lookAt(Vector3.new(c.X, y2, c.Y), Vector3.new(to.X, y2, to.Y)), color, material, false)
+					n += 1
+				end
+			else
+				flatPart(into, "PathSlab", Vector3.new(width, h, len), cf, color, material, false)
+				n += 1
+			end
 			if kerb then
 				-- (Kept for finishKerbs: a kerb piece is only laid where no other path crosses it,
 				-- so the kerbs open where two paths meet instead of running across one another.)

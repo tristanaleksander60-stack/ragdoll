@@ -21,6 +21,16 @@ DailyGoals.POOL = table.freeze({
 	{ kind = "Combo" :: Kind, need = { 5, 8 }, text = "Get a combo of %d" },
 	{ kind = "Arena" :: Kind, need = { 1, 2 }, text = "Play %d arena round%s" },
 })
+-- V9-0s: no arena goals while the Game Arena is hidden (Config.ARENA_ENABLED).
+if not (require(script.Parent:WaitForChild("Config")) :: any).ARENA_ENABLED then
+	local kept = {}
+	for _, goal in DailyGoals.POOL do
+		if goal.kind ~= "Arena" then
+			table.insert(kept, goal)
+		end
+	end
+	DailyGoals.POOL = table.freeze(kept)
+end
 DailyGoals.MAX_KINDS = table.freeze({ Combo = true }) :: { [string]: boolean }
 DailyGoals.COUNT = 3
 DailyGoals.EGGS_PER_GOAL = 1

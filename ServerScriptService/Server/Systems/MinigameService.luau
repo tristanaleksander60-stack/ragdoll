@@ -422,6 +422,9 @@ end
 
 -- Why a game cannot start now (nil: it can).
 function MinigameService.refusal(player: Player, gameId: unknown): string?
+	if not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).ARENA_ENABLED then
+		return "The Game Arena is closed for now" -- (V9-0s)
+	end
 	if gameId ~= "RLGL" and gameId ~= "Shoot" then
 		return "Unknown game"
 	end
@@ -522,7 +525,11 @@ end
 
 function MinigameService.boot(labOrigin: Vector3)
 	centre = Places.floorCenter(labOrigin, "Arena") or Vector3.zero
-	remote = Net.event(Net.Names.Minigame)
+	remote = Net.event(Net.Names.Minigame) -- (made even while hidden: clients wait for it)
+	-- (V9-0s: no arena while it is hidden: no games, no listener, nothing ticking.)
+	if not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).ARENA_ENABLED then
+		return
+	end
 	local maps = WorldMaps.folder()
 	local arena = maps and maps:FindFirstChild("Arena")
 	if arena then

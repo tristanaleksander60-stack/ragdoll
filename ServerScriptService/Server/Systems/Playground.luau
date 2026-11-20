@@ -1156,9 +1156,13 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	if lab and (Config :: any).PATHS then
 		local okU, errU = pcall(function()
 			local roots: { Instance } = { folder }
+			-- (V9-0d review: only this lab's own plot, not every lab built so far.)
 			local labs = Workspace:FindFirstChild("Labs")
-			if labs then
-				table.insert(roots, labs)
+			for _, plot in if labs then labs:GetChildren() else {} do
+				local floorPart = plot:FindFirstChild("LabFloor", true)
+				if floorPart and floorPart:IsA("BasePart") and math.abs(floorPart.Position.X - origin.X) < 60 then
+					table.insert(roots, plot)
+				end
 			end
 			folder:SetAttribute("PathFlicker", require(script.Parent.PathBuilder).unflickerArea({ folder }, roots))
 		end)

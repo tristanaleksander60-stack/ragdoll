@@ -1351,3 +1351,21 @@ Write the baseline into `docs/PERF.md`.
   - **Review small ones:** T153 holds a gun before the seated check; the car on its side does not drive or damp the righting; T163 exempts only the bullseye; T112 reads the row from `Lab.slotPosition`; LayoutCheck measures the compact notice pill in the toast lane.
   - **Tests:** T168_TownSquare (layout, 40 seats enabled and level, a player sits, moved away the seat stays home); T36 budget 520; T150, T156, T106, T112, T147, T153, T163 pass. Captures: arrival, centre, from above, the photo. Place saved v703 (Bench).
   - **Left:** the booths' market row (V9-4b). The lab paths keep the warm cobble texture: the shimmer was z-fighting, now 0.
+- 21 Nov 2026, V9-0d re-review: 0c 8.7, 0g 8.8, 0h 8.7 pass; 0d 8.3. Fix round 2 (PC):
+  - **String lights:** each wire point is parented first, then placed (they were shifted by the first post). T168 checks every wire point lies on its span.
+  - **The photo:**
+    - It follows what each ScreenGui's owner wants while it is up, and puts exactly that back.
+    - Roblox's own GUI pieces are restored one by one.
+    - Only a player standing free may pose (not ragdolled, held, seated or dead).
+  - **Square pieces** stand only on the ground (a ray onto the Baseplate/Terrain only).
+  - **Map walkway over a step:** two half-slabs, each on its own floor.
+  - **The lab's separation pass** reads only its own plot.
+  - The welcome gate is readable from both sides (as before).
+  - **Sky (a V9-0b regression found in the captures):** in the clear thumbnail air the open-air maps' undersides showed as squares in the sky over the plaza and labs. `Places.ROOM_HEIGHT` 1600 -> 4000: the sky is clean. T26, T93, T96, T105, T106, T156, T31 and T42 pass up there.
+  - **Plaza parts** 434 + 2 flower beds; all anchored, the bulbs cast no shadow. Phone check in the full LayoutCheck/phone pass at release.
+- 21 Nov 2026, V9-0s DONE (PC): the Game Arena is hidden.
+  - **The switch:** `Config.ARENA_ENABLED = false`. `Places` leaves it out of the list, so it is not on the Map Board, portal, Maps window or MENU. It is not built and no trip goes there.
+  - **Games and goals:** MinigameService refuses ("The Game Arena is closed for now") and does not tick; its remote still exists for clients. DailyGoals has no arena goal.
+  - **Tests:** T94 SKIPs with the reason; T27 checks the refusal instead.
+  - **T26:** its sleepy-crowd check was chance-dependent (a passer-by could start a chat). The person is now kept to itself (`CrowdService.aloneForTest`).
+  - **To bring it back:** set `ARENA_ENABLED = true`.

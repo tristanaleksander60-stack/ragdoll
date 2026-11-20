@@ -266,7 +266,13 @@ local function body(results: { string }, player: Player)
 	;(ProgressService.storedForTest(player) :: any).takedowns = before5
 	table.insert(results, "profile saved; eggs saved as a change (4 stored + 1 found = 5); a never-read session added on top; the board lists the player")
 
-	-- 6. Red Light, Green Light.
+	-- 6. Red Light, Green Light. (V9-0s: while the Game Arena is hidden its games only refuse.)
+	if not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).ARENA_ENABLED then
+		assert(MinigameService.refusal(player, "RLGL") == "The Game Arena is closed for now", "an arena game could start while the arena is hidden")
+		assert(not WorldMaps.travel(player, "Arena"), "a trip to the hidden arena was allowed")
+		table.insert(results, "arena hidden (ARENA_ENABLED off): no trip, its games refuse")
+		return
+	end
 	MinigameService.stopForTest()
 	assert(MinigameService.refusal(player, "RLGL") ~= nil, "a game started outside the arena")
 	task.wait(Places.TRAVEL_GAP + 0.1)

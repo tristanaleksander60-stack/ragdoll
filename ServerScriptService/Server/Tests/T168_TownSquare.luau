@@ -54,6 +54,20 @@ return {
 			end
 		end
 		assert(trees == 4 and bulbs >= 40, string.format("%d shade trees, %d bulbs", trees, bulbs))
+		-- (V9-0d review: the wire hangs where the bulbs are: every wire point between two lamps, at lamp
+		-- height less the sag, never shifted off by its anchor.)
+		local wires = 0
+		for _, d in dressing:GetDescendants() do
+			if d:IsA("Beam") and d.Attachment0 and d.Attachment1 then
+				wires += 1
+				for _, att in { d.Attachment0 :: Attachment, d.Attachment1 :: Attachment } do
+					local w = att.WorldPosition
+					local r = flat(w - middle).Magnitude
+					assert(r > 36 and r < 50 and w.Y > 7 and w.Y < 16, string.format("a string-light wire point is off its span: r %.0f, y %.0f", r, w.Y))
+				end
+			end
+		end
+		assert(wires >= 50, "only " .. wires .. " wire pieces")
 		-- The prompts.
 		local dance = dressing:FindFirstChild("PlazaDance", true)
 		local photo = dressing:FindFirstChild("PlazaPhoto", true)

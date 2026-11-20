@@ -767,8 +767,11 @@ CrowdService.greetForTest = function(model: Model): boolean
 	return greet(npc, pelvis.Position, os.clock())
 end
 
+-- (Tests: a person kept to itself, so nobody walks up to chat while a check watches it.)
+local alone: { [Model]: boolean } = {}
+
 local function free(npc: Npc): boolean
-	return (npc.mode == "Idle" or npc.mode == "Walk") and stateOf(npc) == "Standing" and npc.panicUntil < os.clock()
+	return (npc.mode == "Idle" or npc.mode == "Walk") and stateOf(npc) == "Standing" and npc.panicUntil < os.clock() and not alone[npc.model]
 end
 
 local function think(npc: Npc, now: number)
@@ -1332,6 +1335,11 @@ function CrowdService.panickedAt(model: Model): number?
 end
 
 -- Tests: a person stops where it is and stands about for `seconds` (its usual linger, made sure).
+-- Tests: keeps one person to itself (no chats, no greetings) while a check watches it.
+function CrowdService.aloneForTest(model: Model, on: boolean)
+	alone[model] = if on then true else nil
+end
+
 function CrowdService.idleForTest(model: Model, seconds: number)
 	local npc = byModel[model]
 	local pelvis = npc and pelvisOf(npc)

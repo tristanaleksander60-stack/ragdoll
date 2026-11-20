@@ -241,10 +241,19 @@ local function body(results: { string }, player: Player)
 	-- The sleepy one, left to stand about.
 	-- (Whatever it was doing when the crowd was held, it now has a while to stand about.)
 	CrowdService.holdForTest(false)
-	CrowdService.idleForTest(sleepy, 12)
-	local dozed = waitFor(function()
-		return sleepy:GetAttribute("Dozing") == true
-	end, 8)
+	-- (Kept to itself: a chat started by someone walking past is chance, not what is checked here.)
+	CrowdService.aloneForTest(sleepy, true)
+	local dozed = false
+	for _ = 1, 2 do
+		CrowdService.idleForTest(sleepy, 12)
+		dozed = waitFor(function()
+			return sleepy:GetAttribute("Dozing") == true
+		end, 6)
+		if dozed then
+			break
+		end
+	end
+	CrowdService.aloneForTest(sleepy, false)
 	assert(dozed, "the sleepy one never nodded off")
 	table.insert(results, "a sleepy one nods off while it stands about")
 

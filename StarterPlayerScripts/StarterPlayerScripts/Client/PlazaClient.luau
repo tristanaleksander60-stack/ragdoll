@@ -60,7 +60,17 @@ local function photo(prompt: ProximityPrompt)
 	local lookAt = spot and spot:GetAttribute("LookAt")
 	local character = player.Character
 	local step = prompt.Parent
-	if typeof(cameraAt) ~= "Vector3" or typeof(lookAt) ~= "Vector3" or not character or not (step and step:IsA("BasePart")) then
+	local humanoid = humanoidOf()
+	if typeof(cameraAt) ~= "Vector3" or typeof(lookAt) ~= "Vector3" or not character or not humanoid or not (step and step:IsA("BasePart")) then
+		return
+	end
+	-- (Only standing free: never pulled out of a ragdoll, a friend's grab or a seat to pose.)
+	local free = humanoid.SeatPart == nil and humanoid.Health > 0 and humanoid:GetState() ~= Enum.HumanoidStateType.Physics
+	pcall(function()
+		local PlayerBody = require(script.Parent:WaitForChild("PlayerBody")) :: any
+		free = free and not PlayerBody.isDown() and not PlayerBody.isHeld()
+	end)
+	if not free then
 		return
 	end
 	busy = true
@@ -68,19 +78,50 @@ local function photo(prompt: ProximityPrompt)
 	-- Into the frame, facing the camera.
 	local standAt = step.Position + Vector3.new(0, step.Size.Y / 2 + 3, 0)
 	character:PivotTo(CFrame.lookAt(standAt, Vector3.new(cameraAt.X, standAt.Y, cameraAt.Z)))
-	local humanoid = humanoidOf()
-	if humanoid then
-		pcall(function()
-			humanoid:PlayEmote("wave")
-		end)
-	end
-	-- The clean frame: no HUD, the camera in front.
+	pcall(function()
+		humanoid:PlayEmote("wave")
+	end)
+	-- The clean frame: every ScreenGui off while the photo is up. What each one's owner wants meanwhile
+	-- (on or off) is followed and put back after: never a stale window brought back, never one lost.
 	local gui = player:WaitForChild("PlayerGui")
-	local hidden: { ScreenGui } = {}
-	for _, g in gui:GetChildren() do
-		if g:IsA("ScreenGui") and g.Enabled then
+	local intent: { [ScreenGui]: boolean } = {}
+	local writing = false
+	local watches: { RBXScriptConnection } = {}
+	local function keepOff(g: ScreenGui)
+		if g.Enabled then
+			writing = true
 			g.Enabled = false
-			table.insert(hidden, g)
+			writing = false
+		end
+	end
+	local function track(g: Instance)
+		if not g:IsA("ScreenGui") or g.Name == "PhotoFlash" or intent[g] ~= nil then
+			return
+		end
+		intent[g] = g.Enabled
+		table.insert(watches, g:GetPropertyChangedSignal("Enabled"):Connect(function()
+			if writing then
+				return
+			end
+			intent[g] = g.Enabled -- (its owner turned it on or off while the photo was up)
+			keepOff(g)
+		end))
+		keepOff(g)
+	end
+	for _, g in gui:GetChildren() do
+		track(g)
+	end
+	table.insert(watches, gui.ChildAdded:Connect(track))
+	-- Roblox's own pieces (chat, player list, backpack...), each put back as it was.
+	local core: { [Enum.CoreGuiType]: boolean } = {}
+	for _, kind in Enum.CoreGuiType:GetEnumItems() do
+		if kind ~= Enum.CoreGuiType.All then
+			local ok, on = pcall(function()
+				return StarterGui:GetCoreGuiEnabled(kind)
+			end)
+			if ok then
+				core[kind] = on
+			end
 		end
 	end
 	pcall(function()
@@ -92,15 +133,6 @@ local function photo(prompt: ProximityPrompt)
 	camera.FieldOfView = 50
 	RunService:BindToRenderStep("PlazaPhoto", Enum.RenderPriority.Camera.Value + 1, function()
 		camera.CFrame = CFrame.lookAt(cameraAt, lookAt)
-		-- (Other systems switch their HUD back on: kept off every frame while the photo is up.)
-		for _, g in gui:GetChildren() do
-			if g:IsA("ScreenGui") and g.Enabled and g.Name ~= "PhotoFlash" then
-				g.Enabled = false
-				if not table.find(hidden, g) then
-					table.insert(hidden, g)
-				end
-			end
-		end
 	end)
 	-- The shutter: a white flash.
 	local flashGui = Instance.new("ScreenGui")
@@ -126,12 +158,19 @@ local function photo(prompt: ProximityPrompt)
 		RunService:UnbindFromRenderStep("PlazaPhoto")
 		camera.CameraType = oldType
 		camera.FieldOfView = oldFov
-		for _, g in hidden do
-			g.Enabled = true
+		for _, c in watches do
+			c:Disconnect()
 		end
-		pcall(function()
-			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, true)
-		end)
+		for g, on in intent do
+			if g.Parent then
+				g.Enabled = on
+			end
+		end
+		for kind, on in core do
+			pcall(function()
+				StarterGui:SetCoreGuiEnabled(kind, on)
+			end)
+		end
 		flashGui:Destroy()
 		player:SetAttribute("PhotoPose", nil)
 		busy = false

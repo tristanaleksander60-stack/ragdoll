@@ -955,9 +955,15 @@ local function dressPlaza(labOrigin: Vector3)
 			plant = plant,
 			sign = sign,
 			ground = function(at: Vector3): Vector3
+				-- (V9-0d review: only the ground itself, never a booth, an edge board or a passer-by.)
 				local params = RaycastParams.new()
-				params.FilterType = Enum.RaycastFilterType.Exclude
-				params.FilterDescendantsInstances = { dressing }
+				params.FilterType = Enum.RaycastFilterType.Include
+				local ground: { Instance } = { Workspace.Terrain }
+				local base = Workspace:FindFirstChild("Baseplate")
+				if base then
+					table.insert(ground, base)
+				end
+				params.FilterDescendantsInstances = ground
 				local hit = Workspace:Raycast(Vector3.new(at.X, middle.Y + 30, at.Z), Vector3.new(0, -80, 0), params)
 				return Vector3.new(at.X, if hit then hit.Position.Y else floorY, at.Z)
 			end,

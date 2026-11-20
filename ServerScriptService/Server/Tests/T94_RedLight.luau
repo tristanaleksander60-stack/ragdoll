@@ -15,6 +15,9 @@ return {
 	name = "T94_RedLight",
 	timeout = 30,
 	run = function(): string?
+		if not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).ARENA_ENABLED then
+			return "skipped (V9-0s: the Game Arena is hidden, Config.ARENA_ENABLED off)"
+		end
 		local player = Players:GetPlayers()[1]
 		assert(player, "no player in the play test")
 		local wasPlace = player:GetAttribute("Place")

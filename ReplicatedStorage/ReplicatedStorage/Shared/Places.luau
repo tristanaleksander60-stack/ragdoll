@@ -26,7 +26,7 @@ export type Place = {
 
 local Places = {}
 
-Places.ROOM_HEIGHT = 1600 -- studs above the lab's floor where the rooms stand (out of sight from it)
+Places.ROOM_HEIGHT = 4000 -- studs above the lab's floor where the rooms stand (out of sight from it; V9-0d: at 1600 the clear V9-0b air showed the maps' undersides as squares in the sky)
 Places.ROOM_SPACING = 420 -- studs between rooms (further than the crowd's wake-up range)
 Places.TRAVEL_GAP = 2 -- s between two trips (server-checked)
 -- v3 phase B: the open-air maps stand in a row of their own, behind the rooms (+Z), further apart:
@@ -45,6 +45,18 @@ Places.list = table.freeze({
 	{ id = "Farm", name = "Old Farm", blurb = "Barns, tractors, hay bales and grumpy bison.", slot = 104, size = Vector3.new(360, 90, 360), crowd = 12, roles = { "Farmer", "Tourist" }, light = "Outdoor", color = "#C8553D", glyph = "\u{1F69C}", outdoor = true, row = 4, arrive = 150, image = "rbxassetid://94155941068741" },
 	{ id = "Military", name = "Army Base", blurb = "Tanks, a firing range, an obstacle course and a helipad.", slot = 105, size = Vector3.new(340, 90, 340), crowd = 14, roles = { "Soldier" }, light = "Outdoor", color = "#6B7A4B", glyph = "\u{1F396}\u{FE0F}", outdoor = true, row = 5, arrive = 140, image = "rbxassetid://128146376061336" },
 } :: { Place })
+
+-- V9-0s: the Game Arena is hidden while Config.ARENA_ENABLED is false: left out of the list, so nothing
+-- shows it, builds it or travels there.
+if not (require(script.Parent:WaitForChild("Config")) :: any).ARENA_ENABLED then
+	local kept = {}
+	for _, place in Places.list do
+		if place.id ~= "Arena" then
+			table.insert(kept, place)
+		end
+	end
+	Places.list = table.freeze(kept)
+end
 
 Places.byId = {} :: { [string]: Place }
 for _, place in Places.list do

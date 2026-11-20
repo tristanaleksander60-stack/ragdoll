@@ -103,8 +103,8 @@ local function stringLights(kit: Kit, into: Instance, posts: { Vector3 })
 			local t = k / (TownSquare.BULBS + 1)
 			local p = a:Lerp(b, t) - Vector3.new(0, TownSquare.SAG * 4 * t * (1 - t), 0)
 			local att = Instance.new("Attachment")
+			att.Parent = anchor -- (parented first: WorldPosition is read against its part)
 			att.WorldPosition = p
-			att.Parent = anchor
 			if last then
 				local wire = Instance.new("Beam")
 				wire.Attachment0 = last
