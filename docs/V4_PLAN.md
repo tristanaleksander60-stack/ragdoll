@@ -303,3 +303,14 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
   - Tyre dust.
   - The driver sits in the model's own seat.
   - `Client/VehicleFeel`. Seen in Studio.
+- **C3 done (20 Nov, PC):** a realistic gorilla and bulls.
+  - Two Creator Store rigs are in `ServerStorage.V3Assets` (place file only, saved v523; attribute `Rigged`, root anchored, pivot via PivotOffset at the feet):
+    - `GorillaRig` is "Killer Ape" 16280985370 (R15 Motor6D, SurfaceAppearance, 15 studs). Removed scripts: FollowScript, DamageScript, IdleScript, CloseProximityFollow and Animate, plus 28 Animations. Nothing flagged.
+    - `BullRig` is "Bull Cow Rig" 13992411894 (skinned mesh, 36 bones, 11 studs long, no scripts).
+  - The server moves the root and sets `Kind`/`Gait`/`GaitAt` (tag `AnimatedCreature`).
+  - `Client/CreatureAnim` animates on every screen with no animation upload:
+    - Gorilla: Roar (arms out, head back), Walk (heavy rolling gait), Chest (chest beats with thumps), Swat (right-arm sweep).
+    - Bull: a gallop, head down, tail.
+  - Sounds: a roar (ProSoundEffects 9113987603, pitched down), snorts (9113636194), a hooves loop (74590166641102).
+  - Bull Run is now a herd of 3 per lane, with dust. The gorilla roars 1.8 s before the rampage.
+  - Seen in Studio: the roar pose, the swat, the galloping herd. Old models stay as fallbacks.

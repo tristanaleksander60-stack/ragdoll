@@ -7,6 +7,7 @@
 -- The server moves them (anchored, PivotTo) and knocks bodies through DummyControl.hit and
 -- PlayerRagdoll.knock, as a blast does. Each returns a stop function for the event's clean-up.
 
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -23,9 +24,12 @@ Creatures.GORILLA_SPEED = 16 -- studs/s
 Creatures.GORILLA_REACH = 8 -- studs from its middle to swat
 Creatures.GORILLA_SWAT = 85 -- body speed a swat gives
 Creatures.GORILLA_GAP = 0.7 -- s between swats
+Creatures.GORILLA_HEIGHT = 15 -- studs (v4 C3: the rigged one)
+Creatures.GORILLA_ROAR = 1.8 -- s it stands and roars before the rampage
 Creatures.BULL_SPEED = 48
 Creatures.BULL_REACH = 5.5
 Creatures.BULL_THROW = 95
+Creatures.HERD = 3 -- bulls per lane (v4 C3)
 Creatures.HALF = 70 -- studs from the lab's middle the animals keep inside
 
 local function block(model: Model, name: string, size: Vector3, offset: CFrame, color: Color3, shape: Enum.PartType?): Part
@@ -154,16 +158,24 @@ function Creatures.gorilla(center: Vector3): () -> ()
 	end
 	local at = center + Vector3.new(0, 0, 60)
 	local facing = 0
-	-- v3: the Creator Store gorilla when the place has one (V3Assets "Gorilla"); the blocky one is
-	-- the fallback.
-	local look = V3Assets.place("Gorilla", folder(), CFrame.new(at), { height = 13, collide = false })
+	-- v4 C3: the rigged gorilla first (V3Assets "GorillaRig": a real ape model on R15 joints, which
+	-- every screen animates from the attributes below: Client/CreatureAnim), then v3's still model,
+	-- then the blocky one.
+	local rigged = V3Assets.place("GorillaRig", folder(), CFrame.new(at), { height = Creatures.GORILLA_HEIGHT, collide = false })
+	local look = rigged or V3Assets.place("Gorilla", folder(), CFrame.new(at), { height = 13, collide = false })
+	if rigged then
+		rigged:SetAttribute("Kind", "Gorilla")
+		rigged:SetAttribute("Gait", "Roar")
+		rigged:SetAttribute("GaitAt", Workspace:GetServerTimeNow())
+		CollectionService:AddTag(rigged, "AnimatedCreature")
+	end
 	if look then
 		table.clear(base)
 		model:Destroy()
 		model = look
 	end
 	local function place(t: number)
-		local bob = math.abs(math.sin(t * 6)) * 0.6
+		local bob = if rigged then 0 else math.abs(math.sin(t * 6)) * 0.6 -- (a rigged one walks by its legs)
 		local root = CFrame.new(at) * CFrame.Angles(0, facing, 0) * CFrame.new(0, bob, 0)
 		if look then
 			look:PivotTo(root)
@@ -185,6 +197,16 @@ function Creatures.gorilla(center: Vector3): () -> ()
 	place(0)
 	model.Parent = folder()
 	FxService.hit(at + Vector3.new(0, 4, 0), 120, "BigBoom")
+	-- The gait the screens animate (only sent when it changes).
+	local gait = "Roar"
+	local swatUntil = 0
+	local function setGait(g: string)
+		if rigged and g ~= gait then
+			gait = g
+			rigged:SetAttribute("Gait", g)
+			rigged:SetAttribute("GaitAt", Workspace:GetServerTimeNow())
+		end
+	end
 	local lastSwat = 0
 	local t = 0
 	local bodies: { Body } = {}
@@ -208,13 +230,21 @@ function Creatures.gorilla(center: Vector3): () -> ()
 				best, target = dist, d.pelvis.Position
 			end
 		end
+		-- (First it stands and roars.)
+		if t < Creatures.GORILLA_ROAR then
+			place(t)
+			return
+		end
 		local goal = target or center
 		local flat = Vector3.new(goal.X - at.X, 0, goal.Z - at.Z)
-		if flat.Magnitude > 2 then
+		local moving = flat.Magnitude > 2 and os.clock() >= swatUntil
+		if moving then
 			local step = flat.Unit * math.min(flat.Magnitude, Creatures.GORILLA_SPEED * dt)
 			at += step
 			facing = math.atan2(-flat.X, -flat.Z)
 		end
+		-- (Nobody left standing: it beats its chest.)
+		setGait(if os.clock() < swatUntil then "Swat" elseif not target then "Chest" elseif moving then "Walk" else "Chest")
 		local o = at - center
 		at = center + Vector3.new(math.clamp(o.X, -Creatures.HALF, Creatures.HALF), 0, math.clamp(o.Z, -90, 68))
 		place(t)
@@ -228,6 +258,8 @@ function Creatures.gorilla(center: Vector3): () -> ()
 			end
 			if swatted then
 				lastSwat = os.clock()
+				swatUntil = lastSwat + 0.55
+				setGait("Swat")
 				FxService.hit(at + Vector3.new(0, 3, 0), 90, "BigBoom")
 				knockPlayers(at, Creatures.GORILLA_REACH, Creatures.GORILLA_SWAT, 0.9, center)
 			end
@@ -254,9 +286,33 @@ function Creatures.bulls(center: Vector3): () -> ()
 			local x0 = if fromLeft then -Creatures.HALF else Creatures.HALF
 			local dirX = if fromLeft then 1 else -1
 			local facing = if fromLeft then -math.pi / 2 else math.pi / 2
-			local at = center + Vector3.new(x0, 0, z)
+			-- v4 C3: a herd of HERD bulls per lane, staggered (each runs its own loop below).
+			for k = 1, Creatures.HERD do
+			local at = center + Vector3.new(x0 - dirX * (k - 1) * 8, 0, z + (k - 2) * 6.5)
 			-- (v3: the Creator Store bull when the place has one; the blocky one is the fallback.)
-			local asset = V3Assets.place("Bull", folder(), CFrame.new(at) * CFrame.Angles(0, facing, 0), { height = 7, collide = false })
+			local rigged = V3Assets.place("BullRig", folder(), CFrame.new(at) * CFrame.Angles(0, facing, 0), { height = 6, collide = false })
+			local asset = rigged or V3Assets.place("Bull", folder(), CFrame.new(at) * CFrame.Angles(0, facing, 0), { height = 7, collide = false })
+			if rigged then
+				rigged:SetAttribute("Kind", "Bull")
+				rigged:SetAttribute("Gait", "Run")
+				rigged:SetAttribute("GaitAt", Workspace:GetServerTimeNow() + k * 0.13)
+				CollectionService:AddTag(rigged, "AnimatedCreature")
+				-- Dust kicked up behind it.
+				local root = rigged.PrimaryPart
+				if root then
+					local dust = Instance.new("ParticleEmitter")
+					dust.Name = "HoofDust"
+					dust.Texture = "rbxasset://textures/particles/smoke_main.dds"
+					dust.Color = ColorSequence.new(Color3.fromRGB(176, 158, 130))
+					dust.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.45), NumberSequenceKeypoint.new(1, 1) })
+					dust.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2), NumberSequenceKeypoint.new(1, 6) })
+					dust.Lifetime = NumberRange.new(0.8, 1.4)
+					dust.Rate = 22
+					dust.Speed = NumberRange.new(1, 4)
+					dust.SpreadAngle = Vector2.new(40, 20)
+					dust.Parent = root
+				end
+			end
 			local bull = asset or bullModel()
 			local base: { [BasePart]: CFrame } = {}
 			if not asset then
@@ -278,7 +334,7 @@ function Creatures.bulls(center: Vector3): () -> ()
 			c = RunService.Heartbeat:Connect(function(dt)
 				t += dt
 				at += Vector3.new(dirX * Creatures.BULL_SPEED * dt, 0, 0)
-				local root = CFrame.new(at) * CFrame.Angles(0, facing, 0) * CFrame.new(0, math.abs(math.sin(t * 14)) * 0.5, 0)
+				local root = CFrame.new(at) * CFrame.Angles(0, facing, 0) * CFrame.new(0, if rigged then 0 else math.abs(math.sin(t * 14)) * 0.5, 0)
 				if asset then
 					asset:PivotTo(root)
 				end
@@ -300,12 +356,13 @@ function Creatures.bulls(center: Vector3): () -> ()
 					end
 				end
 				knockPlayers(at, Creatures.BULL_REACH, Creatures.BULL_THROW, 1.1, center, hitPlayers)
-				if math.abs(at.X - center.X) > Creatures.HALF + 2 then
+				if (at.X - center.X) * dirX > Creatures.HALF + 2 then -- (out the far side)
 					c:Disconnect()
 					bull:Destroy()
 				end
 			end)
 			table.insert(connections, c)
+			end -- (the herd)
 			task.wait(4)
 		end
 	end)
