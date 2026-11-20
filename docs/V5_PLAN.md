@@ -50,3 +50,11 @@ Ordered by how much of a player's screen time each one covers. Every step:
   - Studio-only capture hook: the player attribute `DevOpen` = a window name opens it ("Weapons" opens the catalog).
   - T90 updated (press 0.96 under Clean); T21/T35/T90 pass.
 - **V5-4 (part):** the lightning storm's cloud is a volume of dark smoke puffs (a particle emitter in a flat box), not plastic balls. Seen in Studio.
+- **V5-4 (more):**
+  - **Giant fan:** an open ring of steel segments, a grille, a big rotor, a stand and a foot. It always stands on the east side (z -55); the solid disc used to hide the blades, and on the west it stood in the rocket.
+  - **Sinkhole and quake cracks:** now at the real floor height (`Surprises.FLOOR_UP`); before they lay under the floor. The hole is a black void with dust rising.
+  - **Moon:** the craters are sunk into the surface.
+  - **Meteors:** 7-stud CrackedLava rocks with a light, a smoke trail and bigger fire.
+  - **Card pictures:** 4 more (FanBlast, Sinkhole, BalloonDrop, MoonGravity), so 11 of 18 have one.
+  - **Still a word on the card:** RocketRain, Earthquake, GiantDummy, MeteorShower and TrainRun. The meteor falls too fast to catch, and the 4x giant falls over.
+  - **Seen:** the first-wow UFO came by itself at 50 s.

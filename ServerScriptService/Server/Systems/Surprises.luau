@@ -35,6 +35,7 @@ local Surprises = {}
 
 Surprises.HALF = Creatures.HALF -- studs either side of the lab's middle
 Surprises.Z_MIN, Surprises.Z_MAX = -85, 65
+Surprises.FLOOR_UP = 0.56 -- studs from `center` (half a stud under the floor) up to the lab floor's top
 
 type Stop = () -> ()
 
@@ -392,9 +393,23 @@ end
 function Surprises.Sinkhole(center: Vector3): Stop
 	local m = model("Sinkhole")
 	local at = spot(center, 22)
-	local hole = block(m, "Hole", Vector3.new(0.3, 1, 1), CFrame.new(at + Vector3.new(0, 0.1, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(14, 12, 16), Enum.PartType.Cylinder)
-	local lip = block(m, "Lip", Vector3.new(0.2, 1, 1), CFrame.new(at + Vector3.new(0, 0.05, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(95, 75, 55), Enum.PartType.Cylinder)
+	local hole = block(m, "Hole", Vector3.new(0.3, 1, 1), CFrame.new(at + Vector3.new(0, Surprises.FLOOR_UP + 0.04, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(14, 12, 16), Enum.PartType.Cylinder)
+	local lip = block(m, "Lip", Vector3.new(0.2, 1, 1), CFrame.new(at + Vector3.new(0, Surprises.FLOOR_UP + 0.02, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(95, 75, 55), Enum.PartType.Cylinder)
 	lip.Material = Enum.Material.Ground
+	-- V5-4: a hole, not a lid: a black void (neon black draws no light), dust rising out of it.
+	hole.Material = Enum.Material.Neon
+	hole.Color = Color3.new(0, 0, 0)
+	local dust = Instance.new("ParticleEmitter")
+	dust.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	dust.Color = ColorSequence.new(Color3.fromRGB(140, 118, 96))
+	dust.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 1) })
+	dust.Size = NumberSequence.new(3, 8)
+	dust.Lifetime = NumberRange.new(1.2, 2)
+	dust.Speed = NumberRange.new(3, 6)
+	dust.Rate = 14
+	dust.EmissionDirection = Enum.NormalId.Right -- (the cylinder lies on its side: +X is up)
+	dust.SpreadAngle = Vector2.new(25, 25)
+	dust.Parent = hole
 	FxService.hit(at, 50, "Shockwave")
 	local pull = every(0.2)
 	local spat = false
@@ -432,8 +447,8 @@ function Surprises.Sinkhole(center: Vector3): Stop
 		if cycle > 7.8 and t > hopAt then
 			hopAt = t + 1
 			at = spot(center, 22)
-			hole.CFrame = CFrame.new(at + Vector3.new(0, 0.1, 0)) * CFrame.Angles(0, 0, math.rad(90))
-			lip.CFrame = CFrame.new(at + Vector3.new(0, 0.05, 0)) * CFrame.Angles(0, 0, math.rad(90))
+			hole.CFrame = CFrame.new(at + Vector3.new(0, Surprises.FLOOR_UP + 0.04, 0)) * CFrame.Angles(0, 0, math.rad(90))
+			lip.CFrame = CFrame.new(at + Vector3.new(0, Surprises.FLOOR_UP + 0.02, 0)) * CFrame.Angles(0, 0, math.rad(90))
 		end
 	end)
 end
@@ -460,7 +475,7 @@ function Surprises.Earthquake(center: Vector3): Stop
 		end
 		if crack(t) and #cracks:GetChildren() < 14 then
 			local at = spot(center, 6)
-			local c = block(cracks, "Crack", Vector3.new(rng:NextNumber(0.4, 0.7), 0.1, rng:NextNumber(8, 18)), CFrame.new(at + Vector3.new(0, 0.07, 0)) * CFrame.Angles(0, rng:NextNumber(0, math.pi), 0), Color3.fromRGB(28, 24, 22))
+			local c = block(cracks, "Crack", Vector3.new(rng:NextNumber(0.4, 0.7), 0.1, rng:NextNumber(8, 18)), CFrame.new(at + Vector3.new(0, Surprises.FLOOR_UP + 0.03, 0)) * CFrame.Angles(0, rng:NextNumber(0, math.pi), 0), Color3.fromRGB(28, 24, 22))
 			c.Material = Enum.Material.Slate
 		end
 	end)
@@ -471,17 +486,29 @@ end
 
 function Surprises.FanBlast(center: Vector3): Stop
 	local m = model("GiantFan")
-	local side = if rng:NextNumber() < 0.5 then -1 else 1
-	local at = center + Vector3.new(side * (Surprises.HALF - 4), 13, -10)
+	-- V5-4: always on the east side, south of the vehicle bay (the west has the rocket and tower),
+	-- blowing west across the lab: an open ring of steel segments, a grille of thin bars, a big
+	-- four-blade rotor and a hub (a solid disc hid the blades).
+	local side = 1
+	local at = center + Vector3.new(side * (Surprises.HALF - 4), 14, -55)
 	local face = CFrame.lookAt(at, at - Vector3.new(side, 0, 0))
+	m.WorldPivot = face
 	local frame = Color3.fromRGB(60, 64, 72)
-	block(m, "Cage", Vector3.new(26, 26, 2), face * CFrame.new(0, 0, 1), frame).Transparency = 0.6
-	block(m, "Ring", Vector3.new(2, 27, 27), face * CFrame.Angles(0, math.rad(90), 0), frame, Enum.PartType.Cylinder).Material = Enum.Material.Metal
-	block(m, "Stand", Vector3.new(4, 13, 6), face * CFrame.new(0, -13, 2), frame)
-	local hub = block(m, "Hub", Vector3.new(3, 3, 3), face, Color3.fromRGB(220, 60, 50), Enum.PartType.Ball)
+	local radius = 13
+	for i = 0, 15 do
+		local a = i / 16 * math.pi * 2
+		local seg = block(m, "Ring", Vector3.new(5.4, 1.6, 2.2), face * CFrame.Angles(0, 0, a) * CFrame.new(0, radius, 0), frame)
+		seg.Material = Enum.Material.Metal
+	end
+	for k = -2, 2 do
+		block(m, "Grille", Vector3.new(0.25, radius * 2 - 1, 0.25), face * CFrame.new(k * 5, 0, -1.4), Color3.fromRGB(90, 94, 102)).Material = Enum.Material.Metal
+	end
+	block(m, "Stand", Vector3.new(4, 14, 6), face * CFrame.new(0, -14, 2), frame).Material = Enum.Material.Metal
+	block(m, "Foot", Vector3.new(12, 1, 10), face * CFrame.new(0, -20.5, 2), frame).Material = Enum.Material.Metal
+	local hub = block(m, "Hub", Vector3.new(3.4, 3.4, 3.4), face, Color3.fromRGB(200, 60, 50), Enum.PartType.Ball)
 	local blades: { BasePart } = {}
 	for i = 1, 4 do
-		local b = block(m, "Blade", Vector3.new(4, 11, 0.4), face, Color3.fromRGB(230, 232, 236))
+		local b = block(m, "Blade", Vector3.new(5, 11.5, 0.4), face, Color3.fromRGB(214, 218, 224))
 		b.Material = Enum.Material.Metal
 		table.insert(blades, b)
 	end
@@ -520,7 +547,11 @@ function Surprises.MoonGravity(center: Vector3): Stop
 	moon.Material = Enum.Material.Slate
 	moon.CastShadow = false
 	for i = 1, 5 do
-		local c = block(m, "Crater", Vector3.new(1, 1, 1) * rng:NextNumber(5, 10), moon.CFrame * CFrame.new(rng:NextNumber(-12, 12), rng:NextNumber(-12, 12), 17), Color3.fromRGB(190, 190, 182), Enum.PartType.Ball)
+		local size = rng:NextNumber(5, 10)
+		local cx, cy = rng:NextNumber(-11, 11), rng:NextNumber(-11, 11)
+		-- (Sunk into the surface: only a shallow cap shows, never a bump past the edge.)
+		local depth = math.sqrt(math.max(0, 400 - cx * cx - cy * cy)) - size * 0.42
+		local c = block(m, "Crater", Vector3.one * size, moon.CFrame * CFrame.new(cx, cy, depth), Color3.fromRGB(190, 190, 182), Enum.PartType.Ball)
 		c.Material = Enum.Material.Slate
 		c.CastShadow = false
 	end
