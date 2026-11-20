@@ -394,6 +394,46 @@ function LayoutCheck.run(): string
 	if problems == eyeProblems then
 		table.insert(lines, "creator mode: the eye (top-right) clear of the REC pill, the jump button and the gift guide on every screen")
 	end
+	-- V8-0.9 (the day-2 tablet): HudV3's five squares on touch (HudV3Layout) stay out of the move
+	-- thumb's zone and clear of RAGDOLL, the jump button and every other control and toast.
+	if (Config :: any).LOOK_V3 then
+		local Layout = require(script.Parent:WaitForChild("HudV3Layout")) :: any
+		local v3Problems = problems
+		local TABLETS = {
+			{ name = "iPad", size = Vector2.new(1180, 742) },
+			{ name = "iPad mini 1024x704", size = Vector2.new(1024, 704) },
+			{ name = "Android tablet 1280x736", size = Vector2.new(1280, 736) },
+		}
+		-- (Hidden under HudV3: the chaos meter and its build-mode counter (ChaosMeter), the big WEAPONS
+		-- button and today's deal (HudPlus), the event packs (EventShop).)
+		local SKIP = { Chaos = true, Counter = true, Weapons = true, Deal = true, Packs = true }
+		for _, t in TABLETS do
+			for _, lab in { false, true } do
+				local ctx = ctxOf(t.size, true, lab)
+				local ragdoll = slotRect("Ragdoll", ctx, t.size)
+				local centre, tw, ty = HudSlots.toastBox(t.size, ctx)
+				local squares = Layout.touchRects(t.size, ragdoll.y + ragdoll.h, centre - tw / 2)
+				local others: { Rect } = { jumpButton(t.size), Layout.thumbZone(t.size) }
+				for _, r in controls(t.size, true, lab) do
+					if not SKIP[r.name] then
+						table.insert(others, r)
+					end
+				end
+				table.insert(others, { x = centre - tw / 2, y = ty or 10, w = tw, h = toastH(t.size), name = "Toast" })
+				for _, sq in squares do
+					for _, o in others do
+						if overlap(sq, o) then
+							problems += 1
+							table.insert(lines, string.format("%-18s HudV3 touch%s: %s/%s", t.name, if lab then " lab" else "", sq.name, o.name))
+						end
+					end
+				end
+			end
+		end
+		if problems == v3Problems then
+			table.insert(lines, "HudV3 on tablets: the five squares clear of the move thumb's zone, RAGDOLL, the jump button, the toasts and every control")
+		end
+	end
 	for _, s in LayoutCheck.SCREENS do
 		for _, lab in { false, true } do
 			for _, withTools in { false, true } do

@@ -232,7 +232,7 @@ local function playOpening(result: { kind: string?, id: string, name: string, ra
 			t:Play()
 			t.Completed:Wait()
 		end
-		C.playSound("hover")
+		C.playSound("tick", 0.9 + 0.15 * i) -- (V8-0.9: each wobble ticks, higher each time)
 		task.wait(0.18)
 	end
 	-- Crack: a burst of light in the rarity's colour, the egg pops away.

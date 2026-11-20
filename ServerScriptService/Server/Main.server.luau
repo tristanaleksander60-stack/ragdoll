@@ -43,37 +43,46 @@ local WeaponShop = require(Systems:WaitForChild("WeaponShop"))
 local log = Log.new("Boot")
 log.info(string.format("%s %s (phase %d) server started", Config.GameName, Config.Version, Config.Phase))
 
+-- V8-0.9 (safe boot): every system starts under pcall (Shared\SafeStart), so one error no longer
+-- stops the systems after it (saving above all). A failure is listed in workspace attribute
+-- BootFailed. Purchases starts first: it needs nothing else, and receipts for products not yet
+-- registered come back later (NotProcessedYet).
+local safe = require(Shared:WaitForChild("SafeStart")).new(function(failedList: string)
+	workspace:SetAttribute("BootFailed", failedList)
+end)
+safe("Purchases", function() Purchases.start() end) -- the one ProcessReceipt; finds out whether orders live in a DataStore
+
 -- Round 5, phase 00: one record per visit (Session_v1) for the first-minute numbers.
-require(Systems:WaitForChild("AimService")).start() -- the gun follows the mouse, for everyone to see (round 5)
+safe("AimService", function() require(Systems:WaitForChild("AimService")).start() end) -- the gun follows the mouse, for everyone to see (round 5)
 local SessionStats = require(Systems:WaitForChild("SessionStats"))
 SessionStats.hasLab = function(player: Player): boolean
 	return Lab.plotIndex(player) ~= nil
 end
-SessionStats.start()
-require(Systems:WaitForChild("ExperimentService")).start() -- phase 1: Experiment cards (Shared\Experiments)
-require(Systems:WaitForChild("EconomyService")).start() -- phase 2: bolts, bone journal, daily experiments, codes
-require(Systems:WaitForChild("PartyService")).start() -- phase 3: Prank Party shared experiment cards
-FxService.start()
-VitalsService.start() -- blood, pulse and wounds (round 2, N2)
-DummyControl.start()
+safe("SessionStats", function() SessionStats.start() end)
+safe("ExperimentService", function() require(Systems:WaitForChild("ExperimentService")).start() end) -- phase 1: Experiment cards (Shared\Experiments)
+safe("EconomyService", function() require(Systems:WaitForChild("EconomyService")).start() end) -- phase 2: bolts, bone journal, daily experiments, codes
+safe("PartyService", function() require(Systems:WaitForChild("PartyService")).start() end) -- phase 3: Prank Party shared experiment cards
+safe("FxService", function() FxService.start() end)
+safe("VitalsService", function() VitalsService.start() end) -- blood, pulse and wounds (round 2, N2)
+safe("DummyControl", function() DummyControl.start() end)
 DummyControl.onShatter = FxService.shatter
-ToyService.start()
-OnboardingService.start()
-HitService.start()
-LoadoutStore.start()
-HeldService.start()
-Lab.build()
-BuildService.start()
-BuildStore.start()
-PlayerRagdoll.start()
-require(Systems:WaitForChild("PlayerGrab")).start() -- grab and throw other players in the plaza
-Playground.build(workspace:GetAttribute("LabOrigin") or Vector3.zero, "Plaza") -- the plaza's own
-Lab.setPlaygroundBuilder(Playground.build) -- and one in every lab once someone owns it
-WorldMaps.build(workspace:GetAttribute("LabOrigin") or Vector3.zero) -- the places (before their crowds)
-require(Systems:WaitForChild("MapActivities")).start(WorldMaps.folder() or workspace) -- v3: the open-air maps' launchers
-require(Systems:WaitForChild("GroundGuard")).start() -- v4 A2: lifts buried bodies onto the ground
-require(Systems:WaitForChild("NpcCommand")).start() -- v4 B4: talk to NPCs and command them
-require(Systems:WaitForChild("LabZones")).start() -- v4 C1: today's machine and NEW tags follow the UTC day
+safe("ToyService", function() ToyService.start() end)
+safe("OnboardingService", function() OnboardingService.start() end)
+safe("HitService", function() HitService.start() end)
+safe("LoadoutStore", function() LoadoutStore.start() end)
+safe("HeldService", function() HeldService.start() end)
+safe("Lab", function() Lab.build() end)
+safe("BuildService", function() BuildService.start() end)
+safe("BuildStore", function() BuildStore.start() end)
+safe("PlayerRagdoll", function() PlayerRagdoll.start() end)
+safe("PlayerGrab", function() require(Systems:WaitForChild("PlayerGrab")).start() end) -- grab and throw other players in the plaza
+safe("Playground", function() Playground.build(workspace:GetAttribute("LabOrigin") or Vector3.zero, "Plaza") end) -- the plaza's own
+safe("Lab", function() Lab.setPlaygroundBuilder(Playground.build) end) -- and one in every lab once someone owns it
+safe("WorldMaps", function() WorldMaps.build(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- the places (before their crowds)
+safe("MapActivities", function() require(Systems:WaitForChild("MapActivities")).start(WorldMaps.folder() or workspace) end) -- v3: the open-air maps' launchers
+safe("GroundGuard", function() require(Systems:WaitForChild("GroundGuard")).start() end) -- v4 A2: lifts buried bodies onto the ground
+safe("NpcCommand", function() require(Systems:WaitForChild("NpcCommand")).start() end) -- v4 B4: talk to NPCs and command them
+safe("LabZones", function() require(Systems:WaitForChild("LabZones")).start() end) -- v4 C1: today's machine and NEW tags follow the UTC day
 do -- LOOK_V3: grass, hills and trees round the labs (after WorldMaps: it repaints the baseplate)
 	local ok, err = pcall(function()
 		require(Systems:WaitForChild("Landscape")).build(workspace:GetAttribute("LabOrigin") or Vector3.zero, Lab.PLOT_SPACING, Lab.PLOT_COUNT)
@@ -82,8 +91,8 @@ do -- LOOK_V3: grass, hills and trees round the labs (after WorldMaps: it repain
 		warn("[Landscape] " .. tostring(err))
 	end
 end
-require(Systems:WaitForChild("MapShopService")).start(workspace:GetAttribute("LabOrigin") or Vector3.zero) -- V6-7: showcase booths and the map items' effects
-require(Systems:WaitForChild("PathBuilder")).start(workspace:GetAttribute("LabOrigin") or Vector3.zero) -- V7-2: paths on the plaza and the open-air maps
+safe("MapShopService", function() require(Systems:WaitForChild("MapShopService")).start(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- V6-7: showcase booths and the map items' effects
+safe("PathBuilder", function() require(Systems:WaitForChild("PathBuilder")).start(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- V7-2: paths on the plaza and the open-air maps
 -- A trip to a room counts towards the day's goals (round 3, M9).
 WorldMaps.onTrip = function(player: Player, landed: string)
 	local place = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Places")).byId[landed]
@@ -91,29 +100,29 @@ WorldMaps.onTrip = function(player: Player, landed: string)
 		require(Systems:WaitForChild("ProgressService")).goal(player, "Trips", 1)
 	end
 end
-CrowdService.start(workspace:GetAttribute("LabOrigin") or Vector3.zero)
-ProgressService.start(workspace:GetAttribute("LabOrigin") or Vector3.zero) -- takedowns, eggs, hats, the profile
-LeaderboardService.start(workspace:GetAttribute("LabOrigin") or Vector3.zero) -- the plaza's four boards (round 3, M6)
-LeaderboardService.buildLabBoards() -- and two in every lab, by the spawn (10 Nov 2026)
-ChristmasService.start(workspace:GetAttribute("LabOrigin") or Vector3.zero) -- the Christmas theme (round 3, M7)
-AdminService.start() -- the owner's own controls (round 3, M7)
-require(Systems:WaitForChild("ScheduleService")).start() -- the weekly ADMIN SHOW and the free weekend (round 3, M9)
-MinigameService.boot(workspace:GetAttribute("LabOrigin") or Vector3.zero) -- the arena games
-FriendsService.start() -- nukes and pranks between friends, PvP switch, friend boost, joining friends
-HordeService.boot(workspace:GetAttribute("LabOrigin") or Vector3.zero) -- the co-op horde every 10 minutes
-Purchases.start() -- the one ProcessReceipt; finds out whether orders live in a DataStore
-EventService.start() -- registers its products and claims orders owed from other servers
-WeaponShop.start() -- weapons for Robux: one product per price tier (round 2, N4)
-MoneyService.start() -- passes, free ULTRA minutes, What's New, admin events
-require(Systems:WaitForChild("LaunchGift")).start() -- one free weapon egg for everyone while we launch
-require(Systems:WaitForChild("PlaytimeGifts")).start() -- a weapon egg at 2, 5, 10 and 15 min of play a day
-require(Systems:WaitForChild("PortalService")).start() -- portals + the server list (round 5, phase 4)
-require(Systems:WaitForChild("VisitorService")).start() -- a living lab: visitor ragdolls try the things (round 5, phase 3)
-require(Systems:WaitForChild("ChaseService")).start_() -- NPC Chase: a pack runs at a newer player, with a health bar (round 5)
-require(Systems:WaitForChild("TrialService")).start() -- TRY FREE: a locked weapon for 2 min, once a day each (round 5)
-require(Systems:WaitForChild("SandboxService")).start() -- SLOW-MO / REVIVE ALL / RESET in your own lab (round 5)
-require(Systems:WaitForChild("RewardsService")).start() -- REWARDS: the group gift and trophies (round 5)
-require(Systems:WaitForChild("OfferService")).start() -- release 0.20.0: Shop.OFFERS products and passes (Shared\Offers)
+safe("CrowdService", function() CrowdService.start(workspace:GetAttribute("LabOrigin") or Vector3.zero) end)
+safe("ProgressService", function() ProgressService.start(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- takedowns, eggs, hats, the profile
+safe("LeaderboardService", function() LeaderboardService.start(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- the plaza's four boards (round 3, M6)
+safe("LeaderboardService", function() LeaderboardService.buildLabBoards() end) -- and two in every lab, by the spawn (10 Nov 2026)
+safe("ChristmasService", function() ChristmasService.start(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- the Christmas theme (round 3, M7)
+safe("AdminService", function() AdminService.start() end) -- the owner's own controls (round 3, M7)
+safe("ScheduleService", function() require(Systems:WaitForChild("ScheduleService")).start() end) -- the weekly ADMIN SHOW and the free weekend (round 3, M9)
+safe("MinigameService", function() MinigameService.boot(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- the arena games
+safe("FriendsService", function() FriendsService.start() end) -- nukes and pranks between friends, PvP switch, friend boost, joining friends
+safe("HordeService", function() HordeService.boot(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- the co-op horde every 10 minutes
+-- (Purchases started first, at the top: V8-0.9.)
+safe("EventService", function() EventService.start() end) -- registers its products and claims orders owed from other servers
+safe("WeaponShop", function() WeaponShop.start() end) -- weapons for Robux: one product per price tier (round 2, N4)
+safe("MoneyService", function() MoneyService.start() end) -- passes, free ULTRA minutes, What's New, admin events
+safe("LaunchGift", function() require(Systems:WaitForChild("LaunchGift")).start() end) -- one free weapon egg for everyone while we launch
+safe("PlaytimeGifts", function() require(Systems:WaitForChild("PlaytimeGifts")).start() end) -- a weapon egg at 2, 5, 10 and 15 min of play a day
+safe("PortalService", function() require(Systems:WaitForChild("PortalService")).start() end) -- portals + the server list (round 5, phase 4)
+safe("VisitorService", function() require(Systems:WaitForChild("VisitorService")).start() end) -- a living lab: visitor ragdolls try the things (round 5, phase 3)
+safe("ChaseService", function() require(Systems:WaitForChild("ChaseService")).start_() end) -- NPC Chase: a pack runs at a newer player, with a health bar (round 5)
+safe("TrialService", function() require(Systems:WaitForChild("TrialService")).start() end) -- TRY FREE: a locked weapon for 2 min, once a day each (round 5)
+safe("SandboxService", function() require(Systems:WaitForChild("SandboxService")).start() end) -- SLOW-MO / REVIVE ALL / RESET in your own lab (round 5)
+safe("RewardsService", function() require(Systems:WaitForChild("RewardsService")).start() end) -- REWARDS: the group gift and trophies (round 5)
+safe("OfferService", function() require(Systems:WaitForChild("OfferService")).start() end) -- release 0.20.0: Shop.OFFERS products and passes (Shared\Offers)
 require(Systems:WaitForChild("BadgeAwards")).start() -- badges (ids in Shared/Badges; 0 = not made yet)
-Metrics.start() -- counts for the Creator Dashboard (phase Å)
-StreamerService.start() -- Streamer Mode: gift keys set off fun things (private servers, no lasting value)
+safe("Metrics", function() Metrics.start() end) -- counts for the Creator Dashboard (phase Å)
+safe("StreamerService", function() StreamerService.start() end) -- Streamer Mode: gift keys set off fun things (private servers, no lasting value)

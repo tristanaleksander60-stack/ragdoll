@@ -282,13 +282,20 @@ Theme.Motion = {
 -- Ragdoll Lab: Roblox-licensed Pro Sound Effects from the Creator Store.
 local SOUNDS: { [string]: string } = {
 	click = "rbxassetid://9119717523", -- Switch Click On Or Off Toggle Button 2
-	hover = "", -- left silent
+	-- (V8-0.9: no slot a game calls is silent any more; all Pro Sound Effects, already used in-game.)
+	hover = "rbxassetid://9125746460", -- Plastic Cups 4 (a light hollow tick), very quiet
+	tick = "rbxassetid://9125746460", -- the same tick, for the egg's wobbles (rising pitch)
 	open = "rbxassetid://9126045906", -- Synth Air Whoosh Cheesy Karate Style Swishes 3
 	close = "rbxassetid://9126045906", -- the same swish as open
 	success = "rbxassetid://9116421550", -- Magic Transformation 6 (a bouncy boink)
-	error = "", -- left silent
+	reward = "rbxassetid://9116423522", -- Magic Transformation 30 (a bright sparkle)
+	unlock = "rbxassetid://9116423786", -- Magic Transformation 33 (a bigger sparkle)
+	purchase = "rbxassetid://9116421827", -- Magic Transformation 10 (a paid purchase landed)
+	error = "rbxassetid://9113263647", -- Balloon Pop 4 (a soft, friendly "no")
 }
 Theme.Sounds = SOUNDS
+-- Per-slot volume (default 0.5): hover is a whisper, so a mouse sweep over a menu is not a rattle.
+Theme.SoundVolume = table.freeze({ hover = 0.12, tick = 0.45, error = 0.35 }) :: { [string]: number }
 
 -- Icon sizes (design units) and the drop shadow under raised surfaces (UI v2 turns it on).
 Theme.IconSize = { xs = 20, sm = 28, md = 40, lg = 56, xl = 72 }

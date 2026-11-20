@@ -1360,3 +1360,18 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - **tools/SessionReport:** the gone-by curve from the first frame, D1, used, on-screen at leave.
   - **Tests:** T113 passes; T58/T29/T68/T23/T45 pass.
   - **Live baseline (21 Nov, owner and test out):** 368 visits. D1 = **1 %** of 290 first-time players. 0.17.1: 44-50 % gone by 30 s. 0.25.0: 3 visits so far.
+- **V8-0.9 done (code + place v614):**
+  - **Safe boot:** `Shared/SafeStart` starts all 52 server systems and 51 client systems under pcall. Failures are listed in `BootFailed` / `ClientBootFailed`, and a start slower than 8 s is named in the log. Purchases starts first.
+  - **Christmas spots:** moved off the paths and the car park (Chimney 45,66 · Present -40,58 · Sleigh -10,-60) and added to `PathPlan.OBSTACLES`. T106 checks that the two lists match. In Studio with Christmas on, the 7 parts hit no part and no path stone.
+  - **Sounds:**
+    - every `playSound` name is filled (hover, tick, reward, unlock, purchase and error, all Pro Sound Effects; `Theme.SoundVolume`; playSound takes a pitch);
+    - the egg's wobbles tick higher each time;
+    - a paid purchase plays "purchase";
+    - the preload list said "G17", but the gun's id is "Blaster", so the start gun was never loaded first.
+  - **CLIP IT** now reads the callback as (result, capture), so the save prompt can show.
+  - **Settings:** a MENU row wherever HudV3 hides the column (PC, tablet, console) and key O.
+  - **Gift clock** on HudV3's gift button.
+  - **Tablet:** `HudV3Layout` puts Shop/Weapons/Lab in a row at the top left (it shrinks to fit left of the toasts) and Maps/Menu under RAGDOLL. LayoutCheck checks it on 3 tablets: 0 problems.
+  - **Runner:** SKIP counted (`DONE pass= fail= skip=`), `task.cancel` on timeout, exact test numbers, T40/T41/T42/T99 duplicates renamed to T70-T73, `Tests/Lib/TestLib` (waitFor, withHold).
+  - **Tests:** T114_SafeBoot and T122_SoundSlots pass, as do T106, T113, T58, T23, T53, T54, T90, T70 and T72.
+  - **Found on the way:** the lab cannon's breech and knob used an archived mesh (455874143) and drew as nothing (a hole at the back of the barrel). Both are now plain parts in `ServerStorage.V3Assets.Cannon` (place saved, v614).

@@ -1452,7 +1452,9 @@ function FxController.start()
 			end
 		end
 	end
-	for _, gun in { "G17", "Deagle", "Shotgun", "Revolver" } do
+	-- (V8-0.9: the start bar's guns first. The key was "G17", which is only the label: the G17's id is
+	-- "Blaster", so its bank was never loaded first.)
+	for _, gun in { "Blaster", "Deagle", "Shotgun", "Revolver" } do
 		local g = SoundManifest.GUNS[gun]
 		if g then
 			loadList(BANK[g.fire])

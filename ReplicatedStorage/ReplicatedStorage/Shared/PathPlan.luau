@@ -148,6 +148,11 @@ PathPlan.OBSTACLES = table.freeze({
 	{ name = "Cone", min = Vector2.new(73, -18), max = Vector2.new(75, -16) },
 	{ name = "Cone", min = Vector2.new(73, 16), max = Vector2.new(75, 18) },
 	{ name = "Cone", min = Vector2.new(73, 50), max = Vector2.new(75, 52) },
+	-- The Christmas lab's machines (from 1 Dec; Playground.CHRISTMAS_SPOTS): chimney with its hearth, the
+	-- present trap, the sleigh ramp.
+	{ name = "XmasChimney", min = Vector2.new(41.5, 57.5), max = Vector2.new(48.5, 69.5) },
+	{ name = "XmasPresent", min = Vector2.new(-43.5, 54.5), max = Vector2.new(-36.5, 61.5) },
+	{ name = "XmasSleigh", min = Vector2.new(-14, -68), max = Vector2.new(-6, -52) },
 } :: { Obstacle })
 
 -- Terrain material per open-air place (what the grass under a path turns into).

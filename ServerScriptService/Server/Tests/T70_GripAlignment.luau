@@ -27,7 +27,7 @@ local function gripToPart(gripPos: Vector3, piece: BasePart): number
 end
 
 return {
-	name = "T40_GripAlignment",
+	name = "T70_GripAlignment",
 	timeout = 5,
 	run = function(): string?
 		local weapons = ReplicatedStorage:FindFirstChild("N7Assets") and (ReplicatedStorage.N7Assets :: Instance):FindFirstChild("Weapons")

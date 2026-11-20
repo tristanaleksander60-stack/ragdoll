@@ -49,6 +49,18 @@ return {
 			assert(reached, r.name .. " has no path to it")
 		end
 		assert(#PathPlan.lab() <= PathPlan.BUDGET, "the lab's paths are over budget")
+		-- V8-0.9: the Christmas lab's machines (from 1 Dec) are path obstacles too, so the paths
+		-- above keep clear of them; each spot must sit inside its box (the two lists never drift).
+		local Playground = require(script.Parent.Parent:WaitForChild("Systems"):WaitForChild("Playground")) :: any
+		for name, spot in Playground.CHRISTMAS_SPOTS do
+			local covered = false
+			for _, o in PathPlan.OBSTACLES do
+				if string.sub(o.name, 1, 4) == "Xmas" and spot.X >= o.min.X and spot.X <= o.max.X and spot.Y >= o.min.Y and spot.Y <= o.max.Y then
+					covered = true
+				end
+			end
+			assert(covered, "the Christmas " .. name .. " is not a path obstacle")
+		end
 		-- Built in the lab: pictures only.
 		local folder: Instance? = nil
 		assert(waitFor(function()

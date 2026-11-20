@@ -7,7 +7,7 @@
 local StarterPlayer = game:GetService("StarterPlayer")
 
 return {
-	name = "T42_Sprint",
+	name = "T72_Sprint",
 	timeout = 2,
 	run = function(): string?
 		assert(StarterPlayer.EnableMouseLockOption == false, "mouse lock is still on: Shift would toggle it instead of sprinting")

@@ -786,7 +786,8 @@ end
 -- (Workspace "Christmas"): a CHIMNEY that launches you up out of it, a PRESENT that bursts and throws
 -- you, and a SLEIGH RAMP. Built once with the lab into "ChristmasLab", which leaves the world out of
 -- season. The spots are clear of the rest of the lab (T66 checks it in a play test).
-Playground.CHRISTMAS_SPOTS = { Chimney = Vector2.new(60, 40), Present = Vector2.new(-56, 46), Sleigh = Vector2.new(62, -12) }
+-- (V8-0.9: moved off the paths and out of the car park: PathPlan.OBSTACLES keeps them clear, T106.)
+Playground.CHRISTMAS_SPOTS = { Chimney = Vector2.new(45, 66), Present = Vector2.new(-40, 58), Sleigh = Vector2.new(-10, -60) }
 local BRICK = Color3.fromRGB(150, 50, 40)
 local XMAS_GREEN = Color3.fromRGB(40, 150, 70)
 local GOLD = Color3.fromRGB(255, 200, 60)

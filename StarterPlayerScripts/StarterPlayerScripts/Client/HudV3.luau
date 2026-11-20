@@ -50,6 +50,7 @@ local chips: Frame? = nil
 -- Audit area 1: the first-visit flow (FirstVisit) holds parts back until it reveals them.
 local leftCol: Frame? = nil
 local rightCol: Frame? = nil
+local leftList: UIListLayout? = nil -- (V8-0.9: a row on touch, a column off it)
 local held: { [string]: boolean } = {}
 function HudV3.hold(name: string, on: boolean)
 	held[name] = if on then true else nil
@@ -231,6 +232,21 @@ local function buildTop(onRewards: () -> ())
 	gp.AnchorPoint = Vector2.new(0.5, 0.5)
 	gp.Position = UDim2.fromScale(0.5, 0.5)
 	gp.Parent = gift
+	-- (V8-0.9: the play-gift clock lives here under HudV3, where the WEAPONS tile that carried it is
+	-- hidden; GiftClock writes it. Hidden while there is no clock.)
+	local clock = Instance.new("TextLabel")
+	clock.Name = "Clock"
+	clock.AnchorPoint = Vector2.new(0.5, 0)
+	clock.Position = UDim2.new(0.5, 0, 1, 2)
+	clock.Size = UDim2.fromOffset(62, 16)
+	clock.BackgroundColor3 = Color3.fromRGB(255, 200, 60)
+	clock.TextColor3 = Color3.fromRGB(40, 28, 6)
+	clock.Font = Enum.Font.GothamBlack
+	clock.TextSize = 12
+	clock.Text = ""
+	clock.Visible = false
+	corner(clock, 8)
+	clock.Parent = gift
 	gift.Activated:Connect(onRewards)
 	gift.Parent = row
 	local pill = Instance.new("Frame")
@@ -436,6 +452,48 @@ local function step()
 		local h = (Workspace.CurrentCamera :: Camera).ViewportSize.Y
 		s.Scale = math.clamp(h / 1080, 0.72, 1.1)
 	end
+	-- (V8-0.9, the day-2 tablet: on touch the squares leave the move thumb's zone and RAGDOLL;
+	-- HudV3Layout is the rule, LayoutCheck checks it.)
+	local touch = ViewMode.isTouch()
+	local l, r, ll = leftCol, rightCol, leftList
+	if l and r and ll and s then
+		local k = s.Scale
+		if touch then
+			local HudSlots = require(Client:WaitForChild("HudSlots")) :: any
+			local Layout = require(Client:WaitForChild("HudV3Layout")) :: any
+			local screen = (Workspace.CurrentCamera :: Camera).ViewportSize
+			local ok, at, size = pcall(HudSlots.rect, "Ragdoll", HudSlots.context(true, ViewMode.isLab()), screen)
+			local bottom = if ok and at and size then at.Y + size.Y else nil
+			-- (On a narrow tablet the row shrinks a little to end left of the toast lane.)
+			local okT, centre, tw = pcall(HudSlots.toastBox, screen, HudSlots.context(true, ViewMode.isLab()))
+			-- lihfolk-ignore: findfirstchild-chain (stored and nil-checked on the next line)
+			local row = l:FindFirstChild("RowScale") :: UIScale?
+			if not row then
+				local u = Instance.new("UIScale")
+				u.Name = "RowScale"
+				u.Parent = l
+				row = u
+			end
+			;(row :: UIScale).Scale = Layout.rowScale(screen, if okT and centre and tw then centre - tw / 2 else nil)
+			l.AnchorPoint = Vector2.zero
+			l.Position = UDim2.fromOffset(HudV3.MARGIN, HudV3.MARGIN)
+			l.Size = UDim2.fromOffset(3 * HudV3.CARD.X + 2 * HudV3.GAP, HudV3.CARD.Y)
+			ll.FillDirection = Enum.FillDirection.Horizontal
+			ll.VerticalAlignment = Enum.VerticalAlignment.Top
+			r.Position = UDim2.new(1, -HudV3.MARGIN, 0, Layout.rightTop(screen, bottom) / k)
+		else
+			local row = l:FindFirstChild("RowScale")
+			if row and row:IsA("UIScale") then
+				row.Scale = 1
+			end
+			l.AnchorPoint = Vector2.new(0, 1)
+			l.Position = UDim2.new(0, HudV3.MARGIN, 1, -(HudV3.MARGIN + HudV3.CHIPS_H + 8))
+			l.Size = UDim2.fromOffset(HudV3.CARD.X, 3 * HudV3.CARD.Y + 2 * HudV3.GAP)
+			ll.FillDirection = Enum.FillDirection.Vertical
+			ll.VerticalAlignment = Enum.VerticalAlignment.Bottom
+			r.Position = UDim2.new(1, -HudV3.MARGIN, 0, 150)
+		end
+	end
 	if on ~= hidden then
 		hidden = on
 	end
@@ -482,6 +540,7 @@ function HudV3.start()
 	ll.SortOrder = Enum.SortOrder.LayoutOrder
 	ll.VerticalAlignment = Enum.VerticalAlignment.Bottom
 	ll.Parent = left
+	leftList = ll
 	card("Shop", "Shop", "shop", left, function()
 		Controller.toggle("Events")
 	end).LayoutOrder = 1

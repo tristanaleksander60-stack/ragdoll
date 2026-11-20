@@ -43,11 +43,18 @@ local log = Log.new("Boot")
 log.info(string.format("%s %s client started", Config.GameName, Config.Version))
 
 require(Client:WaitForChild("SessionClient")).start() -- (first: the boot time is read now)
+
+-- V8-0.9 (safe boot): every client system starts under pcall, so one error no longer stops the ones
+-- after it. A failure is logged and listed in the player attribute ClientBootFailed (SessionClient
+-- reports script errors in the visit record).
+local safe = require(Shared:WaitForChild("SafeStart")).new(function(failedList: string)
+	game:GetService("Players").LocalPlayer:SetAttribute("ClientBootFailed", failedList)
+end, "ClientBoot")
 -- The hand-drawn icons (Shared.DrawnIcons), before anything draws an icon.
 require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIIcons")).registerMany(require(Shared:WaitForChild("DrawnIcons")).ASSETS)
-PlotPrivacy.start() -- (first: other labs leave this screen before anything draws them)
+safe("PlotPrivacy", function() PlotPrivacy.start() end) -- (first: other labs leave this screen before anything draws them)
 task.spawn(require(Client:WaitForChild("DummySkins")).start) -- the dummies' sculpted mannequin bodies
-require(Client:WaitForChild("SoundMix")).start() -- v4 A3: the mix's groups and compressor
+safe("SoundMix", function() require(Client:WaitForChild("SoundMix")).start() end) -- v4 A3: the mix's groups and compressor
 task.spawn(require(Client:WaitForChild("NpcTalk")).start) -- v4 B4: the talk panel
 task.spawn(require(Client:WaitForChild("SlowMotion")).start) -- v4 C5: smooth slow motion
 task.spawn(require(Client:WaitForChild("VehicleFeel")).start) -- v4 C2: wheels, lean, lights, engine, horn
@@ -58,8 +65,8 @@ task.spawn(require(Client:WaitForChild("Director")).start) -- V6-3: F8 director 
 task.spawn(require(Client:WaitForChild("Birds")).start) -- V6-6: birds round the lab and the maps
 task.spawn(require(Client:WaitForChild("CreatureLife")).start) -- 20 Nov: the lab creatures move while they wait
 task.spawn(require(Client:WaitForChild("BoothSpin")).start) -- V6-7: the booth items turn on their pedestals
-FxController.start()
-AvatarMoves.start()
+safe("FxController", function() FxController.start() end)
+safe("AvatarMoves", function() AvatarMoves.start() end)
 
 -- Effects from our own simulation play here at once and are relayed to everyone else.
 local relay = Net.event(Net.Names.FxRelay)
@@ -73,57 +80,57 @@ end
 PropContacts.onHit = function(toyId: string, position: Vector3, speed: number)
 	FxController.localEvent("Hit", position, speed, toyId)
 end
-DummySim.start()
-DummyLife.start()
-PropContacts.start()
-PokeController.start()
-GrabController.start()
-PlayerBody.start()
-require(Client:WaitForChild("PlayerGrabClient")).start() -- grab and throw players in the plaza
-ReplayController.start()
-LabCamera.start()
-require(Client:WaitForChild("Sprint")).start() -- hold Shift / RUN / L3 to sprint (round 4, M10)
-ChaosMeter.start()
-BuildController.start()
-OnboardingController.start()
-EventShop.start()
-require(Client:WaitForChild("Spectate")).start() -- the owner's SPECTATE (admin menu)
-Ghosts.start()
-HospitalCharts.start()
-HitInfo.start() -- what you are shooting: two lines that add up (round 2, N2; round 3, M2)
-Crosshair.start() -- with a gun picked: a crosshair and hit marks (round 3, M2)
-require(Client:WaitForChild("TouchShoot")).start() -- touch: SHOOT button, centre crosshair, "tap a dummy" (round 5)
-require(Client:WaitForChild("BloodFx")).useHoles(BulletHoles) -- bodies bleed from their bullet holes
-PlaceMenu.start()
-ZoneLighting.start()
-require(Client:WaitForChild("Settings")).start() -- SETTINGS, in MENU (round 3, M6)
-require(Client:WaitForChild("ChristmasFx")).start() -- falling snow while the Christmas theme is on (round 3, M7)
-require(Client:WaitForChild("ScheduleUI")).start() -- the ADMIN SHOW countdown and the free weekend (round 3, M9)
+safe("DummySim", function() DummySim.start() end)
+safe("DummyLife", function() DummyLife.start() end)
+safe("PropContacts", function() PropContacts.start() end)
+safe("PokeController", function() PokeController.start() end)
+safe("GrabController", function() GrabController.start() end)
+safe("PlayerBody", function() PlayerBody.start() end)
+safe("PlayerGrabClient", function() require(Client:WaitForChild("PlayerGrabClient")).start() end) -- grab and throw players in the plaza
+safe("ReplayController", function() ReplayController.start() end)
+safe("LabCamera", function() LabCamera.start() end)
+safe("Sprint", function() require(Client:WaitForChild("Sprint")).start() end) -- hold Shift / RUN / L3 to sprint (round 4, M10)
+safe("ChaosMeter", function() ChaosMeter.start() end)
+safe("BuildController", function() BuildController.start() end)
+safe("OnboardingController", function() OnboardingController.start() end)
+safe("EventShop", function() EventShop.start() end)
+safe("Spectate", function() require(Client:WaitForChild("Spectate")).start() end) -- the owner's SPECTATE (admin menu)
+safe("Ghosts", function() Ghosts.start() end)
+safe("HospitalCharts", function() HospitalCharts.start() end)
+safe("HitInfo", function() HitInfo.start() end) -- what you are shooting: two lines that add up (round 2, N2; round 3, M2)
+safe("Crosshair", function() Crosshair.start() end) -- with a gun picked: a crosshair and hit marks (round 3, M2)
+safe("TouchShoot", function() require(Client:WaitForChild("TouchShoot")).start() end) -- touch: SHOOT button, centre crosshair, "tap a dummy" (round 5)
+safe("BloodFx", function() require(Client:WaitForChild("BloodFx")).useHoles(BulletHoles) end) -- bodies bleed from their bullet holes
+safe("PlaceMenu", function() PlaceMenu.start() end)
+safe("ZoneLighting", function() ZoneLighting.start() end)
+safe("Settings", function() require(Client:WaitForChild("Settings")).start() end) -- SETTINGS, in MENU (round 3, M6)
+safe("ChristmasFx", function() require(Client:WaitForChild("ChristmasFx")).start() end) -- falling snow while the Christmas theme is on (round 3, M7)
+safe("ScheduleUI", function() require(Client:WaitForChild("ScheduleUI")).start() end) -- the ADMIN SHOW countdown and the free weekend (round 3, M9)
 HudMenu.onSandbox = BuildController.toggle -- (MENU's SANDBOX on a phone)
-HudMenu.start()
-ProgressUI.start()
-require(Client:WaitForChild("FirstPerson")).start() -- V: first person (round 5)
-require(Client:WaitForChild("Viewmodel")).start()
-require(Client:WaitForChild("FeelV2")).start() -- World/Feel v2: trails, casings, recoil, combo beat, world lamps (Config.FEEL_V2)
-require(Client:WaitForChild("ChaseHud")).start()
-require(Client:WaitForChild("NpcGlow")).start()
-require(Client:WaitForChild("PortalUI")).start() -- SINGLEPLAYER / MULTIPLAYER portals, the server list (round 5) -- the dummies' slow purple glow (round 5) -- the health bar in an NPC Chase (round 5) -- the weapon in front of the camera in first person
-require(Client:WaitForChild("HudPlus")).start() -- big WEAPONS, LEVEL, today's deal, sandbox column (round 5)
-require(Client:WaitForChild("VehicleClient")).start() -- v3 Phase C: drive the lab cars
-require(Client:WaitForChild("HudV3")).start() -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)
-require(Client:WaitForChild("RewardsUI")).start() -- REWARDS: daily, play gift, dares, trophies, group (round 5)
-require(Client:WaitForChild("GiftClock")).start() -- the clock to the next free gift for time played
-MinigameHud.start()
-FriendsUI.start()
+safe("HudMenu", function() HudMenu.start() end)
+safe("ProgressUI", function() ProgressUI.start() end)
+safe("FirstPerson", function() require(Client:WaitForChild("FirstPerson")).start() end) -- V: first person (round 5)
+safe("Viewmodel", function() require(Client:WaitForChild("Viewmodel")).start() end)
+safe("FeelV2", function() require(Client:WaitForChild("FeelV2")).start() end) -- World/Feel v2: trails, casings, recoil, combo beat, world lamps (Config.FEEL_V2)
+safe("ChaseHud", function() require(Client:WaitForChild("ChaseHud")).start() end)
+safe("NpcGlow", function() require(Client:WaitForChild("NpcGlow")).start() end)
+safe("PortalUI", function() require(Client:WaitForChild("PortalUI")).start() end) -- SINGLEPLAYER / MULTIPLAYER portals, the server list (round 5)
+safe("HudPlus", function() require(Client:WaitForChild("HudPlus")).start() end) -- big WEAPONS, LEVEL, today's deal, sandbox column (round 5)
+safe("VehicleClient", function() require(Client:WaitForChild("VehicleClient")).start() end) -- v3 Phase C: drive the lab cars
+safe("HudV3", function() require(Client:WaitForChild("HudV3")).start() end) -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)
+safe("RewardsUI", function() require(Client:WaitForChild("RewardsUI")).start() end) -- REWARDS: daily, play gift, dares, trophies, group (round 5)
+safe("GiftClock", function() require(Client:WaitForChild("GiftClock")).start() end) -- the clock to the next free gift for time played
+safe("MinigameHud", function() MinigameHud.start() end)
+safe("FriendsUI", function() FriendsUI.start() end)
 -- (Round 5: no background music; the owner removed the radio.)
-ControlsUI.start()
-require(Client:WaitForChild("LikePrompt")).start() -- a friendly "like the game" ask (round 4)
-CreatorUI.start()
-require(Client:WaitForChild("ExperimentCard")).start() -- phase 1: the experiment card and EXPERIMENTS window
+safe("ControlsUI", function() ControlsUI.start() end)
+safe("LikePrompt", function() require(Client:WaitForChild("LikePrompt")).start() end) -- a friendly "like the game" ask (round 4)
+safe("CreatorUI", function() CreatorUI.start() end)
+safe("ExperimentCard", function() require(Client:WaitForChild("ExperimentCard")).start() end) -- phase 1: the experiment card and EXPERIMENTS window
 ReplayController.currentToy = PokeController.getSelected -- (phase 1: the X-ray replay's SHARE CODE)
 ReplayController.onScore = require(Client:WaitForChild("ExperimentCard")).scored
-require(Client:WaitForChild("GamepadControls")).start() -- phase 0: the whole game on a gamepad (Shared\PadMap)
-ToolCatalog.bindHospital(HospitalCharts.isDoctor, function(on: boolean)
+safe("GamepadControls", function() require(Client:WaitForChild("GamepadControls")).start() end) -- phase 0: the whole game on a gamepad (Shared\PadMap)
+safe("ToolCatalog", function() ToolCatalog.bindHospital(HospitalCharts.isDoctor, function(on: boolean) end)
 	HospitalCharts.setDoctor(on)
 end)
 HospitalCharts.onChanged = function()
@@ -161,3 +168,19 @@ if game:GetService("RunService"):IsStudio() then
 		end
 	end)
 end
+
+-- V8-0.9: a paid purchase is no longer silent (Theme.Sounds "purchase"), for products and passes.
+safe("PurchaseSound", function()
+	local MarketplaceService = game:GetService("MarketplaceService")
+	local Kit = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIComponents")) :: any
+	MarketplaceService.PromptProductPurchaseFinished:Connect(function(_, _, bought: boolean)
+		if bought then
+			Kit.playSound("purchase")
+		end
+	end)
+	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(_, _, bought: boolean)
+		if bought then
+			Kit.playSound("purchase")
+		end
+	end)
+end)

@@ -220,6 +220,13 @@ function Settings.start()
 	-- (The kit's clicks are effects too, in the mix's quieter UI group: v4 A3.)
 	C.soundGroup = require(script.Parent:WaitForChild("SoundMix")).group("UI")
 	build()
+	-- (V8-0.9: a key for it, O by default, so a keyboard needs no menu to reach it.)
+	local Keybinds = require(Shared:WaitForChild("Keybinds")) :: any
+	game:GetService("UserInputService").InputBegan:Connect(function(input: InputObject, processed: boolean)
+		if Keybinds.live(processed) and input.UserInputType == Enum.UserInputType.Keyboard and Keybinds.is("Settings", input.KeyCode) then
+			Controller.toggle("Settings")
+		end
+	end)
 	local r = Net.event(Net.Names.Progress)
 	remote = r
 	r.OnClientEvent:Connect(function(kind: unknown, data: unknown)

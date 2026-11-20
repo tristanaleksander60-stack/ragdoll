@@ -27,7 +27,9 @@ local ENTRIES: { any } = {
 	{ window = "Experiments", text = "EXPERIMENTS", role = "go", padOnly = true }, -- (phase 1: a pad reaches the card's window here)
 	{ window = "Friends", text = "FRIENDS", role = "info" },
 	{ window = "Creator", text = "CLIPS & LIVE", role = "info" },
-	{ window = "Settings", text = "SETTINGS", role = "neutral", phoneOnly = true }, -- (off a phone: its own launcher)
+	-- (V8-0.9: also wherever the launcher column is hidden, i.e. under HudV3 on PC, tablet and console:
+	-- there SETTINGS had no way in at all.)
+	{ window = "Settings", text = "SETTINGS", role = "neutral", phoneOnly = true, columnToo = true },
 	{ window = "Like", text = "\u{2B50} FAVORITE", role = "go" }, -- (round 4: LikePrompt)
 	{ window = "Controls", text = "KEYS", role = "neutral", keyboardOnly = true },
 }
@@ -159,7 +161,8 @@ function HudMenu.start()
 			local function show()
 				-- (Phase 0: a gamepad has no left column to reach, so MENU holds everything for it too.)
 				local pad = string.sub(UserInputService:GetLastInputType().Name, 1, 7) == "Gamepad"
-				button.root.Visible = if e.phoneOnly then (isPhone() or pad) else not isPhone()
+				local columnGone = e.columnToo == true and (require(script.Parent:WaitForChild("HudGate")) :: any).active()
+				button.root.Visible = if e.phoneOnly then (isPhone() or pad or columnGone) else not isPhone()
 			end
 			UserInputService.LastInputTypeChanged:Connect(show)
 			show()

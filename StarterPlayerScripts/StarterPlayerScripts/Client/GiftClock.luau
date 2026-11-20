@@ -43,9 +43,17 @@ end
 function GiftClock.start()
 	task.spawn(function()
 		local shown: string? = "-"
+		local gui = player:WaitForChild("PlayerGui")
 		while true do
 			local hud = PokeController.weaponsHud
 			local text = GiftClock.text(secondsLeft())
+			-- (V8-0.9: the same clock on HudV3's gift button, where the WEAPONS tile is hidden.)
+			local top = gui:FindFirstChild("HudV3Top")
+			local clock = top and top:FindFirstChild("Clock", true)
+			if clock and clock:IsA("TextLabel") then
+				clock.Text = text or ""
+				clock.Visible = text ~= nil
+			end
 			if hud and text ~= shown then
 				shown = text
 				hud.setTag(text)

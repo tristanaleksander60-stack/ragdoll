@@ -155,7 +155,8 @@ local soundCache: { [string]: Sound } = {}
 -- The SoundGroup the kit's clicks play in (nil: none). A game sets it to its effects group.
 Components.soundGroup = nil :: SoundGroup?
 
-function Components.playSound(name: string)
+-- `pitch` (optional, default 1) raises or lowers it, e.g. the egg's wobbles tick higher each time.
+function Components.playSound(name: string, pitch: number?)
 	local id = Theme.Sounds[name]
 	if id == nil or id == "" then
 		return
@@ -165,12 +166,14 @@ function Components.playSound(name: string)
 		local s = Instance.new("Sound")
 		s.Name = "LihFolkUI_" .. name
 		s.SoundId = id
-		s.Volume = 0.5
+		local volumes = (Theme :: any).SoundVolume
+		s.Volume = if volumes and volumes[name] then volumes[name] else 0.5
 		s.Parent = SoundService
 		soundCache[name] = s
 		sound = s
 	end
 	;(sound :: Sound).SoundGroup = Components.soundGroup -- (a game's settings can turn the clicks down)
+	;(sound :: Sound).PlaybackSpeed = math.clamp(pitch or 1, 0.5, 2)
 	SoundService:PlayLocalSound(sound :: Sound)
 end
 

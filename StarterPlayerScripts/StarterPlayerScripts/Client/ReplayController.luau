@@ -286,7 +286,12 @@ local function letterbox(): ScreenGui
 		-- The call may yield for the whole capture, so it runs on its own thread.
 		task.spawn(function()
 			local ok = pcall(function()
-				CaptureService:StartVideoCaptureAsync(function(capture: any)
+				-- (V8-0.9: the callback gets (result, capture); the capture was read from the first
+				-- argument, so the save prompt got the result and never showed.)
+				CaptureService:StartVideoCaptureAsync(function(_result: any, capture: any)
+					if capture == nil then
+						return
+					end
 					pcall(function()
 						CaptureService:PromptSaveCapturesToGallery({ capture }, function() end)
 					end)

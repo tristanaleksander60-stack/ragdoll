@@ -61,6 +61,7 @@ Keybinds.ACTIONS = table.freeze({
 	{ id = "Friends", label = "Friends", context = "Global", default = "P", group = "WINDOWS" },
 	{ id = "Clip", label = "Record a clip / stop", context = "Global", default = "Semicolon", group = "WINDOWS" },
 	{ id = "Rewards", label = "Rewards", context = "Global", default = "J", group = "WINDOWS" },
+	{ id = "Settings", label = "Settings", context = "Global", default = "O", group = "WINDOWS" }, -- (V8-0.9)
 	{ id = "Creator", label = "Creator mode (hide the screen buttons)", context = "Global", default = "U", group = "WINDOWS" },
 	{ id = "CreatorWindow", label = "Clips & live window", context = "Global", default = "Comma", group = "WINDOWS" },
 	{ id = "Controls", label = "This list (controls)", context = "Global", default = "K", group = "WINDOWS" },

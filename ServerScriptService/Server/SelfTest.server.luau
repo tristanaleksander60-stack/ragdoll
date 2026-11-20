@@ -1,12 +1,14 @@
 --!strict
 -- Studio only: runs every ModuleScript in Server/Tests when ServerStorage has the attribute RunSelfTest = true.
--- SelfTestOnly = "T15" (a module name prefix, or several: "T15,T28") runs just the matching tests.
+-- SelfTestOnly = "T15" (a test number, or several: "T15,T28"; V8-0.9: exact, so "T4" no longer runs T40-T49;
+-- a full module name works too) runs just the matching tests.
 -- Each test module returns { name: string, timeout: number?, run: () -> string? }.
 -- run() errors to fail; an optional returned string is printed as detail.
 -- Output lines (read them from the console or LogService):
 --   [SelfTest] PASS <name> <detail>
 --   [SelfTest] FAIL <name> <error>
---   [SelfTest] DONE pass=<n> fail=<n>
+--   [SelfTest] SKIP <name> <detail>   (V8-0.9: a test whose detail starts with "skipped")
+--   [SelfTest] DONE pass=<n> fail=<n> skip=<n>
 
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
@@ -29,7 +31,7 @@ local function runWithTimeout(fn: () -> string?, timeout: number): (boolean, str
 	local ok = false
 	local result: string? = nil
 
-	task.spawn(function()
+	local thread = task.spawn(function()
 		local success, value = pcall(fn)
 		ok = success
 		result = if value ~= nil then tostring(value) else nil
@@ -42,6 +44,8 @@ local function runWithTimeout(fn: () -> string?, timeout: number): (boolean, str
 	end
 
 	if not done then
+		-- (V8-0.9: a timed-out test stops here instead of running on into the next test.)
+		pcall(task.cancel, thread)
 		return false, string.format("timeout after %ds", timeout)
 	end
 	return ok, result
@@ -75,8 +79,9 @@ for _, child in testsFolder:GetChildren() do
 	-- (Several groups at once: "T28,T31".)
 	local wanted = type(only) ~= "string" or only == ""
 	if not wanted then
+		-- (V8-0.9: exact: "T4" is T4_..., not T40-T49.)
 		for prefix in string.gmatch(only :: string, "[^,%s]+") do
-			if string.sub(child.Name, 1, #prefix) == prefix then
+			if child.Name == prefix or string.sub(child.Name, 1, #prefix + 1) == prefix .. "_" then
 				wanted = true
 			end
 		end
@@ -89,7 +94,7 @@ table.sort(modules, function(a, b)
 	return a.Name < b.Name
 end)
 
-local passed, failed = 0, 0
+local passed, failed, skipped = 0, 0, 0
 for _, moduleScript in modules do
 	local loaded, test = pcall(require, moduleScript)
 	if not loaded or type(test) ~= "table" or type((test :: any).run) ~= "function" then
@@ -100,7 +105,10 @@ for _, moduleScript in modules do
 
 	local t = test :: TestModule
 	local ok, detail = runWithTimeout(t.run, t.timeout or DEFAULT_TIMEOUT)
-	if ok then
+	if ok and detail and string.lower(string.sub(detail, 1, 7)) == "skipped" then
+		skipped += 1
+		print("[SelfTest] SKIP", t.name, detail)
+	elseif ok then
 		passed += 1
 		print("[SelfTest] PASS", t.name, detail or "")
 	else
@@ -113,7 +121,7 @@ unlockJoin:Disconnect()
 for _, player in Players:GetPlayers() do
 	player:SetAttribute("UnlockAll", nil)
 end
-print(string.format("[SelfTest] DONE pass=%d fail=%d", passed, failed))
+print(string.format("[SelfTest] DONE pass=%d fail=%d skip=%d", passed, failed, skipped))
 if labLive ~= nil then
 	ServerStorage:SetAttribute("LabLive", labLive)
 end
