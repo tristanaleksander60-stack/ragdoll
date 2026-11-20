@@ -31,7 +31,7 @@ Shop.PASSES = table.freeze({
 		key = "God",
 		id = 2093692966, -- the GOD MODE game pass (21 Nov 2026)
 		name = "GOD MODE",
-		blurb = "Create life! Spawn ragdolls anywhere in your lab.",
+		blurb = "Create life! Spawn ragdolls.",
 		perks = { "Spawn ragdolls: tiny, heavy, bouncy, floppy", "Twice as many at once", "Each one comes down in a beam of light" },
 		color = "#FFE066",
 	},

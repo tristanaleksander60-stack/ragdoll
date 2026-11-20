@@ -55,6 +55,14 @@ function DummySpawn.mayCreate(player: Player): boolean
 	return type(untilAt) == "number" and workspace:GetServerTimeNow() < untilAt
 end
 
+-- V9-0f: the SHOP card's TRY 60 s: starts the trial for a player without the pass (once a visit).
+function DummySpawn.tryFor(player: Player): boolean
+	if not DummySpawn.godGated() or player:GetAttribute("God") == true then
+		return false
+	end
+	return DummySpawn.startTrial(player)
+end
+
 -- Starts a player's free trial if it is still unused this visit; true if it started.
 function DummySpawn.startTrial(player: Player): boolean
 	if trialUsed[player] then
@@ -222,6 +230,10 @@ function DummySpawn.start()
 	end
 	-- lihfolk-ignore: remote-unvalidated-args (what is only compared with "Spawn"; kind and at are checked in spawnFor)
 	;(remote :: RemoteEvent).OnServerEvent:Connect(function(player: Player, what: unknown, kind: unknown, at: unknown)
+		if what == "Try" then
+			DummySpawn.tryFor(player) -- (V9-0f: the SHOP card's TRY; once a visit, nothing to validate)
+			return
+		end
 		if what ~= "Spawn" then
 			return
 		end

@@ -21,7 +21,7 @@ local ENTRIES: { any } = {
 	-- close and delete, never a place to go.)
 	{ window = "Maps", text = "MAPS", role = "info", phoneOnly = true }, -- (off a phone MAPS is a square on the right; UI audit 21 Nov: one name, MAPS, everywhere)
 	-- (21 Nov 2026: GOD MODE, create life. Off a phone it is a square of its own: HudV3.)
-	{ window = "God", text = "GOD MODE", role = "premium", phoneOnly = true },
+	{ window = "God", text = "GOD MODE", role = "premium", phoneOnly = true, godOnly = true }, -- (V9-0f: only for an owner of the pass or during the trial: GodRules)
 	-- (Phase 0: SANDBOX had slipped onto the line above, behind its comment, so a phone had no way
 	-- to build; it is back, and a phone's BUILD button now lives here.)
 	{ window = "Sandbox", text = "SANDBOX", role = "go", phoneOnly = true }, -- (HudMenu.onSandbox)
@@ -167,10 +167,20 @@ function HudMenu.start()
 				-- (Phase 0: a gamepad has no left column to reach, so MENU holds everything for it too.)
 				local pad = string.sub(UserInputService:GetLastInputType().Name, 1, 7) == "Gamepad"
 				local columnGone = e.columnToo == true and (require(script.Parent:WaitForChild("HudGate")) :: any).active()
-				button.root.Visible = if e.phoneOnly then (isPhone() or pad or columnGone) else not isPhone()
+				local godOk = not e.godOnly or (require(script.Parent:WaitForChild("GodMode")) :: any).launcherShown()
+				button.root.Visible = godOk and (if e.phoneOnly then (isPhone() or pad or columnGone) else not isPhone())
 			end
 			UserInputService.LastInputTypeChanged:Connect(show)
 			show()
+			if e.godOnly then
+				-- (The pass or the trial can start or end at any time: look again once a second.)
+				task.spawn(function()
+					while button.root.Parent do
+						task.wait(1)
+						show()
+					end
+				end)
+			end
 			local camera = workspace.CurrentCamera
 			if camera then
 				camera:GetPropertyChangedSignal("ViewportSize"):Connect(show)

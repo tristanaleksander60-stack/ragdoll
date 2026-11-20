@@ -52,10 +52,10 @@ return {
 		assert(clickTouch == true and holdTouch >= 0.3, "a quick tap could open Talk on touch")
 		-- Every live Talk prompt from the server: not clickable, E / L3.
 		local prompts = 0
-		TestLib.waitFor(function()
+		assert(TestLib.waitFor(function()
 			local d = Workspace:FindFirstChild("Dummies")
 			return d ~= nil and d:FindFirstChild("TalkPrompt", true) ~= nil
-		end, 15)
+		end, 15), "no Talk prompt to check (V9-0a review: the live part must check something)")
 		local folder = Workspace:FindFirstChild("Dummies")
 		for _, p in if folder then folder:GetDescendants() else {} do
 			if p:IsA("ProximityPrompt") and p.Name == "TalkPrompt" then

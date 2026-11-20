@@ -17,6 +17,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config")) :: any
 local Net = require(Shared:WaitForChild("Net")) :: any
 local Shop = require(Shared:WaitForChild("Shop")) :: any
+local GodRules = require(Shared:WaitForChild("GodRules")) :: any
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local C = require(UI:WaitForChild("LihFolkUIComponents")) :: any
 local Controller = require(UI:WaitForChild("LihFolkUIController")) :: any
@@ -41,7 +42,19 @@ local trialLine: TextLabel? = nil
 -- Studio). While the pass is not on sale live, everyone creates for free and the window has no offer.
 function GodMode.gated(): boolean
 	local pass = Shop.byKey.God
-	return Config.GOD_PASS == true and pass ~= nil and (pass.id ~= 0 or RunService:IsStudio())
+	return pass ~= nil and GodRules.gated(Config.GOD_PASS == true, pass.id, RunService:IsStudio())
+end
+
+-- V9-0f: whether this player sees the GOD launcher (HUD square, phone MENU entry): an owner of the pass
+-- or during the free trial (or everyone while creating is free). Others find GOD MODE in the SHOP.
+function GodMode.launcherShown(): boolean
+	return GodRules.launcherShown(GodMode.gated(), player:GetAttribute("God") == true, player:GetAttribute("GodTrialUntil"), Workspace:GetServerTimeNow())
+end
+
+-- V9-0f: the SHOP card's TRY 60 s: the server starts the trial (once a visit), the window opens.
+function GodMode.tryIt()
+	Net.event(Net.Names.Spawn):FireServer("Try")
+	Controller.open("God")
 end
 
 local function creating(): boolean

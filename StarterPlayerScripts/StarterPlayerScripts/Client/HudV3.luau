@@ -53,6 +53,13 @@ local chips: Frame? = nil
 local leftCol: Frame? = nil
 local rightCol: Frame? = nil
 local leftList: UIListLayout? = nil -- (V8-0.9: a row on touch, a column off it)
+-- (V9-0f: the GOD square only for an owner of the pass or during the trial: GodMode.launcherShown.)
+local function godShown(): boolean
+	local ok, shown = pcall(function()
+		return (require(script.Parent:WaitForChild("GodMode")) :: any).launcherShown()
+	end)
+	return ok and shown == true
+end
 local held: { [string]: boolean } = {}
 function HudV3.hold(name: string, on: boolean)
 	held[name] = if on then true else nil
@@ -491,7 +498,7 @@ local function step()
 		-- and Lab wait for the reveal.)
 		for _, child in leftCol:GetChildren() do
 			if child:IsA("GuiObject") and child.Name ~= "Weapons" then
-				child.Visible = not held.Left
+				child.Visible = not held.Left and (child.Name ~= "God" or godShown())
 			end
 		end
 	end
@@ -619,9 +626,25 @@ function HudV3.start()
 	end).LayoutOrder = 1
 	-- (21 Nov 2026: GOD MODE, create life: GodMode's window.)
 	if Config.GOD_PASS and Config.DUMMY_TYPES then
-		card("God", "God", "god", left, function()
+		local godCard = card("God", "God", "god", left, function()
 			Controller.toggle("God")
-		end).LayoutOrder = 2
+		end)
+		godCard.LayoutOrder = 2
+		-- (V9-0f, owner 21 Nov 2026: "not visible to everyone, just in the shop like the other passes":
+		-- the square shows only for an owner of the pass, and during the free trial with its countdown.)
+		task.spawn(function()
+			local GodMode = require(script.Parent:WaitForChild("GodMode")) :: any
+			local word = godCard:FindFirstChild("Word", true)
+			while godCard.Parent do
+				godCard.Visible = GodMode.launcherShown() and not held.Left
+				if word and word:IsA("TextLabel") then
+					local untilAt = Players.LocalPlayer:GetAttribute("GodTrialUntil")
+					local left = if type(untilAt) == "number" and Players.LocalPlayer:GetAttribute("God") ~= true then math.ceil(untilAt - workspace:GetServerTimeNow()) else 0
+					word.Text = if left > 0 then string.format("%d:%02d", left // 60, left % 60) else "God"
+				end
+				task.wait(1)
+			end
+		end)
 	end
 	card("Lab", "Lab", "sandbox", left, function()
 		Controller.toggle("Lab")

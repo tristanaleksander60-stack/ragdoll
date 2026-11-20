@@ -331,9 +331,15 @@ function NpcTalk.start()
 	end
 	NpcTalk.attacked = attacked -- (tests and other attack paths)
 	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
-		if not processed and TalkRules.isAttack(input.UserInputType, input.KeyCode) then
+		-- (R2 counts even when a bound action took it: V9-0a review.)
+		if (not processed or input.KeyCode == Enum.KeyCode.ButtonR2) and TalkRules.isAttack(input.UserInputType, input.KeyCode) then
 			attacked()
 		end
+	end)
+	pcall(function()
+		table.insert((require(Client:WaitForChild("PokeController", 5)) :: any).onUsedAlso, function()
+			attacked()
+		end)
 	end)
 	pcall(function()
 		(require(Client:WaitForChild("FeelBus", 5)) :: any).on("Shot", function(data: any)

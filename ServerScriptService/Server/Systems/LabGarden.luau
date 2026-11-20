@@ -152,7 +152,12 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 		local i = 0
 		for tz = LabGarden.Z_BACK + 14, LabGarden.Z_FRONT - 8, 26 do
 			i += 1
-			place(folder, if i % 2 == 0 then "TreePine" else "TreeRound", origin + Vector3.new(side * math.max(half - 13, math.abs(walkX(tz)) + 8.5), 0, tz), (i * 47) % 360, if i % 2 == 0 then 0.55 else 0.75, true)
+			-- (V9-0 review: with the wide walks the shed moved to the west walk's outer side, onto this
+			-- tree's spot (z Z_BACK + 14): the shed stands there instead.)
+			local shedSpot = side < 0 and tz == LabGarden.Z_BACK + 14 and (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 == true
+			if not shedSpot then
+				place(folder, if i % 2 == 0 then "TreePine" else "TreeRound", origin + Vector3.new(side * math.max(half - 13, math.abs(walkX(tz)) + 8.5), 0, tz), (i * 47) % 360, if i % 2 == 0 then 0.55 else 0.75, true)
+			end
 		end
 		-- (V9-0 F2: the walks are wider since 0.30 (Config.LAYOUT_V2): beds, benches, lamps and the shed
 		-- step back so nothing stands on the paving.)
@@ -160,7 +165,7 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 		local bedOff, benchOff, lampOff = if wideWalk then 10.5 else 9, if wideWalk then 7 else 6, if wideWalk then 5.3 else 4.5
 		-- Flower beds along the path's inner side, benches and lamps on its outer side.
 		-- (20 Nov: the spider and the plant live at z -70, the frog at -5: their beds made room.)
-		for _, fz in if side > 0 then { -45, 10, 50 } else { -45, 50 } do
+		for _, fz in if side > 0 and not wideWalk then { -45, 10, 50 } else { -45, 50 } do -- (V9-0 review: the fountain at z 16 takes the z 10 bed's place)
 			place(folder, "FlowerBed", origin + Vector3.new(walkX(fz) - side * bedOff, 0.2, fz), 0, 0.8)
 		end
 		for _, bz in { -12, 45 } do
@@ -176,8 +181,10 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 		end
 		place(folder, "Rock", origin + Vector3.new(side * (half - 20), 0, LabGarden.Z_FRONT - 18), 30, 0.35, true)
 	end
-	-- (The walks' kerbs, laid last: they open where a crossing meets the long walk.)
-	if (require(Shared:WaitForChild("Config")) :: any).PATHS then
+	-- (The walks' kerbs, laid last: they open where a crossing meets the long walk. V9-0 review: with
+	-- LAYOUT_V2 the lab's paths come next and lay both folders' kerbs in one pass: PathBuilder.lab.)
+	local cfg = require(Shared:WaitForChild("Config")) :: any
+	if cfg.PATHS and not cfg.LAYOUT_V2 then
 		(require(script.Parent:WaitForChild("PathBuilder")) :: any).finishKerbs(folder)
 	end
 	return folder

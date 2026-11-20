@@ -26,6 +26,14 @@ return {
 		assert(pass and string.find(pass.name, "GOD") and #pass.perks == 3, "no GOD MODE pass in Shop.PASSES")
 		local banner = BannerRules.of("GOD MODE! 60 seconds to create life")
 		assert(banner and banner.title == "GOD MODE!" and banner.icon == "god", "the GOD MODE! line is no banner")
+		-- V9-0f: the GOD launcher only for an owner of the pass or during the trial (or everyone while free).
+		local GodRules = require(Shared:WaitForChild("GodRules")) :: any
+		assert(not GodRules.launcherShown(true, false, nil, 100), "a player without the pass sees the GOD launcher")
+		assert(GodRules.launcherShown(true, false, 160, 100), "the GOD launcher is hidden during the trial")
+		assert(not GodRules.launcherShown(true, false, 90, 100), "the GOD launcher stayed after the trial")
+		assert(GodRules.launcherShown(true, true, nil, 100), "an owner of the pass has no GOD launcher")
+		assert(GodRules.launcherShown(false, false, nil, 100), "creating is free but the GOD launcher is hidden")
+		assert(GodRules.trialState(nil, 100) == "try" and GodRules.trialState(130, 100) == "running" and GodRules.trialState(90, 100) == "used", "the TRY button's states are wrong")
 		if not (Config.GOD_PASS and Config.DUMMY_TYPES) then
 			return "pass listed; skipped (GOD_PASS or DUMMY_TYPES off)"
 		end
@@ -52,6 +60,13 @@ return {
 			p:SetAttribute("God", false)
 			DummySpawn.resetTrialForTest(p)
 			assert(not DummySpawn.mayCreate(p), "creates life without the pass or a trial")
+			-- (V9-0f: the SHOP card's TRY starts the trial once; an owner has nothing to try.)
+			assert(DummySpawn.tryFor(p) and type(p:GetAttribute("GodTrialUntil")) == "number", "TRY 60 s did not start the trial")
+			assert(not DummySpawn.tryFor(p), "TRY started a second trial")
+			DummySpawn.resetTrialForTest(p)
+			p:SetAttribute("God", true)
+			assert(not DummySpawn.tryFor(p), "an owner of the pass got a trial")
+			p:SetAttribute("God", false)
 			-- The first creation starts the free trial.
 			task.wait(DummySpawn.GAP + 0.05)
 			local m, why = DummySpawn.spawnFor(p, "MINI", here)
@@ -77,6 +92,6 @@ return {
 		DummySpawn.resetTrialForTest(p)
 		p:SetAttribute("God", hadGod)
 		assert(ok, err)
-		return "GOD MODE listed with its banner; no pass = no life; the first creation starts the 60 s trial with a beam; after it refused with god; with the pass always and twice the cap"
+		return "GOD MODE listed with its banner; launcher only for owners and the trial (V9-0f), TRY starts the trial once; no pass = no life; the first creation starts the 60 s trial with a beam; after it refused with god; with the pass always and twice the cap"
 	end,
 }

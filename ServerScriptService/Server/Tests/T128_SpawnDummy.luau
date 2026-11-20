@@ -60,7 +60,9 @@ return {
 				task.wait(DummySpawn.GAP + 0.05)
 				DummySpawn.spawnFor(p, "BOUNCY", here)
 			end
-			assert(#DummySpawn.of(p) <= 6, "more spawned dummies than the cap: " .. #DummySpawn.of(p))
+			-- (With live ids the creator owns GOD MODE in Studio, and Roblox may say so mid-test: twice the cap.)
+			local cap = if p:GetAttribute("God") == true then 12 else 6
+			assert(#DummySpawn.of(p) <= cap, "more spawned dummies than the cap: " .. #DummySpawn.of(p))
 			DummySpawn.clear(p)
 			assert(#DummySpawn.of(p) == 0, "clear left dummies")
 		end)

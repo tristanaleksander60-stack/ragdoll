@@ -97,13 +97,29 @@ local passBlurbs: { [string]: TextLabel } = {}
 local buyLockedUntil = 0
 local BUY_LOCK = 3 -- s a BUY waits after a tap (Roblox's purchase window is on its way)
 
+local godTry: any = nil -- (V9-0f: GOD MODE's TRY 60 s button)
 local function refreshPasses()
 	for key, button in passButtons do
 		local pass = Shop.byKey[key]
 		local mine = player:GetAttribute(key) == true
-		button.setRole(if mine then "done" else "premium")
-		button.setText(if mine then "OWNED" elseif pass.id ~= 0 then "BUY" elseif RunService:IsStudio() then "TEST" else "SOON")
-		button.setEnabled(not mine and (pass.id ~= 0 or RunService:IsStudio()) and os.clock() >= buyLockedUntil)
+		if key == "God" and mine then
+			-- (Yours: OPEN brings up the GOD MODE window.)
+			button.setRole("go")
+			button.setText("OPEN")
+			button.setEnabled(true)
+		else
+			button.setRole(if mine then "done" else "premium")
+			button.setText(if mine then "OWNED" elseif pass.id ~= 0 then "BUY" elseif RunService:IsStudio() then "TEST" else "SOON")
+			button.setEnabled(not mine and (pass.id ~= 0 or RunService:IsStudio()) and os.clock() >= buyLockedUntil)
+		end
+	end
+	local try = godTry
+	if try then
+		local GodRules = require(Shared:WaitForChild("GodRules")) :: any
+		local state, left = GodRules.trialState(player:GetAttribute("GodTrialUntil"), workspace:GetServerTimeNow())
+		try.root.Visible = player:GetAttribute("God") ~= true
+		try.setText(if state == "running" then string.format("%d:%02d", left // 60, left % 60) elseif state == "used" then "TRIED" else "TRY 60 s")
+		try.setEnabled(state == "try")
 	end
 end
 
@@ -249,13 +265,45 @@ local function buildPasses(window: any)
 		})
 		perks.TextXAlignment = Enum.TextXAlignment.Left
 		local key = pass.key
+		-- (V9-0f: GOD MODE's card has TRY 60 s beside BUY, and BUY turns OPEN once it is yours.)
+		local buttonParent: Instance = card.content
+		local buySize = UDim2.new(1, 0, 0, Theme.Size.buttonH)
+		if key == "God" then
+			local row = Instance.new("Frame")
+			row.Name = "Buttons"
+			row.BackgroundTransparency = 1
+			row.Size = UDim2.new(1, 0, 0, Theme.Size.buttonH)
+			row.LayoutOrder = 4
+			local rl = Instance.new("UIListLayout")
+			rl.FillDirection = Enum.FillDirection.Horizontal
+			rl.Padding = UDim.new(0, 8)
+			rl.SortOrder = Enum.SortOrder.LayoutOrder
+			rl.Parent = row
+			row.Parent = card.content
+			buttonParent = row
+			buySize = UDim2.new(0.56, -4, 1, 0)
+			godTry = C.Button({
+				text = "TRY 60 s",
+				role = "info",
+				size = UDim2.new(0.44, -4, 1, 0),
+				layoutOrder = 1,
+				parent = row,
+				onActivated = function()
+					(require(script.Parent:WaitForChild("GodMode")) :: any).tryIt()
+				end,
+			})
+		end
 		passButtons[key] = C.Button({
 			text = "BUY",
 			role = "premium",
-			size = UDim2.new(1, 0, 0, Theme.Size.buttonH),
-			layoutOrder = 4,
-			parent = card.content,
+			size = buySize,
+			layoutOrder = if key == "God" then 2 else 4,
+			parent = buttonParent,
 			onActivated = function()
+				if key == "God" and player:GetAttribute("God") == true then
+					Controller.open("God")
+					return
+				end
 				local r = moneyRemote
 				if r and os.clock() >= buyLockedUntil then
 					-- (One tap is one ask: the button rests while Roblox's purchase window opens.)
@@ -284,6 +332,16 @@ local function buildPasses(window: any)
 	for _, pass in Shop.PASSES do
 		player:GetAttributeChangedSignal(pass.key):Connect(refreshPasses)
 	end
+	-- (V9-0f: the GOD MODE TRY button counts down while the trial runs, and the shop is open.)
+	player:GetAttributeChangedSignal("GodTrialUntil"):Connect(refreshPasses)
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			if godTry and Controller.isOpen("Events") then
+				refreshPasses()
+			end
+		end
+	end)
 end
 
 -- One tap on a pack: what the shop's button does (the server opens Roblox's own purchase prompt).

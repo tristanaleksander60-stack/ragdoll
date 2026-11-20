@@ -566,3 +566,15 @@ Write the baseline into `docs/PERF.md`.
   - Light: Brightness 3.3, blue ambient (shadows read blue-grey), a warm ColorShift_Top, light-blue air (density 0.22, glare 0.6), saturation +0.22, contrast +0.08, a warm tint, bloom 0.4 at threshold 1.4, sun rays 0.1, no depth of field.
   - Terrain grass (96,158,62).
   - Captures: the cannon and the spawn, before and after. Phones keep the bright base light when the post effects drop at low quality.
+- 21 Nov 2026, V9-0f DONE (PC):
+  - `Shared/GodRules` (pure) decides who sees the GOD launcher: an owner of the pass, or during the free trial with a countdown on the square; everyone while creating is free (id 0).
+  - Everyone else: no HudV3 square (`HudV3.godShown`, the left column respects it) and no phone MENU entry (`godOnly`).
+  - SHOP: the GOD MODE pass card has TRY 60 s beside BUY. TRY sends Spawn "Try", the server runs `DummySpawn.tryFor` (once a visit), and the window opens. An owner sees OPEN.
+  - T148 is updated and passes. Live: the square is hidden for a player without the pass. LayoutCheck shows 0 problems.
+- 21 Nov 2026, V9-0a + V9-0 blind review: V9-0a scored 8.3, V9-0 scored 6.5 (fail). Fix round 1:
+  - **Kerbs:** one kerb pass for the lab's Paths and Garden (`PathBuilder.finishKerbs(into, together)`, own bends included; LabGarden leaves its kerbs to it under LAYOUT_V2). Bushes and lamps avoid the garden's real curving walks (`pendingLines`).
+  - **Paving check:** `overPaving` samples at most 2 studs apart and tall props only by their foot, with the paving cached per lab. Bush footprints are measured from the models.
+  - **Garden:** no tree under the shed, no bed under the fountain; the rug is clearly under the yard road.
+  - **Paths:** `PathBuilder.lab` has its own pcall.
+  - **Talk:** every tool use (`PokeController.onUsedAlso`) and R2 count as attacks for Talk.
+  - **Tests:** T150 also checks that no kerb lies across paving; T158 requires live prompts; T128 doubles the cap while the creator's GOD MODE shows. T150/T158/T148/T128/T103/T106/T147 pass.

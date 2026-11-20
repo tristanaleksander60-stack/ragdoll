@@ -67,6 +67,9 @@ PokeController.weaponsHud = nil :: any -- the left column's WEAPONS tile (its ta
 
 -- Called after a toy request is sent: (toyId, worldPosition).
 PokeController.onUsed = nil :: ((toyId: string, position: Vector3) -> ())?
+-- (V9-0a review: more listeners, each told the same; NpcTalk hides the Talk prompts on every use, so
+-- a hit from R2 or the touch SHOOT button, which the UI already took, still counts as an attack.)
+PokeController.onUsedAlso = {} :: { (toyId: string, position: Vector3) -> () }
 
 local P = Theme.Palette
 local INK = P.ink
@@ -1327,6 +1330,9 @@ local function fireMiss(toy: Toys.Toy, ray: Ray, result: RaycastResult?): boolea
 	if listener then
 		task.spawn(listener, toy.id, point)
 	end
+	for _, also in PokeController.onUsedAlso do
+		task.spawn(also, toy.id, point)
+	end
 	return true
 end
 
@@ -1648,6 +1654,9 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 	local listener = PokeController.onUsed
 	if listener then
 		task.spawn(listener, toy.id, result.Position)
+	end
+	for _, also in PokeController.onUsedAlso do
+		task.spawn(also, toy.id, result.Position)
 	end
 	return true
 end

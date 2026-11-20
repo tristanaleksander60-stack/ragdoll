@@ -160,7 +160,7 @@ end
 
 DRESS.Vacuum = function(f, at)
 	-- The robot's living-room corner: a soft rug under its round, and its charging dock.
-	local rug = part(f, "Habitat_Rug", Vector3.new(52, 0.08, 22), at * CFrame.new(0, 0.2, 0), -- (V9-0: under the yard road, never level with it: no flicker)
+	local rug = part(f, "Habitat_Rug", Vector3.new(52, 0.08, 22), at * CFrame.new(0, 0.1, 0), -- (V9-0 review: top 0.14, border top 0.11: both clearly under the yard road (top 0.21), no flicker)
 		 Color3.fromRGB(150, 130, 108), Enum.Material.Fabric)
 	part(f, "Habitat_RugBorder", Vector3.new(54, 0.06, 24), rug.CFrame * CFrame.new(0, -0.02, 0), Color3.fromRGB(96, 80, 66), Enum.Material.Fabric)
 	local dock = at * CFrame.new(0, 0, 12.5)

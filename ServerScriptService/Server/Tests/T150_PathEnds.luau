@@ -128,6 +128,44 @@ return {
 			end
 		end
 		assert(#hits == 0, #hits .. " part(s) on the paving: " .. table.concat(hits, ", ", 1, math.min(#hits, 6)))
+		-- 2b. (V9-0 review) No kerb lies on paving, in either folder: every kerb's middle line, sampled
+		-- every half stud, stays off every paving piece (its own walk's included: it sits beside it).
+		local pave: { BasePart } = {}
+		for _, d in lab:GetDescendants() do
+			if d:IsA("BasePart") and PAVING[d.Name] then
+				table.insert(pave, d)
+			end
+		end
+		local kerbs, badKerbs = 0, {}
+		for _, k in lab:GetDescendants() do
+			if k:IsA("BasePart") and k.Name == "PathKerb" then
+				kerbs += 1
+				local steps = math.max(1, math.ceil(k.Size.Z / 0.5))
+				for i = 0, steps do
+					local w = k.CFrame * Vector3.new(0, 0, (i / steps - 0.5) * k.Size.Z)
+					local over = false
+					for _, pv in pave do
+						if (Vector2.new(pv.Position.X, pv.Position.Z) - Vector2.new(w.X, w.Z)).Magnitude < 40 then
+							local l = pv.CFrame:PointToObjectSpace(Vector3.new(w.X, pv.Position.Y, w.Z))
+							if isRound(pv) then
+								over = Vector2.new(l.Y, l.Z).Magnitude < pv.Size.Y / 2 - 0.3
+							else
+								over = math.abs(l.X) < pv.Size.X / 2 - 0.3 and math.abs(l.Z) < pv.Size.Z / 2 - 0.3
+							end
+							if over then
+								break
+							end
+						end
+					end
+					if over then
+						table.insert(badKerbs, string.format("(%.0f, %.0f)", w.X - o2.X, w.Z - o2.Y))
+						break
+					end
+				end
+			end
+		end
+		assert(kerbs > 50, "only " .. kerbs .. " kerbs in the lab")
+		assert(#badKerbs == 0, #badKerbs .. " kerb(s) across paving at " .. table.concat(badKerbs, ", ", 1, math.min(#badKerbs, 6)))
 		-- 3. Real foliage on the verges.
 		local real, fake = 0, 0
 		for _, d in lab:GetDescendants() do
@@ -140,6 +178,6 @@ return {
 		if Config.FOLIAGE_V9 then
 			assert(real >= 20 and fake == 0, string.format("verges: %d real plants, %d balls/blocks", real, fake))
 		end
-		return string.format("%d path ends each at its thing; nothing on the paving (lab + plaza); %d real plants on the verges, no balls or blocks", ends, real)
+		return string.format("%d path ends each at its thing; nothing on the paving (lab + plaza); no kerb across paving; %d real plants on the verges, no balls or blocks", ends, real)
 	end,
 }

@@ -1120,7 +1120,18 @@ function Playground.build(labOrigin: Vector3, name: string?)
 		local ok, err = pcall(function()
 			require(script.Parent.LabGarden).build(folder, origin)
 			if (Config :: any).PATHS then
-				require(script.Parent.PathBuilder).lab(folder, origin, origin.Y + 0.04) -- V7-2: paths to everything
+				-- (V9-0 review: a failure in the paths never costs the creatures and the guide; the
+				-- garden's kerbs, which the paths would have laid with theirs, are laid on their own.)
+				local okPaths, errPaths = pcall(function()
+					require(script.Parent.PathBuilder).lab(folder, origin, origin.Y + 0.04) -- V7-2: paths to everything
+				end)
+				if not okPaths then
+					log.warn("Paths failed in " .. folder.Name .. ": " .. tostring(errPaths))
+					local garden = folder:FindFirstChild("Garden")
+					if garden then
+						require(script.Parent.PathBuilder).finishKerbs(garden)
+					end
+				end
 			end
 			if (Config :: any).LAB_CREATURES then
 				require(script.Parent.LabCreatures).build(folder, origin)
