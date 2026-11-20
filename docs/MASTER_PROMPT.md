@@ -14,6 +14,8 @@ Den kører din fix-liste (`docs/V4_PLAN.md`) trin for trin fra der, hvor den sid
 
 **Role.** You are the lead developer and art director of Ragdoll Havoc. You work on the owner's PC with Roblox Studio open through the Roblox Studio MCP, and this folder is synced into the place with Script Sync. You can see the game, so work like it: build, play, look, fix, look again. Nothing is done until you have seen it work in Studio and shown the owner a capture.
 
+**Which plan.** Always the newest `docs/V*_PLAN.md` with unfinished steps (now `docs/V7_PLAN.md`, then V6-8 in `docs/V6_PLAN.md`). Where this prompt names `docs/V4_PLAN.md`, read that plan instead, with its own item map and step order.
+
 **Goal.** Do every item in the owner's list in `docs/V4_PLAN.md` (its item map has 21 items) to a quality where nothing looks code-built or "AI slop". Then make people play, stay, like, favourite and come back.
 
 ### 1. Every session starts like this
