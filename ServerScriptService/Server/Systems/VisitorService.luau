@@ -68,8 +68,11 @@ local function pick(player: Player, v: Visitor)
 	v.pickedAt = os.clock()
 end
 
+local downSince: { [Model]: number } = {} -- (V9-0j: since when a visitor has been down or away)
+
 local function clear(player: Player)
 	for _, v in visitors[player] or {} do
+		downSince[v.model] = nil
 		if v.model.Parent and v.model:GetAttribute("Vital") ~= "Dead" then
 			v.model:Destroy()
 		end
@@ -133,18 +136,28 @@ end
 ------------------------------------------------------------------------------------------------
 -- V9-0j (owner, 21 Nov 2026: "make sure ragdolls walk round your lab so there is always one to
 -- shoot"): while you are in your own lab, at least Config.LAB_MIN_TARGETS bodies (by device tier)
--- stand in it: the row, the visitors and your GOD MODE ones together. When fewer stand (knocked out,
--- in a creature, thrown away), a new one walks in from the hub's rim with a puff, heading for a spot
--- in front of you, then goes about the lab like any visitor. One pool with the visitors; all bodies of
--- the lab stay under the device's ragdoll cap (Config.FX_CAPS) and the server's room. A visitor that
--- lies or is gone from the lab for STILL_RECYCLE s is recycled.
+-- stand in it, the row, the visitors and your GOD MODE ones together, and at least NEAR_WANT of them
+-- within NEAR studs in front of you. When fewer stand (knocked out, in a creature, thrown away), all
+-- that are missing walk in at once from the hub's rim with a puff, each on a free spot of floor (never
+-- the lava, a machine or inside anything), heading for a spot in front of you, then go about the lab
+-- like any visitor. One pool with the visitors; all bodies of the lab stay under the device's ragdoll
+-- cap (Config.FX_CAPS) and the server's room. Walkers past what is needed, once everyone is up again,
+-- puff away out of the player's sight; a visitor that lies or is gone from the lab for STILL_RECYCLE s
+-- is recycled (never one in a machine or in someone's hands).
 
-VisitorService.KEEP_EVERY = 1.5 -- s between checks
+VisitorService.KEEP_EVERY = 1 -- s between checks
 VisitorService.WALK_IN_RIM = 60 -- studs from the lab's spawn: where a walker comes in
-VisitorService.WALK_IN_AT_ONCE = 2 -- walkers a check may bring
 VisitorService.STILL_RECYCLE = 30 -- s a visitor may lie still or be out of the lab before it goes
+VisitorService.NEAR = 45 -- studs: "near the player"
+VisitorService.NEAR_WANT = 2 -- standing ones near and in front of the player, at least
+VisitorService.SPARE = 2 -- walkers kept past the minimum before the extras puff away
 
-local downSince: { [Model]: number } = {}
+local loopInTests = false
+
+-- Tests: lets the real loop run while the self-tests run (T166 waits on it).
+function VisitorService.loopInTests(on: boolean)
+	loopInTests = on
+end
 
 -- A body that counts as a target: up (standing, walking or running off), alive, not in a machine
 -- or in someone's hands.
@@ -202,28 +215,96 @@ local function puff(at: Vector3)
 	game:GetService("Debris"):AddItem(ball, 0.6)
 end
 
--- One walker in from the rim, heading for a spot in front of the player.
-local function walkIn(player: Player, list: { Visitor })
-	local origin = Lab.originFor(player)
+-- Whether a lab spot (x, z from the lab's spawn) is in a machine's footprint (PathPlan.OBSTACLES).
+local function inMachine(p: Vector2): boolean
+	local PathPlan = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PathPlan")) :: any
+	for _, o in PathPlan.OBSTACLES do
+		if o.at and o.radius and (p - o.at).Magnitude < o.radius + 3 then
+			return true
+		elseif o.min and o.max and p.X > o.min.X - 3 and p.X < o.max.X + 3 and p.Y > o.min.Y - 3 and p.Y < o.max.Y + 3 then
+			return true
+		end
+	end
+	return false
+end
+
+-- A free spot on the floor near `want` (world): open floor under it (no lava, no machine), nothing
+-- standing in the way at body height. nil when none of the tries is free.
+local function freeSpot(origin: Vector3, want: Vector3): Vector3?
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local dummies = Workspace:FindFirstChild("Dummies")
+	params.FilterDescendantsInstances = if dummies then { dummies } else {}
+	local overlap = OverlapParams.new()
+	overlap.FilterType = Enum.RaycastFilterType.Exclude
+	overlap.FilterDescendantsInstances = if dummies then { dummies } else {}
+	for _, at in { want, want + Vector3.new(4, 0, 0), want + Vector3.new(-4, 0, 0), want + Vector3.new(0, 0, 4), want + Vector3.new(0, 0, -4) } do
+		local lab = Vector2.new(at.X - origin.X, at.Z - origin.Z)
+		if not inMachine(lab) then
+			local hit = Workspace:Raycast(Vector3.new(at.X, origin.Y + 30, at.Z), Vector3.new(0, -60, 0), params)
+			if hit and hit.Normal.Y > 0.9 and math.abs(hit.Position.Y - origin.Y) < 2.5 and not string.find(hit.Instance.Name, "Lava") and Lab.ownerAt(hit.Position) ~= nil then
+				local top = hit.Position
+				local inside = false
+				for _, part in Workspace:GetPartBoundsInBox(CFrame.new(top + Vector3.new(0, 3, 0)), Vector3.new(3, 4.5, 3), overlap) do
+					if part.CanCollide then
+						inside = true
+						break
+					end
+				end
+				if not inside then
+					return top + Vector3.new(0, 3, 0)
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local function facingOf(player: Player): (Vector3, Vector3?)
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	local facing = Lab.SPAWN_FACING
 	if root and root:IsA("BasePart") then
 		local look = root.CFrame.LookVector
-		facing = if Vector3.new(look.X, 0, look.Z).Magnitude > 0.1 then Vector3.new(look.X, 0, look.Z).Unit else facing
+		if Vector3.new(look.X, 0, look.Z).Magnitude > 0.1 then
+			facing = Vector3.new(look.X, 0, look.Z).Unit
+		end
+		return facing, root.Position
 	end
-	-- (In from the rim ahead of the player, a little to one side, so it walks into view.)
-	local a = math.rad(math.random(-35, 35))
-	local dir = Vector3.new(facing.X * math.cos(a) - facing.Z * math.sin(a), 0, facing.X * math.sin(a) + facing.Z * math.cos(a))
-	local at = Vector3.new(origin.X, origin.Y + 3, origin.Z) + dir * VisitorService.WALK_IN_RIM
-	local here = if root and root:IsA("BasePart") then root.Position else origin
+	return facing, nil
+end
+
+-- One walker in from the rim on a free spot, heading for a spot in front of the player. False when
+-- no free spot was found this time.
+local function walkIn(player: Player, list: { Visitor }): boolean
+	local origin = Lab.originFor(player)
+	local facing, rootAt = facingOf(player)
+	local here = rootAt or origin
+	local at: Vector3? = nil
+	for _ = 1, 8 do
+		-- (In from the rim ahead of the player, a little to one side, so it walks into view.)
+		local a = math.rad(math.random(-40, 40))
+		local dir = Vector3.new(facing.X * math.cos(a) - facing.Z * math.sin(a), 0, facing.X * math.sin(a) + facing.Z * math.cos(a))
+		at = freeSpot(origin, origin + dir * math.random(VisitorService.WALK_IN_RIM - 14, VisitorService.WALK_IN_RIM))
+		if at then
+			break
+		end
+	end
+	if not at then
+		at = freeSpot(origin, here + facing * 20) -- (the rim is busy: closer in, still on free floor)
+	end
+	if not at then
+		return false
+	end
+	local spawnAt = at :: Vector3
 	local goal = here + facing * math.random(18, 30) + Vector3.new(facing.Z, 0, -facing.X) * math.random(-10, 10)
-	puff(at)
-	local model = DummyFactory.spawn(at, goal, player)
+	puff(spawnAt)
+	local model = DummyFactory.spawn(spawnAt, goal, player)
 	model.Name = "Visitor"
 	model:SetAttribute("Visitor", player.UserId)
 	model:SetAttribute("WalkIn", true)
+	model:SetAttribute("WalkInAt", spawnAt) -- (where it came in: T166 checks it was free floor)
 	model:SetAttribute("Personality", "Brave")
-	model:SetAttribute("Home", Vector3.new(goal.X, at.Y, goal.Z))
+	model:SetAttribute("Home", Vector3.new(goal.X, spawnAt.Y, goal.Z))
 	model:SetAttribute("HomeLook", here)
 	local shirt = SHIRTS[(#list) % #SHIRTS + 1]
 	for _, d in model:GetChildren() do
@@ -246,6 +327,7 @@ local function walkIn(player: Player, list: { Visitor })
 		end
 		wasDown = down
 	end)
+	return true
 end
 
 -- Keeps at least the minimum standing in the player's own lab (nothing while they are elsewhere).
@@ -262,7 +344,7 @@ function VisitorService.keepTargets(player: Player): number
 	local list = visitors[player] or {}
 	visitors[player] = list
 	local now = os.clock()
-	-- Recycle a visitor that lies, is held in a machine or left the lab for too long.
+	-- Recycle a visitor that lies or left the lab for too long (never one in a machine or held).
 	for i = #list, 1, -1 do
 		local m = list[i].model
 		if not m.Parent then
@@ -272,11 +354,11 @@ function VisitorService.keepTargets(player: Player): number
 		end
 		local pelvis = m:FindFirstChild("LowerTorso")
 		local away = pelvis and pelvis:IsA("BasePart") and Lab.ownerAt(pelvis.Position) ~= player
-		if VisitorService.standing(m) and not away then
+		if (VisitorService.standing(m) and not away) or m:GetAttribute("InMachine") or m:GetAttribute("Held") then
 			downSince[m] = nil
 		else
 			downSince[m] = downSince[m] or now
-			if now - downSince[m] > VisitorService.STILL_RECYCLE and not m:GetAttribute("InMachine") then
+			if now - downSince[m] > VisitorService.STILL_RECYCLE then
 				downSince[m] = nil
 				m:Destroy()
 				table.remove(list, i)
@@ -287,8 +369,9 @@ function VisitorService.keepTargets(player: Player): number
 	local want = ((Config :: any).LAB_MIN_TARGETS :: any)[tier] or 5
 	local cap = ((Config :: any).FX_CAPS :: any)[tier].ragdolls
 	local bodies = VisitorService.bodiesOf(player)
-	local up = 0
-	-- (A walker that just came in counts as up while it lands from its puff: no second one for it.)
+	local facing, rootAt = facingOf(player)
+	local up, near = 0, 0
+	-- (A walker that just came in counts as up, and near, while it lands from its puff.)
 	local fresh: { [Model]: boolean } = {}
 	for _, v in list do
 		if v.model:GetAttribute("WalkIn") and now - v.pickedAt < 3 then
@@ -298,14 +381,43 @@ function VisitorService.keepTargets(player: Player): number
 	for _, m in bodies do
 		if fresh[m] or VisitorService.standing(m) then
 			up += 1
+			local pelvis = m:FindFirstChild("LowerTorso")
+			if rootAt and pelvis and pelvis:IsA("BasePart") then
+				local d = Vector3.new(pelvis.Position.X - rootAt.X, 0, pelvis.Position.Z - rootAt.Z)
+				if fresh[m] or (d.Magnitude < VisitorService.NEAR and (d.Magnitude < 6 or d.Unit:Dot(facing) > 0.2)) then
+					near += 1
+				end
+			end
 		end
 	end
+	-- All that are missing at once (the 3-second rule), within the caps.
 	local room = math.min(cap - #bodies, EventService.dummyRoom() - VisitorService.ROOM_KEEP)
-	local n = math.min(want - up, room, VisitorService.WALK_IN_AT_ONCE)
+	local need = math.max(want - up, VisitorService.NEAR_WANT - near, 0)
+	local n = math.min(need, room)
+	local came = 0
 	for _ = 1, n do
-		walkIn(player, list)
+		if walkIn(player, list) then
+			came += 1
+		end
 	end
-	return math.max(0, n)
+	-- Extras once everyone is up again: walkers past the minimum and a spare puff away, out of sight.
+	if need <= 0 and up > want + VisitorService.SPARE and rootAt then
+		for i = #list, 1, -1 do
+			local m = list[i].model
+			local pelvis = m:FindFirstChild("LowerTorso")
+			if m:GetAttribute("WalkIn") and VisitorService.standing(m) and pelvis and pelvis:IsA("BasePart") then
+				local d = Vector3.new(pelvis.Position.X - rootAt.X, 0, pelvis.Position.Z - rootAt.Z)
+				if d.Magnitude > 20 and d.Unit:Dot(facing) < -0.2 then
+					puff(pelvis.Position)
+					downSince[m] = nil
+					m:Destroy()
+					table.remove(list, i)
+					break -- (one a check: never a whole crowd vanishing at once)
+				end
+			end
+		end
+	end
+	return came
 end
 
 -- Tests: a player's visitors now.
@@ -333,8 +445,8 @@ function VisitorService.start()
 	task.spawn(function()
 		while true do
 			task.wait(VisitorService.KEEP_EVERY)
-			if game:GetService("RunService"):IsStudio() and game:GetService("ServerStorage"):GetAttribute("RunSelfTest") == true then
-				continue -- (the tests set their own scenes: keepTargets)
+			if game:GetService("RunService"):IsStudio() and game:GetService("ServerStorage"):GetAttribute("RunSelfTest") == true and not loopInTests then
+				continue -- (the tests set their own scenes; T166 lets this real loop run: loopInTests)
 			end
 			for _, player in Players:GetPlayers() do
 				pcall(VisitorService.keepTargets, player)

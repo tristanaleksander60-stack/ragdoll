@@ -349,6 +349,10 @@ local Config = {
 	-- V9-0j (owner, 21 Nov 2026: "always a ragdoll to shoot"): bodies standing in your own lab at least, by
 	-- device tier (VisitorService.keepTargets: walkers come in from the rim; all under FX_CAPS.ragdolls).
 	LAB_MIN_TARGETS = table.freeze({ low = 4, mid = 5, high = 6 }),
+	-- V9-0k (owner, 21 Nov 2026: "the floor looks like white tiles, it should look like 3D cushions"): the hub floor
+	-- wears a PBR MaterialVariant of soft padded pads (MaterialService "HubPads", place file; 2 x 2 pads a
+	-- 28-stud tile = 14-stud pads), still one flat floor part. nil = the V9-0h tile texture.
+	HUB_FLOOR_PADS = table.freeze({ variant = "HubPads", material = Enum.Material.Rubber, color = Color3.fromRGB(216, 206, 190) }), -- (a light warm grey: the white dummies still read brighter)
 	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges
 	-- (V3Assets VergeBushRound/Leafy, VergeFlowers*; tools/ImportV9Foliage.luau). false = the old balls and blocks.

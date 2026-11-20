@@ -1470,3 +1470,19 @@ Write the baseline into `docs/PERF.md`.
   - **Counting:** row + visitors + GOD MODE bodies, standing ones only (not dead, not in a machine, not held). When too few stand, up to 2 walkers a check come in from the hub's rim with a puff, ahead of the player, heading for a spot in front of them; then they are visitors (one pool).
   - **Caps:** all the lab's bodies stay under `FX_CAPS[tier].ragdolls` and the server's room. A visitor lying still or out of the lab for 30 s is recycled. A fresh walker counts as up while it lands.
   - **Tests:** T166_AlwaysTargets (the row out of play: 6 standing again within 3 s, 12 bodies under the cap 22, nothing walks in while out of the lab). Live in Studio: the row out, 7 walked in within 6 s (before the landing fix).
+- 21 Nov 2026, V9-0i PASSED (re-review 8.8). V9-0j review 7.8. Fix round 1 (PC):
+  - **Speed:** every missing one comes in on the first check, and checks run every 1 s. T166 now waits on the real loop (`VisitorService.loopInTests`): with everything knocked out, 6 stand again in 0.5 s.
+  - **Free floor:** a walker lands only on open floor; it tries angles, never a machine footprint (`PathPlan.OBSTACLES`), never lava, never inside a solid part. `WalkInAt` is kept, and T166 checks it.
+  - **Near you:** at least 2 standing within 45 studs in front of the player count too.
+  - **Retiring extras:** once everyone is up, walkers past the minimum + 2 spare puff away, one a check, behind the player.
+  - **Recycling and memory:** a held or machine-held visitor is never recycled; `downSince` is cleared with the player's visitors.
+  - **T166 uses the real loop for every check:**
+    - everything set Dead, then the minimum is back within 3 s;
+    - three mass knockouts stay at 21 or fewer of the cap 22;
+    - nothing for a newcomer or out of the lab.
+- 21 Nov 2026, V9-0k DONE (PC): the hub floor as soft pads (`Config.HUB_FLOOR_PADS`).
+  - **The look:** a generated PBR MaterialVariant "HubPads" (MaterialService.AssistantMaterials; base Rubber; color, normal and roughness maps): puffy square pads with rounded bevels and dark grooves, 2 x 2 to a 28-stud tile, so 14-stud pads.
+  - **The floor:** it stays the one thin LabFloor layer (the V9-0h tile texture is removed under it), in a warm light grey (216, 206, 190) that the white dummies still read brighter than.
+  - **Why this option:** the plan's option 2. No extra parts, no flicker (T156 lab 0), the same cost on a phone, collision unchanged. Option 1 (real bevelled slabs) had no clean mesh in the Creator Store and would have added about 110 parts a lab.
+  - **Tests:** T163 checks the padded variant (its StudsPerTile ≥ 20, still one flat layer). Captures: spawn view and close-up.
+  - **Place:** saved v721 (the MaterialVariant lives in the place file).

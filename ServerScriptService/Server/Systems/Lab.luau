@@ -768,6 +768,16 @@ local function dressPlot(plot: Plot)
 		tiles.StudsPerTileV = look3.tile
 		tiles.Color3 = Color3.fromRGB(206, 206, 202) -- (a light grey in the bright sun, never glaring white)
 		tiles.Parent = floor
+		-- (V9-0k, Config.HUB_FLOOR_PADS: soft padded cushions instead of flat white tiles: a PBR
+		-- MaterialVariant with a pillow normal map on the same one flat floor (MaterialService,
+		-- place file). The bevels catch the light; the floor stays one flat part for the physics.)
+		local pads = (Config :: any).HUB_FLOOR_PADS
+		if pads and game:GetService("MaterialService"):FindFirstChild(pads.variant, true) then
+			tiles:Destroy()
+			floor.Material = pads.material
+			floor.MaterialVariant = pads.variant
+			floor.Color = pads.color
+		end
 	else
 		Finish.apply(floor, "Floor")
 	end

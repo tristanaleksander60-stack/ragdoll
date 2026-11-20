@@ -43,7 +43,15 @@ return {
 		end
 		assert(floor, "no LabFloor in Lab1")
 		local tiles = (floor :: BasePart):FindFirstChild("Tiles")
-		assert(tiles and tiles:IsA("Texture") and tiles.StudsPerTileU >= 10, "the floor has no big-tile texture")
+		-- (V9-0k: the soft pads, a MaterialVariant on the same one flat floor, or the V9-0h tiles.)
+		local padded = (floor :: BasePart).MaterialVariant ~= ""
+		assert(padded or (tiles and tiles:IsA("Texture") and tiles.StudsPerTileU >= 10), "the floor has neither the pads nor the big-tile texture")
+		if padded then
+			local variant = game:GetService("MaterialService"):FindFirstChild((floor :: BasePart).MaterialVariant, true)
+			assert(variant and variant:IsA("MaterialVariant") and variant.StudsPerTile >= 20, "the pads' MaterialVariant is missing or too small")
+			-- (Still one thin flat layer: the solid ground under it is unchanged, so bodies and cars move as before.)
+			assert((floor :: BasePart).Size.Y < 1 and #(floor :: BasePart):GetChildren() == 0, "the floor is no longer one flat layer")
+		end
 		-- No path on the floor: every paving piece is beyond the floor's back edge (z >= 66) or out
 		-- in the gardens (|x| >= 80).
 		local inside = 0
@@ -107,6 +115,6 @@ return {
 			local _, size = board:GetBoundingBox()
 			assert(size.Y >= 24, "the lab board is not the big wall: " .. size.Y)
 		end
-		return string.format("big-tile floor, no path on it, spawn circle %d clear, %d attractions on the rim (%s), test row out", PathPlan.HUB_CLEAR, found, table.concat(report, ", "))
+		return string.format("%s floor, no path on it, spawn circle %d clear, %d attractions on the rim (%s), test row out", if (floor :: BasePart).MaterialVariant ~= "" then "padded (" .. (floor :: BasePart).MaterialVariant .. ")" else "big-tile", PathPlan.HUB_CLEAR, found, table.concat(report, ", "))
 	end,
 }
