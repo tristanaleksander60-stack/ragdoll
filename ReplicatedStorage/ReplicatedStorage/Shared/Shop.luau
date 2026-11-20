@@ -57,11 +57,19 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.26.0",
+		lines = {
+			"A FULL BAR from the start: Popper, Grab, Bat, Grenade and Launch. The Rocket comes at 3 KOs",
+			"EVERY HIT LANDS: your first hits knock them flat, with a big KO and a dusty THWACK",
+			"NEW WEAPONS keep your bar: they take the weakest slot and land in your hand",
+			"THE CANNON in view from the first second, and calmer dummies: one runs, only for a moment",
+		},
+	},
+	{
 		version = "0.25.0",
 		lines = {
 			"THE MONSTERS COME ALIVE: the spider on its giant web, the frog in its pond, the chicken in its run",
 			"GRAVEL PATHS to every machine in your lab, and CRASH-TEST DUMMIES with test marks",
-			"BIRDS that really fly: wings beating as they take off",
 			"A NEW EVENT CARD, missions and new weapons from your first minute",
 		},
 	},
