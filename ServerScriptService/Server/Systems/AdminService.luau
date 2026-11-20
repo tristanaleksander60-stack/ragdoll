@@ -24,6 +24,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Log = require(Shared:WaitForChild("Log"))
 local Owner = require(script.Parent.Owner)
+local Admins = require(script.Parent.Admins) -- (21 Nov: the owner and the admins the owner made)
 local ChristmasService = require(script.Parent.ChristmasService)
 local MoneyService = require(script.Parent.MoneyService)
 local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
@@ -269,12 +270,13 @@ end
 local function state(): { [string]: any }
 	local here = {}
 	for _, p in Players:GetPlayers() do
-		table.insert(here, { id = p.UserId, name = p.DisplayName, user = p.Name })
+		-- (21 Nov: who is admin, for the owner's MAKE ADMIN / REMOVE ADMIN.)
+		table.insert(here, { id = p.UserId, name = p.DisplayName, user = p.Name, admin = Admins.isAdmin(p) or nil, owner = Owner.isOwner(p) or nil })
 	end
 	table.sort(here, function(a, b)
 		return a.name < b.name
 	end)
-	return { players = here, log = table.clone(lines) }
+	return { players = here, log = table.clone(lines), admins = Admins.entries() }
 end
 
 local function tell(player: Player)
@@ -460,9 +462,50 @@ function AdminService.watchingOf(player: Player): number?
 end
 
 -- One request, as if the client sent it (tests call it too). Returns whether it was done.
+-- (21 Nov 2026, the owner: admins (Admins) use the menu too. These stay the owner's: settings kept
+-- for every server, the director, and who is admin.)
+AdminService.OWNER_ONLY = table.freeze({
+	FreePasses = true, Theme = true, AllWeapons = true, AdminSet = true,
+	LaunchDummy = true, Shot = true, DirectorSave = true, DirectorGet = true,
+}) :: { [string]: boolean }
+-- (What an admin may never do to the owner or another admin.)
+local AIMED = table.freeze({ Kick = true, Bring = true, Goto = true, Troll = true, Trial = true }) :: { [string]: boolean }
+
 function AdminService.request(player: Player, kind: unknown, arg: unknown): boolean
-	if not Owner.isOwner(player) then
-		return false -- (never told: a non-owner learns nothing of what is here)
+	if not Admins.isAdmin(player) then
+		return false -- (never told: a non-admin learns nothing of what is here)
+	end
+	local owner = Owner.isOwner(player)
+	if type(kind) == "string" and not owner then
+		if AdminService.OWNER_ONLY[kind] then
+			remote:FireClient(player, "Notice", "Only the owner can do that")
+			return false
+		end
+		if AIMED[kind] then
+			local id = if type(arg) == "table" then (arg :: any).target else arg
+			local aimed = if type(id) == "number" then Players:GetPlayerByUserId(id) else nil
+			if aimed and aimed ~= player and Admins.isAdmin(aimed) then
+				remote:FireClient(player, "Notice", "Not on the owner or another admin")
+				return false
+			end
+		end
+	end
+	if kind == "AdminSet" then
+		-- (The owner gives or takes admin: { target = userId, on = boolean }.)
+		local a = if type(arg) == "table" then arg :: any else {}
+		local id = if type(a.target) == "number" then a.target else nil
+		local who = if id then Players:GetPlayerByUserId(id) else nil
+		local ok, line = Admins.set(player, id or 0, if who then who.DisplayName else tostring(id), a.on == true)
+		remote:FireClient(player, "Notice", line)
+		if ok then
+			note(string.format("%s (%d) %s admin for %s", player.Name, player.UserId, if a.on == true then "gave" else "took", tostring(id)), line)
+		end
+		for _, p in Players:GetPlayers() do
+			if Admins.isAdmin(p) then
+				tell(p)
+			end
+		end
+		return ok
 	end
 	if kind == "DirectorGet" then
 		AdminTools.run(player, kind, arg) -- (not paced: the director asks once when it opens)
@@ -538,6 +581,7 @@ function AdminService.logForTest(): { string }
 end
 
 function AdminService.start()
+	Admins.start() -- (21 Nov: the admins the owner made, kept for every server)
 	remote = Net.event(Net.Names.Admin)
 	AdminTools.start(function(p: Player, kind: string, data: any)
 		remote:FireClient(p, kind, data)
@@ -562,7 +606,7 @@ function AdminService.start()
 	-- The owner's list of who is here stays right as people come and go.
 	local function refresh()
 		for _, p in Players:GetPlayers() do
-			if Owner.isOwner(p) then
+			if Admins.isAdmin(p) then
 				tell(p)
 			end
 		end
@@ -595,8 +639,19 @@ function AdminService.start()
 			task.defer(function()
 				if not ownerHere() then
 					AdminService.setAllWeapons(false)
-					AdminTools.ownerLeft() -- (V6-2 review: gravity, time, weather and spawned bodies go too)
 				end
+			end)
+		end
+		-- (21 Nov: the last admin gone, the owner included: gravity, time, weather and spawned bodies
+		-- go too, V6-2 review.)
+		if Admins.isAdmin(player) then
+			task.defer(function()
+				for _, p in Players:GetPlayers() do
+					if p ~= player and Admins.isAdmin(p) then
+						return
+					end
+				end
+				AdminTools.ownerLeft()
 			end)
 		end
 		last[player] = nil

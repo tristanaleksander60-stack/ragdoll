@@ -42,6 +42,7 @@ local built = false
 local remote: RemoteEvent? = nil
 local target: number? = nil -- the picked player (PLAYERS / WORLD)
 local playerList: { any } = {}
+local adminList: { any } = {} -- (21 Nov: the admins the owner made, from the server's State)
 local onPlayers: { () -> () } = {}
 local serverDebug: { [string]: any } = {}
 local clientErrors: { string } = {}
@@ -229,6 +230,33 @@ local function buildPlayers(p: Frame)
 			end)
 		end
 	end
+	-- (21 Nov 2026, the owner: give others the admin menu. Owner only; kept for every server. Admins
+	-- get every tool here but never against the owner or another admin, and none of the owner's
+	-- settings kept for every server.)
+	if Players.LocalPlayer:GetAttribute("IsOwner") == true then
+		header(p, "ADMINS (ONLY YOU CAN CHANGE THIS)")
+		local ad = grid(p, 2)
+		button(ad, "MAKE ADMIN", "go", function()
+			local t = needTarget()
+			if t then
+				send("AdminSet", { target = t, on = true })
+			end
+		end)
+		button(ad, "REMOVE ADMIN", "danger", function()
+			local t = needTarget()
+			if t then
+				send("AdminSet", { target = t, on = false })
+			end
+		end)
+		local adminsLine = caption(p, "Admins: none yet")
+		table.insert(onPlayers, function()
+			local names = {}
+			for _, e in adminList do
+				table.insert(names, tostring(e.name))
+			end
+			adminsLine.Text = "Admins: " .. (if #names > 0 then table.concat(names, ", ") else "none yet")
+		end)
+	end
 	header(p, "KICK (THE REASON IS SHOWN TO THEM)")
 	local kk = grid(p, 4)
 	for _, it in AdminPanel.KICK do
@@ -395,6 +423,7 @@ function AdminPanel.build()
 	r.OnClientEvent:Connect(function(kind: unknown, data: unknown)
 		if kind == "State" and type(data) == "table" then
 			playerList = (data :: any).players or {}
+			adminList = (data :: any).admins or {}
 			for _, fn in onPlayers do
 				fn()
 			end

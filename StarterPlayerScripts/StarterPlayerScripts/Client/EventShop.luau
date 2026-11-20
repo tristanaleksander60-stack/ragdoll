@@ -90,6 +90,7 @@ local moneyRemote: RemoteEvent? = nil
 local passButtons: { [string]: any } = {}
 local isOwner = false
 local adminButton: any = nil
+local adminWatch: RBXScriptConnection? = nil -- (21 Nov: IsAdmin while here)
 local shopHud: any = nil
 local freeEnds = 0 -- server time free ULTRA runs to (0: not running)
 local passBlurbs: { [string]: TextLabel } = {}
@@ -269,7 +270,7 @@ local function buildPasses(window: any)
 	C.SectionHeader("SERVER EVENTS", "shop", -2, window.body)
 	-- The owner's own button: start any event free for everyone (MoneyService checks it is them).
 	adminButton = C.Button({
-		text = "ADMIN EVENTS (OWNER)",
+		text = "ADMIN EVENTS",
 		role = "danger",
 		size = UDim2.new(1, 0, 0, Theme.Size.buttonH),
 		layoutOrder = -1, -- (under its SERVER EVENTS header, above the queue line and the events)
@@ -1065,7 +1066,29 @@ local function buildWhatsNew()
 end
 
 -- The owner's admin events: every server event, free, for everyone (checked on the server).
-local function buildAdmin()
+local buildAdmin: () -> ()
+-- The admin menu's button: built once, the first time it is allowed; hidden again when admin is
+-- taken away (player attribute IsAdmin, Admins on the server).
+local adminBuilt = false
+local function showAdmin(on: boolean)
+	local b = adminButton
+	if not b then
+		return
+	end
+	if on and not adminBuilt then
+		adminBuilt = true
+		buildAdmin()
+		if (Config :: any).ADMIN_V2 then
+			require(Client:WaitForChild("AdminPanel")).build() -- V6-2: the tabbed menu
+		end
+	end
+	b.root.Visible = on
+	if not on and (Controller.isOpen("Admin") or Controller.isOpen("AdminV2")) then
+		Controller.closeAll()
+	end
+end
+
+function buildAdmin()
 	local window = C.Window({ name = "Admin", title = "Admin", theme = "settings", icon = "crown", size = Vector2.new(560, 620) })
 	-- Round 3, M7: the Christmas theme's switch (AdminService checks it is the owner; kept for every
 	-- server): AUTO follows the dates (on until 6 January, then 1 December - 6 January), ON, OFF.
@@ -1372,13 +1395,16 @@ function EventShop.start()
 	money.OnClientEvent:Connect(function(kind: unknown, data: unknown)
 		local d = if type(data) == "table" then data :: any else {}
 		if kind == "Hello" then
-			isOwner = d.owner == true
-			if isOwner and adminButton then
-				buildAdmin()
-				if (Config :: any).ADMIN_V2 then
-					require(Client:WaitForChild("AdminPanel")).build() -- V6-2: the tabbed menu
-				end
-				adminButton.root.Visible = true
+			-- (21 Nov: the owner and the admins the owner made; the server checks every action.)
+			isOwner = d.owner == true or d.admin == true
+			showAdmin(isOwner)
+			if not adminWatch then
+				-- (Made admin, or no longer, while here: the button follows at once.)
+				local lp = Players.LocalPlayer
+				adminWatch = lp:GetAttributeChangedSignal("IsAdmin"):Connect(function()
+					isOwner = lp:GetAttribute("IsAdmin") == true
+					showAdmin(isOwner)
+				end)
 			end
 		elseif kind == "Owned" then
 			local pass = Shop.byKey[tostring(d.key)]

@@ -1473,3 +1473,11 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
     - no separate 10-minute phone-emulator session: the suite's ~13 minutes of play and the targeted runs showed no errors;
     - no new products, so nothing to test-buy.
   - **Publish:** the MCP cannot publish and the Open Cloud route needs the .rbxl, so the owner presses Alt+P (RELEASE.md, method 3). Then restart the servers through Open Cloud and read Session_v1 after 15-30 min.
+- **Admins (owner order, 21 Nov):** the owner gives others the admin menu.
+  - **Where:** admin menu → PLAYERS → pick a player → MAKE ADMIN / REMOVE ADMIN (owner only). The line under the buttons lists the admins.
+  - **Storage:** `Server/Systems/Admins` keeps the list in DataStore `Admins_v1` (UpdateAsync, at most 20); every server reads it again within 60 s. Studio keeps it in memory.
+  - **What admins get:** every tool, never against the owner or another admin (kick, bring, go to, troll, try).
+  - **Owner only:** free passes, the Christmas theme, all weapons for everyone, the director, and making admins.
+  - **Leaving:** the last admin to leave resets gravity, time, weather and spawned bodies.
+  - **Never admin:** a play-as-newcomer visit.
+  - **Tests:** T124 passes; T101, T71, T43 and T29 pass.

@@ -262,7 +262,7 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 			remote:FireClient(player, "Refused", { text = pass.name .. " is coming soon!" })
 		end
 	elseif kind == "Admin" and type(arg) == "string" then
-		if not isOwner(player) then
+		if not require(script.Parent.Admins).isAdmin(player) then -- (21 Nov: admins too)
 			return
 		end
 		if os.clock() - lastAdmin < ADMIN_GAP or not Events.byId[arg] then
@@ -284,7 +284,7 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 	elseif kind == "SeenNew" then
 		ProgressService.setSeenVersion(player, Config.Version)
 	elseif kind == "Hello" then
-		remote:FireClient(player, "Hello", { owner = isOwner(player) })
+		remote:FireClient(player, "Hello", { owner = isOwner(player), admin = require(script.Parent.Admins).isAdmin(player) })
 	end
 end
 
