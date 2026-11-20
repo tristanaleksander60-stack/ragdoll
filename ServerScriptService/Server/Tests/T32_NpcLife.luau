@@ -124,6 +124,8 @@ local function body(results: { string }, player: Player)
 	task.wait(0.4)
 	local shooter = (character:FindFirstChild("HumanoidRootPart") :: BasePart).Position
 	local startDistance = flat(pelvis(coward).Position - shooter).Magnitude
+	-- (V8-0.2: past a newcomer's calm first minute, where nobody runs.)
+	player:SetAttribute("V8JoinedAt", workspace:GetServerTimeNow() - 600)
 	Lab.heardForTest("Hit", pelvis(coward).Position + Vector3.new(4, 0, 0), 120, "Blaster", player.UserId)
 	local from = coward:GetAttribute("PanicFrom")
 	assert(typeof(from) == "Vector3" and flat(from - shooter).Magnitude < 3, "the coward did not run from the shooter")

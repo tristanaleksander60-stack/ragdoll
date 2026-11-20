@@ -359,17 +359,36 @@ local function run(results: { string }, player: Player)
 		return c ~= nil and c:GetAttribute("RagdollState") == "Standing"
 	end, 10), "the lab's coward is not standing")
 	local coward = Lab.slotDummy(player, 2) :: Model
-	coward:SetAttribute("PanicFrom", nil)
+	for i = 1, 6 do
+		local d = Lab.slotDummy(player, i)
+		if d then
+			d:SetAttribute("PanicFrom", nil)
+			d:SetAttribute("PanicUntil", nil)
+		end
+	end
+	-- lihfolk-ignore: findfirstchild-chain (test setup: the character was moved about above, so its root exists)
 	local root = (player.Character :: Model):FindFirstChild("HumanoidRootPart") :: BasePart
 	local ground = Vector3.new(part(coward, "LowerTorso").Position.X + 5, 0.5, part(coward, "LowerTorso").Position.Z)
+	-- (V8-0.2: past a newcomer's calm first minute, where nobody runs.)
+	player:SetAttribute("V8JoinedAt", workspace:GetServerTimeNow() - 600)
 	local before = HitService.lastUseOf(player, "Blaster")
 	task.wait(0.2)
 	HitService.onShot(player, ground, "Blaster")
 	local after = HitService.lastUseOf(player, "Blaster")
 	assert(after and after ~= before, "a shot into the ground was not taken")
+	-- (V8-0.2: only the coward nearest the bang runs, which may be a neighbour of slot 2.)
 	assert(waitFor(function()
-		return typeof(coward:GetAttribute("PanicFrom")) == "Vector3"
-	end, 1), "the coward did not hear the shot")
+		if not (Config :: any).V8_FIRST_HIT then
+			return typeof(coward:GetAttribute("PanicFrom")) == "Vector3"
+		end
+		for i = 1, 6 do
+			local d = Lab.slotDummy(player, i)
+			if d and typeof(d:GetAttribute("PanicFrom")) == "Vector3" then
+				return true
+			end
+		end
+		return false
+	end, 1), "no coward heard the shot")
 	HitService.onShot(player, ground, "Blaster")
 	assert(HitService.lastUseOf(player, "Blaster") == after, "a second shot at once was taken (the gun's pace)")
 	task.wait(0.2)

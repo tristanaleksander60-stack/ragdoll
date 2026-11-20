@@ -128,6 +128,16 @@ function GreeterService.send(player: Player): Model?
 		return nil
 	end
 	greeted[player] = true
+	-- V8-0.2 (audit A): the avatar appears where Roblox spawns it, and Lab moves it into its own lab
+	-- a frame later (task.defer). Wait for that move (at most 3 s), so the route is worked out in the
+	-- lab, not at the spawn it just left.
+	local waited = os.clock()
+	while Lab.plotIndex(player) ~= nil and Lab.ownerAt(root.Position) ~= player and os.clock() - waited < 3 do
+		task.wait(0.1)
+		if not root.Parent or player.Character ~= character then
+			return nil
+		end
+	end
 	local start, stop = GreeterService.route(root)
 	if not start or not stop then
 		return nil

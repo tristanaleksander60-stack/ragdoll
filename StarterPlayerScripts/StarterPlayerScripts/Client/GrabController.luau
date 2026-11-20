@@ -687,7 +687,11 @@ local function updatePad()
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
-		local offset = if wanted then SHOULDER_OFFSET else Vector3.zero
+		-- (V8-0.2: a pad fires at the screen centre, which sat on the back of your own head: over the
+		-- shoulder for a pad too, in the player view.)
+		local padShoulder = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).V8_FIRST_HIT
+			and not ViewMode.isLab() and string.sub(game:GetService("UserInputService"):GetLastInputType().Name, 1, 7) == "Gamepad"
+		local offset = if wanted or padShoulder then SHOULDER_OFFSET else Vector3.zero
 		if humanoid.CameraOffset ~= offset then
 			humanoid.CameraOffset = offset
 		end

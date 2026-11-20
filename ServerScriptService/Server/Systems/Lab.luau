@@ -26,6 +26,7 @@
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
@@ -501,7 +502,44 @@ local function heard(kind: string, position: Vector3, speed: number, toyId: stri
 		source = makerRoot.Position
 	end
 	local now = os.clock()
+	-- V8-0.2 (Config.V8_FIRST_HIT): calmer cowards. 5 of 6 ran from every shot, so a newcomer could
+	-- hardly hit anything. Now nobody runs in a newcomer's first CALM_FIRST s; after that only the
+	-- coward nearest the bang runs, for FLEE_SHORT s, and at most FLEE_MAX run at once in a lab.
+	local calm = (Config :: any).V8_FIRST_HIT == true
 	for _, plot in plots do
+		if calm and plot.owner and math.abs(position.X - plot.origin.X) < Lab.PLOT_HALF + SCARE_BLAST then
+			local owner = plot.owner :: Player
+			local joined = (owner:GetAttribute("V8JoinedAt") :: number?) or 0
+			if owner:GetAttribute("Newcomer") == true and Workspace:GetServerTimeNow() - joined < (Config :: any).CALM_FIRST then
+				continue
+			end
+			local running, nearest, nearestD = 0, nil :: any, math.huge
+			local serverNow = Workspace:GetServerTimeNow()
+			for _, slot in plot.slots do
+				local model = slot.model
+				local until_ = model and model:GetAttribute("PanicUntil")
+				if type(until_) == "number" and until_ > serverNow then
+					running += 1
+				end
+				local pelvis = model and model:FindFirstChild("LowerTorso")
+				if model and PERSONALITY[slot.index] ~= "Brave" and model:GetAttribute("Greeter") == nil and pelvis and pelvis:IsA("BasePart") and upright(model)
+					and now - slot.scaredAt >= SCARE_REST then
+					local d = (pelvis.Position - position).Magnitude
+					if d <= reach and d > 2 and d < nearestD then
+						nearest, nearestD = slot, d
+					end
+				end
+			end
+			if nearest and running < (Config :: any).FLEE_MAX then
+				nearest.scaredAt = now
+				if nearest.socialKind then
+					endSocial(nearest)
+				end
+				nearest.model:SetAttribute("PanicFrom", source)
+				nearest.model:SetAttribute("PanicUntil", serverNow + (Config :: any).FLEE_SHORT)
+			end
+			continue
+		end
 		if plot.owner and math.abs(position.X - plot.origin.X) < Lab.PLOT_HALF + SCARE_BLAST then
 			for _, slot in plot.slots do
 				local model = slot.model
@@ -761,6 +799,9 @@ local function claim(player: Player)
 	for _, plot in plots do
 		if plot.owner == nil then
 			plot.owner = player
+			if player:GetAttribute("V8JoinedAt") == nil then
+				player:SetAttribute("V8JoinedAt", Workspace:GetServerTimeNow()) -- (V8-0.2: the calm first minute counts from here)
+			end
 			plot.generation += 1
 			plotOf[player] = plot
 			if not plot.built and playgroundBuilder then

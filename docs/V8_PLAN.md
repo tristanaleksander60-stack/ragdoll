@@ -1375,3 +1375,17 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - **Runner:** SKIP counted (`DONE pass= fail= skip=`), `task.cancel` on timeout, exact test numbers, T40/T41/T42/T99 duplicates renamed to T70-T73, `Tests/Lib/TestLib` (waitFor, withHold).
   - **Tests:** T114_SafeBoot and T122_SoundSlots pass, as do T106, T113, T58, T23, T53, T54, T90, T70 and T72.
   - **Found on the way:** the lab cannon's breech and knob used an archived mesh (455874143) and drew as nothing (a hole at the back of the barrel). Both are now plain parts in `ServerStorage.V3Assets.Cannon` (place saved, v614).
+- **V8-0.2 done (code; switch `Config.V8_FIRST_HIT`):**
+  - **Greeter:** T109 confirmed audit A. The greeter's route was worked out at Roblox's spawn, a frame before Lab moves the avatar into its lab, so it stood outside the player's lab. GreeterService.send now waits for the move (at most 3 s, run in its own thread). It is now in the player's lab and walks up.
+  - **First hits:** a newcomer's first 3 hits with any tool knock the dummy flat. `ActiveRagdoll.firstHitsLeft` is armed by the client on `Newcomer`. The body is thrown back at ≥ 20 studs/s; a 2 studs/s tap gave 22 studs/s in T109.
+  - **With BLOOD off:** a round is a dry thwack, with 6-10 white/yellow puffs and a 60 ms white flash, no hole and no flesh sound.
+  - **KO stamp:** the hit tick, the KO stamp and the "thock" come from this screen at once (Crosshair.localHit). The server's mark for the same hit is skipped unless it is a head or a kill.
+  - **Cowards:** nobody runs in a newcomer's first 60 s (`CALM_FIRST`). After that, only the coward nearest the bang runs, for 1.2 s, with at most 2 at once per lab.
+  - **Aim help:** torso only, and for pads too.
+  - **Pad:**
+    - the camera goes over the shoulder, so the screen centre is not the head;
+    - the help line uses pad buttons (RT / LB-RB / Y), not Click / 1-6;
+    - no key chips while a pad is the last input;
+    - "Menu" became "More".
+  - **Tests:** T109 passes; T23, T24, T32 and T33 pass (T32/T33 now step past the calm minute; T33 accepts the nearest coward); T38 and T45 pass.
+  - **Not done:** before/after captures (saved for the round 1 playtest).

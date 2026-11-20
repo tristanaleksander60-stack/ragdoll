@@ -28,6 +28,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Toys = require(Shared:WaitForChild("Toys"))
 local BarRules = require(Shared:WaitForChild("BarRules"))
+local Config = require(Shared:WaitForChild("Config"))
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
 local Shop = require(Shared:WaitForChild("Shop"))
 local HitFeel = require(Shared:WaitForChild("HitFeel"))
@@ -352,6 +353,21 @@ local heldSent: string? = nil -- the tool the server shows in your avatar's hand
 -- The help line's words for the picked weapon.
 function PokeController.helpText(id: string, lab: boolean): string
 	local toy = Toys.byId[id]
+	-- V8-0.2 (the pad pass): while a pad is the last input, its own buttons, never "Click", "1-6"
+	-- or a keyboard key (B is RAGDOLL on a pad, not the sandbox).
+	if (Config :: any).V8_FIRST_HIT and string.sub(UserInputService:GetLastInputType().Name, 1, 7) == "Gamepad" then
+		local PadMap = require(Shared:WaitForChild("PadMap")) :: any
+		local okA, a = pcall(function()
+			return UserInputService:GetStringForKeyCode(Enum.KeyCode.ButtonA)
+		end)
+		local ps = okA and type(a) == "string" and string.find(string.lower(a), "cross", 1, true) ~= nil
+		local fire, slot, weapons = PadMap.glyph("Fire", ps), PadMap.glyph("Slot", ps), PadMap.glyph("Weapons", ps)
+		local what = if not toy then "pick a weapon"
+			elseif toy.kind == "grab" then "grab a dummy, " .. PadMap.glyph("Grab", ps) .. " throws"
+			elseif toy.kind == "dummy" or toy.kind == "place" then "put down the " .. toy.label
+			else "use the " .. toy.label
+		return string.format("%s %s  \u{00B7}  %s switch  \u{00B7}  %s all weapons", fire, what, slot, weapons)
+	end
 	local first: string
 	if not toy then
 		first = "Pick a weapon in the bar"
@@ -1204,6 +1220,8 @@ end
 -- and never into a lab this player may not reach.
 PokeController.ASSIST = 0.12
 local ASSIST_PARTS = { "UpperTorso", "Head", "LowerTorso" }
+-- (V8-0.2: the torso only, never the head: a help that lands headshots reads as a cheat.)
+local ASSIST_TORSO = { "UpperTorso", "LowerTorso" }
 local function assisted(camera: Camera, at: Vector2): Vector2
 	local ray = camera:ViewportPointToRay(at.X, at.Y)
 	local params = RaycastParams.new()
@@ -1224,7 +1242,7 @@ local function assisted(camera: Camera, at: Vector2): Vector2
 		if model:GetAttribute("IsDummy") ~= true then
 			continue
 		end
-		for _, name in ASSIST_PARTS do
+		for _, name in (if (Config :: any).V8_FIRST_HIT then ASSIST_TORSO else ASSIST_PARTS) do
 			local part = model:FindFirstChild(name)
 			if part and part:IsA("BasePart") and Zones.mayReach(player, part.Position) then
 				local point, onScreen = camera:WorldToViewportPoint(part.Position)
@@ -1254,7 +1272,9 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 			hint("BOOM!")
 			return true
 		end
-		if picked and (picked.kind == "hit" or picked.kind == "dummy") and ViewMode.isTouch() then
+		-- (V8-0.2: a pad aims at the screen centre with a stick: it gets the same help as a finger.)
+		local padAim = (Config :: any).V8_FIRST_HIT and string.sub(UserInputService:GetLastInputType().Name, 1, 7) == "Gamepad"
+		if picked and (picked.kind == "hit" or picked.kind == "dummy") and (ViewMode.isTouch() or padAim) then
 			screenPosition = GunFeel.aim(picked, assisted(camera, screenPosition))
 		elseif picked and picked.gun then
 			screenPosition = GunFeel.aim(picked, screenPosition)
@@ -1454,7 +1474,19 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 				local mass = (simulated:GetAttribute("Mass") :: number?) or 10
 				-- (On the part the server will wound: the line from our head, WoundSpot.)
 				local onPart, at = WoundSpot.find(character, simulated, part, position)
-				ActiveRagdoll.hit(simulated, onPart, HitMath.toyImpulse(toy, direction, mass), at, nil, HitMath.gunOf(toy))
+				local before = simulated:GetAttribute("RagdollState")
+				local after = ActiveRagdoll.hit(simulated, onPart, HitMath.toyImpulse(toy, direction, mass), at, nil, HitMath.gunOf(toy))
+				-- V8-0.2: the hit tick and, when it went down, the KO stamp and a dry "thock" now, from
+				-- this screen; the server stays the count's source of truth.
+				if (Config :: any).V8_FIRST_HIT then
+					local knocked = after == "Ragdoll" and before ~= "Ragdoll" and before ~= "Out"
+					pcall(function()
+						(require(script.Parent:WaitForChild("Crosshair")) :: any).localHit(knocked)
+					end)
+					if knocked then
+						C.playSound("tick", 0.62)
+					end
+				end
 			end
 			-- Round 4, M10: the shooter hears the impact this frame (<50 ms), whether or not they
 			-- own the target's simulation. The server echo for our own UserId is suppressed by the

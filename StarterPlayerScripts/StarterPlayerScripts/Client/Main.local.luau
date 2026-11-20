@@ -81,6 +81,25 @@ PropContacts.onHit = function(toyId: string, position: Vector3, speed: number)
 	FxController.localEvent("Hit", position, speed, toyId)
 end
 safe("DummySim", function() DummySim.start() end)
+-- V8-0.2: a newcomer's first Config.FIRST_HITS hits knock a dummy flat (ActiveRagdoll.firstHitsLeft,
+-- on this screen, which simulates the lab's dummies). Armed once, when the server says Newcomer.
+safe("FirstHits", function()
+	if not (Config :: any).V8_FIRST_HIT then
+		return
+	end
+	local AR = require(Shared:WaitForChild("Ragdoll"):WaitForChild("ActiveRagdoll")) :: any
+	AR.FIRST_HIT_PUSH = (Config :: any).FIRST_HIT_PUSH
+	local me = game:GetService("Players").LocalPlayer
+	local armed = false
+	local function arm()
+		if not armed and me:GetAttribute("Newcomer") == true then
+			armed = true
+			AR.firstHitsLeft = (Config :: any).FIRST_HITS
+		end
+	end
+	me:GetAttributeChangedSignal("Newcomer"):Connect(arm)
+	arm()
+end)
 safe("DummyLife", function() DummyLife.start() end)
 safe("PropContacts", function() PropContacts.start() end)
 safe("PokeController", function() PokeController.start() end)

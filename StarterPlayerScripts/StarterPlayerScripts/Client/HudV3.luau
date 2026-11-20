@@ -433,7 +433,9 @@ local function step()
 	end
 	local c = chips
 	if c then
-		c.Visible = on and UserInputService.KeyboardEnabled and not ViewMode.isTouch() and not held.Chips
+		-- (V8-0.2: no keyboard keys on screen while a pad is the last input.)
+		local padLast = Config.V8_FIRST_HIT and string.sub(UserInputService:GetLastInputType().Name, 1, 7) == "Gamepad"
+		c.Visible = on and UserInputService.KeyboardEnabled and not ViewMode.isTouch() and not held.Chips and not padLast
 	end
 	if leftCol then
 		-- (Audit area 1: a newcomer keeps WEAPONS from the first second, research spec 0-5 s; Shop
@@ -570,7 +572,8 @@ function HudV3.start()
 	card("Maps", "Maps", "map", right, function()
 		Controller.toggle("Maps")
 	end).LayoutOrder = 1
-	card("Menu", "Menu", "settings", right, function()
+	-- (V8-0.2: "More", not "Menu": a pad player read it as Roblox's own menu, whose button is Leave.)
+	card("Menu", if Config.V8_FIRST_HIT then "More" else "Menu", "settings", right, function()
 		Controller.toggle("Menu")
 	end).LayoutOrder = 2
 	local c = Instance.new("Frame")

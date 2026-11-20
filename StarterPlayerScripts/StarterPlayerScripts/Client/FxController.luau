@@ -908,12 +908,40 @@ end
 -- A round in a body (round 3, M2): the round going in (round 4, M10: a bullet into flesh, the punch
 -- if those failed to load), a hole on that spot of the limb, and a few drops out of it along the
 -- shot (no splash, no puddle: the body bleeds from the hole after, BloodFx). No shake: a round is small.
+-- V8-0.2 (Config.V8_FIRST_HIT with BLOOD off): a round in a mannequin is a dry THWACK: no hole, no
+-- flesh sound, a puff of white and yellow dust and a 60 ms white flash on the body.
+local PUFF_COLORS = { Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 236, 160) }
+local function dryHit(): boolean
+	local Config = require(Shared:WaitForChild("Config")) :: any
+	return Config.V8_FIRST_HIT == true and Config.BLOOD == "off"
+end
+local function whiteFlash(body: Model)
+	local h = Instance.new("Highlight")
+	h.Name = "HitFlash"
+	h.FillColor = Color3.new(1, 1, 1)
+	h.FillTransparency = 0.25
+	h.OutlineTransparency = 1
+	h.DepthMode = Enum.HighlightDepthMode.Occluded
+	h.Adornee = body
+	h.Parent = body
+	task.delay(0.06, function()
+		h:Destroy()
+	end)
+end
+
 local function roundInBody(position: Vector3, sourceUserId: number?, toyId: string, tool: Toys.Toy, priority: boolean)
 	local along = hitDirection(position, sourceUserId or localUserId)
 	local body = bodyAt(position)
-	local part = if body then BulletHoles.body(body, position) else nil
+	local dry = dryHit()
+	local part = if body and not dry then BulletHoles.body(body, position) else nil
 	-- (A player in the plaza takes no wound: a knock, not a round in flesh.)
-	if hasBank("flesh") and not onPlayerBody(position) then
+	if dry and not onPlayerBody(position) then
+		play("hit", position, 0.42, 1.2, { priority = priority })
+		sparks(position, rng:NextInteger(6, 10), 0.55, PUFF_COLORS)
+		if body then
+			whiteFlash(body)
+		end
+	elseif hasBank("flesh") and not onPlayerBody(position) then
 		play("flesh", position, 0.5, 1, { cut = 0.5, priority = priority })
 	else
 		play("hit", position, 0.28, 1.45, { priority = priority })

@@ -308,7 +308,7 @@ local function onSpawned(player: Player)
 	end
 	p.spawnedAt = os.clock()
 	player:SetAttribute("SpawnedAt", workspace:GetServerTimeNow())
-	GreeterService.send(player)
+	task.spawn(GreeterService.send, player) -- (V8-0.2: it may wait for the move into the lab)
 	startFirstMinute(player, p)
 end
 

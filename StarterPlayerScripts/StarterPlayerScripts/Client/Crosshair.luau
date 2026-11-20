@@ -183,6 +183,17 @@ end
 
 -- A shot landed on a body: the hit mark, red for the head; the round that killed gets the kill
 -- mark instead (round 4, M10: a head hit that did not kill is only red).
+-- V8-0.2: our own hit on a body this screen simulates, marked now (the server's mark for it follows
+-- ~100 ms later and is skipped unless it says more: a head or a kill).
+local localMarkAt = -math.huge
+function Crosshair.localHit(knocked: boolean)
+	localMarkAt = os.clock()
+	Crosshair.hit(false, knocked)
+end
+function Crosshair.recentLocal(): boolean
+	return os.clock() - localMarkAt < 0.35
+end
+
 function Crosshair.hit(head: boolean, killed: boolean)
 	for _, tw in markTweens do
 		tw:Cancel()
@@ -340,7 +351,11 @@ function Crosshair.start()
 		end
 		-- Red for the head; the kill mark for the round that killed (the server's word: never a
 		-- round into a body already dead).
-		Crosshair.hit(type(zoneId) == "string" and HEAD[zoneId] == true, killed == true)
+		local head = type(zoneId) == "string" and HEAD[zoneId] == true
+		if Crosshair.recentLocal() and not head and killed ~= true then
+			return -- (V8-0.2: already marked from this screen)
+		end
+		Crosshair.hit(head, killed == true)
 	end)
 end
 

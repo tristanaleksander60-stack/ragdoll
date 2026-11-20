@@ -245,6 +245,16 @@ local Config = {
 	-- never the owner's own). 3037725863 is the second account seen on the owner's phone: the owner
 	-- confirms or replaces it in Sitting 1.
 	TEST_ACCOUNTS = table.freeze({ 3037725863 }),
+	-- V8-0.2 (the first hit lands): a newcomer's first FIRST_HITS hits with any tool knock the dummy
+	-- flat with a big flop; gun hits get a dry impact puff with BLOOD off; the client stamps KO at
+	-- once; nobody flees in a newcomer's first CALM_FIRST s, then only the nearest coward runs, for
+	-- FLEE_SHORT s, at most FLEE_MAX at once in a lab; aim help on the torso, for pads too.
+	V8_FIRST_HIT = true,
+	FIRST_HITS = 3,
+	FIRST_HIT_PUSH = 20, -- studs/s the first hits throw the body back, at the least
+	CALM_FIRST = 60,
+	FLEE_SHORT = 1.2,
+	FLEE_MAX = 2,
 }
 
 return table.freeze(Config)
