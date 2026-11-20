@@ -55,6 +55,7 @@ task.spawn(require(Client:WaitForChild("CreatureAnim")).start) -- v4 C3: the gor
 task.spawn(require(Client:WaitForChild("FirstVisit")).start) -- audit area 1: a newcomer's first visit (one objective, the HUD comes in at 90 s)
 task.spawn(require(Client:WaitForChild("AdminWorld")).start) -- V6-2: the owner's time of day and weather for everyone
 task.spawn(require(Client:WaitForChild("Director")).start) -- V6-3: F8 director mode (owner only)
+task.spawn(require(Client:WaitForChild("Birds")).start) -- V6-6: birds round the lab and the maps
 FxController.start()
 AvatarMoves.start()
 

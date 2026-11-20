@@ -365,3 +365,20 @@ What to do:
   - **Tests:** T103 (built, cards and pages, spider eats and spits, whale geyser, held body left alone, events counted) passes; T60/T63/T31 pass.
   - **Captures:** yard_east, spider_feed.
   - **Left:** per-creature sounds (SoundMix), a hunger readout for the owner's HUD, and the ball pit and conveyor (optional in the plan).
+- **V6-6 birds (20 Nov, `Config.BIRDS`, `BIRDS_MAX` pc 24 / tablet 14 / phone 8):** `Client/Birds`, client-side only, with pooled real models in ReplicatedStorage.BirdModels (place file only, saved).
+  - **Models:** Pigeon (16726492351, skinned walker), Crow (99170264330082), Gull (123244333951153), Hawk (10367972039, skinned with wing bones; its script removed). A part-built "sparrow" was dropped.
+  - **Flocks by place:**
+    - Lab: pigeons pecking on the ground, crows circling, a hawk gliding high;
+    - Plaza and City: pigeons on the ground (crows over the city);
+    - Island: gulls;
+    - Farm and Site: crows;
+    - Army: hawks.
+  - **Behaviour:**
+    - boids-lite round a point that drifts after the player, banking into turns;
+    - the pigeons walk, stop and peck;
+    - a shot or a blast nearby (FeelBus Shot / BigHit) scatters them up and away, and the pigeons come back down later;
+    - the hawk's wings beat on its bones, gliding most of the time.
+  - **Cost:** birds past 320 studs are hidden and not stepped. A quiet birdsong loop (Pro Sound Effects 9119383684, SoundMix Ambient) plays outdoors, never in the roofed rooms.
+  - **Bug found and fixed:** without ground under a bird, its floor lifted it 8 studs a frame (they flew off to y 7000).
+  - **Tests:** T104 passes (models present and script-free, budgets by tier).
+  - **Capture:** birds_lab.
