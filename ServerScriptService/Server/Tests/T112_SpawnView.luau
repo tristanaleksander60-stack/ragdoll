@@ -61,6 +61,11 @@ return {
 		-- The 3 middle dummies of the lab's row, at home (earlier tests knock them about): about 20
 		-- studs in front of the spawn, 5 apart.
 		local row = { Vector3.new(o.X - 3, y, o.Z - 21), Vector3.new(o.X + 2, y, o.Z - 21), Vector3.new(o.X + 7, y, o.Z - 20) }
+		if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAYOUT_V3 then
+			-- (V9-0h: the row stands behind the bullseye, a 40-degree arc at r 58; the spawn faces 50 degrees
+			-- right, towards the cannon, so its 3 slots on the right are the ones in view.)
+			row = { Vector3.new(o.X + 4.05, y, o.Z - 57.9), Vector3.new(o.X + 12.1, y, o.Z - 56.7), Vector3.new(o.X + 19.8, y, o.Z - 54.5) }
+		end
 		for _, size in { Vector2.new(1920, 1080), Vector2.new(800, 360) } do
 			assert(onScreen(cam, cannonAt + Vector3.new(0, 2, 0), size), string.format("the cannon is off screen at %dx%d", size.X, size.Y))
 			for i = 1, 3 do

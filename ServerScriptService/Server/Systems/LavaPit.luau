@@ -70,7 +70,7 @@ function LavaPit.dress(pool: BasePart, floorY: number): Folder
 	for i = 0, 5 do
 		local a = i / 6 * math.pi * 2
 		local at = Vector3.new(c.X + math.cos(a) * rx * 0.35, 0, c.Z + math.sin(a) * rz * 0.35)
-		disc(into, "LavaScorch", at, math.max(w, d) * 0.85, 0.06, floorY + 0.02 + i * 0.002, LavaPit.SCORCH, Enum.Material.Slate)
+		disc(into, "LavaScorch", at, math.max(w, d) * 0.85, 0.06, floorY + 0.02 + i * 0.07, LavaPit.SCORCH, Enum.Material.Slate) -- (V9-0d: 0.07 apart, no flicker)
 	end
 	-- The lava itself: overlapping discs that fill an oval, Roblox's cracked lava (a dark crust with
 	-- glowing cracks), and a few hot spots of molten glow that breathe (LavaClient).
@@ -81,7 +81,8 @@ function LavaPit.dress(pool: BasePart, floorY: number): Folder
 	for i, s in spots do
 		local diameter = (if i == 1 then math.min(w, d) * 1.0 else math.min(w, d) * 0.72)
 		local at = Vector3.new(c.X + s.X, 0, c.Z + s.Z)
-		local bed = disc(into, "LavaBed", at, diameter, 0.3, floorY + 0.2 + i * 0.003, Color3.fromRGB(255, 96, 24), Enum.Material.CrackedLava)
+		local bed = disc(into, "LavaBed", at, diameter, 0.3, floorY + 0.2 + i * 0.07, -- (V9-0d: 0.07 apart, no flicker)
+			 Color3.fromRGB(255, 96, 24), Enum.Material.CrackedLava)
 		CollectionService:AddTag(bed, LavaPit.TAG) -- (its glow breathes: LavaClient warms and cools its colour)
 	end
 	-- Crust islands: dark flat rocks floating on it (LavaClient drifts them a little).

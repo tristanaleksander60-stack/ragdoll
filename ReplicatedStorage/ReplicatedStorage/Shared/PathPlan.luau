@@ -277,17 +277,20 @@ PathPlan.HUB_CLEAR = 0 -- (V9-0h: the radius of floor round the spawn kept free 
 local LAYOUT_V3 = (require(script.Parent:WaitForChild("Config")) :: any).LAYOUT_V3 == true
 if LAYOUT_V3 then
 	PathPlan.BUTTON_AT = Vector2.new(-34, 24)
-	PathPlan.RAMP_AT = Vector2.new(34, 34)
+	PathPlan.RAMP_AT = Vector2.new(36, 38) -- (its nearest corner 42 studs out)
 	PathPlan.ROW_Z = -60
 	PathPlan.HUB_CLEAR = 40
+	PathPlan.FLOOR_BACK_Z = 71 -- (the open floor's back edge: Lab's LabFloor, 165 deep round z -11.5)
 	PathPlan.LAB_POINTS = table.freeze({
 		Spawn = Vector2.new(0, 0),
 		YardIn = Vector2.new(-6, 70), -- (on the floor's back edge: the floor itself leads here)
 		Yard = Vector2.new(-6, 80),
 		YP1 = Vector2.new(-60, 78),
 		YP2 = Vector2.new(45, 78),
-		GardenWestEnd = Vector2.new(-PathPlan.GARDEN_WALK_X, PathPlan.GARDEN_WALK_SOUTH),
-		GardenEastEnd = Vector2.new(PathPlan.GARDEN_WALK_X, PathPlan.GARDEN_WALK_SOUTH),
+		-- (V9-0d: the road stops where its round end just meets the garden walk's edge: they touch, they
+		-- never lie on top of each other, so nothing flickers there.)
+		GardenWestEnd = Vector2.new(-PathPlan.GARDEN_WALK_X + 7.6, PathPlan.GARDEN_WALK_SOUTH),
+		GardenEastEnd = Vector2.new(PathPlan.GARDEN_WALK_X - 7.6, PathPlan.GARDEN_WALK_SOUTH),
 	})
 	PathPlan.LAB_SEGMENTS = table.freeze({
 		{ "YardIn", "Yard", true },
@@ -305,12 +308,17 @@ if LAYOUT_V3 then
 	PathPlan.SIGNS = table.freeze({})
 	PathPlan.END_TARGETS = table.freeze({
 		YardIn = { kind = "floor", reach = 3 },
-		GardenWestEnd = { kind = "path", reach = 3 },
-		GardenEastEnd = { kind = "path", reach = 3 },
+		GardenWestEnd = { kind = "path", reach = 4.5 },
+		GardenEastEnd = { kind = "path", reach = 4.5 },
 	})
 	local list: { Obstacle } = {}
 	for _, o in PathPlan.OBSTACLES do
-		table.insert(list, if o.name == "Button" then { name = "Button", at = PathPlan.BUTTON_AT, radius = 4.5 } else o)
+		local moved: Obstacle? = if o.name == "Button" then { name = "Button", at = PathPlan.BUTTON_AT, radius = 4.5 }
+			elseif o.name == "Ramp" then { name = "Ramp", min = PathPlan.RAMP_AT - Vector2.new(5, 9), max = PathPlan.RAMP_AT + Vector2.new(5, 9) }
+			elseif o.name == "TestMat" then { name = "TestMat", min = Vector2.new(-21, PathPlan.ROW_Z - 8), max = Vector2.new(21, PathPlan.ROW_Z + 8) }
+			elseif o.name == "XmasSleigh" then { name = "XmasSleigh", min = Vector2.new(58, -70), max = Vector2.new(66, -54) } -- (Playground.CHRISTMAS_SPOTS V3)
+			else nil
+		table.insert(list, moved or o)
 	end
 	PathPlan.OBSTACLES = table.freeze(list)
 end

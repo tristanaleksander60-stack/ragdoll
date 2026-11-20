@@ -82,6 +82,9 @@ return {
 		assert(waitFor(function()
 			missing = {}
 			for id in PathPlan.TERRAIN do
+				if id == "Plaza" then
+					continue -- (V9-0d: the plaza is a paved square: no path slabs over it)
+				end
 				local painted = Workspace:GetAttribute("Paths_" .. id)
 				if type(painted) ~= "number" or painted <= 0 then
 					table.insert(missing, id)
@@ -89,6 +92,6 @@ return {
 			end
 			return #missing == 0
 		end, 30), "no painted paths on: " .. table.concat(missing, ", "))
-		return string.format("%d lab routes, %d stones in the lab; paths on %s", #PathPlan.LAB_ROUTES, n, "plaza and every open-air map")
+		return string.format("%d lab routes, %d stones in the lab; paths on %s", #PathPlan.LAB_ROUTES, n, "every open-air map (the plaza is paved)")
 	end,
 }

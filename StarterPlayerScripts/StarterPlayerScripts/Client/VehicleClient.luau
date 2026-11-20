@@ -45,11 +45,16 @@ local function drive(seat: VehicleSeat, dt: number)
 	local v = body.AssemblyLinearVelocity
 	VehicleClient.reading.top = spec.speed
 	VehicleClient.reading.along = if fwd.Magnitude > 0.2 then Vector3.new(v.X, 0, v.Z):Dot(fwd.Unit) else 0
-	-- (V9-0c: tipped over a little: it rights itself, so it never gets stuck on its side or spinning.)
+	-- (V9-0c: tipped well over (more than about 45 degrees, so a car on a slope is left alone): it
+	-- rights itself, so it never gets stuck on its side; a set rate, the same at any frame rate.)
 	local up = body.CFrame.UpVector
-	if up.Y < 0.92 then
+	if up.Y < 0.7 then
 		local axis = up:Cross(Vector3.yAxis)
-		body.AssemblyAngularVelocity += axis * math.min(1, (1 - up.Y) * 6) * 10 * dt
+		if axis.Magnitude > 0.01 then
+			local av = body.AssemblyAngularVelocity
+			local want = axis.Unit * 2.5
+			body.AssemblyAngularVelocity = av:Lerp(Vector3.new(want.X, av.Y, want.Z), math.min(1, dt * 4))
+		end
 	end
 	if fwd.Magnitude < 0.2 or not grounded(body, car) then
 		return -- (in the air or on its side: physics only)

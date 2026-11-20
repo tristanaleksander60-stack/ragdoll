@@ -15,7 +15,7 @@ local NoticeRules = {}
 
 NoticeRules.PHONE_H = 40
 NoticeRules.PHONE_H_PORTRAIT = 48
-NoticeRules.PHONE_W = 0.45
+NoticeRules.PHONE_W = 0.5 -- (two lines of about 38 letters on a 667 px phone: the longest live lines fit)
 NoticeRules.PHONE_TEXT = 15
 NoticeRules.BUSY = 1.5 -- s after a shot or swing
 NoticeRules.BANNER_HOLD = 1.2 -- s a compact banner stays
@@ -55,6 +55,15 @@ function NoticeRules.allow(kind: string, mode: Mode, busy: boolean): boolean
 		return false
 	end
 	return true
+end
+
+-- The KO counter after a takedown of `n` at `now`, given when it last counted and to what: it keeps
+-- counting within KO_MERGE s, else starts again (ProgressUI and T162 share it).
+function NoticeRules.mergeKo(lastAt: number?, lastCount: number, now: number, n: number): number
+	if lastAt and now - lastAt < NoticeRules.KO_MERGE then
+		return lastCount + n
+	end
+	return n
 end
 
 -- The merged KO counter's words.

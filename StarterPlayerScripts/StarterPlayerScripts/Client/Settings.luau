@@ -218,7 +218,7 @@ local function build()
 	end)
 	choiceRow("Motion", "Auto follows your device. Less: menus just appear", "motion", "motion", Settings.MOTION, 4, body)
 	choiceRow("UI size", "Buttons and windows bigger or smaller", "scale", "ui", Settings.UI, 5, body)
-	choiceRow("Notices", "Auto: small on a phone. Minimal: only what matters", "eye", "notices", Settings.NOTICES, 6, body)
+	choiceRow("Notices", "Auto: small on a phone. Minimal: only what matters", "eye", "notices", Settings.NOTICES, 9, body)
 	window.defaultSelection = first.hit
 	Controller.register(window)
 	apply()

@@ -64,6 +64,23 @@ return {
 				found += 1
 				local p = (thing :: any):GetPivot().Position - o
 				local r = math.sqrt(p.X * p.X + p.Z * p.Z)
+				-- (V9-0h review: its nearest corner too, not only its middle.)
+				local cf: CFrame, size: Vector3
+				if thing:IsA("Model") then
+					cf, size = thing:GetBoundingBox()
+				else
+					cf, size = (thing :: BasePart).CFrame, (thing :: BasePart).Size
+				end
+				local near = math.huge
+				for _, sx in { -0.5, 0.5 } do
+					for _, sz in { -0.5, 0.5 } do
+						local c = (cf * Vector3.new(size.X * sx, 0, size.Z * sz)) - o
+						near = math.min(near, math.sqrt(c.X * c.X + c.Z * c.Z))
+					end
+				end
+				-- (A flat thing on the floor, the bullseye, may reach in: it blocks nothing.)
+				local flatThing = math.min(size.X, size.Y, size.Z) < 1.5
+				assert(flatThing or near >= PathPlan.HUB_CLEAR - 2, string.format("%s reaches %.0f studs from the spawn (want %d)", name, near, PathPlan.HUB_CLEAR))
 				assert(r >= PathPlan.HUB_CLEAR and r <= 150, string.format("%s is %.0f studs from the spawn (want %d-150)", name, r, PathPlan.HUB_CLEAR))
 				table.insert(report, string.format("%s %.0f", name, r))
 			end
@@ -77,6 +94,12 @@ return {
 			end
 		end
 		assert(zone and math.abs((zone :: BasePart).Position.Z - o.Z) >= PathPlan.HUB_CLEAR, "the test row is inside the spawn's clear circle")
+		-- (V9-0h review) No Christmas spot stands on the test row.
+		local Playground = require(script.Parent.Parent:WaitForChild("Systems"):WaitForChild("Playground")) :: any
+		for spot, at in Playground.CHRISTMAS_SPOTS or {} do
+			local onRow = math.abs(at.X) < 21 + 6 and math.abs(at.Y - PathPlan.ROW_Z) < 8 + 9
+			assert(not onRow, "the Christmas " .. spot .. " stands on the dummies' test row")
+		end
 		-- The lab boards: the bigger wall.
 		local board = (Workspace :: any).Labs:FindFirstChild("Board_Takedowns", true)
 		if board and board:IsA("Model") then

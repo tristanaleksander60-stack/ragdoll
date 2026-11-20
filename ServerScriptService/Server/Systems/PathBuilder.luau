@@ -134,12 +134,19 @@ end
 local FROM = { Enum.Material.Grass, Enum.Material.LeafyGrass, Enum.Material.Sand }
 local partsInto: Folder = Instance.new("Folder")
 partsInto.Name = "MapPaths"
-local function paint(a: Vector3, b: Vector3, material: Enum.Material, seed: number): number
+local function paint(a: Vector3, b: Vector3, material: Enum.Material, seed: number, noSlabs: boolean?): number
 	if not partsInto.Parent then
 		partsInto.Parent = Workspace
 	end
 	local terrain = Workspace.Terrain
 	local n = 0
+	-- (V9-0d, owner 21 Nov 2026: "the ground glitches because of all the gravel stones": on a part
+	-- floor (no terrain) the path is one clean walkway of slabs, not a row of overlapping round
+	-- stones; each path a clear 0.1 above or below the next, so where they share the arrival nothing
+	-- shimmers.)
+	local slabPoints: { Vector2 } = {}
+	local slabY: number? = nil
+	local slabWidth = 0
 	for _, s in PathPlan.curve(Vector2.new(a.X, a.Z), Vector2.new(b.X, b.Z), seed) do
 		-- (The ground's height there: a ray down onto the terrain itself.)
 		local params = RaycastParams.new()
@@ -156,17 +163,44 @@ local function paint(a: Vector3, b: Vector3, material: Enum.Material, seed: numb
 			end
 			n += 1
 		end
-		-- (No terrain here (a paved city, the plaza's floor): flat stones on whatever floor it is.)
+		-- (No terrain here (a paved city, the plaza's floor): a walkway on whatever floor it is.)
 		if not hit then
 			local any = RaycastParams.new()
 			any.FilterType = Enum.RaycastFilterType.Exclude
 			any.FilterDescendantsInstances = { Workspace:FindFirstChild("Dummies") :: any, Workspace:FindFirstChild("MapBooths") :: any, partsInto :: any }
 			local floorHit = Workspace:Raycast(Vector3.new(s.at.X, a.Y + 4, s.at.Y), Vector3.new(0, -40, 0), any) -- (from just above the arrival floor: never a roof or an awning)
 			if floorHit and floorHit.Instance:IsA("BasePart") and floorHit.Instance.Size.Y < 30 then
-				stone(partsInto, Vector3.new(s.at.X, floorHit.Position.Y + 0.035, s.at.Y), s.width, Color3.fromRGB(150, 146, 138), Enum.Material.Cobblestone)
-				n += 1
+				table.insert(slabPoints, s.at)
+				slabY = math.max(slabY or -math.huge, floorHit.Position.Y)
+				slabWidth = math.max(slabWidth, s.width)
 			end
 		end
+	end
+	-- (The path stops 6 studs short of the thing it leads to (a booth, a launcher), so its round end
+	-- never lies under that thing's base.)
+	local goal = Vector2.new(b.X, b.Z)
+	while #slabPoints > 2 and (slabPoints[#slabPoints] - goal).Magnitude < 6 do
+		table.remove(slabPoints)
+	end
+	-- (Only the bends and a point every 12 studs: a joint per 1-stud sample made the discs pile up.)
+	if #slabPoints > 2 then
+		local thin: { Vector2 } = { slabPoints[1] }
+		local last = slabPoints[1]
+		for k = 2, #slabPoints - 1 do
+			local d1, d2 = slabPoints[k] - slabPoints[k - 1], slabPoints[k + 1] - slabPoints[k]
+			local turn = if d1.Magnitude > 0.01 and d2.Magnitude > 0.01 then math.acos(math.clamp(d1.Unit:Dot(d2.Unit), -1, 1)) else 0
+			local gap = (slabPoints[k] - last).Magnitude
+			if gap >= 12 or (turn > math.rad(10) and gap >= 4) then
+				table.insert(thin, slabPoints[k])
+				last = slabPoints[k]
+			end
+		end
+		table.insert(thin, slabPoints[#slabPoints])
+		slabPoints = thin
+	end
+	if #slabPoints >= 2 and slabY and not noSlabs then
+		local lift = 0.2 + (seed % 3) * 0.1 -- (its sunk joints clear of the floor and of the plaza's paved square, which a ray does not see)
+		n += PathBuilder.walkway(partsInto, slabPoints, slabY + lift, math.min(slabWidth, PathBuilder.walkWidth()), Color3.fromRGB(150, 146, 138), Enum.Material.Cobblestone, nil)
 	end
 	return n
 end
@@ -190,7 +224,7 @@ function PathBuilder.map(place: string, arrival: Vector3, area: Instance?, goals
 	local total = 0
 	for i, t in targets do
 		if (t - arrival).Magnitude < 260 then
-			total += paint(arrival, t, material, i + #place)
+			total += paint(arrival, t, material, i + #place, place == "Plaza") -- (V9-0d: the plaza is a paved square already: you walk anywhere, no slabs over it)
 		end
 	end
 	return total
@@ -297,12 +331,17 @@ function PathBuilder.walkway(into: Instance, points: { Vector2 }, y: number, wid
 	table.insert(state.lines, { points = points, width = width })
 	local lineIndex = #state.lines
 	for i, a in points do
-		flatPart(into, "PathJoint", Vector3.new(h - 0.004, width, width), CFrame.new(a.X, y + h / 2 - 0.002, a.Y) * flat, color, material, true)
+		-- (V9-0d: the joint disc sits 0.1 under the slabs' top, so where they overlap the slab alone
+		-- shows, and every other joint 0.07 lower again, so two joints never lie level: no shimmer.)
+		local jointTop = y + h - 0.1 - (i % 2) * 0.07
+		flatPart(into, "PathJoint", Vector3.new(0.05, width, width), CFrame.new(a.X, jointTop - 0.025, a.Y) * flat, color, material, true)
 		n += 1
 		local b = points[i + 1]
 		if b and (b - a).Magnitude > 0.05 then
 			local mid = (a + b) / 2
-			local cf = CFrame.lookAt(Vector3.new(mid.X, y + h / 2, mid.Y), Vector3.new(b.X, y + h / 2, b.Y))
+			-- (V9-0d: every other slab 0.07 higher, so two slabs that overlap at a bend never lie level.)
+			local sy = y + h / 2 + (i % 2) * 0.07
+			local cf = CFrame.lookAt(Vector3.new(mid.X, sy, mid.Y), Vector3.new(b.X, sy, b.Y))
 			local len = (b - a).Magnitude
 			flatPart(into, "PathSlab", Vector3.new(width, h, len), cf, color, material, false)
 			n += 1
@@ -709,18 +748,25 @@ function PathBuilder.dressLine(into: Instance, points: { Vector2 }, y: number, w
 	-- not a green stripe painted on the floor.)
 	local soilWide = wide + 0.7
 	local lift = 0.12 -- the verge stands a little proud of the lab floor
-	for i, a in points do
-		local h = y + (own % 5) * 0.0015
-		deco(into, "PathSoilJoint", Vector3.new(lift, soilWide, soilWide), CFrame.new(a.X, h + lift / 2 - 0.004, a.Y) * flat, PathBuilder.SOIL, Enum.Material.Ground, Enum.PartType.Cylinder)
-		deco(into, "PathShoulderJoint", Vector3.new(lift, wide, wide), CFrame.new(a.X, h + lift / 2 + 0.006, a.Y) * flat, PathBuilder.SHOULDER, Enum.Material.Grass, Enum.PartType.Cylinder)
-		n += 2
+	-- (V9-0d, owner 21 Nov 2026: "the ground glitches when you look round": one grass layer, its round
+	-- joints a clear 0.07 under its slabs, nothing level with anything else; the dark soil ring that
+	-- lay a hair under it went: it flickered.)
+	local _ = soilWide
+	-- (V9-0d: under LAYOUT_V3 the only lab road runs over the creature yard's own grass: no verge of its
+	-- own under it, which only lay level with that grass and flickered.)
+	local verge = not (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V3
+	for i, a in if verge then points else {} do
+		local h = y
+		-- (Joints sunk into the ground under the grass slabs, every other one lower again; the slabs
+		-- take turns 0.07 apart and stay under the paving by more than 0.06.)
+		deco(into, "PathShoulderJoint", Vector3.new(0.05, wide, wide), CFrame.new(a.X, h - 0.025 - (i % 2) * 0.07, a.Y) * flat, PathBuilder.SHOULDER, Enum.Material.Grass, Enum.PartType.Cylinder)
+		n += 1
 		local b = points[i + 1]
 		if b and (b - a).Magnitude > 0.05 then
 			local mid = (a + b) / 2
 			local look = CFrame.lookAt(Vector3.new(mid.X, h, mid.Y), Vector3.new(b.X, h, b.Y))
-			deco(into, "PathSoil", Vector3.new(soilWide, lift, (b - a).Magnitude), look + Vector3.new(0, lift / 2 - 0.003, 0), PathBuilder.SOIL, Enum.Material.Ground)
-			deco(into, "PathShoulder", Vector3.new(wide, lift, (b - a).Magnitude), look + Vector3.new(0, lift / 2 + 0.007, 0), PathBuilder.SHOULDER, Enum.Material.Grass)
-			n += 2
+			deco(into, "PathShoulder", Vector3.new(wide, lift, (b - a).Magnitude), look + Vector3.new(0, lift / 2 - 0.08 + (i % 2) * 0.07, 0), PathBuilder.SHOULDER, Enum.Material.Grass)
+			n += 1
 		end
 	end
 	-- Bushes along the verge's outer edge: clumps of two or three round shrubs in mixed greens, at
@@ -889,7 +935,7 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 	end
 	for i in PathPlan.LAB_SEGMENTS do
 		-- (Each segment a hair apart in height: where two meet they never flicker.)
-		local y = floorY + 0.01 + (i % 3) * 0.003
+		local y = floorY + (if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V3 then 0.3 else 0.01) + (i % 3) * 0.1 -- (V9-0d: where two meet, a clear 0.1 between them; under LAYOUT_V3 the yard road lies over the yard grass (top 0.20))
 		local v3 = (require(Shared:WaitForChild("Config")) :: any).PATHS_V3 == true
 		count += PathBuilder.walkway(folder, allLines[i], y, walkWidth(), if v3 then PathBuilder.PAVING_V3 else PathBuilder.GRAVEL, Enum.Material.Cobblestone, PathBuilder.KERB)
 		if v3 then

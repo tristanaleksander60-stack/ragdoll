@@ -138,6 +138,10 @@ function Lab.plotCenter(index: number): Vector3
 end
 
 local function focusOf(origin: Vector3): Vector3
+	-- (V9-0h review: under LAYOUT_V3 the lab view looks at the test row behind the bullseye.)
+	if (Config :: any).LAYOUT_V3 then
+		return origin + Vector3.new(0, 2.5, (require(Shared:WaitForChild("PathPlan")) :: any).ROW_Z * 0.85)
+	end
 	return origin + Vector3.new(0, 2.5, -RADIUS * 0.85)
 end
 
@@ -765,15 +769,16 @@ local function dressPlot(plot: Plot)
 	end
 	-- The test zone under the row: a black rubber safety mat.
 	local rowZ = o.Z + (require(Shared:WaitForChild("PathPlan")) :: any).ROW_Z -- (V9-0h: behind the bullseye under LAYOUT_V3)
-	local mat = paint(folder, "TestZone", Vector3.new(42, 0.05, 16), Vector3.new(o.X, ground + 0.045, rowZ), Color3.fromRGB(52, 54, 60), Enum.Material.Concrete)
+	local mat = paint(folder, "TestZone", Vector3.new(42, 0.05, 16), Vector3.new(o.X, ground + 0.12, rowZ) -- (V9-0d: 0.1 over the floor, no flicker)
+		, Color3.fromRGB(52, 54, 60), Enum.Material.Concrete)
 	Finish.apply(mat, "Rubber")
 	local yellow = Color3.fromRGB(245, 200, 40)
 	-- (Each layer a clear step above the one under it, so none of them flickers.)
-	paint(folder, "ZoneEdge", Vector3.new(42, 0.06, 0.6), Vector3.new(o.X, ground + 0.08, rowZ - 8), yellow)
-	paint(folder, "ZoneEdge", Vector3.new(0.6, 0.06, 16), Vector3.new(o.X - 21, ground + 0.08, rowZ), yellow)
-	paint(folder, "ZoneEdge", Vector3.new(0.6, 0.06, 16), Vector3.new(o.X + 21, ground + 0.08, rowZ), yellow)
+	paint(folder, "ZoneEdge", Vector3.new(42, 0.06, 0.6), Vector3.new(o.X, ground + 0.22, rowZ - 8), yellow)
+	paint(folder, "ZoneEdge", Vector3.new(0.6, 0.06, 16), Vector3.new(o.X - 21, ground + 0.22, rowZ), yellow)
+	paint(folder, "ZoneEdge", Vector3.new(0.6, 0.06, 16), Vector3.new(o.X + 21, ground + 0.22, rowZ), yellow)
 	for i = 0, 13 do -- hazard stripes along its front edge
-		paint(folder, "Hazard", Vector3.new(1.5, 0.06, 1.6), Vector3.new(o.X - 19.5 + i * 3, ground + 0.08, rowZ + 8), if i % 2 == 0 then yellow else Color3.fromRGB(24, 24, 28))
+		paint(folder, "Hazard", Vector3.new(1.5, 0.06, 1.6), Vector3.new(o.X - 19.5 + i * 3, ground + 0.22, rowZ + 8), if i % 2 == 0 then yellow else Color3.fromRGB(24, 24, 28))
 	end
 	-- The crash wall behind the row, a workbench either side of it.
 	prop(folder, "CrashWall", Vector3.new(o.X, ground, o.Z - 74), Vector3.new(0, 0, 1), 28)

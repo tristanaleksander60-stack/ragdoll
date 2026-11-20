@@ -57,7 +57,7 @@ local function body(results: { string }, player: Player)
 	assert(player:GetAttribute("LabPlot") == 1, "the player was not told their lab")
 	assert(player:GetAttribute("LabOrigin") == origin, "the player's LabOrigin is not their lab's")
 	local focus = player:GetAttribute("LabFocus")
-	assert(typeof(focus) == "Vector3" and flat(focus - origin).Magnitude < 25, "LabFocus is not in front of the lab's spawn")
+	assert(typeof(focus) == "Vector3" and flat(focus - origin).Magnitude < 60, "LabFocus is not in front of the lab's spawn") -- (V9-0h: up to the test row behind the bullseye)
 	assert(Lab.plotCenter(2).X < plazaOrigin.X, "lab 2 should be west of the plaza")
 	table.insert(results, string.format("lab 1 for the first player, %d studs east of the plaza (lab 2 west)", Lab.PLOT_SPACING))
 
@@ -81,7 +81,7 @@ local function body(results: { string }, player: Player)
 		for _, d in Lab.dummiesOf(player) do
 			local pelvis = d:FindFirstChild("LowerTorso") :: BasePart
 			local away = flat(pelvis.Position - origin).Magnitude
-			if away >= 40 then
+			if away >= (if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAYOUT_V3 then 66 else 40) then -- (V9-0h: the test row stands 58 out)
 				far = math.max(far, away)
 				Lab.rewind(player) -- (one still on its way back from an earlier test)
 			end

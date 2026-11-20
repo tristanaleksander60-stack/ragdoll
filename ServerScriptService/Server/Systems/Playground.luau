@@ -704,7 +704,7 @@ local function buildBullseye()
 	base.CanTouch = false
 	-- The rings, each a hair over the one under it.
 	for i, ring in { { r * 0.8, RED }, { r * 0.6, WHITE }, { r * 0.4, RED }, { r * 0.2, WHITE }, { r * 0.08, RED } } do
-		local disc = part("BullseyeRing", Vector3.new(0.82 + i * 0.02, ring[1] * 2, ring[1] * 2), CFrame.new(origin + Vector3.new(land.X, 0.4, land.Z)) * CFrame.Angles(0, 0, math.rad(90)), ring[2] :: Color3, Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
+		local disc = part("BullseyeRing", Vector3.new(0.82 + i * 0.14, ring[1] * 2, ring[1] * 2), CFrame.new(origin + Vector3.new(land.X, 0.4, land.Z)) * CFrame.Angles(0, 0, math.rad(90)), ring[2] :: Color3, Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
 		disc.CanCollide = false
 		disc.CanQuery = false
 		disc.CanTouch = false
@@ -897,6 +897,10 @@ Playground.CHRISTMAS_SPOTS = { Chimney = Vector2.new(45, 66), Present = Vector2.
 Playground.MACE_V2_AT = Vector2.new(-41, 50)
 if (Config :: any).LAYOUT_V2 then
 	Playground.CHRISTMAS_SPOTS = { Chimney = Vector2.new(45, 66), Present = Vector2.new(-58, 64), Sleigh = Vector2.new(-10, -60) }
+end
+if (Config :: any).LAYOUT_V3 then
+	-- (V9-0h review: the dummies' test row moved behind the bullseye, onto the sleigh's old spot.)
+	Playground.CHRISTMAS_SPOTS = { Chimney = Vector2.new(45, 66), Present = Vector2.new(-58, 64), Sleigh = Vector2.new(62, -62) }
 end
 local BRICK = Color3.fromRGB(150, 50, 40)
 local XMAS_GREEN = Color3.fromRGB(40, 150, 70)

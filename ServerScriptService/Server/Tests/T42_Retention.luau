@@ -186,6 +186,9 @@ local function schedule(results: { string }, p: Player?)
 			local toy = Toys.byId[free :: string] :: any
 			local wasAll = p:GetAttribute("UnlockAll")
 			p:SetAttribute("UnlockAll", false)
+			-- (With live ids the creator owns All Guns in Studio: judge a player without passes.)
+			local passToys = p:GetAttribute("PassToys")
+			p:SetAttribute("PassToys", nil)
 			local profile = ProgressService.profileForTest(p) :: any
 			local wasOwned, wasTakedowns = profile.owned[toy.id], profile.takedowns
 			profile.owned[toy.id] = nil
@@ -194,6 +197,7 @@ local function schedule(results: { string }, p: Player?)
 			local own = ProgressService.isUnlocked(p, toy, true)
 			profile.owned[toy.id], profile.takedowns = wasOwned, wasTakedowns
 			p:SetAttribute("UnlockAll", wasAll)
+			p:SetAttribute("PassToys", passToys)
 			assert(usable and not own, "the free weapon is not usable, or the shop thinks it is owned")
 		end
 		clock = start + 2

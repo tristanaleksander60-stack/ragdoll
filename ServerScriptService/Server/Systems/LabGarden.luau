@@ -123,12 +123,12 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 			local PathPlan = require(Shared:WaitForChild("PathPlan")) :: any
 			local walkColor = if v2 then PathBuilder.PAVING_V3 else PATH
 			local northZ = if v2 then PathPlan.GARDEN_WALK_NORTH else LabGarden.Z_BACK + 4
-			PathBuilder.trail(folder, o2 + Vector2.new(pathX, northZ), o2 + Vector2.new(pathX, LabGarden.Z_FRONT - 3), origin.Y + 0.24, walkColor, Enum.Material.Cobblestone, if side > 0 then 101 else 102)
+			PathBuilder.trail(folder, o2 + Vector2.new(pathX, northZ), o2 + Vector2.new(pathX, LabGarden.Z_FRONT - 3), origin.Y + 0.34, walkColor, Enum.Material.Cobblestone, if side > 0 then 101 else 102)
 			if v2 then
 				walkPts = PathBuilder.trailPoints(o2 + Vector2.new(pathX, northZ), o2 + Vector2.new(pathX, LabGarden.Z_FRONT - 3), if side > 0 then 101 else 102)
 			end
 			for k, z in if v2 then (if side > 0 then { 30 } else {}) else { -30, 30 } do
-				PathBuilder.trail(folder, o2 + Vector2.new(side * (inner - 1), z), o2 + Vector2.new(pathX, z), origin.Y + 0.25, walkColor, Enum.Material.Cobblestone, 110 + k + (if side > 0 then 0 else 5))
+				PathBuilder.trail(folder, o2 + Vector2.new(side * (inner - 1), z), o2 + Vector2.new(pathX, z), origin.Y + 0.44, walkColor, Enum.Material.Cobblestone, 110 + k + (if side > 0 then 0 else 5))
 			end
 		else
 			part(folder, "GardenPath", Vector3.new(6, 0.24, depth - 6), CFrame.new(origin + Vector3.new(pathX, 0.12, zMid)), PATH, Enum.Material.Cobblestone)

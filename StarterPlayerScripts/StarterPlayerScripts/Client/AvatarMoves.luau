@@ -280,6 +280,11 @@ end
 -- How far your avatar steps in towards a target to land a blow from STRIKE_DISTANCE (never through
 -- a wall or off a ledge it would not walk off).
 local function lungeTowards(character: Model, root: BasePart, target: Vector3, targetModel: Instance?): Vector3?
+	-- (V9-0c review: seated, the body is welded to its car: a step in would shove the car.)
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if humanoid and humanoid.SeatPart then
+		return nil
+	end
 	local flat = Vector3.new(target.X - root.Position.X, 0, target.Z - root.Position.Z)
 	local length = math.min(flat.Magnitude - HitFeel.STRIKE_DISTANCE, HitFeel.LUNGE_MAX)
 	if length < 0.5 then

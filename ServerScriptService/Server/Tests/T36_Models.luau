@@ -36,7 +36,7 @@ local PROPS = { "Plant", "Espresso", "OfficeChair", "Jet", "Crate", "Shelf", "Ca
 -- Part budgets for phones (every part here is streamed to whoever is near).
 local ROOM_BUDGET = 400 -- parts in one room
 local LAB_BUDGET = 80 -- parts in one lab's markings, sign and props
-local PLAZA_BUDGET = 120 -- parts in the plaza's dressing
+local PLAZA_BUDGET = 280 -- parts in the plaza's dressing (V9-0d: + four picnic sets of 40 small anchored pieces)
 local CROWD = { Barista = true, Office = true, Tourist = true, Chef = true, Guard = true, Cashier = true, Traveler = true, Worker = true, Farmer = true, Soldier = true, Beachgoer = true }
 local WEAR = { ChefHat = "Chef", GuardCap = "Guard", BucketHat = "Tourist", Camera = "Tourist", Backpack = "Traveler", NeckPillow = "Traveler" }
 local ROOM_PROPS: { [string]: { string } } = {
@@ -195,8 +195,10 @@ local function body(results: { string })
 		end
 	end
 	assert(plazaParts <= PLAZA_BUDGET, string.format("the plaza's dressing has %d parts (budget %d)", plazaParts, PLAZA_BUDGET))
-	assert((dressed.StreetLamp or 0) >= 6 and (dressed.Bench or 0) >= 4 and (dressed.Plant or 0) >= 8, "the plaza is missing lamps, benches or plants")
-	table.insert(results, string.format("plaza: %d lamps, %d benches, %d plants (%d parts, budget %d)", dressed.StreetLamp, dressed.Bench, dressed.Plant, plazaParts, PLAZA_BUDGET))
+	-- (V9-0d: the benches are picnic sets now, a table with its benches.)
+	local seats = (dressed.Bench or 0) + (dressed.PicnicSet or 0)
+	assert((dressed.StreetLamp or 0) >= 6 and seats >= 4 and (dressed.Plant or 0) >= 8, "the plaza is missing lamps, benches or plants")
+	table.insert(results, string.format("plaza: %d lamps, %d benches or picnic sets, %d plants (%d parts, budget %d)", dressed.StreetLamp, seats, dressed.Plant, plazaParts, PLAZA_BUDGET))
 	-- Its two edges (round 3, M1): a line and boards along the whole ground, a budget of their own.
 	local edges = Workspace:FindFirstChild("PlazaEdges")
 	assert(edges, "the plaza's edges are not marked")

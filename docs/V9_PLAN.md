@@ -773,3 +773,30 @@ Write the baseline into `docs/PERF.md`.
   - **Tests:** T163_HubLayout passes (16 attractions on the rim at 42-82 studs). T150 accepts a path end on the floor's edge. T112/T106/T36/T50/T103/T45/T147 pass.
   - **Captures:** spawn and top-down.
   - **Left for V9-0e and later:** the Maps board near the spawn (V9-0e), a cosy deck corner, angling the board wall at the spawn, the 6+ attractions-in-one-frame check on a phone.
+- 21 Nov 2026, blind review of V9-0b/0c/0g/0h: 0b 8.6 (pass), 0c 7.9, 0g 7.4, 0h 6.8. Fix round 1:
+  - **0h:**
+    - The Christmas sleigh moved off the moved test row to (62,-62), and the XmasSleigh obstacle with it. The Ramp and TestMat obstacles follow V3. The ramp is at (36,38), its nearest corner 42 out.
+    - The lab view focuses on the row (focusOf). T112 checks the row's 3 slots in view (the spawn faces 50 degrees right). T31 allows the row's 58 studs.
+    - T163 checks the nearest corner of everything that blocks and that no Christmas spot is on the row. T150 really checks YardIn against the floor's back edge (`PathPlan.FLOOR_BACK_Z`).
+  - **0c:**
+    - No melee lunge while seated.
+    - Self-righting only when tipped past about 45 degrees, at a set rate.
+    - T153's steer-release check can fail now, and T153 runs the cause live (seated, AimTestPoint 90 degrees to the side: 0.0 degrees turned).
+  - **0g:**
+    - A compact pill holds two lines (less padding, 50 % wide).
+    - The KO counter counts always in compact mode, through the shared `NoticeRules.mergeKo`, which T162 tests.
+    - In MINIMAL only priority-4 banners show. Only the newest waiting unlock reveal plays. The Notices row has its own order.
+  - **0b:** a sky that replicates late is taken out too; the comment is fixed.
+- 21 Nov 2026, V9-0d DONE (PC), the ground part:
+  - **Scan:** `Shared/ZFight` finds overlapping flat ground layers with top faces within 0.06. At first it found 597 pairs in the lab and 800+ on the plaza.
+  - **Fixes:**
+    - The plaza's and maps' paths are clean walkways (thinned to bends / 12 studs) instead of rows of overlapping round stones, stop 6 studs short of their booth, and lie clear of the plaza square. On the paved plaza itself there are no path slabs at all.
+    - Path joints sit 0.1 under the slabs, and every other joint and slab is 0.07 apart. Lines are 0.1 apart.
+    - The verge is one grass layer; under V3 the yard road has none (the yard grass is there).
+    - The test mat is 0.1 over the floor; lava beds, scorch, guide rings and bullseye rings are 0.07 apart. The garden walks are lifted, and the yard road ends just touching the garden walk.
+    - The frog's pond is moved off the west garden walk (x -81 under V3).
+  - **Result:** T156_NoZFight passes (4 tiny path pairs left at the yard junctions, outside the floor).
+  - **Bench set:** the plaza's benches are real picnic sets: V3Assets "PicnicSet", Creator Store 79924543529998, 6 seats. It carried the known Runtime/ScreenBuilder malware, removed; a second pick (138266223570881) had it too and was dropped.
+  - **Tests:** T36 (plaza budget 280, picnic sets count as seats), T106 (the plaza is paved), T42 (judges without the creator's passes). Place saved v698.
+  - **Left for V9-4b:** the booths into a market row clear of the paths (T156 leaves booth parts to it).
+  - **Left (time):** the town-square extras (string lights, photo spot, statue, seating groups under shade trees, pigeons, ambient town sound).

@@ -683,7 +683,7 @@ end
 -- walk), the other five spread across the whole yard in front.
 LabCreatures.LAYOUT = table.freeze({
 	{ id = "Spider", label = "the SPIDER", x = -90, z = -70, yaw = -90 },
-	{ id = "Frog", label = "the FROG", x = -89, z = -5, yaw = -90 },
+	{ id = "Frog", label = "the FROG", x = if (Config :: any).LAYOUT_V3 then -81 else -89, z = -5, yaw = -90 }, -- (V9-0d: its pond off the west garden walk)
 	{ id = "Plant", label = "the GIANT PLANT", x = 90, z = -70, yaw = 90 },
 	{ id = "Chicken", label = "the CHICKEN", x = 90, z = -8, yaw = 90 },
 	{ id = "Whale", label = "the WHALE", x = -95, z = 92, yaw = 0 },

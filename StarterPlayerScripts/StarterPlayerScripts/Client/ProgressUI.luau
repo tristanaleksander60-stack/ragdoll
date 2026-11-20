@@ -76,6 +76,7 @@ local hatButtons: { [string]: any } = {}
 local opening = false
 local overlay: Frame? = nil
 
+local revealToken = 0 -- (V9-0g review: the newest waiting unlock reveal)
 local function owns(id: string): boolean
 	return table.find(state.hats, id) ~= nil
 end
@@ -687,7 +688,8 @@ function ProgressUI.start()
 			-- (Round 2: no COMBO on the screen, the owner's wish. Round 5, phase 00: in the first
 			-- minutes of a visit every takedown pops a big "+1 TAKEDOWN", so a new player sees the
 			-- shots count.)
-			if time() < ProgressUI.POP_FOR then
+			-- (V9-0g review: in compact notices the small "KO xN" counter always counts, not only at first.)
+			if time() < ProgressUI.POP_FOR or (require(script.Parent:WaitForChild("NoticeState")) :: any).compact() then
 				local d = data :: any
 				ProgressUI.popTakedown(1 + (if type(d.bonus) == "number" then d.bonus else 0))
 			end
@@ -719,16 +721,20 @@ function ProgressUI.start()
 			-- (V8-1.4: a 1.5 s present, never in the way: the weapon turning, its name, a chord.)
 			if toy and (Config :: any).LADDER_V3 then
 				-- (V9-0g: in compact notices, never in the middle of a fight: the reveal waits for
-				-- NoticeRules.REVEAL_QUIET s without a shot (the "NEW: X" line shows at once), or is skipped.)
+				-- NoticeRules.REVEAL_QUIET s without a shot (the "NEW: X" line comes through Notify when the fight
+				-- pauses), or is skipped.)
 				local NoticeState = require(script.Parent:WaitForChild("NoticeState")) :: any
 				if NoticeState.compact() then
+					-- (V9-0g review: only the newest waiting reveal plays: several unlocks in one fight never stack.)
+					revealToken += 1
+					local token = revealToken
 					task.spawn(function()
 						local NoticeRules = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("NoticeRules")) :: any
 						local giveUp = os.clock() + 20
 						while os.clock() < giveUp and not NoticeRules.revealNow(os.clock(), NoticeState.lastUse()) do
 							task.wait(0.25)
 						end
-						if os.clock() < giveUp then
+						if os.clock() < giveUp and token == revealToken then
 							ProgressUI.reveal(toy.id, toy.label)
 						end
 					end)
@@ -844,7 +850,7 @@ function ProgressUI.popTakedown(n: number)
 		end
 		assert(counter)
 		local last = counter:GetAttribute("At")
-		local total = (if type(last) == "number" and now - last < NoticeRules.KO_MERGE then (counter:GetAttribute("Count") :: number? or 0) else 0) + n
+		local total = NoticeRules.mergeKo(if type(last) == "number" then last else nil, (counter:GetAttribute("Count") :: number?) or 0, now, n)
 		counter:SetAttribute("Count", total)
 		counter:SetAttribute("At", now)
 		counter.Text = NoticeRules.koText(total)

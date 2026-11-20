@@ -202,9 +202,10 @@ local function finish()
 end
 
 -- V9-0b (Config.LOOK_THUMB, the thumbnails' sunny look): Roblox's own cartoon cloud skybox in place of
--- the realistic one (kept, parented under it as "RealisticSky", so turning the switch off brings it
--- back on the next start), a big sun, dynamic white clouds, warm sunlight, a soft sun glow, sun rays.
+-- the realistic one (taken out of Lighting on this screen only, as "RealisticSky": the server and the
+-- place keep it, so turning the switch off brings it back on the next start), a big sun, dynamic white clouds, warm sunlight, a soft sun glow, sun rays.
 -- On this screen only; the server and the place file keep their sky.
+local skyWatch: RBXScriptConnection? = nil
 local function thumbSky()
 	local V = V3 :: any
 	Lighting.GeographicLatitude = V.GeographicLatitude
@@ -220,6 +221,17 @@ local function thumbSky()
 		end
 		sky.Parent = Lighting
 		current = sky
+	end
+	-- (V9-0b review: a sky that replicates after this ran is taken out too, so there are never two.)
+	if not skyWatch then
+		skyWatch = Lighting.ChildAdded:Connect(function(c)
+			if c:IsA("Sky") and c.Name ~= "ThumbSky" then
+				task.defer(function()
+					c.Name = "RealisticSky"
+					c.Parent = nil
+				end)
+			end
+		end)
 	end
 	assert(current)
 	current.SunAngularSize = V.sunSize

@@ -297,6 +297,10 @@ function Banner.tryLine(text: string): boolean
 	-- (priority 4) shows, the rest are dropped, not queued.)
 	local NoticeState = require(script.Parent:WaitForChild("NoticeState")) :: any
 	if NoticeState.compact() then
+		-- (MINIMAL: only the critical ones (priority 4) at all.)
+		if NoticeState.mode() == "minimal" then
+			return spec.priority < 4
+		end
 		return NoticeState.busy() and spec.priority < 4
 	end
 	Banner.show(spec)

@@ -20,7 +20,7 @@ return {
 		-- Sizes on phone screens.
 		for _, screen in { { Vector2.new(667, 375), false }, { Vector2.new(844, 390), false }, { Vector2.new(390, 844), true }, { Vector2.new(360, 780), true } } do
 			local w, h, text = NoticeRules.smallBox(screen[1], screen[2])
-			local limitW = screen[1].X * (if screen[2] then 0.9 else 0.46)
+			local limitW = screen[1].X * (if screen[2] then 0.9 else 0.51)
 			assert(w <= limitW and h <= (if screen[2] then 48 else 40) and text >= 14 and text <= 16, string.format("a notice is too big on %dx%d: %dx%d at %d px", screen[1].X, screen[1].Y, w, h, text))
 		end
 		-- In a fight only critical shows; minimal only critical; normal shows all.
@@ -32,18 +32,18 @@ return {
 		assert(NoticeRules.allow("reward", "small", false), "a reward notice was held back when calm")
 		assert(not NoticeRules.allow("reward", "minimal", false) and NoticeRules.allow("critical", "minimal", false), "MINIMAL is wrong")
 		assert(NoticeRules.allow("info", "normal", true), "a PC lost its notices in a fight")
-		-- 20 takedowns in 5 s: one counter (each comes within the merge window of the last).
-		local count, last = 0, -math.huge
+		-- 20 takedowns in 5 s: one counter (NoticeRules.mergeKo, what ProgressUI's KO counter runs).
+		local count: number, last: number? = 0, nil
 		local counters = 0
 		for i = 1, 20 do
 			local t = i * 0.25
-			if t - last >= NoticeRules.KO_MERGE then
+			local merged = NoticeRules.mergeKo(last, count, t, 1)
+			if merged == 1 then
 				counters += 1
-				count = 0
 			end
-			count += 1
-			last = t
+			count, last = merged, t
 		end
+		assert(NoticeRules.mergeKo(10, 5, 13, 1) == 1, "a takedown after the merge window did not start a new counter")
 		assert(counters == 1 and NoticeRules.koText(count) == "KO \u{00D7}20", "20 takedowns in 5 s did not merge into one KO x20")
 		assert(NoticeRules.koText(1) == "+1 KO", "a single takedown reads wrong")
 		-- An unlock while firing: the reveal waits; after 2 s quiet it plays.

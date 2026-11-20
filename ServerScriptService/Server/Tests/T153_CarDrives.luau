@@ -27,7 +27,7 @@ end
 
 return {
 	name = "T153_CarDrives",
-	timeout = 10,
+	timeout = 30,
 	run = function(): string?
 		if not (Config.VEHICLES and Config.VEHICLES.enabled) then
 			return "skipped (VEHICLES off)"
@@ -43,9 +43,10 @@ return {
 			-- Steer left at speed: turns left (+); let go: stops turning within 0.5 s.
 			local _, steerNow, left = run(spec, 1, 1, -1, speed, 0)
 			assert(left > 10, kind .. " did not turn left: " .. left)
-			local _, _, after = run(spec, 0.5, 1, 0, speed, steerNow)
-			local _, s2, stillTurning = run(spec, 0.1, 1, 0, speed, 0)
-			assert(s2 == 0 and math.abs(stillTurning) < 0.01, kind .. " kept turning after the steer was let go")
+			local _, s2, after = run(spec, 0.5, 1, 0, speed, steerNow)
+			assert(s2 == 0, kind .. " still steers 0.5 s after the steer was let go")
+			local _, _, stillTurning = run(spec, 0.2, 1, 0, speed, s2)
+			assert(math.abs(stillTurning) < 0.01, kind .. " kept turning after the steer was let go")
 			assert(math.abs(after) < 20, kind .. " turned " .. after .. " deg in the 0.5 s after letting go")
 			local _, _, right = run(spec, 1, 1, 1, speed, 0)
 			assert(right < -10, kind .. " did not turn right")
@@ -59,8 +60,51 @@ return {
 			assert(back < -spec.reverse * 0.8, kind .. " does not reverse: " .. back)
 			table.insert(lines, string.format("%s straight (%.1f deg in 3 s), left/right, stops turning, brake + reverse", kind, turned))
 		end
+		-- (V9-0c review) Live, the cause itself: seated in the lab car with the aim 90 degrees to the side
+		-- (the Studio hook AimTestPoint), the car does not turn. Before the fix it turned 80 degrees in 2 s.
+		local Players = game:GetService("Players")
+		local p = Players:GetPlayers()[1]
+		local humanoid = p and p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+		local seat: VehicleSeat? = nil
+		local pg = workspace:FindFirstChild("Playground")
+		local lab = pg and pg:FindFirstChild("Lab1")
+		for _, d in if lab then lab:GetDescendants() else {} do
+			if d:IsA("VehicleSeat") and d:GetAttribute("LabCar") == "Car" then
+				seat = d
+			end
+		end
+		local live = "no live check (no player or car)"
+		if p and humanoid and seat and seat.Parent and seat.Parent:IsA("Model") then
+			local car = seat.Parent :: Model
+			local home = car:GetPivot()
+			local ok, err = pcall(function()
+				car:PivotTo(home + Vector3.new(0, 1, 0))
+				task.wait(0.3)
+				;(seat :: VehicleSeat):Sit(humanoid)
+				task.wait(1)
+				local body = (seat :: VehicleSeat).AssemblyRootPart :: BasePart
+				local function heading(): number
+					local lv = body.CFrame.LookVector
+					return math.deg(math.atan2(-lv.X, -lv.Z))
+				end
+				p:SetAttribute("AimTestPoint", body.Position + body.CFrame.RightVector * 40)
+				local h0 = heading()
+				task.wait(2)
+				local turned = math.abs((heading() - h0 + 180) % 360 - 180)
+				assert(turned < 3, string.format("seated with the aim to the side the car turned %.0f degrees", turned))
+				live = string.format("seated + aim 90 deg to the side: turned %.1f deg", turned)
+			end)
+			p:SetAttribute("AimTestPoint", nil)
+			local weld = (seat :: VehicleSeat):FindFirstChild("SeatWeld")
+			if weld then
+				weld:Destroy()
+			end
+			task.wait(0.3)
+			car:PivotTo(home)
+			assert(ok, err)
+		end
 		local kmh, gear = CarDrive.reading(40)
 		assert(kmh == 40 and gear == "D" and select(2, CarDrive.reading(-5)) == "R" and select(2, CarDrive.reading(0)) == "N", "the gauge reads wrong")
-		return table.concat(lines, "; ") .. "; gauge km/h and D/R/N"
+		return table.concat(lines, "; ") .. "; gauge km/h and D/R/N; " .. live
 	end,
 }

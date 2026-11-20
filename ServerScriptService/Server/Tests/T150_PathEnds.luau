@@ -34,7 +34,7 @@ local function onPaving(root: Instance): { string }
 				table.insert(pave, d)
 			elseif string.sub(n, 1, 4) ~= "Path" and string.sub(n, 1, 5) ~= "Plaza" then
 				local model = d:FindFirstAncestorWhichIsA("Model")
-				if not (d:GetAttribute("Knockable") or (model and model:GetAttribute("Knockable")) or MOVING[n]) then
+				if not (d:GetAttribute("Knockable") or (model and model:GetAttribute("Knockable")) or MOVING[n] or d:FindFirstAncestor("MVacuum") ~= nil) then
 					table.insert(others, d)
 				end
 			end
@@ -104,7 +104,8 @@ return {
 				local at = o2 + PathPlan.LAB_POINTS[name]
 				local best = math.huge
 				if target.kind == "floor" then
-					best = 0 -- (V9-0h: it starts on the open floor's edge: the floor is the path)
+					-- (V9-0h: it starts on the open floor's back edge: the floor is the path there.)
+					best = math.abs(PathPlan.LAB_POINTS[name].Y - (PathPlan.FLOOR_BACK_Z or 71))
 				end
 				for _, d in lab:GetDescendants() do
 					if target.kind == "part" and d.Name == target.name and (d:IsA("Model") or d:IsA("BasePart")) then

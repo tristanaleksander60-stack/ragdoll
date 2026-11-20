@@ -946,10 +946,15 @@ local function dressPlaza(labOrigin: Vector3)
 	end
 	for _, angle in PLAZA_BENCHES do
 		local at, out = round(angle, 43)
-		if asset(dressing, "Bench", at, -out, 7) then
+		-- (V9-0d, owner 21 Nov 2026: "fix the table and bench set on the plaza": a real picnic set, a table
+		-- with its benches and 6 seats, standing on the ground; the old bench where there is none.)
+		local V3Assets = require(script.Parent:WaitForChild("V3Assets")) :: any
+		local picnic = V3Assets.has("PicnicSet")
+		local placed = if picnic then V3Assets.place("PicnicSet", dressing, CFrame.lookAt(at, at - out), { size = 12.5, collide = true }) else asset(dressing, "Bench", at, -out, 7)
+		if placed then
 			local side = Vector3.new(-out.Z, 0, out.X)
-			plant(dressing, at + side * 5.5)
-			plant(dressing, at - side * 5.5)
+			plant(dressing, at + side * (if picnic then 8.5 else 5.5))
+			plant(dressing, at - side * (if picnic then 8.5 else 5.5))
 		end
 	end
 	-- Round 3, M1: the plaza is everyone's, and the only place players can hit each other. Its two

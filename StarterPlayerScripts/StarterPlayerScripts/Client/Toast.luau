@@ -156,6 +156,14 @@ function showNext()
 	pad.PaddingRight = UDim.new(0, 16)
 	pad.PaddingTop = UDim.new(0, 10)
 	pad.PaddingBottom = UDim.new(0, 10)
+	if compact then
+		-- (V9-0g review: a compact pill holds two lines of 15 px in its 40-48 px: less padding, so the
+		-- longest lines (an unlock, the car hint) wrap instead of being cut.)
+		pad.PaddingLeft = UDim.new(0, 10)
+		pad.PaddingRight = UDim.new(0, 10)
+		pad.PaddingTop = UDim.new(0, 4)
+		pad.PaddingBottom = UDim.new(0, 4)
+	end
 	pad.Parent = label
 	-- (V6-1: a small picture left of the line, and a tap takes the card away.)
 	local iconId = item.icon

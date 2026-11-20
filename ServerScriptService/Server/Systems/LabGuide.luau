@@ -193,7 +193,7 @@ local function addSpot(into: Instance, origin: Vector3, id: string, target: () -
 	local pieces = 14
 	for k = 1, pieces do
 		local a = k / pieces * math.pi * 2
-		local seg = anchoredPart("GuideRingSeg", Vector3.new(LabGuide.RING * math.pi / pieces * 0.62, 0.12, 0.5), CFrame.new(at.X + math.cos(a) * LabGuide.RING / 2, floorY + 0.14, at.Z + math.sin(a) * LabGuide.RING / 2) * CFrame.Angles(0, -a + math.pi / 2, 0), ring)
+		local seg = anchoredPart("GuideRingSeg", Vector3.new(LabGuide.RING * math.pi / pieces * 0.62, 0.12, 0.5), CFrame.new(at.X + math.cos(a) * LabGuide.RING / 2, floorY + 0.3, at.Z + math.sin(a) * LabGuide.RING / 2) * CFrame.Angles(0, -a + math.pi / 2, 0), ring)
 		seg.Material = Enum.Material.Neon
 		seg.Color = LabGuide.ACCENT
 		seg.Transparency = 0.25
