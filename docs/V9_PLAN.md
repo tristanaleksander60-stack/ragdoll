@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -501,6 +501,33 @@ A full placement pass for the lab hub (V9-0h) and every map, done as a designer 
 **Test:** T169_GuideFollows. Move the vacuum 30 studs: within 1 frame, its sign and ring are within 1 stud of its position, over 5 s of roaming.
 
 **Capture:** the vacuum moving with its sign and ring, 3 frames.
+
+## V9-0q No sign hidden inside trees or models (owner, 21 Nov; quick)
+> "Man kan ikke se hvad der står ved slingshot."
+
+**Problem** (`art/store/look_target/slingshot_sign_now.webp`): the slingshot's "LOAD ME! 3/10" sign sits inside the tree's leaves, so the text is unreadable. The slingshot itself is half hidden under the canopy too.
+
+**Fix for every world sign** (LabGuide signs, hunger counters, today's machine star, NEW tags, booth signs, terminals' screens, board and portal labels):
+- **Placement:**
+  - put the sign **above the top of everything around its thing**: compute the bounds of the creature or machine **and** any foliage or prop within a few studs (like LabZones `topOf`, but including trees and MeshParts), then add a margin;
+  - or put it **in front of the thing, toward the player's approach side** (the path or spawn), whichever is closer to eye height and not blocked.
+- **Occlusion fallback:**
+  - Each client checks (cheaply, about 4 Hz, only for signs within 40 studs) whether the line from the camera to the sign is blocked by leaves or a model.
+  - If it is blocked, the sign switches to `AlwaysOnTop` with a soft backing card, and fades back to normal when the line is clear.
+  - Far signs (past about 40 studs) stay normal, so the whole lab does not show through walls.
+- **Readable:**
+  - a minimum size in pixels at 10-30 studs;
+  - a dark card behind white text, or the V9 icon style;
+  - the counter ("3 / 10") inside the card, not floating loose.
+- **The slingshot tree itself:**
+  - trim or lift the canopy so the slingshot, its band and its load pad are clearly visible from the approach;
+  - or use a slingshot-tree model whose fork is the readable shape.
+- **Prompts:** the default "Slingshot / Load" ProximityPrompt is replaced by the V9-2b terminal / V9-4b card style when those steps land. Until then, the prompt sits in front of the leaves.
+- **Audit:** walk every creature, machine, booth and board in the lab and on the maps, and fix any sign that is hidden, clipped or overlapping. Record it in a short table in `docs/AUDIT.md`.
+
+**Test:** T170_SignsVisible. For every guide sign, a ray from the main approach point at eye height reaches the sign unblocked, or the sign has the occlusion fallback; no sign's centre is inside another part's bounds.
+
+**Capture:** the slingshot from the owner's angle, before and after, and 3 other creatures.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
