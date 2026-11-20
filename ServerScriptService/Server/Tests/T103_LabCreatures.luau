@@ -42,6 +42,12 @@ return {
 		assert(waitFor(function()
 			for _, f in if pg then pg:GetChildren() else {} do
 				local y = f:FindFirstChild("CreatureYard")
+				-- (The test player's own lab: only an owned lab's yard plays.)
+				local pad = f:FindFirstChild("CannonPad")
+				local Lab = require(Systems:WaitForChild("Lab")) :: any
+				if y and pad and pad:IsA("BasePart") and Lab.ownerAt(pad.Position) ~= p then
+					y = nil
+				end
 				if y then
 					yard = y
 					return true
@@ -99,8 +105,11 @@ return {
 			task.wait(1)
 			assert(b:GetAttribute("InMachine") == nil, "a held body was taken")
 			b:SetAttribute("Held", nil)
+			-- (A fresh body for the take: the one marked held may still be reported held by its client.)
+			local c = mine[3]
+			c:PivotTo(CFrame.new(pool.Position + Vector3.new(0, 3, 0)))
 			assert(waitFor(function()
-				return b:GetAttribute("InMachine") == "Whale"
+				return c:GetAttribute("InMachine") == "Whale"
 			end, 3), "the whale did not take a body in its pool")
 			assert(waitFor(function()
 				return (counted.Spider or 0) >= 1 and (counted.Whale or 0) >= 1

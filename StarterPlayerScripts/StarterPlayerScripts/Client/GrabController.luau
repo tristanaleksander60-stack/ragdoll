@@ -260,7 +260,8 @@ end
 local function begin(screen: Vector2, input: InputObject?, center: boolean): boolean
 	local before, beforeOurs = tooFarAt, notOursAt
 	local model, part, point, ray = aimAt(screen)
-	if not model or not part or not point or not ray then
+	-- (V6-5: a body inside a lab creature cannot be pulled out of it.)
+	if not model or not part or not point or not ray or model:GetAttribute("InMachine") ~= nil then
 		-- No dummy there: another player, in the plaza (phase D)?
 		if not ViewMode.isLab() and PlayerGrabClient.tryAt(screen) then
 			return true

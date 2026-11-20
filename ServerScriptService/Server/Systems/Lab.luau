@@ -259,7 +259,8 @@ local function watchSlot(plot: Plot, slot: Slot, dt: number)
 		return
 	end
 	-- v4 B4: a body a player commands (NpcCommand) is not "lost": it is not walked or sent home.
-	if model:GetAttribute("CommandedBy") ~= nil then
+	-- (V6-5: nor one inside a lab creature: the creature lets it go in a moment.)
+	if model:GetAttribute("CommandedBy") ~= nil or model:GetAttribute("InMachine") ~= nil then
 		slot.awayTime = 0
 		return
 	end

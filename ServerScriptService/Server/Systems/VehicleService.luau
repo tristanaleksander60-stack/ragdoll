@@ -411,7 +411,9 @@ function VehicleService.start()
 			end
 			local p = car.body.Position
 			local away = p - car.origin
-			local off = math.abs(away.X) > reach or away.Z > 75 or away.Z < -96 or away.Y < -20
+			-- (V6-5: the creature yard in front of the lab is in play too.)
+			local front = if (Config :: any).LAB_CREATURES then 112 else 75
+			local off = math.abs(away.X) > reach or away.Z > front or away.Z < -96 or away.Y < -20
 			local flipped = car.body.CFrame.UpVector.Y < 0.3
 			if off or flipped then
 				car.badSince = if car.badSince > 0 then car.badSince else now

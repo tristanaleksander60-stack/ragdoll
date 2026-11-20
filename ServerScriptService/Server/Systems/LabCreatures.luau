@@ -121,7 +121,7 @@ local function dummiesIn(cf: CFrame, size: Vector3): { Model }
 		while m and m.Parent ~= folder do
 			m = m.Parent and m.Parent:FindFirstAncestorOfClass("Model") or nil
 		end
-		if m and not seen[m] and m:GetAttribute("Held") ~= true and m:GetAttribute("InMachine") == nil then
+		if m and not seen[m] and m:GetAttribute("Held") ~= true and m:GetAttribute("InMachine") == nil and os.clock() >= ((m:GetAttribute("MachineCool") :: number?) or 0) then -- (MachineCool: just thrown, not taken again at once)
 			seen[m] = true
 			table.insert(out, m)
 		end
@@ -139,23 +139,10 @@ local function hold(model: Model, at: () -> CFrame, seconds: number)
 	end
 end
 
+-- (Review fix: the server blocks are already invisible on screens (DummySkins draws skins over
+-- them), so hiding is an attribute every client honours on the skins.)
 local function hideBody(model: Model, hidden: boolean)
-	for _, d in model:GetDescendants() do
-		if d:IsA("BasePart") then
-			if hidden then
-				d:SetAttribute("MachineWas", d.Transparency)
-				d.Transparency = 1
-			else
-				local was = d:GetAttribute("MachineWas")
-				if type(was) == "number" then
-					d.Transparency = was
-				end
-				d:SetAttribute("MachineWas", nil)
-			end
-		elseif d:IsA("Decal") then
-			d.Transparency = if hidden then 1 else 0
-		end
-	end
+	model:SetAttribute("MachineHidden", if hidden then true else nil)
 end
 
 type Machine = {
@@ -165,6 +152,8 @@ type Machine = {
 	folder: Folder,
 	owner: () -> Player?,
 	busy: boolean,
+	toLab: Vector3, -- (level, from the creature toward the lab's middle: every throw lands back in play)
+	temp: { Instance }, -- (parts made for one swallow: removed if it fails half way)
 }
 
 local function credit(m: Machine)
@@ -189,16 +178,23 @@ local function swallow(m: Machine, model: Model, inside: (Model) -> Vector3)
 			task.wait(0.15)
 			if model.Parent then
 				lazy("DummyControl").push(model, out, nil)
+				model:SetAttribute("MachineCool", os.clock() + 6)
 			end
 			credit(m)
 		end)
 		if not ok then
 			warn("[LabCreatures] " .. m.id .. ": " .. tostring(err))
+			for _, t in m.temp do
+				if t.Parent then
+					t:Destroy() -- (no cocoon, tongue or egg left behind)
+				end
+			end
 		end
 		if model.Parent then
 			hideBody(model, false)
 			model:SetAttribute("InMachine", nil)
 		end
+		table.clear(m.temp)
 		task.wait(1)
 		m.busy = false
 	end)
@@ -269,7 +265,13 @@ BUILD.Spider = function(f, at, m)
 	end
 	draw()
 	return function()
-		hunger = math.max(0, hunger - LabCreatures.SPIDER_DIGEST * LabCreatures.CHECK)
+		-- (Asleep it does not digest; it wakes up hungry again.)
+		if napUntil > 0 and os.clock() >= napUntil then
+			napUntil = 0
+			hunger = 0
+		elseif os.clock() >= napUntil then
+			hunger = math.max(0, hunger - LabCreatures.SPIDER_DIGEST * LabCreatures.CHECK)
+		end
 		draw()
 		if m.busy or os.clock() < napUntil then
 			return
@@ -283,6 +285,7 @@ BUILD.Spider = function(f, at, m)
 			local r = rootOf(model)
 			local stuck = web.CFrame * CFrame.new(0, -1, -1.5)
 			local cocoon = part(f, "Cocoon", Vector3.new(4, 7, 4), stuck, Color3.fromRGB(245, 245, 240), Enum.Material.Fabric, Enum.PartType.Ball)
+			table.insert(m.temp, cocoon)
 			task.spawn(hold, model, function()
 				return stuck
 			end, 2.4)
@@ -332,7 +335,6 @@ end
 BUILD.Plant = function(f, at, m)
 	local plant = place(f, "MPlant", at.Position, 180, 22)
 	local base = if plant then plant:GetPivot() else at
-	local scale = if plant then plant:GetScale() else 1
 	return function()
 		if m.busy then
 			return
@@ -348,12 +350,12 @@ BUILD.Plant = function(f, at, m)
 			hideBody(model, true)
 			play(1.4, function(t)
 				if plant then
-					plant:ScaleTo(scale * (1 + math.sin(t * math.pi * 4) * 0.08))
-					plant:PivotTo(base)
+					-- (A chomping bob and sway: never a rescale each frame.)
+					plant:PivotTo(base * CFrame.new(0, math.abs(math.sin(t * math.pi * 4)) * 1.2, 0) * CFrame.Angles(math.sin(t * math.pi * 4) * 0.12, 0, 0))
 				end
 			end)
 			hideBody(model, false)
-			return Vector3.new(0, 110, 0) + (base.LookVector * 30)
+			return Vector3.new(0, 110, 0) + m.toLab * 30
 		end)
 	end
 end
@@ -363,19 +365,20 @@ BUILD.Frog = function(f, at, m)
 	part(f, "FrogPond", Vector3.new(14, 0.3, 14), at * CFrame.new(0, 0.15, 0), Color3.fromRGB(70, 120, 150), Enum.Material.Glass, Enum.PartType.Cylinder).CFrame = at * CFrame.new(0, 0.15, 0) * CFrame.Angles(0, 0, math.rad(90))
 	local frog = place(f, "MFrog", (at * CFrame.new(0, 0.3, 0)).Position, 180, 9)
 	local mouth = (if frog then frog:GetPivot() else at) * CFrame.new(0, 3, -3)
-	local next = 0
+	local nextAt = 0
 	return function()
-		if m.busy or os.clock() < next then
+		if m.busy or os.clock() < nextAt then
 			return
 		end
 		local body = dummiesIn(at, Vector3.new(44, 12, 44))[1]
 		if not body then
 			return
 		end
-		next = os.clock() + 4
+		nextAt = os.clock() + 4
 		swallow(m, body, function(model)
 			local r = rootOf(model)
 			local tongue = part(f, "Tongue", Vector3.new(0.7, 0.7, 1), mouth, Color3.fromRGB(230, 90, 120), Enum.Material.SmoothPlastic)
+			table.insert(m.temp, tongue)
 			local target = if r then r.Position else mouth.Position
 			play(0.25, function(t)
 				local tip = mouth.Position:Lerp(target, t)
@@ -393,7 +396,7 @@ BUILD.Frog = function(f, at, m)
 			end)
 			tongue:Destroy()
 			task.wait(0.5)
-			return (mouth.LookVector * 80) + Vector3.new(0, 55, 0)
+			return m.toLab * 80 + Vector3.new(0, 55, 0)
 		end)
 	end
 end
@@ -435,7 +438,7 @@ BUILD.Whale = function(f, at, m)
 				end)
 			end
 			emitter:Emit(60)
-			return Vector3.new(0, 150, 0)
+			return Vector3.new(0, 150, 0) + m.toLab * 25 -- (lands beside the pool, not back in it)
 		end)
 	end
 end
@@ -466,12 +469,13 @@ BUILD.Chicken = function(f, at, m)
 				end)
 			end
 			local egg = part(f, "DummyEgg", Vector3.new(4.5, 6, 4.5), nest * CFrame.new(0, 3.5, 0), Color3.fromRGB(250, 246, 236), Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+			table.insert(m.temp, egg)
 			play(1.6, function(t)
 				egg.CFrame = nest * CFrame.new(0, 3.5, 0) * CFrame.Angles(0, 0, math.sin(t * 25) * 0.2 * t)
 			end)
 			egg:Destroy()
 			hideBody(model, false)
-			return Vector3.new(0, 70, 0) + nest.LookVector * 25
+			return Vector3.new(0, 70, 0) + m.toLab * 25
 		end)
 	end
 end
@@ -503,7 +507,7 @@ BUILD.Washer = function(f, at, m)
 				washer:PivotTo(base)
 			end
 			hideBody(model, false)
-			return door.LookVector * 85 + Vector3.new(0, 45, 0)
+			return m.toLab * 85 + Vector3.new(0, 45, 0)
 		end)
 	end
 end
@@ -559,16 +563,16 @@ BUILD.Mole = function(f, at, m)
 		part(f, "MoleHill", Vector3.new(3, 1.6, 3), at * CFrame.new(math.cos(a) * 6, 0.5, math.sin(a) * 6), Color3.fromRGB(92, 68, 48), Enum.Material.Ground, Enum.PartType.Ball)
 	end
 	local mole = place(f, "MMole", (at * CFrame.new(0, -6, 0)).Position, 0, 6)
-	local next = 0
+	local nextAt = 0
 	return function()
-		if m.busy or os.clock() < next then
+		if m.busy or os.clock() < nextAt then
 			return
 		end
 		local body = dummiesIn(at * CFrame.new(0, 4, 0), Vector3.new(20, 8, 20))[1]
 		if not body then
 			return
 		end
-		next = os.clock() + math.random(4, 7)
+		nextAt = os.clock() + math.random(4, 7)
 		swallow(m, body, function(model)
 			local r = rootOf(model)
 			local under = if r then CFrame.new(r.Position.X, at.Position.Y, r.Position.Z) else at
@@ -582,7 +586,7 @@ BUILD.Mole = function(f, at, m)
 					end)
 				end)
 			end
-			return Vector3.new(0, 95, 0)
+			return Vector3.new(0, 95, 0) + m.toLab * 30 -- (off the patch)
 		end)
 	end
 end
@@ -597,13 +601,13 @@ BUILD.Vacuum = function(f, at, m)
 	local pos = at.Position
 	task.spawn(function()
 		while f.Parent do
-			if not m.busy then
-				angle += 0.02
+			if not m.busy and m.owner() then -- (V6-5 review: only in a lab someone owns)
+				angle += 0.08
 				pos = (at * CFrame.new(math.cos(angle) * 22, 0, math.sin(angle) * 8)).Position
-				local ahead = (at * CFrame.new(math.cos(angle + 0.05) * 22, 0, math.sin(angle + 0.05) * 8)).Position
+				local ahead = (at * CFrame.new(math.cos(angle + 0.08) * 22, 0, math.sin(angle + 0.08) * 8)).Position
 				bot:PivotTo(CFrame.lookAt(pos, Vector3.new(ahead.X, pos.Y, ahead.Z)) + Vector3.new(0, 0.1, 0))
 			end
-			RunService.Heartbeat:Wait()
+			task.wait(1 / 15) -- (15 steps a second is smooth enough for a slow robot)
 		end
 	end)
 	return function()
@@ -624,7 +628,7 @@ BUILD.Vacuum = function(f, at, m)
 				bot:PivotTo(here * CFrame.Angles(0, t * math.pi * 4, 0))
 			end)
 			hideBody(model, false)
-			return here.LookVector * -90 + Vector3.new(0, 50, 0)
+			return m.toLab * 90 + Vector3.new(0, 50, 0)
 		end)
 	end
 end
@@ -659,7 +663,8 @@ function LabCreatures.build(into: Instance, origin: Vector3)
 		local sub = Instance.new("Folder")
 		sub.Name = spot.id
 		sub.Parent = folder
-		local machine: Machine = { id = spot.id, label = spot.label, lab = nil, folder = sub, owner = owner, busy = false }
+		local toLab = Vector3.new(-spot.x, 0, -(LabCreatures.YARD_Z + spot.z))
+		local machine: Machine = { id = spot.id, label = spot.label, lab = nil, folder = sub, owner = owner, busy = false, toLab = toLab.Unit, temp = {} }
 		local at = CFrame.new(origin + Vector3.new(spot.x, 0, LabCreatures.YARD_Z + spot.z)) * CFrame.Angles(0, math.rad(spot.yaw), 0)
 		local ok, tick = pcall(BUILD[spot.id], sub, at, machine)
 		if ok and tick then

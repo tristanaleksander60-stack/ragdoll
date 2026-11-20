@@ -382,3 +382,15 @@ What to do:
   - **Bug found and fixed:** without ground under a bird, its floor lifted it 8 studs a frame (they flew off to y 7000).
   - **Tests:** T104 passes (models present and script-free, budgets by tier).
   - **Capture:** birds_lab.
+- **V6-4/V6-5 blind review 7.0/6.5 → fix round 1:**
+  - **Hiding a body inside a creature:** the server now sets `MachineHidden` and every client hides the body's skins (DummySkins). Before, the server's blocks were already invisible on screens, so the white mannequin showed inside the plant, the egg and the washer.
+  - **Throws:** every throw heads back toward the lab's middle (`toLab`). The whale and mole throws land off their own patch, and `MachineCool` stops a thrown body being taken again for 6 s, so there are no endless geyser loops and no throws over the hedge onto the hills.
+  - **Server cost:** the vacuum drives only in an owned lab, at 15 Hz (was 60 Hz in all 10 labs). The plant bobs instead of being rescaled every frame.
+  - **Cleanup:** a failed swallow removes its cocoon, tongue or egg.
+  - **Spider:** it does not digest while napping and wakes hungry.
+  - **InMachine respected:** the lab's slot watcher does not walk a body in a creature home, and GrabController cannot pull it out.
+  - **Old spacing fixes:** a car in the creature yard is no longer reset (VehicleService front 112); the plaza edge boards follow the plot edge (WorldMaps).
+  - **Baseplate:** BaseplateEast/West pieces (place file, saved v567) cover the outer labs at x ±1250.
+  - Strict return types in LabGarden.
+  - T103 checks the test player's own yard and uses a fresh body for the whale. Passes; T31/T36/T26/T50/T92 pass.
+  - Not re-reviewed.

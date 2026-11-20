@@ -981,7 +981,7 @@ local function dressPlaza(labOrigin: Vector3)
 		local lineX = labOrigin.X + side * (Lab.PLOT_HALF - 1.2)
 		part(edges, "PlazaEdge", Vector3.new(1.2, 0.06, length), CFrame.new(lineX, groundTop + 0.04, midZ), hex("#FFC93C"), Enum.Material.SmoothPlastic, { CanCollide = false, CanQuery = false, CanTouch = false })
 		-- (The first board stands by the plaza's middle; the others along the line both ways.)
-		local edgeX = labOrigin.X + side * 78
+		local edgeX = labOrigin.X + side * (Lab.PLOT_HALF - 7) -- (V6-4: by the line, wherever the plot edge is)
 		for k = -math.floor((middle.Z - (midZ - length / 2)) / EDGE_BOARD_EVERY), math.floor((midZ + length / 2 - middle.Z) / EDGE_BOARD_EVERY) do
 			board(Vector3.new(edgeX, floor + 11, middle.Z + k * EDGE_BOARD_EVERY), Vector3.new(-side, 0, 0), edges)
 		end

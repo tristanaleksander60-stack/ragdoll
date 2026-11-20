@@ -15,7 +15,7 @@ local Zones = require(Shared:WaitForChild("Zones"))
 
 local LabGarden = {}
 
-LabGarden.CORE_HALF = 80 -- the concrete core's half width (the old plot)
+LabGarden.CORE_HALF = 80 -- where the garden starts: just past the concrete floor (Lab.CORE_HALF 85 less the 6-stud floor margin)
 LabGarden.Z_BACK = -92
 LabGarden.Z_FRONT = 70
 LabGarden.HEDGE_HEIGHT = 14
@@ -78,10 +78,10 @@ local function place(into: Instance, name: string, at: Vector3, yaw: number, sca
 	return m
 end
 
-function LabGarden.build(into: Instance, origin: Vector3)
+function LabGarden.build(into: Instance, origin: Vector3): Folder?
 	local half = Zones.PLOT_HALF
 	if half <= LabGarden.CORE_HALF + 20 then
-		return -- (the old narrow plots: no room for a garden)
+		return nil -- (the old narrow plots: no room for a garden)
 	end
 	local folder = Instance.new("Folder")
 	folder.Name = "Garden"

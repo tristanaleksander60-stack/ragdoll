@@ -83,6 +83,22 @@ local function dress(model: Model)
 		end
 	end
 	folder.Parent = model
+	-- (V6-5: a body inside a lab creature (the plant, the egg, the washer, the vacuum) is hidden on
+	-- every screen through its skins too: the server sets MachineHidden on the model.)
+	local function machineHide()
+		local hidden = model:GetAttribute("MachineHidden") == true
+		for _, s in folder:GetChildren() do
+			if s:IsA("BasePart") then
+				s.LocalTransparencyModifier = if hidden then 1 else 0
+			end
+		end
+		for _, d in model:GetDescendants() do
+			if d:IsA("BasePart") and not skins[d] and not d:IsDescendantOf(folder) and d.Name ~= "HumanoidRootPart" then
+				d.LocalTransparencyModifier = if hidden then 1 else 0
+			end
+		end
+	end
+	model:GetAttributeChangedSignal("MachineHidden"):Connect(machineHide)
 	-- (A body that goes for good takes its entries with it: the table never keeps dead limbs.)
 	model.Destroying:Once(function()
 		for _, d in model:GetChildren() do
