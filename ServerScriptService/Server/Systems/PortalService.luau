@@ -247,6 +247,89 @@ function PortalService.buildPortals(folder: Instance, origin: Vector3)
 		end)
 		m.Parent = folder
 	end
+	-- V5-1 (owner: "improve everything"): with Config.UI_CLEAN the doors stand by the lab's west side,
+	-- turned to its middle (the view from the spawn stays open), as a steel frame with a dark glass
+	-- door, a thin light strip and a small plate sign; no neon-filled doorway, no floating words.
+	local Config = require(game:GetService("ReplicatedStorage").Shared.Config) :: any
+	if Config.UI_CLEAN then
+		local function door(name: string, z: number, color: Color3, text: string)
+			local m = Instance.new("Model")
+			m.Name = name
+			local base = CFrame.new(origin + Vector3.new(-66, 0, z)) * CFrame.Angles(0, math.rad(-90), 0)
+			local steel = Color3.fromRGB(58, 61, 68)
+			local function piece(pname: string, size: Vector3, at: CFrame, color3: Color3, material: Enum.Material): Part
+				local p = Instance.new("Part")
+				p.Name = pname
+				p.Anchored = true
+				p.Size = size
+				p.CFrame = base * at
+				p.Color = color3
+				p.Material = material
+				p.Parent = m
+				return p
+			end
+			piece("Post", Vector3.new(1, 10, 1.4), CFrame.new(-4, 5, 0), steel, Enum.Material.Metal)
+			piece("Post", Vector3.new(1, 10, 1.4), CFrame.new(4, 5, 0), steel, Enum.Material.Metal)
+			piece("Lintel", Vector3.new(9, 1.2, 1.4), CFrame.new(0, 10.6, 0), steel, Enum.Material.Metal)
+			piece("Step", Vector3.new(10, 0.4, 3), CFrame.new(0, 0.2, 0), Color3.fromRGB(44, 46, 52), Enum.Material.DiamondPlate)
+			for _, sx in { -3.35, 3.35 } do
+				local strip = piece("Strip", Vector3.new(0.15, 9.2, 0.2), CFrame.new(sx, 4.9, -0.1), color, Enum.Material.Neon)
+				strip.CanCollide = false
+			end
+			local field = piece("Field", Vector3.new(6.6, 9.4, 0.25), CFrame.new(0, 4.9, 0), Color3.fromRGB(24, 28, 36), Enum.Material.Glass)
+			field.Transparency = 0.25
+			field.Reflectance = 0.15
+			field.CanCollide = false
+			field:SetAttribute("Portal", name)
+			local glow = Instance.new("PointLight")
+			glow.Color = color
+			glow.Range = 10
+			glow.Brightness = 0.8
+			glow.Parent = field
+			-- The plate sign over the lintel.
+			local plate = piece("Plate", Vector3.new(8, 1.6, 0.2), CFrame.new(0, 12, -0.2), Color3.fromRGB(30, 32, 38), Enum.Material.Metal)
+			plate.CanCollide = false
+			local gui = Instance.new("SurfaceGui")
+			gui.Face = Enum.NormalId.Front
+			gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			gui.PixelsPerStud = 40
+			gui.LightInfluence = 0.2
+			gui.Parent = plate
+			local dot = Instance.new("Frame")
+			dot.Size = UDim2.fromOffset(22, 22)
+			dot.Position = UDim2.new(0, 16, 0.5, -11)
+			dot.BackgroundColor3 = color
+			local c = Instance.new("UICorner")
+			c.CornerRadius = UDim.new(1, 0)
+			c.Parent = dot
+			dot.Parent = gui
+			local label = Instance.new("TextLabel")
+			label.BackgroundTransparency = 1
+			label.Size = UDim2.new(1, -60, 1, -12)
+			label.Position = UDim2.fromOffset(48, 6)
+			label.TextXAlignment = Enum.TextXAlignment.Left
+			label.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
+			label.TextScaled = true
+			label.TextColor3 = Color3.fromRGB(236, 236, 232)
+			label.Text = text
+			label.Parent = gui
+			local last: { [Player]: number } = {}
+			table.insert(portalTouch, last)
+			field.Touched:Connect(function(other)
+				local character = other:FindFirstAncestorOfClass("Model")
+				local player = character and Players:GetPlayerFromCharacter(character)
+				if not player or os.clock() - (last[player] or -math.huge) < 4 then
+					return
+				end
+				last[player] = os.clock()
+				remote:FireClient(player, "Open", { portal = name })
+			end)
+			m.Parent = folder
+		end
+		door("PortalSolo", 30, Color3.fromRGB(80, 210, 120), "SINGLEPLAYER")
+		door("PortalMulti", 44, Color3.fromRGB(90, 170, 250), "MULTIPLAYER")
+		return
+	end
 	arch("PortalSolo", -7, Color3.fromRGB(70, 220, 110), "SINGLEPLAYER")
 	arch("PortalMulti", 7, Color3.fromRGB(80, 170, 255), "MULTIPLAYER")
 end

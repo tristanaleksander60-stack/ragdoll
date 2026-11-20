@@ -347,9 +347,29 @@ local function buildRamp()
 	ramp.Size = Vector3.new(10, 7, 18)
 	-- The wedge rises towards its -Z face: run at it from +Z.
 	ramp.CFrame = at(26, 3.5, 30) * CFrame.Angles(0, math.pi, 0)
+	ramp.Anchored = true
+	if (Config :: any).UI_CLEAN then
+		-- V5-1: a steel ramp (diamond plate) with hazard-striped side rails and a painted lip, not a
+		-- flat yellow wedge.
+		ramp.Color = Color3.fromRGB(118, 122, 130)
+		ramp.Material = Enum.Material.DiamondPlate
+		ramp.Parent = folder
+		for _, sx in { -5.2, 5.2 } do
+			local rail = Instance.new("WedgePart")
+			rail.Name = "RampRail"
+			rail.Size = Vector3.new(0.5, 7.4, 18.2)
+			rail.CFrame = at(26 + sx, 3.7, 30) * CFrame.Angles(0, math.pi, 0)
+			rail.Color = YELLOW
+			rail.Material = Enum.Material.Metal
+			rail.Anchored = true
+			rail.CanCollide = false
+			rail.Parent = folder
+		end
+		part("RampStripe", Vector3.new(10.2, 0.2, 1), at(26, 7.1, 21.5), WHITE, Enum.Material.SmoothPlastic).CanCollide = false
+		return
+	end
 	ramp.Color = YELLOW
 	Finish.apply(ramp, "Painted")
-	ramp.Anchored = true
 	ramp.Parent = folder
 	part("RampStripe", Vector3.new(10.2, 0.2, 1), at(26, 7.1, 21.5), WHITE, Enum.Material.Neon).CanCollide = false
 end
@@ -410,6 +430,24 @@ local function sign(text: string, onto: BasePart, height: number, color: Color3)
 		gui.StudsOffsetWorldSpace = Vector3.new(0, math.min(height, 6), 0)
 		gui.MaxDistance = 38
 		gui.LightInfluence = 0
+		if (Config :: any).UI_CLEAN then
+			-- V5-1: a small dark tag of a fixed size on screen (it never fills the view up close).
+			gui.Size = UDim2.fromOffset(math.max(90, #text * 11 + 28), 30)
+			local tag = Instance.new("TextLabel")
+			tag.Size = UDim2.fromScale(1, 1)
+			tag.BackgroundColor3 = Color3.fromRGB(24, 26, 31)
+			tag.BackgroundTransparency = 0.2
+			tag.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
+			tag.TextSize = 17
+			tag.TextColor3 = Color3.fromRGB(240, 240, 236)
+			tag.Text = text
+			local c = Instance.new("UICorner")
+			c.CornerRadius = UDim.new(0, 8)
+			c.Parent = tag
+			tag.Parent = gui
+			gui.Parent = onto
+			return
+		end
 		local label = Instance.new("TextLabel")
 		label.Size = UDim2.fromScale(1, 1)
 		label.BackgroundTransparency = 1

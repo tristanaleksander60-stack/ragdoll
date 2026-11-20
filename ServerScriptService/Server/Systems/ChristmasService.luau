@@ -355,6 +355,30 @@ function ChristmasService.dress(body: Model)
 		hat.Name = "XmasHat"
 		hat:SetAttribute("Worn", true) -- (never part of the body when it goes limp)
 		local w, top = head.Size.X, head.Size.Y / 2
+		-- V5-2: a real soft Santa hat mesh when the place has one (ServerStorage.V3Assets.SantaHat,
+		-- the free Creator Store "Cool Santa (Hat only)"), sized to the head; the stacked
+		-- cylinders below are the fallback.
+		local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
+		local mesh = assets and assets:FindFirstChild("SantaHat")
+		if mesh and mesh:IsA("BasePart") then
+			local copy = mesh:Clone()
+			copy.Name = "Hat"
+			local k = (w * 1.45) / math.max(mesh.Size.X, 0.01)
+			copy.Size = mesh.Size * k
+			copy.Anchored = false
+			copy.CanCollide = false
+			copy.CanQuery = false
+			copy.CanTouch = false
+			copy.Massless = true
+			copy.CFrame = head.CFrame * CFrame.new(0, top + copy.Size.Y * 0.12, 0.05)
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = head
+			weld.Part1 = copy
+			weld.Parent = copy
+			copy.Parent = hat
+			hat.Parent = body
+		end
+		if hat.Parent == nil then
 		wearable(hat, head, "Brim", Vector3.new(0.35, w * 1.12, w * 1.12), CFrame.new(0, top + 0.05, 0) * UP, WHITE, Enum.PartType.Cylinder)
 		for i = 0, 2 do
 			local d = w * (0.95 - i * 0.28)
@@ -363,6 +387,7 @@ function ChristmasService.dress(body: Model)
 		end
 		wearable(hat, head, "Pom", Vector3.new(0.42, 0.42, 0.42), CFrame.new(0.45, top + 1.3, 0), WHITE, Enum.PartType.Ball)
 		hat.Parent = body
+		end
 	end
 	if torso and torso:IsA("BasePart") then
 		local scarf = Instance.new("Model")
@@ -371,7 +396,7 @@ function ChristmasService.dress(body: Model)
 		local sw = torso.Size.X
 		local neck = CFrame.new(0, torso.Size.Y / 2 + 0.05, 0)
 		wearable(scarf, torso, "Wrap", Vector3.new(0.38, sw * 0.62, sw * 0.62), neck * UP, RED)
-		wearable(scarf, torso, "Tail", Vector3.new(0.32, 1.0, 0.12), neck * CFrame.new(sw * 0.18, -0.55, -torso.Size.Z / 2 - 0.08), GREEN)
+		wearable(scarf, torso, "Tail", Vector3.new(0.26, 0.9, 0.08), neck * CFrame.new(sw * 0.18, -0.5, -torso.Size.Z / 2 - 0.06), RED)
 		scarf.Parent = body
 	end
 end
