@@ -317,3 +317,22 @@ They lead from the spawn or arrival to each thing you can do there.
     - LayoutCheck does not measure the banner or the chip;
     - the old Event sound is used, not a whoosh;
     - the next-mission card, toasts and pops are not restyled.
+- **Release gate, 2nd run (20 Nov): NOT published.**
+  - **Passed:**
+    - suite 89/93, and T16 passes alone;
+    - LayoutCheck shows 0 problems (V7-6 run);
+    - 0 output errors in the 12-min suite play;
+    - flags are off (RunSelfTest false, StudioFresh false, no test attributes);
+    - BLOOD is off and SEVERING is off;
+    - version 0.25.0 matches What's New;
+    - git is clean;
+    - the place is saved as v589 with the hand-synced code.
+  - **Failed:**
+    - T32 does not pass when rerun alone (3 tries);
+    - the 2-client test cannot be started from the MCP;
+    - the phone-emulator play cannot be switched from here.
+  - **Next:**
+    - the owner reconnects Script Sync;
+    - start Test → Clients and Servers → 2 players and the phone emulator, so the session can read both outputs;
+    - make T32's coward checks robust (or find its cause);
+    - then run the gate again.
