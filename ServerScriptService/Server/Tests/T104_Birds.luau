@@ -12,6 +12,10 @@ return {
 	name = "T104_Birds",
 	timeout = 10,
 	run = function(): string?
+		-- (V8-1.7: with the birds off their models are moved to ServerStorage at boot.)
+		if not (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BIRDS then
+			return "skipped (birds off: Config.BIRDS)"
+		end
 		local models = ReplicatedStorage:FindFirstChild("BirdModels")
 		assert(models, "no ReplicatedStorage.BirdModels (place file)")
 		for _, m in (models :: Instance):GetChildren() do

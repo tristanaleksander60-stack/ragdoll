@@ -51,6 +51,14 @@ local safe = require(Shared:WaitForChild("SafeStart")).new(function(failedList: 
 	workspace:SetAttribute("BootFailed", failedList)
 end)
 safe("Purchases", function() Purchases.start() end) -- the one ProcessReceipt; finds out whether orders live in a DataStore
+-- V8-1.7 (phone diet): with the birds off, their models leave ReplicatedStorage (every client loaded
+-- them for nothing); Config.BIRDS on brings them back at the next server start.
+safe("BirdModels", function()
+	local birds = game:GetService("ReplicatedStorage"):FindFirstChild("BirdModels")
+	if birds and not (Config :: any).BIRDS then
+		birds.Parent = game:GetService("ServerStorage")
+	end
+end)
 
 -- Round 5, phase 00: one record per visit (Session_v1) for the first-minute numbers.
 safe("AimService", function() require(Systems:WaitForChild("AimService")).start() end) -- the gun follows the mouse, for everyone to see (round 5)

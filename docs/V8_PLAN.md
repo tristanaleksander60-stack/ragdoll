@@ -1534,3 +1534,10 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - **Timing:** the chase waits for everyone, not only newcomers, until 300 s and 15 KOs.
   - **The chase:** 2 chasers and "THEY'RE COMING!". A chaser knocked down is out for good (it sits where it fell, so the counter only counts down). No HP bar: every punch is heard and every 3rd one throws you. Clearing it gives a burst.
   - **Tests:** T50 and T123 updated and passing.
+- **V8-1.7 done in part (phone diet):**
+  - **Done:**
+    - the replay records 15 times a second on a touch screen without keys (30 elsewhere);
+    - with the birds off, `BirdModels` moves to ServerStorage at boot, so clients no longer load them (T104 skips while birds are off);
+    - the Director loads only once the player is the owner.
+  - **Not built:** replay to own-lab bodies only, lazy sound banks, ActiveRagdoll caching and sleeping, windows built on first open, streaming radius. These need phone fps and memory measurements first (Session_v1 records them since 0.25.1).
+- **V8-1.8 (owner/playtest):** the orientation decision and playtest round 2 wait for the owner and real phone data.

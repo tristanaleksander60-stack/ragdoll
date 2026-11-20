@@ -61,7 +61,20 @@ task.spawn(require(Client:WaitForChild("VehicleFeel")).start) -- v4 C2: wheels, 
 task.spawn(require(Client:WaitForChild("CreatureAnim")).start) -- v4 C3: the gorilla and bulls move and sound
 task.spawn(require(Client:WaitForChild("FirstVisit")).start) -- audit area 1: a newcomer's first visit (one objective, the HUD comes in at 90 s)
 task.spawn(require(Client:WaitForChild("AdminWorld")).start) -- V6-2: the owner's time of day and weather for everyone
-task.spawn(require(Client:WaitForChild("Director")).start) -- V6-3: F8 director mode (owner only)
+-- V6-3: F8 director mode (owner only). (V8-1.7, phone diet: loaded only once this player is the
+-- owner, IsOwner from AdminService; nobody else ever loads it.)
+do
+	local me = game:GetService("Players").LocalPlayer
+	local started = false
+	local function startDirector()
+		if not started and me:GetAttribute("IsOwner") == true then
+			started = true
+			task.spawn(require(Client:WaitForChild("Director")).start)
+		end
+	end
+	me:GetAttributeChangedSignal("IsOwner"):Connect(startDirector)
+	startDirector()
+end
 task.spawn(require(Client:WaitForChild("Birds")).start) -- V6-6: birds round the lab and the maps
 task.spawn(require(Client:WaitForChild("CreatureLife")).start) -- 20 Nov: the lab creatures move while they wait
 task.spawn(require(Client:WaitForChild("BoothSpin")).start) -- V6-7: the booth items turn on their pedestals

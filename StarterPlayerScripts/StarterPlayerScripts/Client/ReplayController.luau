@@ -17,7 +17,9 @@ local Toys = require(Shared:WaitForChild("Toys"))
 
 local ReplayController = {}
 
-local RECORD_HZ = 30
+-- (V8-1.7, phone diet: 15 a second on a touch screen without keys; 30 elsewhere.)
+local UIS_ = game:GetService("UserInputService")
+local RECORD_HZ = if UIS_.TouchEnabled and not UIS_.KeyboardEnabled then 15 else 30
 local KEEP_SECONDS = 8
 local RANGE = 120 -- studs from the camera
 local SPEED = 0.3 -- playback speed
