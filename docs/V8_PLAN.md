@@ -1581,3 +1581,9 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - **Clean:** 0 client errors; BootFailed and ClientBootFailed are nil.
   - **Sync check:** see below; the place is saved.
   - **Not yet:** 0.26.0 and 0.27.0 wait for the owner's Alt+P. Then restart the servers through Open Cloud.
+- **Published (21 Nov):** 0.27.0 is live (it carries 0.26.0's V8-0 too).
+  - **How:** the owner said "publish it for me now", so the session focused Roblox Studio and sent Alt+P.
+  - **Proof:** the asset versions API shows place version 642 (the last save, after the gate) as `published: true`.
+  - **Servers:** the old ones were restarted through Open Cloud (`restartServers` 200).
+  - **Backup:** `RagdollLab-backups/2026-11-21-pre-publish-0.27.0`.
+  - **Next:** read Session_v1 for v 0.27.0 and pv 642 after 15-30 min, then after 48 h (D1, CRASH and missions).
