@@ -552,9 +552,46 @@ BUILDERS.Island = function(m, place, mid)
 		local hut = Instance.new("Model")
 		hut.Name = "BeachHut"
 		local colour = ({ rgb(240, 120, 90), rgb(90, 170, 230), rgb(250, 210, 90) })[i]
-		part(hut, "Walls", Vector3.new(10, 8, 9), CFrame.new(at + Vector3.new(0, 4, 0)), rgb(245, 240, 228), Enum.Material.WoodPlanks)
-		part(hut, "Roof", Vector3.new(12, 1, 11), CFrame.new(at + Vector3.new(0, 8.6, 0)) * CFrame.Angles(0, 0, math.rad(8)), colour, Enum.Material.SmoothPlastic)
-		part(hut, "Door", Vector3.new(3, 6, 0.3), CFrame.new(at + Vector3.new(0, 3, -4.6)), colour, Enum.Material.SmoothPlastic, false)
+		-- Audit area 6 (a flat box with a flat lid read as code-built): a real beach hut on short
+		-- stilts with a deck and a step, pastel plank walls with white corner trim, a gable roof
+		-- with an overhang, a framed white door and a shuttered window.
+		local white = rgb(244, 242, 236)
+		for _, sx in { -4.4, 4.4 } do
+			for _, sz in { -3.9, 3.9 } do
+				part(hut, "Stilt", Vector3.new(0.6, 1.4, 0.6), CFrame.new(at + Vector3.new(sx, 0.7, sz)), rgb(150, 120, 90), Enum.Material.Wood)
+			end
+		end
+		part(hut, "Deck", Vector3.new(11, 0.4, 12), CFrame.new(at + Vector3.new(0, 1.4, -1)), rgb(196, 160, 118), Enum.Material.WoodPlanks)
+		part(hut, "Step", Vector3.new(3.4, 0.4, 1.4), CFrame.new(at + Vector3.new(0, 0.7, -7.6)), rgb(190, 155, 112), Enum.Material.WoodPlanks)
+		part(hut, "Walls", Vector3.new(10, 6.6, 9), CFrame.new(at + Vector3.new(0, 4.9, 0)), colour, Enum.Material.WoodPlanks)
+		for _, sx in { -5.05, 5.05 } do
+			for _, sz in { -4.55, 4.55 } do
+				part(hut, "Trim", Vector3.new(0.35, 6.7, 0.35), CFrame.new(at + Vector3.new(sx, 4.9, sz)), white, Enum.Material.Wood, false)
+			end
+		end
+		-- The gable roof: two wedges meeting at the ridge (a wedge rises towards its -Z face).
+		local roofColour = rgb(232, 230, 222)
+		local front = Instance.new("WedgePart")
+		front.Name = "Roof"
+		front.Size = Vector3.new(12, 2.8, 6)
+		front.CFrame = CFrame.new(at + Vector3.new(0, 9.6, -3)) * CFrame.Angles(0, math.pi, 0)
+		local back = Instance.new("WedgePart")
+		back.Name = "Roof"
+		back.Size = Vector3.new(12, 2.8, 6)
+		back.CFrame = CFrame.new(at + Vector3.new(0, 9.6, 3))
+		for _, w in { front, back } do
+			w.Anchored = true
+			w.Color = roofColour
+			w.Material = Enum.Material.WoodPlanks
+			w.Parent = hut
+		end
+		part(hut, "Gable", Vector3.new(10, 0.3, 0.3), CFrame.new(at + Vector3.new(0, 8.35, -4.6)), white, Enum.Material.Wood, false)
+		part(hut, "DoorFrame", Vector3.new(3.4, 5.4, 0.3), CFrame.new(at + Vector3.new(-1.8, 4.3, -4.6)), white, Enum.Material.Wood, false)
+		part(hut, "Door", Vector3.new(2.8, 5, 0.32), CFrame.new(at + Vector3.new(-1.8, 4.1, -4.62)), rgb(250, 250, 248), Enum.Material.Wood, false)
+		part(hut, "Window", Vector3.new(2.4, 2, 0.32), CFrame.new(at + Vector3.new(2.4, 5.2, -4.62)), rgb(120, 170, 200), Enum.Material.Glass, false)
+		for _, sx in { 0.9, 3.9 } do
+			part(hut, "Shutter", Vector3.new(0.9, 2.2, 0.34), CFrame.new(at + Vector3.new(sx, 5.2, -4.64)), white, Enum.Material.Wood, false)
+		end
 		hut.Parent = m
 	end
 	-- The lighthouse (south-west point): white and red rings, a lamp on top.
