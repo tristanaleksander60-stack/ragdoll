@@ -1005,6 +1005,9 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	if (Config :: any).LAB_V6 and lab then
 		local ok, err = pcall(function()
 			require(script.Parent.LabGarden).build(folder, origin)
+			if (Config :: any).PATHS then
+				require(script.Parent.PathBuilder).lab(folder, origin, origin.Y + 0.04) -- V7-2: paths to everything
+			end
 			if (Config :: any).LAB_CREATURES then
 				require(script.Parent.LabCreatures).build(folder, origin)
 			end

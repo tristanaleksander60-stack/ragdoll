@@ -95,10 +95,20 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 		local pathX = side * (inner + width * 0.45)
 		-- Grass and the path (thin, a hair above the ground so nothing flickers).
 		part(folder, "GardenGrass", Vector3.new(width, 0.2, depth), CFrame.new(origin + Vector3.new(xMid, 0.1, zMid)), GRASS, Enum.Material.Grass)
-		part(folder, "GardenPath", Vector3.new(6, 0.24, depth - 6), CFrame.new(origin + Vector3.new(pathX, 0.12, zMid)), PATH, Enum.Material.Cobblestone)
-		for _, z in { -30, 30 } do
-			local len = math.abs(pathX) - inner + 3
-			part(folder, "GardenPath", Vector3.new(len, 0.24, 5), CFrame.new(origin + Vector3.new(side * (inner + len / 2 - 3), 0.12, z)), PATH, Enum.Material.Cobblestone)
+		if (require(Shared:WaitForChild("Config")) :: any).PATHS then
+			-- (V7-2: the walk curves gently, its stones overlap: soft edges, no hard rectangle.)
+			local PathBuilder = require(script.Parent:WaitForChild("PathBuilder")) :: any
+			local o2 = Vector2.new(origin.X, origin.Z)
+			PathBuilder.trail(folder, o2 + Vector2.new(pathX, LabGarden.Z_BACK + 4), o2 + Vector2.new(pathX, LabGarden.Z_FRONT - 3), origin.Y + 0.24, PATH, Enum.Material.Cobblestone, if side > 0 then 101 else 102)
+			for k, z in { -30, 30 } do
+				PathBuilder.trail(folder, o2 + Vector2.new(side * (inner - 1), z), o2 + Vector2.new(pathX, z), origin.Y + 0.25, PATH, Enum.Material.Cobblestone, 110 + k + (if side > 0 then 0 else 5))
+			end
+		else
+			part(folder, "GardenPath", Vector3.new(6, 0.24, depth - 6), CFrame.new(origin + Vector3.new(pathX, 0.12, zMid)), PATH, Enum.Material.Cobblestone)
+			for _, z in { -30, 30 } do
+				local len = math.abs(pathX) - inner + 3
+				part(folder, "GardenPath", Vector3.new(len, 0.24, 5), CFrame.new(origin + Vector3.new(side * (inner + len / 2 - 3), 0.12, z)), PATH, Enum.Material.Cobblestone)
+			end
 		end
 		-- The hedge on the plot's edge (tall: the neighbour's lab stays out of view).
 		local hedgeX = side * (half - 3)

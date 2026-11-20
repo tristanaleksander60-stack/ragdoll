@@ -208,3 +208,11 @@ They lead from the spawn or arrival to each thing you can do there.
   - T99 checks that no boxes or light column are left and waits for the lab to be built; T99/T23/T50 pass.
   - Captures: v7_1_after (above) and v7_1_after2 (eye height).
   - Studio's viewport had gone white (an Assistant plugin version change); Studio was restarted from the saved place (v577).
+- **V7-2 done (20 Nov, `Config.PATHS`):** `Shared/PathPlan` (pure: routes, gently bowed curves, widths that vary, budget 400 stones per lab) and `Server/Systems/PathBuilder`.
+  - **Lab:** earthen paths of overlapping flat stones, with a few pebbles at the edges. They run from the hub in front of the spawn to the cannon, button, stations, bullseye, lava, mace, tower, portals, wrecking ball, creature yard and both gardens (12 routes, about 330 stones). The garden walks are curving cobbled trails in the same style.
+  - **Plaza and open-air maps:** from the arrival to every launcher and every shop booth.
+    - On terrain, the grass and sand under the path are repainted (`ReplaceMaterial`; the ground's shape never changes): Ground (warm brown) on the Island, Farm and Army; Mud on the Site; Cobblestone on the plaza and in the City.
+    - Where there is no terrain (the City streets, the plaza floor), flat cobbled stones are laid instead (Workspace.MapPaths).
+  - Everything is pictures only: no collision, no query, no touch.
+  - **Tests:** T106 passes (every route reaches its goal, within budget, non-colliding, painted on every place); T26/T31 pass.
+  - **Captures:** v7_2_lab_top, v7_2_lab_eye2, v7_2_farm.
