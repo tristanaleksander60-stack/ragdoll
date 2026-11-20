@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -251,6 +251,39 @@ The reference capture is `art/store/look_target/leader_hub.webp`. It shows the l
 - The shop fits on 16 LayoutCheck screens.
 
 **Capture:** before/after of FEATURED, PASSES and a detail view, on PC and phone.
+
+## V9-0j There is always a ragdoll to shoot (owner, 21 Nov)
+> "Sørg også for at der også går ragdolls rundt omkring i ens lab så der altid er en at skyde."
+
+**Now:**
+- the lab's dummy row (6 dummies; dead ones revive after `REVIVE_AFTER` 10 s);
+- `VisitorService` (3 roaming visitors per owner, phone tier 1, `ROOM_KEEP` 8; VipLab more);
+- the GOD MODE spawns;
+- creatures and the feed terminals take dummies out of play for a while.
+
+So a player can stand there with no standing target.
+
+**Rule: never zero standing targets.**
+- In the owner's lab there are always at least `LAB_MIN_TARGETS` standing dummies (PC 6, tablet 5, phone 4). At least 2 of them are within about 40 studs of the player and in front of the camera when possible.
+- **Kept up live:** checked every 1-2 s, cheap, only while the owner is in their lab (sleep otherwise, V9-5b). When the count drops (KO'd, in a creature, launched, thrown off), a new dummy **walks in** from the rim of the hub (V9-0h): through a small gate/door, or popping out of a spawn tube with a puff.
+- **Life:** the roaming ones wander the hub floor on loose routes:
+  - they stop at machines (cannon, trampoline, ring), look around and wave;
+  - some sit or chat in pairs (DummyLife lines, small);
+  - they flee briefly from bangs, but never out of the lab, and never more than V8's coward rule.
+  - Visitors and the new walkers share one pool, so the counts never add up past the cap.
+- **Caps:**
+  - the total bodies per lab stay within the device tier (`DEVICE_CAPS` / FX_CAPS ragdolls);
+  - KO'd bodies past the cap are cleaned (the oldest first, after `REVIVE_AFTER`);
+  - a body lying still for a long time is recycled.
+- **Newcomers:** the first minute still follows V8 (the greeter, calm, first hits knock flat).
+- **Party labs:** the same count, shared.
+
+**Tests:** T166_AlwaysTargets.
+- KO every dummy in the lab: within 3 s at least the minimum is standing again.
+- The body count never passes the tier cap.
+- With no owner in the lab, the loop is idle.
+
+**Capture:** after 20 s of nonstop shooting, standing dummies are still in view, on PC and phone.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
