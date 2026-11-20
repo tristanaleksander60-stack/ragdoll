@@ -10,7 +10,30 @@ build is live. Written fresh; nothing is taken from another game's page.
 3. `[UPD] Ragdoll Havoc 💥` (use only in an update week)
 4. `Ragdoll Havoc: Launch the Dummies 💥`
 
-## Description v4 (English, release 0.23.0; recommended)
+## Description v5 (English, release 0.30.0; recommended)
+
+💥 Crash-test dummies, a lab full of toys, and 5 big maps to wreck. Make them fly!
+
+✨ NEW: GOD MODE
+• Create life! Tap GOD and a ragdoll comes down in a beam of light: tiny, heavy, bouncy or floppy
+• Try it free for 60 seconds every visit
+• Wide new paths all round your lab, a lava pit and monsters to feed
+
+💥 YOUR LAB
+• 60+ toys: blasters, bats, grenades, rockets, freeze rays and more, each with its own sound
+• The cannon, the bullseye, the lava and the throw tower
+• Feed the spider, the plant and the other monsters a ragdoll
+
+🗺️ 5 MAPS
+• Tropical Island, Downtown, Building Site, Old Farm and Army Base
+
+🎮 Computer, phone, tablet and controller
+
+⭐ Favorite so you can find your lab again!
+
+Cartoon effects only: stars and sparks, no blood.
+
+## Description v4 (English, release 0.23.0)
 
 💥 Crash-test dummies, a lab full of toys, and 5 big maps to wreck. Make them fly!
 
