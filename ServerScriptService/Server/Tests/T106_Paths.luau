@@ -1,6 +1,7 @@
 --!strict
 -- V7-2: paths to everything (Shared/PathPlan, PathBuilder).
---   every lab route has stones and its last stone reaches its goal; the lab stays in its budget;
+--   the lab's paths are a tree: every segment keeps clear of every machine, every goal is the end
+--   of a segment; the lab stays in its budget;
 --   the stones never collide or block a ray (pictures only); the lab is built with them;
 --   the plaza and every open-air map got repainted paths.
 
@@ -24,13 +25,28 @@ return {
 	name = "T106_Paths",
 	timeout = 45,
 	run = function(): string?
-		for i, r in PathPlan.LAB_ROUTES do
-			local stones = PathPlan.curve(PathPlan.LAB_HUB, r.to, i)
-			assert(#stones >= 2, r.name .. " has no path")
-			assert((stones[#stones].at - r.to).Magnitude < 1.5, r.name .. "'s path does not reach it")
+		-- The tree: every segment has stones, keeps clear of every machine (with its own half
+		-- width) and every goal is reached by the end of a segment.
+		local P = PathPlan.LAB_POINTS :: any
+		for i, seg in PathPlan.LAB_SEGMENTS do
+			assert(P[seg[1]] and P[seg[2]], "an unknown point in segment " .. i)
+			local stones = PathPlan.segment(i)
+			assert(#stones >= 2, seg[1] .. "->" .. seg[2] .. " has no stones")
 			for _, s in stones do
 				assert(s.width >= PathPlan.WIDTH_MIN and s.width <= PathPlan.WIDTH_MAX, "a stone out of the width range")
 			end
+			local ok, hit = PathPlan.clear(stones, PathPlan.OBSTACLES)
+			assert(ok, seg[1] .. "->" .. seg[2] .. " runs into the " .. tostring(hit))
+		end
+		for _, r in PathPlan.LAB_ROUTES do
+			local reached = false
+			for i, seg in PathPlan.LAB_SEGMENTS do
+				local stones = PathPlan.segment(i)
+				if seg[2] == r.name and (stones[#stones].at - r.to).Magnitude < 1.5 then
+					reached = true
+				end
+			end
+			assert(reached, r.name .. " has no path to it")
 		end
 		assert(#PathPlan.lab() <= PathPlan.BUDGET, "the lab's paths are over budget")
 		-- Built in the lab: pictures only.
