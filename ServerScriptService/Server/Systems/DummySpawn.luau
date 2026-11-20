@@ -29,11 +29,88 @@ DummySpawn.TYPES = table.freeze({
 
 local mine: { [Player]: { Model } } = {}
 local last: { [Player]: number } = {}
+local trialUsed: { [Player]: boolean } = {}
+
+-- 21 Nov 2026 (the owner: "a pass called God: it gives access to creating life", Config.GOD_PASS): spawning
+-- is GOD MODE's. A player without it gets one free TRIAL s a visit (the first press starts it), then
+-- the offer. While the pass is not on sale yet (id 0, live) spawning stays free for everyone, as before.
+DummySpawn.TRIAL = 60
+DummySpawn.BEAM_SOUND = "rbxassetid://9116394545" -- (Pro Sound Effects "Magic Glows Soft Clusters Of Chiming Hits 1")
+
+function DummySpawn.godGated(): boolean
+	if not Config.GOD_PASS then
+		return false
+	end
+	local Shop = require(Shared:WaitForChild("Shop")) :: any
+	local pass = Shop.byKey.God
+	return pass ~= nil and (pass.id ~= 0 or game:GetService("RunService"):IsStudio())
+end
+
+-- Whether a player may create life now: GOD MODE, or the trial running.
+function DummySpawn.mayCreate(player: Player): boolean
+	if not DummySpawn.godGated() or player:GetAttribute("God") == true then
+		return true
+	end
+	local untilAt = player:GetAttribute("GodTrialUntil")
+	return type(untilAt) == "number" and workspace:GetServerTimeNow() < untilAt
+end
+
+-- Starts a player's free trial if it is still unused this visit; true if it started.
+function DummySpawn.startTrial(player: Player): boolean
+	if trialUsed[player] then
+		return false
+	end
+	trialUsed[player] = true
+	player:SetAttribute("GodTrialUntil", workspace:GetServerTimeNow() + DummySpawn.TRIAL)
+	pcall(function()
+		(require(script.Parent:WaitForChild("ProgressService")) :: any).notice(player, "GOD MODE! " .. DummySpawn.TRIAL .. " seconds to create life")
+	end)
+	return true
+end
 
 local function capFor(player: Player): number
 	local SessionStats = require(script.Parent:WaitForChild("SessionStats")) :: any
 	local record = SessionStats.recordFor(player)
-	return DummySpawn.CAP[record and record.plat or "pc"] or 6
+	local cap = DummySpawn.CAP[record and record.plat or "pc"] or 6
+	return if player:GetAttribute("God") == true then cap * 2 else cap
+end
+
+-- Life comes down from the sky: a beam of gold light at the spot that fades, sparkles, a chime.
+local function beam(at: Vector3)
+	local p = Instance.new("Part")
+	p.Name = "CreationBeam"
+	p.Shape = Enum.PartType.Cylinder
+	p.Size = Vector3.new(70, 3.2, 3.2)
+	p.CFrame = CFrame.new(at + Vector3.new(0, 35, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	p.Material = Enum.Material.Neon
+	p.Color = Color3.fromRGB(255, 226, 120)
+	p.Transparency = 0.4
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.CastShadow = false
+	local sparkle = Instance.new("ParticleEmitter")
+	sparkle.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	sparkle.Color = ColorSequence.new(Color3.fromRGB(255, 240, 170))
+	sparkle.LightEmission = 1
+	sparkle.LightInfluence = 0
+	sparkle.Size = NumberSequence.new(0.5, 0)
+	sparkle.Lifetime = NumberRange.new(0.6, 1.2)
+	sparkle.Speed = NumberRange.new(4, 9)
+	sparkle.SpreadAngle = Vector2.new(180, 180)
+	sparkle.Rate = 0
+	sparkle.Parent = p
+	local chime = Instance.new("Sound")
+	chime.SoundId = DummySpawn.BEAM_SOUND
+	chime.Volume = 0.6
+	chime.RollOffMaxDistance = 120
+	chime.Parent = p
+	p.Parent = workspace
+	sparkle:Emit(30)
+	chime:Play()
+	game:GetService("TweenService"):Create(p, TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Transparency = 1, Size = Vector3.new(70, 0.5, 0.5) }):Play()
+	game:GetService("Debris"):AddItem(p, 1.6)
 end
 
 local function dress(model: Model, spec: Spec)
@@ -100,6 +177,10 @@ function DummySpawn.spawnFor(player: Player, kind: unknown, at: unknown): (Model
 	if not root or not root:IsA("BasePart") or (root.Position - point).Magnitude > DummySpawn.REACH then
 		return nil, "too far"
 	end
+	-- (GOD MODE: the first try starts the free trial, after it the offer: "god".)
+	if not DummySpawn.mayCreate(player) and not DummySpawn.startTrial(player) then
+		return nil, "god"
+	end
 	local now = os.clock()
 	if now - (last[player] or -math.huge) < DummySpawn.GAP then
 		return nil, "slow down"
@@ -118,6 +199,9 @@ function DummySpawn.spawnFor(player: Player, kind: unknown, at: unknown): (Model
 	model.Name = "SpawnedDummy"
 	dress(model, spec)
 	table.insert(list, model)
+	if DummySpawn.godGated() then
+		beam(point)
+	end
 	return model, nil
 end
 
@@ -149,7 +233,14 @@ function DummySpawn.start()
 	Players.PlayerRemoving:Connect(function(player)
 		DummySpawn.clear(player)
 		last[player] = nil
+		trialUsed[player] = nil
 	end)
+end
+
+-- Tests: forget a player's trial (used and running).
+function DummySpawn.resetTrialForTest(player: Player)
+	trialUsed[player] = nil
+	player:SetAttribute("GodTrialUntil", nil)
 end
 
 return DummySpawn

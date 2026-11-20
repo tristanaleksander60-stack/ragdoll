@@ -339,3 +339,19 @@ Phases 0-4b, A-M, N1-N5, N7 (graphics accepted as is), M1-M8 done. M9 was under 
   - Dummy lines are emoji (`DummyLines.EMOJI_*`).
 - **Lab guide:** the cannon (Fire), the lava (Toss) and the trampoline (Bounce) got buttons too (`LabGuide.MACHINES`). Rings are dashed glowing pieces round an invisible part (`GuideRingSeg`).
 - **Fewer pop-ups:** "Walking again" is gone, the lab-view how-to shows once a visit, and `TOMORROW_AT` moved from 80 to 480.
+
+## Wide paths and GOD MODE (21 Nov 2026, release 0.30.0)
+- The owner: the paths were "far too narrow and still stick out at the bullseye, 5/10".
+- **Paths (`LAYOUT_V2`, PathPlan V2 block):**
+  - Paving is `PathPlan.WIDE_PAVING` 7.4 (was 4.2), with `WIDTH_MIN` 8.3 / `WIDTH_MAX` 8.6. The lab's walkways and their dressing read it through `PathBuilder.walkWidth()`.
+  - Fewer segments: three arms from the spawn plaza with loops, and the yard road round both gardens. There are no BULL or LV stubs; the only ends are the tower's first step, the portals and the garden walks.
+  - The plaza is bigger (disc 18). The mace is at (-41, 50) (`Playground.MACE_V2_AT`), the Christmas present at (-58, 64), and two LabDress benches moved under LAYOUT_V2.
+  - Lamps, tufts and flowers also keep off the two garden walks (`avoid` in `PathBuilder.lab`).
+- **GOD MODE (`Config.GOD_PASS`):**
+  - The pass: `Shop.PASSES` God, "GOD MODE", 199 Robux planned. Its **id is 0**: Open Cloud refused to create it (multipart needs an approved upload folder), so the owner creates it on the dashboard and sends the id.
+  - With id 0 live, spawning stays free for everyone and the window shows no offer. In Studio it is gated.
+  - Server: `DummySpawn.godGated` / `mayCreate` / `startTrial`. Without the pass, the first creation starts a free 60 s trial once a visit (player attribute `GodTrialUntil`, the GOD MODE! banner); after it a creation is refused with "god".
+  - With the pass: twice the device cap, and a gold beam of light plus a chime at every creation. MoneyService sets the player attribute `God`.
+  - Client: `Client/GodMode`, a window of 4 coloured kinds (TINY/HEAVY/BOUNCY/FLOPPY). A tap drops one 12 studs ahead of where the camera looks; GET GOD MODE goes through MoneyService "Buy".
+  - Launchers: a HudV3 square between Shop and Lab off phones (`HudV3Layout.LEFT`); on a phone, the GOD MODE entry in MENU (phone column has no room, LayoutCheck). CLIPS & LIVE is `notPhone`.
+  - Icon `god` (art\icons\god.png, DrawnIcons). Tests: T148_GodMode; T128 resets the trial around itself.

@@ -95,7 +95,7 @@ end
 -- the kit's dimmer used to eat that tap and only close. LihFolkUIController.passThrough asks here.)
 local tapActions: { [GuiObject]: () -> () } = {}
 local tapWindows: { [GuiObject]: string } = {} -- (the window a square opens: a tap on the open one only closes)
-local CARD_WINDOWS: { [string]: string } = { Shop = "Events", Lab = "Lab", Maps = "Maps", Menu = "Menu" }
+local CARD_WINDOWS: { [string]: string } = { Shop = "Events", God = "God", Lab = "Lab", Maps = "Maps", Menu = "Menu" }
 
 local function card(name: string, word: string, icon: string, parent: Instance, onActivated: () -> ()): TextButton
 	local Icons = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIIcons"))
@@ -617,6 +617,12 @@ function HudV3.start()
 	card("Shop", "Shop", "shop", left, function()
 		Controller.toggle("Events")
 	end).LayoutOrder = 1
+	-- (21 Nov 2026: GOD MODE, create life: GodMode's window.)
+	if Config.GOD_PASS and Config.DUMMY_TYPES then
+		card("God", "God", "god", left, function()
+			Controller.toggle("God")
+		end).LayoutOrder = 2
+	end
 	card("Lab", "Lab", "sandbox", left, function()
 		Controller.toggle("Lab")
 	end).LayoutOrder = 3

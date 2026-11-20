@@ -147,6 +147,7 @@ safe("FeelV2", function() require(Client:WaitForChild("FeelV2")).start() end) --
 safe("ChaseHud", function() require(Client:WaitForChild("ChaseHud")).start() end)
 safe("StuntHud", function() require(Client:WaitForChild("StuntHud")).start() end) -- V8-1.1: the CRASH score, the cannon's slow-mo beat, AGAIN
 safe("SpawnKey", function() require(Client:WaitForChild("SpawnKey")).start() end) -- V8-2.5: H drops a dummy of a type where you aim
+safe("GodMode", function() require(Client:WaitForChild("GodMode")).start() end) -- 21 Nov 2026: GOD MODE, the pass that creates life (spawning ragdolls)
 safe("LabGuideClient", function() require(Client:WaitForChild("LabGuideClient")).start() end) -- 21 Nov 2026: the lab guide's rings breathe; DROP HERE! while you carry a dummy
 safe("LavaClient", function() require(Client:WaitForChild("LavaClient")).start() end) -- 21 Nov 2026: the lava pit breathes, flickers and its crust drifts
 safe("NpcGlow", function() require(Client:WaitForChild("NpcGlow")).start() end)

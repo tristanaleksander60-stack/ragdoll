@@ -19,6 +19,7 @@ DrawnIcons.ASSETS = {
 	gift = "rbxassetid://121323709806351",
 	present = "rbxassetid://100227731520689", -- (UI audit 21 Nov 2026: REWARDS, a present)
 	guide_feed = "rbxassetid://128651332389460", -- (21 Nov 2026: the lab guide signs, a dummy and an arrow)
+	god = "rbxassetid://99170925486763", -- (21 Nov 2026: GOD MODE, a dummy in a burst of light)
 	-- (21 Nov 2026, the owner: "no big text, signs and icons": the lab's pictograms, art\icons\sign_*, hud_*.)
 	sign_lava = "rbxassetid://90478938347210",
 	sign_target = "rbxassetid://115820320705096",

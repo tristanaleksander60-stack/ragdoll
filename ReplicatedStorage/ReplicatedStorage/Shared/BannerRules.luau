@@ -58,6 +58,9 @@ function BannerRules.of(text: string): Spec?
 	if string.find(s, "^BULLSEYE!") then
 		return { title = "BULLSEYE!", sub = "RIGHT ON TARGET", color = RED, icon = "", emoji = "\u{1F3AF}", priority = 3 }
 	end
+	if string.find(s, "^GOD MODE!") then
+		return { title = "GOD MODE!", sub = "CREATE LIFE", color = Color3.fromRGB(240, 180, 30), icon = "god", emoji = "\u{2728}", priority = 3 }
+	end
 	local cleared = string.match(s, "^CHASE CLEARED!%s*(.*)$")
 	if cleared then
 		return { title = "CHASE CLEARED!", sub = if cleared ~= "" then upper(cleared) else "YOU WON", color = GREEN, icon = "crown", emoji = "\u{1F451}", priority = 3 }

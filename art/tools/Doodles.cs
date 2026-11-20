@@ -437,6 +437,21 @@ public static partial class Doodles
 				Ink(10, 128, 132, 128, 78); Ink(10, 128, 132, 166, 150);
 				Add(Rect(108, 24, 40, 16), Iron);
 				break;
+			case "god":
+				// (21 Nov 2026: GOD MODE, "create life": a little dummy in a burst of light, a halo over it.)
+				for (int r = 0; r < 12; r++)
+				{
+					double a = r * Math.PI * 2 / 12;
+					Line(Yellow, 12, 128 + (float)Math.Cos(a) * 70, 136 + (float)Math.Sin(a) * 70, 128 + (float)Math.Cos(a) * 118, 136 + (float)Math.Sin(a) * 118);
+				}
+				Add(Oval(128, 136, 72, 72), Rgb(255, 236, 140));
+				Add(Rect(108, 150, 14, 40), White); Add(Rect(134, 150, 14, 40), White);
+				Add(Rect(102, 110, 52, 46), White);
+				Add(Turn(Rect(80, 112, 14, 36), 30, 87, 112), White); Add(Turn(Rect(162, 112, 14, 36), -30, 169, 112), White);
+				Add(Oval(128, 90, 22, 22), White);
+				Flat(Poly(128, 90, 128, 72, 142, 76, 148, 90), Yellow); Flat(Poly(128, 90, 128, 108, 114, 104, 108, 90), Yellow);
+				Line(Rgb(255, 196, 40), 7, 104, 58, 128, 52, 152, 58);
+				break;
 			case "guide_feed":
 				// (21 Nov 2026: the lab's guide signs: a crash-test dummy and a big arrow, "put one in".)
 				Add(Rect(34, 156, 20, 52), White); Add(Rect(62, 156, 20, 52), White);
@@ -937,7 +952,7 @@ public static partial class Doodles
 	}
 
 	public static string[] Names = {
-		"shop", "settings", "sandbox", "gift", "present", "guide_feed", "sign_lava", "sign_target", "sign_up", "sign_fling", "sign_crash", "sign_wrecking", "sign_bounce", "sign_button", "sign_tower", "sign_car", "sign_monster", "hud_click", "hud_tap", "hud_ragdoll", "hud_slowmo", "star", "crown", "toolbox", "map", "friends", "camera", "music", "keys", "eye", "shake", "heart",
+		"shop", "settings", "sandbox", "gift", "present", "guide_feed", "sign_lava", "sign_target", "sign_up", "sign_fling", "sign_crash", "sign_wrecking", "sign_bounce", "sign_button", "sign_tower", "sign_car", "sign_monster", "hud_click", "hud_tap", "hud_ragdoll", "hud_slowmo", "god", "star", "crown", "toolbox", "map", "friends", "camera", "music", "keys", "eye", "shake", "heart",
 		"event_DummyRain", "event_MegaBomb", "event_ZeroG", "event_BouncyFloor", "event_FlashFreeze",
 		"tool_Blaster", "tool_Deagle", "tool_Shotgun", "tool_NailGun", "tool_Crossbow", "tool_Portal", "tool_Slime",
 		"tool_Grab", "tool_Poke", "tool_Slap", "tool_Shove", "tool_Punch", "tool_Kick", "tool_Uppercut", "tool_MegaSlap", "tool_Glove",

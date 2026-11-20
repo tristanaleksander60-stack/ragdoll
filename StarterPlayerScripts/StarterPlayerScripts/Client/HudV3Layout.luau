@@ -17,7 +17,7 @@ HudV3Layout.TOAST_GAP = 12 -- px between the top-left row and the toast lane
 HudV3Layout.ROW_MIN = 0.75 -- the top-left row shrinks to fit left of the toasts, never under this
 -- The left squares (UI audit 21 Nov 2026: WEAPONS lives only on the bar, next to the weapons; the
 -- square was the same button twice).
-HudV3Layout.LEFT = { "Shop", "Lab" }
+HudV3Layout.LEFT = { "Shop", "God", "Lab" } -- (21 Nov 2026: GOD MODE between them: GodMode)
 
 export type Rect = { x: number, y: number, w: number, h: number, name: string }
 

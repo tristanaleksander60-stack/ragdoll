@@ -20,6 +20,8 @@ local ENTRIES: { any } = {
 	-- (One colour for going somewhere; green where something waits to be claimed; red is the kit's
 	-- close and delete, never a place to go.)
 	{ window = "Maps", text = "MAPS", role = "info", phoneOnly = true }, -- (off a phone MAPS is a square on the right; UI audit 21 Nov: one name, MAPS, everywhere)
+	-- (21 Nov 2026: GOD MODE, create life. Off a phone it is a square of its own: HudV3.)
+	{ window = "God", text = "GOD MODE", role = "premium", phoneOnly = true },
 	-- (Phase 0: SANDBOX had slipped onto the line above, behind its comment, so a phone had no way
 	-- to build; it is back, and a phone's BUILD button now lives here.)
 	{ window = "Sandbox", text = "SANDBOX", role = "go", phoneOnly = true }, -- (HudMenu.onSandbox)
@@ -27,7 +29,7 @@ local ENTRIES: { any } = {
 	{ window = "Eggs", text = "RANK & EGGS", role = "go" },
 	{ window = "Experiments", text = "EXPERIMENTS", role = "go", padOnly = true }, -- (phase 1: a pad reaches the card's window here)
 	{ window = "Friends", text = "FRIENDS", role = "info" },
-	{ window = "Creator", text = "CLIPS & LIVE", role = "info" },
+	{ window = "Creator", text = "CLIPS & LIVE", role = "info", notPhone = true }, -- (21 Nov 2026: streaming tools are a computer's; a phone clips from the replay's CLIP IT. Its row went to GOD MODE.)
 	-- (V8-0.9: also wherever the launcher column is hidden, i.e. under HudV3 on PC, tablet and console:
 	-- there SETTINGS had no way in at all.)
 	{ window = "Settings", text = "SETTINGS", role = "neutral", phoneOnly = true, columnToo = true },
@@ -37,6 +39,7 @@ local ENTRIES: { any } = {
 -- UI v2: the drawn icon for each MENU entry (DrawnIcons names; the same pictures as the launchers).
 local MENU_ICONS: { [string]: string } = {
 	Maps = "map",
+	God = "god",
 	Sandbox = "sandbox",
 	Rewards = "present",
 	Eggs = "crown",
@@ -56,7 +59,7 @@ HudMenu.ICONS = MENU_ICONS
 HudMenu.KEEP = { Shop = true, Rewards = true, Places = true, Sandbox = true, Settings = true }
 -- A phone: SHOP beside MENU (one row: the short screen's left edge has the big WEAPONS button
 -- too); REWARDS, PLACES, SANDBOX and SETTINGS in MENU (its badge shows what waits in REWARDS).
-HudMenu.PHONE_KEEP = { Shop = true }
+HudMenu.PHONE_KEEP = { Shop = true } -- (GOD MODE sits in MENU on a phone: no room in the column, LayoutCheck)
 -- The column starts under the big WEAPONS button (HudSlots "Weapons": 68 px down, 58 tall; 46 on a phone).
 Controller.COLUMN_TOP = 144
 C.HUD_CAPTION_MIN = 11 -- (smaller tiles: "Settings" still fits)

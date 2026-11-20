@@ -89,7 +89,18 @@ function LabDress.dress(into: Instance, origin: Vector3)
 	local folder = Instance.new("Folder")
 	folder.Name = "Dress"
 	folder.Parent = into
-	for _, s in LabDress.SPOTS do
+	-- (21 Nov 2026, Config.LAYOUT_V2: the two benches by the yard move clear of the mace's sweep, the
+	-- Christmas chimney and the wide yard road.)
+	local v2 = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAYOUT_V2 == true
+	local MOVED: { [string]: Vector2 } = { ["-40,66"] = Vector2.new(-46, 68), ["40,66"] = Vector2.new(28, 68) }
+	for _, s0 in LabDress.SPOTS do
+		local s = s0
+		local to = if v2 then MOVED[s0.x .. "," .. s0.z] else nil
+		if to then
+			local c = table.clone(s0) :: any
+			c.x, c.z = to.X, to.Y
+			s = c
+		end
 		if V3Assets.has(s.role) then
 			local at = CFrame.new(origin + Vector3.new(s.x, 0, s.z)) * CFrame.Angles(0, math.rad(s.yaw), 0)
 			local placed = V3Assets.place(s.role, folder, at, { size = s.size, height = s.height, collide = s.collide == true })

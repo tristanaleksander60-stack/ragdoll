@@ -40,6 +40,10 @@ return {
 		task.wait(0.5)
 		local here = root.Position + Vector3.new(6, -2, 0)
 		local made: { Model } = {}
+		-- (GOD MODE, T148: a fresh trial lets the first drop through; the pass off keeps the plain cap.)
+		local hadGod = p:GetAttribute("God")
+		p:SetAttribute("God", false)
+		DummySpawn.resetTrialForTest(p)
 		local ok, err = pcall(function()
 			local m, why = DummySpawn.spawnFor(p, "MINI", here)
 			assert(m, "a MINI was refused: " .. tostring(why))
@@ -61,6 +65,8 @@ return {
 			assert(#DummySpawn.of(p) == 0, "clear left dummies")
 		end)
 		DummySpawn.clear(p)
+		DummySpawn.resetTrialForTest(p)
+		p:SetAttribute("God", hadGod)
 		assert(ok, err)
 		return "MINI dropped with its plate; outside the lab, out of reach and junk refused; the cap holds; clear removes them; JONAS' LAB"
 	end,

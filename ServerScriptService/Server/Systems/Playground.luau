@@ -893,9 +893,9 @@ end
 Playground.CHRISTMAS_SPOTS = { Chimney = Vector2.new(45, 66), Present = Vector2.new(-40, 58), Sleigh = Vector2.new(-10, -60) }
 -- 21 Nov 2026 (Config.LAYOUT_V2): the lab re-laid out (vault and the biggest ragdoll games: the spawn faces
 -- the test range and the cannon, the hazards gather on the west side, every path joins another).
-Playground.MACE_V2_AT = Vector2.new(-38, 48)
+Playground.MACE_V2_AT = Vector2.new(-41, 50)
 if (Config :: any).LAYOUT_V2 then
-	Playground.CHRISTMAS_SPOTS = { Chimney = Vector2.new(45, 66), Present = Vector2.new(-56, 62), Sleigh = Vector2.new(-10, -60) }
+	Playground.CHRISTMAS_SPOTS = { Chimney = Vector2.new(45, 66), Present = Vector2.new(-58, 64), Sleigh = Vector2.new(-10, -60) }
 end
 local BRICK = Color3.fromRGB(150, 50, 40)
 local XMAS_GREEN = Color3.fromRGB(40, 150, 70)

@@ -93,6 +93,7 @@ local function apply(player: Player)
 	player:SetAttribute("FreeUltraUntil", if freeUntil[player] then freeUntil[player] else nil)
 	local vip = MoneyService.owns(player, "VIP")
 	player:SetAttribute("VIP", vip)
+	player:SetAttribute("God", MoneyService.owns(player, "God")) -- (21 Nov 2026: GOD MODE, DummySpawn reads it)
 	local character = player.Character
 	local head = character and character:FindFirstChild("Head")
 	local tag = head and head:FindFirstChild("VipTag")

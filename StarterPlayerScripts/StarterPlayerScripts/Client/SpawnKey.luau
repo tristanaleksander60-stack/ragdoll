@@ -73,7 +73,7 @@ function SpawnKey.start()
 		end
 	end)
 	Net.event(Net.Names.Spawn).OnClientEvent:Connect(function(kind: unknown, why: unknown)
-		if kind == "Refused" and type(why) == "string" then
+		if kind == "Refused" and type(why) == "string" and why ~= "god" then -- ("god": GodMode opens its window)
 			pcall(function()
 				(require(script.Parent:WaitForChild("Toast")) :: any).show("Can't drop a dummy: " .. why)
 			end)

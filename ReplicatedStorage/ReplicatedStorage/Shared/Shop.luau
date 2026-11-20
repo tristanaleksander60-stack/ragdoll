@@ -24,6 +24,17 @@ Shop.PASSES = table.freeze({
 		perks = { "VIP tag over your head", "An egg every 50 takedowns (not 75)", "VIP next to your name on the boards" },
 		color = "#FFD24A",
 	},
+	{
+		-- 21 Nov 2026 (the owner: "a pass called God: it gives access to creating life, spawning
+		-- ragdolls"; Config.GOD_PASS, DummySpawn). 0 until it is created on the dashboard (199 Robux):
+		-- while it is 0 live, spawning stays free for everyone as before.
+		key = "God",
+		id = 0,
+		name = "GOD MODE",
+		blurb = "Create life! Spawn ragdolls anywhere in your lab.",
+		perks = { "Spawn ragdolls: tiny, heavy, bouncy, floppy", "Twice as many at once", "Each one comes down in a beam of light" },
+		color = "#FFE066",
+	},
 } :: { Pass })
 
 Shop.byKey = {} :: { [string]: Pass }
@@ -56,6 +67,14 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
+	{
+		version = "0.30.0",
+		lines = {
+			"GOD MODE: create life! Tap GOD and a ragdoll comes down in a beam of light",
+			"Try GOD MODE free for 60 seconds every visit",
+			"Wide new paths all round your lab",
+		},
+	},
 	{
 		version = "0.29.0",
 		lines = {

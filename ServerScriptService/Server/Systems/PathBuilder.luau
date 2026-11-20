@@ -204,6 +204,14 @@ end
 -- 20 Nov, round 2 (the owner: "improve the paths markedly"): a built path. Raised paving (cobbles
 -- in a warm stone) between two raised stone kerbs, and a wooden signpost at every fork.
 PathBuilder.WALK_WIDTH = 4.2
+-- (21 Nov 2026, round 2, Config.LAYOUT_V2, the owner: "far too narrow": the paving is PathPlan.WIDE_PAVING.)
+local function walkWidth(): number
+	if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 then
+		return PathPlan.WIDE_PAVING or PathBuilder.WALK_WIDTH
+	end
+	return PathBuilder.WALK_WIDTH
+end
+PathBuilder.walkWidth = walkWidth
 PathBuilder.GRAVEL = Color3.fromRGB(176, 160, 136) -- (the paving's stone)
 PathBuilder.KERB = Color3.fromRGB(112, 108, 102)
 PathBuilder.KERB_W = 0.45
@@ -455,7 +463,7 @@ end
 
 -- One walkway from a to b (world x, z) at height y (the garden's cobbled walks use it).
 function PathBuilder.trail(into: Instance, a: Vector2, b: Vector2, y: number, color: Color3, material: Enum.Material, seed: number): number
-	return PathBuilder.walkway(into, corners(PathPlan.curve(a, b, seed), Vector2.zero), y, PathBuilder.WALK_WIDTH, color, material, PathBuilder.KERB)
+	return PathBuilder.walkway(into, corners(PathPlan.curve(a, b, seed), Vector2.zero), y, walkWidth(), color, material, PathBuilder.KERB)
 end
 
 -- 21 Nov 2026 (Config.PATHS_V3, the owner: "make the paths round the lab much nicer"). Vault (Roads,
@@ -670,13 +678,21 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 		end
 	end
 	local dressState = { lamps = 0, lights = 0, parts = 0 }
+	-- (21 Nov 2026: lamps, tufts and flowers also keep off the two garden walks: LabGarden lays them.)
+	local avoid: { { Vector2 } } = table.clone(allLines)
+	if PathPlan.GARDEN_WALK_X then
+		for _, sx in { -1, 1 } do
+			local x = sx * PathPlan.GARDEN_WALK_X
+			table.insert(avoid, { o2 + Vector2.new(x, PathPlan.GARDEN_WALK_NORTH), o2 + Vector2.new(x, PathPlan.GARDEN_WALK_SOUTH) })
+		end
+	end
 	for i in PathPlan.LAB_SEGMENTS do
 		-- (Each segment a hair apart in height: where two meet they never flicker.)
 		local y = floorY + 0.01 + (i % 3) * 0.003
 		local v3 = (require(Shared:WaitForChild("Config")) :: any).PATHS_V3 == true
-		count += PathBuilder.walkway(folder, allLines[i], y, PathBuilder.WALK_WIDTH, if v3 then PathBuilder.PAVING_V3 else PathBuilder.GRAVEL, Enum.Material.Cobblestone, PathBuilder.KERB)
+		count += PathBuilder.walkway(folder, allLines[i], y, walkWidth(), if v3 then PathBuilder.PAVING_V3 else PathBuilder.GRAVEL, Enum.Material.Cobblestone, PathBuilder.KERB)
 		if v3 then
-			count += PathBuilder.dressLine(folder, allLines[i], floorY, PathBuilder.WALK_WIDTH, i, allLines, dressState)
+			count += PathBuilder.dressLine(folder, allLines[i], floorY, walkWidth(), i, avoid, dressState)
 		end
 	end
 	count += PathBuilder.finishKerbs(folder)
@@ -685,13 +701,13 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 	if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 then
 		local hub = o2 + PathPlan.LAB_HUB
 		local flat = CFrame.Angles(0, 0, math.rad(90))
-		deco(folder, "PlazaSoil", Vector3.new(0.12, 19.4, 19.4), CFrame.new(hub.X, floorY + 0.06, hub.Y) * flat, PathBuilder.SOIL, Enum.Material.Ground, Enum.PartType.Cylinder)
-		deco(folder, "PlazaGrass", Vector3.new(0.13, 18.6, 18.6), CFrame.new(hub.X, floorY + 0.07, hub.Y) * flat, PathBuilder.SHOULDER, Enum.Material.Grass, Enum.PartType.Cylinder)
-		deco(folder, "PlazaRing", Vector3.new(0.3, 15.6, 15.6), CFrame.new(hub.X, floorY + 0.16, hub.Y) * flat, PathBuilder.KERB, Enum.Material.Slate, Enum.PartType.Cylinder)
-		deco(folder, "Plaza", Vector3.new(0.34, 14.4, 14.4), CFrame.new(hub.X, floorY + 0.18, hub.Y) * flat, PathBuilder.PAVING_V3, Enum.Material.Cobblestone, Enum.PartType.Cylinder)
+		deco(folder, "PlazaSoil", Vector3.new(0.12, 21.8, 21.8), CFrame.new(hub.X, floorY + 0.06, hub.Y) * flat, PathBuilder.SOIL, Enum.Material.Ground, Enum.PartType.Cylinder)
+		deco(folder, "PlazaGrass", Vector3.new(0.13, 21, 21), CFrame.new(hub.X, floorY + 0.07, hub.Y) * flat, PathBuilder.SHOULDER, Enum.Material.Grass, Enum.PartType.Cylinder)
+		deco(folder, "PlazaRing", Vector3.new(0.3, 19.2, 19.2), CFrame.new(hub.X, floorY + 0.16, hub.Y) * flat, PathBuilder.KERB, Enum.Material.Slate, Enum.PartType.Cylinder)
+		deco(folder, "Plaza", Vector3.new(0.34, 18, 18), CFrame.new(hub.X, floorY + 0.18, hub.Y) * flat, PathBuilder.PAVING_V3, Enum.Material.Cobblestone, Enum.PartType.Cylinder)
 		-- A rosette set into it: a darker ring and a centre stone.
-		deco(folder, "PlazaRose", Vector3.new(0.36, 7, 7), CFrame.new(hub.X, floorY + 0.19, hub.Y) * flat, PathBuilder.PAVING_V3:Lerp(PathBuilder.KERB, 0.35), Enum.Material.Cobblestone, Enum.PartType.Cylinder)
-		deco(folder, "PlazaHeart", Vector3.new(0.38, 5.6, 5.6), CFrame.new(hub.X, floorY + 0.2, hub.Y) * flat, PathBuilder.PAVING_V3, Enum.Material.Cobblestone, Enum.PartType.Cylinder)
+		deco(folder, "PlazaRose", Vector3.new(0.36, 9, 9), CFrame.new(hub.X, floorY + 0.19, hub.Y) * flat, PathBuilder.PAVING_V3:Lerp(PathBuilder.KERB, 0.35), Enum.Material.Cobblestone, Enum.PartType.Cylinder)
+		deco(folder, "PlazaHeart", Vector3.new(0.38, 7.2, 7.2), CFrame.new(hub.X, floorY + 0.2, hub.Y) * flat, PathBuilder.PAVING_V3, Enum.Material.Cobblestone, Enum.PartType.Cylinder)
 		count += 6
 	end
 	-- The signposts: at each fork, one board per way out, beside the path on the side no path takes.
@@ -716,7 +732,7 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 		end
 		if #ways > 0 then
 			local away = if sum.Magnitude > 0.05 then -sum.Unit else Vector2.new(1, 0)
-			local spot = o2 + here + away * (PathBuilder.WALK_WIDTH / 2 + 1.6)
+			local spot = o2 + here + away * (walkWidth() / 2 + PathBuilder.KERB_W + PathBuilder.SHOULDER_W + 0.6)
 			count += PathBuilder.signpost(folder, Vector3.new(spot.X, floorY, spot.Y), ways)
 		end
 	end
