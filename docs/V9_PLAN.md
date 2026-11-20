@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -52,6 +52,23 @@ Run all of `docs/FIX_PATHS_SHOP.md`:
 - F3 no dead-end paths;
 - F4 captures;
 - F5 purchase pictures and id paste-in.
+
+## V9-0s Game Arena hidden for now (owner, 21 Nov; quick, do it first)
+> "Fjern game arena for nu."
+
+- **Hide it, do not delete it.** Add a switch `Config.ARENA_ENABLED = false`; true brings it back.
+- **With it off:**
+  - not in `Places`;
+  - not on the Map Board, in the Places portal carousel, in the Maps window or in MENU;
+  - no arena minigame starts or invites (Red Light Green Light and the others);
+  - no arena entry or arena experiment cards in the daily deck;
+  - no arena "used" counters expected.
+- **Also off:**
+  - the arena is not built at server start, so there is no cost (V9-5b);
+  - nothing teleports a player there (portals, admin go-to, director shots);
+  - a saved last place of "Arena" falls back to the lab.
+- **Tests:** tests that need the arena skip with a clear SKIP while the switch is off (T26, T31, the minigame tests); everything else passes.
+- **Report:** note in State that the arena is hidden and how to turn it back on.
 
 ## V9-0a Hitting a ragdoll never opens Talk (owner, 21 Nov; do it first, it is quick)
 > "Fiks så at når man forsøger at slå en ragdoll at man ikke åbner talk menuen hele tiden."
