@@ -150,6 +150,7 @@ local Config = {
 	LAB_SURPRISE_GAP = Vector2.new(150, 240), -- s between them (random in the range)
 	LAB_ZONES = true, -- v4 C1: lab zones, today's machine, NEW tags (Server/Systems/LabZones)
 	UI_CLEAN = true, -- v4 D2: calm hand-made look (leaderboards as wall panels, no neon frames/crowns/glow; see LeaderboardService.STYLE)
+	ARENA_V2 = true, -- v4 D1: the Game Arena as a sports hall (track floor, lanes, concrete, padding) instead of the pink room
 	NEW_SINCE = "2026-11-20", -- UTC date of the update whose things get a NEW tag
 	NEW_DAYS = 7,
 	NEW_IN_LAB = table.freeze({ "BigButton", "LabCar", "LabTruck", "PortalMulti" }), -- names in the lab's folder

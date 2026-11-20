@@ -15,6 +15,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Places = require(Shared:WaitForChild("Places"))
+local Config = require(Shared:WaitForChild("Config"))
 local Net = require(Shared:WaitForChild("Net"))
 local Log = require(Shared:WaitForChild("Log"))
 local N7Models = require(Shared:WaitForChild("N7Models"))
@@ -538,11 +539,29 @@ end
 
 BUILDERS.Arena = function(m, place, c)
 	local s = place.size
-	shell(m, place, c, hex("#E8D2A6"), Enum.Material.Sand, hex("#F7B6C8"), Enum.Material.SmoothPlastic, hex("#9FE3E0"))
+	-- v4 D1 (owner: "no AI slop"): with Config.ARENA_V2 a sports hall (a red running track with white
+	-- lanes, bare concrete walls over a blue padded band, painted lines), not a pink box.
+	local v2 = (Config :: any).ARENA_V2 == true
+	if v2 then
+		shell(m, place, c, hex("#A9473A"), Enum.Material.Rubber, hex("#CFCBC3"), Enum.Material.Concrete, hex("#2A2D33"))
+		for _, side in { -1, 1 } do
+			part(m, "Padding", Vector3.new(0.6, 5, s.Z), CFrame.new(c + Vector3.new(side * (s.X / 2 - 0.3), 2.5, 0)), hex("#24456F"), Enum.Material.Fabric, { CanQuery = false })
+		end
+		for _, z in { -1, 1 } do
+			part(m, "Padding", Vector3.new(s.X, 5, 0.6), CFrame.new(c + Vector3.new(0, 2.5, z * (s.Z / 2 - 0.3))), hex("#24456F"), Enum.Material.Fabric, { CanQuery = false })
+		end
+		-- Lanes down the run (start in the north, finish in the south).
+		local laneW = 8
+		for x = -s.X / 2 + 12, s.X / 2 - 12, laneW do
+			part(m, "Lane", Vector3.new(0.35, 0.05, 96), CFrame.new(c + Vector3.new(x, 0.03, 8)), hex("#F2EEE6"), Enum.Material.SmoothPlastic, { CanCollide = false, CanQuery = false })
+		end
+	else
+		shell(m, place, c, hex("#E8D2A6"), Enum.Material.Sand, hex("#F7B6C8"), Enum.Material.SmoothPlastic, hex("#9FE3E0"))
+	end
 	-- The lines: where runners start (north), where they must not cross (the finish, south), and
 	-- the guard's side behind it.
 	local function line(z: number, color: Color3)
-		part(m, "Line", Vector3.new(s.X - 6, 0.06, 1.4), CFrame.new(c + Vector3.new(0, 0.03, z)), color, Enum.Material.Neon, { CanCollide = false, CanQuery = false })
+		part(m, "Line", Vector3.new(s.X - 6, 0.06, 1.4), CFrame.new(c + Vector3.new(0, 0.04, z)), color, if (Config :: any).ARENA_V2 then Enum.Material.SmoothPlastic else Enum.Material.Neon, { CanCollide = false, CanQuery = false })
 	end
 	line(56, hex("#FFFFFF"))
 	line(-40, hex("#E63946"))
@@ -604,7 +623,7 @@ local LOOKS: { [string]: Look } = {
 	Hangar = { trim = hex("#F2C230"), pilaster = hex("#454B55"), windows = true, border = hex("#F2C230") },
 	WhiteRoom = { trim = hex("#D3D3DE"), pilaster = hex("#ECECF2"), windows = false, border = nil },
 	Metro = { trim = hex("#2F3A4A"), pilaster = nil, windows = false, border = nil, crown = hex("#2F3A4A") },
-	Arena = { trim = hex("#C9577A"), pilaster = hex("#F3A6BD"), windows = true, border = nil },
+	Arena = if (Config :: any).ARENA_V2 then { trim = hex("#24456F"), pilaster = hex("#B9B5AD"), windows = true, border = nil } else { trim = hex("#C9577A"), pilaster = hex("#F3A6BD"), windows = true, border = nil },
 }
 
 local BAY = 18 -- studs between pilasters
