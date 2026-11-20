@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -1065,6 +1065,79 @@ These are the `map = true` OFFERS and the passes that put a thing in the world. 
 - **Bring every event model up to the same bar:** Gorilla, Bull, UFO, Train, Balloon, Giant Dummy, Tornado, Meteor, Bowling balls, Magnet, Rocket rain and so on.
 - **Each needs:** a real model, an entrance, an act on the ragdolls, an exit and sound.
 - **Match V8-2.9:** only the events that stay get the work. The rest stay hidden and are not sold.
+
+## V9-5c Many more free things to play with on every map (owner, 21 Nov)
+> "Tilføj flere forskellige gratis ting man kan interagere med ved alle de andre maps."
+
+**Now:** `MapActivities` has a few activities per map; the maps feel empty next to the lab.
+
+**Goal:**
+- **How many:** 5-6 free interactive things per map, each themed to its place.
+- **Each one:** a real model at hero scale (V9-0r), its own animation and sounds, a terminal / ProximityPrompt in the V9-2b / V9-4b style, a LabGuide-style icon sign (V9-0q visible), and a landing on open ground.
+- **Who can use them:** they work on dummies and on players (cartoon-style, kid-safe).
+
+**Placement:** placed with the V9-0n rules: from the arrival, the first one is 15-20 studs ahead, the rest in a loop, the portal home in view, and spaced so the actions never overlap.
+
+**Ideas** (pick the best 5-6 per map; real models, mild):
+- **Plaza:**
+  - a bouncy castle;
+  - a dunk tank (hit the target, the dummy drops in the water);
+  - a carnival high-striker (hammer → bell, launches a dummy);
+  - a spinning teacup ride;
+  - a ball pit;
+  - a confetti cannon.
+- **Island:**
+  - a coconut catapult;
+  - a water slide into the sea;
+  - a jet-ski ramp jump;
+  - a beach volleyball net that spikes dummies;
+  - a geyser rock;
+  - a lighthouse zip line.
+- **City:**
+  - a taxi crash course;
+  - a revolving-door launcher;
+  - a manhole steam blast;
+  - a fire-hydrant jet;
+  - an elevator drop from a rooftop;
+  - a bus that bowls dummies down the street.
+- **Building site:**
+  - a crane with a wrecking ball;
+  - a cement mixer spin;
+  - a conveyor into a skip;
+  - a demolition-charge wall (cartoon puff);
+  - a dump-truck tip;
+  - a scaffold drop.
+- **Old farm:**
+  - a hay-bale cannon;
+  - a tractor tow;
+  - a windmill fling;
+  - a pig-mud slide;
+  - a barn-door swing;
+  - a corn-silo drop.
+- **Army base:**
+  - an obstacle course with a catapult wall;
+  - a parachute tower;
+  - a jeep jump ramp;
+  - a cartoon target range (dummies pop up);
+  - a trampoline-net training pit;
+  - a paint-ball (colour splat) turret.
+
+**Rules:**
+- server-checked use, rate limits and spam allowed within a queue (V9-2b pattern);
+- one remote family through `Net`, listed in CLAUDE.md;
+- the map's crowd NPCs may be used too (as now);
+- each map's things sleep when no player is on that map (V9-5b);
+- an experiment card per map ("Try 3 things on the Island") and a journal page per thing;
+- **the phone budget per map** is held.
+
+**Tests:** T172_MapThings.
+- Every map has at least 5 things.
+- Each works once on a dummy and on a player.
+- Each launch lands on open ground on that map.
+- Strangers on another map cannot trigger them.
+- Things sleep with nobody on the map.
+
+**Capture:** the arrival view and each thing in action, per map, PC and phone.
 
 ## V9-5b A clean server and no lag, without losing quality (owner, 21 Nov)
 > "Sørg for serveren kører så clean som overhovedet muligt med så lidt lag som overhovedet muligt, uden at ødelægge eller svække noget kvalitet mæssigt."
