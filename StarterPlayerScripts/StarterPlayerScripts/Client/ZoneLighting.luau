@@ -11,7 +11,8 @@ local TweenService = game:GetService("TweenService")
 
 local Places = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Places"))
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
-local V3 = Config.LOOK_V3_LIGHT
+local THUMB = (Config :: any).LOOK_THUMB == true and (Config :: any).LOOK_THUMB_LIGHT ~= nil -- (V9-0b: the thumbnail look)
+local V3 = if THUMB then (Config :: any).LOOK_THUMB_LIGHT else Config.LOOK_V3_LIGHT
 
 local ZoneLighting = {}
 ZoneLighting.reapply = function() end -- (set by start)
@@ -62,7 +63,7 @@ if Config.LOOK_V3 then
 		EnvironmentDiffuseScale = V3.EnvironmentDiffuseScale,
 		EnvironmentSpecularScale = V3.EnvironmentSpecularScale,
 	}
-	AIR.Lab = { density = V3.airDensity, color = V3.airColor, decay = V3.airDecay, saturation = V3.saturation, tint = Color3.new(1, 1, 1) }
+	AIR.Lab = { density = V3.airDensity, color = V3.airColor, decay = V3.airDecay, saturation = V3.saturation, tint = if THUMB then V3.tint else Color3.new(1, 1, 1) }
 end
 -- Audit area 6: the open-air maps lie 1200 studs apart; a thicker sea haze hides the next map's
 -- skyline across the water (Places light = "Outdoor").
@@ -200,6 +201,60 @@ local function finish()
 	end
 end
 
+-- V9-0b (Config.LOOK_THUMB, the thumbnails' sunny look): Roblox's own cartoon cloud skybox in place of
+-- the realistic one (kept, parented under it as "RealisticSky", so turning the switch off brings it
+-- back on the next start), a big sun, dynamic white clouds, warm sunlight, a soft sun glow, sun rays.
+-- On this screen only; the server and the place file keep their sky.
+local function thumbSky()
+	local V = V3 :: any
+	Lighting.GeographicLatitude = V.GeographicLatitude
+	Lighting.ColorShift_Top = V.ColorShift_Top
+	local current = Lighting:FindFirstChildOfClass("Sky")
+	if not (current and current.Name == "ThumbSky") then
+		local sky = Instance.new("Sky") -- (a new Sky wears Roblox's classic blue sky with clouds)
+		sky.Name = "ThumbSky"
+		sky.StarCount = 0
+		if current then
+			current.Name = "RealisticSky"
+			current.Parent = nil
+		end
+		sky.Parent = Lighting
+		current = sky
+	end
+	assert(current)
+	current.SunAngularSize = V.sunSize
+	current.CelestialBodiesShown = true
+	local clouds = workspace.Terrain:FindFirstChildOfClass("Clouds")
+	if not clouds then
+		local made = Instance.new("Clouds")
+		made.Parent = workspace.Terrain
+		clouds = made
+	end
+	assert(clouds)
+	clouds.Cover = V.cloudCover
+	clouds.Density = V.cloudDensity
+	clouds.Color = Color3.new(1, 1, 1)
+	clouds.Enabled = true
+	local bloom = Lighting:FindFirstChildOfClass("BloomEffect")
+	if bloom then
+		bloom.Size = V.bloomSize
+	end
+	for _, d in Lighting:GetChildren() do
+		if d:IsA("SunRaysEffect") then
+			d.Enabled = true
+			d.Intensity = V.sunRays
+			d.Spread = V.sunRaysSpread
+		end
+	end
+	if not Lighting:FindFirstChildOfClass("SunRaysEffect") then
+		local rays = Instance.new("SunRaysEffect")
+		rays.Name = "ThumbRays"
+		rays.Intensity = V.sunRays
+		rays.Spread = V.sunRaysSpread
+		rays.Parent = Lighting
+	end
+end
+
 -- LOOK_V3's finish: soft shadows, almost no bloom, no sun rays or far blur, a low haze.
 local function finishV3()
 	Lighting.ShadowSoftness = V3.ShadowSoftness
@@ -231,7 +286,7 @@ local function finishV3()
 	cc.Contrast = V3.contrast
 	cc.Brightness = 0
 	cc.Saturation = V3.saturation
-	cc.TintColor = Color3.new(1, 1, 1)
+	cc.TintColor = if THUMB then V3.tint else Color3.new(1, 1, 1)
 	local air = Lighting:FindFirstChildOfClass("Atmosphere")
 	if not air then
 		local made = Instance.new("Atmosphere")
@@ -246,6 +301,9 @@ local function finishV3()
 	air.Glare = V3.airGlare
 	air.Color = V3.airColor
 	air.Decay = V3.airDecay
+	if THUMB then
+		thumbSky()
+	end
 end
 
 function ZoneLighting.start()

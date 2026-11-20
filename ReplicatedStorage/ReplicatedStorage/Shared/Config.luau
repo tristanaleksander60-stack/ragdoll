@@ -215,6 +215,41 @@ local Config = {
 		contrast = 0.05,
 		saturation = -0.05,
 	}),
+	-- V9-0b (owner, 21 Nov 2026: "make the game feel like the thumbnails ... now it looks dark and the sky
+	-- looks dead"; art/store/look_target): a bright, sunny afternoon. A cartoon-blue sky with Roblox's
+	-- own cloud skybox and dynamic white clouds, a big sun behind the spawn camera's left shoulder (faces
+	-- and the cannon lit), warm sunlight with blue-grey (never black) shadows, richer colour, a soft
+	-- glow on only the brightest things. Client/ZoneLighting reads it. false = the LOOK_V3 light.
+	LOOK_THUMB = true,
+	LOOK_THUMB_LIGHT = table.freeze({
+		ClockTime = 14.5,
+		GeographicLatitude = 50, -- (with ClockTime: the sun at about (-0.54, 0.71, 0.45))
+		Brightness = 3.3,
+		Ambient = Color3.fromRGB(104, 116, 140),
+		OutdoorAmbient = Color3.fromRGB(150, 168, 200),
+		ColorShift_Top = Color3.fromRGB(255, 232, 200),
+		ExposureCompensation = 0.1,
+		EnvironmentDiffuseScale = 0.8,
+		EnvironmentSpecularScale = 0.8,
+		ShadowSoftness = 0.3,
+		airDensity = 0.22,
+		airOffset = 0.25,
+		airHaze = 0.4,
+		airGlare = 0.6,
+		airColor = Color3.fromRGB(190, 220, 255),
+		airDecay = Color3.fromRGB(110, 160, 230),
+		bloom = 0.4,
+		bloomThreshold = 1.4,
+		bloomSize = 24,
+		contrast = 0.08,
+		saturation = 0.22,
+		tint = Color3.fromRGB(255, 251, 242),
+		sunRays = 0.1,
+		sunRaysSpread = 0.5,
+		sunSize = 18,
+		cloudCover = 0.58,
+		cloudDensity = 0.75,
+	}),
 	LOOK_V3_DUMMY = Color3.fromRGB(240, 240, 238), -- the plain white of a test mannequin
 	LOOK_V3_DUMMY_LOW = Color3.fromRGB(232, 232, 230), -- forearms and shins, a hair darker
 	LOOK_V3_DUMMY_ENDS = Color3.fromRGB(222, 222, 220), -- hands and feet

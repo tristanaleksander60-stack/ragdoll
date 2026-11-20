@@ -17,7 +17,7 @@ local V3Assets = require(script.Parent.V3Assets)
 
 local Landscape = {}
 
-Landscape.GRASS = Color3.fromRGB(104, 128, 66)
+Landscape.GRASS = if (Config :: any).LOOK_THUMB then Color3.fromRGB(96, 158, 62) else Color3.fromRGB(104, 128, 66) -- (V9-0b: the thumbnails' lush green)
 Landscape.SEED = 1119 -- the same land on every server
 Landscape.STEP = 8 -- studs per terrain column
 Landscape.FLAT = 30 -- studs of flat land next to the labs before the hills start
