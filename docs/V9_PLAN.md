@@ -447,3 +447,4 @@ These are the `map = true` OFFERS and the passes that put a thing in the world. 
 
 ## State
 - 21 Nov 2026: plan written (cloud). Nothing done.
+- 21 Nov 2026, V9-0a DONE (PC): `Shared/TalkRules` (pure). The server's TalkPrompt is `ClickablePrompt = false`. `Client/NpcTalk` hides every Talk prompt for 2 s after a click, R2 or own shot (3 s on touch; on touch only while standing still, with a 0.4 s hold) and while Grab holds a body, and ignores an "Open" within 0.5 s of an attack. T158_HitNotTalk passes (18 live prompts not clickable). Live in Studio: 30 quick clicks with the Popper on a dummy 5-9 studs away opened Talk 0 times (the prompt hid at once and came back after 2 s); E next to a calm dummy still opens it (capture).

@@ -369,6 +369,7 @@ function NpcCommand.start()
 		prompt.HoldDuration = 0
 		prompt.RequiresLineOfSight = false
 		prompt.Style = Enum.ProximityPromptStyle.Default
+		prompt.ClickablePrompt = false -- (V9-0a: a click meant as a hit never opens Talk; touch: NpcTalk, TalkRules)
 		prompt.Parent = head
 		-- Usable only while the body can take commands (alive, not in a game of its own): the
 		-- attribute "Talkable" tells the clients (NpcTalk keeps it hidden in the lab view and Build).

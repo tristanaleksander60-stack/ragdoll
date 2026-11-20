@@ -19,6 +19,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Toys = require(Shared:WaitForChild("Toys"))
+local TalkRules = require(Shared:WaitForChild("TalkRules")) -- (V9-0a: a hit never opens Talk)
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local C = require(UI:WaitForChild("LihFolkUIComponents")) :: any
 local Theme = require(UI:WaitForChild("LihFolkUITheme")) :: any
@@ -31,6 +32,7 @@ local NpcTalk = {}
 
 NpcTalk.TALK_REACH = 16 -- studs: further from the NPC the panel shuts
 NpcTalk.CLOSE_ACTION = "NpcTalkClose"
+NpcTalk.attacked = function() end :: () -> () -- (V9-0a: set in start; hides the Talk prompts after an attack)
 
 local player = Players.LocalPlayer
 local remote: RemoteEvent
@@ -41,6 +43,8 @@ local current: Model? = nil
 local firstButton: GuiObject? = nil
 local firstOrder = math.huge
 local buildActive: (() -> boolean)? = nil
+local lastAttack = -math.huge -- (os.clock of the last click, tap, R2 or own shot: TalkRules)
+local isGrabbing: (() -> boolean)? = nil
 
 local BUTTON_W, BUTTON_H = 260, 44
 
@@ -160,6 +164,10 @@ local function open(data: any)
 	if type(data) ~= "table" or typeof(data.npc) ~= "Instance" or not (data.npc :: Instance):IsA("Model") then
 		return
 	end
+	-- (V9-0a: a prompt that fired in the middle of a fight is ignored.)
+	if not TalkRules.mayOpen(os.clock(), lastAttack) then
+		return
+	end
 	current = data.npc :: Model
 	gui.Enabled = true
 	pageMain(data)
@@ -171,14 +179,30 @@ local function open(data: any)
 	end, false, Enum.ContextActionPriority.High.Value + 50, Enum.KeyCode.ButtonB, Enum.KeyCode.Escape)
 end
 
--- The Talk prompts show only where E is free (not in the lab view or Build).
+-- The Talk prompts show only where E is free (not in the lab view or Build), and (V9-0a,
+-- TalkRules) not during a fight: after a click, tap, R2 or shot, while Grab holds a body, and on
+-- touch only while you stand still.
 local function promptsAllowed(): boolean
-	return not ViewMode.isLab() and not (buildActive and buildActive())
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local v = if root and root:IsA("BasePart") then root.AssemblyLinearVelocity else Vector3.zero
+	return TalkRules.show({
+		now = os.clock(),
+		lastAttack = lastAttack,
+		touch = ViewMode.isTouch(),
+		speed = Vector3.new(v.X, 0, v.Z).Magnitude,
+		grabbing = isGrabbing ~= nil and isGrabbing(),
+		viewOk = not ViewMode.isLab() and not (buildActive and buildActive()),
+	})
 end
 
 local function setPrompt(p: ProximityPrompt, allowed: boolean)
 	-- (Local only: hides it on this screen. The server's "Talkable" says whether it can be used.)
 	p.Enabled = allowed and p:GetAttribute("Talkable") ~= false
+	-- (Not clickable with a mouse; on touch a short hold, so a quick tap meant as a hit never talks.)
+	local clickable, hold = TalkRules.promptStyle(ViewMode.isTouch())
+	p.ClickablePrompt = clickable
+	p.HoldDuration = hold
 end
 
 function NpcTalk.start()
@@ -186,6 +210,9 @@ function NpcTalk.start()
 	pcall(function()
 		local BuildController = require(Client:WaitForChild("BuildController", 5)) :: any
 		buildActive = BuildController.isActive
+	end)
+	pcall(function()
+		isGrabbing = (require(Client:WaitForChild("GrabController", 5)) :: any).isGrabbing
 	end)
 	gui = Instance.new("ScreenGui")
 	gui.Name = "NpcTalk"
@@ -289,6 +316,32 @@ function NpcTalk.start()
 			end
 		end
 	end
+	-- V9-0a: an attack hides every Talk prompt at once; the check below brings them back after
+	-- TalkRules' quiet time.
+	local function attacked()
+		lastAttack = os.clock()
+		if allowed and folder then
+			allowed = false
+			for _, d in folder:GetDescendants() do
+				if d:IsA("ProximityPrompt") and d.Name == "TalkPrompt" then
+					setPrompt(d, false)
+				end
+			end
+		end
+	end
+	NpcTalk.attacked = attacked -- (tests and other attack paths)
+	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
+		if not processed and TalkRules.isAttack(input.UserInputType, input.KeyCode) then
+			attacked()
+		end
+	end)
+	pcall(function()
+		(require(Client:WaitForChild("FeelBus", 5)) :: any).on("Shot", function(data: any)
+			if type(data) == "table" and data.own then
+				attacked()
+			end
+		end)
+	end)
 	-- Shut when you walk away or the NPC goes; the prompts follow the camera mode.
 	local checkAt = 0
 	RunService.Heartbeat:Connect(function()
