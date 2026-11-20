@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -92,6 +92,48 @@ Run all of `docs/FIX_PATHS_SHOP.md`:
 - Without the pass and the trial: no GOD launcher in the HUD or MENU, and the card is in SHOP.
 - TRY opens the window and starts the trial.
 - With the pass (`OfferService.grantPass`): the launcher shows and the window opens.
+
+## V9-0g Phone notices much smaller: never cover the action (owner, 21 Nov; quick, do it next)
+> "Gør også alle nofikationer på telefonen meget mindre, jeg testet det lige og man kunne nærmest ikke se noget når man skød flere ragdolls og unlocked ting osv."
+
+**Problem.** On a phone, during fast play (several KOs, unlocks, missions), the toasts, banners (`Client/Banner`: KNOCKED OUT!, BULLSEYE!...), unlock reveals, KO stamps / "+1", combo pops, the experiment card and the event banner stack up and cover the screen.
+
+**Rules for touch screens** (landscape and portrait; tablets get a middle size):
+- **Size:**
+  - every unsolicited notice is at most about 40 px tall in landscape (portrait about 48 px);
+  - at most about 45 % of the screen width;
+  - text 14-16 px, an icon plus one short line;
+  - no full-width ribbons on phones.
+- **Place:**
+  - in one notice lane at the top centre (under the top bar), or in the top-right corner;
+  - never in the middle third, never over the crosshair or the thumb zones.
+  - The event banner goes straight to its small chip on phones (no big card first).
+- **Amount:**
+  - **One at a time.** At most 1 notice visible, and never more than 2 lines of the lane.
+  - **Merge repeats:** "+1 KO" ×5 becomes one small counter that ticks up ("KO ×5").
+  - **Combo pops** are a small number by the crosshair, not a word over it.
+  - **KO stamps** stay small and fade in 0.6 s.
+- **Unlocks:**
+  - a new weapon shows as a small chip "NEW: Rocket" with its icon, sliding into the bar slot;
+  - the big reveal plays only when nothing is happening (no shot for 2 s), or when the player taps the chip;
+  - never a full-screen reveal in the middle of a fight.
+- **Banners** (BULLSEYE!, KNOCKED OUT!, SURPRISE!):
+  - on phones a compact pill, about 36-40 px;
+  - hold about 1.2 s;
+  - when busy, only the most important one shows, and the rest are dropped (not queued).
+- **Busy mode:** while the player fired in the last 1.5 s, only critical notices and the merged KO counter show. Everything else waits in `Notify` (V6-1 rules) or is dropped if stale.
+- **Settings:** a "Notifications: Normal / Small / Minimal" choice in Settings. Small is the phone default.
+
+**Check:**
+- In the phone emulator (iPhone SE landscape, iPhone 17 Pro portrait and landscape, a small Android), play 60 s of rapid shooting with 3 unlocks and a bullseye.
+- Captures every 5 s: the centre third is never covered for more than 0.3 s, and there is at most 1 notice at a time.
+- LayoutCheck gets a "notice lane" rule.
+
+**Tests:** T162_PhoneNotices.
+- 20 KOs in 5 s: one merged counter, no stack.
+- An unlock while firing: a small chip, and the reveal waits.
+- Sizes are within the limits on the phone screens.
+- T100 still passes.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
