@@ -246,3 +246,19 @@ What to do:
   - Capture `toast_tip_x`. T100/T23/T45/T55/T60 pass, no errors.
   - Left (minor): a gamepad cannot close tips (× not selectable); `NotifyRules.pick` is unused.
 - **V6-1 done.** Next: V6-2 (admin menu).
+- **V6-2 admin menu (20 Nov, `Config.ADMIN_V2`):** one tabbed window, `Client/AdminPanel` ("AdminV2"). The owner's SHOP → ADMIN EVENTS button opens it.
+  - **SERVER:**
+    - start any event (free, everyone here);
+    - all weapons on/off;
+    - gravity: normal / low / moon / space;
+    - time: auto / morning / day / sunset / night;
+    - weather: clear / rain / snow / fog;
+    - 5 fixed announcements;
+    - the old menu (theme, free passes, trolls).
+  - **PLAYERS:** pick a player; go to, bring, spectate; a 2-minute free try of 6 big weapons (`TrialService.grant`); kick with 4 fixed reasons.
+  - **WORLD:** reset a lab (picked player's or mine); revive all; spawn 1/5/10 guest dummies as a row, ring or tower (`NoCredit`); clear the spawned ones; crowd +5/-5 where you are (`CrowdService.adjust`, at most 40).
+  - **DEBUG:** this screen's fps, memory, parts, ping; the server's fps, memory, parts, ragdolls, players, traffic, version; the last server and client errors.
+  - **Server side:** `Server/Systems/AdminTools` behind `AdminService` (owner check, pacing, fixed choices, every action logged with who and whom).
+  - **For everyone:** `Client/AdminWorld` draws the time of day (Workspace `AdminClock`) and the rain, snow or fog (`AdminWeather`); a phone gets a third of the drops.
+  - T101 (non-owner refused for every tool, fixed choices only, the tools work and are logged) passes; T41/T43 pass.
+  - Captures: admin_server, admin_players, admin_world, admin_debug, admin_rain6.

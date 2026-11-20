@@ -275,7 +275,7 @@ local function buildPasses(window: any)
 		layoutOrder = -1, -- (under its SERVER EVENTS header, above the queue line and the events)
 		parent = window.body,
 		onActivated = function()
-			Controller.open("Admin")
+			Controller.open(if (Config :: any).ADMIN_V2 then "AdminV2" else "Admin")
 		end,
 	})
 	adminButton.root.Visible = false
@@ -1086,6 +1086,9 @@ function EventShop.start()
 			isOwner = d.owner == true
 			if isOwner and adminButton then
 				buildAdmin()
+				if (Config :: any).ADMIN_V2 then
+					require(Client:WaitForChild("AdminPanel")).build() -- V6-2: the tabbed menu
+				end
 				adminButton.root.Visible = true
 			end
 		elseif kind == "Owned" then

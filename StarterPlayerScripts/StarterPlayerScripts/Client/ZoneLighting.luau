@@ -14,6 +14,7 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 local V3 = Config.LOOK_V3_LIGHT
 
 local ZoneLighting = {}
+ZoneLighting.reapply = function() end -- (set by start)
 
 type Profile = {
 	ClockTime: number,
@@ -263,6 +264,10 @@ function ZoneLighting.start()
 	local function update()
 		local place = player:GetAttribute("Place")
 		apply(if type(place) == "string" then place else "Lab")
+	end
+	ZoneLighting.reapply = function()
+		current = nil -- (V6-2: the owner's AUTO time puts the place's own light back)
+		update()
 	end
 	player:GetAttributeChangedSignal("Place"):Connect(update)
 	update()

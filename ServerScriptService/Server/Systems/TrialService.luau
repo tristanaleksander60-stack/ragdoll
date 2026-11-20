@@ -123,6 +123,22 @@ function TrialService.try(player: Player, id: unknown): string?
 	return nil
 end
 
+-- V6-2: the owner gives a player a free try from the admin menu (no store, no daily limit; the
+-- same attributes and timer as a normal try, so it ends the same way).
+function TrialService.grant(player: Player, id: string): boolean
+	local toy = Toys.byId[id]
+	if not toy or toy.unlockAt <= 0 then
+		return false
+	end
+	local prev = player:GetAttribute("TrialToken")
+	local token = (if type(prev) == "number" then prev else 0) + 1
+	player:SetAttribute("TrialToken", token)
+	player:SetAttribute("TrialWeapon", toy.id)
+	player:SetAttribute("TrialUntil", Workspace:GetServerTimeNow() + TrialService.SECONDS)
+	task.delay(TrialService.SECONDS, finish, player, token)
+	return true
+end
+
 function TrialService.start()
 	if ProgressService.usesDataStores() then
 		local ok, ds = pcall(DataStoreService.GetDataStore, DataStoreService, STORE)

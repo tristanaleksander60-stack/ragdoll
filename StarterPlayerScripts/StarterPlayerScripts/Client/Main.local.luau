@@ -53,6 +53,7 @@ task.spawn(require(Client:WaitForChild("SlowMotion")).start) -- v4 C5: smooth sl
 task.spawn(require(Client:WaitForChild("VehicleFeel")).start) -- v4 C2: wheels, lean, lights, engine, horn
 task.spawn(require(Client:WaitForChild("CreatureAnim")).start) -- v4 C3: the gorilla and bulls move and sound
 task.spawn(require(Client:WaitForChild("FirstVisit")).start) -- audit area 1: a newcomer's first visit (one objective, the HUD comes in at 90 s)
+task.spawn(require(Client:WaitForChild("AdminWorld")).start) -- V6-2: the owner's time of day and weather for everyone
 FxController.start()
 AvatarMoves.start()
 

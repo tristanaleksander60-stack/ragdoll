@@ -1357,6 +1357,30 @@ function CrowdService.holdForTest(on: boolean, noticing: boolean?)
 end
 
 -- Tests: brings in extra people (the 20-at-once check) and takes them away again.
+-- V6-2: the owner's admin menu sets how many people a zone has (+/- `delta`, at most `max`).
+function CrowdService.adjust(zoneId: string, delta: number, max: number): number
+	local zone = zoneById[zoneId]
+	if not zone then
+		return -1
+	end
+	local list = CrowdService.people(zoneId)
+	if delta > 0 then
+		for _ = 1, math.min(delta, max - #list) do
+			spawnOne(zone)
+		end
+	else
+		for i = 1, math.min(-delta, #list) do
+			local model = list[#list - i + 1]
+			local npc = byModel[model]
+			if npc then
+				forget(npc)
+			end
+			model:Destroy()
+		end
+	end
+	return #CrowdService.people(zoneId)
+end
+
 function CrowdService.addForTest(count: number, zoneId: string?): { Model }
 	local added = {}
 	local zone = zoneById[zoneId or "Plaza"]

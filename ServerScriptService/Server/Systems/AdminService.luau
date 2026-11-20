@@ -30,6 +30,7 @@ local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
 local StreamerService = require(script.Parent.StreamerService)
 local FxService = require(script.Parent.FxService)
 local Lab = require(script.Parent.Lab)
+local AdminTools = require(script.Parent.AdminTools) -- V6-2: the tabbed menu's tools
 
 local log = Log.new("Admin")
 
@@ -493,6 +494,18 @@ function AdminService.request(player: Player, kind: unknown, arg: unknown): bool
 			done = true
 			note(string.format("%s (%d) set all weapons for everyone here: %s", player.Name, player.UserId, tostring(arg)), player.DisplayName .. (if arg then " gave everyone here every weapon" else " ended the free weapons"))
 		end
+	elseif type(kind) == "string" and AdminTools.KINDS[kind] then
+		local logged, shown, why
+		done, logged, shown, why = AdminTools.run(player, kind, arg)
+		if done and logged then
+			note(logged, shown or logged)
+		end
+		if why then
+			remote:FireClient(player, "Notice", why)
+		end
+	elseif kind == "Debug" then
+		remote:FireClient(player, "Debug", AdminTools.debug())
+		done = true
 	elseif kind == "Troll" then
 		local why
 		done, why = troll(player, arg)
@@ -518,6 +531,7 @@ end
 
 function AdminService.start()
 	remote = Net.event(Net.Names.Admin)
+	AdminTools.start()
 	remote.OnServerEvent:Connect(function(player: Player, kind: unknown, arg: unknown)
 		AdminService.request(player, kind, arg)
 	end)

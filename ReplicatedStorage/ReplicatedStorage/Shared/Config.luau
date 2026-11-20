@@ -153,6 +153,7 @@ local Config = {
 	NEWCOMER_SECONDS = 300, -- played in all under this = a newcomer (the first-visit flow)
 	-- V6-1 notification centre (Client/Notify, Shared/NotifyRules): one big pop-up at a time, gaps by
 	-- kind, dedupe, quiet after windows; false = every message straight to Toast as before.
+	ADMIN_V2 = true, -- V6-2: the owner's tabbed admin menu (Client/AdminPanel, Server/Systems/AdminTools)
 	NOTIFY = true,
 	NOTIFY_BIG_AFTER_REVEAL = 20, -- s after a newcomer's HUD reveal before the first big pop-up
 	NOTIFY_REVEAL_KEEP = 2, -- rewards that waited through a newcomer's quiet: only the newest this many show
