@@ -3,7 +3,7 @@
 -- T110 checks it). A new tool takes the weakest slot (by Toy.rank, the ladder before V8 moved the
 -- start bar to 0) that may go, and only when it is
 -- stronger; a gun, an explosive, Grab, the G17 (Blaster) and the Bat never give way to a plain tool
--- (a stronger gun or bang may take the weakest gun or bang, never the G17). A prize (an egg, a
+-- (a stronger gun or bang may take the weakest gun or bang that is not in KEEP). A prize (an egg, a
 -- crate, a gift day) always lands: with nothing weaker it takes the weakest that may go anyway, and
 -- with every slot guarded the last slot that is not the G17 or Grab.
 
@@ -11,7 +11,8 @@ local Toys = require(script.Parent:WaitForChild("Toys"))
 
 local HandRules = {}
 
-HandRules.KEEP = table.freeze({ Blaster = true, Grab = true, Bat = true }) :: { [string]: boolean }
+-- (Fix round 2: the start bar's Grenade and Launch stay too: a Firecracker or a Kick took them.)
+HandRules.KEEP = table.freeze({ Blaster = true, Grab = true, Bat = true, Grenade = true, Launch = true }) :: { [string]: boolean }
 
 -- Whether a slot's tool may give way to a new one.
 function HandRules.mayGo(id: string): boolean
@@ -48,7 +49,7 @@ function HandRules.slotFor(bar: { string }, id: string, prize: boolean?): number
 		local bang, bangAt = nil :: number?, new.rank
 		for i, have in bar do
 			local t = Toys.byId[have]
-			if t and have ~= "Blaster" and (t.gun or t.category == "Explosives") and t.rank < bangAt then
+			if t and not HandRules.KEEP[have] and (t.gun or t.category == "Explosives") and t.rank < bangAt then
 				bang, bangAt = i, t.rank
 			end
 		end

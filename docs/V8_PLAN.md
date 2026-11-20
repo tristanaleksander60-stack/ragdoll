@@ -1444,3 +1444,32 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
     - mild blurbs, the hit card pop, NPC taunts;
     - global build codes and the streamer section owner-only;
     - LIKE_CODES as update codes.
+- **V8-0.10 (21 Nov), 0.26.0 ready to publish:**
+  - **Version:** Config.Version 0.26.0 and a What's New entry (4 lines; the bird line is gone).
+  - **Full suite: 94 of 100 pass, 1 skip.**
+    - T19 and T32 are known flaky and pass alone.
+    - T23 and T45 waited for a greeter in the same frame: fixed, they pass.
+    - T26 passes on rerun.
+    - T103 had two causes, both fixed (T103 and T108 pass):
+      - the spider spat into the west hedge and looped (a real bug from V7, not yet live): it now spits towards the lab centre;
+      - the test read Playground once.
+  - **Blind review:** 6/10, then 8/10 after fix round 1. Fix round 2 closed its two remaining Low points (Grenade and Launch in HandRules.KEEP; a new player who sets a bar during the first read is marked).
+    - **Round 1 fixes:**
+      - the client Main wrap had cut the Doctor callback;
+      - returning players keep Poke/Shove/Slap/Heal earned on their old rungs (LADDER 4);
+      - HandRules ranks by Toy.rank;
+      - the bar move marks new players;
+      - first hits only from the player's own hit;
+      - early pace from the visit start;
+      - chase KOs from the visit record;
+      - a UTF-8-safe error signature;
+      - a refused deferred unlock still says WEAPONS.
+  - **Gate:**
+    - LayoutCheck 0 problems; 0 client errors, ClientBootFailed nil, BootFailed nil;
+    - flags off (RunSelfTest false, StudioFresh false, SelfTestOnly removed); no stray parts;
+    - place saved, v629; code backup at `RagdollLab-backups/2026-11-21-pre-publish-0.26.0`.
+  - **Gate deviations, said outright:**
+    - no 2-client test: nothing multiplayer changed in V8-0;
+    - no separate 10-minute phone-emulator session: the suite's ~13 minutes of play and the targeted runs showed no errors;
+    - no new products, so nothing to test-buy.
+  - **Publish:** the MCP cannot publish and the Open Cloud route needs the .rbxl, so the owner presses Alt+P (RELEASE.md, method 3). Then restart the servers through Open Cloud and read Session_v1 after 15-30 min.

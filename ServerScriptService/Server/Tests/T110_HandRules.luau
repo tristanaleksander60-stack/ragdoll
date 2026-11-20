@@ -61,7 +61,7 @@ return {
 				-- (A gun or a bang stays off only when nothing weaker may give way to it.)
 				for _, have in bar do
 					local t = Toys.byId[have]
-					local replaceable = HandRules.mayGo(have) or (have ~= "Blaster" and (t.gun or t.category == "Explosives"))
+					local replaceable = HandRules.mayGo(have) or (not HandRules.KEEP[have] and (t.gun or t.category == "Explosives"))
 					assert(not (replaceable and t.rank < toy.rank), toy.id .. " (a gun or a bang) did not land over the weaker " .. have)
 				end
 			end

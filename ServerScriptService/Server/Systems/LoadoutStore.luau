@@ -202,6 +202,9 @@ local function onJoin(player: Player)
 	readFailed[player] = not ok or nil
 	if current[player] then
 		scheduleSave(player) -- set while the read was running: newer than what was stored
+		if ok and list == nil and (Config :: any).V8_START_BAR then
+			task.spawn(markV8, player.UserId) -- (a new player's own bar: never moved later; fix round 2)
+		end
 	elseif list then
 		if (Config :: any).V8_START_BAR and ok then
 			list = LoadoutStore.migrateOnce(player.UserId, list)
