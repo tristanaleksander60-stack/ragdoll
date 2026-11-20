@@ -447,3 +447,14 @@ What to do:
   - **Birds:** crows fly higher.
   - **Map captures (Studio):** map_island, map_city2, map_farm, map_army, plus the lab (garden_east/west, yard_east) and the plaza (booths_plaza3).
   - **For the owner to judge:** whether the maps now read "100x better". Next per-map upgrades if wanted: MaterialVariants on the open-air terrain and decals for wear.
+- **Full regression (20 Nov, end of V6):**
+  - Full suite **85/91**. The fails:
+    - T15, T19, T25, T32: on the known flaky list;
+    - T23: order effect, passes alone;
+    - T39: plaza booths stood in front of the leaderboards. Fixed: plaza booths now stand in two side columns facing in; T39 and T105 pass.
+  - T66 fails when run alone (it starts before the labs are built) but passes in the full suite.
+  - LayoutCheck in the game's own client: **0 problems**.
+  - Version **0.24.0** with What's New (T66/T68 checked).
+- **State:** V6-1 to V6-8 are built, seen in Studio and pushed.
+  - Still open (owner): the product ids for the 10 map items (table above), the notification strings, saving the place (done by me through v570+), and publishing.
+  - Still open (later): the 3-client lab privacy check, phone frame-time checks, TRY per UTC day, and birds on roofs and wires.

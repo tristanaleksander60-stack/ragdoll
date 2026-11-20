@@ -314,7 +314,9 @@ function MapShopService.build(labOrigin: Vector3)
 				-- (The plaza: a row across its front. A map: a row along the arrival path, 40 studs to its
 				-- side, so the road and the arrival pad stay clear.)
 				local step = (i - (#list + 1) / 2) * gap
-				local offset = if place == "Plaza" then Vector3.new(step, 0, 0) else Vector3.new(MapShopService.MAP_SIDE, 0, step)
+				-- (The plaza: two columns at its sides, facing in, clear of the leaderboards at its front.)
+				local side = if i % 2 == 1 then -1 else 1
+				local offset = if place == "Plaza" then Vector3.new(side * 56, 0, -60 + math.floor((i - 1) / 2) * 16) else Vector3.new(MapShopService.MAP_SIDE, 0, step)
 				local spot = at + offset
 				-- (The ground itself, never a roof: the open-air maps stand on terrain; the plaza on parts.)
 				local rp = RaycastParams.new()
@@ -324,7 +326,7 @@ function MapShopService.build(labOrigin: Vector3)
 				end
 				local ground = Workspace:Raycast(spot + Vector3.new(0, 120, 0), Vector3.new(0, -400, 0), rp)
 				local y = if ground then ground.Position.Y else at.Y
-				MapShopService.buildBooth(o, CFrame.new(spot.X, y, spot.Z) * CFrame.Angles(0, if place == "Plaza" then 0 else math.rad(-90), 0), folder)
+				MapShopService.buildBooth(o, CFrame.new(spot.X, y, spot.Z) * CFrame.Angles(0, if place == "Plaza" then math.rad(side * 90) else math.rad(-90), 0), folder)
 			end
 		end
 	end

@@ -57,6 +57,15 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.24.0",
+		lines = {
+			"A BIGGER LAB with a garden, a fountain and tall hedges: your own private place",
+			"THE CREATURE YARD: feed the SPIDER, the giant plant, a frog, a whale geyser and more",
+			"BIRDS over your lab and every map",
+			"NEW SHOP BOOTHS: pets, trails, the crash-test suit and lab machines (try them free)",
+		},
+	},
+	{
 		version = "0.23.0",
 		lines = {
 			"TALK TO PEOPLE: press E and they follow you, stay put or take on another dummy",

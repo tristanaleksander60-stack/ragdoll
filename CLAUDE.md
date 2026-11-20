@@ -226,3 +226,23 @@ Phases 0-4b, A-M, N1-N5, N7 (graphics accepted as is), M1-M8 done. M9 was under 
   - Client: the player attribute `NewcomerUntil`, plus HudSlots `setNewcomerUntil`, `newcomerChanged` and `quietUntil`.
   - The HUD is held from frame 0; on PC, WEAPONS stays.
   - Studio hooks: player attribute `DevLayoutCheck` (runs LayoutCheck in the real client) and ServerStorage `StudioFresh`.
+- **V6-2 admin:** `Client/AdminPanel` ("AdminV2", `Config.ADMIN_V2`) is a tabbed window with SERVER / PLAYERS / WORLD / DEBUG tabs. Its tools are in `Server/Systems/AdminTools`, behind `AdminService` (owner check, pacing, fixed choices, logging). `Client/AdminWorld` draws the owner's time of day (`AdminClock`) and weather (`AdminWeather`) on every screen. When the owner leaves, these reset.
+- **V6-3 director:** `Client/Director` (`Config.DIRECTOR`), owner only.
+  - Keys: F8 turns it on and off, H is REC.
+  - It hides the game UI and shows a 9:16 frame.
+  - Cameras: free, orbit, follow, drone, first person and camera paths.
+  - It also has lens and time controls, actions, presets (`OwnerSetting` "DirectorPresets") and 6 one-tap TikTok shots.
+  - The server side is AdminTools `LaunchDummy` / `Shot` / `DirectorSave` / `DirectorGet`. Player attribute `IsOwner`.
+- **V6-4 lab:** with `Config.LAB_V6`, plots are 250 apart (`Zones.PLOT_SPACING`) and `Lab.CORE_HALF` is 85.
+  - The garden is `Server/Systems/LabGarden`.
+  - Place-file pieces: BaseplateEast/West.
+  - New models in V3Assets: GardenFountain, FlowerBed, GardenShed, Hedge.
+- **V6-5 creatures:** `Server/Systems/LabCreatures` (`Config.LAB_CREATURES`) is a yard in front of each lab with spider, plant, frog, whale, chicken, washer, slingshot, mole and vacuum.
+  - Body attributes: `InMachine`, `MachineHidden` (DummySkins hides the skins) and `MachineCool`.
+  - Each creature has an experiment card and a journal page.
+  - Models are in V3Assets with an M prefix.
+- **V6-6 birds:** `Client/Birds` (`Config.BIRDS`, `BIRDS_MAX`). Models are in ReplicatedStorage.BirdModels.
+- **V6-7 map shop:** `Server/Systems/MapShopService` + `Client/BoothSpin` (`Config.MAP_SHOP`).
+  - There are 10 `map = true` Shop.OFFERS (ids 0 until the owner creates them) with TRY 60 s.
+  - Pets are PetRobotDog and PetParrot in V3Assets.
+- **V6-8:** all 18 event cards have pictures, there is less outdoor haze, and version 0.24.0.

@@ -5,7 +5,7 @@ local Config = {
 	GameName = "Ragdoll Havoc", -- (the owner's name for the game, 10 Nov 2026)
 	-- Bumped with every change that goes live (round 5): SessionStats keeps it per visit, so the
 	-- numbers of one build can be told from another's.
-	Version = "0.23.0", -- (0.18.0 phase 0; 0.19.0 phases 1-3; 0.20.0 the release; 0.21.0 v3 look, cars, animals; 0.22.0 open-air maps, launchers, disasters, train, throw tower, 19 Nov 2026; 0.23.0 v4: talk to NPCs, real gorilla and bulls, 11 surprises, cars, slow-mo, lab zones, 20 Nov 2026; SessionStats also keeps game.PlaceVersion)
+	Version = "0.24.0", -- (0.24.0 v6: notifications, admin and director menus, bigger lab with garden, creature yard, birds, map shop, 20 Nov 2026; 0.18.0 phase 0; 0.19.0 phases 1-3; 0.20.0 the release; 0.21.0 v3 look, cars, animals; 0.22.0 open-air maps, launchers, disasters, train, throw tower, 19 Nov 2026; 0.23.0 v4: talk to NPCs, real gorilla and bulls, 11 surprises, cars, slow-mo, lab zones, 20 Nov 2026; SessionStats also keeps game.PlaceVersion)
 	Phase = 3,
 	-- Heavy weapons and close blasts can cut a limb off (round 2, N2). Roblox lists severed body
 	-- parts as Restricted (18+, ID-checked players only): switching this off keeps the game at a
