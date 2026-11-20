@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -134,6 +134,73 @@ Run all of `docs/FIX_PATHS_SHOP.md`:
 - An unlock while firing: a small chip, and the reveal waits.
 - Sizes are within the limits on the phone screens.
 - T100 still passes.
+
+## V9-0h The lab as one big open hub, like the leader (owner, 21 Nov)
+> "Analyser dybt dette billede hvad de gør i forhold til map placering og hvor tingene står og hvor stort det er og fiks så vi gør det samme."
+
+The reference capture is `art/store/look_target/leader_hub.webp`. It shows the leader's spawn hub (HRR-style HUD: Shop/Tools/Lab, R Revive · G Spawn · V Scan, Maps/Events, Next pill).
+
+### What the leader does (analysis)
+1. **One huge, open, flat floor is the whole play area.**
+   - Large light-grey concrete tiles (about 12-16 studs each, thin dark joints), with no paths, no clutter and no fences inside.
+   - The player spawns in the middle of empty floor, with about 40+ studs of clear floor round them. Dummies, cars and ragdolls read perfectly on the calm, light floor.
+   - The floor is the "path": you walk straight anywhere.
+2. **Everything sits on the rim, around the open middle, at about 40-150 studs.** Each attraction is a big, readable silhouette on its own pad:
+   - a giant rocket on a lattice launch tower (the tallest landmark, about 60-80 studs, back left);
+   - a big ramp or coaster track (left);
+   - a raised boxing ring with ropes and steps (back centre), with a brick crash wall behind it;
+   - vehicles parked side by side in one row: car, monster truck, tank (back centre-right);
+   - a pool (right back);
+   - a huge rock (right).
+3. **Everything is visible from spawn in one turn of the camera.** The spawn frame alone shows about 7 attractions. Nothing hides behind another, and heights step up toward the back (ring low, vehicles mid, rocket tall), like a stage.
+4. **Big, close social and info pieces frame the spawn:**
+   - the leaderboards are a giant wall of tall boards (about 30+ studs), angled toward the spawn, only about 10-20 studs away on the right. They form the right edge of the view;
+   - a **Maps billboard** with picture tiles of every map stands about 25 studs from spawn, angled to face it (click to travel);
+   - a wooden deck with a fence, a bench and a small house sits at the near left (a cosy corner).
+5. **The edge is closed:** green rolling hills with pine trees ring the whole hub (a bowl), with a few grey buildings as backdrop. No void, no visible map end. The grass shows only outside the tiled floor, behind a low kerb.
+6. **Scale:** generous. The floor is about 250-300 studs across, and the attractions are real-sized and big against a 5-stud player. Lots of negative space, so the physics chaos has room.
+7. **Few, calm world texts:** only the Maps board and the boards. Dummies have one small dark speech label. No signposts.
+
+### What we change (`Config.LAYOUT_V3`; false = today's LAYOUT_V2)
+- **Floor:** the lab core becomes one big open tiled floor.
+  - Light concrete tiles: a real MaterialVariant or a texture with large tiles and calm joints. Check it does not z-fight or shimmer (V9-0d rules).
+  - About 220-260 studs across inside the plot (`PLOT_SPACING` 250+; grow the spacing if needed, with the neighbour labs still hidden).
+  - The paths, verges and lamps inside the core go. Paths and greenery stay only on the grass ring outside the floor, to the garden and the creature yard.
+- **Spawn:** in the middle of the floor, with a 40-stud clear circle, facing the main attractions.
+- **The rim** (one ring at about 50-140 studs, each on its own pad, heights rising toward the back):
+  - **left/back left:** the rocket on its launch tower (V9-3c) as the tallest landmark, and the tower/ramp;
+  - **back centre:** the cannon with the bullseye in front of the spawn view, the BIG RED BUTTON pad, the boxing/test ring with the dummy row;
+  - **back right:** the vehicle row (Car, Truck, Tank, monster truck) parked side by side;
+  - **right:** the aquarium/pool (V9-1) and the creature yard entrance;
+  - **sides:** the lava pit, wrecking ball, mace, trampoline and stations, spaced so none hides another.
+- **Info pieces near the spawn:**
+  - **the leaderboard wall:** big, angled, about 15-20 studs to one side, forming that edge of the view;
+  - **the Maps board / Places portal** (V9-0e) about 25 studs from the spawn, angled to face it;
+  - **a cosy corner:** a wooden deck with a bench and fence at the near side.
+- **Edge:**
+  - a low kerb, then grass;
+  - the garden and the creature yard outside the floor;
+  - the hedge and the rolling hills with trees all round (Landscape), so nothing beyond is visible (privacy holds).
+- **Keep:** every machine and system works as now (only positions change). Update PathPlan and LabGuide rings, LabZones/today's machine, the Christmas spots, VehicleService spawn and reset points, GreeterService and VisitorService routes, and the tests that hold positions.
+- **HUD check against the reference** (only where ours is weaker):
+  - the big left squares (Shop, Tools/Weapons, Lab);
+  - the key chips bottom-left (R Revive, G Spawn, V…);
+  - the Next pill top right;
+  - Maps/Events squares top right;
+  - an in-game board panel (Here/Friends/Global).
+
+  Ours already has most of this; only align what V9-0g's phone rules allow.
+
+### Done when
+- **Captures from the spawn:**
+  - the PC frame shows at least 6 attractions without turning, the leaderboard wall and the Maps board;
+  - phone landscape shows at least 4;
+  - a top-down shot shows the ring layout, and a back shot shows the closed edge.
+- **Side by side** with `leader_hub.webp`, the blind reviewer judges that "it reads as one big open hub with everything on the rim" (≥ 8.5).
+- **Tests:**
+  - T112 (spawn view), T106/T150 (paths), T36, T26, T50, T103 and T153 updated;
+  - a new T163_HubLayout: a 40-stud clear spawn circle; every attraction on the rim between 40 and 150 studs; none fully hidden from the spawn camera; no part z-fighting on the floor.
+- **Phone budget** held.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
