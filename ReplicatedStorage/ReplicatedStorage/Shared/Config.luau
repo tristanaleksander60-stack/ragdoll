@@ -162,6 +162,8 @@ local Config = {
 	PATHS = true, -- V7-2: earthen paths to everything in the lab, and repainted terrain paths on the plaza and open-air maps (Shared/PathPlan, Server/Systems/PathBuilder)
 	BIRDS_MAX = table.freeze({ pc = 24, tablet = 14, phone = 8 }), -- birds out at once per device
 	NOTIFY = true,
+	BANNER_V7 = true, -- V7-5: the event banner as a picture card that shrinks into a chip
+	BANNER_CHIP_AFTER = 3, -- seconds the full banner shows before it becomes a chip
 	NOTIFY_BIG_AFTER_REVEAL = 20, -- s after a newcomer's HUD reveal before the first big pop-up
 	NOTIFY_REVEAL_KEEP = 2, -- rewards that waited through a newcomer's quiet: only the newest this many show
 	EXPERIENCE_NOTIFY = true, -- ask for Roblox Experience Notifications opt-in after a wow moment

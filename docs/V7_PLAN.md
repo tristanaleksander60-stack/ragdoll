@@ -232,3 +232,14 @@ They lead from the spawn or arrival to each thing you can do there.
   - **Tests:** T36/T40/T91 pass.
   - **Captures:** v7_4_before, v7_4_after2.
   - **Left:** the map crowds keep their M11 role outfits (real Roblox clothes and hair per role). A new per-role accessory pass (hard hats, straw hats, helmets, sunglasses) and a LOD for the rings are not done.
+- **V7-5 done (part, 20 Nov, `Config.BANNER_V7`, `BANNER_CHIP_AFTER` 3):** the event banner ("<player> sent ...") is now a short premium card from the UI v2 tokens. It has:
+  - the event's own drawn picture (DrawnIcons `event_<id>`);
+  - the name in big display type, in title case (no all caps);
+  - a quiet "Sent by <display name>" line (or "A gift from" for TikTok, "A surprise for everyone" with no sender);
+  - a thin havoc-orange countdown line along the bottom that empties smoothly;
+  - a drop shadow, the card radius, and gentle Quint easing.
+
+  After 3 s it glides into a small chip in the top-left corner (picture, name, line), so the middle stays free and toasts go back to their own place (`belowBanner` returns 0 for the chip). `false` = the old banner.
+  - **Tests:** T107_EventBanner (all 21 events have a picture, a one-line name and a duration) and T100 pass. LayoutCheck shows 0 problems.
+  - **Captures:** v7_5_banner_full2, v7_5_banner_chip2.
+  - **Left for a later round:** a restyle of the next-mission card, the toasts and the other pops into the same family. They already use the UI v2 tokens from V6, so they were not touched here.

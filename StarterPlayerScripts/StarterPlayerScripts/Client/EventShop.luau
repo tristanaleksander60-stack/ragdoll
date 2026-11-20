@@ -621,7 +621,253 @@ local shownSeconds = -1
 local bannerGui: ScreenGui? = nil
 local bannerScale: UIScale? = nil
 
+-- V7-5 (Config.BANNER_V7): the event banner as a short premium card. The event's own picture,
+-- its name in big type, a quiet "Sent by <name>" line and a thin countdown line; after
+-- BANNER_CHIP_AFTER seconds it shrinks into a small chip (picture, name, the same line) so the
+-- screen is free for the action. UI v2 tokens, gentle easing, one drop shadow.
+
+local DrawnIcons = require(Shared:WaitForChild("DrawnIcons")) :: any
+local V7 = { full = Vector2.new(392, 80), chip = Vector2.new(214, 44) }
+local v7card: Frame? = nil
+local v7shadow: Frame? = nil
+local v7pic: ImageLabel? = nil
+local v7title: TextLabel? = nil
+local v7by: TextLabel? = nil
+local v7fill: Frame? = nil
+local v7mode = 0 -- 0 full .. 1 chip (tweened)
+local v7modeValue: NumberValue? = nil
+
+local function v7layout()
+	local card, pic, title, by = v7card, v7pic, v7title, v7by
+	if not (card and pic and title and by) then
+		return
+	end
+	local t = v7mode
+	local size = V7.full:Lerp(V7.chip, t)
+	local holder = banner
+	if holder then
+		holder.Size = UDim2.fromOffset(size.X, size.Y)
+		-- (The chip glides into the top-left corner: the middle stays free for toasts and the action.)
+		holder.AnchorPoint = Vector2.new(0.5 * (1 - t), 0)
+		if holder.Visible and shownId then
+			holder.Position = UDim2.new(0.5 * (1 - t), 10 * t, 0, 8)
+		end
+	end
+	card.Size = UDim2.fromOffset(size.X, size.Y)
+	if v7shadow then
+		v7shadow.Size = card.Size
+	end
+	local p = 64 + (30 - 64) * t
+	pic.Size = UDim2.fromOffset(p, p)
+	pic.Position = UDim2.fromOffset(8 - t, (size.Y - 4 - p) / 2)
+	local left = pic.Position.X.Offset + p + 10
+	by.TextTransparency = math.clamp(t * 2, 0, 1)
+	by.Visible = t < 0.5
+	by.Position = UDim2.fromOffset(left, 12)
+	by.Size = UDim2.new(1, -left - 12, 0, 18)
+	local titleH = 30 + (20 - 30) * t
+	title.Size = UDim2.new(1, -left - 12, 0, titleH)
+	title.Position = UDim2.fromOffset(left, (1 - t) * 31 + t * ((size.Y - 4 - titleH) / 2))
+	title.TextSize = titleH
+end
+
+local function buildBannerV7()
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "EventBanner"
+	gui.ResetOnSpawn = false
+	gui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
+	gui.DisplayOrder = 30
+	gui.Parent = player:WaitForChild("PlayerGui")
+	bannerGui = gui
+
+	local holder = Instance.new("Frame")
+	holder.Name = "Banner"
+	holder.AnchorPoint = Vector2.new(0.5, 0)
+	holder.Position = UDim2.new(0.5, 0, 0, 8)
+	holder.Size = UDim2.fromOffset(V7.full.X, V7.full.Y)
+	holder.BackgroundTransparency = 1
+	holder.Visible = false
+	local scale = Instance.new("UIScale")
+	scale.Parent = holder
+	bannerScale = scale
+	local function fit()
+		scale.Scale = math.clamp((gui.AbsoluteSize.X - 24) / V7.full.X, 0.7, 1)
+	end
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+	fit()
+
+	local radius = UDim.new(0, (Theme.Radius :: any).card or 14)
+	local shadowTok = (Theme :: any).Shadow or {}
+	local shadow = Instance.new("Frame")
+	shadow.Name = "Shadow"
+	shadow.Position = UDim2.fromOffset(0, shadowTok.offset or 5)
+	shadow.BackgroundColor3 = shadowTok.color or Theme.Palette.ink
+	shadow.BackgroundTransparency = shadowTok.transparency or 0.55
+	shadow.BorderSizePixel = 0
+	local sc = Instance.new("UICorner")
+	sc.CornerRadius = radius
+	sc.Parent = shadow
+	shadow.Parent = holder
+	v7shadow = shadow
+
+	local Pa = Theme.Palette :: any
+	local card = Instance.new("Frame")
+	card.Name = "Card"
+	card.BackgroundColor3 = Pa.dusk
+	card.BorderSizePixel = 0
+	card.ClipsDescendants = true
+	local cc = Instance.new("UICorner")
+	cc.CornerRadius = radius
+	cc.Parent = card
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Pa.accent or Pa.gold
+	stroke.Thickness = 1.5
+	stroke.Transparency = 0.35
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Parent = card
+	card.Parent = holder
+	v7card = card
+
+	local pic = Instance.new("ImageLabel")
+	pic.Name = "Picture"
+	pic.BackgroundColor3 = Pa.duskRaised
+	pic.ScaleType = Enum.ScaleType.Crop
+	local pc = Instance.new("UICorner")
+	pc.CornerRadius = UDim.new(0, 10)
+	pc.Parent = pic
+	pic.Parent = card
+	v7pic = pic
+
+	local by = Instance.new("TextLabel")
+	by.Name = "By"
+	by.BackgroundTransparency = 1
+	by.FontFace = Theme.Fonts.bodySemi
+	by.TextSize = 15
+	by.TextColor3 = Pa.textMid or Color3.fromRGB(220, 228, 245)
+	by.TextXAlignment = Enum.TextXAlignment.Left
+	by.TextTruncate = Enum.TextTruncate.AtEnd
+	by.Parent = card
+	v7by = by
+
+	local title = Instance.new("TextLabel")
+	title.Name = "Title"
+	title.BackgroundTransparency = 1
+	title.FontFace = Theme.Fonts.display
+	title.TextColor3 = Color3.new(1, 1, 1)
+	title.TextXAlignment = Enum.TextXAlignment.Left
+	title.TextTruncate = Enum.TextTruncate.AtEnd
+	title.Parent = card
+	v7title = title
+
+	-- The countdown: a thin line along the bottom edge, emptying smoothly.
+	local track = Instance.new("Frame")
+	track.Name = "Countdown"
+	track.AnchorPoint = Vector2.new(0, 1)
+	track.Position = UDim2.new(0, 0, 1, 0)
+	track.Size = UDim2.new(1, 0, 0, 4)
+	track.BackgroundColor3 = Pa.ink
+	track.BackgroundTransparency = 0.4
+	track.BorderSizePixel = 0
+	track.Parent = card
+	local fill = Instance.new("Frame")
+	fill.Name = "Fill"
+	fill.Size = UDim2.fromScale(1, 1)
+	fill.BackgroundColor3 = Pa.accent or Pa.gold
+	fill.BorderSizePixel = 0
+	fill.Parent = track
+	v7fill = fill
+
+	local mv = Instance.new("NumberValue")
+	mv.Changed:Connect(function(v: number)
+		v7mode = v
+		v7layout()
+	end)
+	v7modeValue = mv
+	holder.Parent = gui
+	banner = holder
+	v7layout()
+end
+
+local function setModeV7(target: number, seconds: number)
+	local mv = v7modeValue
+	if not mv then
+		return
+	end
+	if seconds <= 0 then
+		mv.Value = target
+		return
+	end
+	TweenService:Create(mv, TweenInfo.new(seconds, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut), { Value = target }):Play()
+end
+
+local function showBannerV7()
+	local holder = banner
+	if not holder then
+		return
+	end
+	local id = state.id
+	local event = if id then Events.byId[id] else nil
+	if not event then
+		if shownId then
+			shownId = nil
+			local out = TweenService:Create(holder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+				Position = UDim2.new(holder.Position.X.Scale, holder.Position.X.Offset, 0, -110),
+			})
+			out:Play()
+			out.Completed:Once(function()
+				if not shownId then
+					holder.Visible = false
+				end
+			end)
+		end
+		return
+	end
+	if shownId ~= id then
+		shownId = id
+		shownSeconds = -1
+		local by = string.gsub(state.by or "", "^@", "")
+		;(v7title :: TextLabel).Text = event.name
+		;(v7by :: TextLabel).Text = if by == "" then "A surprise for everyone"
+			elseif state.source == "TikTok" then "A gift from " .. by
+			else "Sent by " .. by
+		;(v7pic :: ImageLabel).Image = DrawnIcons.ASSETS["event_" .. (id :: string)] or ""
+		setModeV7(0, 0)
+		holder.Visible = true
+		holder.AnchorPoint = Vector2.new(0.5, 0)
+		holder.Position = UDim2.new(0.5, 0, 0, -110)
+		TweenService:Create(holder, TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+			Position = UDim2.new(0.5, 0, 0, 8),
+		}):Play()
+		local camera = Workspace.CurrentCamera
+		if camera then
+			FxController.localEvent("Event", camera.CFrame.Position, 0, "")
+		end
+		local myId = id
+		task.delay((Config :: any).BANNER_CHIP_AFTER or 3, function()
+			if shownId == myId then
+				setModeV7(1, 0.5)
+			end
+		end)
+	end
+end
+
+local function tickBannerV7()
+	local fill = v7fill
+	if not shownId or not fill then
+		return
+	end
+	local event = Events.byId[shownId]
+	if not event then
+		return
+	end
+	local left = state.endsAt - Workspace:GetServerTimeNow()
+	fill.Size = UDim2.fromScale(math.clamp(left / event.duration, 0, 1), 1)
+end
+
 local function buildBanner()
+	if (Config :: any).BANNER_V7 then
+		return buildBannerV7()
+	end
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "EventBanner"
 	gui.ResetOnSpawn = false
@@ -676,6 +922,9 @@ local function buildBanner()
 end
 
 local function showBanner()
+	if (Config :: any).BANNER_V7 then
+		return showBannerV7()
+	end
 	local holder = banner
 	if not holder then
 		return
@@ -720,6 +969,9 @@ local function showBanner()
 end
 
 local function tickBanner()
+	if (Config :: any).BANNER_V7 then
+		return tickBannerV7()
+	end
 	if not shownId or not bar then
 		return
 	end
@@ -742,6 +994,12 @@ local function belowBanner(): number
 		return 0
 	end
 	local scale = if bannerScale then bannerScale.Scale else 1
+	if (Config :: any).BANNER_V7 and v7mode > 0.5 then
+		return 0 -- (a corner chip: toasts keep their own place)
+	end
+	if (Config :: any).BANNER_V7 then
+		return holder.AbsolutePosition.Y + holder.AbsoluteSize.Y + 8
+	end
 	return gui.AbsolutePosition.Y + 8 + 104 * scale + 8
 end
 
