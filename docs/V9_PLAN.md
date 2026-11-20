@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0b, V9-0c, V9-0d, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-4, V9-4b, V9-5, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -216,6 +216,40 @@ It follows the UI v2 tokens, phones included (out of the thumb zone), and hides 
 - the blind reviewer passes it (≥ 8.5);
 - the walking and crowd tests pass;
 - T156 passes.
+
+## V9-0e A beautiful Places portal you see at once (owner, 21 Nov)
+> "Lav en portal til places som er flot og ses hurtigt af spilleren så de udforsker."
+
+**Today.** Travel to the maps is a HUD button (Maps), plus the lab's two server portals (PortalSolo / PortalMulti, `PortalService`). Players rarely leave the lab (V8 data: maps are seldom used).
+
+**The new portal:**
+- **One big, beautiful "PLACES" portal in every lab**, placed in the spawn view (inside the V8 spawn cone, at about 25-40 studs from spawn, on a path, not blocking the cannon/dummies view).
+  - **Look:** a round stone or metal ring gate (a real model) with a swirling animated surface (a slowly turning texture plus particles), a soft glow and a hum.
+  - **Pictures:** small live picture panels of the 5 maps round it (the map card pictures), turning slowly.
+  - **Look and sound:** in the V9-0b bright look, plus a low hum.
+- **Walk in (or press E / tap):** a picture carousel of the places opens (Plaza, Arena, Island, City, Site, Farm, Military, with only the maps that are live). It shows:
+  - each place's picture, name and one line ("Feed the shark", "Drive the tank");
+  - who is there now;
+  - a NEW tag.
+
+  Pick one, then the V8-2.10 travel: stream ahead, a short whoosh transition through the portal swirl, and you arrive in front of that map's hero thing.
+- **Ways home:** the same portal stands at every map's arrival ("Back to my lab" plus the other places), so the maps feel connected.
+- **Hints, never spam:**
+  - after the first 3 minutes, and only once a visit, a subtle beam or sparkles call from the portal;
+  - one Notify tip the first time ("Explore other places →");
+  - an experiment card "Visit 2 places".
+- **The existing PortalSolo / PortalMulti** become part of the same gate family (one style). They must not be confused with PLACES: they get different colours and clear icons.
+
+**Done when:**
+- a capture from spawn on PC and phone (the portal is visible in the first frame);
+- the carousel on 16 LayoutCheck screens;
+- a trip to each place and back works;
+- Session_v1 logs `used.portalPlaces` so its effect can be read.
+
+**Tests:** T159_PlacesPortal.
+- The portal is in the spawn view at 1920x1080 and 414x896.
+- Each place travels and returns.
+- Travel is refused while seated or grabbing.
 
 ## V9-1 The water: a real aquarium, the whale under water, a shark
 - **The aquarium.** Replace the flat glass "WhalePool" with a real aquarium/lagoon in the creature yard:
@@ -437,6 +471,63 @@ These are the `map = true` OFFERS and the passes that put a thing in the world. 
 - **Bring every event model up to the same bar:** Gorilla, Bull, UFO, Train, Balloon, Giant Dummy, Tornado, Meteor, Bowling balls, Magnet, Rocket rain and so on.
 - **Each needs:** a real model, an entrance, an act on the ragdolls, an exit and sound.
 - **Match V8-2.9:** only the events that stay get the work. The rest stay hidden and are not sold.
+
+## V9-5b A clean server and no lag, without losing quality (owner, 21 Nov)
+> "Sørg for serveren kører så clean som overhovedet muligt med så lidt lag som overhovedet muligt, uden at ødelægge eller svække noget kvalitet mæssigt."
+
+**Measure first, with numbers.** Use a full lab session with 6 players (4 test clients if MCP multi-client allows, else 2 plus bots), all creatures, machines and events used, and 10 minutes on a map. Record:
+- **server:** heartbeat Hz, physics step time, script activity per script (the Script Performance view), memory per category, instance count, Data send/receive KB/s per player, remote calls/s per remote;
+- **clients:** FPS p50/p5, frame time, draw calls, triangles, memory (MicroProfiler dumps), on PC and the low-tier phone emulator.
+
+Write the baseline into `docs/PERF.md`.
+
+**Fix the heaviest first:**
+- **Loops:** every `while true` / Heartbeat loop on the server.
+  - Event-driven where possible, at the lowest rate that still looks the same (for example 10-15 Hz for AI, 0 when no player is near).
+  - No per-frame `GetDescendants`, `FindFirstChild` chains or new tables.
+  - Sleep the whole lab's AI, creatures and machines when its owner is away or not in the lab.
+- **Physics:**
+  - set the network owner of every ragdoll and prop correctly (the lab's player);
+  - anchor or sleep idle props;
+  - limit the bodies per lab by device tier (already there: check it holds);
+  - CanQuery/CanTouch off on all decoration;
+  - collision groups so decoration never collides;
+  - CollisionFidelity Box/Hull for props;
+  - Touched handlers only where needed.
+- **Network:**
+  - no per-frame attribute writes;
+  - batch updates;
+  - UnreliableRemoteEvent for cosmetic streams;
+  - send only to players in that lab or place;
+  - check every remote's rate limit;
+  - nothing replicated that only one client needs (creatures' animation stays client-side, V9 rules).
+- **Memory and leaks:**
+  - disconnect every connection on cleanup (players leaving, bodies removed, events ending);
+  - destroy temp parts;
+  - pool effects;
+  - run a 30-minute soak and check that server memory and instance count stay flat.
+- **Streaming:**
+  - StreamingEnabled with sensible radii;
+  - models atomic or persistent only where needed;
+  - far maps never loaded until visited.
+- **Rendering:**
+  - CastShadow off on small parts;
+  - LOD (RenderFidelity Automatic, `ModelStreamingMode`);
+  - lights within FX_CAPS;
+  - particles pooled and capped per tier;
+  - textures sized sensibly.
+- **Start time:** time to the first playable frame; preload only what the first minute needs.
+
+**Rule:** nothing may look or feel worse. Every fix needs a before/after capture where it could change the look. A change that lowers quality is reverted.
+
+**Done when** `docs/PERF.md` shows, against the baseline:
+- the server heartbeat stays at 60 with 6 players in full chaos;
+- server script time and memory are flat over 30 minutes;
+- network per player goes down;
+- the low-tier phone holds 30+ FPS p5 in the lab;
+- no errors and no warnings in the output.
+
+**Tests:** T160_PerfBudget (instance count, loop count and remote rate per lab under its budget; leak check after a lab reset).
 
 ## V9-6 Final check and release
 - **Full self-test suite** and LayoutCheck.
