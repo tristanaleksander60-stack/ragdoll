@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0 → V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0, V9-0b, then V9-1 → V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -52,6 +52,59 @@ Run all of `docs/FIX_PATHS_SHOP.md`:
 - F3 no dead-end paths;
 - F4 captures;
 - F5 purchase pictures and id paste-in.
+
+## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
+> "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
+
+**Target.** `art/store/look_target/thumb_cannon.webp` and `thumb_gorilla.webp`.
+
+**The look of the target:**
+- a deep saturated blue sky with big white fluffy clouds and a visible warm sun with a soft flare;
+- bright warm sunlight from one side with soft, blue-tinted shadows (not black);
+- high colour: lush green rolling hills with round trees, warm sandstone, red and yellow accents;
+- clean white dummies that pop against the background;
+- light dust and smoke puffs.
+
+Do this step first, so every later capture in V9 uses the final light.
+
+**Where the look comes from:** Lighting, the post effects and the sky, set per place through ZoneLighting (LOOK_V3 `finishV3`) and AdminWorld (time/weather). This ends the "realistic grey" grade.
+
+**Light:**
+- Daytime about 14:00-15:00 (`ClockTime`), with the sun in front of the spawn camera's side so faces and the cannon get light.
+- Brightness about 2.5-3.5. Warm `ColorShift_Top`; `Ambient` and `OutdoorAmbient` raised and tinted light blue, so shadows read blue-grey, never black.
+- `EnvironmentDiffuseScale` and `EnvironmentSpecularScale` about 0.6-1.0. ExposureCompensation tuned so white dummies are white but not clipped.
+- Keep LightingStyle Realistic + PrioritizeLightingQuality. Check that phones (low quality) still look bright.
+
+**Sky:**
+- A bright cartoon-blue sky with big cumulus clouds: a Creator Store skybox of that style, or Roblox `Clouds` (Cover about 0.5-0.6, Density about 0.7, white).
+- A visible sun (SunTextureId / SunAngularSize larger) and a soft SunRays.
+- The old sky stays in ServerStorage as a backup.
+
+**Atmosphere:**
+- low Density (about 0.2-0.3), Haze low, a light blue Color/Decay;
+- the far hills read soft blue, not grey fog.
+
+**ColorCorrection:** Saturation about +0.15-0.25, Contrast about +0.05-0.1, a slight warm TintColor. Bloom soft (Intensity about 0.4, Threshold high) so only the sun and white highlights glow. DepthOfField only off or very light in normal play.
+
+**Ground and world:**
+- greener, brighter grass (terrain colour `SetMaterialColor` for Grass/LeafyGrass), and warm sandstone paving;
+- the lab's dark grey/asphalt areas get a lighter, warmer surface where it fits;
+- round, lush trees (real models) on the hills;
+- red/yellow accents on barriers and barrels.
+
+**Snow (Christmas from 1 Dec):** a sunny snow day: blue sky and sun stay, the snow is light, and it never turns the scene grey.
+
+**Every place.** Lab, Plaza, Arena, Island, City, Site, Farm and Military each get their own profile in the same bright family. Indoor/arena light gets the same lift. The director (V6-3) and admin time/weather still work on top.
+
+**Phones:** the low tier frame time holds; post effects are cheap or off at low quality, and the scene must still look bright without them.
+
+**Done when:**
+- side-by-side captures, the game vs the two thumbnails, from the same kind of angle (the cannon with the bullseye; a wide lab shot with hills), on PC and phone;
+- the blind reviewer says it matches the target mood (≥ 8.5);
+- the owner signs off;
+- T91 is updated if it checks light values.
+
+**Switch:** `Config.LOOK_THUMB` (false = the old light).
 
 ## V9-1 The water: a real aquarium, the whale under water, a shark
 - **The aquarium.** Replace the flat glass "WhalePool" with a real aquarium/lagoon in the creature yard:
