@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -201,6 +201,56 @@ The reference capture is `art/store/look_target/leader_hub.webp`. It shows the l
   - T112 (spawn view), T106/T150 (paths), T36, T26, T50, T103 and T153 updated;
   - a new T163_HubLayout: a 40-stud clear spawn circle; every attraction on the rim between 40 and 150 studs; none fully hidden from the spawn camera; no part z-fighting on the floor.
 - **Phone budget** held.
+
+## V9-0i A shop people want to spend in: right pictures, 3D and interactive (owner, 21 Nov)
+> "Fiks alle ikonerne i shop så de passer til de rigtige og gør hele shoppen 3d interaktiv og super flot fordi folk skal bruge penge derinde."
+
+**What the capture shows** (`art/store/look_target/shop_now.png`):
+- **Wrong pictures:** Starter Crate, All Guns and Lab Controls all show the egg icon, because `EventShop.buildOffers` falls back to `OFFER_ICONS[offer.key] or "gift"`, and the new keys have no entry.
+- **Buttons:** one card shows "R$ 49" and the others only "BUY".
+- **Cards:** flat and alike: a small icon, a name and a short line.
+
+**1. The right picture on every item:**
+- **Pictures:** use the finished 512x512 pictures in `art/shop/` (`<key>.png`, `event_<id>.png`, made by `art/tools/build-product-icons.py`), the GOD MODE picture, the weapon-tier pictures, ULTRA and VIP.
+- **Upload** them with Studio MCP `upload_image` (the same way as the DrawnIcons: serve `art\` over a localhost HttpListener, batches of 8). Put the ids in `Shared/DrawnIcons` (`shop_<key>`, `shopevent_<id>`).
+- **Mapping:** map every OFFERS / PASSES / Events / weapon-tier key to its picture in one table. A test fails if any sold item has no own picture (no fallback egg or gift).
+
+**2. A 3D, interactive shop:**
+- **Layout:**
+  - tabs **FEATURED · PASSES · ITEMS · EVENTS · BOLTS**;
+  - FEATURED opens first, with a big hero banner (GOD MODE or Everything) and a "BEST VALUE" ribbon;
+  - cards in a clean grid, the UI v2 tokens and rarity frames by price.
+- **Each card:**
+  - **Live 3D:** a live 3D model of the item in a ViewportFrame (Ui3D): the pet, the trampoline, the fan, the spider, the gun set fanned out, the crate opening, the rocket, a dummy in the suit or in gold, the event's star model.
+  - **Motion:** it turns slowly; on hover or focus the card lifts, tilts toward the mouse (parallax), lights up and speeds the turn. On phones, a tap = focus, and a second tap opens the detail.
+  - **Price:** shown the same way on every card, with the Robux mark ("R$ 149"), never a bare "BUY".
+  - **States:** OWNED ✓ / EQUIP for owned items, and TRYING for items on trial.
+- **Detail view** (click a card):
+  - a big turning 3D model you can drag to rotate;
+  - what you get, as 2-3 icon bullets;
+  - TRY 60 s where it exists (the booth/God trial rules);
+  - a big gold BUY.
+  - For events, a short looping preview (the event card picture with motion, or a mini 3D scene).
+- **Buying:**
+  - Roblox's own prompt;
+  - on success, the card bursts (confetti, a coin shower), the item flies to the HUD/bar, a "YOURS!" banner (V9-0g sizes on phones) and the purchase sound;
+  - on cancel, nothing nags.
+- **Feel:** gentle easing; a press squish (KitStyle.press); hover and click sounds; numbers count up; the window opens with a soft scale and a blur of the world behind.
+- **Performance:** only visible cards render 3D (Ui3D budget). Off-screen ones are a still picture, and the low tier uses the still pictures. The window opens in under 0.3 s.
+- **Phones and pads:**
+  - 2 cards per row on phones, 44 px targets, and LayoutCheck 0;
+  - pad focus moves card to card with a clear yellow ring, A opens the detail and X buys.
+- **Fair and policy-safe:** no fake timers or fake discounts, real prices only, and nothing random sold.
+
+**Tests:** T164_ShopPictures and T165_Shop3D.
+- Every sold key has its own uploaded picture.
+- Every card shows a price.
+- Owned items show OWNED.
+- The visible 3D cards stay within the budget.
+- The detail view opens and closes.
+- The shop fits on 16 LayoutCheck screens.
+
+**Capture:** before/after of FEATURED, PASSES and a detail view, on PC and phone.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
