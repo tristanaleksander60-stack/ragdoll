@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0t, V9-0u, V9-0w, V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0v, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0t, V9-0u, V9-0w, V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0v, V9-0x, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -702,6 +702,36 @@ A full placement pass for the lab hub (V9-0h) and every map, done as a designer 
 - Each sign is readable from the approach (the V9-0q ray check).
 
 **Capture:** the owner's angle before and after, plus the spider, the cannon, a station and the vacuum.
+
+## V9-0x Cars react to shots, and go wild from a grenade (owner, 21 Nov)
+> "Gør så biler reagerer hvis man skyder på dem, altså rykker sig lidt, og en granat går amok."
+
+**Shots** (`HitService` onShot already reaches the Knockables; add the vehicles: `VehicleService` / `VehicleFeel`):
+- **The push:** each bullet gives the car a small push at the hit point (an impulse scaled by the gun, capped per second). The car rocks on its suspension, shifts a few studs on heavy fire (minigun, shotgun) and never flips from small arms.
+- **Feedback:** sparks and a metal "tink/clang" on the body, a small dent decal or crack mark on the glass (client-side, cleared when the car resets), and a hubcap or mirror that can pop off now and then (cartoon).
+- **Car alarm:** after a few hits the car's alarm chirps and the lights blink for 3 s (one alarm per car per 20 s, quiet volume, falls off with distance).
+- **A driven car:** it takes the push too, but the driver keeps control (no spin-out from small arms).
+
+**Grenade, C4, RPG and other blasts** (`Blasts`):
+- **The launch:** a big impulse from the blast centre, scaled by distance. The car jumps, flips, spins and tumbles with a camera punch nearby.
+- **Cartoon wreck, kid-safe:** smoke, a short cartoon flame puff, the doors or bonnet pop open and flap, and the wheels wobble.
+- **Reset:** the car rights itself and resets to its bay after about 8-10 s still (the existing reset path), with a little puff and a "good as new" chime. No permanent damage and no fire that spreads.
+- **A driver in a car hit by a blast** is thrown out as a ragdoll (the same as a dummy), cartoon-style. Only in their own or a party lab; the plaza stays no-damage as now.
+
+**Rules:**
+- **The server decides** (the car physics stays server- or driver-owned as now);
+- the impulses are capped so nothing flies out of the lab or over the hedge;
+- the cars never get stuck inside the floor or a machine;
+- the phone budget holds.
+
+**Tests:** T176_CarsReact.
+- 10 pistol hits move a parked car a little without flipping.
+- A grenade at 6 studs flips it.
+- The car is back on its wheels at its bay within 12 s.
+- No car leaves the lab bounds.
+- A driver hit by a blast is ejected only in a lab, not on the plaza.
+
+**Capture:** a 4-frame grenade sequence and the shot sparks.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
