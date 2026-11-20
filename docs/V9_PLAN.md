@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0, V9-0b, V9-0c, V9-1, V9-2, V9-2b, then V9-3 → V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0, V9-0b, V9-0c, V9-0d, V9-1, V9-2, V9-2b, then V9-3, V9-4, V9-4b, V9-5, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -144,6 +144,60 @@ It follows the UI v2 tokens, phones included (out of the thumb zone), and hides 
 
 **Capture:** the speedometer on PC and phone.
 
+## V9-0d The ground stops flickering, the bench set is fixed, a plaza people want to meet in (owner, 21 Nov)
+> "Også fiks bordet bænke sættet her på plazaen og generelt upgrade plazaen så folk for lyst til at mødes. Desuden så bugger jorden når man kigger rundt på grund af alt det grussten tror jeg."
+
+**What the capture shows** (`art/store/look_target/plaza_bench_now.png`):
+- a green bench floating on a stack of overlapping stone discs, with a table that is missing or broken;
+- layers of round paving pieces on top of each other;
+- the booth signs crowding the seating.
+
+**1. The ground flicker (z-fighting and shimmer). Fix it everywhere, not only on the plaza.**
+- **Find it.** Write a tool script that lists every pair of overlapping parts whose top faces are within 0.06 studs of each other. These are:
+  - path stones on stones;
+  - paving discs on discs;
+  - paving on the plaza floor or the baseplate;
+  - verge pieces on grass parts.
+
+  Run it in the lab, the plaza and every map. The list must reach 0.
+- **Fix the cause:**
+  - one surface layer per area: merge the overlapping round paving pieces into single clean slabs or shapes, or use terrain paint where the ground is terrain;
+  - where layers must stack, at least 0.1 stud apart and never the same material on the same height;
+  - remove hidden duplicates (older path versions under newer ones).
+- **Shimmer at a distance** (the busy "gravel" texture): use a calmer paving material or MaterialVariant with a larger `StudsPerTile` and less high-frequency detail. Keep the stone look up close.
+- **Check:** slow 360° camera turns at the spawn, the plaza and 2 maps, on PC and phone. No flicker seen.
+- **Test:** T156_NoZFight (the overlap scan returns 0 in the lab and on the plaza).
+
+**2. The bench and table set.**
+- Replace it with a real picnic set: a table with two benches as one model, or matching table plus benches, at the right height, standing on the ground (not on discs).
+- Every seat works: Seat parts at the right height, facing the table, and a player sits correctly.
+- Check every other bench and table in the game the same way.
+
+**3. A plaza people want to meet in.** Design it as a town square, with:
+- **A centre piece:** a fountain or a landmark statue (a giant crash-test dummy).
+- **Seating:**
+  - picnic sets and benches facing each other in small groups, under shade trees;
+  - string lights between lamp posts, warm at dusk.
+- **Things to do together:**
+  - a photo spot (a frame with the game's logo and a step);
+  - the plaza grab and throw area clearly marked by its shape, not by paint;
+  - a high-five or emote spot;
+  - the leaderboards together in one place;
+  - the portals.
+- **A market row:** the map-shop booths as a proper market row along one side (V9-4b spacing). They never stand among the seats.
+- **Life:**
+  - a few calm crowd NPCs sitting, chatting and walking (existing CrowdService);
+  - pigeons (Birds);
+  - ambient town sound, with no music (owner rule).
+- **Layout:** clear walking lanes from the arrival to everything, open space in the middle, flowers and planters at the edges, and no clutter.
+- **Light:** the bright thumbnail light from V9-0b.
+
+**Done when:**
+- before/after captures from the arrival, the seating, the centre and from above;
+- the blind reviewer passes it (≥ 8.5);
+- the walking and crowd tests pass;
+- T156 passes.
+
 ## V9-1 The water: a real aquarium, the whale under water, a shark
 - **The aquarium.** Replace the flat glass "WhalePool" with a real aquarium/lagoon in the creature yard:
   - glass walls with frames and rivets, deep enough to see into (about 14-18 studs deep, partly sunk into the ground, with a viewing side facing the path);
@@ -263,6 +317,58 @@ These are the `map = true` OFFERS and the passes that put a thing in the world. 
 - **Booths (V6-7):** each booth's turning item is the same improved model. Lit well, with the price readable at 20 studs.
 - **TRY:** TRY shows the real thing working for 60 s.
 - **Tests:** T105 updated (every booth model present and script-free; every item works after purchase and after TRY; delivered once).
+
+## V9-4b Buying and trying must look premium (owner, 21 Nov)
+> "Lig også en plan for man undgår det ser så grimt ud når man skal købe eller try."
+
+**What the owner's capture shows now** (`art/store/look_target/booth_now.png`):
+- **Prompts:** two default Roblox ProximityPrompts stacked ("Gold Dummies / Try 60 s free", "Gold Dummies / Buy").
+- **Overlap:** they overlap the neighbouring booth's sign ("FIRE TRAIL"), so the names do not match what you look at.
+- **Pole:** a pole runs through the gold dummy.
+- **Spacing:** the booths stand so close that their signs and prompts collide.
+
+**One card per booth, our own style:**
+- Hide the default prompts: `ProximityPrompt.Style = Custom`, drawn in `ProximityPromptService.PromptShown`.
+- Show one clean card for the nearest booth only, in the UI v2 tokens:
+  - the item's picture or icon (`art/shop`);
+  - the name;
+  - the one-line pitch;
+  - the price with the Robux mark;
+  - two real buttons: **TRY 60 s** (secondary) and **BUY** (primary, gold).
+- The buttons work by click or tap, and through the E/T keys and pad glyphs. Pads can select them.
+- The card pops in softly and leaves when you walk away. Only one card shows at a time.
+- The world sign above the booth fades while its card is open.
+- **States:** the card shows OWNED ✓ / EQUIP when owned, TRYING 0:42 during a trial, and TRY USED when today's try is spent.
+- **Phones:** the card sits above the thumb zone, has 44 px targets and passes LayoutCheck. No text is cut off.
+
+**The booths themselves:**
+- No pole or light post through any item. Move the spotlight to the booth's frame, or use a hidden light.
+- Spacing: at least about 14-16 studs between booths, so signs and prompts never overlap. A prompt's reach (`MaxActivationDistance`) stays inside its own booth, and `RequiresLineOfSight` is on.
+- The sign belongs to its own booth: the same name and price as the prompt, readable at 20 studs and never overlapping its neighbour.
+- Each item on a clean pedestal, lit, turning slowly, at the right scale.
+
+**Buying feels good:**
+- **On BUY:** Roblox's own purchase prompt.
+- **On success:**
+  - a short celebration: confetti, the item flies to the player or equips at once, and a "YOURS!" banner through `Client/Banner`;
+  - a purchase sound;
+  - the booth switches to OWNED.
+- **On cancel:** nothing nags.
+
+**Trying feels good, with no pressure:**
+- **TRY** equips the real thing at once.
+- A small HUD chip shows "Trying <item> 0:42" with the item icon and a small BUY button.
+- When the try ends, there is one gentle line through Notify ("Liked it? It's at the booth"). No pop-up window, no repeat (Roblox policy, and V8's calm rules).
+
+**Tests:** T155_BoothCard.
+- One card at a time.
+- The card's item always matches the nearest booth.
+- No prompt reach overlaps a neighbour.
+- No booth part intersects its item.
+- The card fits on 16 LayoutCheck screens.
+- The OWNED / TRYING states are right.
+
+**Capture:** the same angle as the owner's screenshot, before and after, on PC and phone.
 
 ## V9-5 Event creatures and big models
 - **Bring every event model up to the same bar:** Gorilla, Bull, UFO, Train, Balloon, Giant Dummy, Tornado, Meteor, Bowling balls, Magnet, Rocket rain and so on.
