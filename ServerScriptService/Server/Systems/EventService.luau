@@ -618,18 +618,21 @@ end
 -- two minutes are the same: only in their own lab, never while an event runs or waits, never in a
 -- new visit's quiet start, at most one per LAB_SURPRISE_GAP (random in the range) per player.
 local nextSurprise: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
+local firstWow: { [Player]: number | false } = setmetatable({}, { __mode = "k" }) :: any
 local miniUntil = 0 -- (while a short surprise runs, no event starts on top of it)
 function EventService.miniRunning(): boolean
 	return os.clock() < miniUntil
 end
-function EventService.surpriseNow(player: Player, id: string?): string?
+function EventService.surpriseNow(player: Player, id: string?, quiet: boolean?): string?
 	if not Lab.plotIndex(player) then
 		return nil
 	end
 	miniUntil = os.clock() + Surprises.MINI_TIME + 1
 	local name = Surprises.mini(labMiddle({ id = "Surprise", by = player.DisplayName, source = "Free" :: any, hostId = player.UserId }), player, id)
 	local event = Events.byId[name]
-	notify(player, string.format("SURPRISE! %s", if event then event.name else name), "ok")
+	if not quiet then
+		notify(player, string.format("SURPRISE! %s", if event then event.name else name), "ok")
+	end
 	return name
 end
 local function surpriseLoop()
@@ -641,6 +644,21 @@ local function surpriseLoop()
 		end
 		local now = os.clock()
 		for _, player in Players:GetPlayers() do
+			-- v4 E1 (research: the first wow by 60 s): once a visit, at Config.FIRST_WOW_AT s, a UFO
+			-- comes over the player's own lab (no pop-up, the quiet start holds; nothing if busy).
+			local joined = firstWow[player]
+			if joined == nil then
+				firstWow[player] = now
+			elseif joined ~= false and now - joined >= (Config :: any).FIRST_WOW_AT then
+				local r = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+				local free = current == nil and #queue == 0 and os.clock() >= miniUntil and player:GetAttribute("PartyLab") == nil
+				if r and r:IsA("BasePart") and free and Lab.ownerAt(r.Position) == player then
+					firstWow[player] = false
+					pcall(EventService.surpriseNow, player, "UfoBeam", true)
+				elseif now - joined > 180 then
+					firstWow[player] = false -- (never found them free in their lab: let it go)
+				end
+			end
 			local due = nextSurprise[player]
 			if not due then
 				-- (Each player's first one falls at a random time, so a fresh server never fires them all at once.)

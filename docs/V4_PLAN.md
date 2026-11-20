@@ -353,3 +353,10 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
   - `Config.UI_CLEAN` makes the leaderboards calm wall panels (`LeaderboardService.STYLE`): slate face, off-white header, Builder Sans, alternating rows, a thin metal stripe for the top 3, a painted steel frame, no crown or neon.
   - Event cards use real in-game pictures for UfoBeam, LightningStorm, MagnetStorm, BowlingAvalanche, Tornado, GorillaRampage and BullRun (art/events, DrawnIcons). The rest show a word, not an emoji (UI_CLEAN).
 - **D1 (part):** the Game Arena is now a sports hall (`Config.ARENA_V2`): a red rubber running track with white lanes, concrete walls over a blue padded band, a dark ceiling with light panels, and painted start/finish lines instead of neon. The game's spots are unchanged. The map card has a new picture (138503773529687). The other maps were already reworked in v3/A2; a fresh 3-captures-per-map judgement against the leader and the owner's sign-off are still to come.
+- **E0 done:** docs/RESEARCH_V4.md covers 20 vault notes plus web sources, with 12 ranked actions, KPIs and rule flags. Reddit was blocked for the crawler, so player voices come from trackers, DevForum and TikTok captions.
+- **E1 (part):**
+  - First wow by 60 s: once a visit, at `Config.FIRST_WOW_AT` 50 s, a UFO comes over your own lab. There is no pop-up and the quiet start holds; it is skipped when an event runs or you are in a party.
+  - Already built from before: favourite ask after a wow moment (LikePrompt), the 7-day streak calendar (RewardsUI), Daily Experiments, play gifts, Prank Party, the update title/days, and today's machine (C1).
+  - Not built: Experience Notifications. Sending needs Open Cloud from outside the game; 13+ only, at most 1 a day.
+- **E2 done:** art/store/v4 holds 5 thumbnails and 2 icons from real captures, plus the A/B steps (README).
+- **E3:** 0.23.0 What's New and store text v4. Publishing and measuring are the owner's (see the report).

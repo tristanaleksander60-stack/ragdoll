@@ -148,6 +148,7 @@ local Config = {
 	SLOWMO_AUTO_GAP = 8, -- s between automatic slow moments on big hits
 	LAB_SURPRISES = true, -- v4 C4: a short surprise (Surprises.MINI) by itself now and then in your own lab
 	LAB_SURPRISE_GAP = Vector2.new(150, 240), -- s between them (random in the range)
+	FIRST_WOW_AT = 50, -- s into a visit: a UFO over your own lab once (v4 E1: the first wow by 60 s)
 	LAB_ZONES = true, -- v4 C1: lab zones, today's machine, NEW tags (Server/Systems/LabZones)
 	UI_CLEAN = true, -- v4 D2: calm hand-made look (leaderboards as wall panels, no neon frames/crowns/glow; see LeaderboardService.STYLE)
 	ARENA_V2 = true, -- v4 D1: the Game Arena as a sports hall (track floor, lanes, concrete, padding) instead of the pink room
