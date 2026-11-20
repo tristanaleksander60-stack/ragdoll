@@ -336,3 +336,22 @@ They lead from the spawn or arrival to each thing you can do there.
     - start Test → Clients and Servers → 2 players and the phone emulator, so the session can read both outputs;
     - make T32's coward checks robust (or find its cause);
     - then run the gate again.
+- **/klar 20 Nov (3rd run) and the owner's wishes:** skip the 2-client test, fix the paths, bring the monsters alive in their own areas (all working), find out from the stats why people leave, and make the birds fly for real.
+  - **Script Sync is still down.** Every change was mirrored into Studio by hand, each file checked byte for byte (all 300 earlier). The place is saved as v602.
+  - **Real bug fixed (T32):** a coward shot at from the front ran into the lava and got stuck at its rim. Fleeing bodies now steer round any `DummyAvoid` place (`ActiveRagdoll.clearRun`).
+    - T32 also aims with `AimTestPoint`. It passed alone twice.
+    - Still flaky in other places: the plaza sleeper. A coward can also stick behind the bullseye board on its way home (later).
+  - **Stats (Session_v1, 72 h, 45 visits):**
+    - 0.24.0: median about 120 s; 1 of 11 visits past 4 min; first shot after 3-17 s; mostly phones held upright.
+    - The hooks came too late: HUD at 90 s, mission 120 s, wow 110 s, next weapons 180 s/25 takedowns.
+    - Moved inside the first two minutes: HUD 35, mission 40, wow 45, next weapons 45 s/5 takedowns, first surprise 80-110, chase 100. T55 guards this.
+    - **Measure again after 1-2 days** (`tools/SessionReport.luau`).
+  - **Event banner:** card and chip in the toast lane. LayoutCheck measures them; 0 problems on 16 screens.
+  - **Paths:** real gravel walkways with a stone kerb (360 parts per lab).
+  - **Birds:** every bird in the air beats real wings on the hawk rig (`Birds.flap`). Pigeons swap to a flyer on takeoff. T104 checks it.
+  - **Monsters:**
+    - **Homes** (`CreatureHabitats`): the spider on a giant web between dead trees, the frog's pond, the chicken run, the planter, the laundry corner, the vegetable patch, the vacuum's rug, the whale's sand.
+    - **Life** (`Client/CreatureLife`): they breathe and look at you; the frog hops, the hen pecks, the plant snaps, the mole peeks.
+    - **T108:** all 9 take, work and let go a body.
+  - **Tests and output:** T23/T45/T55/T66/T99/T100/T103/T104/T106/T107/T108 pass; 0 errors.
+  - **Release 0.25.0** (What's New updated) is saved as v602. **Not published yet:** a publish needs Studio's Publish (Alt+P). The MCP has no publish, and Open Cloud does not take an .rbxl from here.

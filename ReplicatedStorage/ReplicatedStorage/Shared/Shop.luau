@@ -59,10 +59,10 @@ Shop.WHATS_NEW = table.freeze({
 	{
 		version = "0.25.0",
 		lines = {
-			"PATHS everywhere: follow them to every machine in your lab and every launcher on the maps",
-			"CRASH-TEST DUMMIES: joint rings, belts and the yellow and black test marks",
-			"A NEW EVENT CARD with the event's picture and who sent it",
-			"Cleaner lab floor, birds that stand on their feet, and a better fit on TVs",
+			"THE MONSTERS COME ALIVE: the spider on its giant web, the frog in its pond, the chicken in its run",
+			"GRAVEL PATHS to every machine in your lab, and CRASH-TEST DUMMIES with test marks",
+			"BIRDS that really fly: wings beating as they take off",
+			"A NEW EVENT CARD, missions and new weapons from your first minute",
 		},
 	},
 	{
