@@ -39,7 +39,13 @@ function RobuxPrice.text(price: number?): string
 end
 
 -- Calls back with the price (nil when Roblox never answered); at once if it is already known.
-function RobuxPrice.get(productId: number, callback: (number?) -> ())
+function RobuxPrice.get(productId: number, callback: (number?) -> (), pass: boolean?)
+	-- (V9-0i: a game pass too; its answers are kept under the negative id, apart from products.)
+	local infoType = if pass then Enum.InfoType.GamePass else Enum.InfoType.Product
+	local askId = productId
+	if pass then
+		productId = -productId
+	end
 	forgetStale(productId)
 	local have = known[productId]
 	if have ~= nil then
@@ -56,7 +62,7 @@ function RobuxPrice.get(productId: number, callback: (number?) -> ())
 		local price: number | false = false
 		for try = 1, TRIES do
 			local ok, info = pcall(function()
-				return MarketplaceService:GetProductInfoAsync(productId, Enum.InfoType.Product)
+				return MarketplaceService:GetProductInfoAsync(askId, infoType)
 			end)
 			if ok and type(info) == "table" and type(info.PriceInRobux) == "number" then
 				price = info.PriceInRobux
@@ -76,6 +82,11 @@ function RobuxPrice.get(productId: number, callback: (number?) -> ())
 			task.spawn(cb, if price == false then nil else price)
 		end
 	end)
+end
+
+-- V9-0i: a game pass's price (Roblox's own, as for products).
+function RobuxPrice.getPass(passId: number, callback: (number?) -> ())
+	RobuxPrice.get(passId, callback, true)
 end
 
 -- The price if Roblox has answered, else nil; `asked` says whether it has (false: still asking).

@@ -707,7 +707,7 @@ function EventService.start()
 				return
 			end
 			local earlier = os.time() - order.t > 60
-			notify(player, string.format(if earlier then "Your %s from last time %s" else "Thanks! Your %s %s", event.name, placeOf(place)), nil, place <= 1 and not current)
+			notify(player, string.format(if earlier then "Your %s from last time %s" else "Thanks! Your %s %s", event.name, placeOf(place)), if earlier then nil else "bought:" .. eventId, place <= 1 and not current) -- (V9-0i: the SHOP card bursts)
 		end)
 	end
 	-- (V9-0u: a hidden event's product, still owed to someone who paid before: its stand-in instead.)

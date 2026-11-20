@@ -108,6 +108,7 @@ do -- LOOK_V3: grass, hills and trees round the labs (after WorldMaps: it repain
 	end
 end
 safe("MapShopService", function() require(Systems:WaitForChild("MapShopService")).start(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- V6-7: showcase booths and the map items' effects
+safe("ShopModels", function() require(Systems:WaitForChild("ShopModels")).start() end) -- V9-0i: the SHOP's 3D models for the screens
 safe("PathBuilder", function() require(Systems:WaitForChild("PathBuilder")).start(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- V7-2: paths on the plaza and the open-air maps
 -- A trip to a room counts towards the day's goals (round 3, M9).
 WorldMaps.onTrip = function(player: Player, landed: string)

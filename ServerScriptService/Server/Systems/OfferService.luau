@@ -149,6 +149,11 @@ function OfferService.deliver(player: Player, key: string, purchaseId: string, t
 	end
 	ProgressService.ecoChanged(player)
 	ProgressService.notice(player, string.format("%s: %s. Thank you!", if offer then offer.name else key, table.concat(parts, " and ")))
+	-- (V9-0i: the SHOP's card for it bursts on this screen.)
+	local r = remote
+	if r and player.Parent then
+		r:FireClient(player, "Got", key)
+	end
 	log.info(string.format("%d got %s (%s)", player.UserId, key, purchaseId))
 	if not test then
 		task.spawn(OfferService.complete, player.UserId, purchaseId)
@@ -195,6 +200,18 @@ OfferService.checkOwnershipForTest = checkOwnership
 
 -- lihfolk-ignore: remote-unvalidated-args (kind must be "Buy", key a string naming a known offer; rate gap below)
 local function onBuy(player: Player, kind: unknown, key: unknown)
+	-- (V9-0i: the SHOP's detail view asks for a map item's 60 s TRY: the booth's own rules,
+	-- MapShopService.try: a known pass item, once a visit, never cutting one that is on.)
+	if kind == "Try" and type(key) == "string" and #key <= 32 then
+		local now = os.clock()
+		if now - (lastBuy[player] or -math.huge) >= OfferService.BUY_GAP then
+			lastBuy[player] = now
+			pcall(function()
+				(require(script.Parent:WaitForChild("MapShopService")) :: any).try(player, key)
+			end)
+		end
+		return
+	end
 	if kind ~= "Buy" or type(key) ~= "string" then
 		return
 	end

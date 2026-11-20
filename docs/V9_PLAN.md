@@ -1431,3 +1431,27 @@ Write the baseline into `docs/PERF.md`.
   - A UfoBeam order still owed delivers a Balloon Drop with a note (`Events.hidden`, EventService).
   - T173 leaves the creator without passes for the rest of the run, like T47, T50, T63 and T105 (`OfferService.resetForTest` has no undo).
 - 21 Nov 2026, V9-0i started (PC): the 21 shop pictures are uploaded (art/shop) and in DrawnIcons as `shop_<key>`. Events keep `event_<id>`, GOD MODE keeps `god`.
+- 21 Nov 2026, V9-0i DONE (PC): the 3D shop (`Config.SHOP_V9`; false = the old list).
+  - **Pictures:** every sold thing has its own picture: 21 uploaded `shop_<key>`, events `event_<id>`, GOD MODE `god`. `Shared/ShopArt` (pure) maps all 42 things to their tab, picture, 2-3 "what you get" lines, a rarity by price and a 3D showcase.
+  - **Layout** (`Client/ShopV9`):
+    - tabs FEATURED · PASSES · ITEMS · EVENTS · BOLTS, plus a present button for CODES;
+    - FEATURED: the EVERYTHING hero (BEST VALUE, SEE INSIDE, BUY) and a POPULAR row.
+  - **Cards:**
+    - The thing turns in 3D: `Client/ShopShowcase` uses real weapon models (laid across the view, fanned), the mannequin (gold, crash-suit, crown, rainbow, flames, a soft beam) and props copied to `ReplicatedStorage.ShopModels` by `Server/Systems/ShopModels` (7 props, 209 parts).
+    - The 3D is built when a page is first shown; Ui3D turns a few at once. Pictures on low-end devices; events drift in a slow zoom.
+    - Rarity frame and tag (COMMON / RARE / EPIC / LEGENDARY / EVENT) and ribbons (BEST VALUE, NEW, OWNED).
+    - Roblox's own price on every card ("R$ 149"; `RobuxPrice.getPass` for passes), counting up as a page opens. OWNED / OPEN / TRYING m:ss.
+    - Hover or pad focus lifts and tilts the card and speeds its turn; on a phone, the first tap focuses.
+  - **Detail view:**
+    - a big model you drag round;
+    - what you get, with ticks;
+    - TRY 60 s for GOD MODE and the map items (the new Offers "Try" goes through `MapShopService.try` rules);
+    - a big BUY; BACK and pad B close it.
+  - **Celebration:** a purchase this screen asked for (a pass attribute, Offers "Got", EventNotice "bought:<id>") bursts the card with confetti and a Robux shower, flies the picture to SHOP, and shows a YOURS! banner. A pass set on joining stays quiet.
+  - **Feel:** the world is blurred behind an open shop; X buys the focused card on a pad; the focus ring shows only with a pad.
+  - **Tests:** T164_ShopPictures (42 things, each its own picture) and T165_Shop3D (props copied clean, weapons exist, budget) pass. T105, T68, T148 and T107 pass.
+  - **Checks:**
+    - the client self-check (`DevShopCheck`): 48 cards, 0 problems;
+    - LayoutCheck 0 problems, with a new shop section: 2 cards a row on phones, taps ≥ 44 px on every touch screen;
+    - captures: PC (FEATURED, PASSES, ITEMS, EVENTS, BOLTS, detail, celebration) and iPhone 17 Pro landscape.
+  - **Studio hooks:** `DevShopCheck` = true / "tab:<NAME>" / "open:<key>" / "celebrate:<key>".

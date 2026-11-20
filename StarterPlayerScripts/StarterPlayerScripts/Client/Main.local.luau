@@ -200,6 +200,22 @@ if game:GetService("RunService"):IsStudio() then
 			end
 		end
 	end)
+	-- (V9-0i: "DevShopCheck" = true runs ShopV9.selfCheck in this real client: [ShopCheck] lines.)
+	devPlayer:GetAttributeChangedSignal("DevShopCheck"):Connect(function()
+		local ask = devPlayer:GetAttribute("DevShopCheck")
+		if type(ask) == "string" and string.sub(ask, 1, 5) == "open:" then
+			(require(Client:WaitForChild("ShopV9")) :: any).openFor(string.sub(ask, 6))
+		elseif type(ask) == "string" and string.sub(ask, 1, 10) == "celebrate:" then
+			(require(Client:WaitForChild("ShopV9")) :: any).celebrateForTest(string.sub(ask, 11))
+		elseif type(ask) == "string" and string.sub(ask, 1, 4) == "tab:" then
+			(require(Client:WaitForChild("ShopV9")) :: any).showTab(string.sub(ask, 5))
+		elseif ask == true then
+			local ok, res = pcall(function()
+				return (require(Client:WaitForChild("ShopV9")) :: any).selfCheck()
+			end)
+			print("[ShopCheck] " .. (if ok then tostring(res) else "failed: " .. tostring(res)))
+		end
+	end)
 	devPlayer:GetAttributeChangedSignal("DevOpen"):Connect(function()
 		local name = devPlayer:GetAttribute("DevOpen")
 		local Ctl = require(game:GetService("ReplicatedStorage"):WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIController")) :: any

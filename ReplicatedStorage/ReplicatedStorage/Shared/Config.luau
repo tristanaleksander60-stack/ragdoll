@@ -342,6 +342,10 @@ local Config = {
 	-- at FIRST_WOW_AT is FIRST_WOW_EVENT instead. Set its developer product to "not for sale".
 	UFO_ENABLED = false,
 	FIRST_WOW_EVENT = "BalloonDrop", -- (V9-0u: a balloon drifts over your lab and drops new dummies in)
+	-- V9-0i (owner, 21 Nov 2026: "make the whole shop 3D, interactive and beautiful"): the SHOP as a store
+	-- (Client/ShopV9): tabs, 3D cards with their own pictures, a detail view, a purchase celebration.
+	-- false = the old shop list, untouched.
+	SHOP_V9 = true,
 	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges
 	-- (V3Assets VergeBushRound/Leafy, VergeFlowers*; tools/ImportV9Foliage.luau). false = the old balls and blocks.

@@ -528,7 +528,123 @@ local function buildPacks()
 	end)
 end
 
+-- V9-0i (Config.SHOP_V9): the store laid out by Client/ShopV9 (tabs, 3D cards, the detail view, the
+-- celebration). Buying goes through the same paths as below; this hands them over as its api.
+local ShopV9: any = nil
+local function buildShopV9()
+	ShopV9 = require(Client:WaitForChild("ShopV9")) :: any
+	local window = C.Window({ name = "Events", title = "Shop", theme = "shop", icon = "shop", size = ShopV9.SIZE, scroll = false, bodyLayout = "none" })
+	local studio = RunService:IsStudio()
+	offerRemote = Net.event(Net.Names.Offers)
+	;(offerRemote :: RemoteEvent).OnClientEvent:Connect(function(kind: unknown, text: unknown)
+		if kind == "Refused" and type(text) == "string" then
+			Toast.show(text)
+		elseif kind == "Got" and type(text) == "string" then
+			ShopV9.celebrate(text)
+		end
+	end)
+	ShopV9.build(window, {
+		buyPass = function(key: string)
+			local r = moneyRemote
+			if r and os.clock() >= buyLockedUntil then
+				buyLockedUntil = os.clock() + BUY_LOCK
+				r:FireServer("Buy", key)
+			end
+		end,
+		buyOffer = function(key: string)
+			local r = offerRemote
+			if r and os.clock() >= offerLockedUntil then
+				offerLockedUntil = os.clock() + BUY_LOCK
+				r:FireServer("Buy", key)
+			end
+		end,
+		buyEvent = function(eventId: string)
+			buy(eventId)
+		end,
+		eventEntry = function(eventId: string, setText: (string) -> (), setEnabled: (boolean) -> ())
+			local event = Events.byId[eventId]
+			if not event then
+				return
+			end
+			local forSale = event.productId ~= 0
+			local entry: Entry = { button = { setEnabled = setEnabled }, ready = studio and not forSale, locked = false, why = if forSale then "asking" elseif studio then nil else "soon" }
+			buttons[eventId] = entry
+			setText(if forSale then "..." elseif studio then "TEST" else "SOON")
+			if forSale then
+				local function ask()
+					if entry.why == "asking" and entry.ask then
+						return
+					end
+					entry.why = "asking"
+					setText("...")
+					RobuxPrice.get(event.productId, function(robux: number?)
+						setText(RobuxPrice.text(robux))
+						local p = packs[eventId]
+						if p then
+							p.price.Text = RobuxPrice.text(robux)
+						end
+						entry.ready = robux ~= nil
+						entry.why = if robux then nil else "failed"
+						refreshButtons()
+					end)
+				end
+				ask()
+				entry.ask = ask
+			end
+		end,
+		eventsExtras = function(page: Frame)
+			queueLabel = C.Text("caption", "", { color = Theme.Palette.textMid, wrap = true, size = UDim2.new(1, 0, 0, 24), layoutOrder = 1, parent = page })
+			local showLabel = C.Text("caption", ScheduleUI.line(), { color = Theme.Palette.gold, wrap = true, size = UDim2.new(1, 0, 0, 24), layoutOrder = 2, parent = page })
+			task.spawn(function()
+				while showLabel.Parent do
+					if window.root.Visible then
+						showLabel.Text = ScheduleUI.line()
+					end
+					task.wait(1)
+				end
+			end)
+			adminButton = C.Button({
+				text = "ADMIN EVENTS",
+				role = "danger",
+				size = UDim2.new(1, 0, 0, Theme.Size.buttonH),
+				layoutOrder = 3,
+				parent = page,
+				onActivated = function()
+					Controller.open(if (Config :: any).ADMIN_V2 then "AdminV2" else "Admin")
+				end,
+			})
+			adminButton.root.Visible = isOwner
+		end,
+		tryGod = function()
+			(require(script.Parent:WaitForChild("GodMode")) :: any).tryIt()
+		end,
+		tryItem = function(key: string)
+			local r = offerRemote
+			if r then
+				r:FireServer("Try", key)
+			end
+		end,
+	})
+	Controller.register(window)
+	Controller.onChanged(function(name: string, open: boolean)
+		if name == "Events" and open then
+			for _, entry in buttons do
+				local again = entry.ask
+				if entry.why == "failed" and again then
+					again()
+				end
+			end
+		end
+	end)
+	shopHud = Controller.addHudButton({ window = "Events", label = "Shop", icon = "shop", theme = "shop", layoutOrder = 1 })
+	refreshButtons()
+end
+
 local function buildShop()
+	if (Config :: any).SHOP_V9 then
+		buildShopV9()
+		return
+	end
 	local window = C.Window({ name = "Events", title = "Shop", theme = "shop", icon = "shop" })
 	-- (V9-0t: "Have a code?" opens the CODES window: codes from the game page.)
 	C.Button({
@@ -1480,6 +1596,9 @@ function EventShop.start()
 			local pass = Shop.byKey[tostring(d.key)]
 			Toast.show(string.format("%s is yours! Thank you!", if pass then pass.name else "It"), Color3.fromRGB(255, 210, 74))
 			refreshPasses()
+			if ShopV9 then
+				ShopV9.celebrate(tostring(d.key)) -- (V9-0i: the card bursts, YOURS!)
+			end
 		elseif kind == "Free" then
 			freeEnds = tonumber(d.ends) or (Workspace:GetServerTimeNow() + (tonumber(d.seconds) or 180))
 			local seconds = tonumber(d.seconds) or 180
@@ -1558,6 +1677,11 @@ function EventShop.start()
 	Net.event(Net.Names.EventNotice).OnClientEvent:Connect(function(text: unknown, kind: unknown)
 		if type(text) == "string" then
 			Toast.show(text, if kind == "warn" then WARN else nil, belowBanner)
+		end
+		-- (V9-0i: "bought:<id>", an event this player just paid for: its card bursts.)
+		local bought = if type(kind) == "string" then string.match(kind, "^bought:(.+)$") else nil
+		if bought and ShopV9 then
+			ShopV9.celebrate(bought)
 		end
 	end)
 	RunService.Heartbeat:Connect(tickBanner)
