@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0, V9-0b, V9-0c, V9-1, V9-2, V9-2b, then V9-3, V9-4, V9-4b, V9-5, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0, V9-0b, V9-0c, V9-0d, V9-1, V9-2, V9-2b, then V9-3, V9-4, V9-4b, V9-5, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -143,6 +143,60 @@ It follows the UI v2 tokens, phones included (out of the thumb zone), and hides 
 - Both vehicles pass.
 
 **Capture:** the speedometer on PC and phone.
+
+## V9-0d The ground stops flickering, the bench set is fixed, a plaza people want to meet in (owner, 21 Nov)
+> "Også fiks bordet bænke sættet her på plazaen og generelt upgrade plazaen så folk for lyst til at mødes. Desuden så bugger jorden når man kigger rundt på grund af alt det grussten tror jeg."
+
+**What the capture shows** (`art/store/look_target/plaza_bench_now.png`):
+- a green bench floating on a stack of overlapping stone discs, with a table that is missing or broken;
+- layers of round paving pieces on top of each other;
+- the booth signs crowding the seating.
+
+**1. The ground flicker (z-fighting and shimmer). Fix it everywhere, not only on the plaza.**
+- **Find it.** Write a tool script that lists every pair of overlapping parts whose top faces are within 0.06 studs of each other. These are:
+  - path stones on stones;
+  - paving discs on discs;
+  - paving on the plaza floor or the baseplate;
+  - verge pieces on grass parts.
+
+  Run it in the lab, the plaza and every map. The list must reach 0.
+- **Fix the cause:**
+  - one surface layer per area: merge the overlapping round paving pieces into single clean slabs or shapes, or use terrain paint where the ground is terrain;
+  - where layers must stack, at least 0.1 stud apart and never the same material on the same height;
+  - remove hidden duplicates (older path versions under newer ones).
+- **Shimmer at a distance** (the busy "gravel" texture): use a calmer paving material or MaterialVariant with a larger `StudsPerTile` and less high-frequency detail. Keep the stone look up close.
+- **Check:** slow 360° camera turns at the spawn, the plaza and 2 maps, on PC and phone. No flicker seen.
+- **Test:** T156_NoZFight (the overlap scan returns 0 in the lab and on the plaza).
+
+**2. The bench and table set.**
+- Replace it with a real picnic set: a table with two benches as one model, or matching table plus benches, at the right height, standing on the ground (not on discs).
+- Every seat works: Seat parts at the right height, facing the table, and a player sits correctly.
+- Check every other bench and table in the game the same way.
+
+**3. A plaza people want to meet in.** Design it as a town square, with:
+- **A centre piece:** a fountain or a landmark statue (a giant crash-test dummy).
+- **Seating:**
+  - picnic sets and benches facing each other in small groups, under shade trees;
+  - string lights between lamp posts, warm at dusk.
+- **Things to do together:**
+  - a photo spot (a frame with the game's logo and a step);
+  - the plaza grab and throw area clearly marked by its shape, not by paint;
+  - a high-five or emote spot;
+  - the leaderboards together in one place;
+  - the portals.
+- **A market row:** the map-shop booths as a proper market row along one side (V9-4b spacing). They never stand among the seats.
+- **Life:**
+  - a few calm crowd NPCs sitting, chatting and walking (existing CrowdService);
+  - pigeons (Birds);
+  - ambient town sound, with no music (owner rule).
+- **Layout:** clear walking lanes from the arrival to everything, open space in the middle, flowers and planters at the edges, and no clutter.
+- **Light:** the bright thumbnail light from V9-0b.
+
+**Done when:**
+- before/after captures from the arrival, the seating, the centre and from above;
+- the blind reviewer passes it (≥ 8.5);
+- the walking and crowd tests pass;
+- T156 passes.
 
 ## V9-1 The water: a real aquarium, the whale under water, a shark
 - **The aquarium.** Replace the flat glass "WhalePool" with a real aquarium/lagoon in the creature yard:
