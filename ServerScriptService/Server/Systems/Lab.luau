@@ -155,6 +155,10 @@ local function slotPosition(origin: Vector3, index: number): Vector3
 	local angle = -spread / 2 + spread * t
 	return origin + Vector3.new(math.sin(angle) * radius, 0, -math.cos(angle) * radius)
 end
+Lab.slotPosition = slotPosition -- (tests: where each slot of the row stands)
+Lab.slotCount = function(): number
+	return DUMMY_COUNT
+end
 
 local function poof(at: Vector3)
 	local ball = Instance.new("Part")

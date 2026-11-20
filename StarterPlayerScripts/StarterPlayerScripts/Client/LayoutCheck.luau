@@ -450,6 +450,13 @@ function LayoutCheck.run(): string
 				-- A toast at its biggest, where Toast puts it: it may not touch anything.
 				local phone = math.min(s.size.X, s.size.Y) <= 500
 				local centre, tw, ty = HudSlots.toastBox(s.size, ctxOf(s.size, s.touch, lab))
+				-- (V9-0d review: on a phone the compact notice pill, NoticeRules.smallBox, shares the lane: the
+				-- toast box measured is the wider and taller of the two, so the pill never meets the HUD.)
+				if phone then
+					local NoticeRules = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("NoticeRules")) :: any
+					local pw = NoticeRules.smallBox(s.size, s.size.Y > s.size.X)
+					tw = math.max(tw, pw)
+				end
 				local toast: Rect = { x = centre - tw / 2, y = ty or 10, w = tw, h = toastH(s.size), name = "Toast" }
 				table.insert(all, toast)
 				-- V7-5: the event card and its chip share the toast lane (EventShop BANNER_V7: toasts wait

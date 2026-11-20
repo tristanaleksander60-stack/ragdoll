@@ -66,12 +66,9 @@ function LavaPit.dress(pool: BasePart, floorY: number): Folder
 	task.defer(function()
 		pool.Size = Vector3.new(w * 0.74, pool.Size.Y, d * 0.74)
 	end)
-	-- Scorched ground a little wider than the pit.
-	for i = 0, 5 do
-		local a = i / 6 * math.pi * 2
-		local at = Vector3.new(c.X + math.cos(a) * rx * 0.35, 0, c.Z + math.sin(a) * rz * 0.35)
-		disc(into, "LavaScorch", at, math.max(w, d) * 0.85, 0.06, floorY + 0.02 + i * 0.07, LavaPit.SCORCH, Enum.Material.Slate) -- (V9-0d: 0.07 apart, no flicker)
-	end
+	-- Scorched ground a little wider than the pit: one disc (V9-0d review: six overlapping ones had to
+	-- stack up past the lava's own beds to keep apart; one never meets itself).
+	disc(into, "LavaScorch", Vector3.new(c.X, 0, c.Z), math.max(w, d) * 1.18, 0.06, floorY + 0.04, LavaPit.SCORCH, Enum.Material.Slate)
 	-- The lava itself: overlapping discs that fill an oval, Roblox's cracked lava (a dark crust with
 	-- glowing cracks), and a few hot spots of molten glow that breathe (LavaClient).
 	local spots = {
@@ -91,7 +88,7 @@ function LavaPit.dress(pool: BasePart, floorY: number): Folder
 		local r = 0.25 + 0.4 * hash(d, i)
 		local at = Vector3.new(c.X + math.cos(a) * rx * r, 0, c.Z + math.sin(a) * rz * r)
 		local size = 1.2 + hash(i, 3) * 1.2
-		local crust = piece(into, "LavaCrust", Vector3.new(size, 0.2, size * (0.6 + hash(i, 9) * 0.5)), CFrame.new(at.X, floorY + 0.32, at.Z) * CFrame.Angles(0, a, 0), LavaPit.CRUST, Enum.Material.Basalt)
+		local crust = piece(into, "LavaCrust", Vector3.new(size, 0.2, size * (0.6 + hash(i, 9) * 0.5)), CFrame.new(at.X, floorY + 0.2 + #spots * 0.07 + 0.08 - 0.1, at.Z) * CFrame.Angles(0, a, 0), LavaPit.CRUST, Enum.Material.Basalt)
 		crust:SetAttribute("Home", crust.CFrame)
 		CollectionService:AddTag(crust, "LavaCrust")
 	end

@@ -75,6 +75,12 @@ local function place(into: Instance, name: string, at: Vector3, yaw: number, sca
 		end
 	end
 	m.Parent = into
+	-- (V9-0d: its seats stay put when a sitting player is moved: V3Assets.guardSeat.)
+	for _, d in m:GetDescendants() do
+		if d:IsA("Seat") then
+			(require(script.Parent:WaitForChild("V3Assets")) :: any).guardSeat(d)
+		end
+	end
 	return m
 end
 
@@ -169,7 +175,7 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 			place(folder, "FlowerBed", origin + Vector3.new(walkX(fz) - side * bedOff, 0.2, fz), 0, 0.8)
 		end
 		for _, bz in { -12, 45 } do
-			place(folder, "Bench", origin + Vector3.new(walkX(bz) + side * benchOff, 0.2, bz), if side > 0 then -90 else 90, 1.1, true)
+			place(folder, "Bench", origin + Vector3.new(walkX(bz) + side * benchOff, 0.2, bz), if side > 0 then 90 else -90, 1.1, true) -- (V9-0d: the bench with real seats faces -Z: turned to face the walk)
 		end
 		for _, lz in { -78, -40, 0, 40 } do
 			place(folder, "StreetLamp", origin + Vector3.new(walkX(lz) + side * lampOff, 0.2, lz), if side > 0 then 180 else 0, 0.8, true)

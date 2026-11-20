@@ -1151,6 +1151,21 @@ function Playground.build(labOrigin: Vector3, name: string?)
 			log.warn("LabGarden failed in " .. folder.Name .. ": " .. tostring(err))
 		end
 	end
+	-- (V9-0d review: once everything stands, no path piece lies level with another or with the ground it
+	-- crosses; PathFlicker = the pairs left, 0.)
+	if lab and (Config :: any).PATHS then
+		local okU, errU = pcall(function()
+			local roots: { Instance } = { folder }
+			local labs = Workspace:FindFirstChild("Labs")
+			if labs then
+				table.insert(roots, labs)
+			end
+			folder:SetAttribute("PathFlicker", require(script.Parent.PathBuilder).unflickerArea({ folder }, roots))
+		end)
+		if not okU then
+			log.warn("unflicker failed in " .. folder.Name .. ": " .. tostring(errU))
+		end
+	end
 	-- World/Feel v2: the dressing over it all (pictures only: WorldDress). A failure there never
 	-- costs the playground itself.
 	if Config.WORLD_V2 then

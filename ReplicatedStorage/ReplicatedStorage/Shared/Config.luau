@@ -327,6 +327,10 @@ local Config = {
 	-- step out to 40+ studs, the lab boards grow. Paths stay outside the floor (yard, gardens).
 	-- false = LAYOUT_V2.
 	LAYOUT_V3 = true,
+	-- V9-0d (owner, 21 Nov 2026: "upgrade the plaza so people want to meet there"): the plaza as a town square
+	-- (Server/Systems/TownSquare, Client/PlazaClient): the fountain in the middle, seating groups under
+	-- shade trees, benches facing each other, string lights, a toss pit, a meet stage and a photo spot.
+	PLAZA_V9 = true,
 	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges
 	-- (V3Assets VergeBushRound/Leafy, VergeFlowers*; tools/ImportV9Foliage.luau). false = the old balls and blocks.

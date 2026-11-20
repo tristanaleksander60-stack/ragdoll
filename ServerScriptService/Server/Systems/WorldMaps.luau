@@ -907,7 +907,9 @@ local function dressPlaza(labOrigin: Vector3)
 	-- A fountain on a round of paving (N7), between the crowd's middle and the board (the middle
 	-- itself stays open: the crowd gathers and meets there).
 	-- (Round 3, M6: on the plaza's east side, 0 degrees: at 90 it stood in front of the boards.)
-	local fountainAt = select(1, round(0, 22))
+	-- (V9-0d, Config.PLAZA_V9: a town square: the fountain is its centre piece, open paving round it.)
+	local townSquare = (Config :: any).PLAZA_V9 == true
+	local fountainAt = if townSquare then select(1, round(0, 0)) else select(1, round(0, 22))
 	local floorY = fountainAt.Y
 	-- The square itself (fix round 2): a round of pale paving under the whole crowd, out to the lamps.
 	local square = Instance.new("Part")
@@ -915,7 +917,7 @@ local function dressPlaza(labOrigin: Vector3)
 	square.Shape = Enum.PartType.Cylinder
 	square.Size = Vector3.new(0.04, 104, 104)
 	square.CFrame = CFrame.new(middle.X, floorY + 0.02, middle.Z) * CFrame.Angles(0, 0, math.rad(90))
-	square.Color = hex("#B9B2A6")
+	square.Color = if townSquare then hex("#A8977E") else hex("#B9B2A6") -- (V9-0d: a warm sandstone that does not blow out white in the bright light)
 	square.Material = Enum.Material.Pavement
 	square.Anchored = true
 	square.CanQuery = false
@@ -927,7 +929,7 @@ local function dressPlaza(labOrigin: Vector3)
 	paving.Name = "Paving"
 	paving.Shape = Enum.PartType.Cylinder
 	paving.Size = Vector3.new(0.08, 30, 30)
-	paving.CFrame = CFrame.new(fountainAt.X, floorY + 0.04, fountainAt.Z) * CFrame.Angles(0, 0, math.rad(90))
+	paving.CFrame = CFrame.new(fountainAt.X, floorY + 0.08, fountainAt.Z) * CFrame.Angles(0, 0, math.rad(90)) -- (V9-0d: its top 0.08 over the square's: no shimmer)
 	paving.Color = hex("#C9B79C")
 	paving.Material = Enum.Material.Cobblestone
 	paving.Anchored = true
@@ -940,11 +942,29 @@ local function dressPlaza(labOrigin: Vector3)
 	if fountain then
 		fountain:SetAttribute("KeepOut", 7.5) -- (the crowd never meets inside it: CrowdService)
 	end
+	local posts: { Vector3 } = {}
 	for _, angle in PLAZA_LAMPS do
 		local at, out = round(angle, 47)
 		asset(dressing, "StreetLamp", at, out, 15) -- (the kept lamp's arm reaches along -Z: over the plaza)
+		table.insert(posts, at + Vector3.new(0, 12.5, 0))
 	end
-	for _, angle in PLAZA_BENCHES do
+	if townSquare then
+		local TownSquare = require(script.Parent:WaitForChild("TownSquare")) :: any
+		local kit = {
+			part = part,
+			plant = plant,
+			sign = sign,
+			ground = function(at: Vector3): Vector3
+				local params = RaycastParams.new()
+				params.FilterType = Enum.RaycastFilterType.Exclude
+				params.FilterDescendantsInstances = { dressing }
+				local hit = Workspace:Raycast(Vector3.new(at.X, middle.Y + 30, at.Z), Vector3.new(0, -80, 0), params)
+				return Vector3.new(at.X, if hit then hit.Position.Y else floorY, at.Z)
+			end,
+		}
+		TownSquare.build(kit, dressing, Vector3.new(middle.X, floorY, middle.Z), posts)
+	end
+	for _, angle in if townSquare then {} else PLAZA_BENCHES do
 		local at, out = round(angle, 43)
 		-- (V9-0d, owner 21 Nov 2026: "fix the table and bench set on the plaza": a real picnic set, a table
 		-- with its benches and 6 seats, standing on the ground; the old bench where there is none.)
@@ -993,7 +1013,8 @@ local function dressPlaza(labOrigin: Vector3)
 	end
 	edges.Parent = Workspace
 	local arrival = labOrigin + Vector3.new(0, 0, 40)
-	board(Vector3.new(arrival.X, floor + 11, arrival.Z + 34), Vector3.new(0, 0, -1))
+	-- (V9-0d: in the town square the welcome board is the gate on the way in, not a wall before the fountain.)
+	board(Vector3.new(arrival.X, floor + 11, arrival.Z + (if townSquare then -6 else 34)), Vector3.new(0, 0, -1))
 	if #dressing:GetChildren() > 0 then
 		dressing.Parent = Workspace
 	else

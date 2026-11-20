@@ -756,7 +756,7 @@ aimParams.FilterType = Enum.RaycastFilterType.Exclude
 local function ownAim(character: Model, dt: number): Vector2?
 	local root = character:FindFirstChild("HumanoidRootPart")
 	local camera = Workspace.CurrentCamera
-	if not root or not root:IsA("BasePart") or not camera or not gunHeld(character) or not upright(character) then
+	if not root or not root:IsA("BasePart") or not camera or not gunHeld(character) or not upright(character) or Players.LocalPlayer:GetAttribute("PhotoPose") == true then -- (V9-0d: posing in the photo frame, the body faces the camera, not the mouse)
 		turning = false
 		return nil
 	end

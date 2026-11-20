@@ -64,7 +64,13 @@ return {
 		if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAYOUT_V3 then
 			-- (V9-0h: the row stands behind the bullseye, a 40-degree arc at r 58; the spawn faces 50 degrees
 			-- right, towards the cannon, so its 3 slots on the right are the ones in view.)
-			row = { Vector3.new(o.X + 4.05, y, o.Z - 57.9), Vector3.new(o.X + 12.1, y, o.Z - 56.7), Vector3.new(o.X + 19.8, y, o.Z - 54.5) }
+			-- (V9-0d review: read from the lab's own slots, not typed in.)
+			local n = Lab.slotCount()
+			row = {}
+			for index = n - 2, n do
+				local at = Lab.slotPosition(Vector3.new(o.X, y, o.Z), index)
+				table.insert(row, Vector3.new(at.X, y, at.Z))
+			end
 		end
 		for _, size in { Vector2.new(1920, 1080), Vector2.new(800, 360) } do
 			assert(onScreen(cam, cannonAt + Vector3.new(0, 2, 0), size), string.format("the cannon is off screen at %dx%d", size.X, size.Y))

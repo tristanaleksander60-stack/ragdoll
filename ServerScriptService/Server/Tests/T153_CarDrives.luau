@@ -82,6 +82,12 @@ return {
 				task.wait(0.3)
 				;(seat :: VehicleSeat):Sit(humanoid)
 				task.wait(1)
+				-- (V9-0d review: a gun in the hand, or ownAim never turns the body and the check proves nothing.)
+				local HeldService = require(script.Parent.Parent:WaitForChild("Systems"):WaitForChild("HeldService")) :: any
+				HeldService.onHold(p, "Blaster")
+				task.wait(0.5)
+				local heldTool = (p.Character :: Model):FindFirstChild("HeldTool")
+				assert(heldTool and heldTool:GetAttribute("Tool") == "Blaster", "no gun in the hand for the seated aim check")
 				local body = (seat :: VehicleSeat).AssemblyRootPart :: BasePart
 				local function heading(): number
 					local lv = body.CFrame.LookVector

@@ -972,3 +972,29 @@ Write the baseline into `docs/PERF.md`.
   - **Tests:** T36 (plaza budget 280, picnic sets count as seats), T106 (the plaza is paved), T42 (judges without the creator's passes). Place saved v698.
   - **Left for V9-4b:** the booths into a market row clear of the paths (T156 leaves booth parts to it).
   - **Left (time):** the town-square extras (string lights, photo spot, statue, seating groups under shade trees, pigeons, ambient town sound).
+- 21 Nov 2026, blind re-review: 0c 8.6, 0g 8.7, 0h 8.6 pass; V9-0d 6.6 (fail). Fix round 1 for V9-0d (PC):
+  - **Ground, really 0:**
+    - `ZFight.lifts` (one pass) gives each movable flat piece the least 0.07 lift that clears everything it overlaps (fixed ground and pieces already settled; biggest first). `PathBuilder.unflicker` / `unflickerArea` use it.
+    - Applied to the lab's paths, verges, creature ground cover (`Habitat_*`) and lava scorch after the whole lab stands (Playground, attr `PathFlicker` = 0), to the map walkways (attr `MapPathsFlicker` = 0), and to every map's own thin pieces (a crosswalk on a road, a rug on a floor).
+    - The scan has no cap and checks overlap both ways on a 5x5 grid; the widest footprint bounds the search.
+    - Lava: one scorch disc under the beds, crusts above the top bed.
+    - Map walkways: each point on its own floor (only a wide level floor counts, never a prop).
+    - Path joints 0.07 under their slabs (no ledge at bends).
+    - T156 checks lab, plaza and all 5 maps with no allowance: 0 pairs in 3867 / 781 / 5593 parts.
+  - **Seats:**
+    - V3Assets "Bench" is now a real bench with 2 working seats: Creator Store 133605229604823, the known Runtime/ScreenBuilder malware removed. It is aligned (front -Z, seats facing out), and the garden benches turned to face their walk.
+    - The PicnicSet and Bench models are flat (no nested models).
+    - `V3Assets.guardSeat`: a player moved while sitting (a trip, a respawn) no longer drags the anchored seat along. This was a real bug: two plaza seats ended 100 studs up.
+  - **Town square** (`Config.PLAZA_V9`, `Server/Systems/TownSquare`, `Client/PlazaClient`):
+    - The fountain is the centre piece, with open paving round it (warm sandstone, no longer blown-out white).
+    - Four seating groups (picnic set + shade tree + planters) on the diagonals, and two benches facing each other across the fountain.
+    - String lights between the six lamps (54 warm bulbs, Beam wire).
+    - TOSS PIT (a round sand pit with a padded rim) on the way in.
+    - MEET STAGE in front of the boards: "Dance" plays the emote.
+    - PHOTO SPOT outside the entrance: a gold frame on a step with RAGDOLL HAVOC. "Take a photo" frames you facing the camera with the square behind, the HUD off for 3.5 s, and a shutter flash. `PhotoPose` stops the aim turn.
+    - Entrance flower beds; the welcome board is now the gate on the way in.
+    - Sounds on the Ambient bus: fountain water + outdoor murmur (Pro Sound Effects, Roblox-licensed), no music.
+    - Crowd NPCs (CrowdService) and pigeons (Birds) were already there; every feature is KeepOut for the crowd.
+  - **Review small ones:** T153 holds a gun before the seated check; the car on its side does not drive or damp the righting; T163 exempts only the bullseye; T112 reads the row from `Lab.slotPosition`; LayoutCheck measures the compact notice pill in the toast lane.
+  - **Tests:** T168_TownSquare (layout, 40 seats enabled and level, a player sits, moved away the seat stays home); T36 budget 520; T150, T156, T106, T112, T147, T153, T163 pass. Captures: arrival, centre, from above, the photo. Place saved v703 (Bench).
+  - **Left:** the booths' market row (V9-4b). The lab paths keep the warm cobble texture: the shimmer was z-fighting, now 0.

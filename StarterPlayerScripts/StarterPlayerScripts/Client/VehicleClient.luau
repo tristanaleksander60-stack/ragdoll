@@ -55,6 +55,7 @@ local function drive(seat: VehicleSeat, dt: number)
 			local want = axis.Unit * 2.5
 			body.AssemblyAngularVelocity = av:Lerp(Vector3.new(want.X, av.Y, want.Z), math.min(1, dt * 4))
 		end
+		return -- (V9-0d review: no driving on its side, and no damping that would slow the righting)
 	end
 	if fwd.Magnitude < 0.2 or not grounded(body, car) then
 		return -- (in the air or on its side: physics only)

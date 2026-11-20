@@ -36,7 +36,7 @@ local PROPS = { "Plant", "Espresso", "OfficeChair", "Jet", "Crate", "Shelf", "Ca
 -- Part budgets for phones (every part here is streamed to whoever is near).
 local ROOM_BUDGET = 400 -- parts in one room
 local LAB_BUDGET = 80 -- parts in one lab's markings, sign and props
-local PLAZA_BUDGET = 280 -- parts in the plaza's dressing (V9-0d: + four picnic sets of 40 small anchored pieces)
+local PLAZA_BUDGET = 520 -- parts in the plaza's dressing (V9-0d town square: four picnic sets of 40 pieces, two benches of 58, 54 bulbs; all anchored, small ones cast no shadow)
 local CROWD = { Barista = true, Office = true, Tourist = true, Chef = true, Guard = true, Cashier = true, Traveler = true, Worker = true, Farmer = true, Soldier = true, Beachgoer = true }
 local WEAR = { ChefHat = "Chef", GuardCap = "Guard", BucketHat = "Tourist", Camera = "Tourist", Backpack = "Traveler", NeckPillow = "Traveler" }
 local ROOM_PROPS: { [string]: { string } } = {
@@ -186,8 +186,10 @@ local function body(results: { string })
 	assert(plaza, "the plaza is bare")
 	local dressed: { [string]: number } = {}
 	local plazaParts = 0
-	for _, c in plaza:GetChildren() do
-		dressed[c.Name] = (dressed[c.Name] or 0) + 1
+	for _, c in plaza:GetDescendants() do
+		if c:IsA("Model") then
+			dressed[c.Name] = (dressed[c.Name] or 0) + 1 -- (V9-0d: the town square keeps its benches and plants in groups)
+		end
 	end
 	for _, d in plaza:GetDescendants() do
 		if d:IsA("BasePart") then

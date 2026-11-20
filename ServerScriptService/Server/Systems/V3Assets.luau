@@ -68,7 +68,45 @@ function V3Assets.place(role: string, parent: Instance, at: CFrame, options: Opt
 	local yaw = src:GetAttribute("Yaw")
 	copy:PivotTo(at * CFrame.Angles(0, math.rad(if type(yaw) == "number" then yaw else 0), 0))
 	copy.Parent = parent
+	for _, d in copy:GetDescendants() do
+		if d:IsA("Seat") then
+			V3Assets.guardSeat(d)
+		end
+	end
 	return copy
+end
+
+-- V9-0d: a bench's or a picnic set's seat stays where it was built. A sitting player who is moved
+-- (a trip, a respawn, a test) would drag the anchored seat along by its SeatWeld: the weld is let go
+-- and the seat goes home at once.
+function V3Assets.guardSeat(seat: Seat)
+	-- (Home is where it stands when someone sits down: an anchored seat does not move as they sit,
+	-- so a model moved after it was built keeps the right home.)
+	local home = seat.CFrame
+	seat:GetPropertyChangedSignal("Occupant"):Connect(function()
+		if seat.Occupant then
+			home = seat.CFrame
+		end
+		if not seat.Occupant then
+			if (seat.Position - home.Position).Magnitude > 0.5 then
+				seat.CFrame = home
+			end
+			return
+		end
+		task.spawn(function()
+			while seat.Parent and seat.Occupant do
+				if (seat.Position - home.Position).Magnitude > 0.5 then
+					local weld = seat:FindFirstChild("SeatWeld")
+					if weld then
+						weld:Destroy()
+					end
+					seat.CFrame = home
+					break
+				end
+				task.wait(0.1)
+			end
+		end)
+	end)
 end
 
 -- Roles present (tests, the report).

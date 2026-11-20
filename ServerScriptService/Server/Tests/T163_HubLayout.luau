@@ -78,8 +78,9 @@ return {
 						near = math.min(near, math.sqrt(c.X * c.X + c.Z * c.Z))
 					end
 				end
-				-- (A flat thing on the floor, the bullseye, may reach in: it blocks nothing.)
-				local flatThing = math.min(size.X, size.Y, size.Z) < 1.5
+				-- (The bullseye, flat on the floor, may reach in: it blocks nothing. Only it: the BIG RED BUTTON's
+				-- 1-stud base is checked like the rest, V9-0d review.)
+				local flatThing = name == "Bullseye"
 				assert(flatThing or near >= PathPlan.HUB_CLEAR - 2, string.format("%s reaches %.0f studs from the spawn (want %d)", name, near, PathPlan.HUB_CLEAR))
 				assert(r >= PathPlan.HUB_CLEAR and r <= 150, string.format("%s is %.0f studs from the spawn (want %d-150)", name, r, PathPlan.HUB_CLEAR))
 				table.insert(report, string.format("%s %.0f", name, r))
