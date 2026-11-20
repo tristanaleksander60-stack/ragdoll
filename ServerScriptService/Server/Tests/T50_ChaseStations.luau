@@ -32,7 +32,10 @@ local function body(player: Player): string
 	task.wait(1)
 	local c = ChaseService.start(player, 4)
 	assert(c, "the chase did not start in the own lab")
-	assert(player:GetAttribute("ChaseHP") == ChaseService.MAX_HP and player:GetAttribute("ChaseMax") == ChaseService.MAX_HP, "no health bar")
+	-- (V8-1.6, CHASE_V8: no health bar in a fair chase; every 3rd punch throws you instead.)
+	local fair = (require(game:GetService("ReplicatedStorage").Shared.Config) :: any).CHASE_V8 == true
+	assert(fair or (player:GetAttribute("ChaseHP") == ChaseService.MAX_HP and player:GetAttribute("ChaseMax") == ChaseService.MAX_HP), "no health bar")
+	assert(not fair or player:GetAttribute("ChaseHP") == nil, "a fair chase shows a health bar")
 	assert(#(c :: any).chasers == 4, "not 4 chasers")
 	assert(ChaseService.start(player, 4) == nil, "a second chase at once")
 	task.wait(1)

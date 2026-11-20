@@ -288,7 +288,7 @@ local function goLimp(stay: boolean, velocity: Vector3?, force: boolean?)
 				ActiveRagdoll.setState(model, "Ragdoll")
 				ActiveRagdoll.setStayDown(model, stayDown)
 			end
-			ActiveRagdoll.push(model, capped(velocity), LAUNCH_MAX)
+			ActiveRagdoll.push(model, capped(velocity), if velocity.Magnitude > 180 then LAUNCH_MAX else nil)
 		end
 		refreshButton()
 		return
@@ -318,7 +318,7 @@ local function goLimp(stay: boolean, velocity: Vector3?, force: boolean?)
 	ActiveRagdoll.setState(model, "Ragdoll")
 	ActiveRagdoll.setStayDown(model, stay)
 	if velocity and velocity.Magnitude > 0.5 then
-		ActiveRagdoll.push(model, capped(velocity), LAUNCH_MAX) -- (V8-1.1: the cannon's long arc)
+		ActiveRagdoll.push(model, capped(velocity), if velocity.Magnitude > 180 then LAUNCH_MAX else nil) -- (V8-1.1: only the cannon's long arc goes past 180)
 	else
 		tip(model)
 		local chest = model:FindFirstChild("UpperTorso")
@@ -498,7 +498,7 @@ function PlayerBody.freeHeld(velocity: Vector3?)
 	stayDown = false
 	ActiveRagdoll.setStayDown(model, false)
 	if velocity and velocity.Magnitude > 0.5 then
-		ActiveRagdoll.push(model, capped(velocity), LAUNCH_MAX) -- (V8-1.1: the cannon's long arc)
+		ActiveRagdoll.push(model, capped(velocity), if velocity.Magnitude > 180 then LAUNCH_MAX else nil) -- (V8-1.1: only the cannon's long arc goes past 180)
 	end
 	refreshButton()
 end

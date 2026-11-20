@@ -27,7 +27,7 @@ local Client = script.Parent
 local StuntHud = {}
 
 StuntHud.SLOW_K = 0.35 -- the slow-mo beat's time scale
-StuntHud.SLOW_FOR = 0.7 -- s of real time the beat lasts
+StuntHud.SLOW_FOR = 1.0 -- s of real time the beat lasts (1.0: about 2.8 s in the air in all; 0.7 gave 2.3-2.5)
 StuntHud.CARD_FOR = 6 -- s the landing card stays
 
 local player = Players.LocalPlayer
@@ -148,12 +148,70 @@ local function slowBeat()
 	end)
 end
 
--- Waits for the top of the arc (going up, then not), then the beat.
+-- After the beat, on the way down: the shot steers gently onto the bullseye (the ragdoll's joints
+-- lose a little speed on the way up; this makes up for it, like aim help).
+StuntHud.HOMING = 0.12 -- share of the gap to the right horizontal speed closed each frame
+local function homeIn(target: Vector3)
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not character or not root or not root:IsA("BasePart") then
+		return
+	end
+	local t0 = os.clock()
+	while os.clock() - t0 < 4 and root.Parent do
+		local pos, v = root.Position, root.AssemblyLinearVelocity
+		local h = pos.Y - (target.Y + 3)
+		if h < 4 then
+			return
+		end
+		local g = Workspace.Gravity
+		local t = (v.Y + math.sqrt(math.max(0, v.Y * v.Y + 2 * g * h))) / g
+		if t > 0.05 then
+			local want = Vector3.new((target.X - pos.X) / t, 0, (target.Z - pos.Z) / t)
+			local have = Vector3.new(v.X, 0, v.Z)
+			local nudge = (want - have) * StuntHud.HOMING
+			local seen: { [BasePart]: boolean } = {}
+			for _, d in character:GetDescendants() do
+				if d:IsA("BasePart") and not d.Anchored then
+					local r = d.AssemblyRootPart or d
+					if not seen[r] then
+						seen[r] = true
+						r.AssemblyLinearVelocity += nudge
+					end
+				end
+			end
+		end
+		RunService.Heartbeat:Wait()
+	end
+end
+
+local function bullseyeNear(at: Vector3): Vector3?
+	local best: Vector3? = nil
+	local bestD = 200
+	local pg = Workspace:FindFirstChild("Playground")
+	for _, d in if pg then pg:GetDescendants() else {} do
+		if d.Name == "Bullseye" and d:IsA("BasePart") then
+			local dist = (d.Position - at).Magnitude
+			if dist < bestD then
+				best, bestD = d.Position, dist
+			end
+		end
+	end
+	return best
+end
+
+-- Waits for the top of the arc (going up, then not), then the beat, then steers onto the bullseye.
 local function watchApex()
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	if not root or not root:IsA("BasePart") then
 		return
+	end
+	local target = bullseyeNear(root.Position)
+	local function afterBeat()
+		if target then
+			task.delay(StuntHud.SLOW_FOR + 0.05, homeIn, target)
+		end
 	end
 	local t0 = os.clock()
 	local rising = false
@@ -163,6 +221,7 @@ local function watchApex()
 			rising = true
 		elseif rising and vy <= 0 then
 			slowBeat()
+			afterBeat()
 			return
 		end
 		RunService.Heartbeat:Wait()
@@ -286,6 +345,9 @@ function StuntHud.start()
 		local d = if type(data) == "table" then data :: any else {}
 		if kind == "Begin" then
 			showLive()
+			if Config.AUDIO_V8 then
+				(require(Client:WaitForChild("Haptics")) :: any).pulse(0.7, 0.15) -- (V8-1.5: the launch)
+			end
 			if d.machine == "Cannon" then
 				task.spawn(watchApex)
 			end
@@ -293,6 +355,9 @@ function StuntHud.start()
 			setLive(tonumber(d.score) or 0)
 		elseif kind == "Land" then
 			clearLive()
+			if Config.AUDIO_V8 then
+				(require(Client:WaitForChild("Haptics")) :: any).pulse(0.6, 0.12) -- (V8-1.5: the landing)
+			end
 			if type(d.tricks) == "table" and table.find(d.tricks, "BULLSEYE!") then
 				C.playSound("unlock", 1.2) -- (the bullseye's ding)
 			end

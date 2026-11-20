@@ -50,7 +50,9 @@ return {
 			assert(ChaseService.calmAllows(p, Config.CALM_CHASE_KOS), "a newcomer past both never gets a chase")
 			p:SetAttribute("Newcomer", false)
 			p:SetAttribute("V8JoinedAt", now)
-			assert(ChaseService.calmAllows(p, 0), "a returner was held back")
+			-- (V8-1.6, CHASE_V8: the fair chase waits for everyone; without it a returner is never held back.)
+			local chaseV8 = Config.CHASE_V8 == true
+			assert(ChaseService.calmAllows(p, 0) ~= chaseV8, "the returner rule is wrong")
 		end)
 		p:SetAttribute("Newcomer", wasNew)
 		p:SetAttribute("V8JoinedAt", wasJoined)

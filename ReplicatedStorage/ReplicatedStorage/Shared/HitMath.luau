@@ -209,7 +209,7 @@ HitMath.BUMPER_SPEED = 55
 HitMath.TOUCH_COOLDOWN = 0.4
 -- A player's own body: the most a knock may send it, and the human cannon (studs/s).
 HitMath.PLAYER_MAX_KNOCK = 70
-HitMath.PLAYER_LAUNCH_MAX = 230 -- (V8-1.1: the cannon's long arc is about 218 studs/s; was 140)
+HitMath.PLAYER_LAUNCH_MAX = 260 -- (V8-1.1: the cannon's long arc is about 246 studs/s; was 140)
 -- s a player stays limp before getting up again is allowed
 HitMath.PLAYER_MIN_DOWN_TIME = 0.6
 -- studs above FallenPartsDestroyHeight where a limp body counts as fallen out of the world

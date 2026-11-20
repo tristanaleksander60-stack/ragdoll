@@ -1910,7 +1910,9 @@ function ActiveRagdoll.push(model: Model, deltaVelocity: Vector3, maxSpeed: numb
 		return
 	end
 	for _, p in rig.parts do
-		if p ~= rig.root then
+		-- (V8-1.1: a launch past MAX_LINEAR_SPEED, the cannon's long arc, moves the root too: left out,
+		-- the joints ate about 15% of it and the arc fell short.)
+		if p ~= rig.root or maxSpeed ~= nil then
 			p:ApplyImpulse(deltaVelocity * p.Mass)
 		end
 	end

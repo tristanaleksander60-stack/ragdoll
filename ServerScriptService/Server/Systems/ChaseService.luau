@@ -22,6 +22,8 @@ local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
 local EventService = require(script.Parent.EventService)
 local MinigameService = require(script.Parent.MinigameService)
 local Metrics = require(script.Parent.Metrics)
+local FxService = require(script.Parent.FxService) -- (V8-1.6: the punch sound and the cleared burst)
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local SessionStats = require(script.Parent.SessionStats)
 local DeviceTier = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("DeviceTier"))
 
@@ -42,7 +44,7 @@ ChaseService.EVERY_MAX = 480
 ChaseService.NEW_TAKEDOWNS = 300
 
 type Chaser = { model: Model, down: boolean, lastHit: number }
-type Chase = { player: Player, chasers: { Chaser }, endsAt: number, done: boolean }
+type Chase = { player: Player, chasers: { Chaser }, endsAt: number, done: boolean, punches: number? }
 
 local chases: { [Player]: Chase } = {}
 local nextAt: { [Player]: number } = {}
@@ -53,7 +55,7 @@ local nextAt: { [Player]: number } = {}
 local startTakedowns: { [Player]: number } = {}
 function ChaseService.calmAllows(player: Player, takedowns: number): boolean
 	local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
-	if not Config.V8_CALM_START or player:GetAttribute("Newcomer") ~= true then
+	if not Config.V8_CALM_START or (player:GetAttribute("Newcomer") ~= true and not Config.CHASE_V8) then -- (V8-1.6: for everyone)
 		return true
 	end
 	-- (This visit's KOs from the visit record, counted from the join: blind review, 21 Nov. The first
@@ -107,7 +109,12 @@ local function finish(c: Chase, why: string)
 	player:SetAttribute("ChaseLeft", nil)
 	if why == "Cleared" and player.Parent then
 		ProgressService.addTakedowns(player, ChaseService.BONUS)
-		ProgressService.notice(player, string.format("CHASE CLEARED! +%d takedowns", ChaseService.BONUS))
+		ProgressService.notice(player, string.format("\u{1F389} CHASE CLEARED! +%d takedowns", ChaseService.BONUS))
+		-- (V8-1.6: a celebration where you stand.)
+		local r = rootOf(player)
+		if (Config :: any).CHASE_V8 and r then
+			FxService.hit(r.Position + Vector3.new(0, 3, 0), 130, "CannonPad")
+		end
 	elseif player.Parent then
 		ProgressService.notice(player, "They gave up the chase!")
 	end
@@ -145,17 +152,21 @@ function ChaseService.start(player: Player, count: number?): Chase?
 	-- (Phase 1: at most the device tier's chasers; DeviceTier.)
 	local record = SessionStats.recordFor(player)
 	local most = math.max(ChaseService.CHASE_MIN, math.min(ChaseService.CHASE_MAX, DeviceTier.caps(DeviceTier.of(record and record.plat)).chasers))
-	local n = math.min(count or math.random(ChaseService.CHASE_MIN, most), EventService.dummyRoom())
-	if n < ChaseService.CHASE_MIN and not count then
+	local fair = (Config :: any).CHASE_V8 == true
+	local n = math.min(count or (if fair then (Config :: any).CHASE_V8_COUNT else math.random(ChaseService.CHASE_MIN, most)), EventService.dummyRoom())
+	if n < (if fair then 1 else ChaseService.CHASE_MIN) and not count then
 		return nil
 	end
 	local root = rootOf(player) :: BasePart
 	local c: Chase = { player = player, chasers = {}, endsAt = os.clock() + ChaseService.DURATION, done = false }
 	chases[player] = c
-	player:SetAttribute("ChaseMax", ChaseService.MAX_HP)
-	player:SetAttribute("ChaseHP", ChaseService.MAX_HP)
+	-- (V8-1.6: no HP bar in a fair chase: every 3rd punch throws you instead.)
+	if not fair then
+		player:SetAttribute("ChaseMax", ChaseService.MAX_HP)
+		player:SetAttribute("ChaseHP", ChaseService.MAX_HP)
+	end
 	player:SetAttribute("ChaseLeft", n)
-	ProgressService.notice(player, "\u{26A0}\u{FE0F} NPC CHASE! They're coming for you. Knock them down!")
+	ProgressService.notice(player, if fair then "\u{26A0}\u{FE0F} THEY'RE COMING! Knock them both down!" else "\u{26A0}\u{FE0F} NPC CHASE! They're coming for you. Knock them down!")
 	local center = Lab.focusFor(player)
 	for i = 1, n do
 		local angle = (i / n) * math.pi * 2
@@ -214,13 +225,33 @@ function ChaseService.start(player: Player, count: number?): Chase?
 			for _, ch in c.chasers do
 				local pelvis = ch.model:FindFirstChild("LowerTorso")
 				if ch.model.Parent and pelvis and pelvis:IsA("BasePart") then
-					if ch.down and standing(ch.model) then
+					local fair = (Config :: any).CHASE_V8 == true
+					if ch.down and standing(ch.model) and not fair then
 						ch.down = false -- (got up again: still in the chase)
+					end
+					if fair and ch.down then
+						-- (V8-1.6: knocked down once, out for good: it sits where it fell, dizzy; the
+						-- counter only ever counts down.)
+						if not ch.model:GetAttribute("ChaseOut") then
+							ch.model:SetAttribute("ChaseOut", true)
+							ch.model:SetAttribute("Home", pelvis.Position)
+						end
+						continue
 					end
 					ch.model:SetAttribute("Home", Vector3.new(r.Position.X, pelvis.Position.Y, r.Position.Z))
 					ch.model:SetAttribute("HomeLook", Vector3.new(r.Position.X, pelvis.Position.Y, r.Position.Z))
 					local close = (pelvis.Position - r.Position).Magnitude <= ChaseService.REACH
-					local hp = (player:GetAttribute("ChaseHP") :: number?) or 0
+					local hp = if fair then 1 else (player:GetAttribute("ChaseHP") :: number?) or 0
+					if fair and close and standing(ch.model) and now - ch.lastHit >= ChaseService.HIT_GAP and not PlayerRagdoll.isDown(player) then
+						-- (V8-1.6: a punch is heard; every 3rd one throws you. No HP, no knock-out.)
+						ch.lastHit = now
+						c.punches = (c.punches or 0) + 1
+						FxService.hit(r.Position, 40, "Punch", nil, true)
+						if c.punches % 3 == 0 then
+							PlayerRagdoll.knock(player, (r.Position - pelvis.Position).Unit * 40 + Vector3.new(0, 22, 0))
+						end
+						continue
+					end
 					if close and standing(ch.model) and now - ch.lastHit >= ChaseService.HIT_GAP and hp > 0 and not PlayerRagdoll.isDown(player) then
 						ch.lastHit = now
 						hp = math.max(0, hp - ChaseService.HIT_DAMAGE)

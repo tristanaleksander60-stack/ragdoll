@@ -1499,6 +1499,14 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 					end)
 					if knocked then
 						C.playSound("tick", 0.62)
+						-- (V8-1.5: a chime that climbs with the combo, and a buzz on phones and pads.)
+						if (Config :: any).AUDIO_V8 then
+							pcall(function()
+								local n = (require(script.Parent:WaitForChild("Crosshair")) :: any).combo()
+								C.playSound("reward", math.min(1.6, 0.9 + 0.12 * math.max(0, n - 1)))
+								;(require(script.Parent:WaitForChild("Haptics")) :: any).pulse(if n >= 3 then 0.8 else 0.5, 0.08)
+							end)
+						end
 					end
 				end
 			end

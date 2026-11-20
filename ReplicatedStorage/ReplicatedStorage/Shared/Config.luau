@@ -283,7 +283,7 @@ local Config = {
 	-- live count, a landing card with your best and AGAIN. The player's cannon shot is a long arc of
 	-- CANNON_AIR s to the same bullseye, with a slow-mo beat at the top (StuntHud).
 	STUNT_SCORE = true,
-	CANNON_AIR = 2.2,
+	CANNON_AIR = 2.5, -- (2.2 measured 2.3-2.4 s in the air on the server; 2.5 with the slow-mo beat: about 2.9)
 	-- V8-1.2 (hits you can read): a word over the struck body (Dizzy / Wobbly / Knocked out, at most
 	-- 2), dizzy stars after a head hit, a 70 ms hit-stop on the body for melee and big hits
 	-- (HitWords); the camera shake is undone each frame (no drift); slow-mo slows your own body too,
@@ -299,6 +299,14 @@ local Config = {
 	-- unlock gets a 1.5 s reveal that never blocks (ProgressUI.reveal).
 	LADDER_V3 = true,
 	BOLTS_BUY_GAP = 5,
+	-- V8-1.5 (sounds that reward): KOs close together are a combo ("KO! x3", a chime that climbs), and
+	-- a short buzz on a pad or phone on a KO, the cannon's launch and a landing (Client/Haptics).
+	AUDIO_V8 = true,
+	-- V8-1.6 (the chase, fair and later): for everyone, not before 300 s and 15 KOs (both); 2 chasers;
+	-- one knocked down is out for good (the counter only counts down); no HP bar: every 3rd punch
+	-- throws you; a burst when you clear it.
+	CHASE_V8 = true,
+	CHASE_V8_COUNT = 2,
 }
 
 return table.freeze(Config)

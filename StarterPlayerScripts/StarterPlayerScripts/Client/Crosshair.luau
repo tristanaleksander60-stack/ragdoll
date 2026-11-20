@@ -186,8 +186,23 @@ end
 -- V8-0.2: our own hit on a body this screen simulates, marked now (the server's mark for it follows
 -- ~100 ms later and is skipped unless it says more: a head or a kill).
 local localMarkAt = -math.huge
+-- (V8-1.5: KOs close together are a combo: "KO! x2", "KO! x3"... and the chime climbs.)
+Crosshair.COMBO_GAP = 4 -- s between two KOs that keeps a combo
+local comboN, comboAt = 0, -math.huge
+function Crosshair.combo(): number
+	return comboN
+end
 function Crosshair.localHit(knocked: boolean)
 	localMarkAt = os.clock()
+	if knocked then
+		comboN = if os.clock() - comboAt <= Crosshair.COMBO_GAP then comboN + 1 else 1
+		comboAt = os.clock()
+	end
+	local f = root
+	local ko = f and f:FindFirstChild("KO")
+	if ko and ko:IsA("TextLabel") then
+		ko.Text = if knocked and comboN > 1 then string.format("KO! x%d", comboN) else "KO!"
+	end
 	Crosshair.hit(false, knocked)
 end
 function Crosshair.recentLocal(): boolean

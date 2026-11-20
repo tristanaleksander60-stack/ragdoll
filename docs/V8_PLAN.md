@@ -1522,3 +1522,15 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
     - the BOLTS counter on phones;
     - stars and Level merged into one Lab Rank;
     - eggs leaving the loop and crates showing their prize.
+- **V8-1.1 tuned (play test):** the cannon arc is `CANNON_AIR` 2.5 s, the launch cap 260, and the slow-mo beat 1.0 s.
+  - A launch past 180 studs/s now also pushes the ragdoll's root; left out, the joints ate about 15% and the arc fell short.
+  - On the way down the shot steers gently onto the bullseye (StuntHud.homeIn, 12% per frame). A client log showed it landing 9.7 studs off without this.
+  - T117: 2.7 s in the air, bullseye, CRASH 1566.
+- **V8-1.5 done in part (switch `AUDIO_V8`):**
+  - **Combo:** KOs within 4 s are a combo ("KO! x3" by the crosshair, `Crosshair.combo`) with a chime that climbs.
+  - **Buzz:** `Client/Haptics` gives a short buzz on a pad or phone (where Roblox supports it; none with Motion LESS) on a KO, the cannon launch and a landing.
+  - **Not built:** the synth reward family, the grenade, C4 and nuke tells, the LUFS mix, the bank-per-fx test.
+- **V8-1.6 done (switch `CHASE_V8`):**
+  - **Timing:** the chase waits for everyone, not only newcomers, until 300 s and 15 KOs.
+  - **The chase:** 2 chasers and "THEY'RE COMING!". A chaser knocked down is out for good (it sits where it fell, so the counter only counts down). No HP bar: every punch is heard and every 3rd one throws you. Clearing it gives a burst.
+  - **Tests:** T50 and T123 updated and passing.
