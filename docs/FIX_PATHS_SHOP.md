@@ -70,4 +70,5 @@ Then:
 Ids are not secrets; they can be pasted in chat.
 
 ## State
-- 21 Nov 2026: plan written (cloud). Nothing done.
+- 21 Nov 2026: plan written (cloud).
+- 21 Nov 2026 (cloud): F5 pictures done by `art/tools/build-product-icons.py`. It writes 19 offers to `art/shop/<key>.png`, 16 events to `art/shop/event_<id>.png` and 3 badges to `art/badges/badge_*.png`, and a contact sheet to `art/shop/_sheet.png`. Only the id paste-in and the STARTER_PACK/event-cut check are left in F5.
