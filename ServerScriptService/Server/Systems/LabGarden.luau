@@ -107,6 +107,10 @@ function LabGarden.build(into: Instance, origin: Vector3)
 			place(folder, "Hedge", origin + Vector3.new(hedgeX, 0, z), 0, LabGarden.HEDGE_HEIGHT / 8, true)
 			z += 60
 		end
+		-- (V6-5: the hedge goes on along the creature yard in front of the lab.)
+		if (require(Shared:WaitForChild("Config")) :: any).LAB_CREATURES then
+			place(folder, "Hedge", origin + Vector3.new(hedgeX, 0, 92), 0, LabGarden.HEDGE_HEIGHT / 8, true)
+		end
 		-- Trees along the hedge, round and pine by turns.
 		local i = 0
 		for tz = LabGarden.Z_BACK + 14, LabGarden.Z_FRONT - 8, 26 do

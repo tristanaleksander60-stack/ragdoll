@@ -42,6 +42,16 @@ Economy.JOURNAL = table.freeze({
 	{ id = "Daily", text = "A daily experiment", kind = "Daily", need = 1 },
 	{ id = "Regular", text = "Regular: 15 daily experiments", kind = "Daily", need = 15 },
 	{ id = "Toss", text = "Friend flinger: a TOSS COMBO", kind = "Toss", need = 1 }, -- (release 0.20)
+	-- V6-5: one page per creature in the yard.
+	{ id = "Spider", text = "Spider snack", kind = "Spider", need = 1 },
+	{ id = "Plant", text = "Plant food", kind = "Plant", need = 1 },
+	{ id = "Frog", text = "Frog tongue", kind = "Frog", need = 1 },
+	{ id = "Whale", text = "Thar she blows", kind = "Whale", need = 1 },
+	{ id = "Chicken", text = "Dummy egg", kind = "Chicken", need = 1 },
+	{ id = "Washer", text = "Spin cycle", kind = "Washer", need = 1 },
+	{ id = "Slingshot", text = "Slingshot!", kind = "Slingshot", need = 1 },
+	{ id = "Mole", text = "Whack!", kind = "Mole", need = 1 },
+	{ id = "Vacuum", text = "Sucked up", kind = "Vacuum", need = 1 },
 } :: { Page })
 
 Economy.GOT_KEPT = 30 -- purchase ids remembered (Purchases keeps 100 per buyer as well)

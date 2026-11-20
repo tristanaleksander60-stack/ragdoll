@@ -343,3 +343,25 @@ What to do:
     - path ease and duration controls;
     - the Roblox topbar;
     - the SPIDER shot waits for V6-5.
+- **V6-5 creatures (20 Nov, `Config.LAB_CREATURES`):** `Server/Systems/LabCreatures` builds a creature yard in front of each lab (z 75-110, grass). The land stays flat out to z 112 (Landscape), and the hedge carries on along the yard.
+  - **The 9 creatures:**
+    - **SPIDER:** a web; it wraps a dummy in a wiggling silk cocoon, munches and spits it away as a "burrito". Hunger meter (3 meals = full, then a 20 s nap).
+    - **GIANT PLANT:** chomps a dummy and spits it high.
+    - **FROG:** its tongue pulls in a dummy within reach and spits it.
+    - **WHALE:** a pool with a geyser.
+    - **CHICKEN:** lays a dummy as a wobbling egg that hatches.
+    - **WASHING MACHINE:** spins a dummy and throws it out.
+    - **SLINGSHOT TREE:** pulls back and fires a dummy at the lab.
+    - **MOLE:** pops up under dummies in its dirt patch.
+    - **ROBOT VACUUM:** drives a loop, sucks up a dummy and shoots it out.
+  - **Rules:** one body at a time per machine, never a held one. Bodies only through DummyControl (the lab's player simulates them). Kid-safe: nothing eaten for real. An empty lab's yard rests.
+  - **Progress:** each creature counts an ExperimentService event for the lab's owner, with 9 new experiment cards (21 in all) and 9 journal pages (25 in all).
+  - **Models** in V3Assets (place file only, saved v564): MSpider 9602053434 (meshes only), MPlant 11297917863, MFrog 106808835, MWhale 13676783065, MChicken 4376443752, MWasher 120197306107893, MVacuum 77204638222896, MMole 8096582970.
+  - **Malware pass:**
+    - The spider held 23 NPC scripts ("killing script", Attack, Damage, Animatronic_AI…) plus an embedded humanoid rig; all removed.
+    - The first plant held an Animate script.
+    - A second plant tried ("JeffTheKillerMain") was deleted outright.
+    - Humanoids and sounds were stripped from all of them.
+  - **Tests:** T103 (built, cards and pages, spider eats and spits, whale geyser, held body left alone, events counted) passes; T60/T63/T31 pass.
+  - **Captures:** yard_east, spider_feed.
+  - **Left:** per-creature sounds (SoundMix), a hunger readout for the owner's HUD, and the ball pit and conveyor (optional in the plan).

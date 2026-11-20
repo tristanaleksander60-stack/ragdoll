@@ -36,9 +36,19 @@ local LIST: { Def } = {
 	-- v3 phase C: the throw tower in your lab and the launchers on the open-air maps.
 	{ id = "Tower", text = "Jump off the THROW TOWER", kind = "Tower", target = 1, seconds = 120, stars = 1 },
 	{ id = "MapLaunch", text = "Get launched on any MAP", kind = "Map", target = 1, seconds = 240, stars = 2 },
+	-- V6-5: the creature yard in front of the lab (Server/Systems/LabCreatures).
+	{ id = "Spider", text = "FEED THE SPIDER a dummy", kind = "Spider", target = 1, seconds = 120, stars = 1 },
+	{ id = "Plant", text = "Let the GIANT PLANT chomp a dummy", kind = "Plant", target = 1, seconds = 120, stars = 1 },
+	{ id = "Frog", text = "Bring a dummy near the FROG", kind = "Frog", target = 1, seconds = 120, stars = 1 },
+	{ id = "Whale", text = "Throw a dummy in the WHALE pool", kind = "Whale", target = 1, seconds = 120, stars = 1 },
+	{ id = "Chicken", text = "Put a dummy in the CHICKEN coop", kind = "Chicken", target = 1, seconds = 120, stars = 1 },
+	{ id = "Washer", text = "Spin a dummy in the WASHING MACHINE", kind = "Washer", target = 1, seconds = 120, stars = 1 },
+	{ id = "Slingshot", text = "Fire a dummy from the SLINGSHOT TREE", kind = "Slingshot", target = 1, seconds = 120, stars = 1 },
+	{ id = "Mole", text = "Let the MOLE pop a dummy", kind = "Mole", target = 1, seconds = 150, stars = 1 },
+	{ id = "Vacuum", text = "Let the ROBOT VACUUM suck up a dummy", kind = "Vacuum", target = 1, seconds = 150, stars = 1 },
 }
 Experiments.LIST = table.freeze(LIST)
-Experiments.KINDS = table.freeze({ Takedown = true, Cannon = true, Bullseye = true, Hazard = true, Egg = true, Chimney = true, Present = true, Toss = true, Tower = true, Map = true })
+Experiments.KINDS = table.freeze({ Takedown = true, Cannon = true, Bullseye = true, Hazard = true, Egg = true, Chimney = true, Present = true, Toss = true, Tower = true, Map = true, Spider = true, Plant = true, Frog = true, Whale = true, Chicken = true, Washer = true, Slingshot = true, Mole = true, Vacuum = true })
 
 -- Phase 3: Prank Party (2-6 players in one lab): one shared card, everyone's events count, everyone
 -- gets the stars (ExperimentService.startParty; PartyService deals it).
