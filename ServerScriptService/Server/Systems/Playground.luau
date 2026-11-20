@@ -998,6 +998,15 @@ function Playground.build(labOrigin: Vector3, name: string?)
 			log.warn("LabZones failed in " .. folder.Name .. ": " .. tostring(err))
 		end
 	end
+	-- V6-4: the garden in the wider plot's side strips (LabGarden). A failure never costs the lab.
+	if (Config :: any).LAB_V6 and lab then
+		local ok, err = pcall(function()
+			require(script.Parent.LabGarden).build(folder, origin)
+		end)
+		if not ok then
+			log.warn("LabGarden failed in " .. folder.Name .. ": " .. tostring(err))
+		end
+	end
 	-- World/Feel v2: the dressing over it all (pictures only: WorldDress). A failure there never
 	-- costs the playground itself.
 	if Config.WORLD_V2 then

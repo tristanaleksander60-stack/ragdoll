@@ -74,8 +74,9 @@ local Lab = {}
 Lab.DUMMY_COUNT = DUMMY_COUNT -- (World/Feel v2: T80 adds it to a device's ragdoll budget)
 
 Lab.PLOT_COUNT = 10 -- labs on one server (the place's server size should be 10)
-Lab.PLOT_SPACING = 170 -- studs between the middles of two neighbouring labs (and the plaza)
-Lab.PLOT_HALF = 85 -- half a plot's width: closer than this to its middle line, you are in it
+Lab.PLOT_SPACING = Zones.PLOT_SPACING -- studs between the middles of two neighbouring labs (and the plaza; V6-4 wider)
+Lab.PLOT_HALF = Zones.PLOT_HALF -- half a plot's width: closer than this to its middle line, you are in it
+Lab.CORE_HALF = 85 -- the concrete lab inside it (markings and floor; the rest is the V6-4 garden)
 Lab.GROUND_TOP = 600 -- studs above the floor: higher than this you are in the rooms, not on the ground
 
 type Slot = {
@@ -598,7 +599,7 @@ end
 -- whose lab it is (Roblox display names only; nobody types anything here).
 local function markPlot(plot: Plot)
 	local o = plot.origin
-	local w = Lab.PLOT_HALF * 2 - 10
+	local w = Lab.CORE_HALF * 2 - 10
 	-- The lab runs from 72 behind the spawn (the Workshop's reach, 70, inside it) to 95 in front.
 	local depth = 167
 	local zMid = o.Z - 11.5
@@ -702,7 +703,7 @@ local function dressPlot(plot: Plot)
 	local ground = o.Y - 0.5
 	local folder = plot.folder
 	-- The floor (the whole plot, within its markings): tiled lab concrete (Finish).
-	local floor = paint(folder, "LabFloor", Vector3.new(Lab.PLOT_HALF * 2 - 12, 0.04, 165), Vector3.new(o.X, ground + 0.02, o.Z - 11.5), Color3.fromRGB(176, 180, 188), Enum.Material.Concrete)
+	local floor = paint(folder, "LabFloor", Vector3.new(Lab.CORE_HALF * 2 - 12, 0.04, 165), Vector3.new(o.X, ground + 0.02, o.Z - 11.5), Color3.fromRGB(176, 180, 188), Enum.Material.Concrete)
 	Finish.apply(floor, "Floor")
 	-- The test zone under the row: a black rubber safety mat.
 	local rowZ = o.Z - 20

@@ -296,3 +296,21 @@ What to do:
   - Server: AdminTools `LaunchDummy`, `Shot`, `DirectorSave`, `DirectorGet`; remote messages `DirectorFocus` / `DirectorPresets` on the Admin remote.
   - T102 passes; T101/T41/T43/T98 pass.
   - Captures: director_on2 (no game UI), director_cannon_rec and director_tower2 (REC 9:16).
+- **V6-4 bigger lab (20 Nov, `Config.LAB_V6`):**
+  - **Size:** the plots are 250 studs apart (was 170; `Zones.PLOT_SPACING`/`PLOT_HALF`, which Lab reads). That is about +50 % area. The concrete core keeps its size (`Lab.CORE_HALF` 85: markings, floor).
+  - **Garden** (`Server/Systems/LabGarden`, called from Playground.build for labs), filling both new side strips:
+    - grass and a cobblestone path with two crossings into the lab;
+    - flower beds, benches and warm street lamps;
+    - round and pine trees;
+    - a stone fountain (east) and a shed (west);
+    - a 14-stud hedge on the plot's edge (privacy, together with the client's PlotPrivacy).
+    - About 627 parts per lab.
+  - **New models** in ServerStorage.V3Assets (place file only, saved):
+    - GardenFountain 93434732057582
+    - FlowerBed 131216077381773
+    - GardenShed 132302998596557
+    - Hedge 13364734150
+  - **Malware pass:** the fountain, flower bed and shed held the known malware scripts "Runtime" and "ScreenBuilder" (12 in all, despite "No scripts" on the store). Removed. The hedge was clean.
+  - **Tests:** T31 (now 250 studs), T36, T26, T99, T51, T50, T23, T92, T97 pass.
+  - **Captures:** garden_east, garden_west.
+  - **Still open in V6-4:** the 3-client privacy check (multi-client is not available over MCP), the dusk lamp look, and ambient birdsong (with V6-6).
