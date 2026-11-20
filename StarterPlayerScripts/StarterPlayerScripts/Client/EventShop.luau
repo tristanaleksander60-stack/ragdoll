@@ -647,11 +647,6 @@ local function v7layout()
 	local holder = banner
 	if holder then
 		holder.Size = UDim2.fromOffset(size.X, size.Y)
-		-- (The chip glides into the top-left corner: the middle stays free for toasts and the action.)
-		holder.AnchorPoint = Vector2.new(0.5 * (1 - t), 0)
-		if holder.Visible and shownId then
-			holder.Position = UDim2.new(0.5 * (1 - t), 10 * t, 0, 8)
-		end
 	end
 	card.Size = UDim2.fromOffset(size.X, size.Y)
 	if v7shadow then
@@ -691,7 +686,9 @@ local function buildBannerV7()
 	scale.Parent = holder
 	bannerScale = scale
 	local function fit()
-		scale.Scale = math.clamp((gui.AbsoluteSize.X - 24) / V7.full.X, 0.7, 1)
+		-- (As wide as the toast lane allows: it shares the lane between the top corners.)
+		local _, laneWidth = HudSlots.toastBox(gui.AbsoluteSize, HudSlots.context(false, false))
+		scale.Scale = math.min(1, laneWidth / V7.full.X)
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
 	fit()
@@ -788,6 +785,17 @@ local function buildBannerV7()
 	v7layout()
 end
 
+-- Where the card sits: the toast lane (HudSlots.toastBox, measured clear of every control on
+-- every screen by LayoutCheck), centred, at the lane's top.
+local function v7lane(): (number, number)
+	local gui = bannerGui
+	if not gui then
+		return 0, 10
+	end
+	local centre, _, boxTop = HudSlots.toastBox(gui.AbsoluteSize, HudSlots.context(false, false))
+	return centre, boxTop or 10
+end
+
 local v7modeTween: Tween? = nil
 local v7showToken = 0 -- (each banner showing its own: an old chip timer never shrinks a new one)
 local function setModeV7(target: number, seconds: number)
@@ -819,6 +827,7 @@ local function showBannerV7()
 	if not event then
 		if shownId then
 			shownId = nil
+			Toast.hold("EventCard", false)
 			local out = TweenService:Create(holder, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
 				Position = UDim2.new(holder.Position.X.Scale, holder.Position.X.Offset, 0, -110),
 			})
@@ -843,10 +852,13 @@ local function showBannerV7()
 		setModeV7(0, 0)
 		holder.Visible = true
 		holder.AnchorPoint = Vector2.new(0.5, 0)
-		holder.Position = UDim2.new(0.5, 0, 0, -110)
+		local laneX, laneTop = v7lane()
+		holder.Position = UDim2.fromOffset(laneX, -110)
 		TweenService:Create(holder, TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-			Position = UDim2.new(0.5, 0, 0, 8),
+			Position = UDim2.fromOffset(laneX, laneTop),
 		}):Play()
+		-- (Toasts wait while the full card is up; then the chip gives way to each toast.)
+		Toast.hold("EventCard", true)
 		local camera = Workspace.CurrentCamera
 		if camera then
 			FxController.localEvent("Event", camera.CFrame.Position, 0, "")
@@ -856,6 +868,7 @@ local function showBannerV7()
 		task.delay((Config :: any).BANNER_CHIP_AFTER or 3, function()
 			if shownId ~= nil and v7showToken == myToken then
 				setModeV7(1, 0.5)
+				Toast.hold("EventCard", false)
 			end
 		end)
 	end
@@ -872,6 +885,17 @@ local function tickBannerV7()
 	end
 	local left = state.endsAt - Workspace:GetServerTimeNow()
 	fill.Size = UDim2.fromScale(math.clamp(left / event.duration, 0, 1), 1)
+	-- (The card and chip give way to whatever else has the lane: a toast, the nuke warning, a game
+	-- bar, the view card, the first-visit line; they come back after.)
+	local card = v7card
+	if card then
+		local away = Toast.isShowing() or Toast.isHeld("Nuke") or Toast.isHeld("GameBar") or Toast.isHeld("card")
+			or Toast.topY() > select(2, v7lane()) + 1 -- (a horde bar or the first-visit line has the lane top)
+		card.Visible = not away
+		if v7shadow then
+			v7shadow.Visible = not away
+		end
+	end
 end
 
 local function buildBanner()
@@ -1004,11 +1028,8 @@ local function belowBanner(): number
 		return 0
 	end
 	local scale = if bannerScale then bannerScale.Scale else 1
-	if (Config :: any).BANNER_V7 and v7mode > 0.5 then
-		return 0 -- (a corner chip: toasts keep their own place)
-	end
 	if (Config :: any).BANNER_V7 then
-		return gui.AbsolutePosition.Y + 8 + holder.AbsoluteSize.Y + 8 -- (where it rests, also while it slides in)
+		return 0 -- (the card shares the toast lane: toasts wait for it, then the chip gives way to them)
 	end
 	return gui.AbsolutePosition.Y + 8 + 104 * scale + 8
 end

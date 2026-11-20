@@ -119,6 +119,11 @@ local NEVER_TOGETHER: { [string]: { [string]: boolean } } = {
 	Nuke = { Toast = true, HordeToast = true, NukeHorde = true, GameBar = true, Choice = true },
 	NukeHorde = { Experiment = true, Toast = true, HordeToast = true, Nuke = true, Choice = true, Hint = true, Light = true },
 	Light = { Toast = true, Choice = true, HordeToast = true },
+	-- (V7-5: the event card and chip share the toast lane and give way: they hide while a toast, the
+	-- nuke warning, a game bar, the view card, the first-visit line or BUILD/PLAY on an upright
+	-- phone has the lane top (Toast.topY; EventShop tickBannerV7).)
+	EventCard = { EventChip = true, Toast = true, HordeToast = true, Nuke = true, NukeHorde = true, GameBar = true, Choice = true, Light = true, Mode = true, Play = true },
+	EventChip = { EventCard = true, Toast = true, HordeToast = true, Nuke = true, NukeHorde = true, GameBar = true, Choice = true, Light = true, Mode = true, Play = true },
 	-- (Round 2, N5: the Robux packs step aside while Streamer Mode's gift guide is up.)
 	Packs = { Guide = true },
 	-- (Round 3, M6: on a phone the part counter takes the chaos meter's place while building.)
@@ -405,6 +410,13 @@ function LayoutCheck.run(): string
 				local centre, tw, ty = HudSlots.toastBox(s.size, ctxOf(s.size, s.touch, lab))
 				local toast: Rect = { x = centre - tw / 2, y = ty or 10, w = tw, h = toastH(s.size), name = "Toast" }
 				table.insert(all, toast)
+				-- V7-5: the event card and its chip share the toast lane (EventShop BANNER_V7: toasts wait
+				-- for the card, the chip gives way to a toast or the nuke warning), as wide as it allows.
+				if (Config :: any).BANNER_V7 then
+					local cs = math.min(1, tw / 392)
+					table.insert(all, { x = centre - 392 * cs / 2, y = ty or 10, w = 392 * cs, h = 80 * cs, name = "EventCard" })
+					table.insert(all, { x = centre - 214 * cs / 2, y = ty or 10, w = 214 * cs, h = 44 * cs, name = "EventChip" })
+				end
 				-- During a horde toasts go on below the game bar (Toast.setMinTop); a phone shows them
 				-- in the bar's points line instead (MinigameHud setBar), so it has no such box.
 				local underBar = HudSlots.eventTop(s.size, MinigameHud.BAR_TOP) + MinigameHud.BAR_SIZE.Y + MinigameHud.TOAST_UNDER_GAP
@@ -430,7 +442,8 @@ function LayoutCheck.run(): string
 					end
 					for k = i + 1, #all do
 						local apart = NEVER_TOGETHER[a.name]
-						if not (apart and apart[all[k].name]) and overlap(a, all[k]) then
+						local apartToo = NEVER_TOGETHER[all[k].name] -- (either way round)
+						if not (apart and apart[all[k].name]) and not (apartToo and apartToo[a.name]) and overlap(a, all[k]) then
 							table.insert(hits, a.name .. "/" .. all[k].name)
 						end
 					end
