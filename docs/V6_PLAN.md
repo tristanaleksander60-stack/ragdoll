@@ -426,3 +426,24 @@ What to do:
     | GiantFan | Game pass | Giant Fan | 179 | A giant fan that blows every dummy across your lab. | the fan booth |
     | SpiderDeluxe | Game pass | Spider Deluxe | 199 | Your lab's spider in gold, and it spits farther. | the golden spider |
     | BoltCrate | Developer product | Bolt Crate | 49 | 500 BOLTS for your next weapons. | the crate booth |
+- **V6-6/V6-7 blind review 7.8 / 7.4 → fix round 1:**
+  - **Gold dummies:** one rule per tick on living bodies only. The dead-green paint is left alone and turns gold again on revive. The true colours are kept per part until put back on a living body.
+  - **Pets:** no more server PivotTo loop. The parrot is welded to the shoulder (in the character). The dog is a light physics body pulled by AlignPosition/AlignOrientation, owned by the player's machine.
+  - **Nothing sold before it is finished:** `sellable` also needs every model the item uses (place file) and the display mannequin.
+  - **BUY:** one per second per player, only within 16 studs of the booth (TRY too), never while the server is closing. Delivery stays OfferService's.
+  - **Leaving:** no pet is made for a player who has left.
+  - **Crash suit:** clothes that load after the suit are tucked away too, and the arms are black like the mannequin.
+  - **Birds:**
+    - parts made safe (anchored, no collision, query or touch);
+    - landing pigeons glide down instead of popping;
+    - ground rays cached about 7 a second per bird;
+    - the ray filter is cached;
+    - the parent is set only on change.
+  - Not done: TRY kept per UTC day (it is per visit), birds perching on roofs and wires, and DeviceTier for the bird budget.
+- **V6-8 graphics (part, 20 Nov):**
+  - **Event cards:** RocketRain, MeteorShower and Earthquake now have real captured pictures, so all 18 events have one.
+  - **Haze:** the open-air haze is down from +0.18 to +0.07 (+0.05 saturation). The maps were washed out; the far skyline still fades.
+  - **Map shop:** on the open-air maps the booths stand in a row beside the arrival path (`MAP_SIDE` 42), on terrain only (never a roof).
+  - **Birds:** crows fly higher.
+  - **Map captures (Studio):** map_island, map_city2, map_farm, map_army, plus the lab (garden_east/west, yard_east) and the plaza (booths_plaza3).
+  - **For the owner to judge:** whether the maps now read "100x better". Next per-map upgrades if wanted: MaterialVariants on the open-air terrain and decals for wear.

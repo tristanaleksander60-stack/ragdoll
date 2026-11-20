@@ -65,7 +65,10 @@ return {
 		-- A Studio TEST purchase and its effects.
 		OfferService.resetForTest(p)
 		assert(MapShopService.buy(p, "RobotDog") == "test", "the Studio purchase did not run")
+		task.wait(1.1) -- (one buy a second per player)
 		assert(MapShopService.buy(p, "MegaTrampoline") == "test", "the Studio purchase did not run")
+		assert(MapShopService.buy(p, "Parrot") == "paced", "two buys within a second were both taken")
+		task.wait(1.1)
 		assert(p:GetAttribute("Offer_RobotDog") == true, "the dog was not delivered")
 		assert(waitFor(function()
 			return Workspace:FindFirstChild("PetRobotDog") ~= nil

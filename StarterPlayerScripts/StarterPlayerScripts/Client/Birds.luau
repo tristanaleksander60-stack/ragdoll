@@ -34,13 +34,13 @@ Birds.HIGH_ROOMS = 500 -- above this the rooms have roofs: no birds, no song
 
 -- Per place: { model, count, height, radius, speed, ground (walking pigeons), size }.
 Birds.FLOCKS = table.freeze({
-	Lab = { { model = "Pigeon", count = 5, ground = true, radius = 30, speed = 4, size = 2.6 }, { model = "Crow", count = 6, height = 34, radius = 70, speed = 20, size = 1.1 }, { model = "Hawk", count = 1, height = 85, radius = 110, speed = 16, size = 1 } },
+	Lab = { { model = "Pigeon", count = 5, ground = true, radius = 30, speed = 4, size = 2.6 }, { model = "Crow", count = 6, height = 48, radius = 70, speed = 20, size = 1.1 }, { model = "Hawk", count = 1, height = 85, radius = 110, speed = 16, size = 1 } },
 	Plaza = { { model = "Pigeon", count = 10, ground = true, radius = 40, speed = 4, size = 2.6 } },
 	City = { { model = "Pigeon", count = 12, ground = true, radius = 50, speed = 4, size = 2.6 }, { model = "Crow", count = 5, height = 45, radius = 80, speed = 22, size = 1.1 } },
 	Island = { { model = "Gull", count = 7, height = 40, radius = 90, speed = 18, size = 0.22 } },
-	Farm = { { model = "Crow", count = 9, height = 32, radius = 80, speed = 20, size = 1.2 } },
+	Farm = { { model = "Crow", count = 7, height = 50, radius = 90, speed = 20, size = 1.1 } },
 	Military = { { model = "Hawk", count = 2, height = 90, radius = 120, speed = 16, size = 1 } },
-	Site = { { model = "Crow", count = 5, height = 40, radius = 70, speed = 20, size = 1.2 } },
+	Site = { { model = "Crow", count = 5, height = 52, radius = 70, speed = 20, size = 1.1 } },
 })
 
 type Bird = {
@@ -81,6 +81,12 @@ local function folder(): Folder
 	return new
 end
 
+local params = RaycastParams.new()
+params.FilterType = Enum.RaycastFilterType.Exclude
+local function refreshFilter()
+	params.FilterDescendantsInstances = { folder(), player.Character :: any }
+end
+
 local function makeBird(def: any, at: Vector3): Bird?
 	local src = ReplicatedStorage:FindFirstChild("BirdModels")
 	local tpl = src and src:FindFirstChild(def.model)
@@ -90,6 +96,16 @@ local function makeBird(def: any, at: Vector3): Bird?
 	local m = tpl:Clone()
 	if def.size and def.size ~= 1 then
 		m:ScaleTo(m:GetScale() * def.size)
+	end
+	-- (Review fix: a bird never collides, is never hit by an aim ray, never simulates.)
+	for _, d in m:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.Anchored = true
+			d.CanCollide = false
+			d.CanQuery = false
+			d.CanTouch = false
+			d.CastShadow = false
+		end
 	end
 	m.Parent = folder()
 	local bones: { Bone } = {}
@@ -128,6 +144,7 @@ local function anchorPoint(): Vector3?
 end
 
 local function build(place: string)
+	refreshFilter()
 	clear()
 	if Config.BIRDS == false then
 		return
@@ -165,12 +182,22 @@ local function scatter(at: Vector3)
 end
 
 -- The ground under a point (grounded pigeons stand on it).
-local params = RaycastParams.new()
-params.FilterType = Enum.RaycastFilterType.Exclude
 local function groundY(p: Vector3, fallback: number): number
-	params.FilterDescendantsInstances = { folder(), player.Character :: any }
 	local hit = Workspace:Raycast(p + Vector3.new(0, 40, 0), Vector3.new(0, -160, 0), params)
 	return if hit then hit.Position.Y else fallback -- (no ground under it: the caller's own floor)
+end
+
+-- (Review fix: a bird's ground is looked up about 7 times a second, not every frame.)
+local groundCache: { [any]: { y: number, at: number } } = setmetatable({}, { __mode = "k" }) :: any
+local function cachedGround(b: any, p: Vector3, fallback: number): number
+	local c = groundCache[b]
+	local now = os.clock()
+	if c and now - c.at < 0.15 then
+		return c.y
+	end
+	local y = groundY(p, fallback)
+	groundCache[b] = { y = y, at = now }
+	return y
 end
 
 local function step(dt: number)
@@ -198,7 +225,10 @@ local function step(dt: number)
 		local mid = sum / n
 		for i, b in fl.birds do
 			local far = (b.pos - camPos).Magnitude > Birds.VIEW
-			b.model.Parent = if far then nil else folder()
+			local wantParent = if far then nil else folder()
+			if b.model.Parent ~= wantParent then
+				b.model.Parent = wantParent
+			end
 			if far then
 				continue
 			end
@@ -214,7 +244,9 @@ local function step(dt: number)
 					b.vel = Vector3.zero
 				end
 				local p = b.pos + b.vel * dt
-				p = Vector3.new(p.X, groundY(p, p.Y) + 0.05, p.Z)
+				-- (Back from the air it glides down, never pops to the ground.)
+				local gy = cachedGround(b, p, p.Y) + 0.05
+				p = Vector3.new(p.X, math.max(gy, b.pos.Y - 12 * dt), p.Z)
 				b.pos = p
 				local look = if b.vel.Magnitude > 0.1 then b.vel.Unit else b.model:GetPivot().LookVector
 				local peck = if b.vel.Magnitude < 0.1 then CFrame.Angles(math.max(0, math.sin(b.phase * 9)) * -0.5, 0, 0) else CFrame.new()
@@ -245,7 +277,7 @@ local function step(dt: number)
 				b.vel = b.vel.Unit * speed
 			end
 			b.pos += b.vel * dt
-			local floor = groundY(b.pos, -math.huge) + 8
+			local floor = cachedGround(b, b.pos, -math.huge) + 8
 			if b.pos.Y < floor then
 				b.pos = Vector3.new(b.pos.X, floor, b.pos.Z)
 			end

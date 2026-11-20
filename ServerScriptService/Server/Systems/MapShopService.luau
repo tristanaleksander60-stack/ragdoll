@@ -34,6 +34,7 @@ local MapShopService = {}
 
 MapShopService.TRY_SECONDS = 60
 MapShopService.TICK = 0.25
+MapShopService.MAP_SIDE = 42 -- studs beside an open-air map's arrival path where its booth row stands
 
 local function lazy(name: string): any
 	return require(Systems:WaitForChild(name)) :: any
@@ -50,6 +51,7 @@ end
 MapShopService.ITEMS = ITEMS
 
 local tried: { [Player]: { [string]: boolean } } = {}
+local lastBuy: { [Player]: number } = {}
 
 -- Whether the player has the item now (owned, or in a TRY).
 function MapShopService.has(player: Player, key: string): boolean
@@ -60,9 +62,30 @@ function MapShopService.has(player: Player, key: string): boolean
 	return type(untilT) == "number" and untilT > Workspace:GetServerTimeNow()
 end
 
+-- The models an item needs on its pedestal and for its effect (place-file only: checked here).
+local NEEDS: { [string]: { string } } = {
+	RobotDog = { "PetRobotDog" }, Parrot = { "PetParrot" }, MegaTrampoline = { "Trampoline" },
+	GiantFan = { "BigFan" }, SpiderDeluxe = { "MSpider" }, BoltCrate = { "Crate" },
+}
+
+-- (Review fix: never sold unless it is finished: an id, and every model it needs is in the place.)
 local function sellable(o: any): boolean
-	return (tonumber(o.id) or 0) > 0 or RunService:IsStudio()
+	if (tonumber(o.id) or 0) <= 0 and not RunService:IsStudio() then
+		return false
+	end
+	local assets = ServerStorage:FindFirstChild("V3Assets")
+	for _, name in NEEDS[o.key] or {} do
+		if not assets or not assets:FindFirstChild(name) then
+			warn("[MapShop] " .. o.key .. " is not sold: the model " .. name .. " is missing")
+			return false
+		end
+	end
+	if (o.show == "Suit" or o.show == "GoldDummy" or o.show == "Trail" or o.show == "Fire") and not game:GetService("ReplicatedStorage"):FindFirstChild("DummySkin") then
+		return false
+	end
+	return true
 end
+MapShopService.sellable = sellable
 
 ------------------------------------------------------------------------------------------------
 -- Booths
@@ -232,12 +255,21 @@ function MapShopService.buildBooth(o: any, at: CFrame, into: Instance): Model
 	sign.Parent = top
 	local tryPrompt = if o.kind == "pass" then prompt(base, "Try 60 s free", o.name, Enum.KeyCode.T, 1) else nil
 	local buyPrompt = prompt(base, "Buy", o.name, Enum.KeyCode.E, 0)
+	local function near(player: Player): boolean
+		local c = player.Character
+		local r = c and c:FindFirstChild("HumanoidRootPart")
+		return r ~= nil and r:IsA("BasePart") and (r.Position - base.Position).Magnitude < 16
+	end
 	buyPrompt.Triggered:Connect(function(player: Player)
-		MapShopService.buy(player, o.key)
+		if near(player) then
+			MapShopService.buy(player, o.key)
+		end
 	end)
 	if tryPrompt then
 		tryPrompt.Triggered:Connect(function(player: Player)
-			MapShopService.try(player, o.key)
+			if near(player) then
+				MapShopService.try(player, o.key)
+			end
 		end)
 	end
 	booth.Parent = into
@@ -279,11 +311,20 @@ function MapShopService.build(labOrigin: Vector3)
 			folder.Parent = root
 			local gap = 16
 			for i, o in list do
-				local x = (i - (#list + 1) / 2) * gap
-				local ground = Workspace:Raycast(at + Vector3.new(x, 120, 0), Vector3.new(0, -400, 0))
+				-- (The plaza: a row across its front. A map: a row along the arrival path, 40 studs to its
+				-- side, so the road and the arrival pad stay clear.)
+				local step = (i - (#list + 1) / 2) * gap
+				local offset = if place == "Plaza" then Vector3.new(step, 0, 0) else Vector3.new(MapShopService.MAP_SIDE, 0, step)
+				local spot = at + offset
+				-- (The ground itself, never a roof: the open-air maps stand on terrain; the plaza on parts.)
+				local rp = RaycastParams.new()
+				if place ~= "Plaza" then
+					rp.FilterType = Enum.RaycastFilterType.Include
+					rp.FilterDescendantsInstances = { Workspace.Terrain }
+				end
+				local ground = Workspace:Raycast(spot + Vector3.new(0, 120, 0), Vector3.new(0, -400, 0), rp)
 				local y = if ground then ground.Position.Y else at.Y
-				-- (Facing the way players arrive: the sign reads from the front.)
-				MapShopService.buildBooth(o, CFrame.new(at.X + x, y, at.Z), folder)
+				MapShopService.buildBooth(o, CFrame.new(spot.X, y, spot.Z) * CFrame.Angles(0, if place == "Plaza" then 0 else math.rad(-90), 0), folder)
 			end
 		end
 	end
@@ -319,6 +360,22 @@ function MapShopService.buy(player: Player, key: string): string?
 	local o = BY_KEY[key]
 	if not o then
 		return "junk"
+	end
+	-- (Review fix: one buy a second per player, only next to a booth, and never while the server
+	-- is closing; the delivery itself stays OfferService's, exactly once.)
+	local now = os.clock()
+	if now - (lastBuy[player] or -math.huge) < 1 then
+		return "paced"
+	end
+	lastBuy[player] = now
+	if not sellable(o) then
+		return "noid"
+	end
+	local okClosing, closing = pcall(function()
+		return lazy("Purchases").isClosing()
+	end)
+	if okClosing and closing then
+		return "closing"
 	end
 	if o.kind == "pass" and player:GetAttribute("Offer_" .. key) == true then
 		lazy("ProgressService").notice(player, "You own the " .. o.name .. "!")
@@ -428,6 +485,17 @@ local SUIT_YELLOW = Color3.fromRGB(250, 205, 40)
 local SUIT_BLACK = Color3.fromRGB(30, 30, 34)
 local function setSuit(p: Player, fx: Fx, on: boolean)
 	local c = p.Character
+	if c and on and fx.suit then
+		-- (Clothes that load after the suit went on are tucked away too.)
+		for _, d in c:GetChildren() do
+			if d:IsA("Shirt") or d:IsA("Pants") or d:IsA("ShirtGraphic") then
+				local keep = c:FindFirstChild("SuitClothes")
+				if keep then
+					d.Parent = keep
+				end
+			end
+		end
+	end
 	if not c or fx.suit == on then
 		return
 	end
@@ -454,7 +522,7 @@ local function setSuit(p: Player, fx: Fx, on: boolean)
 		if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then
 			if on then
 				d:SetAttribute("SuitColor", d.Color)
-				d.Color = if string.find(d.Name, "Leg") or string.find(d.Name, "Foot") or string.find(d.Name, "Hand") then SUIT_BLACK elseif d.Name == "Head" then d.Color else SUIT_YELLOW
+				d.Color = if string.find(d.Name, "Leg") or string.find(d.Name, "Foot") or string.find(d.Name, "Hand") or string.find(d.Name, "Arm") then SUIT_BLACK elseif d.Name == "Head" then d.Color else SUIT_YELLOW
 			else
 				local was = d:GetAttribute("SuitColor")
 				if typeof(was) == "Color3" then
@@ -478,8 +546,12 @@ local function labFolderOf(p: Player): Instance?
 end
 
 local function setPet(p: Player, fx: Fx, which: string, on: boolean)
+	-- (Review fix: no server PivotTo loop. The parrot is welded to the shoulder; the dog is a light
+	-- physics body pulled after the player by AlignPosition/AlignOrientation, simulated by the
+	-- player's own machine: smooth on every screen, nothing sent 15 times a second.)
 	local have: Model? = if which == "dog" then fx.dog else fx.parrot
-	if on and (not have or not have.Parent) then
+	local r = rootOf(p)
+	if on and r and (not have or not have.Parent) then
 		local m = clone(if which == "dog" then "PetRobotDog" else "PetParrot")
 		if not m then
 			return
@@ -487,21 +559,61 @@ local function setPet(p: Player, fx: Fx, which: string, on: boolean)
 		local _, s = m:GetBoundingBox()
 		local want = if which == "dog" then 3.4 else 1.6
 		m:ScaleTo(m:GetScale() * want / math.max(s.X, s.Y, s.Z))
+		local main = m.PrimaryPart or m:FindFirstChildWhichIsA("BasePart", true)
+		if not main then
+			m:Destroy()
+			return
+		end
 		for _, d in m:GetDescendants() do
 			if d:IsA("BasePart") then
-				d.Anchored = true
+				d.Anchored = false
 				d.CanCollide = false
 				d.CanQuery = false
 				d.CanTouch = false
 				d.Massless = true
+				if d ~= main then
+					local w = Instance.new("WeldConstraint")
+					w.Part0 = main
+					w.Part1 = d
+					w.Parent = d
+				end
 			end
 		end
 		m.Name = if which == "dog" then "PetRobotDog" else "PetParrot"
-		m.Parent = Workspace
-		if which == "dog" then
-			fx.dog = m
-		else
+		if which == "parrot" then
+			m:PivotTo(r.CFrame * CFrame.new(1.4, 1.9, 0))
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = r
+			w.Part1 = main
+			w.Parent = main
+			m.Parent = p.Character
 			fx.parrot = m
+		else
+			main.Massless = false
+			m:PivotTo(r.CFrame * CFrame.new(3, -1.4, 4))
+			local a0 = Instance.new("Attachment")
+			a0.Parent = main
+			local a1 = Instance.new("Attachment")
+			a1.Name = "PetSpot"
+			a1.Position = Vector3.new(3, -1.6, 4)
+			a1.Parent = r
+			local ap = Instance.new("AlignPosition")
+			ap.Attachment0 = a0
+			ap.Attachment1 = a1
+			ap.MaxForce = 4000
+			ap.Responsiveness = 18
+			ap.Parent = main
+			local ao = Instance.new("AlignOrientation")
+			ao.Attachment0 = a0
+			ao.Attachment1 = a1
+			ao.Responsiveness = 20
+			ao.Parent = main
+			m.Parent = Workspace
+			pcall(main.SetNetworkOwner, main, p)
+			fx.dog = m
+			m.Destroying:Once(function()
+				a1:Destroy()
+			end)
 		end
 	elseif not on and have then
 		have:Destroy()
@@ -560,28 +672,33 @@ end
 
 local GOLD = Color3.fromRGB(240, 196, 60)
 local function goldDummies(p: Player, on: boolean)
+	-- (Review fix: one rule each tick, living bodies only. A dead body's green (VitalsService) is
+	-- left alone; it turns gold again once revived. The true colours are kept per part in GoldWas
+	-- until put back on a living body.)
 	local ok, list = pcall(function()
 		return lazy("Lab").dummiesOf(p)
 	end)
 	for _, m in if ok then list else {} do
-		local is = m:GetAttribute("Gold") == true
-		if on and not is then
-			m:SetAttribute("Gold", true)
-			for _, d in m:GetChildren() do
-				if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then
-					d:SetAttribute("GoldWas", d.Color)
-					d.Color = GOLD
-				end
-			end
-		elseif not on and is then
-			m:SetAttribute("Gold", nil)
-			for _, d in m:GetChildren() do
+		if m:GetAttribute("Vital") == "Dead" then
+			continue
+		end
+		for _, d in m:GetChildren() do
+			if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then
 				local was = d:GetAttribute("GoldWas")
-				if d:IsA("BasePart") and typeof(was) == "Color3" then
+				if on then
+					if was == nil then
+						d:SetAttribute("GoldWas", d.Color)
+					end
+					if d.Color ~= GOLD then
+						d.Color = GOLD
+					end
+				elseif typeof(was) == "Color3" then
 					d.Color = was
+					d:SetAttribute("GoldWas", nil)
 				end
 			end
 		end
+		m:SetAttribute("Gold", if on then true else nil)
 	end
 end
 
@@ -633,6 +750,9 @@ local function labMachines(p: Player, fx: Fx)
 end
 
 local function step(p: Player)
+	if not p.Parent then
+		return -- (left: PlayerRemoving cleaned up already; never make a new pet for them)
+	end
 	local fx = active[p]
 	if not fx then
 		fx = { trail = nil, fire = nil, suit = false, dog = nil, parrot = nil, tramp = nil, fan = nil }
@@ -654,37 +774,11 @@ local function step(p: Player)
 	labMachines(p, f)
 	end
 
--- Pets follow (15 times a second: smooth): the dog trots behind, the parrot rides the shoulder.
-local function petStep(p: Player)
-	local f = active[p]
-	local r = rootOf(p)
-	if f and r then
-		if f.dog and f.dog.Parent then
-			local want = r.CFrame * CFrame.new(3, -1.4, 4)
-			local now = f.dog:GetPivot()
-			local pos = now.Position:Lerp(want.Position, 0.35)
-			local ground = Workspace:Raycast(pos + Vector3.new(0, 4, 0), Vector3.new(0, -12, 0))
-			local y = if ground then ground.Position.Y + 0.1 else pos.Y
-			f.dog:PivotTo(CFrame.lookAt(Vector3.new(pos.X, y, pos.Z), Vector3.new(r.Position.X, y, r.Position.Z)))
-		end
-		if f.parrot and f.parrot.Parent then
-			f.parrot:PivotTo(r.CFrame * CFrame.new(1.4, 1.9, 0))
-		end
-	end
-end
 
 function MapShopService.start(labOrigin: Vector3)
 	if not Config.MAP_SHOP then
 		return
 	end
-	task.spawn(function()
-		while true do
-			task.wait(1 / 15)
-			for _, p in Players:GetPlayers() do
-				pcall(petStep, p)
-			end
-		end
-	end)
 	task.delay(8, MapShopService.build, labOrigin) -- (after the open-air maps are built: booths stand on their ground)
 	Players.PlayerRemoving:Connect(function(p)
 		local fx = active[p]

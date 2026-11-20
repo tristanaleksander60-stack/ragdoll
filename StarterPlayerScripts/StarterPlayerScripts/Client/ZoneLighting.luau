@@ -66,7 +66,7 @@ if Config.LOOK_V3 then
 end
 -- Audit area 6: the open-air maps lie 1200 studs apart; a thicker sea haze hides the next map's
 -- skyline across the water (Places light = "Outdoor").
-AIR.Outdoor = { density = AIR.Lab.density + 0.18, color = AIR.Lab.color, decay = AIR.Lab.decay, saturation = AIR.Lab.saturation, tint = AIR.Lab.tint }
+AIR.Outdoor = { density = AIR.Lab.density + 0.07, color = AIR.Lab.color, decay = AIR.Lab.decay, saturation = AIR.Lab.saturation + 0.05, tint = AIR.Lab.tint } -- (V6-8: +0.18 washed the maps out; +0.07 still fades the far skyline)
 PROFILES.Outdoor = PROFILES.Lab
 local airTween: { Tween } = {}
 
