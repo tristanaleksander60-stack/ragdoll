@@ -789,6 +789,7 @@ local function buildBannerV7()
 end
 
 local v7modeTween: Tween? = nil
+local v7showToken = 0 -- (each banner showing its own: an old chip timer never shrinks a new one)
 local function setModeV7(target: number, seconds: number)
 	local mv = v7modeValue
 	if not mv then
@@ -850,9 +851,10 @@ local function showBannerV7()
 		if camera then
 			FxController.localEvent("Event", camera.CFrame.Position, 0, "")
 		end
-		local myId = id
+		v7showToken += 1
+		local myToken = v7showToken
 		task.delay((Config :: any).BANNER_CHIP_AFTER or 3, function()
-			if shownId == myId then
+			if shownId ~= nil and v7showToken == myToken then
 				setModeV7(1, 0.5)
 			end
 		end)

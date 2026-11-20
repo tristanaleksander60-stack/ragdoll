@@ -280,3 +280,40 @@ They lead from the spawn or arrival to each thing you can do there.
   - have the owner start Test → Clients and Servers → 2 players, while the session reads both outputs;
   - then run the gate again.
 - **State:** V7-1 to V7-6 are built, and fix round 1 is pushed. Next: the Studio check of the fix round, then fix round 2. V6-8 waits on the owner's sign-off on the maps.
+- **/klar 20 Nov (2nd run): Script Sync was still down after the Studio restart.**
+  - The changed scripts were put into Studio by hand (find/replace through the MCP), and every file was checked: all 300 synced files match the repo in size.
+  - Full suite **89/93**:
+    - T16 failed in the suite but passes alone;
+    - T15, T24 and T32 are on the flaky list;
+    - T32 failed 3 times alone, each time in a different timing window. It has been flaky since v4, the server runs at 60 Hz, and V7 did not touch NPC code.
+  - 0 errors in the output.
+- **V7-2, fix round 2 (3c2e228):** the lab paths are now a tree, not a fan.
+  - Layout: a trunk to a centre fork, east and west walks, then short branches. The bullseye is reached round the east side of the test mat, the yard round the west.
+  - Measured against the built lab (machines, test mat, side barriers and cones; `PathPlan.OBSTACLES`). T106 checks that every stone, with its half width, stays clear.
+  - A vehicles route was added. The pebbles sit beside the path, across its direction. The stones are round (a Cylinder cannot be oval).
+  - Capture: v7_2_tree_top2.
+- **Re-review after fix round 2:**
+  - V7-2: 7.5;
+  - V7-3: 8.0;
+  - V7-4: 6.5;
+  - V7-5: 8.0.
+- **Fix round 3 (the last):**
+  - Birds: the ground ray starts just above the feet, so a pigeon never pops onto a roof, beam or stair.
+  - Mannequins:
+    - the Color connection is disconnected with its skin;
+    - a body dressed while inside a machine is hidden at once;
+    - the belt is removed (the waist block is wider than the sculpted waist, so a belt stuck out like a tray).
+  - Banner: the chip timer uses a show token, so a quick restart of the same event is not shrunk early.
+  - T103, T104, T106, T107 and T36 pass, with 0 client errors. Capture: v7_4_after4.
+- **Still open after 3 rounds, written here per RELEASE.md:**
+  - V7-2: the map paths are still straight lines with 4-stud terrain edges.
+  - V7-3: T104 checks the maths, not a real floor, and perching is not built.
+  - V7-4:
+    - the rings follow the block limbs, not the sculpted skin;
+    - the head is the plain block head with its smiley;
+    - no LOD;
+    - the crowd, visitor and chaser outfits are not done.
+  - V7-5:
+    - LayoutCheck does not measure the banner or the chip;
+    - the old Event sound is used, not a whoosh;
+    - the next-mission card, toasts and pops are not restyled.

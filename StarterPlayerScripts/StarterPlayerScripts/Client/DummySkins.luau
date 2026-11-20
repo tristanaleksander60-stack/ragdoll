@@ -78,15 +78,18 @@ local function dress(model: Model)
 				skins[d] = skin
 				d.LocalTransparencyModifier = 1
 				-- (A limb recoloured later, a frozen one, keeps its skin the same colour.)
-				d:GetPropertyChangedSignal("Color"):Connect(function()
+				local recolour = d:GetPropertyChangedSignal("Color"):Connect(function()
 					skin.Color = d.Color
+				end)
+				skin.Destroying:Once(function()
+					recolour:Disconnect() -- (stripped and dressed again: no pile of old connections)
 				end)
 			end
 		end
 	end
 	-- V7-4 (the owner: "every ragdoll must look better, details and all"): the white mannequin gets
 	-- crash-test details: dark joint rings at the elbows, knees and ankles,
-	-- a belt at the waist, and the yellow and black test targets on both sides of the head and on
+	-- and the yellow and black test targets on both sides of the head and on
 	-- the chest. All of it welded to the limbs on this screen only (no network, no physics).
 	if DummySkins.DETAILS then
 		local DARK = Color3.fromRGB(56, 60, 68)
@@ -98,9 +101,16 @@ local function dress(model: Model)
 			local d = math.min(limb.Size.X, limb.Size.Z) * grow
 			local r = Instance.new("Part")
 			r.Name = "JointRing"
-			r.Shape = Enum.PartType.Cylinder
-			r.Size = Vector3.new(thick, d, d)
-			r.CFrame = limb.CFrame * CFrame.new(0, (if top then 1 else -1) * (limb.Size.Y / 2 - thick / 2), 0) * CFrame.Angles(0, 0, math.rad(90))
+			local at = limb.CFrame * CFrame.new(0, (if top then 1 else -1) * (limb.Size.Y / 2 - thick / 2), 0)
+			if limbName == "LowerTorso" then
+				-- (The belt follows the waist's own shape: a band, not a round disc on an oval waist.)
+				r.Size = Vector3.new(limb.Size.X * grow, thick, limb.Size.Z * grow)
+				r.CFrame = at
+			else
+				r.Shape = Enum.PartType.Cylinder
+				r.Size = Vector3.new(thick, d, d)
+				r.CFrame = at * CFrame.Angles(0, 0, math.rad(90))
+			end
 			r.Color = DARK
 			r.Material = Enum.Material.SmoothPlastic
 			r.Reflectance = 0.06
@@ -117,7 +127,7 @@ local function dress(model: Model)
 			ring(side .. "LowerLeg", true, 0.16, 1.14) -- knee
 			ring(side .. "Foot", true, 0.12, 1.12) -- ankle
 		end
-		ring("LowerTorso", true, 0.2, 1.08) -- the belt
+		-- (No belt: the waist block is wider than the sculpted waist, so any belt stuck out like a tray.)
 		-- The test targets: thin plates with the target picture.
 		local function mark(limbName: string, offset: CFrame, size: number)
 			local limb = model:FindFirstChild(limbName)
@@ -168,6 +178,9 @@ local function dress(model: Model)
 		end
 	end
 	model:GetAttributeChangedSignal("MachineHidden"):Connect(machineHide)
+	if model:GetAttribute("MachineHidden") == true then
+		machineHide() -- (dressed while already inside a machine: hidden at once)
+	end
 	-- (A body that goes for good takes its entries with it: the table never keeps dead limbs.)
 	model.Destroying:Once(function()
 		for _, d in model:GetChildren() do

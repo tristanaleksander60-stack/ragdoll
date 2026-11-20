@@ -21,7 +21,7 @@ local function stone(into: Instance, at: Vector3, width: number, color: Color3, 
 	local p = Instance.new("Part")
 	p.Name = "PathStone"
 	p.Shape = Enum.PartType.Cylinder
-	p.Size = Vector3.new(0.06, width, width * (0.86 + (at.X * 7 + at.Z * 3) % 1 * 0.28))
+	p.Size = Vector3.new(0.06, width, width) -- (a Cylinder is round: the width varies stone to stone instead)
 	p.CFrame = CFrame.new(at) * CFrame.Angles(0, (at.X * 13 + at.Z) % math.pi, math.rad(90))
 	p.Anchored = true
 	p.CanCollide = false
@@ -64,7 +64,15 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 			p.Name = "PathPebble"
 			p.Shape = Enum.PartType.Ball
 			p.Size = Vector3.new(0.5, 0.5, 0.5) -- (a Ball is round: one size)
-			p.CFrame = CFrame.new(origin.X + s.at.X + side * (s.width / 2 + 0.3), floorY + 0.12, origin.Z + s.at.Y + 0.4)
+			-- (Beside the path, across its own direction: never on its middle line.)
+			local other = stones[i + 1]
+			if not other or (other.at - s.at).Magnitude > 6 then
+				other = stones[i - 1]
+			end
+			local along = if other then other.at - s.at else Vector2.new(1, 0)
+			local across = if along.Magnitude > 0.01 then Vector2.new(-along.Y, along.X).Unit else Vector2.new(0, 1)
+			local edge = s.at + across * side * (s.width / 2 + 0.3)
+			p.CFrame = CFrame.new(origin.X + edge.X, floorY + 0.12, origin.Z + edge.Y)
 			p.Anchored = true
 			p.CanCollide = false
 			p.CanQuery = false

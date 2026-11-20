@@ -208,7 +208,7 @@ end
 local function groundY(p: Vector3, fallback: number): number
 	-- (V7-3: a see-through or walk-through part (a sign, a light, a path stone's neighbour) is
 	-- not ground: the ray goes on below it, up to 4 times.)
-	local from = p + Vector3.new(0, 40, 0)
+	local from = p + Vector3.new(0, 3, 0) -- (just above its feet: never up onto a roof, a beam or a stair over it)
 	for _ = 1, 4 do
 		local hit = Workspace:Raycast(from, Vector3.new(0, -160, 0), params)
 		if not hit then
