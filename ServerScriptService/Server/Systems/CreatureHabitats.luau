@@ -83,7 +83,7 @@ local WATER = Color3.fromRGB(62, 118, 128)
 local DRESS: { [string]: (Folder, CFrame) -> () } = {}
 
 DRESS.Spider = function(f, at)
-	disc(f, "Habitat_Moss", 30, 0.2, at, 0.24, GRASS_DARK, Enum.Material.LeafyGrass)
+	disc(f, "Habitat_Moss", 19, 0.2, at, 0.24, GRASS_DARK, Enum.Material.LeafyGrass)
 	-- Two dead trees: bare trunks leaning a little, a broken branch each, holding the web's corners.
 	for _, side in { -1, 1 } do
 		local base = at * CFrame.new(side * 14.5, 0, 0)
@@ -108,12 +108,12 @@ DRESS.Plant = function(f, at)
 	disc(f, "Habitat_PlanterSoil", 13.4, 0.2, at, 1.45, SOIL, Enum.Material.Ground)
 	for i = 0, 5 do
 		local a = i * math.pi / 3 + 0.4
-		prop(f, "Bush", at * CFrame.new(math.cos(a) * 9.5, 0, math.sin(a) * 9.5), i * 50, 3.4)
+		prop(f, "Bush", at * CFrame.new(math.cos(a) * 8.5, 0, math.sin(a) * 8.5), i * 50, 3.2)
 	end
 end
 
 DRESS.Chicken = function(f, at)
-	disc(f, "Habitat_Straw", 24, 0.2, at * CFrame.new(0, 0, -1), 0.24, STRAW, Enum.Material.Sand)
+	disc(f, "Habitat_Straw", 20, 0.2, at * CFrame.new(0, 0, -2), 0.24, STRAW, Enum.Material.Sand)
 	-- A low wooden run on three sides (the front stays open toward the lab).
 	for _, spec in { { 0, -12, 0 }, { -11, -2, 90 }, { 11, -2, 90 } } do
 		local post = at * CFrame.new(spec[1], 0, spec[2]) * CFrame.Angles(0, math.rad(spec[3]), 0)
@@ -129,19 +129,19 @@ end
 
 DRESS.Frog = function(f, at)
 	-- The pond under the frog: a stone rim of rocks, lily pads, reeds at the back.
-	disc(f, "Habitat_PondBed", 27, 0.2, at, 0.12, Color3.fromRGB(48, 70, 60), Enum.Material.Mud)
-	local water = disc(f, "Habitat_Water", 24, 0.1, at, 0.36, WATER, Enum.Material.Glass)
+	disc(f, "Habitat_PondBed", 21, 0.2, at, 0.12, Color3.fromRGB(48, 70, 60), Enum.Material.Mud)
+	local water = disc(f, "Habitat_Water", 18, 0.1, at, 0.36, WATER, Enum.Material.Glass)
 	water.Transparency = 0.15
 	for i = 0, 9 do
 		local a = i * math.pi / 5
-		prop(f, "Rock", at * CFrame.new(math.cos(a) * 13, 0, math.sin(a) * 13), i * 37, 2.4 + (i % 3) * 0.7)
+		prop(f, "Rock", at * CFrame.new(math.cos(a) * 10, 0, math.sin(a) * 10), i * 37, 2.2 + (i % 3) * 0.6)
 	end
-	for i, spot in { Vector3.new(-7, 0, 4), Vector3.new(6.5, 0, 6), Vector3.new(8, 0, -3), Vector3.new(-5, 0, -7.5), Vector3.new(1, 0, 8.5) } do
+	for i, spot in { Vector3.new(-5.5, 0, 3), Vector3.new(5, 0, 4.5), Vector3.new(6, 0, -2.5), Vector3.new(-4, 0, -5.5), Vector3.new(0.5, 0, 6.5) } do
 		disc(f, "Habitat_LilyPad", 2.6 + (i % 2) * 0.8, 0.08, at * CFrame.new(spot), 0.44, Color3.fromRGB(78, 140, 64), Enum.Material.SmoothPlastic)
 	end
 	for i = 0, 6 do
 		local x = -6 + i * 2
-		part(f, "Habitat_Reed", Vector3.new(0.18, 3 + (i % 3), 0.18), at * CFrame.new(x, 1.5 + (i % 3) / 2, 12.5) * CFrame.Angles(0, 0, math.rad((i % 2) * 8 - 4)), Color3.fromRGB(86, 110, 52), Enum.Material.Grass)
+		part(f, "Habitat_Reed", Vector3.new(0.18, 3 + (i % 3), 0.18), at * CFrame.new(x, 1.5 + (i % 3) / 2, -9.5) * CFrame.Angles(0, 0, math.rad((i % 2) * 8 - 4)), Color3.fromRGB(86, 110, 52), Enum.Material.Grass)
 	end
 end
 

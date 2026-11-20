@@ -8,7 +8,7 @@
 local PathPlan = {}
 
 PathPlan.STEP = 2.4 -- studs between two path stones (they overlap well: smooth soft edges, not scallops)
-PathPlan.WIDTH_MIN = 4.6
+PathPlan.WIDTH_MIN = 5.2 -- (the paved walk with both kerbs: what T106 keeps clear of the machines)
 PathPlan.WIDTH_MAX = 5.6
 PathPlan.BOW = 0.08 -- how far a path bows sideways, as a share of its length (at most 4 studs)
 PathPlan.BUDGET = 480 -- path parts per lab at most (walkway slabs, joints, kerbs; phones: flat, anchored, no shadows, no collisions)
@@ -29,10 +29,9 @@ PathPlan.LAB_POINTS = table.freeze({
 	West = Vector2.new(-26, 4),
 	MatEast = Vector2.new(25, -12), -- (round the east side of the dummies' test mat)
 	MatSouth = Vector2.new(24, -33),
-	TowerWest = Vector2.new(-64, -4),
-	TowerSouth = Vector2.new(-68, -36), -- (inside the side barriers and cones)
 	YardWest = Vector2.new(-46, 70),
-	VehSouth = Vector2.new(56, -44),
+	EastGap = Vector2.new(37, 42.3), -- (the gap between the ramp and the station pads: walked straight)
+	WestBend = Vector2.new(-62, 18), -- (south of the portals, between the cones)
 	-- Goals: at the edge of each machine.
 	Cannon = Vector2.new(38, 13),
 	Button = Vector2.new(12, 23),
@@ -45,8 +44,8 @@ PathPlan.LAB_POINTS = table.freeze({
 	Wrecking = Vector2.new(40, -16),
 	Vehicles = Vector2.new(56, -12),
 	Yard = Vector2.new(-6, 78),
-	GardenEast = Vector2.new(80, -44),
-	GardenWest = Vector2.new(-80, -38),
+	GardenEast = Vector2.new(80, 30), -- (the garden walk's crossing: the plant and the chicken live along it)
+	GardenWest = Vector2.new(-80, 29), -- (the spider and the frog)
 })
 -- Every segment from -> to (the trunk first; branches after).
 PathPlan.LAB_SEGMENTS = table.freeze({
@@ -62,14 +61,13 @@ PathPlan.LAB_SEGMENTS = table.freeze({
 	{ "East", "Cannon" },
 	{ "East", "Wrecking" },
 	{ "East", "Vehicles" },
-	{ "Vehicles", "VehSouth" },
-	{ "VehSouth", "GardenEast" },
+	{ "Stations", "EastGap", true },
+	{ "EastGap", "GardenEast" },
 	{ "West", "Lava" },
 	{ "West", "Tower" },
 	{ "Tower", "Portals" },
-	{ "Tower", "TowerWest" },
-	{ "TowerWest", "TowerSouth" },
-	{ "TowerSouth", "GardenWest" },
+	{ "Tower", "WestBend" },
+	{ "WestBend", "GardenWest" },
 	{ "Portals", "YardWest" },
 	{ "YardWest", "Yard" },
 })
@@ -89,6 +87,29 @@ PathPlan.LAB_ROUTES = table.freeze({
 	{ name = "GardenEast", to = PathPlan.LAB_POINTS.GardenEast },
 	{ name = "GardenWest", to = PathPlan.LAB_POINTS.GardenWest },
 })
+
+-- What the wooden signposts at the forks call each way (the point a segment leads to).
+PathPlan.LABELS = table.freeze({
+	Fork = "WORKSHOP",
+	East = "CANNON",
+	West = "LAVA",
+	MatEast = "BULLSEYE",
+	Cannon = "CANNON",
+	Button = "BIG BUTTON",
+	Stations = "LAUNCH PADS",
+	Bullseye = "BULLSEYE",
+	Lava = "LAVA",
+	Mace = "MACE",
+	Tower = "TOWER",
+	Portals = "PORTALS",
+	Wrecking = "WRECKING BALL",
+	Vehicles = "CARS",
+	EastGap = "GARDEN",
+	WestBend = "GARDEN",
+	YardWest = "MONSTERS",
+})
+-- The forks that get a signpost.
+PathPlan.SIGNS = table.freeze({ "Hub", "Fork", "East", "West", "Tower", "Stations" })
 
 export type Obstacle = { name: string, at: Vector2?, radius: number?, min: Vector2?, max: Vector2? }
 
@@ -147,21 +168,22 @@ end
 
 export type Stone = { at: Vector2, width: number }
 
--- The stones of one path from a to b (seeded by `seed`).
-function PathPlan.curve(a: Vector2, b: Vector2, seed: number): { Stone }
+-- The stones of one path from a to b (seeded by `seed`); `straight` = no bow, no wiggle (a narrow gap).
+function PathPlan.curve(a: Vector2, b: Vector2, seed: number, straight: boolean?): { Stone }
 	local d = b - a
 	local length = d.Magnitude
 	if length < 1 then
 		return {}
 	end
 	local side = Vector2.new(-d.Y, d.X).Unit
-	local bow = math.min(length * PathPlan.BOW, 4) * (if hash(seed) > 0.5 then 1 else -1)
+	local bow = if straight then 0 else math.min(length * PathPlan.BOW, 4) * (if hash(seed) > 0.5 then 1 else -1)
+	local wiggle = if straight then 0 else 0.6
 	local n = math.max(2, math.floor(length / PathPlan.STEP))
 	local out: { Stone } = {}
 	for i = 0, n do
 		local t = i / n
 		local along = a + d * t
-		local offset = side * (math.sin(t * math.pi) * bow + math.sin(t * math.pi * 3 + seed) * 0.6)
+		local offset = side * (math.sin(t * math.pi) * bow + math.sin(t * math.pi * 3 + seed) * wiggle)
 		local w = PathPlan.WIDTH_MIN + (PathPlan.WIDTH_MAX - PathPlan.WIDTH_MIN) * hash(seed * 31 + i)
 		table.insert(out, { at = along + offset, width = w })
 	end
@@ -172,7 +194,7 @@ end
 function PathPlan.segment(i: number): { Stone }
 	local seg = PathPlan.LAB_SEGMENTS[i]
 	local P = PathPlan.LAB_POINTS :: any
-	return PathPlan.curve(P[seg[1]], P[seg[2]], i)
+	return PathPlan.curve(P[seg[1]], P[seg[2]], i, (seg :: any)[3] == true)
 end
 
 -- Every stone of the lab's paths.

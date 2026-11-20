@@ -675,17 +675,20 @@ BUILD.Vacuum = function(f, at, m)
 	end
 end
 
--- Where each one stands in the yard (x from the lab's middle; the yard runs along z = YARD_Z).
+-- Where each one lives (x, z from the lab's middle). 20 Nov 2026 (the owner: "move the monsters
+-- round the lab so they are not all in one place"): the spider and the frog in the west garden, the
+-- plant and the chicken in the east garden (between the lab floor and the garden walk, facing the
+-- walk), the other five spread across the whole yard in front.
 LabCreatures.LAYOUT = table.freeze({
-	{ id = "Spider", label = "the SPIDER", x = 108, z = 6, yaw = 180 },
-	{ id = "Plant", label = "the GIANT PLANT", x = 80, z = 4, yaw = 180 },
-	{ id = "Chicken", label = "the CHICKEN", x = 52, z = 4, yaw = 180 },
-	{ id = "Frog", label = "the FROG", x = 26, z = 6, yaw = 180 },
-	{ id = "Vacuum", label = "the ROBOT VACUUM", x = 0, z = -4, yaw = 0 },
-	{ id = "Slingshot", label = "the SLINGSHOT TREE", x = -26, z = 6, yaw = 0 },
-	{ id = "Mole", label = "the MOLE", x = -52, z = 2, yaw = 0 },
-	{ id = "Washer", label = "the WASHING MACHINE", x = -78, z = 4, yaw = 180 },
-	{ id = "Whale", label = "the WHALE", x = -106, z = 2, yaw = 0 },
+	{ id = "Spider", label = "the SPIDER", x = -90, z = -70, yaw = -90 },
+	{ id = "Frog", label = "the FROG", x = -89, z = -5, yaw = -90 },
+	{ id = "Plant", label = "the GIANT PLANT", x = 90, z = -70, yaw = 90 },
+	{ id = "Chicken", label = "the CHICKEN", x = 90, z = -8, yaw = 90 },
+	{ id = "Whale", label = "the WHALE", x = -95, z = 92, yaw = 0 },
+	{ id = "Washer", label = "the WASHING MACHINE", x = -47, z = 94, yaw = 180 },
+	{ id = "Vacuum", label = "the ROBOT VACUUM", x = 0, z = 88, yaw = 0 },
+	{ id = "Mole", label = "the MOLE", x = 47, z = 94, yaw = 0 },
+	{ id = "Slingshot", label = "the SLINGSHOT TREE", x = 95, z = 98, yaw = 0 },
 })
 
 -- Builds the yard into a lab's Playground folder; a loop per lab checks every trigger.
@@ -705,9 +708,9 @@ function LabCreatures.build(into: Instance, origin: Vector3)
 		local sub = Instance.new("Folder")
 		sub.Name = spot.id
 		sub.Parent = folder
-		local toLab = Vector3.new(-spot.x, 0, -(LabCreatures.YARD_Z + spot.z))
+		local toLab = Vector3.new(-spot.x, 0, -spot.z)
 		local machine: Machine = { id = spot.id, label = spot.label, lab = nil, folder = sub, owner = owner, busy = false, toLab = toLab.Unit, temp = {} }
-		local at = CFrame.new(origin + Vector3.new(spot.x, 0, LabCreatures.YARD_Z + spot.z)) * CFrame.Angles(0, math.rad(spot.yaw), 0)
+		local at = CFrame.new(origin + Vector3.new(spot.x, 0, spot.z)) * CFrame.Angles(0, math.rad(spot.yaw), 0)
 		local ok, tick = pcall(BUILD[spot.id], sub, at, machine)
 		-- (20 Nov: its own little home round it, and its model moves on the screens while it waits.)
 		pcall(function()

@@ -110,10 +110,19 @@ return {
 				local at = f:GetAttribute("Trigger") :: Vector3
 				b:PivotTo(CFrame.new(at + Vector3.new(0, 1, 0)))
 				local busySeen = false
-				assert(waitFor(function()
-					busySeen = busySeen or f:GetAttribute("Busy") == true
-					return b:GetAttribute("InMachine") == spot.id
-				end, 6), spot.id .. " did not take a body dropped into it (taken by " .. tostring(b:GetAttribute("InMachine")) .. ")")
+				local function taken(): boolean
+					return waitFor(function()
+						busySeen = busySeen or f:GetAttribute("Busy") == true
+						return b:GetAttribute("InMachine") == spot.id
+					end, 6)
+				end
+				-- (A body can bounce out or run off before the machine's next look: one more drop.)
+				local ok1 = taken()
+				if not ok1 and b:GetAttribute("InMachine") == nil then
+					b:PivotTo(CFrame.new((f:GetAttribute("Trigger") :: Vector3) + Vector3.new(0, 1, 0)))
+					ok1 = taken()
+				end
+				assert(ok1, spot.id .. " did not take a body dropped into it (taken by " .. tostring(b:GetAttribute("InMachine")) .. ")")
 				assert(waitFor(function()
 					busySeen = busySeen or f:GetAttribute("Busy") == true
 					return b:GetAttribute("InMachine") == nil

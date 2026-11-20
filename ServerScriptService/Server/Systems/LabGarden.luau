@@ -128,7 +128,8 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 			place(folder, if i % 2 == 0 then "TreePine" else "TreeRound", origin + Vector3.new(side * (half - 13), 0, tz), (i * 47) % 360, if i % 2 == 0 then 0.55 else 0.75, true)
 		end
 		-- Flower beds along the path's inner side, benches and lamps on its outer side.
-		for _, fz in { -70, -45, 10, 50 } do
+		-- (20 Nov: the spider and the plant live at z -70, the frog at -5: their beds made room.)
+		for _, fz in if side > 0 then { -45, 10, 50 } else { -45, 50 } do
 			place(folder, "FlowerBed", origin + Vector3.new(pathX - side * 9, 0.2, fz), 0, 0.8)
 		end
 		for _, bz in { -12, 45 } do
@@ -143,6 +144,10 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 			place(folder, "GardenShed", origin + Vector3.new(pathX - 4, 0.2, LabGarden.Z_BACK + 14), 90, 1.1, true)
 		end
 		place(folder, "Rock", origin + Vector3.new(side * (half - 20), 0, LabGarden.Z_FRONT - 18), 30, 0.35, true)
+	end
+	-- (The walks' kerbs, laid last: they open where a crossing meets the long walk.)
+	if (require(Shared:WaitForChild("Config")) :: any).PATHS then
+		(require(script.Parent:WaitForChild("PathBuilder")) :: any).finishKerbs(folder)
 	end
 	return folder
 end
