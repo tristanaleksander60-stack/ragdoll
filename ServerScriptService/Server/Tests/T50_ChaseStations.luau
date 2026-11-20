@@ -22,7 +22,8 @@ local function body(player: Player): string
 		if p.Name == "StationPad" then
 			pads += 1
 			assert(typeof(p:GetAttribute("LaunchVelocity")) == "Vector3", "a station pad has no launch")
-			assert(p:FindFirstChild("Sign"), "a station pad has no sign")
+			-- (21 Nov 2026, Config.ICON_SIGNS: the word sign is now a picture badge, "IconSign".)
+			assert(p:FindFirstChild("Sign") or p:FindFirstChild("IconSign"), "a station pad has no sign")
 		end
 	end
 	assert(pads == #Playground.STATIONS, string.format("%d station pads (want %d)", pads, #Playground.STATIONS))
