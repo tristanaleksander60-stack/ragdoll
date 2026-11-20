@@ -1484,3 +1484,15 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
 - **V8-0.1 prepared (21 Nov):** `docs/SITTING1.md`, checked against the code. It holds the honest description; the product texts (Dummy Rain and Mega Bomb happen in the buyer's lab; Zero-G, Bouncy Floor and Flash Freeze hit the whole server; the weapon tiers pay 80 BOLTS when all are owned); events; the audience/maturity steps; and the owner's decisions A-G.
   - **Captures:** left to the owner's Director (F8/H). A Studio capture showed the HUD, real usernames on the leaderboards and the owner's name on the lab sign.
   - **Place:** saved with the admin feature. 0.26.0 still waits for Alt+P.
+- **V8-1.1 done (switch `STUNT_SCORE`):**
+  - **Scoring:** `Shared/StuntMath` scores a flight from air time, distance, flips, bounces, machines and the bullseye, names the tricks (BULLSEYE!, BIG AIR, MEGA FLIP, BOUNCE xN, LONG SHOT, MACHINE xN) and multiplies chains (x1.25 per flight, at most x2).
+  - **Server:** `Server/Systems/StuntScore` measures your own flights from the cannon, the stations and the traps. A trap hit on the way is a bonus.
+  - **Saving:** the best per machine goes to `StuntBest_v1` through UpdateAsync, only ever up (memory in Studio and for test visits). AGAIN puts you back on the pad, own lab only, paced.
+  - **Client:** `Client/StuntHud` counts live over your head. The landing card in the toast lane (it holds the lane) shows the score, the tricks, your best or NEW BEST!, and AGAIN, with ticks and a ding.
+  - **Cannon:** your own cannon shot is a long arc (`CANNON_AIR` 2.2 s) to the same bullseye, up to 120 studs high. The slow-mo beat at the top slows your own body (time dilation per assembly) and fires FeelBus SlowMo.
+    - PLAYER_LAUNCH_MAX went from 140 to 230;
+    - ActiveRagdoll.push takes a maxSpeed for this one case;
+    - the dummies keep the old shot.
+  - **Found in play:** the first slow-mo version scaled each part of an assembly, about 15 times over, and shot the body into space. It now works per assembly.
+  - **Tests:** T117 passes (2.5 s in the air, bullseye, CRASH 1518, best kept). T17, T18 and T50 pass. LayoutCheck has a StuntCard box.
+  - **Not built:** the lab's daily best board.

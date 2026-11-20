@@ -122,6 +122,21 @@ local lastFired: { [Player]: number } = {}
 Playground.BULLSEYE_RADIUS = 8
 -- Where the human cannon's shot comes down (no air drag on a body in Roblox: a plain throw), from
 -- the pad at (x, z) with the root 3 studs over the pad, down to lying height.
+-- V8-1.1 (Config.STUNT_SCORE): the player's own cannon shot, a longer and higher arc of
+-- Config.CANNON_AIR s to the very same landing point (the old shot was a 1 s hop, 23 studs up).
+-- The dummies keep the old shot (the pad's LaunchVelocity): the same landing.
+function Playground.cannonVelocity(): Vector3
+	local v = CANNON_DIRECTION * CANNON_SPEED
+	if not Config.STUNT_SCORE then
+		return v
+	end
+	local g = Workspace.Gravity
+	local rise = 2 -- (as cannonLanding: from 3 over the pad down to about 1 over the ground)
+	local old = (v.Y + math.sqrt(v.Y * v.Y + 2 * g * rise)) / g
+	local t = (Config :: any).CANNON_AIR
+	return Vector3.new(v.X * old / t, (0.5 * g * t * t - rise) / t, v.Z * old / t)
+end
+
 function Playground.cannonLanding(padTop: Vector3): Vector3
 	local v = CANNON_DIRECTION * CANNON_SPEED
 	local g = Workspace.Gravity
@@ -135,7 +150,7 @@ end
 function watchBullseye(player: Player, target: BasePart)
 	local started = os.clock()
 	task.wait(0.4) -- (off the pad first)
-	while os.clock() - started < 4 and player.Parent do
+	while os.clock() - started < 6 and player.Parent do -- (V8-1.1: the long arc lands later)
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		if root and root:IsA("BasePart") then
@@ -143,6 +158,9 @@ function watchBullseye(player: Player, target: BasePart)
 			if Vector3.new(d.X, 0, d.Z).Magnitude <= Playground.BULLSEYE_RADIUS + 1 and d.Y < 5 then
 				FxService.hit(target.Position + Vector3.new(0, 2, 0), 130, "CannonPad")
 				ProgressService.notice(player, "\u{1F3AF} BULLSEYE!")
+				pcall(function()
+					(require(script.Parent:WaitForChild("StuntScore")) :: any).bonus(player, "Bullseye") -- (V8-1.1)
+				end)
 				ExperimentService.event(player, "Bullseye", 1, "the BULLSEYE")
 				BadgeAwards.award(player, "Bullseye")
 				return
@@ -212,7 +230,11 @@ local function buildCannon()
 			return
 		end
 		lastFired[player] = now
-		PlayerRagdoll.launch(player, CANNON_DIRECTION * CANNON_SPEED)
+		PlayerRagdoll.launch(player, Playground.cannonVelocity())
+		-- (V8-1.1: the flight is scored: StuntScore; AGAIN puts the player back on this pad.)
+		pcall(function()
+			(require(script.Parent:WaitForChild("StuntScore")) :: any).begin(player, "Cannon", padPart)
+		end)
 		ExperimentService.event(player, "Cannon", 1, "the CANNON")
 		-- (Audit area 1: the first-visit objective line waits on this, not on a height guess.)
 		player:SetAttribute("CannonShots", ((player:GetAttribute("CannonShots") :: number?) or 0) + 1)
@@ -256,6 +278,15 @@ local function throwOnTouch(p: BasePart, cooldown: number, fxSpeed: number, fxId
 		end
 		last[player] = now
 		PlayerRagdoll.launch(player, velocityFor(root))
+		-- (V8-1.1: a machine on the way is a bonus in the flight that is on; else a new flight.)
+		pcall(function()
+			local StuntScore = require(script.Parent:WaitForChild("StuntScore")) :: any
+			if StuntScore.isFlying(player) then
+				StuntScore.bonus(player, "Machine")
+			else
+				StuntScore.begin(player, if type(station) == "string" then station else p.Name, p)
+			end
+		end)
 		FxService.hit(root.Position, fxSpeed, fxId)
 		ExperimentService.event(player, "Hazard", 1, what)
 		-- (Audit area 1: which machine threw this player, for the first-visit objective line.)

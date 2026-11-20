@@ -278,6 +278,12 @@ local Config = {
 	-- BIG RED BUTTON's free pool; EXPERIENCE_NOTIFY off; no share prompt for clips (16+ on Roblox);
 	-- a Robux weapon with everything owned pays fixed BOLTS, not eggs (no paid random items).
 	MILD_V8 = true,
+	-- V8-1.1 (the CRASH score): your own flights from the cannon, a station or a trap are scored
+	-- (StuntScore, StuntMath: air, distance, flips, bounces, machines, the bullseye, chains), with a
+	-- live count, a landing card with your best and AGAIN. The player's cannon shot is a long arc of
+	-- CANNON_AIR s to the same bullseye, with a slow-mo beat at the top (StuntHud).
+	STUNT_SCORE = true,
+	CANNON_AIR = 2.2,
 }
 
 return table.freeze(Config)

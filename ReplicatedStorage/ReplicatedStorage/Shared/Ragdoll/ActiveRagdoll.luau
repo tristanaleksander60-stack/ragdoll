@@ -352,11 +352,13 @@ local function governSpeed(rig: Rig)
 	end
 end
 
-local function clampVelocities(rig: Rig)
+local function clampVelocities(rig: Rig, maxSpeed: number?)
+	-- (V8-1.1: a push may allow more, for the human cannon's long arc on the player's own body.)
+	local cap = math.max(MAX_LINEAR_SPEED, maxSpeed or 0)
 	for _, part in rig.parts do
 		local v = part.AssemblyLinearVelocity
-		if v.Magnitude > MAX_LINEAR_SPEED then
-			part.AssemblyLinearVelocity = v.Unit * MAX_LINEAR_SPEED
+		if v.Magnitude > cap then
+			part.AssemblyLinearVelocity = v.Unit * cap
 		end
 		local w = part.AssemblyAngularVelocity
 		if w.Magnitude > MAX_ANGULAR_SPEED then
@@ -1891,7 +1893,9 @@ end
 
 -- Adds velocity to the whole body without choosing a new state (wind, conveyor, magnet).
 -- A standing dummy treats a strong push as a hit to the chest.
-function ActiveRagdoll.push(model: Model, deltaVelocity: Vector3)
+-- maxSpeed (optional, V8-1.1): how fast this push may leave the body (above MAX_LINEAR_SPEED only for
+-- the player's own body thrown by the human cannon's long arc).
+function ActiveRagdoll.push(model: Model, deltaVelocity: Vector3, maxSpeed: number?)
 	local rig = rigs[model]
 	if not rig or rig.state == "Frozen" then
 		return
@@ -1910,7 +1914,7 @@ function ActiveRagdoll.push(model: Model, deltaVelocity: Vector3)
 			p:ApplyImpulse(deltaVelocity * p.Mass)
 		end
 	end
-	clampVelocities(rig)
+	clampVelocities(rig, maxSpeed)
 end
 
 -- Grabbing: the grabbed body goes limp and will not get up while held.

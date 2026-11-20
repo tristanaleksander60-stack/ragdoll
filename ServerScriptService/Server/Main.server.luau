@@ -59,6 +59,7 @@ SessionStats.hasLab = function(player: Player): boolean
 	return Lab.plotIndex(player) ~= nil
 end
 safe("SessionStats", function() SessionStats.start() end)
+safe("StuntScore", function() require(Systems:WaitForChild("StuntScore")).start() end) -- V8-1.1: the CRASH score of your own flights
 safe("ExperimentService", function() require(Systems:WaitForChild("ExperimentService")).start() end) -- phase 1: Experiment cards (Shared\Experiments)
 safe("EconomyService", function() require(Systems:WaitForChild("EconomyService")).start() end) -- phase 2: bolts, bone journal, daily experiments, codes
 safe("PartyService", function() require(Systems:WaitForChild("PartyService")).start() end) -- phase 3: Prank Party shared experiment cards
