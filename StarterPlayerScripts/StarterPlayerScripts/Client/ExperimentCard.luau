@@ -65,6 +65,12 @@ function ExperimentCard.scored(score: number)
 end
 
 local function lineOf(data: any, left: number): string
+	-- (V8-1.3: a mission has no timer: no clock on it. CRASH points read as 1,240/2,000.)
+	if (tonumber(data.seconds) or 0) >= 1e8 then
+		local count, target = tonumber(data.count) or 0, tonumber(data.target) or 1
+		local fmt = if target >= 1000 then (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("StuntMath")) :: any).format else tostring
+		return string.format("\u{1F3AF} %s  %s/%s", data.text, fmt(count), fmt(target))
+	end
 	return string.format("\u{1F9EA} %s  %d/%d  %d:%02d", data.text, data.count, data.target, left // 60, left % 60)
 end
 
@@ -420,6 +426,8 @@ function ExperimentCard.start()
 			party = nil
 		elseif kind == "Combo" and type(d.text) == "string" then
 			ExperimentCard.combo(d.text, tonumber(d.n) or 1)
+		elseif kind == "SkipLater" then -- (V8-1.3)
+			Toast.show(string.format("Give it a try first: SKIP in %d s", tonumber(d.left) or 60))
 		end
 	end)
 	RunService.Heartbeat:Connect(function()

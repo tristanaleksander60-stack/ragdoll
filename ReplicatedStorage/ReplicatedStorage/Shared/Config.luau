@@ -289,6 +289,11 @@ local Config = {
 	-- (HitWords); the camera shake is undone each frame (no drift); slow-mo slows your own body too,
 	-- and gives speed back with no 90 cap (SlowMotion).
 	REACTIONS_V8 = true,
+	-- V8-1.3 (one mission chain): the first 8 cards are always the same missions in order (KO, BAT,
+	-- CANNON, BULLSEYE, GRENADE, WRECKING BALL, 10 KOs, 2,000 CRASH), no timer, SKIP after 60 s, each
+	-- paying its stars as BOLTS; the place is kept for every visit (Missions_v1). After the chain a
+	-- newcomer never gets a creature or map card.
+	MISSION_CHAIN = true,
 }
 
 return table.freeze(Config)

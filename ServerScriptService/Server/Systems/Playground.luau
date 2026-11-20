@@ -289,6 +289,9 @@ local function throwOnTouch(p: BasePart, cooldown: number, fxSpeed: number, fxId
 		end)
 		FxService.hit(root.Position, fxSpeed, fxId)
 		ExperimentService.event(player, "Hazard", 1, what)
+		if p.Name == "SwingBall" or string.find(p.Name, "Wreck", 1, true) then
+			ExperimentService.event(player, "Wrecking", 1) -- (V8-1.3: "ride the WRECKING BALL")
+		end
 		-- (Audit area 1: which machine threw this player, for the first-visit objective line.)
 		player:SetAttribute("ThrownBy_" .. p.Name, ((player:GetAttribute("ThrownBy_" .. p.Name) :: number?) or 0) + 1)
 		if after then

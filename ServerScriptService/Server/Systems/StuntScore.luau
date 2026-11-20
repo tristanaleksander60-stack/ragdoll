@@ -133,6 +133,10 @@ local function finish(player: Player, f: Flight)
 		air = flight.air,
 	})
 	StuntScore.lastForTest = { player = player, flight = flight, result = r }
+	-- (V8-1.3: CRASH points count into a mission: "Score 2,000 CRASH".)
+	pcall(function()
+		(require(script.Parent:WaitForChild("ExperimentService")) :: any).event(player, "Crash", r.score)
+	end)
 end
 
 -- A player was just launched by `machine` (its pad, for AGAIN).

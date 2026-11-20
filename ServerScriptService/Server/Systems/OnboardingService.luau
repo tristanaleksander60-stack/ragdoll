@@ -400,6 +400,12 @@ end
 
 -- Called by HitService after a toy request passed validation.
 function OnboardingService.onToyUsed(player: Player, toyId: string)
+	-- (V8-1.3: the mission chain's "swing the BAT" and "throw the GRENADE".)
+	if toyId == "Bat" or toyId == "Grenade" then
+		pcall(function()
+			(require(script.Parent:WaitForChild("ExperimentService")) :: any).event(player, "Tool:" .. toyId, 1)
+		end)
+	end
 	local p = progress[player]
 	if not p or not Toys.byId[toyId] then
 		return

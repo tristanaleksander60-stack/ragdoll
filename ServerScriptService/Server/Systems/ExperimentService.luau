@@ -63,6 +63,54 @@ local function cardData(s: Experiments.State, now: number): any
 	}
 end
 
+-- V8-1.3 (Config.MISSION_CHAIN): each player's place in Experiments.CHAIN, kept for every visit in
+-- DataStore Missions_v1 (UpdateAsync, only ever forward; memory in Studio and for test visits).
+local chainAt: { [Player]: number } = {}
+local missionStore: DataStore? = nil
+local function chainOn(): boolean
+	return (Config :: any).MISSION_CHAIN == true
+end
+local function isChain(def: Experiments.Def): boolean
+	return string.sub(def.id, 1, 5) == "Chain"
+end
+local function testVisit(player: Player): boolean
+	return (require(script.Parent:WaitForChild("TestAccount")) :: any).is(player)
+end
+local function saveChain(player: Player, at: number)
+	local ds = missionStore
+	if not ds or testVisit(player) then
+		return
+	end
+	task.spawn(function()
+		pcall(function()
+			ds:UpdateAsync(tostring(player.UserId), function(old: unknown)
+				if type(old) == "number" and old >= at then
+					return nil
+				end
+				return at, { player.UserId }
+			end)
+		end)
+	end)
+end
+local function loadChain(player: Player)
+	local ds = missionStore
+	if not ds or testVisit(player) then
+		chainAt[player] = chainAt[player] or 0
+		return
+	end
+	local ok, value = pcall(function()
+		return ds:GetAsync(tostring(player.UserId))
+	end)
+	chainAt[player] = if ok and type(value) == "number" then math.clamp(math.floor(value), 0, #Experiments.CHAIN) else 0
+end
+-- Tests: a player's place in the chain (and set it).
+function ExperimentService.chainOf(player: Player): number
+	return chainAt[player] or 0
+end
+function ExperimentService.setChainForTest(player: Player, at: number)
+	chainAt[player] = at
+end
+
 -- Deals the next card (today's deck first, then the list) and tells the client.
 function ExperimentService.deal(player: Player): Experiments.Def?
 	local p = players[player]
@@ -71,10 +119,22 @@ function ExperimentService.deal(player: Player): Experiments.Def?
 	end
 	local def: Experiments.Def
 	local deck = p.deck
-	if deck and #deck > 0 then
+	local at = chainAt[player] or 0
+	if chainOn() and at < #Experiments.CHAIN then
+		def = Experiments.CHAIN[at + 1]
+	elseif deck and #deck > 0 then
 		def = table.remove(deck, 1) :: Experiments.Def
 	else
 		def = Experiments.nextFor(p.done)
+	end
+	-- (V8-1.3: never a creature or map card for a newcomer: they have not met it yet.)
+	if chainOn() and not isChain(def) and player:GetAttribute("Newcomer") == true then
+		local tries = 0
+		while Experiments.SEEN_FIRST[def.kind] and tries < #Experiments.LIST do
+			tries += 1
+			p.done += 1
+			def = Experiments.nextFor(p.done)
+		end
 	end
 	local now = os.clock()
 	local s: Experiments.State = { def = def, count = 0, startedAt = now }
@@ -90,6 +150,12 @@ local function finish(player: Player, p: Player_, result: string)
 	end
 	p.state = nil
 	p.done += 1
+	-- (V8-1.3: a chain card done, or skipped after SKIP_AFTER s, moves the chain on, for good.)
+	if chainOn() and isChain(s.def) then
+		local at = math.min(#Experiments.CHAIN, (chainAt[player] or 0) + 1)
+		chainAt[player] = at
+		saveChain(player, at)
+	end
 	if result == "done" then
 		pcall(function()
 			(require(script.Parent:WaitForChild("SessionStats")) :: any).mark(player, "firstMissionDoneAt")
@@ -278,8 +344,19 @@ function ExperimentService.start()
 	if not Config.EXPERIMENTS then
 		return
 	end
+	if chainOn() and not game:GetService("RunService"):IsStudio() then
+		local ok, result = pcall(function()
+			return game:GetService("DataStoreService"):GetDataStore("Missions_v1")
+		end)
+		if ok then
+			missionStore = result
+		end
+	end
 	local function joined(player: Player)
 		ExperimentService.join(player)
+		if chainOn() then
+			task.spawn(loadChain, player)
+		end
 		task.delay(Config.EXPERIMENT_FIRST_AT, function()
 			local p = players[player]
 			if p and p.state == nil and p.done == 0 then
@@ -297,6 +374,7 @@ function ExperimentService.start()
 		partyOf[player] = nil
 		tossed[player] = nil
 		chains[player] = nil
+		chainAt[player] = nil
 	end)
 	-- lihfolk-ignore: remote-unvalidated-args (kind is only compared with "Skip"; nothing else is read)
 	;(remote :: RemoteEvent).OnServerEvent:Connect(function(player: Player, kind: unknown)
@@ -306,6 +384,12 @@ function ExperimentService.start()
 		end
 		local now = os.clock()
 		if now - p.lastSkip < ExperimentService.SKIP_GAP then
+			return
+		end
+		-- (V8-1.3: a mission has no timer and may be skipped only after SKIP_AFTER s.)
+		local s = p.state
+		if chainOn() and s and now - s.startedAt < Experiments.SKIP_AFTER then
+			send(player, "SkipLater", { left = math.ceil(Experiments.SKIP_AFTER - (now - s.startedAt)) })
 			return
 		end
 		p.lastSkip = now

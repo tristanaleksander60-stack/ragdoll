@@ -1502,3 +1502,12 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - **Slow-mo:** it slows your own body too (SlowMotion.stepBodies), and speed comes back up to 230 instead of the 90 cap.
   - **Tests:** T109 and T38 pass; T24 failed as known flaky.
   - **Not built:** the phone SLOW-MO button (the phone MENU is full: LayoutCheck's 4-row limit on the iPhone SE), and T118/T119 (client-only behaviour).
+- **V8-1.3 done in part (switch `MISSION_CHAIN`):**
+  - **The chain:** `Experiments.CHAIN` holds 8 missions in a fixed order: KO a dummy, Swing the BAT, Fire the CANNON, Hit the BULLSEYE, Throw the GRENADE, Ride the WRECKING BALL, Get 10 KOs, Score 2,000 CRASH. "Open the Stunt Book" became the CRASH mission, since there is no Stunt Book.
+  - **Rules:** no timer, SKIP only after 60 s (the server refuses earlier and says so), and each pays its stars as BOLTS.
+  - **Saving:** the place is kept for every visit in `Missions_v1` (UpdateAsync, only forward; memory in Studio and for test visits).
+  - **After the chain:** a newcomer never gets a creature or map card.
+  - **New events:** `Tool:Bat` and `Tool:Grenade` (OnboardingService.onToyUsed), `Wrecking` (throwOnTouch on the swing ball) and `Crash` (StuntScore).
+  - **Card:** the mission card has no clock (`1,240/2,000` for CRASH).
+  - **Tests:** T120 passes. T60 updated (the chain is done before its deck check, and it waits for the player); T63, T66, T67 and T103 pass.
+  - **Not built:** the FirstVisit line merged into the card (both still run; FirstVisit holds the reveal), and a crate prize on a mission.

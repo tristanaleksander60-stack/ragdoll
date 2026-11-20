@@ -35,13 +35,21 @@ return {
 		assert(#a == 3 and a[1] == b[1] and a[2] == b[2] and a[3] == b[3], "the daily pick differs for the same day")
 		assert(a[1] ~= a[2] and a[2] ~= a[3] and a[1] ~= a[3], "the daily pick repeats a card")
 
+		local t0 = os.clock()
+		while Players:GetPlayers()[1] == nil and os.clock() - t0 < 15 do
+			task.wait(0.2) -- (run first, the player may not have joined yet)
+		end
 		local player = Players:GetPlayers()[1]
 		assert(player, "no player in the play test")
 		ExperimentService.join(player)
 		local savedNext = ExperimentService.NEXT_AFTER
 		ExperimentService.NEXT_AFTER = 0.2
 		ExperimentService.setDeck(player, { Experiments.byId.Takedown3 })
+		-- (V8-1.3: the mission chain comes before the deck: done here.)
+		local wasChain = ExperimentService.chainOf(player)
+		ExperimentService.setChainForTest(player, #(Experiments :: any).CHAIN)
 		local def = ExperimentService.deal(player)
+		ExperimentService.setChainForTest(player, wasChain)
 		assert(def and def.id == "Takedown3", "the deck's card was not dealt first")
 		local _, starsBefore = ExperimentService.stateOf(player)
 		ExperimentService.event(player, "Takedown", 3)
