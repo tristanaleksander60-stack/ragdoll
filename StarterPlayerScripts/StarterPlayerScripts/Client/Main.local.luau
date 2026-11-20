@@ -56,6 +56,7 @@ task.spawn(require(Client:WaitForChild("FirstVisit")).start) -- audit area 1: a 
 task.spawn(require(Client:WaitForChild("AdminWorld")).start) -- V6-2: the owner's time of day and weather for everyone
 task.spawn(require(Client:WaitForChild("Director")).start) -- V6-3: F8 director mode (owner only)
 task.spawn(require(Client:WaitForChild("Birds")).start) -- V6-6: birds round the lab and the maps
+task.spawn(require(Client:WaitForChild("CreatureLife")).start) -- 20 Nov: the lab creatures move while they wait
 task.spawn(require(Client:WaitForChild("BoothSpin")).start) -- V6-7: the booth items turn on their pedestals
 FxController.start()
 AvatarMoves.start()

@@ -16,6 +16,7 @@
 -- pages of the same kind). Bodies are only moved and pushed through DummyControl (the lab's player
 -- simulates them), one at a time per machine, never one that someone holds.
 
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
@@ -129,6 +130,15 @@ local function dummiesIn(cf: CFrame, size: Vector3): { Model }
 	return out
 end
 
+-- A machine's look into its trigger box; the box's middle is kept on the machine's folder (Trigger)
+-- so a self-test (T108) can drop a body right into it.
+local function look(f: Instance, cf: CFrame, size: Vector3): { Model }
+	if f:GetAttribute("Trigger") ~= cf.Position then
+		f:SetAttribute("Trigger", cf.Position)
+	end
+	return dummiesIn(cf, size)
+end
+
 -- Holds a body at a spot for a while (moved there again and again: the owner simulates it).
 local function hold(model: Model, at: () -> CFrame, seconds: number)
 	local DummyControl = lazy("DummyControl")
@@ -168,6 +178,7 @@ end
 -- The common shape: take one body from the trigger, do `inside` with it, then let it go flying.
 local function swallow(m: Machine, model: Model, inside: (Model) -> Vector3)
 	m.busy = true
+	m.folder:SetAttribute("Busy", true) -- (CreatureLife on the screens rests while it works)
 	model:SetAttribute("InMachine", m.id)
 	task.spawn(function()
 		local ok, err = pcall(function()
@@ -197,6 +208,7 @@ local function swallow(m: Machine, model: Model, inside: (Model) -> Vector3)
 		table.clear(m.temp)
 		task.wait(1)
 		m.busy = false
+		m.folder:SetAttribute("Busy", nil)
 	end)
 end
 
@@ -207,15 +219,15 @@ local BUILD: { [string]: (Folder, CFrame, Machine) -> ((() -> ())?) } = {}
 
 -- SPIDER: a web in the yard's east corner; hunger meter on a small sign.
 BUILD.Spider = function(f, at, m)
-	local web = part(f, "SpiderWeb", Vector3.new(16, 16, 0.4), at * CFrame.new(0, 8, 0), Color3.fromRGB(235, 235, 240), Enum.Material.SmoothPlastic)
+	local web = part(f, "SpiderWeb", Vector3.new(26, 26, 0.4), at * CFrame.new(0, 14, 0), Color3.fromRGB(235, 235, 240), Enum.Material.SmoothPlastic)
 	web.Transparency = 1 -- (only the threads show)
 	web.CanQuery = true
 	for i = 0, 7 do
 		local a = i * math.pi / 8
-		local thread = part(f, "WebThread", Vector3.new(0.12, 16, 0.12), web.CFrame * CFrame.Angles(0, 0, a), Color3.fromRGB(250, 250, 255), Enum.Material.Neon)
+		local thread = part(f, "WebThread", Vector3.new(0.12, 26, 0.12), web.CFrame * CFrame.Angles(0, 0, a), Color3.fromRGB(250, 250, 255), Enum.Material.Neon)
 		thread.Transparency = 0.35
 	end
-	for r = 2, 7, 2.5 do
+	for r = 2.5, 12.5, 2.5 do
 		for i = 0, 7 do
 			local a1, a2 = i * math.pi / 4, (i + 1) * math.pi / 4
 			local p1 = Vector3.new(math.cos(a1) * r, math.sin(a1) * r, 0)
@@ -225,7 +237,17 @@ BUILD.Spider = function(f, at, m)
 			ring.Transparency = 0.4
 		end
 	end
-	local spider = place(f, "MSpider", (at * CFrame.new(0, 0, -7)).Position, 180, 24)
+	local spider = place(f, "MSpider", (at * CFrame.new(0, 0, -7)).Position, 180, 13)
+	-- (20 Nov 2026, the owner: the spider lives ON its giant web: head down, legs spread on the
+	-- threads, on the side that faces the lab. Its own up is the web's normal; its local +Z is up.)
+	if spider then
+		local n = web.CFrame.LookVector
+		if n:Dot(m.toLab) < 0 then
+			n = -n
+		end
+		local onWeb = web.Position + Vector3.new(0, 4.5, 0) + n * 1.2
+		spider:PivotTo(CFrame.fromMatrix(onWeb, n:Cross(Vector3.yAxis).Unit, n))
+	end
 	local home = if spider then spider:GetPivot() else at
 	-- (V6-7: the golden SPIDER DELUXE when the lab owner has it.)
 	local labF = f.Parent and f.Parent.Parent
@@ -249,7 +271,7 @@ BUILD.Spider = function(f, at, m)
 	local sign = Instance.new("BillboardGui")
 	sign.Name = "SpiderHunger"
 	sign.Size = UDim2.fromOffset(120, 26)
-	sign.StudsOffsetWorldSpace = Vector3.new(0, 18, 0)
+	sign.StudsOffsetWorldSpace = Vector3.new(0, 16, 0)
 	sign.MaxDistance = 90
 	sign.Adornee = web
 	local bar = Instance.new("Frame")
@@ -293,7 +315,7 @@ BUILD.Spider = function(f, at, m)
 		if m.busy or os.clock() < napUntil then
 			return
 		end
-		local body = dummiesIn(web.CFrame, Vector3.new(16, 16, 6))[1]
+		local body = look(f, web.CFrame, Vector3.new(24, 24, 7))[1]
 		if not body then
 			return
 		end
@@ -310,14 +332,14 @@ BUILD.Spider = function(f, at, m)
 				cocoon.Size = Vector3.new(4, 7, 4) * (0.3 + 0.7 * t)
 				cocoon.CFrame = stuck * CFrame.Angles(0, 0, math.sin(t * 30) * 0.15)
 				if spider then
-					spider:PivotTo(home:Lerp(home * CFrame.new(0, 0, 4), t))
+					spider:PivotTo(home:Lerp(home * CFrame.new(0, 0, -5.5), t)) -- (down the web to its catch)
 				end
 			end)
 			-- Munch munch (the spider bobs), then the burrito flies.
 			play(1.0, function(t)
 				cocoon.CFrame = stuck * CFrame.Angles(0, 0, math.sin(t * 40) * 0.25)
 				if spider then
-					spider:PivotTo(home * CFrame.new(0, 0, 4) * CFrame.new(0, math.abs(math.sin(t * 18)) * 1.2, 0))
+					spider:PivotTo(home * CFrame.new(0, 0, -5.5) * CFrame.new(0, math.abs(math.sin(t * 18)) * 1.2, 0))
 				end
 			end)
 			hideBody(model, false)
@@ -333,7 +355,7 @@ BUILD.Spider = function(f, at, m)
 			end)
 			if spider then
 				task.spawn(play, 0.8, function(t)
-					spider:PivotTo((home * CFrame.new(0, 0, 4)):Lerp(home, t))
+					spider:PivotTo((home * CFrame.new(0, 0, -5.5)):Lerp(home, t))
 				end)
 			end
 			hunger += LabCreatures.SPIDER_MEAL
@@ -359,7 +381,7 @@ BUILD.Plant = function(f, at, m)
 		if m.busy then
 			return
 		end
-		local body = dummiesIn(at * CFrame.new(0, 4, 0), Vector3.new(10, 8, 10))[1]
+		local body = look(f, at * CFrame.new(0, 4, 0), Vector3.new(10, 8, 10))[1]
 		if not body then
 			return
 		end
@@ -390,7 +412,7 @@ BUILD.Frog = function(f, at, m)
 		if m.busy or os.clock() < nextAt then
 			return
 		end
-		local body = dummiesIn(at, Vector3.new(44, 12, 44))[1]
+		local body = look(f, at, Vector3.new(44, 12, 44))[1]
 		if not body then
 			return
 		end
@@ -443,7 +465,7 @@ BUILD.Whale = function(f, at, m)
 		if m.busy then
 			return
 		end
-		local body = dummiesIn(at * CFrame.new(0, 3, 0), Vector3.new(30, 6, 20))[1]
+		local body = look(f, at * CFrame.new(0, 3, 0), Vector3.new(30, 6, 20))[1]
 		if not body then
 			return
 		end
@@ -466,14 +488,14 @@ end
 -- CHICKEN: a coop; a dummy that walks in is laid as an egg that wobbles, cracks and hatches it.
 BUILD.Chicken = function(f, at, m)
 	part(f, "Coop", Vector3.new(14, 0.4, 12), at * CFrame.new(0, 0.2, 0), Color3.fromRGB(196, 160, 96), Enum.Material.WoodPlanks)
-	local hen = place(f, "MChicken", (at * CFrame.new(0, 0.4, 2)).Position, 180, 14)
+	local hen = place(f, "MChicken", (at * CFrame.new(0, 0.4, 2)).Position, 180, 9)
 	local nest = at * CFrame.new(0, 0, -6)
 	part(f, "Nest", Vector3.new(6, 1, 6), nest * CFrame.new(0, 0.5, 0), Color3.fromRGB(205, 180, 110), Enum.Material.Grass, Enum.PartType.Cylinder).CFrame = nest * CFrame.new(0, 0.5, 0) * CFrame.Angles(0, 0, math.rad(90))
 	return function()
 		if m.busy then
 			return
 		end
-		local body = dummiesIn(at * CFrame.new(0, 4, 2), Vector3.new(14, 8, 10))[1]
+		local body = look(f, at * CFrame.new(0, 4, 2), Vector3.new(14, 8, 10))[1]
 		if not body then
 			return
 		end
@@ -509,7 +531,7 @@ BUILD.Washer = function(f, at, m)
 		if m.busy then
 			return
 		end
-		local body = dummiesIn(door * CFrame.new(0, -2, -2), Vector3.new(10, 8, 8))[1]
+		local body = look(f, door * CFrame.new(0, -2, -2), Vector3.new(10, 8, 8))[1]
 		if not body then
 			return
 		end
@@ -552,7 +574,7 @@ BUILD.Slingshot = function(f, at, m)
 		if m.busy then
 			return
 		end
-		local body = dummiesIn(at * CFrame.new(0, 3, 0), Vector3.new(7, 6, 7))[1]
+		local body = look(f, at * CFrame.new(0, 3, 0), Vector3.new(7, 6, 7))[1]
 		if not body then
 			return
 		end
@@ -588,7 +610,7 @@ BUILD.Mole = function(f, at, m)
 		if m.busy or os.clock() < nextAt then
 			return
 		end
-		local body = dummiesIn(at * CFrame.new(0, 4, 0), Vector3.new(20, 8, 20))[1]
+		local body = look(f, at * CFrame.new(0, 4, 0), Vector3.new(20, 8, 20))[1]
 		if not body then
 			return
 		end
@@ -634,7 +656,7 @@ BUILD.Vacuum = function(f, at, m)
 		if m.busy then
 			return
 		end
-		local body = dummiesIn(CFrame.new(pos + Vector3.new(0, 3, 0)), Vector3.new(9, 6, 9))[1]
+		local body = look(f, CFrame.new(pos + Vector3.new(0, 3, 0)), Vector3.new(9, 6, 9))[1]
 		if not body then
 			return
 		end
@@ -687,6 +709,17 @@ function LabCreatures.build(into: Instance, origin: Vector3)
 		local machine: Machine = { id = spot.id, label = spot.label, lab = nil, folder = sub, owner = owner, busy = false, toLab = toLab.Unit, temp = {} }
 		local at = CFrame.new(origin + Vector3.new(spot.x, 0, LabCreatures.YARD_Z + spot.z)) * CFrame.Angles(0, math.rad(spot.yaw), 0)
 		local ok, tick = pcall(BUILD[spot.id], sub, at, machine)
+		-- (20 Nov: its own little home round it, and its model moves on the screens while it waits.)
+		pcall(function()
+			lazy("CreatureHabitats").dress(spot.id, sub, at)
+		end)
+		for _, c in sub:GetChildren() do
+			if c:IsA("Model") and string.sub(c.Name, 1, 1) == "M" and c.Name ~= "MVacuum" then
+				c:SetAttribute("Creature", spot.id)
+				c:SetAttribute("LifeHome", c:GetPivot())
+				CollectionService:AddTag(c, "CreatureLife")
+			end
+		end
 		if ok and tick then
 			table.insert(ticks, tick)
 		elseif not ok then
