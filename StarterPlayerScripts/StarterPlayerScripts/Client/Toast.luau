@@ -14,11 +14,16 @@ local TweenService = game:GetService("TweenService")
 
 local Theme = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUITheme"))
 local HudSlots = require(script.Parent:WaitForChild("HudSlots"))
+local NoticeState = require(script.Parent:WaitForChild("NoticeState")) :: any -- (V9-0g: small notices on phones)
 local Banner = require(script.Parent:WaitForChild("Banner"))
 
 -- (10 Nov 2026, the audit: 1.8 s for every line was too short to read a long one on a phone, and
 -- a short queue dropped the launch's lines: time now follows the text, more may wait, longer.)
 local function showTime(text: string): number
+	-- (V9-0g: a compact notice on a phone goes sooner: one small line, then out of the way.)
+	if NoticeState.compact() then
+		return math.clamp(1.1 + #text * 0.03, 1.4, 3)
+	end
 	return math.clamp(1.6 + #text * 0.035, 2.2, 4.5) -- s on screen
 end
 local QUEUE_MAX = 4
@@ -107,6 +112,13 @@ function showNext()
 	local ctx = HudSlots.context(false, false)
 	local centre, width, boxTop = HudSlots.toastBox(g.AbsoluteSize, ctx)
 	local tallest = if ctx.portrait then PORTRAIT_HEIGHT_MAX elseif ctx.phone then PHONE_HEIGHT_MAX else HEIGHT_MAX
+	local compact = NoticeState.compact()
+	if compact then
+		-- (V9-0g: at most about 45 % of the width and 40 px tall (48 upright), text 15 px.)
+		local w, h = NoticeState.smallBox(g.AbsoluteSize)
+		width = math.min(width, w)
+		tallest = h
+	end
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0)
 	label.Size = UDim2.fromOffset(0, 44)
@@ -119,7 +131,7 @@ function showNext()
 	label.BackgroundTransparency = 0.05
 	label.TextColor3 = item.color
 	label.FontFace = Theme.Fonts.display
-	label.TextSize = if ctx.phone then 18 else 20
+	label.TextSize = if compact then 15 elseif ctx.phone then 18 else 20
 	label.TextStrokeColor3 = P.ink
 	label.TextStrokeTransparency = 0.3
 	local outline = Instance.new("UIStroke")
@@ -380,7 +392,7 @@ function Toast.show(text: string, color: Color3?, top: (() -> number)?, icon: st
 			return
 		end
 	end
-	if #queue >= QUEUE_MAX then
+	if #queue >= (if NoticeState.compact() then 1 else QUEUE_MAX) then -- (V9-0g: one waits on a phone)
 		-- The oldest waiting message makes way (never one set aside mid-show for the view card).
 		for i, waiting in queue do
 			if not waiting.pinned then

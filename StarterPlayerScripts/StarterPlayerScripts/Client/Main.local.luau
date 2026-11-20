@@ -56,6 +56,7 @@ safe("PlotPrivacy", function() PlotPrivacy.start() end) -- (first: other labs le
 task.spawn(require(Client:WaitForChild("DummySkins")).start) -- the dummies' sculpted mannequin bodies
 safe("SoundMix", function() require(Client:WaitForChild("SoundMix")).start() end) -- v4 A3: the mix's groups and compressor
 task.spawn(require(Client:WaitForChild("NpcTalk")).start) -- v4 B4: the talk panel
+task.spawn(function() require(Client:WaitForChild("NoticeState")).start() end) -- V9-0g: small notices on phones (who fired when)
 task.spawn(require(Client:WaitForChild("SlowMotion")).start) -- v4 C5: smooth slow motion
 task.spawn(require(Client:WaitForChild("VehicleFeel")).start) -- v4 C2: wheels, lean, lights, engine, horn
 task.spawn(require(Client:WaitForChild("CreatureAnim")).start) -- v4 C3: the gorilla and bulls move and sound

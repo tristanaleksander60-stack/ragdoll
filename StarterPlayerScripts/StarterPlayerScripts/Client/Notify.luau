@@ -119,6 +119,13 @@ local function tick()
 			end
 		end
 	end
+	-- (V9-0g: on a phone in a fight, or in MINIMAL, only critical notices show; the rest wait and go stale.)
+	local function noticeOk(kind: string): boolean
+		local ok, allowed = pcall(function()
+			return (require(script.Parent:WaitForChild("NoticeState")) :: any).allow(kind)
+		end)
+		return not ok or allowed == true
+	end
 	-- (One at a time on screen: the next waits for the toast to go.)
 	local busy = Toast.isShowing() or Toast.isPaused() -- (a held Toast would only queue and drop it)
 	local order: { number } = {}
@@ -140,7 +147,7 @@ local function tick()
 		local verdict = NotifyRules.decide(state, it.kind, it.key, it.at, now)
 		if verdict == "drop" then
 			drop[i] = true
-		elseif verdict == "show" and not shownOne and (not busy or it.kind == "critical") then
+		elseif verdict == "show" and not shownOne and (not busy or it.kind == "critical") and noticeOk(it.kind) then
 			show(it)
 			drop[i] = true
 			shownOne = true

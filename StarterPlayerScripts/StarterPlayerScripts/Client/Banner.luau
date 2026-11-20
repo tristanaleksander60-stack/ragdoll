@@ -292,6 +292,13 @@ function Banner.tryLine(text: string): boolean
 	if not spec then
 		return false
 	end
+	-- (V9-0g, owner 21 Nov 2026: "on the phone you could hardly see anything": in compact notices
+	-- the big moment is a small toast pill in the top lane; in a fight only the most important one
+	-- (priority 4) shows, the rest are dropped, not queued.)
+	local NoticeState = require(script.Parent:WaitForChild("NoticeState")) :: any
+	if NoticeState.compact() then
+		return NoticeState.busy() and spec.priority < 4
+	end
 	Banner.show(spec)
 	return true
 end

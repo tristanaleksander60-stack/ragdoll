@@ -755,3 +755,13 @@ Write the baseline into `docs/PERF.md`.
   - **Speedometer:** `Client/Speedometer`, a round gauge with a sweeping needle, km/h, a D/R/N chip and a red zone at top speed. It pops in when seated and sits just above the tool bar on every screen.
   - **Tests:** T153_CarDrives passes for Car and Truck (0.0 degrees in 3 s on throttle, left/right, stops turning, brake + reverse, gauge); T52 still passes.
   - **Not done:** separate GAS/BRAKE pedals on phones. The thumbstick drives (X steer, Y throttle), and the circle on phones came from the same body turn (screen-centre aim).
+- 21 Nov 2026, V9-0g DONE (PC):
+  - **Rules and state:** `Shared/NoticeRules` (pure) and `Client/NoticeState` (who fired when: PokeController.onUsedAlso and own shots; the phone test; the setting).
+  - **Toast:** on a phone (Settings "Notices" AUTO = small) a notice is one pill at most 45 % wide and 40 px tall (48 upright) with 15 px text, shows for 1.4-3 s, and only one waits.
+  - **Banners:** BULLSEYE!, KNOCKED OUT! and the rest become that small pill; in a fight only priority-4 ones show, the rest are dropped.
+  - **Notify:** in a fight (a shot in the last 1.5 s) only critical notices show.
+  - **KO counter:** "+1 TAKEDOWN" repeats merge into one small "KO xN" counter just under the crosshair.
+  - **Unlocks:** an unlock's big reveal waits for 2 s without a shot (or is skipped after 20 s); the "NEW: X" line shows at once.
+  - **Settings:** "Notices" AUTO / NORMAL / SMALL / MINIMAL, saved in the profile (ProgressService SETTING_CHOICES).
+  - **Checks:** T162_PhoneNotices passes; T100/T147/T45 pass; LayoutCheck shows 0 problems. In the phone simulator (iPhone 17 Pro landscape, 750x381) the BULLSEYE line is a small top pill and 5 KOs read "KO x5".
+  - **Left:** a LayoutCheck "notice lane" rule; the event card's chip-first on phones; the egg offer card (it opens only when calm) is unchanged.

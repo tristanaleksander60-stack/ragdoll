@@ -89,7 +89,7 @@ export type Profile = {
 	bought: { string }, -- the last weapon purchase ids delivered (a repeated receipt gives nothing twice)
 	oldEggs: number, -- eggs found before the weapon ladder: they still hold a hat, as they did then
 	playSeconds: number, -- time played in all (round 3, M6: the MOST TIME PLAYED boards)
-	settings: { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean }?, -- SETTINGS (M6, M11)
+	settings: { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean, notices: number? }?, -- SETTINGS (M6, M11)
 	goals: Goals?, -- the day's three goals (round 3, M9: DailyGoals)
 	eco: Economy.Eco?, -- phase 2: bolts, journal, today's daily experiments, codes (Shared\Economy)
 }
@@ -171,12 +171,12 @@ end
 -- A stored profile made safe (anything odd dropped).
 -- SETTINGS (round 3, M6), checked: three small choices and three switches (round 4, M11: the dead
 -- body's monitor), nothing else kept.
-local SETTING_CHOICES = { sfx = 3, motion = 3, ui = 3 }
-function ProgressService.cleanSettings(raw: any): { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean }?
+local SETTING_CHOICES = { sfx = 3, motion = 3, ui = 3, notices = 4 } -- (notices: V9-0g)
+function ProgressService.cleanSettings(raw: any): { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean, notices: number }?
 	if type(raw) ~= "table" then
 		return nil
 	end
-	local out = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false }
+	local out = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1 }
 	for key, most in SETTING_CHOICES do
 		local n = raw[key]
 		if type(n) == "number" and n == math.floor(n) and n >= 1 and n <= most then

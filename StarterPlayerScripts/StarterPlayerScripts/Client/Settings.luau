@@ -26,15 +26,18 @@ local Icons = require(UI:WaitForChild("LihFolkUIIcons"))
 local Settings = {}
 
 --   DEAD MONITOR   ON / OFF (round 4, M11): the small monitor over a dead body under the mouse (OFF unless chosen)
-export type Values = { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean }
+export type Values = { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean, notices: number }
 
 -- The choices of each multi-way row, in the order a tap cycles them (index 1 is the default).
 Settings.SFX = { { name = "NORMAL", volume = 1 }, { name = "QUIET", volume = 0.4 }, { name = "OFF", volume = 0 } }
 Settings.MOTION = { { name = "AUTO", reduced = nil :: boolean? }, { name = "LESS", reduced = true :: boolean? }, { name = "FULL", reduced = false :: boolean? } }
 Settings.UI = { { name = "NORMAL", scale = 1 }, { name = "LARGE", scale = 1.15 }, { name = "SMALL", scale = 0.9 } }
+-- (V9-0g: how big and how many notices: AUTO is SMALL on a phone, NORMAL elsewhere; MINIMAL shows only
+-- what matters. NoticeRules.)
+Settings.NOTICES = { { name = "AUTO" }, { name = "NORMAL" }, { name = "SMALL" }, { name = "MINIMAL" } }
 local SAVE_AFTER = 0.75 -- s after the last change (one write for a flurry of taps)
 
-local values: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false }
+local values: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1 }
 local touched = false -- (changed here before the kept choice arrived: this session's choice wins)
 local saveToken = 0
 local remote: RemoteEvent? = nil
@@ -73,7 +76,7 @@ end
 
 -- Checks a table from anywhere (the server's message, a test) into values; junk keeps the default.
 function Settings.clean(raw: unknown): Values
-	local v: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false }
+	local v: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1 }
 	if type(raw) ~= "table" then
 		return v
 	end
@@ -84,6 +87,7 @@ function Settings.clean(raw: unknown): Values
 	v.sfx = pick(t.sfx, Settings.SFX) or 1
 	v.motion = pick(t.motion, Settings.MOTION) or 1
 	v.ui = pick(t.ui, Settings.UI) or 1
+	v.notices = pick(t.notices, Settings.NOTICES) or 1
 	v.blood = t.blood ~= false
 	v.shake = t.shake ~= false
 	v.deadMon = t.deadMon == true -- (10 Nov 2026, the owner: off unless chosen; a new key, so an old saved 'monitor' is not read)
@@ -98,6 +102,9 @@ local function apply()
 	player:SetAttribute("HitFxStyle", if values.blood then nil else "Stylised")
 	Controller.setReducedMotion(Settings.MOTION[values.motion].reduced)
 	Controller.setPlayerScale(Settings.UI[values.ui].scale)
+	pcall(function()
+		(require(script.Parent:WaitForChild("NoticeState")) :: any).setChoice(values.notices)
+	end)
 	for _, redraw in redrawers do
 		redraw()
 	end
@@ -211,6 +218,7 @@ local function build()
 	end)
 	choiceRow("Motion", "Auto follows your device. Less: menus just appear", "motion", "motion", Settings.MOTION, 4, body)
 	choiceRow("UI size", "Buttons and windows bigger or smaller", "scale", "ui", Settings.UI, 5, body)
+	choiceRow("Notices", "Auto: small on a phone. Minimal: only what matters", "eye", "notices", Settings.NOTICES, 6, body)
 	window.defaultSelection = first.hit
 	Controller.register(window)
 	apply()
