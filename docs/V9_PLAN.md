@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -92,6 +92,48 @@ Run all of `docs/FIX_PATHS_SHOP.md`:
 - Without the pass and the trial: no GOD launcher in the HUD or MENU, and the card is in SHOP.
 - TRY opens the window and starts the trial.
 - With the pass (`OfferService.grantPass`): the launcher shows and the window opens.
+
+## V9-0g Phone notices much smaller: never cover the action (owner, 21 Nov; quick, do it next)
+> "Gør også alle nofikationer på telefonen meget mindre, jeg testet det lige og man kunne nærmest ikke se noget når man skød flere ragdolls og unlocked ting osv."
+
+**Problem.** On a phone, during fast play (several KOs, unlocks, missions), the toasts, banners (`Client/Banner`: KNOCKED OUT!, BULLSEYE!...), unlock reveals, KO stamps / "+1", combo pops, the experiment card and the event banner stack up and cover the screen.
+
+**Rules for touch screens** (landscape and portrait; tablets get a middle size):
+- **Size:**
+  - every unsolicited notice is at most about 40 px tall in landscape (portrait about 48 px);
+  - at most about 45 % of the screen width;
+  - text 14-16 px, an icon plus one short line;
+  - no full-width ribbons on phones.
+- **Place:**
+  - in one notice lane at the top centre (under the top bar), or in the top-right corner;
+  - never in the middle third, never over the crosshair or the thumb zones.
+  - The event banner goes straight to its small chip on phones (no big card first).
+- **Amount:**
+  - **One at a time.** At most 1 notice visible, and never more than 2 lines of the lane.
+  - **Merge repeats:** "+1 KO" ×5 becomes one small counter that ticks up ("KO ×5").
+  - **Combo pops** are a small number by the crosshair, not a word over it.
+  - **KO stamps** stay small and fade in 0.6 s.
+- **Unlocks:**
+  - a new weapon shows as a small chip "NEW: Rocket" with its icon, sliding into the bar slot;
+  - the big reveal plays only when nothing is happening (no shot for 2 s), or when the player taps the chip;
+  - never a full-screen reveal in the middle of a fight.
+- **Banners** (BULLSEYE!, KNOCKED OUT!, SURPRISE!):
+  - on phones a compact pill, about 36-40 px;
+  - hold about 1.2 s;
+  - when busy, only the most important one shows, and the rest are dropped (not queued).
+- **Busy mode:** while the player fired in the last 1.5 s, only critical notices and the merged KO counter show. Everything else waits in `Notify` (V6-1 rules) or is dropped if stale.
+- **Settings:** a "Notifications: Normal / Small / Minimal" choice in Settings. Small is the phone default.
+
+**Check:**
+- In the phone emulator (iPhone SE landscape, iPhone 17 Pro portrait and landscape, a small Android), play 60 s of rapid shooting with 3 unlocks and a bullseye.
+- Captures every 5 s: the centre third is never covered for more than 0.3 s, and there is at most 1 notice at a time.
+- LayoutCheck gets a "notice lane" rule.
+
+**Tests:** T162_PhoneNotices.
+- 20 KOs in 5 s: one merged counter, no stack.
+- An unlock while firing: a small chip, and the reveal waits.
+- Sizes are within the limits on the phone screens.
+- T100 still passes.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
@@ -420,6 +462,66 @@ For each one:
 - a return to rest.
 
 Keep the gameplay numbers the same unless the act needs a small timing change (note it in State).
+
+## V9-3b Bigger gaps between weapon unlocks (owner, 21 Nov)
+> "Lav større mellemrum på når man unlocker nye våben."
+
+**Now:** takedown rungs come from `Toys` (the base rungs → `squeeze` under `LADDER_V2` with `LADDER_KEEP` / `LADDER_V2_SCALE` → `V8_RUNGS` / `START_BAR_V9` / `HARD_RUNGS`).
+
+**Change:**
+- **Widen the gaps** between unlocks, so each new weapon feels earned and the ladder lasts longer.
+- **Keep the first-minutes hook** (V8's evidence: players who get early takedowns and a first present stay longer):
+  - the start bar stays as it is;
+  - the first present (Launch at 3) stays;
+  - the next 2 unlocks stay within the first ~10 minutes.
+- **From there on**, the gaps grow:
+  - make it a smooth curve, for example each gap about 1.35-1.5x the one before, set as Config numbers (`LADDER_V9_GROWTH`, `LADDER_V9_KEEP`);
+  - the top end stays reachable, about 2-3x today's top;
+  - keep `HARD_RUNGS` items (the Rocket at 470) in proportion.
+- **Show the progress well,** so the wait never feels empty: the NEXT pill / NextUnlocks bar shows "x / y KOs" and fills smoothly, there is a small reward sound at 50 % and 90 %, and the unlock moment is a big satisfying reveal.
+- **Never take anything away:** a profile keeps every weapon it already owns (grandfather, like Ladder 5). The Robux weapon tiers and Bolts prices are re-checked so nothing looks like a pay wall (V8-5 fair shop).
+- **Switch:** `Config.LADDER_V9` (false = today's ladder).
+
+**Tests:**
+- T35, T64 and T110 updated;
+- a new pure test checks that the gaps grow monotonically after the kept early rungs, that no owned weapon is lost, and that the top is at most `LADDER_V9_TOP`.
+
+**Watch after release:** Session_v1 takedowns-per-visit and leaves just before an unlock. If early leaves rise, shrink the growth.
+
+## V9-3c The big rocket in the lab: strap a ragdoll on and launch it from a computer (owner, 21 Nov)
+> "Gør så man kan bruge den store raket i ens lab så man trykker ved en computer og strap en ragdoll på."
+
+**Now:** a big Rocket model stands in the lab only as decoration (LabDress role `Rocket` at x -72, z 12, height 26).
+
+**New: a working launch pad.**
+- **Pad:** the rocket stands on a launch pad with a gantry and arms. Beside it is a launch **computer terminal**, the same family as V9-2b: screen, big red LAUNCH button and a countdown display. Pick it up: a real rocket model, a launch tower and a terminal, from the Creator Store with the malware pass.
+- **Press LAUNCH** (click/tap on the screen, or E / ButtonX):
+  1. The lab's nearest free dummy is carried in an arc to the rocket (or a spare one drops from the gantry). It is strapped on with belts, standing at the nose, and given a little helmet.
+  2. The gantry arms swing away.
+  3. A 3-2-1 countdown on the screen and above the rocket, with steam venting and a rumble.
+  4. Lift-off: a big flame and smoke trail, a camera shake nearby and a roar. The rocket climbs, wobbles a little and arcs over the lab.
+  5. At the top, the straps pop: the ragdoll flies free, spinning, with a trail. It lands toward the bullseye or the crash zone (with BULLSEYE scoring), or uses a small cartoon parachute some of the time for fun variety.
+  6. The rocket bursts into a cartoon firework (kid-safe, no debris that hurts).
+  7. A fresh rocket rises back onto the pad from below, ready again.
+- **"Ride it yourself"** (optional second button on the terminal): the player straps themselves on, with the same flight. Your own lab, or a party lab, only.
+- **Server rules:**
+  - owner or party only;
+  - near the terminal;
+  - cooldown about 10 s (one flight at a time);
+  - a press during a flight queues at most 1;
+  - the flight is server-driven for the body (network owner stays the lab's player for the fall);
+  - the ragdoll physics stays the same;
+  - LabGuide gives it a ring and a sign icon.
+- **The same V9 rules apply:** juicy beats, sound, a phone budget, and the first launch of a visit gets the slow-mo beat. An experiment card "Launch a dummy to space" and a journal page.
+
+**Tests:** T161_RocketPad.
+- One press = one dummy strapped, launched and landed whole on the lab side.
+- Spam respects the cooldown and queue.
+- Strangers are refused.
+- The rocket resets.
+- No body is left stuck on the rocket.
+
+**Capture:** a 4-frame launch sequence and the terminal.
 
 ## V9-4 Everything sold for Robux, perfect
 These are the `map = true` OFFERS and the passes that put a thing in the world. Each must look and move as good as its price (the turning booth model **and** the thing in use):
