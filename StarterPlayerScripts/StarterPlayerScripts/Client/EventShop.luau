@@ -788,16 +788,24 @@ local function buildBannerV7()
 	v7layout()
 end
 
+local v7modeTween: Tween? = nil
 local function setModeV7(target: number, seconds: number)
 	local mv = v7modeValue
 	if not mv then
 		return
 	end
+	-- (One mode tween at a time: a new event never inherits the last one's shrink.)
+	if v7modeTween then
+		v7modeTween:Cancel()
+		v7modeTween = nil
+	end
 	if seconds <= 0 then
 		mv.Value = target
 		return
 	end
-	TweenService:Create(mv, TweenInfo.new(seconds, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut), { Value = target }):Play()
+	local tw = TweenService:Create(mv, TweenInfo.new(seconds, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut), { Value = target })
+	v7modeTween = tw
+	tw:Play()
 end
 
 local function showBannerV7()
@@ -998,7 +1006,7 @@ local function belowBanner(): number
 		return 0 -- (a corner chip: toasts keep their own place)
 	end
 	if (Config :: any).BANNER_V7 then
-		return holder.AbsolutePosition.Y + holder.AbsoluteSize.Y + 8
+		return gui.AbsolutePosition.Y + 8 + holder.AbsoluteSize.Y + 8 -- (where it rests, also while it slides in)
 	end
 	return gui.AbsolutePosition.Y + 8 + 104 * scale + 8
 end

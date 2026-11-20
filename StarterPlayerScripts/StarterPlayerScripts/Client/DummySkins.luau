@@ -85,7 +85,7 @@ local function dress(model: Model)
 		end
 	end
 	-- V7-4 (the owner: "every ragdoll must look better, details and all"): the white mannequin gets
-	-- crash-test details: dark joint rings at the shoulders, elbows, wrists, hips, knees and ankles,
+	-- crash-test details: dark joint rings at the elbows, knees and ankles,
 	-- a belt at the waist, and the yellow and black test targets on both sides of the head and on
 	-- the chest. All of it welded to the limbs on this screen only (no network, no physics).
 	if DummySkins.DETAILS then
@@ -113,11 +113,11 @@ local function dress(model: Model)
 			r.Parent = folder
 		end
 		for _, side in { "Left", "Right" } do
-			ring(side .. "LowerArm", true, 0.14, 1.02) -- elbow
-			ring(side .. "LowerLeg", true, 0.16, 1.02) -- knee
-			ring(side .. "Foot", true, 0.12, 1.0) -- ankle
+			ring(side .. "LowerArm", true, 0.14, 1.16) -- elbow
+			ring(side .. "LowerLeg", true, 0.16, 1.14) -- knee
+			ring(side .. "Foot", true, 0.12, 1.12) -- ankle
 		end
-		ring("LowerTorso", true, 0.2, 0.98) -- the belt
+		ring("LowerTorso", true, 0.2, 1.08) -- the belt
 		-- The test targets: thin plates with the target picture.
 		local function mark(limbName: string, offset: CFrame, size: number)
 			local limb = model:FindFirstChild(limbName)
@@ -148,7 +148,7 @@ local function dress(model: Model)
 		end
 		local chest = model:FindFirstChild("UpperTorso")
 		if chest and chest:IsA("BasePart") then
-			mark("UpperTorso", CFrame.new(chest.Size.X * 0.22, chest.Size.Y * 0.12, -(chest.Size.Z / 2 + 0.06)) * CFrame.Angles(0, math.rad(180), 0), chest.Size.Y * 0.32)
+			mark("UpperTorso", CFrame.new(chest.Size.X * 0.22, chest.Size.Y * 0.12, -(chest.Size.Z / 2 + 0.06)), chest.Size.Y * 0.32)
 		end
 	end
 	folder.Parent = model

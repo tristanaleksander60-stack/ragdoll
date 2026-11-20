@@ -63,7 +63,7 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 			local p = Instance.new("Part")
 			p.Name = "PathPebble"
 			p.Shape = Enum.PartType.Ball
-			p.Size = Vector3.new(0.9, 0.35, 0.8)
+			p.Size = Vector3.new(0.5, 0.5, 0.5) -- (a Ball is round: one size)
 			p.CFrame = CFrame.new(origin.X + s.at.X + side * (s.width / 2 + 0.3), floorY + 0.12, origin.Z + s.at.Y + 0.4)
 			p.Anchored = true
 			p.CanCollide = false
@@ -111,7 +111,7 @@ local function paint(a: Vector3, b: Vector3, material: Enum.Material, seed: numb
 			local any = RaycastParams.new()
 			any.FilterType = Enum.RaycastFilterType.Exclude
 			any.FilterDescendantsInstances = { Workspace:FindFirstChild("Dummies") :: any, Workspace:FindFirstChild("MapBooths") :: any, partsInto :: any }
-			local floorHit = Workspace:Raycast(Vector3.new(s.at.X, a.Y + 60, s.at.Y), Vector3.new(0, -160, 0), any)
+			local floorHit = Workspace:Raycast(Vector3.new(s.at.X, a.Y + 4, s.at.Y), Vector3.new(0, -40, 0), any) -- (from just above the arrival floor: never a roof or an awning)
 			if floorHit and floorHit.Instance:IsA("BasePart") and floorHit.Instance.Size.Y < 30 then
 				stone(partsInto, Vector3.new(s.at.X, floorHit.Position.Y + 0.035, s.at.Y), s.width, Color3.fromRGB(150, 146, 138), Enum.Material.Cobblestone)
 				n += 1

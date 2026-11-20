@@ -98,6 +98,16 @@ local function refreshFilter()
 	end
 	params.FilterDescendantsInstances = skip
 end
+-- (A respawned or newly joined character is skipped too: no pigeon on a head.)
+local function watchPlayer(pl: Player)
+	pl.CharacterAdded:Connect(function()
+		task.defer(refreshFilter)
+	end)
+end
+for _, pl in Players:GetPlayers() do
+	watchPlayer(pl)
+end
+Players.PlayerAdded:Connect(watchPlayer)
 
 local function makeBird(def: any, at: Vector3): Bird?
 	local src = ReplicatedStorage:FindFirstChild("BirdModels")
@@ -205,7 +215,7 @@ local function groundY(p: Vector3, fallback: number): number
 			return fallback
 		end
 		local part = hit.Instance
-		if part:IsA("Terrain") or (part:IsA("BasePart") and part.CanCollide and part.Transparency < 0.9) or part.Name == "PathStone" then
+		if part:IsA("Terrain") or (part:IsA("BasePart") and part.CanCollide and part.Transparency < 0.9) then
 			return hit.Position.Y
 		end
 		from = hit.Position - Vector3.new(0, 0.05, 0)

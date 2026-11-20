@@ -609,7 +609,10 @@ local function onBuy(player: Player, id: unknown)
 		-- Not on sale yet: in Studio the shop runs it straight away for testing.
 		local place = EventService.trigger(id, player.DisplayName, "Test", nil, nil, player.UserId)
 		if place then
-			notify(player, string.format("Your %s %s", event.name, placeOf(place)), nil, place <= 1 and not current)
+			-- (V7-5: "is starting!" is what the banner itself says: no second line under it.)
+			if not (Config.BANNER_V7 and place <= 1 and not current) then
+				notify(player, string.format("Your %s %s", event.name, placeOf(place)), nil, place <= 1 and not current)
+			end
 		end
 	end
 end
