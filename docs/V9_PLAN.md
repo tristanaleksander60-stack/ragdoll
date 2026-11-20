@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0, V9-0b, then V9-1 → V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0, V9-0b, V9-0c, V9-1, V9-2, V9-2b, then V9-3 → V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -106,6 +106,44 @@ Do this step first, so every later capture in V9 uses the final light.
 
 **Switch:** `Config.LOOK_THUMB` (false = the old light).
 
+## V9-0c Cars that drive straight, and a speedometer (owner, 21 Nov)
+> "Når man sætter sig ind i bil så drejer den bare rundt i en cirkel fiks det og lav speedometer."
+
+**Reproduce first** on PC (WASD), on a phone (thumbstick) and with a pad, in the Car and the Truck (`VehicleService`, `Client/VehicleClient`, `VehicleFeel`). Log the throttle and steer input, the heading and the angular speed each frame.
+
+**Likely causes to check:**
+- **Steering read from the camera:** the steering is taken from `Humanoid.MoveDirection` or relative to the camera, so the car chases its own camera and circles. The steer must come from the input axis only (A/D, stick X, the phone's steer control).
+- **The model's forward axis:** the model's forward axis does not match the drive force. The imported model's front is ±X or the `Yaw` attribute is applied twice, so "forward" pushes sideways and the yaw torque never settles.
+- **A stuck steer:** a non-zero steer or AngularVelocity/AlignOrientation target that is never reset to 0 when the input is released.
+- **Wheels:** the VehicleFeel wheels on Welds touch the ground unevenly, so one side drags. The visual wheels must be non-colliding; the drive body decides.
+- **Network owner:** the driver must own the car. A server/client ownership flip makes it fight itself.
+
+**Fix the root cause.**
+- Steering:
+  - centred when no input;
+  - a smooth steer with a speed-dependent turn rate;
+  - no turning on the spot at 0 speed.
+- Driving:
+  - reverse works;
+  - the brake works;
+  - the car stays upright (anti-flip) and never gets stuck in a spin.
+- **Phones:** phones get clear drive controls: GAS/BRAKE pedals plus steering, or the thumbstick X for steering and pedals for throttle. Pads get RT/LT plus the left stick. They follow the HUD and LayoutCheck rules.
+
+**Speedometer.** A round gauge HUD while seated:
+- a needle that sweeps and a number (km/h; 1 stud ≈ 0.28 m, or the scale from Config);
+- a small gear/R indicator;
+- a red zone at top speed.
+
+It follows the UI v2 tokens, phones included (out of the thumb zone), and hides on exit.
+
+**Tests:** T153_CarDrives.
+- With throttle only for 3 s, the heading changes less than 3°.
+- Steer left or right turns that way, and releasing it stops the turn within 0.5 s.
+- No spin at 0 throttle.
+- Both vehicles pass.
+
+**Capture:** the speedometer on PC and phone.
+
 ## V9-1 The water: a real aquarium, the whale under water, a shark
 - **The aquarium.** Replace the flat glass "WhalePool" with a real aquarium/lagoon in the creature yard:
   - glass walls with frames and rivets, deep enough to see into (about 14-18 studs deep, partly sunk into the ground, with a viewing side facing the path);
@@ -145,6 +183,50 @@ Go through each one in `Server/Systems/LabCreatures` and its model in V3Assets (
   - a clear drop ring (LabGuide) and a sign icon;
   - spaced so their acts never overlap.
 - **Tests:** T103 updated, plus a T152_CreatureBeats check (each creature: notice → act → release within its time, the body is released, it is not stuck).
+
+
+**Much juicier eating (owner, 21 Nov: "Gør animationerne meget federe på dyrene ... når de flækker ragdolls").** On top of the beat in the rules, every creature's act must feel like a cartoon highlight:
+- big anticipation (a long wind-up, eyes popping);
+- a hard snap with squash and stretch;
+- impact frames: a white flash, a quick hit-stop of about 80 ms through HitFeel, and a small camera punch;
+- a comic word pop in the world ("CHOMP!", "GULP!", "SPLAT!", "BOING!") as a drawn sticker, not plain text;
+- particles that fit: stars, feathers, splash, silk strands, dust, suds;
+- layered sound (whoosh → snap → crunch-free chew → spit);
+- the ragdoll launched with spin and a trail;
+- a happy victory wiggle;
+- a short slow-mo beat for the first feed of a visit.
+
+All of it stays kid-safe (no gore) and within the phone budget.
+
+## V9-2b A feed terminal at every creature, spam allowed (owner, 21 Nov)
+> "Gør så at det er en lille computer terminal man kommer hen til og så kan trykke feed ved og spam hvis man ville."
+
+**The terminal.** Replace the floating "Feed" ProximityPrompt (`LabGuide`) with a small computer terminal model beside each creature (and the cannon/lava/trampoline machines that have one):
+- a real model: a console on a post, a screen, and a big glowing FEED button;
+- the screen is a SurfaceGui showing the creature's picture, its hunger bar and "FEED!";
+- it beeps and lights when used.
+
+**Use:**
+- Walk up and press FEED:
+  - click or tap the button on the screen (SurfaceGui button);
+  - or E / ButtonX through a prompt for keyboard and pad.
+- **Spam is allowed and fun:** every press sends the next dummy flying in an arc into the creature. Rapid presses chain:
+  - a combo count on the screen ("x5!");
+  - the creature gets more excited;
+  - the feeding speeds up a little.
+
+**Server rules:**
+- every press is checked: owner or party member, near the terminal;
+- a rate limit of about 4 presses per second;
+- a queue of at most 6;
+- the feed uses free lab dummies first. When none are free, it drops a spare dummy from a little chute on the terminal, within the device-tier body cap, and the spare is cleaned up after;
+- no remote without `Net` validation and a rate limit, listed in CLAUDE.md.
+
+**Tests:** T154_FeedTerminal.
+- One press = one feed.
+- 20 fast presses respect the rate limit and the queue.
+- A press from far away or by a stranger is refused.
+- The body cap is held.
 
 ## V9-3 The lab machines
 Give the same pass to everything in the lab that takes or throws a ragdoll:
