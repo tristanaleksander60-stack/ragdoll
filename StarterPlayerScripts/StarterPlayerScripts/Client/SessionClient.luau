@@ -176,9 +176,28 @@ local function watchScreen()
 	end)
 end
 
+-- V8-5.5 (the money funnel): the shop window opened, and every purchase prompt that closed (bought
+-- or not), for the visit record.
+local function watchMoney()
+	local Controller = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIController")) :: any
+	Controller.onChanged(function(name: string, isOpen: boolean)
+		if isOpen and (name == "Events" or name == "Shop") then
+			send("Shop", "open")
+		end
+	end)
+	local MarketplaceService = game:GetService("MarketplaceService")
+	MarketplaceService.PromptProductPurchaseFinished:Connect(function(_, _, bought: boolean)
+		send("Shop", if bought then "bought" else "prompt")
+	end)
+	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(_, _, bought: boolean)
+		send("Shop", if bought then "bought" else "prompt")
+	end)
+end
+
 function SessionClient.start()
 	SessionClient.bootSeconds = time()
 	remote = Net.event(Net.Names.Session)
+	task.spawn(watchMoney)
 	send("Frame0") -- (V8-0.8: every first-* time in a report counts from this frame)
 	task.spawn(watchOrientation)
 	task.spawn(watchHealth)

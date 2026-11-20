@@ -1557,3 +1557,11 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - 3.1, 3.2 and 3.6 need a 2-client test (friends together, invites with LaunchData, lab event slots);
   - 3.3 is a UI merge best done with V8-6.7's one HUD;
   - 3.5 and 3.7 need the owner (notification strings, Open Cloud package, the group id).
+- **V8-4 waiting (owner):** 4.1 the questionnaire, 4.2 the Kids toy pass, 4.3 art and video, 4.6 the traffic plan.
+  - The 4.4 store text and product texts are prepared in `docs/SITTING1.md`.
+  - The 4.5 clip moment (share prompt) is off for 16+ reasons (V8-0.7).
+- **V8-5.5 done:**
+  - **Records:** Session_v1 counts `shopOpen`, `promptShown`, `promptDone` and `robux` (client `Shop` messages, clamped server-side; Robux from Purchases' receipts).
+  - **Report:** SessionReport shows the money funnel per device.
+  - **Tests:** T145 passes; T29, T58, T68 and T113 pass.
+- **V8-5.1/5.2/5.3/5.4/5.6 waiting (owner):** the products, prices and passes come from the dashboard. The phone-first shop window and the trial-end BUY card belong with them.

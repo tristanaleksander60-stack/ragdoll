@@ -56,6 +56,10 @@ export type Record = {
 	step: number,
 	unlocks: number?,
 	streak: number?,
+	robux: number?,
+	shopOpen: number?,
+	promptShown: number?,
+	promptDone: number?,
 	dailyClaimed: boolean?,
 	firstUnlockAt: number?,
 	-- V8-0.8 (see why they leave): times are seconds from the server's join, like firstShot;
@@ -109,6 +113,10 @@ local function begin(player: Player)
 		knocks = 0,
 		takedowns = 0,
 		unlocks = 0, -- (V8-1.4: weapons unlocked this visit; firstUnlockAt is the first)
+		robux = 0, -- (V8-5.5: the money funnel this visit)
+		shopOpen = 0,
+		promptShown = 0,
+		promptDone = 0,
 		eggCard = false,
 		eggOpened = 0,
 		autoEgg = false,
@@ -289,6 +297,17 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 				-- (A cut may split a character: then every non-ASCII byte becomes "?".)
 				return if utf8.len(cut) ~= nil then cut else (string.gsub(cut, "[\128-\255]", "?"))
 			end)()
+		end
+	elseif kind == "Shop" and type(data) == "string" then
+		-- (V8-5.5: the money funnel: the shop opened, a purchase prompt closed, bought or not.)
+		local rr = r :: any
+		if data == "open" then
+			rr.shopOpen = math.min((rr.shopOpen or 0) + 1, 500)
+		elseif data == "prompt" or data == "bought" then
+			rr.promptShown = math.min((rr.promptShown or 0) + 1, 500)
+			if data == "bought" then
+				rr.promptDone = math.min((rr.promptDone or 0) + 1, 500)
+			end
 		end
 	elseif kind == "Screen" and type(data) == "string" then
 		if data == "play" or data == "window" or data == "chase" or data == "objective" then

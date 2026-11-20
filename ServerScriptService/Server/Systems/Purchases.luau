@@ -290,6 +290,13 @@ local function processReceipt(receipt: { [string]: any }): Enum.ProductPurchaseD
 	end
 	if isNew then
 		log.info(string.format("%d bought %s (%s Robux)", receipt.PlayerId, product.key, tostring(receipt.CurrencySpent)))
+		-- (V8-5.5: the money funnel: Robux spent this visit, in the visit record.)
+		local buyer = Players:GetPlayerByUserId(receipt.PlayerId)
+		if buyer and type(receipt.CurrencySpent) == "number" then
+			pcall(function()
+				(require(script.Parent:WaitForChild("SessionStats")) :: any).count(buyer, "robux", receipt.CurrencySpent)
+			end)
+		end
 	end
 	-- What to hand over now: the new order, or a repeat's order this server claimed but never
 	-- handed over (the first save landed but its answer was lost).

@@ -165,6 +165,28 @@ for i = 1, math.min(15, #names) do
 end
 table.insert(lines, "Used: " .. (if #top > 0 then table.concat(top, ", ") else "(no V8 records yet)"))
 
+-- V8-5.5: the money funnel per device: shop opened, a prompt shown, bought, Robux.
+local money: { [string]: { n: number, shop: number, prompt: number, bought: number, robux: number } } = {}
+for _, r in rows do
+	local k = tostring(r.plat)
+	local m = money[k] or { n = 0, shop = 0, prompt = 0, bought = 0, robux = 0 }
+	money[k] = m
+	m.n += 1
+	if (r.shopOpen or 0) > 0 then
+		m.shop += 1
+	end
+	if (r.promptShown or 0) > 0 then
+		m.prompt += 1
+	end
+	if (r.promptDone or 0) > 0 then
+		m.bought += 1
+	end
+	m.robux += r.robux or 0
+end
+for k, m in money do
+	table.insert(lines, string.format("Money %s: shop %s, prompt %s, bought %s, %d Robux", k, pct(m.shop, m.n), pct(m.prompt, m.n), pct(m.bought, m.n), m.robux))
+end
+
 -- What was on screen when they left.
 local screens: { [string]: number } = {}
 for _, r in rows do
