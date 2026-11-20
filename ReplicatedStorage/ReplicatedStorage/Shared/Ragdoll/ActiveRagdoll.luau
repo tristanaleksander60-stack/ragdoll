@@ -197,6 +197,9 @@ local ActiveRagdoll = {}
 ActiveRagdoll.onEvent = nil :: ((kind: string, model: Model, position: Vector3, speed: number) -> ())?
 -- V8-0.2: hits left that knock a dummy flat whatever they are (the client sets it for a newcomer).
 ActiveRagdoll.firstHitsLeft = 0
+-- True only around the player's own hit (PokeController): hazards, the mace, visitors and server
+-- hits never use up the first hits (blind review, 21 Nov).
+ActiveRagdoll.ownHit = false
 ActiveRagdoll.FIRST_HIT_PUSH = 20 -- studs/s (Config.FIRST_HIT_PUSH; the client copies it)
 -- Topology listener: called on every state change and every break/heal with the new state and
 -- the list of broken joints. The owning client forwards this to the server.
@@ -1809,7 +1812,7 @@ function ActiveRagdoll.hit(model: Model, part: BasePart, impulse: Vector3, posit
 	-- big, readable flop: thrown back at FIRST_HIT_PUSH studs/s at the least, a little up. (The
 	-- playtest needed 7 shots for the first knock-down; time played follows takedowns.) The client
 	-- sets firstHitsLeft for a newcomer; it is 0 everywhere else.
-	local firstHit = ActiveRagdoll.firstHitsLeft > 0 and rig.held == 0
+	local firstHit = ActiveRagdoll.ownHit and ActiveRagdoll.firstHitsLeft > 0 and rig.held == 0
 		and (current == "Standing" or current == "Walking" or current == "Fleeing" or current == "Flinch" or current == "Stumble" or current == "Recovering")
 	if firstHit then
 		ActiveRagdoll.firstHitsLeft -= 1

@@ -56,13 +56,22 @@ function ChaseService.calmAllows(player: Player, takedowns: number): boolean
 	if not Config.V8_CALM_START or player:GetAttribute("Newcomer") ~= true then
 		return true
 	end
-	local first = startTakedowns[player]
-	if first == nil then
-		first = takedowns
-		startTakedowns[player] = first
+	-- (This visit's KOs from the visit record, counted from the join: blind review, 21 Nov. The first
+	-- reading of the profile's count is the fallback when there is no record.)
+	local record = (require(script.Parent:WaitForChild("SessionStats")) :: any).recordFor(player)
+	local visitKOs: number
+	if record and type(record.takedowns) == "number" then
+		visitKOs = record.takedowns
+	else
+		local first = startTakedowns[player]
+		if first == nil then
+			first = takedowns
+			startTakedowns[player] = first
+		end
+		visitKOs = takedowns - first
 	end
 	local joined = (player:GetAttribute("V8JoinedAt") :: number?) or Workspace:GetServerTimeNow()
-	return Workspace:GetServerTimeNow() - joined >= Config.CALM_CHASE_AFTER and takedowns - first >= Config.CALM_CHASE_KOS
+	return Workspace:GetServerTimeNow() - joined >= Config.CALM_CHASE_AFTER and visitKOs >= Config.CALM_CHASE_KOS
 end
 
 local function rootOf(player: Player): BasePart?

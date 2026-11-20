@@ -31,6 +31,7 @@ type Item = { text: string, kind: string, key: string, color: Color3?, icon: str
 local state = NotifyRules.new()
 if (Config :: any).V8_ONE_VOICE then
 	NotifyRules.EARLY_GAP = 15 -- (V8-0.4: one toast per 15 s in the first 3 minutes)
+	NotifyRules.EARLY_START = os.clock() - time() -- (the visit started time() s ago; blind review)
 end
 local queue: { Item } = {}
 local bigNames: { [string]: boolean } = {} -- windows that opened by themselves (claimed here)

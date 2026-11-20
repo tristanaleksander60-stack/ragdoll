@@ -277,8 +277,13 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 		r.memMb = clean(d.mem, 0, 20000)
 		r.errs = clean(d.errs, 0, 100000)
 		r.vol = clean(d.vol, 0, 3)
-		if type(d.sig) == "string" then
-			r.errSig = string.sub(d.sig, 1, 300)
+		-- (Blind review: a cut or a forged non-UTF-8 string would make the record's SetAsync fail.)
+		if type(d.sig) == "string" and utf8.len(d.sig) ~= nil then
+			r.errSig = (function()
+				local cut = string.sub(d.sig, 1, 300)
+				-- (A cut may split a character: then every non-ASCII byte becomes "?".)
+				return if utf8.len(cut) ~= nil then cut else (string.gsub(cut, "[\128-\255]", "?"))
+			end)()
 		end
 	elseif kind == "Screen" and type(data) == "string" then
 		if data == "play" or data == "window" or data == "chase" or data == "objective" then

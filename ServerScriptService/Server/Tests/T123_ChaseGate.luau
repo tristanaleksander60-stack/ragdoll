@@ -25,24 +25,38 @@ return {
 			return "skipped (no player)"
 		end
 		local wasNew, wasJoined = p:GetAttribute("Newcomer"), p:GetAttribute("V8JoinedAt")
+		-- (This visit's KOs come from the visit record, SessionStats.)
+		local SessionStats = require(script.Parent.Parent:WaitForChild("Systems"):WaitForChild("SessionStats")) :: any
+		local record = SessionStats.recordFor(p)
+		local wasKOs = record and record.takedowns
+		local function setKOs(n: number)
+			if record then
+				record.takedowns = n
+			end
+		end
 		local ok, err = pcall(function()
 			local now = Workspace:GetServerTimeNow()
 			p:SetAttribute("Newcomer", true)
+			setKOs(0)
 			p:SetAttribute("V8JoinedAt", now - 10)
-			assert(not ChaseService.calmAllows(p, 100), "a newcomer 10 s in got a chase")
-			-- (The first call above set this visit's starting takedowns to 100.)
+			assert(not ChaseService.calmAllows(p, 0), "a newcomer 10 s in got a chase")
 			p:SetAttribute("V8JoinedAt", now - (Config.CALM_CHASE_AFTER + 5))
-			assert(not ChaseService.calmAllows(p, 100 + Config.CALM_CHASE_KOS - 1), "a newcomer with too few KOs got a chase")
+			setKOs(Config.CALM_CHASE_KOS - 1)
+			assert(not ChaseService.calmAllows(p, Config.CALM_CHASE_KOS - 1), "a newcomer with too few KOs got a chase")
 			p:SetAttribute("V8JoinedAt", now - (Config.CALM_CHASE_AFTER - 5))
-			assert(not ChaseService.calmAllows(p, 100 + Config.CALM_CHASE_KOS), "a newcomer short of the time got a chase")
+			setKOs(Config.CALM_CHASE_KOS)
+			assert(not ChaseService.calmAllows(p, Config.CALM_CHASE_KOS), "a newcomer short of the time got a chase")
 			p:SetAttribute("V8JoinedAt", now - (Config.CALM_CHASE_AFTER + 5))
-			assert(ChaseService.calmAllows(p, 100 + Config.CALM_CHASE_KOS), "a newcomer past both never gets a chase")
+			assert(ChaseService.calmAllows(p, Config.CALM_CHASE_KOS), "a newcomer past both never gets a chase")
 			p:SetAttribute("Newcomer", false)
 			p:SetAttribute("V8JoinedAt", now)
 			assert(ChaseService.calmAllows(p, 0), "a returner was held back")
 		end)
 		p:SetAttribute("Newcomer", wasNew)
 		p:SetAttribute("V8JoinedAt", wasJoined)
+		if record then
+			record.takedowns = wasKOs
+		end
 		assert(ok, err)
 		return string.format("newcomer: no chase before %d s and %d KOs (both); returners unaffected", Config.CALM_CHASE_AFTER, Config.CALM_CHASE_KOS)
 	end,

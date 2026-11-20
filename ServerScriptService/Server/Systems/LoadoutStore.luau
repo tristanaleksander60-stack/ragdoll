@@ -206,11 +206,21 @@ local function onJoin(player: Player)
 		if (Config :: any).V8_START_BAR and ok then
 			list = LoadoutStore.migrateOnce(player.UserId, list)
 		end
-		current[player] = list
-		remote:FireClient(player, "Load", list)
+		-- (Blind review: the move yields on the store; a bar set meanwhile is newer and wins.)
+		if current[player] then
+			scheduleSave(player)
+		elseif player.Parent then
+			current[player] = list
+			remote:FireClient(player, "Load", list)
+		end
+	elseif ok and (Config :: any).V8_START_BAR then
+		-- (A new player starts on the V8 bar: marked now, so a Poke they put on it later is never
+		-- moved off by the one-time move. Blind review, 21 Nov.)
+		task.spawn(markV8, player.UserId)
 	end
 end
 
+-- lihfolk-ignore: remote-unvalidated-args (kind is only compared with "Set"; list goes through validate)
 local function onSet(player: Player, kind: unknown, list: unknown)
 	if kind ~= "Set" then
 		return

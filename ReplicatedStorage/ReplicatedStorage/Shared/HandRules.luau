@@ -1,6 +1,7 @@
 --!strict
 -- V8-0.3 (Config.V8_HAND_RULES): where a new tool goes on a full bar (pure; PokeController uses it,
--- T110 checks it). A new tool takes the weakest slot (by ladder rung) that may go, and only when it is
+-- T110 checks it). A new tool takes the weakest slot (by Toy.rank, the ladder before V8 moved the
+-- start bar to 0) that may go, and only when it is
 -- stronger; a gun, an explosive, Grab, the G17 (Blaster) and the Bat never give way to a plain tool
 -- (a stronger gun or bang may take the weakest gun or bang, never the G17). A prize (an egg, a
 -- crate, a gift day) always lands: with nothing weaker it takes the weakest that may go anyway, and
@@ -34,21 +35,21 @@ function HandRules.slotFor(bar: { string }, id: string, prize: boolean?): number
 	local weakest, weakestAt = nil :: number?, math.huge
 	for i, have in bar do
 		local t = Toys.byId[have]
-		if t and HandRules.mayGo(have) and t.unlockAt < weakestAt then
-			weakest, weakestAt = i, t.unlockAt
+		if t and HandRules.mayGo(have) and t.rank < weakestAt then
+			weakest, weakestAt = i, t.rank
 		end
 	end
-	if weakest and (prize or new.unlockAt > weakestAt) then
+	if weakest and (prize or new.rank > weakestAt) then
 		return weakest
 	end
 	-- A stronger gun or bang always lands: with no plain tool left to give way it takes the weakest
 	-- gun or bang below it (never the G17).
 	if new.gun or new.category == "Explosives" then
-		local bang, bangAt = nil :: number?, new.unlockAt
+		local bang, bangAt = nil :: number?, new.rank
 		for i, have in bar do
 			local t = Toys.byId[have]
-			if t and have ~= "Blaster" and (t.gun or t.category == "Explosives") and t.unlockAt < bangAt then
-				bang, bangAt = i, t.unlockAt
+			if t and have ~= "Blaster" and (t.gun or t.category == "Explosives") and t.rank < bangAt then
+				bang, bangAt = i, t.rank
 			end
 		end
 		if bang then

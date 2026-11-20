@@ -42,6 +42,11 @@ local function body(player: Player, root: BasePart): string
 	GreeterService.resetForTest(player, 2)
 	OnboardingService.restartForTest(player, 60)
 	OnboardingService.onSpawned(player)
+	-- (V8-0.2: the greeter may wait for the move into the lab first, up to 3 s.)
+	local t0 = os.clock()
+	while GreeterService.of(player) == nil and os.clock() - t0 < 5 do
+		task.wait(0.1)
+	end
 	local greeter = GreeterService.of(player)
 	assert(greeter, "no greeter came")
 	local g = greeter :: Model

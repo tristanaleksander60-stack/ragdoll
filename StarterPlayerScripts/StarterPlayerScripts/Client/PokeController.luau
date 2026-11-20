@@ -1475,7 +1475,13 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 				-- (On the part the server will wound: the line from our head, WoundSpot.)
 				local onPart, at = WoundSpot.find(character, simulated, part, position)
 				local before = simulated:GetAttribute("RagdollState")
-				local after = ActiveRagdoll.hit(simulated, onPart, HitMath.toyImpulse(toy, direction, mass), at, nil, HitMath.gunOf(toy))
+				ActiveRagdoll.ownHit = true
+				local okHit, after = pcall(ActiveRagdoll.hit, simulated, onPart, HitMath.toyImpulse(toy, direction, mass), at, nil, HitMath.gunOf(toy))
+				ActiveRagdoll.ownHit = false
+				if not okHit then
+					warn("[Poke] local hit failed: " .. tostring(after))
+					after = nil
+				end
 				-- V8-0.2: the hit tick and, when it went down, the KO stamp and a dry "thock" now, from
 				-- this screen; the server stays the count's source of truth.
 				if (Config :: any).V8_FIRST_HIT then

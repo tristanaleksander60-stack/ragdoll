@@ -42,6 +42,7 @@ NotifyRules.AFTER_WINDOW = 3 -- s of quiet after a window closes
 -- Notify sets it from Config.V8_ONE_VOICE).
 NotifyRules.EARLY = 180
 NotifyRules.EARLY_GAP = 0
+NotifyRules.EARLY_START = 0 -- (the clock reading at the visit's start: Notify sets it; `now` is os.clock())
 
 function NotifyRules.new(): State
 	return {
@@ -91,7 +92,7 @@ function NotifyRules.decide(s: State, kind: string?, key: string, queuedAt: numb
 	if s.bigOpen and k ~= "reward" then
 		return "wait"
 	end
-	if NotifyRules.EARLY_GAP > 0 and now < NotifyRules.EARLY and now - s.lastAt < NotifyRules.EARLY_GAP then
+	if NotifyRules.EARLY_GAP > 0 and now - NotifyRules.EARLY_START < NotifyRules.EARLY and now - s.lastAt < NotifyRules.EARLY_GAP then
 		return "wait"
 	end
 	if now - s.lastAt < NotifyRules.GAP[k] then

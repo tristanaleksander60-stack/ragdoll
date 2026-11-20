@@ -54,6 +54,9 @@ export type Toy = {
 	-- Takedowns it takes to unlock (phase H; 0: open from the start). The server refuses a locked
 	-- tool (ProgressService.isUnlocked); the catalog shows the lock and the number.
 	unlockAt: number,
+	-- How strong it is, as a ladder rung (V8-0.3): the rung before V8_RUNGS moved the start bar's
+	-- tools to 0, so HandRules can still tell a Launch (12) from a Crowbar (4).
+	rank: number,
 	-- A gun (round 2, N2): it fires wherever you aim, a dummy or not (a miss hits the ground, a wall
 	-- or the air: HitService's Shot), and every shot is heard far.
 	gun: boolean,
@@ -137,6 +140,7 @@ local V8_RUNGS: { [string]: number } = { Bat = 0, Grenade = 0, Launch = 0, Rocke
 
 local function add(id: string, spec: Spec)
 	assert(byId[id] == nil, "tool " .. id .. " listed twice")
+	local rank = squeeze(spec.unlockAt or 0)
 	local v8 = if Config.V8_START_BAR then V8_RUNGS[id] else nil
 	if v8 ~= nil and spec.unlockAt ~= v8 then
 		local s8 = table.clone(spec) :: any
@@ -180,6 +184,7 @@ local function add(id: string, spec: Spec)
 		move = spec.move or (if spec.kind == "place" or spec.kind == "dummy" then "Throw" else nil),
 		byHand = spec.byHand == true,
 		unlockAt = spec.unlockAt or 0,
+		rank = rank,
 		gun = spec.gun == true,
 		-- (Default: from how hard it hits; a poke barely bruises, a bat hurts.)
 		wound = spec.wound or math.clamp(speed / 45, 0.15, 1.6),

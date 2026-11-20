@@ -97,8 +97,11 @@ export type Goals = { day: number, p: { number }, claimed: { boolean }, bonus: b
 -- The weapon ladder (round 2, N4) moved most tools from "open from the start" up to kills. A profile
 -- from before keeps every tool it had then, once: the old ladder's open tools, and its kill unlocks
 -- that its takedowns had reached (OLD_UNLOCK; everything else was open).
-local LADDER = 3
+local LADDER = 4
 local ROUND5_STARTERS = { "Bat", "Crowbar", "Shove" } -- (on everyone's bar before round 5)
+-- Ladder 4 (V8-0.3, Config.V8_START_BAR): Poke, Shove, Slap and Heal moved up the ladder. What a
+-- player had already earned on their old rungs stays theirs (blind review, 21 Nov).
+local V8_MOVED: { [string]: number } = { Poke = 3, Shove = 6, Slap = 7, Heal = 8 }
 local OLD_UNLOCK: { [string]: number } = { Crossbow = 10, NailGun = 20, Slime = 30, Shrink = 50, Chicken = 75, Float = 100, Slowmo = 125, Portal = 150 }
 -- Every field this version writes (anything else stored is kept as it is: keepUnknown).
 local KNOWN_FIELDS: { [string]: boolean } = {}
@@ -1441,6 +1444,13 @@ function ProgressService.grandfather(profile: Profile, takedowns: number, eggs: 
 	if was < 3 then
 		for _, id in ROUND5_STARTERS do
 			profile.owned[id] = true
+		end
+	end
+	if was < 4 and (Config :: any).V8_START_BAR then
+		for id, oldRung in V8_MOVED do
+			if takedowns >= oldRung and Toys.byId[id] then
+				profile.owned[id] = true
+			end
 		end
 	end
 	profile.ladder = LADDER

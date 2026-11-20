@@ -79,6 +79,7 @@ return {
 		local mass = ActiveRagdoll.getMass(model) or 10
 		local was = ActiveRagdoll.firstHitsLeft
 		ActiveRagdoll.firstHitsLeft = 1
+		ActiveRagdoll.ownHit = true -- (only the player's own hit uses them)
 		local ok, err = pcall(function()
 			-- A tap: 2 studs/s, far under a stagger.
 			local state = ActiveRagdoll.hit(model, chest, chest.CFrame.LookVector * -2 * mass, chest.Position, nil, nil)
@@ -93,6 +94,7 @@ return {
 			table.insert(notes, string.format("a 2 studs/s tap knocked it flat at %.0f studs/s", fastest))
 		end)
 		ActiveRagdoll.firstHitsLeft = was
+		ActiveRagdoll.ownHit = false
 		assert(ok, err)
 		return table.concat(notes, "; ")
 	end,

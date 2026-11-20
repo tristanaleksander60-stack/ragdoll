@@ -649,6 +649,9 @@ function ProgressUI.start()
 					OnboardingController.whenFree(function()
 						if PokeController.autoEquip(id) then
 							Notify.say("reward", string.format("Your %s is on the bar. Try it!", string.upper(toy.label)), Color3.fromRGB(120, 230, 140))
+						elseif (Config :: any).V8_ONE_VOICE then
+							-- (Blind review: the bar kept its stronger tools; it is in WEAPONS.)
+							Notify.say("reward", string.format("UNLOCKED: %s! Find it in WEAPONS.", string.upper(toy.label)), Color3.fromRGB(120, 230, 140))
 						end
 					end)
 				else

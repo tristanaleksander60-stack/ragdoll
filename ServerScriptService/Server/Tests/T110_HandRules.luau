@@ -19,7 +19,7 @@ local LoadoutStore = require(script.Parent.Parent:WaitForChild("Systems"):WaitFo
 local function power(bar: { string }): number
 	local sum = 0
 	for _, id in bar do
-		sum += Toys.byId[id].unlockAt
+		sum += Toys.byId[id].rank -- (V8-0.3: strength is the rank, the ladder before V8 moved the start bar)
 	end
 	return sum
 end
@@ -57,8 +57,13 @@ return {
 			if slot then
 				bar[slot] = toy.id
 			end
-			if toy.gun or toy.category == "Explosives" then
-				assert(table.find(bar, toy.id), toy.id .. " (a gun or a bang) did not land on the bar")
+			if (toy.gun or toy.category == "Explosives") and not table.find(bar, toy.id) then
+				-- (A gun or a bang stays off only when nothing weaker may give way to it.)
+				for _, have in bar do
+					local t = Toys.byId[have]
+					local replaceable = HandRules.mayGo(have) or (have ~= "Blaster" and (t.gun or t.category == "Explosives"))
+					assert(not (replaceable and t.rank < toy.rank), toy.id .. " (a gun or a bang) did not land over the weaker " .. have)
+				end
 			end
 			for _, keep in { "Blaster", "Grab", "Bat" } do
 				assert(table.find(bar, keep), keep .. " left the bar for " .. toy.id)
@@ -81,6 +86,6 @@ return {
 		assert(table.concat(moved, ",") == "Blaster,Grab,Bat,Grenade,Launch", "the old bar moved to " .. table.concat(moved, ","))
 		local again = LoadoutStore.migrateOnce(userId, { "Blaster", "Grab", "Bat", "Grenade", "Launch", "Poke" })
 		assert(table.find(again, "Poke"), "the move ran a second time")
-		return string.format("start bar %s; %d unlocks 0..30: power never fell, guns/bangs all landed, keepers kept; a prize lands; the old bar moved once", table.concat(start, ","), #ladder)
+		return string.format("start bar %s; %d unlocks 0..30: power never fell, guns/bangs landed over anything weaker, keepers kept; a prize lands; the old bar moved once", table.concat(start, ","), #ladder)
 	end,
 }

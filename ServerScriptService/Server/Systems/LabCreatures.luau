@@ -367,7 +367,9 @@ BUILD.Spider = function(f, at, m)
 			-- (V6-7 SPIDER DELUXE, bought for this lab: it spits half as far again.)
 			local labF = f.Parent and f.Parent.Parent
 			local deluxe = labF ~= nil and labF:GetAttribute("SpiderDeluxe") == true
-			local away = (web.CFrame.LookVector * -1)
+			-- (21 Nov: towards the middle of the lab. Away from the web's face it spat into the west
+			-- garden's hedge after the move; the body stuck 12 studs off, slid back and was caught again.)
+			local away = m.toLab
 			return (Vector3.new(away.X, 0, away.Z).Unit * 70 + Vector3.new(0, 75, 0)) * (if deluxe then 1.5 else 1)
 		end)
 	end

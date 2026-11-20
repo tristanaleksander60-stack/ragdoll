@@ -37,9 +37,9 @@ return {
 		if not p then
 			return "skipped (no player)"
 		end
-		local pg = Workspace:FindFirstChild("Playground")
 		local yard: Instance? = nil
 		assert(waitFor(function()
+			local pg = Workspace:FindFirstChild("Playground") -- (looked up each time: an early start found none)
 			for _, f in if pg then pg:GetChildren() else {} do
 				local y = f:FindFirstChild("CreatureYard")
 				-- (The test player's own lab: only an owned lab's yard plays.)
