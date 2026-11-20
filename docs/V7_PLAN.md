@@ -5,6 +5,8 @@
 > Fjern boksene rundt om den røde knap og kanonen på jorden. Lav flotte simple stier på gulvet/jorden af jord osv rundt i ens lab og de andre maps til de forskellige ting man kan lave de steder.
 > Gør så fuglene ikke går halvt nede i jordene.
 > alle ragdolls skal se bedre ud, både tøj og detaljer og alt
+>
+> (Added the same evening) Også put ind i planen at de nofikationer der kommer som fx rolling studios sent zero g og ens næste mission osv skal gøres meget pænere og vurder alt på ens skærm om det er det rigtige sted på alle platforme tlf console pc osv
 
 ## Item map
 | # | Request | Step |
@@ -14,10 +16,12 @@
 | 3 | Nice, simple paths (dirt and so on) in the lab and on the other maps, leading to the things to do there | V7-2 |
 | 4 | Birds must not walk half sunk into the ground | V7-3 |
 | 5 | Every ragdoll must look better: clothes, details, everything | V7-4 |
+| 6 | The notices that pop up (e.g. "<player> sent ZERO G", your next mission) must look much nicer | V7-5 |
+| 7 | Judge everything on the screen: is it in the right place on every platform (phone, console, PC and so on)? | V7-6 |
 
 **Order:**
 1. V7 goes first, even though V6-8 (graphics) is under way. Commit and push what is done of V6-8, and note it in V6 State.
-2. Then V7-1 to V7-4.
+2. Then V7-1 to V7-6.
 3. Then back to V6-8 in `docs/V6_PLAN.md`.
 
 V7 is small and visible, so it goes before the big graphics pass.
@@ -124,6 +128,71 @@ They lead from the spawn or arrival to each thing you can do there.
 - a line-up capture of every type (standing, ragdolled, dead/green), close up and at play distance, next to the leader;
 - the blind reviewer passes it;
 - the dummy and crowd tests pass (T36, T40 and the others that touch looks).
+
+## V7-5 Much nicer notices: event banners and the next mission
+**What it covers:** every message that appears on the screen by itself. This includes:
+- the event banner when someone starts an event ("<player> sent ZERO G", Gorilla Rampage, Mega Bomb and so on), sent by `EventService.broadcast` and drawn in `Client/EventShop`;
+- the experiment / next-mission card (`Client/ExperimentCard`) and its done, late and combo pops;
+- toasts and rewards (`Client/Toast`, which `Client/Notify` routes);
+- the chase bar, the arena lines, the nuke banner, level-up, "+1 TAKEDOWN", gift and egg notes, What's New, and the Experience Notifications opt-in.
+
+**Look (one hand-made family, like the leader's calm HUD):**
+- **Event banner:** a short, premium card that slides in from the top. It has:
+  - the event's real picture (`art/events`);
+  - the event name in big type;
+  - a small line with who sent it (display name, no "@");
+  - a thin countdown line instead of a big number;
+  - a soft whoosh through SoundMix.
+
+  It shrinks into a small corner chip after 3 s while the event runs.
+- **Next mission:** a compact card with an icon, one short goal line and a progress bar that fills smoothly.
+  - Done = a quick tick + stars pop, then the next card slides in.
+  - It never covers the action in the middle.
+- **Everywhere:**
+  - one font pair, the UI_V2 tokens, gentle easing (no bouncy spam), a drop shadow, and the same corner radius;
+  - an icon on every message, and text no longer than one line where possible;
+  - the same look on a phone at the touch floor;
+  - no all-caps shouting walls of text;
+  - `Notify`'s rules (queue, gaps, newcomer quiet) stay as they are.
+- Replace anything that still looks like the old dark-glass or debug style.
+
+**Done when:**
+- before/after captures of each kind (PC, phone landscape, phone portrait, console);
+- the blind reviewer passes it;
+- LayoutCheck shows 0 problems;
+- T100 still passes.
+
+## V7-6 Everything on the screen in the right place, on every platform
+**Which screens.** Audit every HUD piece, button, card, window and notice on:
+- **phone:** small and big; landscape and portrait; with a notch or rounded corners;
+- **tablet**;
+- **console:** a TV at a 10-foot view with a gamepad, 1080p and 4K;
+- **PC:** 1366x768, 1920x1080, 1440p and ultrawide.
+
+**Check each against these rules:**
+- **Safe area:** nothing under the notch, the Roblox top bar or the TV edges. Use ScreenInsets (`CoreUISafeInsets` / `DeviceSafeInsets`) and GuiService insets.
+- **Thumbs and controls:** on a phone, nothing sits under the thumbs or the move stick, and touch targets are at least 44 px.
+- **Console:** text is big enough to read from the sofa, and gamepad focus reaches every button in a sensible order.
+- **Layout:**
+  - nothing overlaps;
+  - the middle of the screen stays free for the action;
+  - things that belong together sit together;
+  - the first minute shows only what matters (the HudSlots and Notify rules).
+- **Platform fit:** the same piece sits in the place players of that platform expect:
+  - phone: actions bottom right;
+  - PC: key chips;
+  - console: glyphs.
+
+**Do:**
+- Write the audit as a table in `docs/AUDIT.md` (piece × platform: OK, or the problem).
+- Move, resize or hide what is wrong, through the existing layout code (HudSlots, PokeController, HudV3/HudGate, Toast.setMinTop and so on), never with one-off offsets.
+- Add the new pieces and the console sizes to LayoutCheck, so this can never slide back.
+- Use the device emulator for each size and the gamepad for console.
+
+**Done when:**
+- a capture grid (every platform, first minute and mid-game) shows every piece in its right place;
+- LayoutCheck covers the console sizes and shows 0 problems;
+- the blind reviewer passes it.
 
 ## State
 - 20 Nov 2026: plan written (cloud). Nothing of V7 started. V6-1..V6-7 done and V6-8 started (see `docs/V6_PLAN.md`); V6-8 waits until V7 is done.
