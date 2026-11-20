@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0, V9-0b, V9-0c, V9-1, V9-2, V9-2b, then V9-3 → V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0, V9-0b, V9-0c, V9-1, V9-2, V9-2b, then V9-3, V9-4, V9-4b, V9-5, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -263,6 +263,58 @@ These are the `map = true` OFFERS and the passes that put a thing in the world. 
 - **Booths (V6-7):** each booth's turning item is the same improved model. Lit well, with the price readable at 20 studs.
 - **TRY:** TRY shows the real thing working for 60 s.
 - **Tests:** T105 updated (every booth model present and script-free; every item works after purchase and after TRY; delivered once).
+
+## V9-4b Buying and trying must look premium (owner, 21 Nov)
+> "Lig også en plan for man undgår det ser så grimt ud når man skal købe eller try."
+
+**What the owner's capture shows now** (`art/store/look_target/booth_now.png`):
+- **Prompts:** two default Roblox ProximityPrompts stacked ("Gold Dummies / Try 60 s free", "Gold Dummies / Buy").
+- **Overlap:** they overlap the neighbouring booth's sign ("FIRE TRAIL"), so the names do not match what you look at.
+- **Pole:** a pole runs through the gold dummy.
+- **Spacing:** the booths stand so close that their signs and prompts collide.
+
+**One card per booth, our own style:**
+- Hide the default prompts: `ProximityPrompt.Style = Custom`, drawn in `ProximityPromptService.PromptShown`.
+- Show one clean card for the nearest booth only, in the UI v2 tokens:
+  - the item's picture or icon (`art/shop`);
+  - the name;
+  - the one-line pitch;
+  - the price with the Robux mark;
+  - two real buttons: **TRY 60 s** (secondary) and **BUY** (primary, gold).
+- The buttons work by click or tap, and through the E/T keys and pad glyphs. Pads can select them.
+- The card pops in softly and leaves when you walk away. Only one card shows at a time.
+- The world sign above the booth fades while its card is open.
+- **States:** the card shows OWNED ✓ / EQUIP when owned, TRYING 0:42 during a trial, and TRY USED when today's try is spent.
+- **Phones:** the card sits above the thumb zone, has 44 px targets and passes LayoutCheck. No text is cut off.
+
+**The booths themselves:**
+- No pole or light post through any item. Move the spotlight to the booth's frame, or use a hidden light.
+- Spacing: at least about 14-16 studs between booths, so signs and prompts never overlap. A prompt's reach (`MaxActivationDistance`) stays inside its own booth, and `RequiresLineOfSight` is on.
+- The sign belongs to its own booth: the same name and price as the prompt, readable at 20 studs and never overlapping its neighbour.
+- Each item on a clean pedestal, lit, turning slowly, at the right scale.
+
+**Buying feels good:**
+- **On BUY:** Roblox's own purchase prompt.
+- **On success:**
+  - a short celebration: confetti, the item flies to the player or equips at once, and a "YOURS!" banner through `Client/Banner`;
+  - a purchase sound;
+  - the booth switches to OWNED.
+- **On cancel:** nothing nags.
+
+**Trying feels good, with no pressure:**
+- **TRY** equips the real thing at once.
+- A small HUD chip shows "Trying <item> 0:42" with the item icon and a small BUY button.
+- When the try ends, there is one gentle line through Notify ("Liked it? It's at the booth"). No pop-up window, no repeat (Roblox policy, and V8's calm rules).
+
+**Tests:** T155_BoothCard.
+- One card at a time.
+- The card's item always matches the nearest booth.
+- No prompt reach overlaps a neighbour.
+- No booth part intersects its item.
+- The card fits on 16 LayoutCheck screens.
+- The OWNED / TRYING states are right.
+
+**Capture:** the same angle as the owner's screenshot, before and after, on PC and phone.
 
 ## V9-5 Event creatures and big models
 - **Bring every event model up to the same bar:** Gorilla, Bull, UFO, Train, Balloon, Giant Dummy, Tornado, Meteor, Bowling balls, Magnet, Rocket rain and so on.
