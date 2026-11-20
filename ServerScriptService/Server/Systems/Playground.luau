@@ -875,6 +875,15 @@ function Playground.build(labOrigin: Vector3, name: string?)
 			log.warn("Vehicles failed in " .. folder.Name .. ": " .. tostring(err))
 		end
 	end
+	-- v4 C1: zones, today's machine and NEW tags (pictures only: LabZones).
+	if lab then
+		local ok, err = pcall(function()
+			require(script.Parent.LabZones).build(folder, origin)
+		end)
+		if not ok then
+			log.warn("LabZones failed in " .. folder.Name .. ": " .. tostring(err))
+		end
+	end
 	-- World/Feel v2: the dressing over it all (pictures only: WorldDress). A failure there never
 	-- costs the playground itself.
 	if Config.WORLD_V2 then

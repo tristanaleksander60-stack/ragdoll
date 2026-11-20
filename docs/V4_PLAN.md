@@ -314,3 +314,10 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
   - Sounds: a roar (ProSoundEffects 9113987603, pitched down), snorts (9113636194), a hooves loop (74590166641102).
   - Bull Run is now a herd of 3 per lane, with dust. The gorilla roars 1.8 s before the rampage.
   - Seen in Studio: the roar pose, the swat, the galloping herd. Old models stay as fallbacks.
+- **C1 done in part (20 Nov, PC):** `Server/Systems/LabZones` (`Config.LAB_ZONES`). Pictures only; no machine was moved, so tests and systems keep their spots.
+  - Zones: floor tint, edge lines and a floor name for TEST ZONE, LAUNCH ZONE, VEHICLE BAY (with parking lines), EVENT PAD and HAZARDS.
+  - Today's machine: one of 9 machines by UTC day (the same on all servers), with a gold light column and a "TODAY'S MACHINE: X" sign over the top of the machine.
+  - NEW tags (green) over `Config.NEW_IN_LAB` for `NEW_DAYS` 7 days after `NEW_SINCE` 2026-11-20.
+  - T99_LabZones. Captures: top down and from the stations side.
+  - **Not done:** moving machines into the zones (the clutter stays where it is), machines bought with Bolts, and an experiment card tied to today's machine.
+- T92 updated for the rig names (Gorilla/Bull) and passes. T98 passes.

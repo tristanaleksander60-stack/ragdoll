@@ -148,6 +148,10 @@ local Config = {
 	SLOWMO_AUTO_GAP = 8, -- s between automatic slow moments on big hits
 	LAB_SURPRISES = true, -- v4 C4: a short surprise (Surprises.MINI) by itself now and then in your own lab
 	LAB_SURPRISE_GAP = Vector2.new(150, 240), -- s between them (random in the range)
+	LAB_ZONES = true, -- v4 C1: lab zones, today's machine, NEW tags (Server/Systems/LabZones)
+	NEW_SINCE = "2026-11-20", -- UTC date of the update whose things get a NEW tag
+	NEW_DAYS = 7,
+	NEW_IN_LAB = table.freeze({ "BigButton", "LabCar", "LabTruck", "PortalMulti" }), -- names in the lab's folder
 	-- v4 A5 (owner): bodies die from enough hits, not only headshots. Every hit adds damage =
 	-- weapon power x DAMAGE_PER_POWER x the region (head, limbs) x DAMAGE_BLUNT for blows; BODY_HP of it
 	-- kills (about 6 Popper rounds to the body, about 10 punches). Headshots stay instant.

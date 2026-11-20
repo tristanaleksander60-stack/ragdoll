@@ -161,7 +161,7 @@ function Creatures.gorilla(center: Vector3): () -> ()
 	-- v4 C3: the rigged gorilla first (V3Assets "GorillaRig": a real ape model on R15 joints, which
 	-- every screen animates from the attributes below: Client/CreatureAnim), then v3's still model,
 	-- then the blocky one.
-	local rigged = V3Assets.place("GorillaRig", folder(), CFrame.new(at), { height = Creatures.GORILLA_HEIGHT, collide = false })
+	local rigged = V3Assets.place("GorillaRig", folder(), CFrame.new(at), { height = Creatures.GORILLA_HEIGHT, collide = false, name = "Gorilla" })
 	local look = rigged or V3Assets.place("Gorilla", folder(), CFrame.new(at), { height = 13, collide = false })
 	if rigged then
 		rigged:SetAttribute("Kind", "Gorilla")
@@ -290,7 +290,7 @@ function Creatures.bulls(center: Vector3): () -> ()
 			for k = 1, Creatures.HERD do
 			local at = center + Vector3.new(x0 - dirX * (k - 1) * 8, 0, z + (k - 2) * 6.5)
 			-- (v3: the Creator Store bull when the place has one; the blocky one is the fallback.)
-			local rigged = V3Assets.place("BullRig", folder(), CFrame.new(at) * CFrame.Angles(0, facing, 0), { height = 6, collide = false })
+			local rigged = V3Assets.place("BullRig", folder(), CFrame.new(at) * CFrame.Angles(0, facing, 0), { height = 6, collide = false, name = "Bull" })
 			local asset = rigged or V3Assets.place("Bull", folder(), CFrame.new(at) * CFrame.Angles(0, facing, 0), { height = 7, collide = false })
 			if rigged then
 				rigged:SetAttribute("Kind", "Bull")
