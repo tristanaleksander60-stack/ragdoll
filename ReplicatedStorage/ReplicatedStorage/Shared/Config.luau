@@ -262,6 +262,11 @@ local Config = {
 	-- the G17 or the Bat; a prize always lands; never picked while firing).
 	V8_START_BAR = true,
 	V8_HAND_RULES = true,
+	-- V8-0.4 (one voice on screen): no false toasts (starters "unlocked", "come back tomorrow" on a
+	-- first visit, hidden buttons named, a tip for a hazard already done, two unlock lines that
+	-- disagree); one toast per 15 s in the first 3 minutes (NotifyRules.EARLY_GAP); no signpost at
+	-- the spawn (PathPlan.SPAWN_CLEAR); the spawn turned 40 degrees so the cannon is in view (Lab).
+	V8_ONE_VOICE = true,
 }
 
 return table.freeze(Config)

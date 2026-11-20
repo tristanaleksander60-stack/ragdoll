@@ -38,6 +38,10 @@ NotifyRules.MAX_WAIT = table.freeze({ critical = 10, reward = 120, info = 45, ti
 NotifyRules.DEDUPE = 120 -- s
 NotifyRules.BIG_GAP = 40 -- s between two big pop-ups
 NotifyRules.AFTER_WINDOW = 3 -- s of quiet after a window closes
+-- V8-0.4 (one voice): in the first EARLY s of a visit, at most one toast per EARLY_GAP s (0: off;
+-- Notify sets it from Config.V8_ONE_VOICE).
+NotifyRules.EARLY = 180
+NotifyRules.EARLY_GAP = 0
 
 function NotifyRules.new(): State
 	return {
@@ -85,6 +89,9 @@ function NotifyRules.decide(s: State, kind: string?, key: string, queuedAt: numb
 	end
 	-- (Tips and news never talk over a big pop-up; a reward may, it is what the card is about.)
 	if s.bigOpen and k ~= "reward" then
+		return "wait"
+	end
+	if NotifyRules.EARLY_GAP > 0 and now < NotifyRules.EARLY and now - s.lastAt < NotifyRules.EARLY_GAP then
 		return "wait"
 	end
 	if now - s.lastAt < NotifyRules.GAP[k] then

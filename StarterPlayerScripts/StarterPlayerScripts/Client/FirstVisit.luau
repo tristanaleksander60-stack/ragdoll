@@ -37,6 +37,8 @@ local FirstVisit = {}
 
 FirstVisit.GIVE_UP = 300 -- s: the line goes away after this whatever is left
 FirstVisit.MIN_QUIET = 45 -- s: a flow that starts late (slow load) still gets this much quiet
+FirstVisit.STUCK_AFTER = 20 -- s in one step before the line adds a nudge (V8-0.4)
+FirstVisit.SKIP_AFTER = 45 -- s in one step before it moves on by itself (V8-0.4)
 FirstVisit.REVEAL_GAP = 5 -- s between the pieces of the reveal (left, right, then the key chips at 2x)
 FirstVisit.ANSWER_WAIT = 20 -- s: no server answer by then = treated as a returning player
 FirstVisit.PHONE_HELD = { "Shop", "Menu" } -- the phone's launchers held with the rest
@@ -203,7 +205,8 @@ function FirstVisit.start()
 		holdHud(false)
 		return
 	end
-	local revealAt = math.max(Config.QUIET_START, time() + FirstVisit.MIN_QUIET)
+	-- (V8-0.4: one reveal number, QUIET_START; the late-start floor made the real reveal 48-55 s.)
+	local revealAt = if (Config :: any).V8_ONE_VOICE then Config.QUIET_START else math.max(Config.QUIET_START, time() + FirstVisit.MIN_QUIET)
 	HudSlots.setNewcomerUntil(revealAt)
 	-- (For modules that cannot require HudSlots: DummyLife, ProgressUI.)
 	player:SetAttribute("NewcomerUntil", revealAt)
@@ -306,7 +309,15 @@ function FirstVisit.start()
 			local startCount = if step.attr then ((player:GetAttribute(step.attr) :: number?) or 0) else 0
 			local startTakedowns = (player:GetAttribute("Takedowns") :: number?) or 0
 			local done = false
-			while not done and time() - started <= FirstVisit.GIVE_UP do
+			-- (V8-0.4: per step, a nudge at STUCK_AFTER s and a skip at SKIP_AFTER s; a stuck step held the
+			-- whole first visit for up to GIVE_UP.)
+			local stepStarted = time()
+			local nudged = false
+			while not done and time() - started <= FirstVisit.GIVE_UP and not ((Config :: any).V8_ONE_VOICE and time() - stepStarted > FirstVisit.SKIP_AFTER) do
+				if (Config :: any).V8_ONE_VOICE and not nudged and time() - stepStarted > FirstVisit.STUCK_AFTER then
+					nudged = true
+					say((if padNow and step.pad then step.pad else step.text) .. "  \u{2192} follow the glow")
+				end
 				if step.id == "Takedown" then
 					done = ((player:GetAttribute("Takedowns") :: number?) or 0) > startTakedowns
 				elseif step.attr then

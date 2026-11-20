@@ -160,6 +160,10 @@ function ExperimentService.event(player: Player, kind: string, n: number?, what:
 			SessionStats.mark(player, "firstLaunchAt")
 		end
 	end)
+	-- (V8-0.4: the hazard tip is never shown for a hazard already tried.)
+	if kind == "Hazard" and player:GetAttribute("HazardDone") ~= true then
+		player:SetAttribute("HazardDone", true)
+	end
 	if tossed[player] and ExperimentService.COMBO_KINDS[kind] then
 		tossCombo(player, kind, what)
 	end

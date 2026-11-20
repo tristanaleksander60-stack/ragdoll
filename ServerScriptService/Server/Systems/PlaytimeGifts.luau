@@ -32,7 +32,7 @@ PlaytimeGifts.AT = { 120, 300, 600, 900 } -- s of play today for each gift (one 
 -- Phase 2 (Config.EGG_RATION): the gifts are BOLTS, not eggs (tests may turn it off).
 PlaytimeGifts.RATION = Config.EGG_RATION and Config.ECONOMY
 PlaytimeGifts.TEXT = "FREE GIFT for playing! A weapon egg is yours."
-PlaytimeGifts.FULL_TEXT = "Your gift is ready! Open an egg in RANK & EGGS to make room for it."
+PlaytimeGifts.FULL_TEXT = "Your gift is ready! Open an egg to make room for it." -- (V8-0.4: no hidden button named)
 PlaytimeGifts.RETRY = 30 -- s after a DataStore failure (doubling each time, at most 10 min)
 PlaytimeGifts.SAVE_EVERY = 60 -- s: today's minutes kept while playing (and on leaving and closing)
 local STORE = "PlaytimeGifts_v1"

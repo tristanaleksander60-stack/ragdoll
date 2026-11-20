@@ -19,7 +19,8 @@ local log = Log.new("LaunchGift")
 local LaunchGift = {}
 
 LaunchGift.UNTIL = os.time({ year = 2026, month = 12, day = 10, hour = 23, min = 59, sec = 0 }) -- (server UTC)
-LaunchGift.TEXT = "LAUNCH GIFT! A free weapon egg for everyone who plays now. Open it in RANK & EGGS!"
+-- (V8-0.4: no button named that may be hidden; the egg card offers it by itself.)
+LaunchGift.TEXT = "LAUNCH GIFT! A free weapon egg for everyone who plays now!"
 local STORE = "LaunchGift_v1"
 
 local store: DataStore? = nil

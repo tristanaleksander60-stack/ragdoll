@@ -109,7 +109,12 @@ PathPlan.LABELS = table.freeze({
 	YardWest = "MONSTERS",
 })
 -- The forks that get a signpost.
-PathPlan.SIGNS = table.freeze({ "Hub", "Fork", "East", "West", "Tower", "Stations" })
+-- (V8-0.4, Config.V8_ONE_VOICE: no signpost on or right by the spawn; the Hub and Fork boards go.)
+local V8_VOICE = (require(script.Parent:WaitForChild("Config")) :: any).V8_ONE_VOICE == true
+PathPlan.SIGNS = table.freeze(if V8_VOICE then { "East", "West", "Tower", "Stations" } else { "Hub", "Fork", "East", "West", "Tower", "Stations" })
+-- V8-0.4: the spawn's keep-clear circle. No machine, sign or prop stands in it (T106); the paths'
+-- flat paving may cross it.
+PathPlan.SPAWN_CLEAR = table.freeze({ at = Vector2.new(0, 0), radius = 10 })
 
 export type Obstacle = { name: string, at: Vector2?, radius: number?, min: Vector2?, max: Vector2? }
 

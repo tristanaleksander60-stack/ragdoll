@@ -586,6 +586,10 @@ function ProgressUI.start()
 			if time() < newcomerUntil then
 				task.wait(newcomerUntil - time() + 3)
 			end
+			-- (V8-0.4: no "come back tomorrow" on a first visit: the egg itself says enough.)
+			if (Config :: any).V8_ONE_VOICE and streak <= 1 and lp:GetAttribute("Newcomer") == true then
+				return
+			end
 			Notify.say("reward", if streak <= 1
 				then "Daily egg! Come back tomorrow for another."
 				else string.format("Daily egg%s! Day %d in a row. Come back tomorrow!", if (tonumber(d.eggs) or 1) > 1 then "s" else "", streak), Color3.fromRGB(255, 154, 205))
@@ -595,7 +599,8 @@ function ProgressUI.start()
 		elseif kind == "GoalDone" and type(data) == "string" then
 			-- (V5 first visit: never on top of an egg card or another reward: it waits a few seconds.)
 			task.wait(6)
-			Notify.say("reward", "Goal done: " .. data .. "! Claim your egg in Rank & Eggs", Color3.fromRGB(255, 154, 205))
+			-- (V8-0.4: no button named that may be hidden; the egg card offers the egg by itself.)
+			Notify.say("reward", if (Config :: any).V8_ONE_VOICE then "Goal done: " .. data .. "! A free egg is yours." else "Goal done: " .. data .. "! Claim your egg in Rank & Eggs", Color3.fromRGB(255, 154, 205))
 			C.playSound("reward")
 		elseif kind == "Rank" and type(data) == "string" then
 			Notify.say("reward", "Rank up: " .. string.upper(data) .. "!", Color3.fromRGB(255, 210, 74))
@@ -633,9 +638,12 @@ function ProgressUI.start()
 			-- funnel: most never opened WEAPONS to find what they had earned).
 			local toy = type(d.id) == "string" and Toys.byId[d.id] or nil
 			local onBar = false
+			local deferred = false
 			-- (Round 5: the first rungs too, whatever they are: Bat, Crowbar and Shove come at 2, 4 and 6.)
-			if toy and (toy.category == "Guns" or toy.category == "Explosives" or toy.unlockAt <= 10) then
+			-- (V8-0.3: under the hand rules every unlock asks for a slot; HandRules decides.)
+			if toy and ((Config :: any).V8_HAND_RULES or toy.category == "Guns" or toy.category == "Explosives" or toy.unlockAt <= 10) then
 				if PokeController.firstMinute() then
+					deferred = true
 					-- (The first minute's bar is fixed: it goes on the moment that is over.)
 					local id = toy.id
 					OnboardingController.whenFree(function()
@@ -647,9 +655,13 @@ function ProgressUI.start()
 					onBar = PokeController.autoEquip(toy.id)
 				end
 			end
-			Notify.say("reward", if onBar
-				then string.format("NEW: %s! It's on your bar. Try it!", string.upper(tostring(d.name)))
-				else string.format("UNLOCKED: %s! Find it in WEAPONS.", string.upper(tostring(d.name))), Color3.fromRGB(120, 230, 140))
+			-- (V8-0.4: when it goes on after the first minute, that line says it once; no second toast
+			-- saying the opposite now.)
+			if not (deferred and (Config :: any).V8_ONE_VOICE) then
+				Notify.say("reward", if onBar
+					then string.format("NEW: %s! It's on your bar. Try it!", string.upper(tostring(d.name)))
+					else string.format("UNLOCKED: %s! Find it in WEAPONS.", string.upper(tostring(d.name))), Color3.fromRGB(120, 230, 140))
+			end
 			C.playSound("reward")
 		end
 	end)

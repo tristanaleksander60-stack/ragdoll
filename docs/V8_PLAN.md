@@ -1404,3 +1404,19 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
     - T21, T22, T23, T45, T47, T90 and T122 pass;
     - LayoutCheck shows 0 problems.
   - **Not checked:** SHOOT staying up for 3 minutes of scripted phone play (left for the round 1 playtest).
+- **V8-0.4 done in part (code; switch `V8_ONE_VOICE`):**
+  - **False toasts gone:**
+    - "N weapons unlocked!" (the starters);
+    - "Daily egg! Come back tomorrow" on a first visit;
+    - "Claim your egg in Rank & Eggs" and "Open it in RANK & EGGS" (LaunchGift, PlaytimeGifts): no hidden button is named now;
+    - the hazard tip once the cannon or a hazard is done (`HazardDone`, CannonShots);
+    - the second, opposite unlock line in the first minute.
+  - **Pace:** one toast per 15 s in the first 3 minutes (NotifyRules.EARLY_GAP).
+  - **Spawn:**
+    - the Hub/Fork signposts are gone;
+    - `PathPlan.SPAWN_CLEAR` (10 studs): no machine or sign in it. The flat paving may cross it, a deliberate cut: the trunk stays;
+    - the spawn is turned 50° (Lab.SPAWN_FACING). T112 measures the cannon at 42° and the middle dummies at -37..-19 in the follow camera, both on screen at 1920x1080 and 800x360. Capture SpawnView_V8_1.
+  - **Greeter:** it also waits for the lab to be claimed (a play test caught it on the plaza).
+  - **FirstVisit:** one reveal number (QUIET_START); per step, a "follow the glow" nudge at 20 s and a skip at 45 s.
+  - **Tests:** T112 passes; T55, T45, T100, T106, T109 and T23 pass.
+  - **Left for V8-1** (one voice in full): the edge arrow, the experiment card waiting for FirstVisit, the touch hand only after 6 s, the reward notices all through Notify, T111 (timeline), LayoutCheck for FirstVisitGoal.

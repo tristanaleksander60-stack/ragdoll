@@ -100,7 +100,9 @@ local function release()
 		afterQuiet(HAZARD_TIP_DELAY, function()
 			-- (Only with a lab of their own: the hazards are in the labs, not the plaza.)
 			local plot = player:GetAttribute("LabPlot")
-			if not ReplayController.isPlaying() and type(plot) == "number" and plot > 0 then
+			-- (V8-0.4: not once they have done it: no tip for a thing already done.)
+			local done = (Config :: any).V8_ONE_VOICE and (((player:GetAttribute("CannonShots") :: number?) or 0) > 0 or player:GetAttribute("HazardDone") == true)
+			if not done and not ReplayController.isPlaying() and type(plot) == "number" and plot > 0 then
 				Notify.say("tip", "Jump in the LAVA or blast off the CANNON at the BULLSEYE!", Color3.fromRGB(255, 140, 40), "tip_machines")
 			end
 		end)
@@ -194,7 +196,10 @@ local function playReplay(at: number, first: boolean)
 			while time() < HudSlots.newcomerUntil do
 				task.wait(0.5)
 			end
-			Notify.say("reward", Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
+			-- (V8-0.4: the starters were never unlocked; that toast was not true.)
+			if not (Config :: any).V8_ONE_VOICE then
+				Notify.say("reward", Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
+			end
 		end)
 		PokeController.highlightTools()
 	end
@@ -569,7 +574,10 @@ local function unlockFallback()
 			while time() < HudSlots.newcomerUntil do
 				task.wait(0.5)
 			end
-			Notify.say("reward", Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
+			-- (V8-0.4: the starters were never unlocked; that toast was not true.)
+			if not (Config :: any).V8_ONE_VOICE then
+				Notify.say("reward", Toys.starterCount() .. " weapons unlocked! " .. weaponsCall(), Color3.fromRGB(120, 230, 140))
+			end
 		end)
 		PokeController.highlightTools()
 	end

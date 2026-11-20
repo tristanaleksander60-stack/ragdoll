@@ -132,7 +132,8 @@ function GreeterService.send(player: Player): Model?
 	-- a frame later (task.defer). Wait for that move (at most 3 s), so the route is worked out in the
 	-- lab, not at the spawn it just left.
 	local waited = os.clock()
-	while Lab.plotIndex(player) ~= nil and Lab.ownerAt(root.Position) ~= player and os.clock() - waited < 3 do
+	-- (Also while the lab is not even claimed yet: a Studio play test caught the greeter on the plaza.)
+	while (Lab.plotIndex(player) == nil or Lab.ownerAt(root.Position) ~= player) and os.clock() - waited < 3 do
 		task.wait(0.1)
 		if not root.Parent or player.Character ~= character then
 			return nil

@@ -779,13 +779,18 @@ local function signText(owner: Player?): string
 	return string.upper(owner.DisplayName) .. "'S LAB"
 end
 
+-- Which way an avatar faces at the lab's spawn (V8-0.4: 50 degrees right of -Z, towards the cannon; T112 measured the cannon at 42 degrees and the middle dummies at -37..-19 in the follow camera, inside 1920x1080 (49) and a landscape phone (55)).
+Lab.SPAWN_FACING = if Config.V8_ONE_VOICE then Vector3.new(math.sin(math.rad(50)), 0, -math.cos(math.rad(50))) else -Vector3.zAxis
+
 local function placeOnPlot(player: Player, plot: Plot)
 	local character = player.Character
 	if not character then
 		return
 	end
 	local at = plot.origin + Vector3.new(math.random() * 4 - 2, 3.5, math.random() * 2 - 1)
-	character:PivotTo(CFrame.lookAt(at, at - Vector3.zAxis))
+	-- (V8-0.4: turned 50 degrees towards the cannon, which sat 82-97 degrees right of the spawn camera:
+	-- the dummies in the middle and the cannon both in view on PC, tablet and a landscape phone; T112.)
+	character:PivotTo(CFrame.lookAt(at, at + Lab.SPAWN_FACING))
 	local root = character:FindFirstChild("HumanoidRootPart")
 	if root and root:IsA("BasePart") then
 		root.AssemblyLinearVelocity = Vector3.zero
