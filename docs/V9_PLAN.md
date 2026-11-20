@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0, V9-0b, V9-0c, V9-0d, V9-1, V9-2, V9-2b, then V9-3, V9-4, V9-4b, V9-5, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0b, V9-0c, V9-0d, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-4, V9-4b, V9-5, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -52,6 +52,25 @@ Run all of `docs/FIX_PATHS_SHOP.md`:
 - F3 no dead-end paths;
 - F4 captures;
 - F5 purchase pictures and id paste-in.
+
+## V9-0a Hitting a ragdoll never opens Talk (owner, 21 Nov; do it first, it is quick)
+> "Fiks så at når man forsøger at slå en ragdoll at man ikke åbner talk menuen hele tiden."
+
+**Cause to confirm.** The Talk prompt (`NpcCommand` addPrompt: a ProximityPrompt on the Head, Default style, `HoldDuration` 0, reach 9) is clickable/tappable by default (`ClickablePrompt`). A click or tap meant as a hit on a close dummy lands on the prompt, and `Client/NpcTalk` opens the panel. E (the key) may also clash with tools.
+
+**Fix:**
+- Set `prompt.ClickablePrompt = false`, so a mouse click never opens Talk.
+- On PC and pad, Talk only through its key: E, or L3 on a pad.
+- **Hide the Talk prompts on this screen** (`NpcTalk.setPrompt`) during any attack and for 2 s after any attack: fire held, a swing, a shot (`AmmoClient.onSpent` / `FeelBus` Shot), or a grab. Also hide them while Grab holds a body.
+- **Touch** (no key there): never let a tap meant as a hit open Talk.
+  - The prompt shows only when the player stands still near a living dummy with no attack in the last 3 s.
+  - Talk needs a short hold (`HoldDuration` about 0.4 s on touch).
+  - Or move Talk to a small TALK chip beside the HUD that appears near a dummy, never on the dummy's body.
+- **NpcTalk:** never opens the panel if an attack happened in the last 0.5 s, even if the prompt fires.
+
+**Test:** T158_HitNotTalk.
+- 30 quick clicks/taps on a dummy at 3-8 studs open the Talk panel 0 times.
+- E (or a hold on touch) next to a calm dummy still opens it.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
@@ -281,6 +300,50 @@ All of it stays kid-safe (no gore) and within the phone budget.
 - 20 fast presses respect the rate limit and the queue.
 - A press from far away or by a stranger is refused.
 - The body cap is held.
+
+## V9-2c Z opens a time dial: faster or slower in a bubble round you (owner, 21 Nov)
+> "Gør så at Z ikke bare stopper tiden i ens lab et lille sted, men åbner en lille menu hvor man kan skrue tiden hurtigere eller langsommere i en bobbel rundt om en selv."
+
+**Now:** Z = `SandboxService` "SlowMo", a fixed slow-motion bubble over the lab's middle (ToyService Slowmo), with a gap of 8 s.
+
+**New: Z opens a small time menu** (it closes with Z again or Esc):
+- a round dial or slider with steps **0.1x · 0.25x · 0.5x · 1x · 2x · 3x**, the current speed shown big;
+- a size control for the bubble (small / medium / big, for example 12 / 20 / 30 studs radius);
+- ON/OFF.
+
+The UI v2 tokens; drag or click on PC; tap on phones (the button sits under More/sandbox and is phone-sized); LB/RB or the D-pad on a pad.
+
+**The bubble:**
+- It is centred on the player and follows them (only in their own lab, or a party lab).
+- **Look:** a clear, slightly refractive sphere with a soft rim glow. Blue for slow, orange for fast, with ripples where things cross the edge, a clock-tick sound slowed or sped up, and the sky/colour inside the bubble faintly tinted.
+- **Inside, time really runs at the chosen speed** for dummies and props (the server decides; Roblox has no per-region time scale, so it is simulated):
+  - **gravity:** a VectorForce per body in the bubble counters gravity to `g·s²`;
+  - **speed:** velocities are scaled by `s` on entering and by `1/s` on leaving;
+  - **launches and throws:** launch impulses inside are scaled;
+  - **creatures, machines and animations:** they run at `s` (their tweens, the AnimationTrack/procedural speed and the cooldowns);
+  - **effects:** particles get `TimeScale = s`, and sounds get `PlaybackSpeed` × `s` (limits 0.5-2);
+  - **at 3x:** dummies fall and fly fast and machines cycle fast, with caps so nothing explodes or tunnels through walls.
+- **Players** keep their own walking speed (so they can enjoy the effect). The camera gets the C5 slow-mo look only when the bubble is slow.
+
+**Rules:**
+- **Server checks:**
+  - owner or party only;
+  - inside their lab;
+  - the speed from the list only;
+  - one bubble per player;
+  - a rate limit on changes.
+- **Remote:** goes through `Net` with a validator; it is listed in CLAUDE.md (extend the Sandbox remote, do not add a new one if it can be helped).
+- **Performance:** at most N bodies affected per bubble per device tier. On the low tier the visual is simpler.
+- The old one-tap behaviour stays reachable: the dial opens on 0.25x by default, so Z then Enter is the old slow-mo.
+
+**Tests:** T157_TimeBubble.
+- A dummy dropped inside at 0.25x falls about 4x slower than outside (±15 %).
+- At 2x it falls faster.
+- Leaving the bubble returns it to normal.
+- Bad speeds and a stranger's lab are refused.
+- The menu fits on 16 LayoutCheck screens.
+
+**Capture:** the menu and the bubble at 0.1x and 3x, on PC and phone.
 
 ## V9-3 The lab machines
 Give the same pass to everything in the lab that takes or throws a ragdoll:
