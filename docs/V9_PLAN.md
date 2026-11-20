@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0t, V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -52,6 +52,71 @@ Run all of `docs/FIX_PATHS_SHOP.md`:
 - F3 no dead-end paths;
 - F4 captures;
 - F5 purchase pictures and id paste-in.
+
+## V9-0s Game Arena hidden for now (owner, 21 Nov; quick, do it first)
+> "Fjern game arena for nu."
+
+- **Hide it, do not delete it.** Add a switch `Config.ARENA_ENABLED = false`; true brings it back.
+- **With it off:**
+  - not in `Places`;
+  - not on the Map Board, in the Places portal carousel, in the Maps window or in MENU;
+  - no arena minigame starts or invites (Red Light Green Light and the others);
+  - no arena entry or arena experiment cards in the daily deck;
+  - no arena "used" counters expected.
+- **Also off:**
+  - the arena is not built at server start, so there is no cost (V9-5b);
+  - nothing teleports a player there (portals, admin go-to, director shots);
+  - a saved last place of "Arena" falls back to the lab.
+- **Tests:** tests that need the arena skip with a clear SKIP while the switch is off (T26, T31, the minigame tests); everything else passes.
+- **Report:** note in State that the arena is hidden and how to turn it back on.
+
+## V9-0t Codes to advertise in the description (owner, 21 Nov; quick)
+> "Tilføj codes som vi kan reklamere for i description."
+
+**Now:**
+- `Economy.redeem` reads `Config.LIKE_CODES` (codes tied to like milestones, all empty and not live).
+- The only code box is inside the EXPERIMENTS window (ExperimentCard "Redeem"), which few players find.
+- Codes tied to like counts come too close to rewarding likes (Roblox policy), so do not use them.
+
+**Change:**
+- **One code list** `Shared/Codes` (or `Config.CODES`):
+
+  ```
+  { code, reward = { bolts?, trialWeapon?, trialMinutes?, cosmetic?, cosmeticHours? }, from, to, live }
+  ```
+
+  The codes are case-insensitive and spaces are ignored. The dates are in UTC; outside them, the code answers "This code has expired". Each player may use a code once (`eco.codes`, saved with UpdateAsync, as now).
+- **The starting codes** (live at the next publish):
+
+  | Code | Gives | Live |
+  |---|---|---|
+  | `RELEASE` | 500 BOLTS | from now |
+  | `BETA` | 300 BOLTS + a 30-minute free try of a top weapon (the Railgun, through TrialService rules) | during the beta |
+  | `RAGDOLL` | 250 BOLTS | from now |
+  | `CHRISTMAS` | 750 BOLTS + the Fire Trail for 24 h | from 1 Dec to 31 Dec |
+
+  Keep old `LIKE_CODES` off.
+- **A CODES button in the HUD menu (More):**
+  - a clean, small window: one text box, REDEEM, a result line with the reward icon, and confetti on success;
+  - clear messages: invalid, already used, expired;
+  - phone and pad friendly;
+  - also reachable from SHOP (a small "Have a code?" link).
+- **Server:**
+  - a rate limit of 5 tries per minute per player;
+  - no hints about which codes exist;
+  - every redeem goes through the existing remote with its validator;
+  - grants use the existing paths (Bolts, TrialService, offers' cosmetic attribute with an expiry);
+  - nothing is sold.
+- **Optional:** a code that only works for players in the Roblox group, when `Shop.GROUP_ID` is set (group join is allowed as a reward; likes and favourites are not).
+- **Docs:** `docs/CODES.md` lists every code, its reward and dates, plus the line for the game description. Update `STORE_TEXT.md`.
+
+**Tests:** T173_Codes.
+- Each code grants once.
+- A second try says "already used".
+- Mixed case and spaces work.
+- An expired or not-yet code is refused.
+- The rate limit works.
+- The CODES window fits on 16 LayoutCheck screens.
 
 ## V9-0a Hitting a ragdoll never opens Talk (owner, 21 Nov; do it first, it is quick)
 > "Fiks så at når man forsøger at slå en ragdoll at man ikke åbner talk menuen hele tiden."
@@ -374,6 +439,200 @@ So a player can stand there with no standing target.
 
 **Capture:** the reveal, the 3D window, a 10-dummy line and a ring being placed, on PC and phone.
 
+## V9-0m The Compressor: a hydraulic press that flattens ragdolls (owner, 21 Nov)
+> "Tilføj en compressor som fladmasser ragdolls."
+
+**The machine:**
+- **Model:** a big industrial hydraulic press: a steel frame with pistons, a heavy press plate, warning stripes, a lit "PRESS" lamp and a small conveyor or plate where the body lies. A real model with the malware pass, in the V9 style.
+- **Terminal:** a feed/launch computer like V9-2b / V9-3c, with a big **PRESS** button. Spam is allowed within the rate limit.
+
+**One press:**
+1. The nearest free dummy is carried onto the plate, or a player drops one there (LabGuide ring "DROP HERE").
+2. The lamp blinks and hydraulic hiss plays.
+3. The plate slams down with a heavy THUD, a camera punch nearby, dust and a comic "SQUISH!" sticker.
+4. **Cartoon flattening:** the dummy becomes a flat pancake. It is done visually on the client: the body's skin is scaled to about 15 % height and widened, with the server marking the state; it is not physics damage, and there is no gore.
+5. It lies there as a flat pancake for 2 s. Then the plate lifts, and the pancake **pops back to shape** with a boing and wobbles (squash and stretch), and walks off dizzy (stars round the head).
+6. A player may also flatten themselves, in their own lab or a party lab (the same cartoon effect).
+
+**Extras:**
+- a "PANCAKE ×N" counter on the terminal screen;
+- an experiment card "Flatten 5 dummies" and a journal page;
+- the first press of a visit gets the slow-mo beat.
+
+**Rules:**
+- server-checked (owner or party, near the terminal);
+- a cooldown of about 2.5 s per press, with spam queued up to 3;
+- the body physics stays the same after it pops back;
+- the phone budget is held.
+
+**Tests:** T168_Compressor.
+- A press flattens and restores the dummy.
+- No body is stuck under the plate.
+- Spam respects the cooldown and queue.
+- Strangers are refused.
+
+## V9-0n Every machine and creature placed where it works best (owner, 21 Nov)
+> "Alle maskiner og dyr står stadig dårlig, sørg for alt er placeret psykologisk bedst i forhold til mappet osv."
+
+A full placement pass for the lab hub (V9-0h) and every map, done as a designer would, with these rules written into `docs/STYLE_LAB.md` and checked in captures:
+
+- **The spawn view sells the game.** The first frame shows the 3-4 most fun things (cannon + bullseye, the rocket, the spider/aquarium, the compressor) and at least 2 standing dummies. Big landmark silhouettes stand at the back (the rocket), action in the middle, the dummies near.
+- **One landmark ("weenie") pulls you in.** The tallest thing (the rocket tower) stands at the far end of the main view line, so players walk across the hub, passing everything else.
+- **A loop, not a dead end.** The attractions sit in a clockwise loop round the hub: spawn → cannon/bullseye → compressor → rocket → creatures/aquarium → vehicles → back to spawn. Each one is visible from the one before ("what's next?" pulls the player on).
+- **Group by verb.**
+  - Launchers together: cannon, rocket, trampoline, stations.
+  - Crushers and hazards together: compressor, mace, wrecking ball, lava.
+  - Feeders together: creatures, aquarium.
+  - Drivers together: the vehicle row with open floor in front to drive into dummies.
+
+  The groups are spaced so their action radii never overlap: a launched body must not land in another machine.
+- **Distances by use.**
+  - Most-used machines (Session_v1 `used`) within about 20-45 studs of the spawn, rarer ones on the outer ring.
+  - The walk between neighbours is at most about 6-8 s.
+- **Facing.** Every machine and creature faces the player's approach: the terminal on the near side, the screen toward the path, the creature's face toward the spawn. Nothing shows its back.
+- **Landing zones.** Every launcher points its flight into open floor or the bullseye, in view of the camera that launched it; never over the hedge or behind a building.
+- **Readable at a glance.** Each attraction has room round it (negative space), its LabGuide ring and one icon sign. No two signs overlap from the spawn view.
+- **Social and shop anchors.**
+  - The leaderboard wall and the Places portal by the spawn (V9-0h / V9-0e).
+  - Seating at the edge of the action, so friends can watch.
+  - The map-shop booths on the walk between attractions, seen but never in the way, and never in the spawn's first frame for a newcomer (V8 fair shop).
+- **Ground and scale.**
+  - Everything stands on the floor (no floating or sinking), at a real scale against a 5-stud player.
+  - Big things far, small things near.
+  - No machine hides another from the spawn camera.
+- **Maps too.** On each open-air map, arrive 15-20 studs in front of its hero activity (V8-2.10), with the other activities in a loop and the portal home in view.
+
+**How:**
+- Draw the top-down plan first (a capture with the loop and the radii marked), then move the things (positions in one data table per place, so tests can read them).
+- Update PathPlan, LabGuide, VehicleService, the Christmas spots and the tests that hold positions.
+- Use the data: after release, compare `used` shares and the walk heatmap (if logged) and adjust.
+
+**Tests:** T163 extended.
+- Every attraction lies inside its band.
+- No action radius overlaps another attraction.
+- Every launcher's landing point is on the open floor.
+- Every machine faces within 45° of the spawn or path.
+- No sign overlaps another in the spawn view.
+
+**Capture and review:** spawn view (PC and phone), top-down with the loop drawn, and a walk-through of 6 frames. The blind reviewer scores the layout ≥ 8.5. The owner signs off.
+
+## V9-0o Grey, matte ragdolls that read in the bright sun (owner, 21 Nov; quick, do it next)
+> "Gør ragdolls mere grå så de er lettere at se og gør dem mere matte fordi solen skinner jo meget nu."
+
+**Problem:** under the bright V9-0b light (LOOK_THUMB), the white dummies blow out (clip to white), shine and blend with the light floor and sky.
+
+**Change** (`Config.DUMMY_TONE`; the old white is one switch away):
+- **Colour:** a **mid-light grey**, about RGB 165-180 (a soft neutral or slightly warm grey), not white.
+  - The crash-test details stay: the yellow and black target, the dark joint rings, the belt.
+  - The dead/KO green still reads clearly against the grey.
+  - Gold Dummies and the crash suit keep their own looks.
+- **Matte:**
+  - SmoothPlastic → **Plastic or a matte MaterialVariant** (roughness about 0.85-0.95, no specular hot spots);
+  - `Reflectance` 0 on every skin part;
+  - check `DummySkins` (the client skin from ReplicatedStorage.DummySkin) and `DummyFactory` (the server body colours) both follow it.
+- **Contrast check:**
+  - In the bright light, from the spawn and at 60 studs, on PC and phone (quality 1 and max), the dummies must stand out from:
+    - the hub floor pads (V9-0k);
+    - the grass;
+    - the sky.
+  - The floor stays a bit lighter or warmer than the dummies, or add a soft contact shadow so they pop.
+  - A greyscale capture shows clear separation.
+- **All dummies:** the lab dummies, walkers and visitors, GOD MODE spawns, event dummies, the greeter, the compressor pancakes. The crowd NPCs in clothes are not touched.
+- **Settings:** if a player picked a dummy skin later (paid skins), that skin wins.
+
+**Tests:** T36/T91 updated.
+- Skin colour within the grey range.
+- Reflectance 0.
+- A matte material.
+- The KO green still differs.
+
+**Capture:** before/after in the sun at the spawn and close up, PC and phone, plus the greyscale check.
+
+## V9-0p Guide signs and rings move with their creature (owner, 21 Nov; quick)
+> "Fiks så at teksten ikke følger bag ved robotstøvsugeren men følger ordentligt efter."
+
+**Problem** (the owner's capture): the vacuum robot roams, but its "FEED ME!" sign (with "3 / 10") and its cyan dashed drop ring stay behind at its home spot, or trail behind it. The sign floats over empty grass while the robot is elsewhere.
+
+**Cause to confirm:**
+- `LabGuide` builds the sign and the ring (`GuideRingSeg`) at a fixed position, or welds them to a part the vacuum does not move with.
+- The vacuum's motion is server-stepped at 15 Hz (V6-5 review), so anything updated separately lags.
+
+**Fix:**
+- **Sign:** a BillboardGui with its **Adornee** set to an Attachment on the creature's own root/PrimaryPart (the part that actually moves), with `StudsOffsetWorldSpace` above its top. Then it follows exactly, every frame, on every screen, with no extra network.
+- **Ring:** for a moving creature, the ring is drawn **client-side** around the creature's current position. It is a cheap ring of pieces re-placed on RenderStepped from the creature's pivot, or one decal disc welded to the root, kept flat on the floor by a ground raycast. Rings of creatures that do not move stay where they are.
+- **Smooth motion:** the vacuum's motion is smoothed on the client (interpolate between the server's 15 Hz steps), so the robot and its sign glide instead of stepping.
+- **The same check for every moving thing** with a sign, ring, hunger meter or name: the spider on its thread, the frog's tongue target, the mole, the chicken, the robot dog/parrot pets, the creature events. Their labels follow the thing.
+
+**Test:** T169_GuideFollows. Move the vacuum 30 studs: within 1 frame, its sign and ring are within 1 stud of its position, over 5 s of roaming.
+
+**Capture:** the vacuum moving with its sign and ring, 3 frames.
+
+## V9-0q No sign hidden inside trees or models (owner, 21 Nov; quick)
+> "Man kan ikke se hvad der står ved slingshot."
+
+**Problem** (`art/store/look_target/slingshot_sign_now.webp`): the slingshot's "LOAD ME! 3/10" sign sits inside the tree's leaves, so the text is unreadable. The slingshot itself is half hidden under the canopy too.
+
+**Fix for every world sign** (LabGuide signs, hunger counters, today's machine star, NEW tags, booth signs, terminals' screens, board and portal labels):
+- **Placement:**
+  - put the sign **above the top of everything around its thing**: compute the bounds of the creature or machine **and** any foliage or prop within a few studs (like LabZones `topOf`, but including trees and MeshParts), then add a margin;
+  - or put it **in front of the thing, toward the player's approach side** (the path or spawn), whichever is closer to eye height and not blocked.
+- **Occlusion fallback:**
+  - Each client checks (cheaply, about 4 Hz, only for signs within 40 studs) whether the line from the camera to the sign is blocked by leaves or a model.
+  - If it is blocked, the sign switches to `AlwaysOnTop` with a soft backing card, and fades back to normal when the line is clear.
+  - Far signs (past about 40 studs) stay normal, so the whole lab does not show through walls.
+- **Readable:**
+  - a minimum size in pixels at 10-30 studs;
+  - a dark card behind white text, or the V9 icon style;
+  - the counter ("3 / 10") inside the card, not floating loose.
+- **The slingshot tree itself:**
+  - trim or lift the canopy so the slingshot, its band and its load pad are clearly visible from the approach;
+  - or use a slingshot-tree model whose fork is the readable shape.
+- **Prompts:** the default "Slingshot / Load" ProximityPrompt is replaced by the V9-2b terminal / V9-4b card style when those steps land. Until then, the prompt sits in front of the leaves.
+- **Audit:** walk every creature, machine, booth and board in the lab and on the maps, and fix any sign that is hidden, clipped or overlapping. Record it in a short table in `docs/AUDIT.md`.
+
+**Test:** T170_SignsVisible. For every guide sign, a ray from the main approach point at eye height reaches the sign unblocked, or the sign has the occlusion fallback; no sign's centre is inside another part's bounds.
+
+**Capture:** the slingshot from the owner's angle, before and after, and 3 other creatures.
+
+## V9-0r Hero scale: everything big and magnificent, each with its own animation and sound (owner, 21 Nov)
+> "Gør alt vi har 10X større, kanonkugle, kanon, slingshot, raket, edderkop og sådan noget så det ser magnificent ud, og de skal have en custom animation alle sammen så det ikke bare er det samme, og de skal lave lyde."
+
+**Scale rule.** Literally 10x would make the 14-stud cannon 140 studs long and the rocket taller than the hub is wide (250 studs), so nothing would fit or be playable. Make each one as big as it can be while the hub still frames it and it still works: **"hero scale"**, about 2.5-5x today, with the landmarks biggest.
+- Tune per thing in Config (`HERO_SCALE.<name>`), judged from the spawn camera on PC and phone.
+- Grow the hub or plot (`PLOT_SPACING`) if needed, keeping privacy.
+
+| Thing | Target size (about) | Its own signature motion | Its own sound |
+|---|---|---|---|
+| **Cannon** | barrel 35-45 studs, wheels taller than a player | barrel tilts up and aims, breech loads with a clunk, the whole cannon recoils back on its wheels, smoke ring | deep BOOM with a long echo, metal clank on the reload |
+| **Cannonball** | 6-10 studs (a dummy fits on it) | rolls into the breech, flies with a smoke trail, bounces and rolls when it lands | whistle in flight, heavy thud and rumble on landing |
+| **Rocket** (V9-3c) | 80-120 studs on its tower, the tallest landmark | gantry arms swing away, steam vents, a slow heavy lift-off that speeds up, slight wobble | countdown beeps, rising roar, crackle of the flame |
+| **Slingshot (tree)** | 30-40 studs tall | the band stretches back with a creak while the tree bends, snaps forward, leaves shower, the tree sways back | creak, twang, rustle |
+| **Spider** | 25-35 studs across, its web spanning a corner | scuttles down its thread, spins the body in silk, chews with its jaws, "burrito" spit | skitter, silk zip, munch, cartoon spit |
+| **Whale / shark** (V9-1) | whale 40-60 studs, shark 20-25 | whale breaches and blows, the shark circles with its fin and snaps | whale call, splash, blowhole spray; shark bite snap |
+| **Plant, frog, chicken, mole, washer, vacuum** | 2.5-4x each | each their own (V9-2 list): plant chomp and bob, frog tongue reel, chicken egg lay, mole pop, washer spin, vacuum suck | each their own: chomp, ribbit and slurp, cluck and plop, dirt burst, spin and slosh, vacuum whine |
+| **Compressor** (V9-0m) | 20-30 studs tall | pistons pump, plate slams, lifts with steam | hydraulic hiss, THUD, boing |
+| **Wrecking ball, mace, trampoline, tower, button** | 2-3x | ball swings on real chain links, mace spins with wobble, trampoline mat stretches deep, button cover flips and presses | chain rattle, whoosh, boing, a big clunk click |
+
+**Rules:**
+- **Gameplay follows the size:** trigger volumes, launch powers, flight arcs and landing zones (V9-0n), LabGuide rings, terminals and signs are all re-tuned to the new sizes. Every launch still lands on the open floor or the bullseye.
+- **No two things share an animation.** Each has its own idle (so it looks alive while waiting), its own act and its own rest. Animated on the client from one server start event (V9 rules), with anticipation, follow-through and squash and stretch.
+- **Every one makes sound:**
+  - its own idle loop (quiet, falls off with distance);
+  - its act sound;
+  - its reaction sound;
+  - all through SoundMix, at most 2 big sounds at once per lab, with the volume falling off over distance.
+- **Performance:**
+  - bigger models keep their triangle budget (real LOD meshes);
+  - idle animations stop past 120 studs;
+  - the low tier stays smooth (V9-5b).
+- **Placement:** re-check V9-0n after the scale-up (spawn view, loop, no hiding).
+
+**Tests:**
+- T163 and T168 updated for the new sizes;
+- T171_HeroScale: every hero thing is inside its size band, every trigger contains its drop point, every launch lands on the floor, every thing has its own animation set and sound ids (none shared).
+
+**Capture:** the spawn view and a close-up of each hero thing in action, before and after.
+
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
 
@@ -552,6 +811,27 @@ It follows the UI v2 tokens, phones included (out of the thumb zone), and hides 
 - The portal is in the spawn view at 1920x1080 and 414x896.
 - Each place travels and returns.
 - Travel is refused while seated or grabbing.
+
+**Owner addition (21 Nov): much nicer portals and a map board.**
+> "Gør portalerne langt flottere og tilføj et sted hvor man kan se et skilt med forskellige maps og så kan man vælge der hvilket map man vil skifte til."
+
+- **Every portal, beautiful:** the Places portal, PortalSolo and PortalMulti in the lab, and the portal at every map's arrival.
+  - **Frame:** a real ornate ring or arch model (carved stone with glowing runes, or polished metal with lights), at a proper size, about 14-18 studs tall.
+  - **Surface:** a **living swirl**: a layered, slowly turning texture with depth, soft refraction, sparkles drifting in, and a glow that lights the ground in front (a PointLight within FX_CAPS).
+  - **Sound and motion:** a calm hum that rises as you come near; a small pull of particles toward you within 15 studs.
+  - **Colour per kind:** gold = Places, blue = Solo, green = Multiplayer, each with its own icon on top.
+  - **Entering:** a whoosh, a quick swirl filling the screen, then the arrival (with streaming ahead).
+- **The Map Board:** a big world billboard (like the leader's "Maps" board) about 20-25 studs from the spawn, angled toward it (V9-0h / V9-0n), on a sturdy frame with lights.
+  - **Tiles:** a tile per place with its real picture (the map card pictures), its name and how many players are there now, plus a NEW tag. The tiles glow on hover.
+  - **Use:** click or tap a tile, or walk up and press E for the focused tile (pads: the left stick picks a tile). That opens the same travel confirm as the portal carousel: the picture, one line, GO. GO uses the V8-2.10 travel.
+  - **Build:** the board is a SurfaceGui on a real frame model, readable at 30 studs, and works on PC, phone and pad.
+  - **On every map** there is a smaller copy of the board by the arrival, with "My lab" first.
+
+**Tests (T159 extended):**
+- every tile travels to its place;
+- the board is visible from the spawn at 1920x1080 and 414x896;
+- the portal colours match their kind;
+- travel is refused while seated or grabbing.
 
 ## V9-1 The water: a real aquarium, the whale under water, a shark
 - **The aquarium.** Replace the flat glass "WhalePool" with a real aquarium/lagoon in the creature yard:
@@ -833,6 +1113,79 @@ These are the `map = true` OFFERS and the passes that put a thing in the world. 
 - **Bring every event model up to the same bar:** Gorilla, Bull, UFO, Train, Balloon, Giant Dummy, Tornado, Meteor, Bowling balls, Magnet, Rocket rain and so on.
 - **Each needs:** a real model, an entrance, an act on the ragdolls, an exit and sound.
 - **Match V8-2.9:** only the events that stay get the work. The rest stay hidden and are not sold.
+
+## V9-5c Many more free things to play with on every map (owner, 21 Nov)
+> "Tilføj flere forskellige gratis ting man kan interagere med ved alle de andre maps."
+
+**Now:** `MapActivities` has a few activities per map; the maps feel empty next to the lab.
+
+**Goal:**
+- **How many:** 5-6 free interactive things per map, each themed to its place.
+- **Each one:** a real model at hero scale (V9-0r), its own animation and sounds, a terminal / ProximityPrompt in the V9-2b / V9-4b style, a LabGuide-style icon sign (V9-0q visible), and a landing on open ground.
+- **Who can use them:** they work on dummies and on players (cartoon-style, kid-safe).
+
+**Placement:** placed with the V9-0n rules: from the arrival, the first one is 15-20 studs ahead, the rest in a loop, the portal home in view, and spaced so the actions never overlap.
+
+**Ideas** (pick the best 5-6 per map; real models, mild):
+- **Plaza:**
+  - a bouncy castle;
+  - a dunk tank (hit the target, the dummy drops in the water);
+  - a carnival high-striker (hammer → bell, launches a dummy);
+  - a spinning teacup ride;
+  - a ball pit;
+  - a confetti cannon.
+- **Island:**
+  - a coconut catapult;
+  - a water slide into the sea;
+  - a jet-ski ramp jump;
+  - a beach volleyball net that spikes dummies;
+  - a geyser rock;
+  - a lighthouse zip line.
+- **City:**
+  - a taxi crash course;
+  - a revolving-door launcher;
+  - a manhole steam blast;
+  - a fire-hydrant jet;
+  - an elevator drop from a rooftop;
+  - a bus that bowls dummies down the street.
+- **Building site:**
+  - a crane with a wrecking ball;
+  - a cement mixer spin;
+  - a conveyor into a skip;
+  - a demolition-charge wall (cartoon puff);
+  - a dump-truck tip;
+  - a scaffold drop.
+- **Old farm:**
+  - a hay-bale cannon;
+  - a tractor tow;
+  - a windmill fling;
+  - a pig-mud slide;
+  - a barn-door swing;
+  - a corn-silo drop.
+- **Army base:**
+  - an obstacle course with a catapult wall;
+  - a parachute tower;
+  - a jeep jump ramp;
+  - a cartoon target range (dummies pop up);
+  - a trampoline-net training pit;
+  - a paint-ball (colour splat) turret.
+
+**Rules:**
+- server-checked use, rate limits and spam allowed within a queue (V9-2b pattern);
+- one remote family through `Net`, listed in CLAUDE.md;
+- the map's crowd NPCs may be used too (as now);
+- each map's things sleep when no player is on that map (V9-5b);
+- an experiment card per map ("Try 3 things on the Island") and a journal page per thing;
+- **the phone budget per map** is held.
+
+**Tests:** T172_MapThings.
+- Every map has at least 5 things.
+- Each works once on a dummy and on a player.
+- Each launch lands on open ground on that map.
+- Strangers on another map cannot trigger them.
+- Things sleep with nobody on the map.
+
+**Capture:** the arrival view and each thing in action, per map, PC and phone.
 
 ## V9-5b A clean server and no lag, without losing quality (owner, 21 Nov)
 > "Sørg for serveren kører så clean som overhovedet muligt med så lidt lag som overhovedet muligt, uden at ødelægge eller svække noget kvalitet mæssigt."
