@@ -1021,7 +1021,7 @@ local function slowmo(player: Player?, at: Vector3, _facing: Vector3)
 			local now = os.clock()
 			for _, dummy in Blasts.dummiesNear(centre, SLOWMO_RADIUS) do
 				local pelvis = dummy:FindFirstChild("LowerTorso") :: BasePart?
-				if pelvis and not (clientSide and DummyControl.ownerOf(dummy)) and now - (slowedAt[dummy] or -math.huge) >= SLOWMO_TICK * 0.9 then
+				if pelvis and not (clientSide and ((dummy:GetAttribute("SimulatedBy") :: number?) or 0) ~= 0) and now - (slowedAt[dummy] or -math.huge) >= SLOWMO_TICK * 0.9 then
 					slowedAt[dummy] = now
 					local v = pelvis.AssemblyLinearVelocity
 					local slowed = -v * (1 - SLOWMO_KEEP) + Vector3.new(0, g * SLOWMO_TICK * SLOWMO_FALL, 0)

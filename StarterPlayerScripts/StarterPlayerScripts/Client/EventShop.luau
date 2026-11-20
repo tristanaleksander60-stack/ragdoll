@@ -14,6 +14,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Events = require(Shared:WaitForChild("Events"))
+local Config = require(Shared:WaitForChild("Config"))
 
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local Theme = require(UI:WaitForChild("LihFolkUITheme"))
@@ -357,7 +358,7 @@ local function buildPacks()
 	for _, event in Events.list do
 		-- Each event's picture (its emoji on its shape, LihFolkUIIcons), as in the shop.
 		if not Icons.Fallbacks[event.icon] then
-			Icons.Fallbacks[event.icon] = { glyph = event.glyph, shape = "square", color = Color3.fromHex(event.color) } -- (rounded squares, as the HUD's)
+			Icons.Fallbacks[event.icon] = { glyph = if (Config :: any).UI_CLEAN then string.upper(string.match(event.name, "^%S+") or event.name) else event.glyph, shape = "square", color = Color3.fromHex(event.color) } -- (rounded squares, as the HUD's; v4 D2: a word, not an emoji)
 		end
 	end
 	for index = 1, math.min(HudSlots.PACKS, #Events.list) do
@@ -502,7 +503,7 @@ local function buildShop()
 	for _, event in Events.list do
 		-- Each event's picture (its emoji on its shape, LihFolkUIIcons) until painted art exists.
 		if not Icons.Fallbacks[event.icon] then
-			Icons.Fallbacks[event.icon] = { glyph = event.glyph, shape = "square", color = Color3.fromHex(event.color) } -- (rounded squares, as the HUD's)
+			Icons.Fallbacks[event.icon] = { glyph = if (Config :: any).UI_CLEAN then string.upper(string.match(event.name, "^%S+") or event.name) else event.glyph, shape = "square", color = Color3.fromHex(event.color) } -- (rounded squares, as the HUD's; v4 D2: a word, not an emoji)
 		end
 	end
 	for index, event in Events.list do

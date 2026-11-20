@@ -34,6 +34,14 @@ DrawnIcons.ASSETS = {
 	event_ZeroG = "rbxassetid://106239231737168",
 	event_BouncyFloor = "rbxassetid://89177360296677",
 	event_FlashFreeze = "rbxassetid://110744201682823",
+	-- v4 (20 Nov): real in-game pictures for the event cards (art/events, cropped captures).
+	event_UfoBeam = "rbxassetid://134212201014097",
+	event_LightningStorm = "rbxassetid://125562375671598",
+	event_MagnetStorm = "rbxassetid://125884220156489",
+	event_BowlingAvalanche = "rbxassetid://110033879913121",
+	event_Tornado = "rbxassetid://119472961826364",
+	event_GorillaRampage = "rbxassetid://103132443783973",
+	event_BullRun = "rbxassetid://83124438677996",
 	-- Every weapon and tool.
 	tool_Blaster = "rbxassetid://108854870039876",
 	tool_Deagle = "rbxassetid://92665121427767",

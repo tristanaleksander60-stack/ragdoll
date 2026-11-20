@@ -26,6 +26,7 @@ local Creatures = require(Systems.Creatures)
 local DummyControl = require(Systems.DummyControl)
 local DummyFactory = require(Systems.DummyFactory)
 local FxService = require(Systems.FxService)
+local Lab = require(Systems.Lab)
 
 local U = Creatures.util
 local block, folder, knock, knockPlayers, dummiesIn = U.block, U.folder, U.knock, U.knockPlayers, U.dummiesIn
@@ -36,6 +37,12 @@ Surprises.HALF = Creatures.HALF -- studs either side of the lab's middle
 Surprises.Z_MIN, Surprises.Z_MAX = -85, 65
 
 type Stop = () -> ()
+
+-- How many more guest dummies the world takes (EventService sets this to its dummyRoom, so the
+-- MAX_DUMMIES cap holds for balloon and giant guests too).
+Surprises.room = function(): number
+	return math.huge
+end
 local rng = Random.new()
 
 local function spot(center: Vector3, margin: number?): Vector3
@@ -77,9 +84,21 @@ local function run(made: { Instance }, tick: (number, number) -> ()): Stop
 	return function()
 		running = false
 		for _, x in made do
-			if x.Parent then
-				x:Destroy()
+			if not x.Parent then
+				continue
 			end
+			-- A guest dummy: a dead one stays for its DEAD_HOLD (VitalsService takes it); a living one
+			-- goes in a puff, as Dummy Rain's do.
+			if x:IsA("Model") and x:GetAttribute("Mass") ~= nil then
+				if x:GetAttribute("Vital") == "Dead" then
+					continue
+				end
+				local pelvis = x:FindFirstChild("LowerTorso")
+				if pelvis and pelvis:IsA("BasePart") then
+					Lab.poof(pelvis.Position)
+				end
+			end
+			x:Destroy()
 		end
 	end
 end
@@ -176,7 +195,12 @@ function Surprises.BowlingAvalanche(center: Vector3): Stop
 	FxService.hit(center + Vector3.new(0, 4, Surprises.Z_MIN), 60, "Cannon")
 	local hitOnce: { [Model]: number } = {}
 	local done: { [Player]: boolean } = {}
+	local bodies = {}
+	local scan = every(0.12)
 	return run(made, function(_dt, t)
+		if scan(t) then
+			bodies = dummiesIn(center) -- (one look a tick for all the balls)
+		end
 		for _, b in balls do
 			local run = math.max(0, t - b.start)
 			local z = b.z + run * b.speed
@@ -186,7 +210,7 @@ function Surprises.BowlingAvalanche(center: Vector3): Stop
 			end
 			local at = center + Vector3.new(b.x, 4.5, z)
 			b.part.CFrame = CFrame.new(at) * CFrame.Angles(z / 4.5, 0, 0)
-			for _, d in dummiesIn(center) do
+			for _, d in bodies do
 				local o = d.pelvis.Position - at
 				if Vector3.new(o.X, 0, o.Z).Magnitude < 6.5 and (hitOnce[d.model] or 0) < t - 1 then
 					hitOnce[d.model] = t
@@ -204,7 +228,7 @@ end
 
 function Surprises.RocketRain(center: Vector3): Stop
 	local made: { Instance } = {}
-	local drop = every(0.28)
+	local drop = every(0.2)
 	local rockets: { { m: Model, from: Vector3, to: Vector3, t0: number } } = {}
 	return run(made, function(_dt, t)
 		if drop(t) then
@@ -214,9 +238,25 @@ function Surprises.RocketRain(center: Vector3): Stop
 			table.insert(made, m)
 			local look = CFrame.lookAt(from, to)
 			m.WorldPivot = look
-			block(m, "Body", Vector3.new(0.9, 0.9, 3.4), look, Color3.fromHSV(rng:NextNumber(), 0.75, 1))
-			neon(block(m, "Nose", Vector3.new(0.7, 0.7, 0.9), look * CFrame.new(0, 0, -2.1), Color3.fromRGB(255, 240, 200)))
-			local flame = neon(block(m, "Flame", Vector3.new(0.6, 0.6, 1.6), look * CFrame.new(0, 0, 2.4), Color3.fromRGB(255, 160, 40)))
+			block(m, "Body", Vector3.new(1.6, 1.6, 5.5), look, Color3.fromHSV(rng:NextNumber(), 0.75, 1))
+			neon(block(m, "Nose", Vector3.new(1.2, 1.2, 1.4), look * CFrame.new(0, 0, -3.3), Color3.fromRGB(255, 240, 200)))
+			local flame = neon(block(m, "Flame", Vector3.new(1, 1, 2.4), look * CFrame.new(0, 0, 3.8), Color3.fromRGB(255, 160, 40)))
+			-- A smoke trail behind it.
+			local a0 = Instance.new("Attachment")
+			a0.Position = Vector3.new(0.5, 0, 0)
+			a0.Parent = flame
+			local a1 = Instance.new("Attachment")
+			a1.Position = Vector3.new(-0.5, 0, 0)
+			a1.Parent = flame
+			local trail = Instance.new("Trail")
+			trail.Attachment0 = a0
+			trail.Attachment1 = a1
+			trail.Lifetime = 0.8
+			trail.FaceCamera = true
+			trail.WidthScale = NumberSequence.new(1.5, 4)
+			trail.Color = ColorSequence.new(Color3.fromRGB(255, 200, 120), Color3.fromRGB(200, 200, 200))
+			trail.Transparency = NumberSequence.new(0.2, 1)
+			trail.Parent = flame
 			local sparks = Instance.new("Sparkles")
 			sparks.SparkleColor = Color3.fromRGB(255, 210, 120)
 			sparks.Parent = flame
@@ -519,7 +559,7 @@ function Surprises.BalloonDrop(center: Vector3, owner: Player?): Stop
 		local at = from:Lerp(to, k) + Vector3.new(0, math.sin(t * 1.3) * 1.5, 0)
 		m:PivotTo(CFrame.new(at))
 		local inside = math.abs(at.X - center.X) < Surprises.HALF - 10
-		if inside and t > 1.5 and dropped < Surprises.BALLOON_DUMMIES and drop(t) then
+		if inside and t > 1.5 and dropped < Surprises.BALLOON_DUMMIES and drop(t) and Surprises.room() > 0 then
 			dropped += 1
 			local ok, body = pcall(DummyFactory.spawn, at - Vector3.new(0, 7, 0), at + Vector3.new(0, -7, 4), owner)
 			if ok and body then
@@ -535,15 +575,21 @@ end
 -- Giant dummy
 
 function Surprises.GiantDummy(center: Vector3, owner: Player?): Stop
-	local at = center + Vector3.new(0, 4, Surprises.Z_MIN + 10)
-	local ok, body = pcall(DummyFactory.spawn, at, center + Vector3.new(0, 4, 0), owner)
+	local at = center + Vector3.new(0, 4, -30)
+	local ok, body = false, nil :: Model?
+	if Surprises.room() > 0 then
+		ok, body = pcall(DummyFactory.spawn, at, center + Vector3.new(0, 4, 0), owner)
+	end
 	local made: { Instance } = {}
 	if ok and body then
 		body:SetAttribute("NoCredit", true)
 		pcall(function()
-			body:ScaleTo(2.6)
+			body:ScaleTo(4)
+			-- (Feet on the floor after growing: it stands, it does not drop in.)
+			local bcf, bsize = body:GetBoundingBox()
+			body:PivotTo(body:GetPivot() + Vector3.new(0, center.Y + 0.6 - (bcf.Position.Y - bsize.Y / 2), 0))
 		end)
-		body:SetAttribute("Mass", ((body:GetAttribute("Mass") :: number?) or 10) * 14)
+		body:SetAttribute("Mass", ((body:GetAttribute("Mass") :: number?) or 10) * 40)
 		body:SetAttribute("Home", center + Vector3.new(0, 4, 0))
 		table.insert(made, body)
 		FxService.hit(at, 120, "Anvil")

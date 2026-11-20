@@ -57,7 +57,7 @@ function LabZones.newShowing(unixTime: number): boolean
 	if not y then
 		return false
 	end
-	local start = os.time({ year = tonumber(y) :: number, month = tonumber(m) :: number, day = tonumber(d) :: number, hour = 0 })
+	local start = DateTime.fromUniversalTime(tonumber(y) :: number, tonumber(m) :: number, tonumber(d) :: number).UnixTimestamp -- (UTC, never the machine's local time)
 	return unixTime >= start and unixTime < start + days * 86400
 end
 
@@ -135,6 +135,8 @@ function LabZones.build(folder: Instance, origin: Vector3)
 	end
 	local into = Instance.new("Folder")
 	into.Name = "Zones"
+	into:SetAttribute("Origin", origin)
+	into:SetAttribute("NewShowing", LabZones.newShowing(os.time()))
 	into.Parent = folder
 	local y = origin.Y + 0.06
 	for _, z in LabZones.ZONES do
@@ -181,13 +183,13 @@ function LabZones.build(folder: Instance, origin: Vector3)
 	-- Today's machine.
 	local pick = LabZones.MACHINES[LabZones.todayIndex(os.time())]
 	local target = folder:FindFirstChild(pick.part, true)
+	into:SetAttribute("Today", pick.part)
 	if target and target:IsA("BasePart") then
 		local column = flat("TodayLight", Vector3.new(60, 9, 9), CFrame.new(target.Position + Vector3.new(0, 30, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 205, 60), 0.82, into)
 		column.Shape = Enum.PartType.Cylinder
 		column.Material = Enum.Material.Neon
 		local machine = if target.Parent and target.Parent:IsA("Model") then target.Parent else target
 		sign(into, anchorAt(topOf(machine, target.Position)), "\u{2B50} TODAY'S MACHINE: " .. pick.label, Color3.fromRGB(255, 205, 60), 4, Vector2.new(260, 40))
-		into:SetAttribute("Today", pick.part)
 	end
 	-- NEW tags.
 	if LabZones.newShowing(os.time()) then
@@ -201,4 +203,29 @@ function LabZones.build(folder: Instance, origin: Vector3)
 	end
 end
 
+
+-- A server that stays up past UTC midnight (or past the end of the NEW window) redraws each lab's
+-- zones once a minute when today's machine or the NEW state has changed.
+function LabZones.start()
+	if not (Config :: any).LAB_ZONES then
+		return
+	end
+	task.spawn(function()
+		while true do
+			task.wait(60)
+			local now = os.time()
+			local today = LabZones.MACHINES[LabZones.todayIndex(now)].part
+			local showing = LabZones.newShowing(now)
+			local pg = workspace:FindFirstChild("Playground")
+			for _, folder in if pg then pg:GetChildren() else {} do
+				local zones = folder:FindFirstChild("Zones")
+				local origin = zones and zones:GetAttribute("Origin")
+				if zones and typeof(origin) == "Vector3" and (zones:GetAttribute("Today") ~= today or zones:GetAttribute("NewShowing") ~= showing) then
+					zones:Destroy()
+					pcall(LabZones.build, folder, origin)
+				end
+			end
+		end
+	end)
+end
 return LabZones

@@ -225,6 +225,11 @@ local function step(f: CarFeel, dt: number, camPos: Vector3)
 		local s = sound(V.crashSound, body, false, 0.7)
 		s.PlaybackSpeed = 0.9 + math.random() * 0.2
 		s:Play()
+		task.delay(5, function() -- (a sound that never loads never ends: gone anyway)
+			if s.Parent then
+				s:Destroy()
+			end
+		end)
 		s.Ended:Once(function()
 			s:Destroy()
 		end)
@@ -253,13 +258,14 @@ function VehicleFeel.start()
 		local now = seated()
 		if now and not bound then
 			bound = true
-			ContextActionService:BindAction(VehicleFeel.HORN_ACTION, function(_, state)
+			-- (Above PadMap's slot keys, Medium+100, so DPad right honks while driving instead of
+			-- switching weapons; no touch button: no unchecked spot on a phone screen.)
+			ContextActionService:BindActionAtPriority(VehicleFeel.HORN_ACTION, function(_, state)
 				if state == Enum.UserInputState.Begin then
 					horn:FireServer()
 				end
 				return Enum.ContextActionResult.Sink
-			end, true, Enum.KeyCode.H, Enum.KeyCode.DPadRight)
-			ContextActionService:SetTitle(VehicleFeel.HORN_ACTION, "HORN")
+			end, false, Enum.ContextActionPriority.High.Value + 200, Enum.KeyCode.H, Enum.KeyCode.DPadRight)
 		elseif not now and bound then
 			bound = false
 			ContextActionService:UnbindAction(VehicleFeel.HORN_ACTION)

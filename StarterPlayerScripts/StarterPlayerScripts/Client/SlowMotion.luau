@@ -37,6 +37,7 @@ SlowMotion.SCALE = C.SLOWMO_SCALE or 0.25 -- how fast time runs in a bubble
 SlowMotion.FEEL_REACH = 30 -- studs past a bubble's edge where the camera still feels it
 SlowMotion.EASE = 0.35 -- s to ease the feel in or out
 SlowMotion.RESTORE_MAX = 90 -- studs/s: a body leaving a bubble gets its speed back up to this
+SlowMotion.SPIN_MAX = 30 -- rad/s: and its spin up to this
 SlowMotion.AUTO_RADIUS = 12
 SlowMotion.AUTO_TIME = 0.9
 SlowMotion.AUTO_GAP = C.SLOWMO_AUTO_GAP or 8
@@ -125,10 +126,22 @@ local function buildFeel()
 	vignette = gui
 end
 
+-- Reduced motion: Settings LESS, or AUTO with the device's own reduced-motion setting on.
+local function calmMotion(): boolean
+	local pick = Settings.MOTION[Settings.get().motion]
+	if pick and pick.reduced ~= nil then
+		return pick.reduced == true
+	end
+	local ok, on = pcall(function()
+		return game:GetService("GuiService").ReducedMotionEnabled
+	end)
+	return ok and on == true
+end
+
 local function applyFeel(k: number)
 	local on = k > 0.01
-	local motion = Settings.get().motion
-	local calm = motion == 2 -- (Settings: LESS motion: no FOV move, no blur)
+
+	local calm = calmMotion() -- (reduced motion: no FOV move, no blur, a lighter vignette)
 	if grade then
 		grade.Enabled = on
 		grade.Saturation = -0.45 * k
@@ -148,20 +161,11 @@ local function applyFeel(k: number)
 		vignette.Enabled = on
 		for _, f in vignette:GetChildren() do
 			if f:IsA("Frame") then
-				f.BackgroundTransparency = 1 - 0.85 * k
+				f.BackgroundTransparency = 1 - (if calm then 0.4 else 0.85) * k
 			end
 		end
 	end
 	FeelV2.fovBeat = if calm then 0 else -9 * k
-end
-
-local function bodyOf(part: BasePart): Model?
-	local m = part:FindFirstAncestorOfClass("Model")
-	local folder = Workspace:FindFirstChild("Dummies")
-	while m and folder and m.Parent ~= folder do
-		m = m:FindFirstAncestorOfClass("Model")
-	end
-	return m
 end
 
 local function addTrail(body: Model)
@@ -216,34 +220,40 @@ local function dropTrail(body: Model)
 	end
 end
 
--- One physics step: every slowed part keeps SCALE of what the step changed.
+-- One physics step: every slowed assembly keeps SCALE of what the step changed. Only bodies this
+-- client simulates (attribute SimulatedBy = our UserId): writing anyone else's would only fight
+-- the network. Each assembly is touched once (its root part), never once per part.
+local seen: { [BasePart]: boolean } = {}
+local seenBody: { [Model]: boolean } = {}
 local function stepBodies()
 	local s = SlowMotion.SCALE
 	local folder = Workspace:FindFirstChild("Dummies")
-	local seen: { [BasePart]: boolean } = {}
-	local seenBody: { [Model]: boolean } = {}
+	table.clear(seen)
+	table.clear(seenBody)
 	if folder and #bubbles > 0 then
+		local me = player.UserId
 		for _, body in folder:GetChildren() do
 			local pelvis = body:FindFirstChild("LowerTorso")
-			if body:IsA("Model") and pelvis and pelvis:IsA("BasePart") and inside(pelvis.Position) then
+			if body:IsA("Model") and pelvis and pelvis:IsA("BasePart") and body:GetAttribute("SimulatedBy") == me and inside(pelvis.Position) then
 				seenBody[body] = true
 				addTrail(body)
 				for _, part in body:GetChildren() do
-					if part:IsA("BasePart") and not part.Anchored then
-						seen[part] = true
-						local v, w = part.AssemblyLinearVelocity, part.AssemblyAngularVelocity
-						local st = slowed[part]
+					local root = if part:IsA("BasePart") then part.AssemblyRootPart else nil
+					if root and not seen[root] and not root.Anchored then
+						seen[root] = true
+						local v, w = root.AssemblyLinearVelocity, root.AssemblyAngularVelocity
+						local st = slowed[root]
 						if not st then
 							-- On the way in: its speed drops to the bubble's time.
 							local nv, nw = v * s, w * s
-							part.AssemblyLinearVelocity = nv
-							part.AssemblyAngularVelocity = nw
-							slowed[part] = { last = nv, lastSpin = nw }
+							root.AssemblyLinearVelocity = nv
+							root.AssemblyAngularVelocity = nw
+							slowed[root] = { last = nv, lastSpin = nw }
 						else
 							local nv = st.last + (v - st.last) * s
 							local nw = st.lastSpin + (w - st.lastSpin) * s
-							part.AssemblyLinearVelocity = nv
-							part.AssemblyAngularVelocity = nw
+							root.AssemblyLinearVelocity = nv
+							root.AssemblyAngularVelocity = nw
 							st.last = nv
 							st.lastSpin = nw
 						end
@@ -252,18 +262,21 @@ local function stepBodies()
 			end
 		end
 	end
-	-- Out of every bubble: its speed back (capped), its trail gone.
-	for part, st in slowed do
-		if not seen[part] then
-			slowed[part] = nil
-			if part.Parent and not part.Anchored then
-				local v = part.AssemblyLinearVelocity
-				local back = v / s
+	-- Out of every bubble: its speed back (capped both ways), its trail gone.
+	for root, _ in slowed do
+		if not seen[root] then
+			slowed[root] = nil
+			if root.Parent and not root.Anchored then
+				local back = root.AssemblyLinearVelocity / s
 				if back.Magnitude > SlowMotion.RESTORE_MAX then
 					back = back.Unit * SlowMotion.RESTORE_MAX
 				end
-				part.AssemblyLinearVelocity = back
-				part.AssemblyAngularVelocity = part.AssemblyAngularVelocity / s
+				local spin = root.AssemblyAngularVelocity / s
+				if spin.Magnitude > SlowMotion.SPIN_MAX then
+					spin = spin.Unit * SlowMotion.SPIN_MAX
+				end
+				root.AssemblyLinearVelocity = back
+				root.AssemblyAngularVelocity = spin
 			end
 		end
 	end
@@ -319,7 +332,7 @@ function SlowMotion.start()
 			return
 		end
 		local now = os.clock()
-		if (tonumber(data.strength) or 0) >= SlowMotion.AUTO_STRENGTH and now - lastAuto >= SlowMotion.AUTO_GAP then
+		if not calmMotion() and (tonumber(data.strength) or 0) >= SlowMotion.AUTO_STRENGTH and now - lastAuto >= SlowMotion.AUTO_GAP then
 			lastAuto = now
 			SlowMotion.moment(data.position)
 		end

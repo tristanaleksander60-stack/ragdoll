@@ -17,8 +17,8 @@ return {
 		assert(a >= 1 and a <= #LabZones.MACHINES and b ~= a, "today's machine does not change by the day")
 		assert(LabZones.todayIndex(t + 3600) == a, "today's machine changed within the day")
 		-- NEW window.
-		assert(LabZones.newShowing(os.time({ year = 2026, month = 11, day = 21, hour = 12 })), "NEW does not show the day after the update")
-		assert(not LabZones.newShowing(os.time({ year = 2026, month = 12, day = 10, hour = 12 })), "NEW still shows three weeks on")
+		assert(LabZones.newShowing(DateTime.fromUniversalTime(2026, 11, 21, 12).UnixTimestamp), "NEW does not show the day after the update")
+		assert(not LabZones.newShowing(DateTime.fromUniversalTime(2026, 12, 10, 12).UnixTimestamp), "NEW still shows three weeks on")
 		-- Built in a lab: zones, a featured machine, nothing that collides.
 		local pg = Workspace:FindFirstChild("Playground")
 		local lab = pg and pg:FindFirstChild("Lab1")

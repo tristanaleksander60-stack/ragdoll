@@ -17,6 +17,7 @@ local Workspace = game:GetService("Workspace")
 
 local Client = script.Parent
 local SoundMix = require(Client:WaitForChild("SoundMix"))
+local feel: any = nil -- (FeelV2, looked up once at start: its sound banks play the chest thumps)
 
 local CreatureAnim = {}
 
@@ -31,6 +32,8 @@ CreatureAnim.SOUNDS = table.freeze({
 type Joint = { motor: Motor6D? , bone: Bone? }
 type Anim = {
 	jointCount: number,
+	jointTries: number,
+	roarUntil: number,
 	jointsAt: number,
 	model: Model,
 	kind: string,
@@ -95,7 +98,7 @@ local function build(model: Model): Anim?
 		return nil
 	end
 	local joints, count = findJoints(model)
-	local a: Anim = { model = model, kind = kind, joints = joints, jointCount = count, jointsAt = os.clock(), gait = "", gaitAt = 0, loop = nil, lastBeat = 0 }
+	local a: Anim = { model = model, kind = kind, joints = joints, jointCount = count, jointTries = 0, roarUntil = 0, jointsAt = os.clock(), gait = "", gaitAt = 0, loop = nil, lastBeat = 0 }
 	local root = model.PrimaryPart
 	if kind == "Bull" and root then
 		local loop = sound(CreatureAnim.SOUNDS.hooves, root, 0.55, 0.85, true)
@@ -195,6 +198,9 @@ local function bull(a: Anim, t: number)
 end
 
 function CreatureAnim.start()
+	pcall(function()
+		feel = require(Client:WaitForChild("FeelV2", 5)) :: any
+	end)
 	local function add(m: Instance)
 		if m:IsA("Model") and not anims[m] then
 			local a = build(m)
@@ -229,7 +235,8 @@ function CreatureAnim.start()
 				continue
 			end
 			-- (Joints still streaming in: look again, once a second, until a full rig is there.)
-			if a.jointCount < (if a.kind == "Bull" then 20 else 14) and t - a.jointsAt > 1 then
+			if a.jointCount < (if a.kind == "Bull" then 20 else 14) and a.jointTries < 10 and t - a.jointsAt > 1 then
+				a.jointTries += 1
 				a.joints, a.jointCount = findJoints(m)
 				a.jointsAt = t
 			end
@@ -237,24 +244,31 @@ function CreatureAnim.start()
 			local at = (m:GetAttribute("GaitAt") :: number?) or now
 			if gait ~= a.gait then
 				a.gait = tostring(gait)
+				-- (A new move starts from rest: nothing of the last one stays on a joint it does not set.)
+				for _, j in a.joints do
+					if j.motor then
+						j.motor.Transform = CFrame.identity
+					elseif j.bone then
+						j.bone.Transform = CFrame.identity
+					end
+				end
 				a.gaitAt = at
 				-- The sound that goes with the new move.
-				if a.kind == "Gorilla" and gait == "Roar" then
+				if a.kind == "Gorilla" and gait == "Roar" and t >= a.roarUntil then
+					a.roarUntil = t + 4
 					oneShot(CreatureAnim.SOUNDS.roar, root, 1, 0.55)
-				elseif a.kind == "Gorilla" and gait == "Swat" and math.random() < 0.3 then
+				elseif a.kind == "Gorilla" and gait == "Swat" and t >= a.roarUntil and math.random() < 0.3 then
+					a.roarUntil = t + 4
 					oneShot(CreatureAnim.SOUNDS.roar, root, 0.6, 0.75)
 				end
 			end
 			local since = now - a.gaitAt
 			if a.kind == "Gorilla" then
 				gorilla(a, t, since)
-				if a.gait == "Chest" and t - a.lastBeat > 0.15 then
+				if a.gait == "Chest" and t - a.lastBeat > 0.3 then
 					a.lastBeat = t
-					local ok, FeelV2 = pcall(function()
-						return require(Client:WaitForChild("FeelV2")) :: any
-					end)
-					if ok and FeelV2 and FeelV2.play then
-						FeelV2.play("slam", root.Position + Vector3.new(0, 8, 0), 0.5, 0.6)
+					if feel and feel.play then
+						feel.play("slam", root.Position + Vector3.new(0, 8, 0), 0.5, 0.6)
 					end
 				end
 			elseif a.kind == "Bull" then

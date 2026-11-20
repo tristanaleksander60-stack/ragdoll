@@ -321,3 +321,34 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
   - T99_LabZones. Captures: top down and from the stations side.
   - **Not done:** moving machines into the zones (the clutter stays where it is), machines bought with Bolts, and an experiment card tied to today's machine.
 - T92 updated for the rig names (Gorilla/Bull) and passes. T98 passes.
+- **Blind review phase C: 7.5. Fix round 1 done (20 Nov):**
+  - **SlowMotion:**
+    - touches each assembly once (its root) and only bodies this client simulates (`SimulatedBy`);
+    - spin restore is capped at SPIN_MAX 30;
+    - reduced motion (LESS, or AUTO with the device setting) means no FOV move or blur, a light vignette and no auto moments;
+    - dead `bodyOf` removed.
+  - **ToyService:** skips only bodies a client really simulates.
+  - **Surprises:**
+    - guests respect MAX_DUMMIES (`Surprises.room` = `EventService.dummyRoom`);
+    - dead guests stay their DEAD_HOLD, living ones go in a puff;
+    - bowling scans once per 0.12 s;
+    - bigger rockets with smoke trails;
+    - the giant dummy is 4x, on its feet, near the middle.
+  - **LabZones:**
+    - `LabZones.start()` redraws today's machine and the NEW tags when the UTC day or the window changes;
+    - the dates are UTC (`DateTime`).
+  - **Scheduler:**
+    - each player's first surprise falls at a random time;
+    - a running mini blocks the BIG RED BUTTON (`EventService.miniRunning`);
+    - no minis during a party or a chase.
+  - **VehicleFeel:** the horn is bound above PadMap (DPad right honks while driving), with no touch button; the crash sound gets a fallback destroy.
+  - **CreatureAnim:**
+    - joints reset on a gait change, and the joint search is capped at 10 tries;
+    - one roar per 4 s;
+    - a thump every 0.3 s;
+    - FeelV2 is required once.
+  - **V3Assets:** a "Rigged" model without a PrimaryPart is anchored whole.
+  - Tests: T23/T36/T40/T41/T91/T92/T95/T97/T98/T99 pass, with no client errors.
+- **D2 (part):**
+  - `Config.UI_CLEAN` makes the leaderboards calm wall panels (`LeaderboardService.STYLE`): slate face, off-white header, Builder Sans, alternating rows, a thin metal stripe for the top 3, a painted steel frame, no crown or neon.
+  - Event cards use real in-game pictures for UfoBeam, LightningStorm, MagnetStorm, BowlingAvalanche, Tornado, GorillaRampage and BullRun (art/events, DrawnIcons). The rest show a word, not an emoji (UI_CLEAN).

@@ -618,10 +618,15 @@ end
 -- two minutes are the same: only in their own lab, never while an event runs or waits, never in a
 -- new visit's quiet start, at most one per LAB_SURPRISE_GAP (random in the range) per player.
 local nextSurprise: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
+local miniUntil = 0 -- (while a short surprise runs, no event starts on top of it)
+function EventService.miniRunning(): boolean
+	return os.clock() < miniUntil
+end
 function EventService.surpriseNow(player: Player, id: string?): string?
 	if not Lab.plotIndex(player) then
 		return nil
 	end
+	miniUntil = os.clock() + Surprises.MINI_TIME + 1
 	local name = Surprises.mini(labMiddle({ id = "Surprise", by = player.DisplayName, source = "Free" :: any, hostId = player.UserId }), player, id)
 	local event = Events.byId[name]
 	notify(player, string.format("SURPRISE! %s", if event then event.name else name), "ok")
@@ -638,11 +643,13 @@ local function surpriseLoop()
 		for _, player in Players:GetPlayers() do
 			local due = nextSurprise[player]
 			if not due then
-				nextSurprise[player] = now + math.max(Config.QUIET_START, gap.X)
+				-- (Each player's first one falls at a random time, so a fresh server never fires them all at once.)
+				nextSurprise[player] = now + math.max(Config.QUIET_START, math.random(math.floor(gap.X), math.floor(gap.Y)))
 				continue
 			end
 			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-			if now >= due and current == nil and #queue == 0 and root and root:IsA("BasePart") and Lab.ownerAt(root.Position) == player then
+			local busy = player:GetAttribute("PartyLab") ~= nil or ((player:GetAttribute("ChaseLeft") :: number?) or 0) > 0 or os.clock() < miniUntil
+			if now >= due and not busy and current == nil and #queue == 0 and root and root:IsA("BasePart") and Lab.ownerAt(root.Position) == player then
 				nextSurprise[player] = now + math.random(math.floor(gap.X), math.floor(gap.Y))
 				pcall(EventService.surpriseNow, player)
 			end
@@ -653,6 +660,7 @@ function EventService.start()
 	stateRemote = Net.event(Net.Names.EventState)
 	noticeRemote = Net.event(Net.Names.EventNotice)
 	Net.event(Net.Names.EventBuy).OnServerEvent:Connect(onBuy)
+	Surprises.room = EventService.dummyRoom -- (guest dummies of the surprises respect MAX_DUMMIES)
 	if Config.LAB_SURPRISES then
 		task.spawn(surpriseLoop)
 	end

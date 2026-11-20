@@ -73,6 +73,7 @@ WorldMaps.build(workspace:GetAttribute("LabOrigin") or Vector3.zero) -- the plac
 require(Systems:WaitForChild("MapActivities")).start(WorldMaps.folder() or workspace) -- v3: the open-air maps' launchers
 require(Systems:WaitForChild("GroundGuard")).start() -- v4 A2: lifts buried bodies onto the ground
 require(Systems:WaitForChild("NpcCommand")).start() -- v4 B4: talk to NPCs and command them
+require(Systems:WaitForChild("LabZones")).start() -- v4 C1: today's machine and NEW tags follow the UTC day
 do -- LOOK_V3: grass, hills and trees round the labs (after WorldMaps: it repaints the baseplate)
 	local ok, err = pcall(function()
 		require(Systems:WaitForChild("Landscape")).build(workspace:GetAttribute("LabOrigin") or Vector3.zero, Lab.PLOT_SPACING, Lab.PLOT_COUNT)

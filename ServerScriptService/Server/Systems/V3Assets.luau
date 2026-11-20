@@ -51,7 +51,7 @@ function V3Assets.place(role: string, parent: Instance, at: CFrame, options: Opt
 	local collide = o.collide ~= false
 	local anchored = o.anchored ~= false
 	-- (v4 C3: a rigged model, attribute "Rigged", keeps only its root anchored, so its joints move.)
-	local rigged = src:GetAttribute("Rigged") == true
+	local rigged = src:GetAttribute("Rigged") == true and copy.PrimaryPart ~= nil -- (no root: anchored whole)
 	local root = copy.PrimaryPart
 	for _, d in copy:GetDescendants() do
 		if d:IsA("BasePart") then

@@ -62,6 +62,31 @@ local INK = Color3.fromRGB(22, 15, 43)
 local PANEL = Color3.fromRGB(34, 28, 62)
 local VIP_GOLD = Color3.fromRGB(255, 178, 36)
 
+-- v4 D2 (owner: "the UI must not look AI-made"): with Config.UI_CLEAN the boards are calm wall
+-- panels: a matte slate face, a warm off-white header with dark lettering, plain alternating rows,
+-- the top three marked by a thin metal stripe (gold, silver, bronze; no glow), one body font, a
+-- painted steel frame and a real lamp (no neon frame, no crown). Off = the round 5 look.
+local CLEAN = (require(game:GetService("ReplicatedStorage").Shared.Config) :: any).UI_CLEAN == true
+local STYLE = if CLEAN
+	then {
+		panel = Color3.fromRGB(33, 36, 41),
+		head = Color3.fromRGB(238, 233, 222),
+		headVip = Color3.fromRGB(226, 196, 120),
+		headInk = Color3.fromRGB(28, 30, 34),
+		row = Color3.fromRGB(43, 47, 54),
+		rowAlt = Color3.fromRGB(38, 41, 47),
+		face = Color3.fromRGB(56, 60, 68),
+		text = Color3.fromRGB(236, 236, 232),
+		muted = Color3.fromRGB(150, 156, 166),
+		medals = { Color3.fromRGB(212, 175, 92), Color3.fromRGB(176, 182, 190), Color3.fromRGB(176, 120, 82) },
+		font = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold),
+		title = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.ExtraBold),
+		frame = Color3.fromRGB(70, 73, 80),
+		radius = 4,
+	}
+	else nil
+LeaderboardService.STYLE = STYLE
+
 local stores: { [string]: OrderedDataStore } = {}
 local globalRows: { [string]: { Row } } = {}
 local written: { [Player]: { [string]: number } } = {}
@@ -154,7 +179,11 @@ local function label(name: string, parent: Instance, props: { [string]: any }): 
 	local t = Instance.new("TextLabel")
 	t.Name = name
 	t.BackgroundTransparency = 1
-	t.Font = Enum.Font.FredokaOne
+	if STYLE then
+		t.FontFace = STYLE.font
+	else
+		t.Font = Enum.Font.FredokaOne
+	end
 	t.TextColor3 = Color3.new(1, 1, 1)
 	t.TextScaled = true
 	for key, value in props do
@@ -173,7 +202,7 @@ local function buildBoard(board: Board, cf: CFrame, folder: Instance, boardSize:
 	panel.Anchored = true
 	panel.Size = BOARD_SIZE
 	panel.CFrame = cf
-	panel.Color = PANEL
+	panel.Color = if STYLE then STYLE.panel else PANEL
 	panel.Material = Enum.Material.SmoothPlastic
 	panel.Parent = model
 	-- Two posts down to the floor (it stands, it does not float).
@@ -203,11 +232,15 @@ local function buildBoard(board: Board, cf: CFrame, folder: Instance, boardSize:
 	local head = Instance.new("Frame")
 	head.Name = "Head"
 	head.Size = UDim2.fromOffset(w, 72)
-	head.BackgroundColor3 = if board.vip then VIP_GOLD else Color3.fromRGB(110, 86, 255)
+	head.BackgroundColor3 = if STYLE then (if board.vip then STYLE.headVip else STYLE.head) elseif board.vip then VIP_GOLD else Color3.fromRGB(110, 86, 255)
 	head.Parent = gui
 	local title = label("Title", head, { Size = UDim2.new(1, -20, 0, 44), Position = UDim2.fromOffset(10, 4), Text = board.title })
+	if STYLE then
+		title.FontFace = STYLE.title
+		title.TextColor3 = STYLE.headInk
+	end
 	local stroke = Instance.new("UIStroke")
-	stroke.Thickness = 3
+	stroke.Thickness = if STYLE then 0 else 3
 	stroke.Color = INK
 	stroke.Parent = title
 	local sub = label("Sub", head, { Size = UDim2.new(1, -20, 0, 20), Position = UDim2.fromOffset(10, 48), Text = "", TextColor3 = INK })
@@ -219,9 +252,18 @@ local function buildBoard(board: Board, cf: CFrame, folder: Instance, boardSize:
 		row.Name = "Row" .. i
 		row.Size = UDim2.fromOffset(w - 16, rowH)
 		row.Position = UDim2.fromOffset(8, top + (i - 1) * (rowH + gap))
-		row.BackgroundColor3 = Color3.fromRGB(52, 44, 92)
+		row.BackgroundColor3 = if STYLE then (if i % 2 == 1 then STYLE.row else STYLE.rowAlt) else Color3.fromRGB(52, 44, 92)
 		row.Visible = false
-		corner(row, 10)
+		corner(row, if STYLE then STYLE.radius else 10)
+		if STYLE and STYLE.medals[i] then
+			-- (The top three: a thin metal stripe down the left edge.)
+			local stripe = Instance.new("Frame")
+			stripe.Name = "Stripe"
+			stripe.BorderSizePixel = 0
+			stripe.Size = UDim2.new(0, 6, 1, 0)
+			stripe.BackgroundColor3 = STYLE.medals[i]
+			stripe.Parent = row
+		end
 		row.Parent = gui
 		-- The face with a medal ring (gold, silver, bronze; plain after) and its place on a badge;
 		-- the name gets most of the row (it is what people look for); the number on the right.
@@ -231,10 +273,10 @@ local function buildBoard(board: Board, cf: CFrame, folder: Instance, boardSize:
 		face.Size = UDim2.fromOffset(a, a)
 		face.AnchorPoint = Vector2.new(0, 0.5)
 		face.Position = UDim2.new(0, 8, 0.5, 0)
-		face.BackgroundColor3 = Color3.fromRGB(76, 66, 128)
+		face.BackgroundColor3 = if STYLE then STYLE.face else Color3.fromRGB(76, 66, 128)
 		corner(face, a // 2)
 		local ring = Instance.new("UIStroke")
-		ring.Thickness = 4
+		ring.Thickness = if STYLE then 0 else 4
 		ring.Color = MEDALS[i] or Color3.fromRGB(120, 110, 170)
 		ring.Parent = face
 		face.Parent = row
@@ -247,12 +289,13 @@ local function buildBoard(board: Board, cf: CFrame, folder: Instance, boardSize:
 		badge.ZIndex = 3
 		corner(badge, 11)
 		badge.Parent = row
+		badge.Visible = STYLE == nil -- (clean: the order and the stripes say the place)
 		label("Rank", badge, { Size = UDim2.fromScale(1, 1), Text = tostring(i), ZIndex = 4, TextColor3 = if MEDALS[i] then INK else Color3.new(1, 1, 1) })
 		local textH = math.floor(rowH * 0.72) -- (read from the plaza's middle on a phone too)
 		local nameX = 8 + a + 10
 		local scoreW = 70
 		local name = label("PlayerName", row, { Size = UDim2.new(1, -(nameX + scoreW + 10), 0, textH), AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, nameX, 0.5, 0), TextXAlignment = Enum.TextXAlignment.Left })
-		local score = label("Score", row, { Size = UDim2.fromOffset(scoreW, textH), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), TextXAlignment = Enum.TextXAlignment.Right, TextColor3 = MEDALS[i] or Color3.new(1, 1, 1) })
+		local score = label("Score", row, { Size = UDim2.fromOffset(scoreW, textH), AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -8, 0.5, 0), TextXAlignment = Enum.TextXAlignment.Right, TextColor3 = if STYLE then STYLE.text else (MEDALS[i] or Color3.new(1, 1, 1)) })
 		for _, t in { name, score } do
 			local cap = Instance.new("UITextSizeConstraint")
 			cap.MaxTextSize = 44
@@ -264,7 +307,7 @@ local function buildBoard(board: Board, cf: CFrame, folder: Instance, boardSize:
 		Size = UDim2.fromOffset(w - 60, 80),
 		Position = UDim2.fromOffset(30, h / 2 - 40),
 		Text = if board.vip then "No VIPs here yet!" elseif board.time then "Nobody yet: just play!" else "Knock something down to get on the board!",
-		TextColor3 = Color3.fromRGB(240, 236, 255),
+		TextColor3 = if STYLE then STYLE.muted else Color3.fromRGB(240, 236, 255),
 		TextWrapped = true,
 	})
 	local list = views[board.id] or {}
@@ -450,17 +493,23 @@ local function trim(model: Model, cf: CFrame, size: Vector3, glow: Color3)
 		return p
 	end
 	local w, h = size.X, size.Y
-	-- The glowing frame round the panel.
-	bar("Frame", Vector3.new(w + 1, 0.5, 0.8), cf * CFrame.new(0, h / 2 + 0.25, 0), glow, Enum.Material.Neon)
-	bar("Frame", Vector3.new(w + 1, 0.5, 0.8), cf * CFrame.new(0, -h / 2 - 0.25, 0), glow, Enum.Material.Neon)
-	bar("Frame", Vector3.new(0.5, h + 1, 0.8), cf * CFrame.new(w / 2 + 0.25, 0, 0), glow, Enum.Material.Neon)
-	bar("Frame", Vector3.new(0.5, h + 1, 0.8), cf * CFrame.new(-w / 2 - 0.25, 0, 0), glow, Enum.Material.Neon)
-	-- A gold crown on top: a band and three points.
+	-- The frame round the panel (clean: painted steel, no glow; then no crown).
+	if STYLE then
+		glow = STYLE.frame
+	end
+	local frameMaterial = if STYLE then Enum.Material.Metal else Enum.Material.Neon
+	bar("Frame", Vector3.new(w + 1, 0.5, 0.8), cf * CFrame.new(0, h / 2 + 0.25, 0), glow, frameMaterial)
+	bar("Frame", Vector3.new(w + 1, 0.5, 0.8), cf * CFrame.new(0, -h / 2 - 0.25, 0), glow, frameMaterial)
+	bar("Frame", Vector3.new(0.5, h + 1, 0.8), cf * CFrame.new(w / 2 + 0.25, 0, 0), glow, frameMaterial)
+	bar("Frame", Vector3.new(0.5, h + 1, 0.8), cf * CFrame.new(-w / 2 - 0.25, 0, 0), glow, frameMaterial)
+	-- A gold crown on top: a band and three points (the round 5 look only).
+	if not STYLE then
 	local gold = Color3.fromRGB(255, 196, 46)
 	bar("Crown", Vector3.new(5, 1, 0.8), cf * CFrame.new(0, h / 2 + 1.2, 0), gold, Enum.Material.Metal)
 	for i = -1, 1 do
 		local point = bar("CrownPoint", Vector3.new(1.1, 1.6, 0.8), cf * CFrame.new(i * 2, h / 2 + 2.3 + (if i == 0 then 0.4 else 0), 0) * CFrame.Angles(0, 0, math.rad(45)), gold, Enum.Material.Metal)
 		point.Size = Vector3.new(1.2, 1.2, 0.8)
+	end
 	end
 	-- Light from below, onto the face.
 	local lampPart = bar("BoardLamp", Vector3.new(w, 0.4, 0.6), cf * CFrame.new(0, -h / 2 - 0.9, -1.4), Color3.fromRGB(30, 30, 40), Enum.Material.Metal)

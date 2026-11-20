@@ -781,7 +781,7 @@ local function buildBigButton()
 		local pick = pool[math.random(1, #pool)]
 		-- (Only when nothing runs or waits: a free lab event never holds the server's one queue, and it
 		-- starts now, while the presser is in this lab. Blind review 19 Nov.)
-		local started = EventService.current() == nil and EventService.queued() == 0 and EventService.trigger(pick, player.DisplayName, "Free", false, nil, owner.UserId)
+		local started = EventService.current() == nil and EventService.queued() == 0 and not EventService.miniRunning() and EventService.trigger(pick, player.DisplayName, "Free", false, nil, owner.UserId)
 		if not started then
 			prompt.ActionText = "Busy, try again soon"
 			task.delay(2.5, function()
