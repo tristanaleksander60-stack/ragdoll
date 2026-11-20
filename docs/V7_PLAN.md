@@ -200,3 +200,11 @@ They lead from the spawn or arrival to each thing you can do there.
 
 ## State
 - 20 Nov 2026: plan written (cloud). Nothing of V7 started. V6-1..V6-7 done and V6-8 started (see `docs/V6_PLAN.md`); V6-8 waits until V7 is done.
+- **V7-1 done (20 Nov):**
+  - The yellow light column over today's machine is gone (`Config.TODAY_LIGHT` false). The small TODAY'S MACHINE sign stays.
+  - The painted floor boxes are gone (`Config.ZONE_FLOOR` false): the zone tints, edge lines, floor names and parking lines, which included the red box round the BIG RED BUTTON and the orange one round the cannon.
+  - The 30x30 hazard box round the spinning mace goes with them.
+  - The machines themselves (CannonPad, Bullseye, BigButton, stations, lava rim) are untouched.
+  - T99 checks that no boxes or light column are left and waits for the lab to be built; T99/T23/T50 pass.
+  - Captures: v7_1_after (above) and v7_1_after2 (eye height).
+  - Studio's viewport had gone white (an Assistant plugin version change); Studio was restarted from the saved place (v577).

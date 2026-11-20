@@ -458,3 +458,4 @@ What to do:
 - **State:** V6-1 to V6-8 are built, seen in Studio and pushed.
   - Still open (owner): the product ids for the 10 map items (table above), the notification strings, saving the place (done by me through v570+), and publishing.
   - Still open (later): the 3-client lab privacy check, phone frame-time checks, TRY per UTC day, and birds on roofs and wires.
+- **20 Nov (/klar, V7 first):** V6-8 is paused here, with its done part committed (event cards, haze, booth placement). It goes on after V7.

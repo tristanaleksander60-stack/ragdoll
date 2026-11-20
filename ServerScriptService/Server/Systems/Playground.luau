@@ -641,7 +641,10 @@ local function buildMace()
 	-- Behind the spawn, on the left: a post with an arm going round, a spiked ball at its end.
 	local x, z = -30, 32
 	local post = part("MacePost", Vector3.new(3, 5, 3), at(x, 2.5, z), DARK, Enum.Material.Metal)
-	hazardRim(x, z, 30, 30, 0.4)
+	-- (V7-1: the big painted box round the mace goes with the other floor boxes: ZONE_FLOOR.)
+	if (Config :: any).ZONE_FLOOR then
+		hazardRim(x, z, 30, 30, 0.4)
+	end
 	local hub = (at(x, 4, z)).Position
 	local length = 12
 	local arm = part("MaceArm", Vector3.new(length, 0.8, 0.8), CFrame.new(hub + Vector3.new(length / 2, 0, 0)), DARK, Enum.Material.DiamondPlate)

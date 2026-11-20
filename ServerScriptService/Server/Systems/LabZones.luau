@@ -138,7 +138,9 @@ function LabZones.build(folder: Instance, origin: Vector3)
 	into:SetAttribute("NewShowing", LabZones.newShowing(os.time()))
 	into.Parent = folder
 	local y = origin.Y + 0.06
-	for _, z in LabZones.ZONES do
+	-- (V7-1, the owner: no painted boxes on the floor. Config.ZONE_FLOOR brings the tints, edge lines,
+	-- floor names and parking lines back; the paths of V7-2 show the way instead.)
+	for _, z in if (Config :: any).ZONE_FLOOR then LabZones.ZONES else {} do
 		local c = CFrame.new(origin + Vector3.new(z.x, 0, z.z))
 		-- A soft tint and a crisp edge line (four thin strips).
 		flat("ZoneTint", Vector3.new(z.w, 0.04, z.d), c + Vector3.new(0, y - origin.Y, 0), z.color, 0.86, into)
@@ -151,7 +153,7 @@ function LabZones.build(folder: Instance, origin: Vector3)
 		end
 	end
 	-- Parking lines in the vehicle bay.
-	for i = 0, 3 do
+	for i = 0, if (Config :: any).ZONE_FLOOR then 3 else -1 do
 		flat("BayLine", Vector3.new(14, 0.05, 0.3), CFrame.new(origin + Vector3.new(70, y - origin.Y + 0.02, -24 + i * 22)), Color3.fromRGB(240, 240, 240), 0.2, into)
 	end
 	-- (A sign floats over the top of the thing it names, and over anything standing round it: an
@@ -184,9 +186,12 @@ function LabZones.build(folder: Instance, origin: Vector3)
 	local target = folder:FindFirstChild(pick.part, true)
 	into:SetAttribute("Today", pick.part)
 	if target and target:IsA("BasePart") then
-		local column = flat("TodayLight", Vector3.new(60, 9, 9), CFrame.new(target.Position + Vector3.new(0, 30, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 205, 60), 0.82, into)
-		column.Shape = Enum.PartType.Cylinder
-		column.Material = Enum.Material.Neon
+		-- (V7-1, the owner: no yellow light column over it; Config.TODAY_LIGHT brings it back.)
+		if (Config :: any).TODAY_LIGHT then
+			local column = flat("TodayLight", Vector3.new(60, 9, 9), CFrame.new(target.Position + Vector3.new(0, 30, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 205, 60), 0.82, into)
+			column.Shape = Enum.PartType.Cylinder
+			column.Material = Enum.Material.Neon
+		end
 		local machine = if target.Parent and target.Parent:IsA("Model") then target.Parent else target
 		sign(into, anchorAt(topOf(machine, target.Position)), "\u{2B50} TODAY'S MACHINE: " .. pick.label, Color3.fromRGB(255, 205, 60), 4, Vector2.new(260, 40))
 	end
