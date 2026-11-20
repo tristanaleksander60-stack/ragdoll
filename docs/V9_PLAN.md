@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -482,6 +482,25 @@ A full placement pass for the lab hub (V9-0h) and every map, done as a designer 
 - The KO green still differs.
 
 **Capture:** before/after in the sun at the spawn and close up, PC and phone, plus the greyscale check.
+
+## V9-0p Guide signs and rings move with their creature (owner, 21 Nov; quick)
+> "Fiks så at teksten ikke følger bag ved robotstøvsugeren men følger ordentligt efter."
+
+**Problem** (the owner's capture): the vacuum robot roams, but its "FEED ME!" sign (with "3 / 10") and its cyan dashed drop ring stay behind at its home spot, or trail behind it. The sign floats over empty grass while the robot is elsewhere.
+
+**Cause to confirm:**
+- `LabGuide` builds the sign and the ring (`GuideRingSeg`) at a fixed position, or welds them to a part the vacuum does not move with.
+- The vacuum's motion is server-stepped at 15 Hz (V6-5 review), so anything updated separately lags.
+
+**Fix:**
+- **Sign:** a BillboardGui with its **Adornee** set to an Attachment on the creature's own root/PrimaryPart (the part that actually moves), with `StudsOffsetWorldSpace` above its top. Then it follows exactly, every frame, on every screen, with no extra network.
+- **Ring:** for a moving creature, the ring is drawn **client-side** around the creature's current position. It is a cheap ring of pieces re-placed on RenderStepped from the creature's pivot, or one decal disc welded to the root, kept flat on the floor by a ground raycast. Rings of creatures that do not move stay where they are.
+- **Smooth motion:** the vacuum's motion is smoothed on the client (interpolate between the server's 15 Hz steps), so the robot and its sign glide instead of stepping.
+- **The same check for every moving thing** with a sign, ring, hunger meter or name: the spider on its thread, the frog's tongue target, the mole, the chicken, the robot dog/parrot pets, the creature events. Their labels follow the thing.
+
+**Test:** T169_GuideFollows. Move the vacuum 30 studs: within 1 frame, its sign and ring are within 1 stud of its position, over 5 s of roaming.
+
+**Capture:** the vacuum moving with its sign and ring, 3 frames.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
