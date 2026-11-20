@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0t, V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0t, V9-0u, V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -117,6 +117,25 @@ Run all of `docs/FIX_PATHS_SHOP.md`:
 - An expired or not-yet code is refused.
 - The rate limit works.
 - The CODES window fits on 16 LayoutCheck screens.
+
+## V9-0u The UFO is removed (owner, 21 Nov; quick)
+> "Fjern ufo."
+
+Remove every UFO from play, behind a switch (`Config.UFO_ENABLED = false`; the code stays so it can come back):
+- **The UfoBeam event** (`Events.luau`, EventService handler, `Surprises.luau`):
+  - not in the SHOP, the Events window or the daily deck;
+  - not in the BIG RED BUTTON pool (`Playground.BUTTON_EVENTS`), the admin/director event lists or the event roulette;
+  - not as a random lab surprise;
+  - nothing starts it.
+- **The first-wow UFO** (`Config.FIRST_WOW_AT` 45: "a UFO over your own lab once"): replace it with another first-wow moment that fits. Pick from what already exists: a mini Dummy Rain, a cannon salvo or the rocket launch (V9-3c), so a newcomer still gets a wow at about 45 s.
+- **Text and pictures:**
+  - remove the UFO from What's New lines, `STORE_TEXT.md`, the experiment cards and journal pages, the icons lists (`DrawnIcons event_UfoBeam` may stay unused);
+  - remove the shop picture `art/shop/event_UfoBeam.png` from any list that is shown.
+- **The developer product** for UfoBeam stays on the dashboard but is never offered in-game. Tell the owner to set it to "not for sale".
+- **Tests:**
+  - T98_Surprises and the event tests skip UfoBeam while it is off;
+  - T107 checks the 20 remaining events;
+  - a new check makes sure no list the players can reach contains "UfoBeam".
 
 ## V9-0a Hitting a ragdoll never opens Talk (owner, 21 Nov; do it first, it is quick)
 > "Fiks så at når man forsøger at slå en ragdoll at man ikke åbner talk menuen hele tiden."
