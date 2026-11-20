@@ -255,6 +255,13 @@ local Config = {
 	CALM_FIRST = 60,
 	FLEE_SHORT = 1.2,
 	FLEE_MAX = 2,
+	-- V8-0.3 (a full bar that stays yours): the start bar is Popper, Grab, Bat, Grenade, Launch
+	-- (Toys.DEFAULT_LOADOUT; Rocket the first unlock at 3; Poke/Slap/Shove/Heal moved up the ladder);
+	-- older saved bars move over once (LoadoutStore, profile flag); new tools keep to the hand rules
+	-- (PokeController.slotFor: the weakest slot, only for a stronger tool; never a gun, a bang, Grab,
+	-- the G17 or the Bat; a prize always lands; never picked while firing).
+	V8_START_BAR = true,
+	V8_HAND_RULES = true,
 }
 
 return table.freeze(Config)

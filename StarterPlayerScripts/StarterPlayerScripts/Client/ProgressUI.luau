@@ -313,7 +313,12 @@ local function playOpening(result: { kind: string?, id: string, name: string, ra
 	redraw()
 	-- A weapon goes straight onto the bar, in hand (or, with a full bar, the pick of its slot).
 	if weapon and not PokeController.firstMinute() then
-		PokeController.equip(weapon.id)
+		-- (V8-0.3: a prize lands in the hand: no pick-a-slot step.)
+		if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).V8_HAND_RULES then
+			PokeController.autoEquip(weapon.id, true)
+		else
+			PokeController.equip(weapon.id)
+		end
 	end
 	-- More eggs: offered again at once (one tap each).
 	if state.eggs > 0 then
@@ -570,7 +575,7 @@ function ProgressUI.start()
 				-- (Round 5: a named weapon day of the calendar.)
 				local id = weapon.id
 				OnboardingController.whenFree(function()
-					PokeController.autoEquip(id)
+					PokeController.autoEquip(id, true) -- (V8-0.3: a gift day is a prize: it always lands)
 				end)
 				Notify.say("reward", string.format("DAY %d GIFT: the %s is yours! It's on your bar.", streak, string.upper(weapon.label)), Color3.fromRGB(120, 230, 140))
 				C.playSound("reward")

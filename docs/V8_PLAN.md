@@ -1389,3 +1389,18 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
     - "Menu" became "More".
   - **Tests:** T109 passes; T23, T24, T32 and T33 pass (T32/T33 now step past the calm minute; T33 accepts the nearest coward); T38 and T45 pass.
   - **Not done:** before/after captures (saved for the round 1 playtest).
+- **V8-0.3 done (code; switches `V8_START_BAR`, `V8_HAND_RULES`):**
+  - **Start bar:** Popper, Grab, Bat, Grenade, Launch (5 of 6), all open from the start. The Rocket is the first unlock at 3 (`Toys.V8_RUNGS`). Poke 18, Shove 22, Slap 24 and Heal 60 left the early rungs, and Punch stays open in WEAPONS.
+  - **Hand rules** (`Shared/HandRules`):
+    - a new tool takes the weakest slot that may go, only when it is stronger;
+    - a gun, a bang, Grab, the G17 and the Bat never give way to a plain tool; a stronger gun or bang takes the weakest gun or bang (never the G17);
+    - a prize (egg, gift day) always lands in the hand, with no pick-a-slot step;
+    - a new tool is never picked while fire is held or a tool fired in the last 0.6 s: it waits for a calm moment.
+  - **Old bars:** a saved bar moves once (Poke/Slap/Heal out; Bat/Grenade/Launch in while there is room). The flag key `<userId>_v8bar` is written with UpdateAsync, so a Poke put back later stays.
+  - **Phones:** they get HudV3's "Next: Rocket" pill from the first second, in the top bar's own strip (tap = WEAPONS, no gift button there).
+  - **Tests:**
+    - T110 passes: unlocks 0..30 never weaken the bar, every gun and bang lands, keepers stay, a prize lands, the move runs once (memory store only);
+    - T35, T56 and T64 updated (T56's 60 s floor was stale since V7's 45 s);
+    - T21, T22, T23, T45, T47, T90 and T122 pass;
+    - LayoutCheck shows 0 problems.
+  - **Not checked:** SHOOT staying up for 3 minutes of scripted phone play (left for the round 1 playtest).

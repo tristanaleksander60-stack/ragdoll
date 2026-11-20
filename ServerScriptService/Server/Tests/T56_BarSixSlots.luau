@@ -26,10 +26,10 @@ return {
 		local cut = LoadoutStore.validate(seven)
 		assert(cut and #cut == 6 and cut[6] == "Freeze", "a 7-tool list should keep its first 6")
 		local three = LoadoutStore.validate(Toys.defaultLoadout)
-		assert(three and #three == 3, "the starting bar of 3 was refused")
+		assert(three and #three == #Toys.defaultLoadout, "the starting bar was refused") -- (V8-0.3: 5 tools)
 
 		local n, after = Config.NEXT_UNLOCKS_MIN_TAKEDOWNS, Config.NEXT_UNLOCKS_AFTER
-		assert(n >= 1 and after >= 60, "the NEXT cards' thresholds are not set")
+		assert(n >= 1 and after >= 30, "the NEXT cards' thresholds are not set") -- (V7: 45 s)
 		assert(not BarRules.nextUnlocksShown(0, 10), "a brand new player sees the NEXT cards")
 		assert(not BarRules.nextUnlocksShown(n - 1, after + 600), "NEXT cards under the takedown threshold")
 		assert(not BarRules.nextUnlocksShown(n + 500, after - 1), "NEXT cards in the first minutes of a visit")

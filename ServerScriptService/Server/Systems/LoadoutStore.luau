@@ -16,6 +16,7 @@ local RunService = game:GetService("RunService")
 local Shared = ReplicatedStorage.Shared
 local Net = require(Shared.Net)
 local Toys = require(Shared.Toys)
+local Config = require(Shared.Config)
 local Log = require(Shared.Log)
 
 local log = Log.new("Loadout")
@@ -119,6 +120,66 @@ local function scheduleSave(player: Player)
 	end)
 end
 
+-- V8-0.3 (Config.V8_START_BAR): a saved bar moves to the full start bar once. Poke, Slap and Heal
+-- leave it; Bat, Grenade and Launch go in while there is room; the rest stays where it was (and
+-- everything stays owned, in WEAPONS). A flag key beside the bar ("<userId>_v8bar") makes it run
+-- once: a Poke put back later stays.
+LoadoutStore.V8_OUT = table.freeze({ Poke = true, Slap = true, Heal = true }) :: { [string]: boolean }
+LoadoutStore.V8_IN = table.freeze({ "Bat", "Grenade", "Launch" }) :: { string }
+function LoadoutStore.migrateV8(list: { string }): { string }
+	local out = {}
+	for _, id in list do
+		if not LoadoutStore.V8_OUT[id] then
+			table.insert(out, id)
+		end
+	end
+	for _, id in LoadoutStore.V8_IN do
+		if not table.find(out, id) and #out < Toys.SLOTS and Toys.byId[id] then
+			table.insert(out, id)
+		end
+	end
+	return out
+end
+local migratedMemory: { [number]: boolean } = {}
+local function v8Done(userId: number): (boolean, boolean)
+	local ds = store
+	if not ds then
+		return true, migratedMemory[userId] == true
+	end
+	local ok, value = retry(function()
+		return ds:GetAsync(tostring(userId) .. "_v8bar")
+	end)
+	return ok, ok and value == true
+end
+local function markV8(userId: number): boolean
+	local ds = store
+	if not ds then
+		migratedMemory[userId] = true
+		return true
+	end
+	return (retry(function()
+		-- (A write-once flag: it only ever goes to true.)
+		ds:UpdateAsync(tostring(userId) .. "_v8bar", function()
+			return true, { userId }
+		end)
+	end))
+end
+-- Tests: whether bars live in memory only (no DataStore: Studio without API access, self-tests).
+function LoadoutStore.inMemory(): boolean
+	return store == nil
+end
+-- Run the one-time move on a stored bar as a join does.
+function LoadoutStore.migrateOnce(userId: number, list: { string }): { string }
+	local okFlag, done = v8Done(userId)
+	if okFlag and not done then
+		local moved = LoadoutStore.migrateV8(list)
+		if save(userId, moved) and markV8(userId) then
+			return moved
+		end
+	end
+	return list
+end
+
 local READ_RETRIES = 3
 local READ_RETRY_GAP = 20 -- s
 
@@ -142,6 +203,9 @@ local function onJoin(player: Player)
 	if current[player] then
 		scheduleSave(player) -- set while the read was running: newer than what was stored
 	elseif list then
+		if (Config :: any).V8_START_BAR and ok then
+			list = LoadoutStore.migrateOnce(player.UserId, list)
+		end
 		current[player] = list
 		remote:FireClient(player, "Load", list)
 	end

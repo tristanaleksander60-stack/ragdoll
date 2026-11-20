@@ -257,6 +257,20 @@ local function buildTop(onRewards: () -> ())
 	pill.BackgroundTransparency = 0.1
 	corner(pill, 22)
 	pill.Parent = row
+	-- (V8-0.3: tapping the next goal opens WEAPONS, where it waits.)
+	local tap = Instance.new("TextButton")
+	tap.Name = "Tap"
+	tap.Text = ""
+	tap.BackgroundTransparency = 1
+	tap.Size = UDim2.fromScale(1, 1)
+	tap.ZIndex = 5
+	tap.Parent = pill
+	tap.Activated:Connect(function()
+		local open = (require(Client:WaitForChild("PokeController")) :: any).openCatalog
+		if type(open) == "function" then
+			open()
+		end
+	end)
 	local trophy = Icons.make("crown", UDim2.fromOffset(22, 22), Color3.new(1, 1, 1))
 	trophy.AnchorPoint = Vector2.new(0, 0.5)
 	trophy.Position = UDim2.new(0, 12, 0.5, -3)
@@ -407,7 +421,15 @@ local function step()
 		g.Enabled = on
 	end
 	if tg then
-		tg.Enabled = on and not held.Top
+		-- (V8-0.3: phones keep the round 5 HUD, but get the "Next: Rocket 2/3" pill from the first
+		-- second, in the top bar's own strip (clear of every control below it); no gift button there.)
+		local phonePill = Config.V8_START_BAR and not on
+			and (require(Client:WaitForChild("HudSlots")) :: any).context(ViewMode.isTouch(), ViewMode.isLab()).phone == true
+		tg.Enabled = (on and not held.Top) or phonePill
+		local giftButton = tg:FindFirstChild("Gift", true)
+		if giftButton and giftButton:IsA("GuiObject") then
+			giftButton.Visible = not phonePill
+		end
 	end
 	local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 	local Controller = require(UI:WaitForChild("LihFolkUIController"))

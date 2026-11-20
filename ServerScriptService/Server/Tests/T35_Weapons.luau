@@ -67,7 +67,11 @@ local function ladder(results: { string })
 		end
 	end
 	table.sort(open)
+	local v8 = (require(game:GetService("ReplicatedStorage").Shared.Config) :: any).V8_START_BAR == true
 	local want = table.clone(Toys.defaultLoadout)
+	if v8 then
+		table.insert(want, "Punch") -- (V8-0.3: Punch stays open, in WEAPONS, off the start bar)
+	end
 	table.sort(want)
 	assert(table.concat(open, ",") == table.concat(want, ","), "open from the start: " .. table.concat(open, ", "))
 	local weapons = {}
@@ -76,10 +80,18 @@ local function ladder(results: { string })
 			table.insert(weapons, Toys.byId[id].label)
 		end
 	end
-	-- (Round 5: the G17 and Punch, and Grab; Bat, Crowbar and Shove at 2, 4 and 6 takedowns.)
-	assert(#weapons == 2, string.format("a new player has %d weapons (want 2)", #weapons))
-	assert(Toys.SLOTS == 6 and #Toys.defaultLoadout == 3, "the bar is not 6 slots with 3 tools at the start (phase 0)")
-	assert(Toys.byId.Bat.unlockAt == 2 and Toys.byId.Crowbar.unlockAt == 4 and Toys.byId.Shove.unlockAt == 6, "Bat, Crowbar, Shove are not at 2, 4, 6")
+	if v8 then
+		-- (V8-0.3: Popper, Bat, Launch and Punch to hit with, Grab and the Grenade besides; the
+		-- Rocket at 3.)
+		assert(#weapons == 4, string.format("a new player has %d weapons (want 4)", #weapons))
+		assert(Toys.SLOTS == 6 and #Toys.defaultLoadout == 5, "the bar is not 6 slots with 5 tools at the start (V8-0.3)")
+		assert(Toys.byId.Rocket.unlockAt == 3 and Toys.byId.Crowbar.unlockAt == 4, "the Rocket is not at 3 or the Crowbar not at 4")
+	else
+		-- (Round 5: the G17 and Punch, and Grab; Bat, Crowbar and Shove at 2, 4 and 6 takedowns.)
+		assert(#weapons == 2, string.format("a new player has %d weapons (want 2)", #weapons))
+		assert(Toys.SLOTS == 6 and #Toys.defaultLoadout == 3, "the bar is not 6 slots with 3 tools at the start (phase 0)")
+		assert(Toys.byId.Bat.unlockAt == 2 and Toys.byId.Crowbar.unlockAt == 4 and Toys.byId.Shove.unlockAt == 6, "Bat, Crowbar, Shove are not at 2, 4, 6")
+	end
 	-- Players from before keep them (grandfather from ladder 2).
 	local old: any = { owned = {}, oldEggs = 0, eggs = 0, ladder = 2 }
 	ProgressService.grandfather(old, 0, 0, 2)
@@ -153,7 +165,14 @@ local function eggs(results: { string }, player: Player, profile: any)
 	ProgressService.setOwnedForTest(player, {})
 	player:SetAttribute("UnlockAll", nil)
 	local locked = ProgressService.lockedOf(player)
-	assert(#locked == #Toys.list - #Toys.defaultLoadout, string.format("%d weapons locked at the start", #locked))
+	-- (V8-0.3: Punch stays open off the start bar.)
+	local openCount = 0
+	for _, toy in Toys.list do
+		if toy.unlockAt <= 0 then
+			openCount += 1
+		end
+	end
+	assert(#locked == #Toys.list - openCount, string.format("%d weapons locked at the start", #locked))
 	assert(not ProgressService.isUnlocked(player, Toys.byId.Katana), "the Katana is open without takedowns")
 
 	-- The next one up (a low roll, no lucky jump).
@@ -306,8 +325,10 @@ local function buying(results: { string }, player: Player, profile: any)
 		profile.pending = {}
 		profile.takedowns = 0
 		WeaponShop.resetForTest(player)
-		WeaponShop.onRequest(player, "Buy", "Poke")
-		assert(next(profile.pending) == nil and not profile.owned.Poke, "Poke, 3 takedowns away, was put up for buying")
+		-- (V8-0.3: the Crowbar is the near rung now, at 4; Poke went up the ladder.)
+		local near = if (require(game:GetService("ReplicatedStorage").Shared.Config) :: any).V8_START_BAR then "Crowbar" else "Poke"
+		WeaponShop.onRequest(player, "Buy", near)
+		assert(next(profile.pending) == nil and not profile.owned[near], near .. ", a few takedowns away, was put up for buying")
 		-- (From its rung: LADDER_V2 moved the Pan from 50 to 37.)
 		local panAt = Toys.byId.Pan.unlockAt
 		assert(not Toys.canBuy(Toys.byId.Pan, panAt - 14) and Toys.canBuy(Toys.byId.Pan, panAt - 15), "the buy line for the Pan is wrong")
@@ -351,10 +372,20 @@ local function oldProfiles(results: { string })
 	for _, id in { "Chicken", "Float", "Portal", "Katana", "Deagle", "PlasmaBlade" } do
 		assert(not joined.owned[id], "an old profile got " .. id .. " it never had")
 	end
-	local kept = count(joined.owned)
+	-- (V8-0.3: a tool open from the start (the Bat now) is not kept as owned; count the locked ones.)
+	local function countLocked(owned: { [string]: boolean }): number
+		local n = 0
+		for id in owned do
+			if Toys.byId[id] and Toys.byId[id].unlockAt > 0 then
+				n += 1
+			end
+		end
+		return n
+	end
+	local kept = countLocked(joined.owned)
 	-- Once: the next join changes nothing.
 	local again = ProgressService.joinedProfile(ProgressService.clean({ takedowns = 60, owned = joined.owned, ladder = joined.ladder }), nil)
-	assert(count(again.owned) == kept, "grandfathered twice")
+	assert(countLocked(again.owned) == kept, "grandfathered twice")
 	-- A save that meets the old stored profile without having read it keeps it too.
 	local session = ProgressService.clean(nil)
 	local merged = ProgressService.merge(ProgressService.clean({ takedowns = 60 }), session)

@@ -131,8 +131,18 @@ local function squeeze(rung: number): number
 	return rung
 end
 
+-- V8-0.3 (Config.V8_START_BAR): rungs moved for the full start bar: its tools open from the start,
+-- the Rocket is the first unlock; Poke, Slap and Shove leave the early rungs and Heal comes later.
+local V8_RUNGS: { [string]: number } = { Bat = 0, Grenade = 0, Launch = 0, Rocket = 3, Poke = 18, Shove = 22, Slap = 24, Heal = 60 }
+
 local function add(id: string, spec: Spec)
 	assert(byId[id] == nil, "tool " .. id .. " listed twice")
+	local v8 = if Config.V8_START_BAR then V8_RUNGS[id] else nil
+	if v8 ~= nil and spec.unlockAt ~= v8 then
+		local s8 = table.clone(spec) :: any
+		s8.unlockAt = v8
+		spec = s8
+	end
 	-- (Phase 2: the retuned ladder, Config.LADDER_V2: the first rungs as they were, the rest squeezed.)
 	local rung = spec.unlockAt
 	if rung and squeeze(rung) ~= rung then
@@ -287,7 +297,9 @@ local CATEGORIES: { Category } = { "Melee", "Guns", "Explosives", "Specials" }
 -- The bar you start with (round 5, like the big ragdoll games: few things from the start, the next
 -- one almost at once): the G17, Grab and Punch. Bat, Crowbar and Shove come at 2, 4 and 6
 -- takedowns (players from before keep them: ProgressService.grandfather, LADDER 3).
-local DEFAULT_LOADOUT = { "Blaster", "Grab", "Punch" }
+-- V8-0.3 (Config.V8_START_BAR): a full bar from the first second, like the big ragdoll games: the
+-- G17 (Popper), Grab, Bat, Grenade and Launch, 5 of 6; slot 6 is the first unlock (the Rocket, at 3).
+local DEFAULT_LOADOUT = if Config.V8_START_BAR then { "Blaster", "Grab", "Bat", "Grenade", "Launch" } else { "Blaster", "Grab", "Punch" }
 -- How many slots the bar has (a fixed number, not the starting bar's length: round 5).
 -- (Phase 0, 19 Nov: back to 6. The cut to 3 in 0.16 made every new weapon a "pick a slot to
 -- replace" step right when WEAPONS unlocks; it lines up with the ~19 s session drop: AUDIT.md 1.3.)

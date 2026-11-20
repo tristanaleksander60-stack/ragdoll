@@ -1723,9 +1723,70 @@ end
 -- or Grab and never something the player chose; with none of those left it asks as an equip does.
 -- Returns whether it is on the bar now.
 local GIVE_UP = { "Shove", "Punch", "Crowbar", "Bat" }
-function PokeController.autoEquip(id: string): boolean
+
+-- V8-0.3 (Config.V8_HAND_RULES): the bar stays yours. A new tool takes the weakest slot (by ladder
+-- rung) that may go, and only when it is stronger; a gun, an explosive, Grab, the G17 and the Bat
+-- never go. A prize (an egg, a crate, a gift day) always lands: with nothing weaker it takes the
+-- weakest that may go anyway, and with all of them guarded the last slot that is not the G17 or
+-- Grab. It is never picked while a tool is in use or fire is held: it waits for a calm moment.
+local function busyFiring(): boolean
+	if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+		return true
+	end
+	local okPad, down = pcall(function()
+		return UserInputService:IsGamepadButtonDown(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonR2)
+	end)
+	if okPad and down then
+		return true
+	end
+	local last = lastFire[selected]
+	return last ~= nil and os.clock() - last < 0.6
+end
+PokeController.slotFor = (require(Shared:WaitForChild("HandRules")) :: any).slotFor
+PokeController.busyFiringForTest = busyFiring
+
+local function autoEquipV8(id: string, prize: boolean?): boolean
+	local slot = PokeController.slotFor(loadout, id, prize)
+	if not slot then
+		return false
+	end
+	if loadout[slot] ~= id then
+		loadout[slot] = id
+		Net.event(Net.Names.Loadout):FireServer("Set", loadout)
+	end
+	layout()
+	local function pick()
+		selected = id
+		refresh()
+		local slab = slabs[id]
+		if slab then
+			pop(slab)
+		end
+	end
+	if busyFiring() then
+		refresh()
+		task.spawn(function()
+			local t0 = os.clock()
+			while busyFiring() and os.clock() - t0 < 8 do
+				task.wait(0.2)
+			end
+			if table.find(loadout, id) then
+				pick()
+			end
+		end)
+	else
+		pick()
+	end
+	C.playSound("unlock")
+	return true
+end
+
+function PokeController.autoEquip(id: string, prize: boolean?): boolean
 	if not Toys.byId[id] or allowed or pendingEquip then
 		return false
+	end
+	if (Config :: any).V8_HAND_RULES then
+		return autoEquipV8(id, prize)
 	end
 	if table.find(loadout, id) or #loadout < Toys.SLOTS then
 		beginEquip(id)

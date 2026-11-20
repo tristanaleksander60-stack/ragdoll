@@ -24,9 +24,11 @@ return {
 			assert(rungs[#rungs] <= 650, "the top of the ladder is " .. rungs[#rungs])
 			-- The Minigun (58 on the old ladder) and the Railgun (1,050) keep their places.
 			assert(Toys.byId.Minigun.unlockAt < Toys.byId.Deagle.unlockAt and Toys.byId.Railgun.unlockAt < Toys.byId.GoldenDeagle.unlockAt, "the order changed")
-			assert(Toys.byId.Bat.unlockAt == 2 and Toys.byId.Grenade.unlockAt == 10, "the first rungs moved")
+			-- (V8-0.3 moves the first rungs on purpose: the full start bar, T110.)
+			assert(Config.V8_START_BAR or (Toys.byId.Bat.unlockAt == 2 and Toys.byId.Grenade.unlockAt == 10), "the first rungs moved")
 			-- Prices: the old tier bounds moved with the ladder.
-			local top, low = Toys.priceTier(Toys.byId.GoldenDeagle), Toys.priceTier(Toys.byId.Bat)
+			-- (V8-0.3: the Bat is free from the start now; the Crowbar is the cheapest rung.)
+			local top, low = Toys.priceTier(Toys.byId.GoldenDeagle), Toys.priceTier(if Config.V8_START_BAR then Toys.byId.Crowbar else Toys.byId.Bat)
 			assert(top and low and top.robux == 199 and low.robux == 25, "price tiers moved")
 		end
 		return string.format("%d rungs, the fifth at %d, the top at %d", #rungs, rungs[5], rungs[#rungs])
