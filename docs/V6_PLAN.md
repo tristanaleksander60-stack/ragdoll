@@ -394,3 +394,35 @@ What to do:
   - Strict return types in LabGarden.
   - T103 checks the test player's own yard and uses a fresh body for the whale. Passes; T31/T36/T26/T50/T92 pass.
   - Not re-reviewed.
+- **V6-7 map shop (20 Nov, `Config.MAP_SHOP`):** `Server/Systems/MapShopService` + `Client/BoothSpin`.
+  - **Booths:** a row of showcase booths at the plaza's front (z 130) and by each open-air map's arrival. Each has a marble pedestal with a gold rim light and a spotlight, the item turning slowly on top (client-side), and a sign with the name, a one-line pitch and the price. Two prompts: **TRY 60 s free** (once per item per visit) and **BUY** (Roblox's own purchase prompt). An id of 0 means no booth live; Studio shows TEST and delivers through the real path.
+  - **10 items** as Shop.OFFERS entries (`map = true`), delivered by the existing OfferService (`Offer_<key>`, checked on join and after purchase, products once per purchase id). Effects in MapShopService:
+    - Rainbow Trail;
+    - Fire Trail (flames at the feet);
+    - Crash-Test Suit (clothes kept and put back);
+    - Gold Dummies (your lab's dummies);
+    - Robot Dog (follows you, 15 Hz);
+    - Parrot (on your shoulder);
+    - Mega Trampoline (your lab's yard; bodies and players bounce);
+    - Giant Fan (back of your lab; blows dummies forward);
+    - Spider Deluxe (your lab's spider in gold, spits 1.5x farther);
+    - Bolt Crate (500 BOLTS).
+    All of it is cosmetic or lab fun: no pay-to-win.
+  - **Models:** PetRobotDog (Roblox "Innovation Robot Dog" 1374012792; its 2 animation scripts removed) and PetParrot (macaw 3676031164). Place file only, saved v569. Display mannequins are copies of ReplicatedStorage.DummySkin.
+  - **Bug:** a sed slip put a stray `&` into Shop.luau/Offers.luau, breaking every module that loads them. Fixed at once.
+  - **Tests:** T105 (10 items with grants, 22 booths, try once and never for a product, Studio purchase delivered, the effects on and off) passes; T68/T103 pass.
+  - **Captures:** booths_plaza2, booths_plaza3.
+  - **OWNER, create on the Creator Dashboard and paste each id into Shop.OFFERS (`id = …`):**
+
+    | Key | Type | Name | Robux | Description | Picture |
+    |---|---|---|---|---|---|
+    | RainbowTrail | Game pass | Rainbow Trail | 49 | Leave a rainbow wherever you fly. | the booth with the rainbow mannequin |
+    | FireTrail | Game pass | Fire Trail | 79 | Run, fly and land in flames (cosmetic). | the fire booth |
+    | CrashSuit | Game pass | Crash-Test Suit | 99 | Dress like the real crash dummies: yellow and black. | the suit booth |
+    | GoldDummies | Game pass | Gold Dummies | 149 | Every dummy in your lab in shining gold. | the gold mannequin |
+    | RobotDog | Game pass | Robot Dog | 129 | A loyal robot dog that follows you everywhere. | the robot dog booth |
+    | Parrot | Game pass | Parrot | 99 | A bright macaw that rides on your shoulder. | the parrot booth |
+    | MegaTrampoline | Game pass | Mega Trampoline | 149 | A giant trampoline in your lab: bounce dummies sky high. | the trampoline booth |
+    | GiantFan | Game pass | Giant Fan | 179 | A giant fan that blows every dummy across your lab. | the fan booth |
+    | SpiderDeluxe | Game pass | Spider Deluxe | 199 | Your lab's spider in gold, and it spits farther. | the golden spider |
+    | BoltCrate | Developer product | Bolt Crate | 49 | 500 BOLTS for your next weapons. | the crate booth |

@@ -158,6 +158,7 @@ local Config = {
 	LAB_V6 = true, -- V6-4: wider plots (Zones.PLOT_SPACING 250) with a garden on both sides (Server/Systems/LabGarden)
 	LAB_CREATURES = true, -- V6-5: the creature yard in front of each lab (Server/Systems/LabCreatures): spider, plant, frog, whale, chicken, washer, slingshot, mole, vacuum
 	BIRDS = true, -- V6-6: client-side flocks (Client/Birds) round the lab and the open-air maps
+	MAP_SHOP = true, -- V6-7: showcase booths on the maps selling Shop.OFFERS map items (Server/Systems/MapShopService); id 0 = no booth live
 	BIRDS_MAX = table.freeze({ pc = 24, tablet = 14, phone = 8 }), -- birds out at once per device
 	NOTIFY = true,
 	NOTIFY_BIG_AFTER_REVEAL = 20, -- s after a newcomer's HUD reveal before the first big pop-up

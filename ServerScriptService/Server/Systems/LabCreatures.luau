@@ -227,6 +227,23 @@ BUILD.Spider = function(f, at, m)
 	end
 	local spider = place(f, "MSpider", (at * CFrame.new(0, 0, -7)).Position, 180, 24)
 	local home = if spider then spider:GetPivot() else at
+	-- (V6-7: the golden SPIDER DELUXE when the lab owner has it.)
+	local labF = f.Parent and f.Parent.Parent
+	if spider and labF then
+		local looks: { [BasePart]: { Color3 | Enum.Material } } = {}
+		for _, d in spider:GetDescendants() do
+			if d:IsA("BasePart") then
+				looks[d] = { d.Color, d.Material }
+			end
+		end
+		labF:GetAttributeChangedSignal("SpiderDeluxe"):Connect(function()
+			local gold = labF:GetAttribute("SpiderDeluxe") == true
+			for d, was in looks do
+				d.Color = if gold then Color3.fromRGB(230, 186, 60) else was[1] :: Color3
+				d.Material = if gold then Enum.Material.Foil else was[2] :: Enum.Material
+			end
+		end)
+	end
 	local hunger = 0
 	local napUntil = 0
 	local sign = Instance.new("BillboardGui")
@@ -325,8 +342,11 @@ BUILD.Spider = function(f, at, m)
 				hunger = LabCreatures.SPIDER_FULL
 			end
 			draw()
+			-- (V6-7 SPIDER DELUXE, bought for this lab: it spits half as far again.)
+			local labF = f.Parent and f.Parent.Parent
+			local deluxe = labF ~= nil and labF:GetAttribute("SpiderDeluxe") == true
 			local away = (web.CFrame.LookVector * -1)
-			return Vector3.new(away.X, 0, away.Z).Unit * 70 + Vector3.new(0, 75, 0)
+			return (Vector3.new(away.X, 0, away.Z).Unit * 70 + Vector3.new(0, 75, 0)) * (if deluxe then 1.5 else 1)
 		end)
 	end
 end

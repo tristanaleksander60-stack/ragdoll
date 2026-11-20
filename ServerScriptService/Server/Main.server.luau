@@ -82,6 +82,7 @@ do -- LOOK_V3: grass, hills and trees round the labs (after WorldMaps: it repain
 		warn("[Landscape] " .. tostring(err))
 	end
 end
+require(Systems:WaitForChild("MapShopService")).start(workspace:GetAttribute("LabOrigin") or Vector3.zero) -- V6-7: showcase booths and the map items' effects
 -- A trip to a room counts towards the day's goals (round 3, M9).
 WorldMaps.onTrip = function(player: Player, landed: string)
 	local place = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Places")).byId[landed]

@@ -35,6 +35,17 @@ Offers.GRANTS = table.freeze({
 	VipLab = table.freeze({ vipLab = true }),
 	EventsPass = table.freeze({ eventsPass = true }),
 	Everything = table.freeze({ toys = { "*" }, doubleBolts = true, vipLab = true, eventsPass = true, labControls = true }),
+	-- V6-7 map items: their effects live in MapShopService (it reads Offer_<key> or the TRY).
+	RainbowTrail = table.freeze({}),
+	FireTrail = table.freeze({}),
+	CrashSuit = table.freeze({}),
+	GoldDummies = table.freeze({}),
+	RobotDog = table.freeze({}),
+	Parrot = table.freeze({}),
+	MegaTrampoline = table.freeze({}),
+	GiantFan = table.freeze({}),
+	SpiderDeluxe = table.freeze({}),
+	BoltCrate = table.freeze({ bolts = 500 }),
 } :: { [string]: Grant })
 
 Offers.byKey = {} :: { [string]: any }
