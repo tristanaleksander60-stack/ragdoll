@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -528,6 +528,45 @@ A full placement pass for the lab hub (V9-0h) and every map, done as a designer 
 **Test:** T170_SignsVisible. For every guide sign, a ray from the main approach point at eye height reaches the sign unblocked, or the sign has the occlusion fallback; no sign's centre is inside another part's bounds.
 
 **Capture:** the slingshot from the owner's angle, before and after, and 3 other creatures.
+
+## V9-0r Hero scale: everything big and magnificent, each with its own animation and sound (owner, 21 Nov)
+> "Gør alt vi har 10X større, kanonkugle, kanon, slingshot, raket, edderkop og sådan noget så det ser magnificent ud, og de skal have en custom animation alle sammen så det ikke bare er det samme, og de skal lave lyde."
+
+**Scale rule.** Literally 10x would make the 14-stud cannon 140 studs long and the rocket taller than the hub is wide (250 studs), so nothing would fit or be playable. Make each one as big as it can be while the hub still frames it and it still works: **"hero scale"**, about 2.5-5x today, with the landmarks biggest.
+- Tune per thing in Config (`HERO_SCALE.<name>`), judged from the spawn camera on PC and phone.
+- Grow the hub or plot (`PLOT_SPACING`) if needed, keeping privacy.
+
+| Thing | Target size (about) | Its own signature motion | Its own sound |
+|---|---|---|---|
+| **Cannon** | barrel 35-45 studs, wheels taller than a player | barrel tilts up and aims, breech loads with a clunk, the whole cannon recoils back on its wheels, smoke ring | deep BOOM with a long echo, metal clank on the reload |
+| **Cannonball** | 6-10 studs (a dummy fits on it) | rolls into the breech, flies with a smoke trail, bounces and rolls when it lands | whistle in flight, heavy thud and rumble on landing |
+| **Rocket** (V9-3c) | 80-120 studs on its tower, the tallest landmark | gantry arms swing away, steam vents, a slow heavy lift-off that speeds up, slight wobble | countdown beeps, rising roar, crackle of the flame |
+| **Slingshot (tree)** | 30-40 studs tall | the band stretches back with a creak while the tree bends, snaps forward, leaves shower, the tree sways back | creak, twang, rustle |
+| **Spider** | 25-35 studs across, its web spanning a corner | scuttles down its thread, spins the body in silk, chews with its jaws, "burrito" spit | skitter, silk zip, munch, cartoon spit |
+| **Whale / shark** (V9-1) | whale 40-60 studs, shark 20-25 | whale breaches and blows, the shark circles with its fin and snaps | whale call, splash, blowhole spray; shark bite snap |
+| **Plant, frog, chicken, mole, washer, vacuum** | 2.5-4x each | each their own (V9-2 list): plant chomp and bob, frog tongue reel, chicken egg lay, mole pop, washer spin, vacuum suck | each their own: chomp, ribbit and slurp, cluck and plop, dirt burst, spin and slosh, vacuum whine |
+| **Compressor** (V9-0m) | 20-30 studs tall | pistons pump, plate slams, lifts with steam | hydraulic hiss, THUD, boing |
+| **Wrecking ball, mace, trampoline, tower, button** | 2-3x | ball swings on real chain links, mace spins with wobble, trampoline mat stretches deep, button cover flips and presses | chain rattle, whoosh, boing, a big clunk click |
+
+**Rules:**
+- **Gameplay follows the size:** trigger volumes, launch powers, flight arcs and landing zones (V9-0n), LabGuide rings, terminals and signs are all re-tuned to the new sizes. Every launch still lands on the open floor or the bullseye.
+- **No two things share an animation.** Each has its own idle (so it looks alive while waiting), its own act and its own rest. Animated on the client from one server start event (V9 rules), with anticipation, follow-through and squash and stretch.
+- **Every one makes sound:**
+  - its own idle loop (quiet, falls off with distance);
+  - its act sound;
+  - its reaction sound;
+  - all through SoundMix, at most 2 big sounds at once per lab, with the volume falling off over distance.
+- **Performance:**
+  - bigger models keep their triangle budget (real LOD meshes);
+  - idle animations stop past 120 studs;
+  - the low tier stays smooth (V9-5b).
+- **Placement:** re-check V9-0n after the scale-up (spawn view, loop, no hiding).
+
+**Tests:**
+- T163 and T168 updated for the new sizes;
+- T171_HeroScale: every hero thing is inside its size band, every trigger contains its drop point, every launch lands on the floor, every thing has its own animation set and sound ids (none shared).
+
+**Capture:** the spawn view and a close-up of each hero thing in action, before and after.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
