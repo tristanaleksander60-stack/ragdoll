@@ -42,3 +42,4 @@
 - Area 7: the Giant Dummy (4x) stands. A soft upright hold on the chest and a vertical-only hold on the pelvis keep it on its feet until something knocks it over (Ragdoll/Flying/Out after 2 s); then both let go and it topples. Before, it folded or fell at once. Seen in Studio (about 21 studs tall, walking).
 - Area 6: the Island's beach huts are real huts: stilts, deck and step, pastel plank walls with white trim, a gable roof with overhang, a framed door and a shuttered window. Before, they were flat boxes with lids.
 - Area 6, finding (P1): from the Island, Downtown's skyline shows across the sea (the maps are 1200 studs apart). Needs per-map haze or a sea horizon.
+- Area 6 (fixed): the open-air maps have their own light profile "Outdoor" with a thicker sea haze (Atmosphere density +0.18), so the next map's skyline fades out across the water.

@@ -63,6 +63,10 @@ if Config.LOOK_V3 then
 	}
 	AIR.Lab = { density = V3.airDensity, color = V3.airColor, decay = V3.airDecay, saturation = V3.saturation, tint = Color3.new(1, 1, 1) }
 end
+-- Audit area 6: the open-air maps lie 1200 studs apart; a thicker sea haze hides the next map's
+-- skyline across the water (Places light = "Outdoor").
+AIR.Outdoor = { density = AIR.Lab.density + 0.18, color = AIR.Lab.color, decay = AIR.Lab.decay, saturation = AIR.Lab.saturation, tint = AIR.Lab.tint }
+PROFILES.Outdoor = PROFILES.Lab
 local airTween: { Tween } = {}
 
 local function applyAir(key: string, instant: boolean?)
