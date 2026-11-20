@@ -85,7 +85,8 @@ end
 
 local function newcomerQuiet(): number
 	local untilT = player:GetAttribute("NewcomerUntil")
-	if type(untilT) == "number" and time() < untilT then
+	-- (Kept after it has passed too: the expiry clock of what waited starts there.)
+	if type(untilT) == "number" then
 		return os.clock() + (untilT - time())
 	end
 	return 0
@@ -136,6 +137,8 @@ function Notify.start()
 		return
 	end
 	started = true
+	-- (A window the player opened before the first message counts too.)
+	state.playerWindow = Controller.getCurrent() ~= nil
 	Controller.onChanged(function(name: string, isOpen: boolean)
 		local now = os.clock()
 		if bigNames[name] then
@@ -173,7 +176,7 @@ function Notify.push(text: string, kind: string?, opts: { key: string?, color: C
 	Notify.start()
 	local key = o.key or text
 	for _, it in queue do
-		if it.key == key then
+		if it.key == key and k ~= "reward" then
 			it.text = text -- (the newest wording wins; it keeps its place)
 			return
 		end
@@ -219,7 +222,10 @@ end
 function Notify.releaseBig(name: string)
 	if bigNames[name] then
 		bigNames[name] = nil
-		NotifyRules.bigClosed(state, name, os.clock())
+		-- (Nothing showed: the slot frees with no gap and no quiet after it.)
+		if state.bigOpen == name then
+			state.bigOpen = nil
+		end
 	end
 end
 
@@ -257,20 +263,28 @@ function Notify.goodMoment()
 		if not Notify.waitBig("NotifyOptIn", 30) then
 			return
 		end
+		-- (The slot frees when Roblox says its prompt closed, or after 30 s if that never comes.)
+		local freed = false
+		local function free()
+			if not freed then
+				freed = true
+				bigNames["NotifyOptIn"] = nil
+				NotifyRules.bigClosed(state, "NotifyOptIn", os.clock())
+			end
+		end
 		pcall(function()
+			(service :: any).OptInPromptClosed:Once(free)
+		end)
+		local okPrompt = pcall(function()
 			(service :: any):PromptOptIn()
 		end)
-		-- (Roblox's own prompt has no kit window: the slot frees after a fixed beat.)
-		task.delay(8, function()
-			bigNames["NotifyOptIn"] = nil
-			NotifyRules.bigClosed(state, "NotifyOptIn", os.clock())
-		end)
+		task.delay(if okPrompt then 30 else 0, free)
 	end)
 end
 
 -- The same arguments as Toast.show, with the kind first (so a Toast call converts in place).
-function Notify.say(kind: string, text: string, color: Color3?)
-	Notify.push(text, kind, { color = color })
+function Notify.say(kind: string, text: string, color: Color3?, key: string?)
+	Notify.push(text, kind, { color = color, key = key })
 end
 
 -- For T100 and the debug tab: a copy of what waits.

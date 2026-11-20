@@ -107,12 +107,15 @@ function LikePrompt.start()
 				task.wait(1)
 			end
 			-- (V6-1: through the notification centre: one big pop-up at a time.)
-			if Notify.waitBig("Like", 300) then
+			-- (It waits its turn, and again while another window is up: never dropped.)
+			while true do
+				Notify.waitBig("Like")
 				if Controller.getCurrent() == nil then
 					Controller.open("Like")
-				else
-					Notify.releaseBig("Like")
+					break
 				end
+				Notify.releaseBig("Like")
+				task.wait(2)
 			end
 		end)
 	end

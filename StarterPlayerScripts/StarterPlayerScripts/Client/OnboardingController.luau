@@ -101,7 +101,7 @@ local function release()
 			-- (Only with a lab of their own: the hazards are in the labs, not the plaza.)
 			local plot = player:GetAttribute("LabPlot")
 			if not ReplayController.isPlaying() and type(plot) == "number" and plot > 0 then
-				Notify.say("tip", "Jump in the LAVA or blast off the CANNON at the BULLSEYE!", Color3.fromRGB(255, 140, 40))
+				Notify.say("tip", "Jump in the LAVA or blast off the CANNON at the BULLSEYE!", Color3.fromRGB(255, 140, 40), "tip_machines")
 			end
 		end)
 	end
@@ -243,7 +243,7 @@ local function onBigEvent(_toyId: string, at: number, _position: Vector3)
 		afterQuiet(RAGDOLL_TIP_DELAY, function()
 			if not PlayerBody.hasGoneLimp() and not ViewMode.isLab() then
 				local b = padGlyph("Ragdoll")
-				Notify.say("tip", if b then "Press " .. b .. " to ragdoll yourself!" elseif ViewMode.isTouch() then "Tap RAGDOLL to flop yourself!" else "Press F to ragdoll yourself!")
+				Notify.say("tip", if b then "Press " .. b .. " to ragdoll yourself!" elseif ViewMode.isTouch() then "Tap RAGDOLL to flop yourself!" else "Press F to ragdoll yourself!", nil, "tip_ragdoll")
 				PlayerBody.highlight()
 			end
 		end)

@@ -24,6 +24,7 @@ local Icons = require(UI:WaitForChild("LihFolkUIIcons"))
 local Controller = require(UI:WaitForChild("LihFolkUIController"))
 
 local Client = script.Parent
+local Toast = require(Client:WaitForChild("Toast"))
 local Notify = require(Client:WaitForChild("Notify")) :: any -- V6-1: what pops up by itself goes through the notification centre
 local KitStyle = require(Client:WaitForChild("KitStyle"))
 local ToolPicture = require(script.Parent:WaitForChild("ToolPicture"))
@@ -378,12 +379,18 @@ function offerEgg(force: boolean)
 				else string.format("You have %d FREE eggs!", state.eggs)
 		end
 		-- (V6-1: one big pop-up at a time, a gap between them, never over a window the player opened.)
-		if not Notify.waitBig("EggReady", 180) then
-			return
-		end
-		if state.eggs <= 0 or Controller.isOpen("EggReady") then
+		-- (Never given up: it waits for its turn, then for calm again, as often as it takes.)
+		while true do
+			Notify.waitBig("EggReady")
+			if state.eggs <= 0 or Controller.isOpen("EggReady") then
+				Notify.releaseBig("EggReady")
+				return
+			end
+			if calm() and Controller.getCurrent() == nil then
+				break
+			end
 			Notify.releaseBig("EggReady")
-			return
+			task.wait(2)
 		end
 		Controller.open("EggReady")
 	end)
@@ -575,7 +582,8 @@ function ProgressUI.start()
 				then "Daily egg! Come back tomorrow for another."
 				else string.format("Daily egg%s! Day %d in a row. Come back tomorrow!", if (tonumber(d.eggs) or 1) > 1 then "s" else "", streak), Color3.fromRGB(255, 154, 205))
 		elseif kind == "Notice" and type(data) == "string" then
-			Notify.say("reward", data) -- (gifts, journal pages, codes: rewards and answers, never held long)
+			-- (Server notices are mostly answers to the player's own press: shown at once, like a reply.)
+			Toast.show(data)
 		elseif kind == "GoalDone" and type(data) == "string" then
 			-- (V5 first visit: never on top of an egg card or another reward: it waits a few seconds.)
 			task.wait(6)

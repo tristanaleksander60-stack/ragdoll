@@ -30,7 +30,12 @@ return {
 		n.newcomerUntil = 90
 		assert(R.decide(n, "info", "x", 10, 10) == "wait", "news in a newcomer's first 90 s")
 		assert(R.decide(n, "tip", "y", 10, 10) == "wait", "a tip in a newcomer's first 90 s")
-		assert(R.decide(n, "reward", "z", 10, 10) == "show", "an unlock was held from a newcomer")
+		assert(R.decide(n, "reward", "z", 10, 10) == "wait", "a reward over a newcomer's objective line")
+		assert(R.decide(n, "info", "x", 10, 100) == "show", "join-time news expired during the newcomer's quiet")
+		-- Rewards are never deduped (two eggs are two eggs).
+		local d = R.new()
+		R.shown(d, "reward", "egg", 0)
+		assert(R.decide(d, "reward", "egg", 10, 10) == "show", "a second identical reward was dropped")
 		assert(not R.bigAllowed(n, 50), "a big pop-up before the reveal")
 		assert(R.bigAllowed(n, 95), "no big pop-up after the reveal")
 		-- Big pop-ups: one at a time, a gap after, never over the player's window.

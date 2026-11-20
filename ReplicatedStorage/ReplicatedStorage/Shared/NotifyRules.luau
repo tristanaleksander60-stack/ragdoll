@@ -6,7 +6,7 @@
 --   critical  shown at once, never held (a refusal, "your lab is gone", a server shutdown)
 --   reward    something the player got (an egg, an unlock, a gift)
 --   info      news nobody asked for (free weekend, events, What's New)
---   tip       help text; "don't show again" mutes it for good
+--   tip       help text; its x mutes it for the rest of the visit (Toast draws the x on tips only)
 -- Rules:
 --   * nothing but critical before `quietUntil` (the newcomer's first 90 s, a window just closed);
 --   * a gap since the last unsolicited message, by kind (GAP);
@@ -66,15 +66,19 @@ function NotifyRules.decide(s: State, kind: string?, key: string, queuedAt: numb
 	if k == "tip" and s.muted[key] then
 		return "drop"
 	end
+	-- (Only news and tips are deduped: two eggs in a row are two eggs.)
 	local seenAt = s.seen[key]
-	if seenAt and now - seenAt < NotifyRules.DEDUPE then
+	if k ~= "reward" and seenAt and now - seenAt < NotifyRules.DEDUPE then
 		return "drop"
 	end
-	if now - queuedAt > NotifyRules.MAX_WAIT[k] then
-		return "drop"
-	end
-	if now < s.newcomerUntil and k ~= "reward" then
+	-- (A newcomer's first visit: nothing but critical, the objective line has the screen.)
+	if now < s.newcomerUntil then
 		return "wait"
+	end
+	-- (The expiry clock starts when the quiet ended: join-time news still shows after the reveal.)
+	local from = math.max(queuedAt, s.newcomerUntil)
+	if now - from > NotifyRules.MAX_WAIT[k] then
+		return "drop"
 	end
 	if now < s.quietUntil then
 		return "wait"

@@ -65,7 +65,7 @@ function GiftClock.start()
 			local minutes = math.max(1, math.ceil(left / 60))
 			-- (Release fix: with Config.EGG_RATION the play gift is BOLTS, so the note says so.)
 			local prize = if Config.EGG_RATION and Config.ECONOMY then string.format("%d FREE BOLTS", Config.PLAYTIME_BOLTS) else "a FREE weapon egg"
-			Notify.say("tip", string.format("\u{1F381} Play %d more min for %s! The clock is on WEAPONS.", minutes, prize), Color3.fromRGB(255, 210, 74))
+			Notify.say("tip", string.format("\u{1F381} Play %d more min for %s! The clock is on WEAPONS.", minutes, prize), Color3.fromRGB(255, 210, 74), "tip_giftclock")
 		end
 	end)
 end

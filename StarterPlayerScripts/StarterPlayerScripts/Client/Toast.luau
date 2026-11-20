@@ -158,20 +158,29 @@ function showNext()
 		pic.Position = UDim2.new(0, -38, 0.5, 0)
 		pic.Parent = label
 	end
-	local tap = Instance.new("TextButton")
-	tap.Name = "Dismiss"
-	tap.Text = ""
-	tap.BackgroundTransparency = 1
-	tap.Size = UDim2.fromScale(1, 1) -- (scale only: it must not grow the auto-sized card)
-	tap.ZIndex = 5
-	tap.Parent = label
-	tap.Activated:Connect(function()
-		local fn = item.onTap
-		if fn then
-			task.spawn(fn)
-		end
-		hide(label)
-	end)
+	-- (Only a card that can be switched off (a tip) takes taps, through a small x at its right edge:
+	-- the rest of the card never eats a shot at a dummy behind it.)
+	local onTap = item.onTap
+	if onTap then
+		pad.PaddingRight = UDim.new(0, 44)
+		local tap = Instance.new("TextButton")
+		tap.Name = "Dismiss"
+		tap.Text = "\u{00D7}"
+		tap.FontFace = Theme.Fonts.display
+		tap.TextSize = 22
+		tap.TextColor3 = Color3.fromRGB(200, 205, 215)
+		tap.BackgroundTransparency = 1
+		tap.Selectable = false
+		tap.AnchorPoint = Vector2.new(0, 0.5)
+		tap.Size = UDim2.fromOffset(40, 40)
+		tap.Position = UDim2.new(1, 2, 0.5, 0)
+		tap.ZIndex = 5
+		tap.Parent = label
+		tap.Activated:Connect(function()
+			task.spawn(onTap)
+			hide(label)
+		end)
+	end
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, Theme.Radius.card)
 	corner.Parent = label
@@ -278,6 +287,11 @@ function Toast.hold(reason: string, on: boolean)
 	if any ~= paused then
 		Toast.setPausedRaw(any)
 	end
+end
+
+-- Drops what waits (FirstVisit: what queued behind the objective line is old news by the reveal).
+function Toast.clearQueue()
+	table.clear(queue)
 end
 
 function Toast.setPaused(on: boolean)

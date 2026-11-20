@@ -207,6 +207,9 @@ function FirstVisit.start()
 	HudSlots.setNewcomerUntil(revealAt)
 	-- (For modules that cannot require HudSlots: DummyLife, ProgressUI.)
 	player:SetAttribute("NewcomerUntil", revealAt)
+	-- (Direct toasts, replies included, never land on the objective line; what queued is dropped at
+	-- the reveal. Notify holds its own until then and lets them out spaced.)
+	Toast.hold("newcomer", true)
 
 
 	-- The lab's signs (today's machine, NEW tags) wait too: the first screen is the dummies.
@@ -226,6 +229,8 @@ function FirstVisit.start()
 				p.LocalTransparencyModifier = 0
 			end
 		end
+		Toast.clearQueue()
+		Toast.hold("newcomer", false)
 		holdHud(false, "Left")
 		HudSlots.newcomerChanged:Fire() -- (LAB VIEW and the rest place themselves again)
 		pcall(function()

@@ -226,3 +226,12 @@ What to do:
     - the line hides while a machine is looked up;
     - the reveal is scheduled before anything that could fail;
     - the pill refits on rotation.
+- **V6-1 blind review 7.4 → fix round 1:**
+  - Server notices (answers to the player's own presses) go straight to Toast again.
+  - Rewards are never deduped or merged.
+  - The expiry clock starts at the end of a newcomer's quiet, so join-time news still shows after the reveal.
+  - A newcomer's first 90 s hold everything but critical. Direct toasts are held too (`Toast.hold "newcomer"`), and the queue is cleared at the reveal (`Toast.clearQueue`).
+  - Only tips can be closed, with a small × (not selectable by a gamepad), so a toast no longer eats a shot. Tips have stable keys.
+  - The egg card, Like and What's New never give up: they wait for their turn, then for calm or no window, again and again. A slot freed without a window costs no gap.
+  - `playerWindow` is seeded at start. The opt-in slot frees on `OptInPromptClosed`.
+  - Timeline (new player): only the line until 90 s; 90.4 s "Welcome back!" (the Studio profile's Returning flag); 94.5 s daily egg; 110 s egg card. T100/T23/T45/T55/T60 pass, no errors.

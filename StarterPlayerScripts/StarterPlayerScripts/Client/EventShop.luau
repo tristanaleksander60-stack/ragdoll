@@ -1106,12 +1106,19 @@ function EventShop.start()
 		elseif kind == "WhatsNew" then
 			-- (V6-1: What's New waits its turn like every big pop-up.)
 			task.spawn(function()
-				if Notify.waitBig("WhatsNew", 600) then
+				-- (It waits its turn, and again while another window is up: never dropped.)
+				while true do
+					Notify.waitBig("WhatsNew")
+					if Controller.isOpen("WhatsNew") then
+						Notify.releaseBig("WhatsNew")
+						break
+					end
 					if Controller.getCurrent() == nil then
 						Controller.open("WhatsNew")
-					else
-						Notify.releaseBig("WhatsNew")
+						break
 					end
+					Notify.releaseBig("WhatsNew")
+					task.wait(2)
 				end
 			end)
 		elseif kind == "Admin" then
