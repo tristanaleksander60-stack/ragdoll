@@ -2,8 +2,8 @@
 -- V8-6.2 (build stamp): written by tools/stamp.pl, never by hand. The commit this build sits on,
 -- when it was made, and every synced script's checksum (tools/SyncCheck.luau compares them).
 return table.freeze({
-	commit = "1eba5df",
-	made = "2026-11-20 19:06 UTC",
+	commit = "b62c533",
+	made = "2026-11-20 19:23 UTC",
 	scripts = table.freeze({
 		["ReplicatedStorage.LihFolkUI.LihFolkUIComponents"] = 3868685012,
 		["ReplicatedStorage.LihFolkUI.LihFolkUIController"] = 4191470231,
@@ -219,7 +219,7 @@ return table.freeze({
 		["ServerScriptService.Server.Tests.T47_TryFree"] = 382392183,
 		["ServerScriptService.Server.Tests.T48_Ammo"] = 179538747,
 		["ServerScriptService.Server.Tests.T49_WeaponMechanics"] = 1058597330,
-		["ServerScriptService.Server.Tests.T50_ChaseStations"] = 1978270583,
+		["ServerScriptService.Server.Tests.T50_ChaseStations"] = 1738534866,
 		["ServerScriptService.Server.Tests.T51_Portals"] = 1598874374,
 		["ServerScriptService.Server.Tests.T52_Aim"] = 4175348743,
 		["ServerScriptService.Server.Tests.T53_Gamepad"] = 1229160497,
