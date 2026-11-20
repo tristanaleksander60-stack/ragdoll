@@ -43,6 +43,24 @@ return {
 				assert(math.abs(bottom - floorY) < 0.15, string.format("a %s stands %.2f studs off the floor", def.model, bottom - floorY))
 			end
 		end
+		-- 20 Nov: every bird in the air beats real wings: a flying flock's model, and a walker's flyer,
+		-- has wing bones on both sides (shoulder to hand), and one flap frame moves them.
+		for place, defs in Birds.FLOCKS do
+			for _, def in defs do
+				local name = if def.ground then Birds.FLYER else def.model
+				local m = ((models :: Instance):FindFirstChild(name) :: Model):Clone()
+				local wings = Birds.wingsOf(m)
+				local left, right = 0, 0
+				for _, w in wings do
+					if w.side > 0 then left += 1 else right += 1 end
+				end
+				assert(left >= 3 and right >= 3, place .. ": the " .. name .. " flying there has no wings to beat")
+				local before = wings[1].bone.Transform
+				Birds.flap(wings, 1, 1, math.pi / 2)
+				assert(wings[1].bone.Transform ~= before, "a flap frame did not move the wing")
+				m:Destroy()
+			end
+		end
 		local caps = Config.BIRDS_MAX
 		assert(caps and caps.phone < caps.tablet and caps.tablet <= caps.pc, "bird budgets are not phone < tablet <= pc")
 		return string.format("%d flock birds over %d models; budgets pc %d / tablet %d / phone %d", n, #(models :: Instance):GetChildren(), caps.pc, caps.tablet, caps.phone)

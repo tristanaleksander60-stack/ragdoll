@@ -8,8 +8,8 @@
 --   Military   a hawk or two, high
 -- Behaviour: a flock steers like boids (keep together, keep apart, follow), wanders round a point
 -- that drifts after the player, banks into turns; grounded pigeons peck and hop. A shot or a blast
--- near them (FeelBus Shot / BigHit) scatters them up and away for a few seconds. The hawk's wings
--- beat on its bones; the others bob and bank. Budget per device tier (Config.BIRDS_MAX); birds far
+-- near them (FeelBus Shot / BigHit) scatters them up and away for a few seconds. Every bird in the
+-- air beats real wings on the hawk rig (Birds.flap; see FLYER). Budget per device tier (Config.BIRDS_MAX); birds far
 -- from the camera are hidden and not stepped. A quiet birdsong loop plays outdoors (SoundMix Ambient).
 
 local Players = game:GetService("Players")
@@ -32,15 +32,34 @@ Birds.SCATTER_REACH = 70 -- studs from a bang that scatters a flock
 Birds.SCATTER_TIME = 4
 Birds.HIGH_ROOMS = 500 -- above this the rooms have roofs: no birds, no song
 
--- Per place: { model, count, height, radius, speed, ground (walking pigeons), size }.
+-- Every bird in the air flies on the hawk's rig (the only model with wing bones: shoulder, upper
+-- arm, forearm, hand), tinted: black for a crow, white for a gull, pigeon grey for a pigeon that
+-- takes off (the walking pigeon is a rig with no wings: it swaps to its flyer in the air and back
+-- on landing). 20 Nov 2026, the owner: the birds must look real flying away, wings beating.
+Birds.FLYER = "Hawk"
+local CROW = Color3.fromRGB(30, 30, 34)
+local GULL = Color3.fromRGB(236, 236, 230)
+local PIGEON = Color3.fromRGB(116, 122, 134)
+
+-- Per place: { model, count, height, radius, speed, ground (walking pigeons), size, tint, flap
+-- (wing beats, rad/s), glide (share of the time spent gliding), flySize/flyTint (a walker's flyer) }.
+local PIGEONS = { model = "Pigeon", ground = true, radius = 30, speed = 4, size = 2.6, flySize = 0.24, flyTint = PIGEON, flap = 24, glide = 0.1 }
+local CROWS = { model = "Hawk", tint = CROW, size = 0.32, flap = 14, glide = 0.4 }
+local function with(base: { [string]: any }, extra: { [string]: any }): { [string]: any }
+	local t = table.clone(base)
+	for k, v in extra do
+		t[k] = v
+	end
+	return t
+end
 Birds.FLOCKS = table.freeze({
-	Lab = { { model = "Pigeon", count = 5, ground = true, radius = 30, speed = 4, size = 2.6 }, { model = "Crow", count = 6, height = 48, radius = 70, speed = 20, size = 1.1 }, { model = "Hawk", count = 1, height = 85, radius = 110, speed = 16, size = 1 } },
-	Plaza = { { model = "Pigeon", count = 10, ground = true, radius = 40, speed = 4, size = 2.6 } },
-	City = { { model = "Pigeon", count = 12, ground = true, radius = 50, speed = 4, size = 2.6 }, { model = "Crow", count = 5, height = 45, radius = 80, speed = 22, size = 1.1 } },
-	Island = { { model = "Gull", count = 7, height = 40, radius = 90, speed = 18, size = 0.22 } },
-	Farm = { { model = "Crow", count = 7, height = 50, radius = 90, speed = 20, size = 1.1 } },
-	Military = { { model = "Hawk", count = 2, height = 90, radius = 120, speed = 16, size = 1 } },
-	Site = { { model = "Crow", count = 5, height = 52, radius = 70, speed = 20, size = 1.1 } },
+	Lab = { with(PIGEONS, { count = 5 }), with(CROWS, { count = 6, height = 48, radius = 70, speed = 20 }), { model = "Hawk", count = 1, height = 85, radius = 110, speed = 16, size = 1, flap = 8, glide = 0.75 } },
+	Plaza = { with(PIGEONS, { count = 10, radius = 40 }) },
+	City = { with(PIGEONS, { count = 12, radius = 50 }), with(CROWS, { count = 5, height = 45, radius = 80, speed = 22 }) },
+	Island = { { model = "Hawk", tint = GULL, count = 7, height = 40, radius = 90, speed = 18, size = 0.42, flap = 9, glide = 0.7 } },
+	Farm = { with(CROWS, { count = 7, height = 50, radius = 90, speed = 20 }) },
+	Military = { { model = "Hawk", count = 2, height = 90, radius = 120, speed = 16, size = 1, flap = 8, glide = 0.75 } },
+	Site = { with(CROWS, { count = 5, height = 52, radius = 70, speed = 20 }) },
 })
 
 type Bird = {
@@ -49,10 +68,14 @@ type Bird = {
 	vel: Vector3,
 	phase: number,
 	ground: boolean,
-	bones: { Bone },
-	baseC0: { CFrame },
+	wings: { Wing }, -- (the model in the air: its wing bones)
+	flyer: Model?, -- (a walking pigeon's body for the air)
+	flyWings: { Wing },
+	flapAmp: number?, -- (1 beating .. 0 gliding, eased)
+	flapPhase: number?,
 	feet: number, -- (V7-3: from the pivot down to the lowest point of the model: its feet)
 }
+type Wing = { bone: Bone, base: CFrame, side: number, part: string }
 type Flock = { def: any, birds: { Bird }, centre: Vector3, scatterUntil: number, scatterFrom: Vector3 }
 
 local player = Players.LocalPlayer
@@ -109,15 +132,59 @@ for _, pl in Players:GetPlayers() do
 end
 Players.PlayerAdded:Connect(watchPlayer)
 
-local function makeBird(def: any, at: Vector3): Bird?
+-- A bird's wing bones (shoulder, upper arm, forearm, hand), each with its rest pose and side.
+function Birds.wingsOf(m: Model): { Wing }
+	local out: { Wing } = {}
+	for _, d in m:GetDescendants() do
+		if d:IsA("Bone") then
+			for _, part in { "Clavical", "UpperArm", "LowerArm", "Hand" } do
+				if string.find(d.Name, part) then
+					table.insert(out, { bone = d, base = d.Transform, side = if string.find(d.Name, "Left") then 1 else -1, part = part })
+				end
+			end
+		end
+	end
+	return out
+end
+
+-- A copy of a bird model, sized and tinted (the hawk's texture off, one flat feather colour).
+local function cloneBird(name: string, size: number?, tint: Color3?): Model?
 	local src = ReplicatedStorage:FindFirstChild("BirdModels")
-	local tpl = src and src:FindFirstChild(def.model)
+	local tpl = src and src:FindFirstChild(name)
 	if not tpl or not tpl:IsA("Model") then
 		return nil
 	end
 	local m = tpl:Clone()
-	if def.size and def.size ~= 1 then
-		m:ScaleTo(m:GetScale() * def.size)
+	if size and size ~= 1 then
+		m:ScaleTo(m:GetScale() * size)
+	end
+	if tint then
+		for _, d in m:GetDescendants() do
+			if d:IsA("SurfaceAppearance") or d:IsA("Decal") or d:IsA("Texture") then
+				d:Destroy()
+			elseif d:IsA("MeshPart") then
+				d.TextureID = ""
+				d.Color = tint
+				d.Material = Enum.Material.SmoothPlastic
+			end
+		end
+	end
+	for _, d in m:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.Anchored = true
+			d.CanCollide = false
+			d.CanQuery = false
+			d.CanTouch = false
+			d.CastShadow = false
+		end
+	end
+	return m
+end
+
+local function makeBird(def: any, at: Vector3): Bird?
+	local m = cloneBird(def.model, def.size, def.tint)
+	if not m then
+		return nil
 	end
 	-- (Review fix: a bird never collides, is never hit by an aim ray, never simulates.)
 	for _, d in m:GetDescendants() do
@@ -130,14 +197,8 @@ local function makeBird(def: any, at: Vector3): Bird?
 		end
 	end
 	m.Parent = folder()
-	local bones: { Bone } = {}
-	local base: { CFrame } = {}
-	for _, d in m:GetDescendants() do
-		if d:IsA("Bone") and (string.find(d.Name, "UpperArm") or string.find(d.Name, "Clavical")) then
-			table.insert(bones, d)
-			table.insert(base, d.Transform)
-		end
-	end
+	-- (A walker gets its flyer now: a takeoff never waits on a clone.)
+	local flyer = if def.ground then cloneBird(Birds.FLYER, def.flySize, def.flyTint) else nil
 	local dir = Vector3.new(rng:NextNumber(-1, 1), 0, rng:NextNumber(-1, 1))
 	return {
 		model = m,
@@ -145,8 +206,9 @@ local function makeBird(def: any, at: Vector3): Bird?
 		vel = (if dir.Magnitude > 0.01 then dir.Unit else Vector3.xAxis) * (def.speed or 10),
 		phase = rng:NextNumber(0, 6),
 		ground = def.ground == true,
-		bones = bones,
-		baseC0 = base,
+		wings = Birds.wingsOf(m),
+		flyer = flyer,
+		flyWings = if flyer then Birds.wingsOf(flyer) else {},
 		feet = Birds.feetOffset(m),
 	}
 end
@@ -155,6 +217,9 @@ local function clear()
 	for _, fl in flocks do
 		for _, b in fl.birds do
 			b.model:Destroy()
+			if b.flyer then
+				b.flyer:Destroy()
+			end
 		end
 	end
 	flocks = {}
@@ -268,8 +333,18 @@ local function step(dt: number)
 		for i, b in fl.birds do
 			local far = (b.pos - camPos).Magnitude > Birds.VIEW
 			local wantParent = if far then nil else folder()
-			if b.model.Parent ~= wantParent then
-				b.model.Parent = wantParent
+			-- (A walking pigeon in the air shows its flyer; on the ground its own body.)
+			local flying = b.flyer ~= nil and not (b.ground and not scattering)
+			local walkerParent = if flying then nil else wantParent
+			if b.model.Parent ~= walkerParent then
+				b.model.Parent = walkerParent
+			end
+			local flyer = b.flyer
+			if flyer then
+				local flyerParent = if flying then wantParent else nil
+				if flyer.Parent ~= flyerParent then
+					flyer.Parent = flyerParent
+				end
 			end
 			if far then
 				continue
@@ -325,17 +400,42 @@ local function step(dt: number)
 			end
 			local fwd = if b.vel.Magnitude > 0.1 then b.vel.Unit else Vector3.zAxis
 			local bank = math.clamp(steer:Dot(fwd:Cross(Vector3.yAxis)) * -0.05, -0.6, 0.6)
-			local bob = math.sin(b.phase * 6) * 0.25
-			b.model:PivotTo(CFrame.lookAt(b.pos + Vector3.new(0, bob, 0), b.pos + fwd) * CFrame.Angles(0, 0, bank))
-			-- Wing beats on the hawk's bones (gliding most of the time, beats now and then).
-			if #b.bones > 0 then
-				local beat = if math.sin(b.phase * 0.6) > 0.2 or scattering then math.sin(b.phase * 14) * 0.6 else 0.05
-				for k, bone in b.bones do
-					local side = if string.find(bone.Name, "Left") then 1 else -1
-					bone.Transform = b.baseC0[k] * CFrame.Angles(0, 0, beat * side)
-				end
-			end
+			-- Wing beats (Birds.flap): hard and fast on a takeoff, a scatter or a climb; now and then a
+			-- glide with the wings held out, a little dihedral. The body rises on each downstroke.
+			local body = if b.flyer then b.flyer else b.model
+			local wings = if b.flyer then b.flyWings else b.wings
+			local climbing = b.vel.Y > 1.5 or scattering
+			local gliding = not climbing and math.sin(b.phase * 0.5 + i) < (def.glide or 0.5) * 2 - 1
+			b.flapAmp = (b.flapAmp or 1) + ((if gliding then 0 else 1) - (b.flapAmp or 1)) * math.clamp(dt * 4, 0, 1)
+			local rate = (def.flap or 12) * (if climbing then 1.35 else 1)
+			b.flapPhase = (b.flapPhase or 0) + dt * rate
+			local stroke = math.sin(b.flapPhase)
+			local bob = -math.cos(b.flapPhase) * 0.12 * (def.size or 1) * 4 * b.flapAmp
+			body:PivotTo(CFrame.lookAt(b.pos + Vector3.new(0, bob, 0), b.pos + fwd) * CFrame.Angles(0, 0, bank))
+			Birds.flap(wings, stroke, b.flapAmp, b.flapPhase)
 		end
+	end
+end
+
+-- One frame of a wing beat: the shoulder and upper arm swing the wing through the stroke, the
+-- forearm and hand trail behind it (folding a little on the upstroke, open on the downstroke).
+-- amp 0 = gliding: wings out, held a little up (a shallow V). On this rig the same angle on both
+-- sides is a mirrored stroke (the bones' axes are mirrored): + is down, - is up. Measured in Studio:
+-- one sign per side tilted the bird like a roll instead of beating.
+function Birds.flap(wings: { Wing }, stroke: number, amp: number, phase: number)
+	local trail = math.sin(phase - 0.9)
+	for _, w in wings do
+		local angle
+		if w.part == "Clavical" then
+			angle = 0.2 * stroke * amp - 0.04
+		elseif w.part == "UpperArm" then
+			angle = 0.5 * stroke * amp - 0.06
+		elseif w.part == "LowerArm" then
+			angle = 0.3 * trail * amp
+		else
+			angle = 0.2 * trail * amp
+		end
+		w.bone.Transform = w.base * CFrame.Angles(0, 0, angle)
 	end
 end
 
