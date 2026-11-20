@@ -37,7 +37,7 @@ Director.HIDE_KEY = Enum.KeyCode.H
 Director.PATH_MAX = 6
 Director.PATH_TIME = 6 -- s a camera path takes
 Director.SPEEDS = { 8, 20, 45, 90 } -- studs/s free-fly (the wheel steps)
-Director.TIMES = { { "1x", 1 }, { "0.5x", 0.5 }, { "0.25x", 0.25 }, { "0.1x", 0.1 }, { "FREEZE", 0.03 } }
+Director.TIMES = { { "1x", 1 }, { "0.5x", 0.5 }, { "0.25x", 0.25 }, { "0.1x", 0.1 }, { "FREEZE", 0.01 } }
 Director.SHOTS = { { "CANNON", "Cannon" }, { "CAR ROW", "CarRow" }, { "SPIDER", "Spider" }, { "GORILLA", "Gorilla" }, { "TOWER", "Tower" }, { "MEGA BOMB", "MegaBomb" } }
 Director.ASPECT = 9 / 16
 
@@ -61,8 +61,8 @@ local path: { CFrame } = {}
 local pathStart: number? = nil
 local presets: { any } = {}
 local eventIndex = 1
-local hiddenGuis: { [ScreenGui]: boolean } = {}
-local hiddenBoards: { [BillboardGui]: boolean } = {}
+local hiddenGuis: { [ScreenGui]: boolean } = {} -- (each gui: was it on when first seen)
+local hiddenBoards: { [BillboardGui]: boolean } = {} -- (the same for the signs)
 local gui: ScreenGui? = nil
 local panel: Frame? = nil
 local bars: { Frame } = {}
@@ -71,6 +71,16 @@ local status: TextLabel? = nil
 local dof: DepthOfFieldEffect? = nil
 local savedType: Enum.CameraType = Enum.CameraType.Custom
 local remote: RemoteEvent? = nil
+local savedFov = 70
+local savedMouse: Enum.MouseBehavior = Enum.MouseBehavior.Default
+local presetsIn = false -- (the stored presets have arrived from the server)
+local boardSweep = 0
+local pokeOff = false -- (director mode keeps the weapons off)
+local pokeWas = true
+local Poke: any = nil -- (PokeController, required at start)
+local Slow: any = nil -- (SlowMotion, required at start)
+local sweepBoards: () -> ()
+local readMove: () -> Vector3
 
 local function send(kind: string, arg: any?)
 	if remote then
@@ -318,12 +328,12 @@ local function buildGui()
 		Director.setSlow(1)
 		say("Reset")
 	end)
-	makeButton(ac, "REPLAY 10s", 82, function()
+	makeButton(ac, "REPLAY 2s", 82, function() -- (the X-ray replay keeps the last 2 s round a moment)
 		local ok, Replay = pcall(function()
 			return require(Client:WaitForChild("ReplayController")) :: any
 		end)
 		if ok then
-			task.spawn(Replay.play, os.clock() - 5)
+			task.spawn(Replay.play, os.clock() - 1.7)
 		end
 	end)
 	title(p, "ONE-TAP SHOTS", n())
@@ -399,7 +409,6 @@ local function pathAt(t: number): CFrame
 	return CFrame.new(pos) * rot
 end
 
-local move = Vector3.zero
 local looking = false
 
 local function step(dt: number)
@@ -410,7 +419,7 @@ local function step(dt: number)
 	local focus: Vector3? = rootPos(target)
 	if mode == "Free" then
 		local rot = CFrame.fromOrientation(pitch, yaw, 0)
-		camCF = CFrame.new(camCF.Position + rot:VectorToWorldSpace(move) * speed * dt) * rot
+		camCF = CFrame.new(camCF.Position + rot:VectorToWorldSpace(readMove()) * speed * dt) * rot
 	elseif mode == "Orbit" and focus then
 		orbitAngle += dt * 0.35
 		local at = focus + Vector3.new(math.cos(orbitAngle) * 22, 7, math.sin(orbitAngle) * 22)
@@ -435,12 +444,28 @@ local function step(dt: number)
 		end
 	end
 	-- (Some HUD pieces switch themselves back on every frame: kept off while directing.)
+	-- (Review fix: each gui's own state is noted the first time it is seen and put back exactly so
+	-- on the way out; a gui the game switched off meanwhile is never forced back on.)
 	local pg = player:FindFirstChild("PlayerGui")
 	for _, g in if pg then pg:GetChildren() else {} do
-		if g:IsA("ScreenGui") and g ~= gui and g.Enabled then
-			hiddenGuis[g] = true
-			g.Enabled = false
+		if g:IsA("ScreenGui") and g ~= gui then
+			if hiddenGuis[g] == nil then
+				hiddenGuis[g] = g.Enabled
+			end
+			if g.Enabled then
+				g.Enabled = false
+			end
 		end
+	end
+	-- (New signs in the world, a new body's tag, a guest's bubble: hidden as they come, once a second.)
+	boardSweep += dt
+	if boardSweep > 1 then
+		boardSweep = 0
+		sweepBoards()
+	end
+	-- (Anything that switched the weapons back on (a replay ending) is switched off again.)
+	if pokeOff and Poke and Poke.isEnabled() then
+		Poke.setEnabled(false)
 	end
 	local cf = camCF
 	if shakeOn then
@@ -460,27 +485,24 @@ local function step(dt: number)
 			d.NearIntensity = 0.4
 		end
 	end
-	-- (Slow time on this screen: a long bubble round what the camera sees, renewed while slowed.)
-	if slow < 1 then
-		local ok, SlowMotion = pcall(function()
-			return require(Client:WaitForChild("SlowMotion")) :: any
-		end)
-		if ok and SlowMotion.activeForTest() == 0 then
-			SlowMotion.SCALE = slow
-			SlowMotion.moment(focus or (cf.Position + cf.LookVector * 30), 90, 3)
-		end
+	-- (Slow time on this screen: one lasting bubble that follows what the camera looks at.)
+	if slow < 1 and Slow then
+		Slow.SCALE = slow
+		Slow.director(focus or (cf.Position + cf.LookVector * 30), 90)
 	end
 end
 
 function Director.setSlow(s: number)
 	slow = s
-	local ok, SlowMotion = pcall(function()
-		return require(Client:WaitForChild("SlowMotion")) :: any
-	end)
-	if ok then
-		SlowMotion.SCALE = if s < 1 then s else ((Config.SLOWMO_SCALE :: number?) or 0.25)
+	if Slow then
+		if s < 1 then
+			Slow.SCALE = s
+		else
+			Slow.director(nil) -- (gone at once: "normal" is normal)
+			Slow.SCALE = (Config.SLOWMO_SCALE :: number?) or 0.25
+		end
 	end
-	say(if s >= 1 then "Time: normal" elseif s <= 0.05 then "Time: FROZEN" else "Time: " .. s .. "x")
+	say(if s >= 1 then "Time: normal" elseif s <= 0.02 then "Time: FROZEN" else "Time: " .. s .. "x")
 end
 
 ------------------------------------------------------------------------------------------------
@@ -490,13 +512,17 @@ local function cfToList(cf: CFrame): { number }
 	return { cf:GetComponents() }
 end
 
+-- (Review fix: one slot at a time, merged on the server, and only once the stored ones have
+-- arrived: a save never wipes the other four.)
 function Director.savePreset(i: number)
-	presets[i] = { c = cfToList(camCF), fov = fov, slow = math.max(0.05, slow) }
-	local out = {}
-	for k = 1, 5 do
-		out[k] = presets[k] or false
+	if not presetsIn then
+		send("DirectorGet")
+		say("Presets are still loading: try again in a moment")
+		return
 	end
-	send("DirectorSave", out)
+	local p = { c = cfToList(camCF), fov = fov, slow = math.max(0.05, slow) }
+	presets[i] = p
+	send("DirectorSave", { slot = i, preset = p })
 	say("Preset " .. i .. " saved")
 end
 
@@ -592,50 +618,67 @@ end
 ------------------------------------------------------------------------------------------------
 -- On and off
 
-local function hideGameUi(hide: boolean)
+sweepBoards = function()
+	for _, d in Workspace:GetDescendants() do
+		if d:IsA("BillboardGui") and hiddenBoards[d] == nil then
+			hiddenBoards[d] = d.Enabled
+			d.Enabled = false
+		end
+	end
 	local pg = player:FindFirstChild("PlayerGui")
-	if hide then
-		hiddenGuis = {}
-		for _, g in if pg then pg:GetChildren() else {} do
-			if g:IsA("ScreenGui") and g ~= gui and g.Enabled then
-				hiddenGuis[g] = true
-				g.Enabled = false
-			end
+	for _, d in if pg then pg:GetDescendants() else {} do
+		if d:IsA("BillboardGui") and hiddenBoards[d] == nil then
+			hiddenBoards[d] = d.Enabled
+			d.Enabled = false
 		end
-		pcall(StarterGui.SetCoreGuiEnabled, StarterGui, Enum.CoreGuiType.All, false)
-		-- (The signs in the world too: a clean shot shows the bodies, not labels.)
-		for _, d in Workspace:GetDescendants() do
-			if d:IsA("BillboardGui") and d.Enabled then
-				hiddenBoards[d] = true
-				d.Enabled = false
-			end
-		end
-	else
-		for g in hiddenGuis do
-			if g.Parent then
-				g.Enabled = true
-			end
-		end
-		hiddenGuis = {}
-		pcall(StarterGui.SetCoreGuiEnabled, StarterGui, Enum.CoreGuiType.All, true)
-		for d in hiddenBoards do
-			if d.Parent then
-				d.Enabled = true
-			end
-		end
-		hiddenBoards = {}
 	end
 end
 
-local function sinkMove(_: string, state: Enum.UserInputState, input: InputObject): Enum.ContextActionResult
-	local k = input.KeyCode
-	local down = if state == Enum.UserInputState.Begin then 1 elseif state == Enum.UserInputState.End then -1 else 0
-	local axis = { [Enum.KeyCode.W] = Vector3.new(0, 0, -1), [Enum.KeyCode.S] = Vector3.new(0, 0, 1), [Enum.KeyCode.A] = Vector3.new(-1, 0, 0), [Enum.KeyCode.D] = Vector3.new(1, 0, 0), [Enum.KeyCode.E] = Vector3.new(0, 1, 0), [Enum.KeyCode.Q] = Vector3.new(0, -1, 0) }
-	local v = axis[k]
-	if v and down ~= 0 then
-		move += v * down
+local function hideGameUi(hide: boolean)
+	if hide then
+		hiddenGuis = {}
+		hiddenBoards = {}
+		pcall(StarterGui.SetCoreGuiEnabled, StarterGui, Enum.CoreGuiType.All, false)
+		sweepBoards() -- (the signs in the world too: a clean shot shows the bodies, not labels)
+	else
+		-- (Every gui and sign back exactly as it was when first seen: never forced on.)
+		for g, was in hiddenGuis do
+			if g.Parent then
+				g.Enabled = was
+			end
+		end
+		hiddenGuis = {}
+		for d, was in hiddenBoards do
+			if d.Parent then
+				d.Enabled = was
+			end
+		end
+		hiddenBoards = {}
+		pcall(StarterGui.SetCoreGuiEnabled, StarterGui, Enum.CoreGuiType.All, true)
 	end
+end
+
+-- The fly keys only stop the character walking; where the camera goes is read from the keys that
+-- are down each frame (a key held while turning on, or lost on alt-tab, never drifts).
+local function sinkMove(_: string, _state: Enum.UserInputState, _input: InputObject): Enum.ContextActionResult
 	return Enum.ContextActionResult.Sink
+end
+local FLY = {
+	[Enum.KeyCode.W] = Vector3.new(0, 0, -1), [Enum.KeyCode.S] = Vector3.new(0, 0, 1),
+	[Enum.KeyCode.A] = Vector3.new(-1, 0, 0), [Enum.KeyCode.D] = Vector3.new(1, 0, 0),
+	[Enum.KeyCode.E] = Vector3.new(0, 1, 0), [Enum.KeyCode.Q] = Vector3.new(0, -1, 0),
+}
+readMove = function(): Vector3
+	if UserInputService:GetFocusedTextBox() then
+		return Vector3.zero
+	end
+	local v = Vector3.zero
+	for k, dir in FLY do
+		if UserInputService:IsKeyDown(k) then
+			v += dir
+		end
+	end
+	return v
 end
 
 function Director.toggle(want: boolean?)
@@ -652,7 +695,10 @@ function Director.toggle(want: boolean?)
 		return
 	end
 	if on then
-		savedType = camera.CameraType
+		-- (A Scriptable camera now (a replay, a cut scene) comes back as the normal one.)
+		savedType = if camera.CameraType == Enum.CameraType.Scriptable then Enum.CameraType.Custom else camera.CameraType
+		savedFov = camera.FieldOfView
+		savedMouse = UserInputService.MouseBehavior
 		camCF = camera.CFrame
 		fov = camera.FieldOfView
 		Director.setMode("Free")
@@ -660,11 +706,13 @@ function Director.toggle(want: boolean?)
 		hideGameUi(true)
 		g.Enabled = true
 		drawFrame()
-		move = Vector3.zero
-		ContextActionService:BindActionAtPriority("DirectorMove", sinkMove, false, Enum.ContextActionPriority.High.Value + 50, Enum.KeyCode.W, Enum.KeyCode.A, Enum.KeyCode.S, Enum.KeyCode.D, Enum.KeyCode.Q, Enum.KeyCode.E)
-		pcall(function()
-			(require(Client:WaitForChild("PokeController")) :: any).setEnabled(false)
-		end)
+		UserInputService.MouseBehavior = Enum.MouseBehavior.Default -- (the panel must be clickable)
+		ContextActionService:BindActionAtPriority("DirectorMove", sinkMove, false, Enum.ContextActionPriority.High.Value + 50, Enum.KeyCode.W, Enum.KeyCode.A, Enum.KeyCode.S, Enum.KeyCode.D, Enum.KeyCode.Q, Enum.KeyCode.E, Enum.KeyCode.Space, Enum.KeyCode.Up, Enum.KeyCode.Down, Enum.KeyCode.Left, Enum.KeyCode.Right)
+		pokeWas = if Poke then Poke.isEnabled() else true
+		pokeOff = true
+		if Poke then
+			Poke.setEnabled(false)
+		end
 		local d = Instance.new("DepthOfFieldEffect")
 		d.Name = "DirectorDOF"
 		d.Enabled = false
@@ -683,11 +731,12 @@ function Director.toggle(want: boolean?)
 		g.Enabled = false
 		hideGameUi(false)
 		camera.CameraType = savedType
-		camera.FieldOfView = 70
-		UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-		pcall(function()
-			(require(Client:WaitForChild("PokeController")) :: any).setEnabled(true)
-		end)
+		camera.FieldOfView = savedFov
+		UserInputService.MouseBehavior = savedMouse
+		pokeOff = false
+		if Poke and pokeWas then
+			Poke.setEnabled(true) -- (only if it was on before: build mode and onboarding keep theirs)
+		end
 	end
 end
 
@@ -721,15 +770,23 @@ function Director.start()
 	end
 	remote = Net.event(Net.Names.Admin)
 	buildGui()
+	Poke = require(Client:WaitForChild("PokeController")) :: any
+	local okSlow, sm = pcall(function()
+		return require(Client:WaitForChild("SlowMotion")) :: any
+	end)
+	Slow = if okSlow then sm else nil
 	;(remote :: RemoteEvent).OnClientEvent:Connect(function(kind: unknown, data: unknown)
 		if kind == "DirectorFocus" and type(data) == "table" then
 			onFocus(data)
+		elseif kind == "Notice" and on and type(data) == "string" then
+			say(data) -- (a refusal shows on the panel: the toasts are hidden while directing)
 		elseif kind == "DirectorPresets" and type(data) == "table" then
 			presets = {}
 			for i = 1, 5 do
 				local p = (data :: any)[i]
 				presets[i] = if type(p) == "table" then p else false
 			end
+			presetsIn = true
 		end
 	end)
 	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
@@ -737,7 +794,7 @@ function Director.start()
 			Director.toggle()
 			return
 		end
-		if not on then
+		if not on or processed or UserInputService:GetFocusedTextBox() then -- (typing in chat never directs)
 			return
 		end
 		if input.KeyCode == Director.HIDE_KEY then
@@ -750,7 +807,7 @@ function Director.start()
 		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
 			looking = true
 			UserInputService.MouseBehavior = Enum.MouseBehavior.LockCurrentPosition
-		elseif input.UserInputType == Enum.UserInputType.MouseButton1 and not processed then
+		elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
 			pick(Vector2.new(input.Position.X, input.Position.Y))
 		else
 			local nums = { Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four, Enum.KeyCode.Five }
@@ -786,8 +843,8 @@ function Director.start()
 			UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 		end
 	end)
-	UserInputService.InputChanged:Connect(function(input: InputObject)
-		if not on then
+	UserInputService.InputChanged:Connect(function(input: InputObject, processed: boolean)
+		if not on or processed or UserInputService:GetFocusedTextBox() then -- (typing in chat never directs)
 			return
 		end
 		if input.UserInputType == Enum.UserInputType.MouseMovement and looking and mode == "Free" then

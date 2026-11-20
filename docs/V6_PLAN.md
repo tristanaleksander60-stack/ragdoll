@@ -314,3 +314,32 @@ What to do:
   - **Tests:** T31 (now 250 studs), T36, T26, T99, T51, T50, T23, T92, T97 pass.
   - **Captures:** garden_east, garden_west.
   - **Still open in V6-4:** the 3-client privacy check (multi-client is not available over MCP), the dusk lamp look, and ambient birdsong (with V6-6).
+- **V6-3 blind review 6.8 → fix round 1:**
+  - **Exact restore:** each gui and sign is noted the first time it is seen and put back exactly. A gui the game switched off meanwhile is never forced on (the SlowMotion vignette bug). Checked in Studio: no gui differs after on/off; the camera type and FOV come back.
+  - **Slow time:** one lasting bubble that follows the camera's focus (`SlowMotion.director`): no 3 s renewal jolt, never blocked by another bubble, gone at once on 1x/RESET/off. FREEZE is 0.01.
+  - **Keys:**
+    - ignored while typing in chat (`processed` / focused text box), so "!" no longer saves a preset;
+    - the fly keys are read from the keys held each frame (no drift);
+    - Space and the arrows are sunk too;
+    - the panel's wheel does not change the speed.
+  - **Weapons:** PokeController's state is noted and restored only if it was on (build mode and onboarding keep theirs). It is re-switched off if a replay turns it on mid-directing.
+  - **Presets:** saved one slot at a time, merged on the server, and only after the stored ones have arrived. `DirectorGet` is not paced.
+  - **Shots:**
+    - CAR ROW and TOWER only in the owner's own lab;
+    - every body shot checks the body budget;
+    - GORILLA and MEGA BOMB only when no event is on or waiting;
+    - the event shot frames the host's lab (`whereFor`);
+    - the facing is guarded.
+  - **Camera and screen:**
+    - the camera comes back as the normal one if it was Scriptable;
+    - the saved FOV and mouse mode come back;
+    - the mouse is free while directing;
+    - refusals show on the panel ("Notice");
+    - new signs are hidden as they appear (also those under PlayerGui).
+  - **REPLAY 2s:** renamed to the clip the X-ray replay really keeps.
+  - T101/T102 pass. No re-review run (credits).
+  - **Left:**
+    - a locked follow mode;
+    - path ease and duration controls;
+    - the Roblox topbar;
+    - the SPIDER shot waits for V6-5.

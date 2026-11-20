@@ -464,6 +464,10 @@ function AdminService.request(player: Player, kind: unknown, arg: unknown): bool
 	if not Owner.isOwner(player) then
 		return false -- (never told: a non-owner learns nothing of what is here)
 	end
+	if kind == "DirectorGet" then
+		AdminTools.run(player, kind, arg) -- (not paced: the director asks once when it opens)
+		return true
+	end
 	if kind == "Debug" then
 		remote:FireClient(player, "Debug", AdminTools.debug()) -- (not paced: the tab polls it)
 		return true

@@ -329,16 +329,35 @@ function AdminTools.director(by: Player, kind: string, arg: unknown): (boolean, 
 		lazy("DummyControl").push(model, away * AdminTools.LAUNCH_SPEED * 0.6 + Vector3.new(0, AdminTools.LAUNCH_SPEED, 0), by)
 		return true, who .. " launched a dummy", "Launched a dummy"
 	elseif kind == "Shot" then
-		if type(arg) ~= "string" or not AdminTools.SHOTS[arg] then
+		if type(arg) ~= "string" or not (AdminTools.SHOTS :: any)[arg] then
 			return false
 		end
 		local root = rootOf(by)
 		if not root then
 			return false
 		end
-		local look = root.CFrame.LookVector
+		-- (Review fix: a level, never-zero facing even while the owner is ragdolled.)
+		local raw = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
+		local look = if raw.Magnitude > 0.05 then raw.Unit else Vector3.new(0, 0, -1)
 		local focus: Vector3 = root.Position
 		local shotTo: Vector3? = nil
+		-- (Shots that spawn bodies: only in the owner's own lab, and only with room in the budget.)
+		local needs = { CarRow = 8, Tower = 5, Cannon = 1, Spider = 1 }
+		local want = needs[arg]
+		if want then
+			if (arg == "CarRow" or arg == "Tower") and lazy("Lab").ownerAt(root.Position) ~= by then
+				return false, nil, nil, "Go to your own lab for this shot"
+			end
+			if lazy("EventService").dummyRoom() < want then
+				return false, nil, nil, "No room for more bodies right now: RESET ALL first"
+			end
+		end
+		if arg == "Gorilla" or arg == "MegaBomb" then
+			local ES = lazy("EventService")
+			if ES.queued() >= 1 or ES.current() ~= nil then
+				return false, nil, nil, "An event is on or waiting: try when it is over"
+			end
+		end
 		if arg == "Cannon" then
 			local pad = ownLabPart(by, "CannonPad")
 			if not pad then
@@ -351,24 +370,24 @@ function AdminTools.director(by: Player, kind: string, arg: unknown): (boolean, 
 			end)
 			shotTo = if okL then landing else nil
 		elseif arg == "CarRow" then
-			local base = root.Position + Vector3.new(look.X, 0, look.Z).Unit * 40
-			for _, at in AdminTools.layout("Row", 8, base - Vector3.new(look.X, 0, look.Z).Unit * 14, look) do
+			local base = root.Position + look * 40
+			for _, at in AdminTools.layout("Row", 8, base - look * 14, look) do
 				guest(at, root.Position, by)
 			end
 			focus = base
-			shotTo = base + Vector3.new(look.X, 0, look.Z).Unit * 30
+			shotTo = base + look * 30
 		elseif arg == "Tower" then
-			local base = root.Position + Vector3.new(look.X, 0, look.Z).Unit * 18 + Vector3.new(0, 34, 0)
+			local base = root.Position + look * 18 + Vector3.new(0, 34, 0)
 			for i = 1, 5 do
 				local model = guest(base + Vector3.new((i - 3) * 3, 0, 0), nil, by)
 				task.delay(0.6, function()
 					if model.Parent then
-						lazy("DummyControl").push(model, Vector3.new(look.X, 0, look.Z).Unit * 70 + Vector3.new((i - 3) * 6, 20, 0), by)
+						lazy("DummyControl").push(model, look * 70 + Vector3.new((i - 3) * 6, 20, 0), by)
 					end
 				end)
 			end
 			focus = base
-			shotTo = base + Vector3.new(look.X, 0, look.Z).Unit * 30
+			shotTo = base + look * 30
 		elseif arg == "Spider" then
 			local web = ownLabPart(by, "SpiderWeb")
 			if not web then
@@ -385,7 +404,7 @@ function AdminTools.director(by: Player, kind: string, arg: unknown): (boolean, 
 			if not place then
 				return false, nil, nil, "That event could not start now"
 			end
-			focus = if typeof(place) == "Vector3" then place else lazy("EventService").whereFor(by.UserId)
+			focus = lazy("EventService").whereFor(by.UserId) -- (trigger returns a number: the event is in the host's lab)
 		end
 		local f = focusRemote
 		if f then
@@ -393,12 +412,23 @@ function AdminTools.director(by: Player, kind: string, arg: unknown): (boolean, 
 		end
 		return true, who .. " set up the " .. arg .. " shot", "Shot: " .. arg
 	elseif kind == "DirectorSave" then
-		local clean = AdminTools.cleanPresets(arg)
-		if not clean or not presets then
+		-- (Review fix: one slot { slot = 1..5, preset } merged into what is stored: a save never wipes
+		-- the other four.)
+		local slot = if type(arg) == "table" then (arg :: any).slot else nil
+		if not presets or type(slot) ~= "number" or slot ~= math.floor(slot) or slot < 1 or slot > AdminTools.PRESETS_MAX then
 			return false
 		end
-		lazy("OwnerSetting").set(presets, clean)
-		return true, who .. " saved the director presets", "Presets saved"
+		local one = AdminTools.cleanPresets({ (arg :: any).preset })
+		if not one or type(one[1]) ~= "table" then
+			return false
+		end
+		local merged = {}
+		local stored = if type(presets.value) == "table" then presets.value else {}
+		for i = 1, AdminTools.PRESETS_MAX do
+			merged[i] = if i == slot then one[1] else (stored[i] or false)
+		end
+		lazy("OwnerSetting").set(presets, merged)
+		return true, string.format("%s saved director preset %d", who, slot), "Preset " .. slot .. " saved"
 	elseif kind == "DirectorGet" then
 		local f = focusRemote
 		if f then

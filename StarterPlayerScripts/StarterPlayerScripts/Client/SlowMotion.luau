@@ -307,6 +307,28 @@ function SlowMotion.moment(at: Vector3, radius: number?, seconds: number?)
 	table.insert(bubbles, { centre = at, radius = radius or SlowMotion.AUTO_RADIUS, ends = Workspace:GetServerTimeNow() + (seconds or SlowMotion.AUTO_TIME), part = nil })
 end
 
+-- V6-3 (director): one lasting bubble that follows a point (the camera's focus) until released;
+-- no 3 s renewals, so no jolt, and nothing else (an auto moment) blocks it.
+local directorBubble: Bubble? = nil
+function SlowMotion.director(at: Vector3?, radius: number?)
+	if at == nil then
+		if directorBubble then
+			directorBubble.ends = 0 -- (gone at the next physics step)
+			directorBubble = nil
+		end
+		return
+	end
+	local b = directorBubble
+	if b then
+		b.centre = at
+		b.radius = radius or b.radius
+	else
+		local new: Bubble = { centre = at, radius = radius or 90, ends = math.huge, part = nil }
+		table.insert(bubbles, new)
+		directorBubble = new
+	end
+end
+
 function SlowMotion.activeForTest(): number
 	return #bubbles
 end

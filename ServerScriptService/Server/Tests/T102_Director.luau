@@ -40,7 +40,7 @@ return {
 			Owner.studioOwnerForTest = false
 			local before = guests()
 			assert(not req("Shot", "Tower"), "a non-owner set up a shot")
-			assert(not req("DirectorSave", good), "a non-owner saved presets")
+			assert(not req("DirectorSave", { slot = 1, preset = good[1] }), "a non-owner saved presets")
 			assert(guests() == before, "a non-owner's shot spawned bodies")
 			Owner.studioOwnerForTest = true
 			-- Presets.
@@ -50,7 +50,10 @@ return {
 			assert(AdminTools.cleanPresets({ { c = { 0, 0, 0 }, fov = 70, slow = 1 } }) == nil, "a short CFrame taken")
 			assert(AdminTools.cleanPresets({ good[1], good[1], good[1], good[1], good[1], good[1] }) == nil, "6 presets taken")
 			assert(AdminTools.cleanPresets("junk") == nil, "junk taken")
-			assert(req("DirectorSave", good), "the owner could not save presets")
+			assert(not req("DirectorSave", { slot = 9, preset = good[1] }), "slot 9 taken")
+			assert(not req("DirectorSave", { slot = 1, preset = { c = { 0 } } }), "a bad preset taken")
+			task.wait(0.3)
+			assert(req("DirectorSave", { slot = 2, preset = good[1] }), "the owner could not save a preset")
 			-- Launch: only a body in Workspace.Dummies.
 			assert(not req("LaunchDummy", Workspace:FindFirstChildWhichIsA("BasePart", true)), "a launch took a part")
 			assert(not req("LaunchDummy", p.Character), "a launch took a player")
