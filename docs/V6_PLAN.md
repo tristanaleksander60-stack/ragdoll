@@ -235,3 +235,14 @@ What to do:
   - The egg card, Like and What's New never give up: they wait for their turn, then for calm or no window, again and again. A slot freed without a window costs no gap.
   - `playerWindow` is seeded at start. The opt-in slot frees on `OptInPromptClosed`.
   - Timeline (new player): only the line until 90 s; 90.4 s "Welcome back!" (the Studio profile's Returning flag); 94.5 s daily egg; 110 s egg card. T100/T23/T45/T55/T60 pass, no errors.
+- **V6-1 re-review 7.8 → fix round 2 (the last; no third review):**
+  - No more Toast hold for newcomers. Replies and critical messages show at once, under the objective line (`setGoalTop`). Notify still holds what it owns.
+  - Notify treats a held Toast as busy (`Toast.isPaused`), so nothing is queued and lost behind a card.
+  - At a newcomer's reveal, only the newest `NOTIFY_REVEAL_KEEP` (2) waiting rewards come out.
+  - One egg-card waiter at a time (`offerWaiting` stays set until the card is up).
+  - The Like card checks again after its wait (favourited, a window, a replay, building, the first minute).
+  - The opt-in waits up to 300 s for the slot.
+  - The tip × is 44 px.
+  - Capture `toast_tip_x`. T100/T23/T45/T55/T60 pass, no errors.
+  - Left (minor): a gamepad cannot close tips (× not selectable); `NotifyRules.pick` is unused.
+- **V6-1 done.** Next: V6-2 (admin menu).

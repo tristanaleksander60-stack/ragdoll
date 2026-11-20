@@ -32,6 +32,7 @@ local state = NotifyRules.new()
 local queue: { Item } = {}
 local bigNames: { [string]: boolean } = {} -- windows that opened by themselves (claimed here)
 local started = false
+local revealTrimmed = false
 local player = Players.LocalPlayer
 
 local COLORS = {
@@ -98,8 +99,24 @@ local function tick()
 	end
 	local now = os.clock()
 	state.newcomerUntil = newcomerQuiet()
+	-- (At a newcomer's reveal, of the rewards that waited only the newest NOTIFY_REVEAL_KEEP come out:
+	-- the early unlocks are on the bar anyway, and the reveal must not turn into a burst.)
+	if not revealTrimmed and state.newcomerUntil > 0 and now >= state.newcomerUntil then
+		revealTrimmed = true
+		local keep = (Config :: any).NOTIFY_REVEAL_KEEP or 2
+		local rewards = 0
+		for i = #queue, 1, -1 do
+			local it = queue[i]
+			if it.kind == "reward" and it.at < state.newcomerUntil then
+				rewards += 1
+				if rewards > keep then
+					table.remove(queue, i)
+				end
+			end
+		end
+	end
 	-- (One at a time on screen: the next waits for the toast to go.)
-	local busy = Toast.isShowing()
+	local busy = Toast.isShowing() or Toast.isPaused() -- (a held Toast would only queue and drop it)
 	local order: { number } = {}
 	for i in queue do
 		table.insert(order, i)
@@ -260,7 +277,8 @@ function Notify.goodMoment()
 		if not can then
 			return
 		end
-		if not Notify.waitBig("NotifyOptIn", 30) then
+		-- (A Like card from the same wow may hold the slot first: wait for it and its gap.)
+		if not Notify.waitBig("NotifyOptIn", 300) then
 			return
 		end
 		-- (The slot frees when Roblox says its prompt closed, or after 30 s if that never comes.)

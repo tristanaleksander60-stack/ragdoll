@@ -110,7 +110,12 @@ function LikePrompt.start()
 			-- (It waits its turn, and again while another window is up: never dropped.)
 			while true do
 				Notify.waitBig("Like")
-				if Controller.getCurrent() == nil then
+				if favorited then
+					Notify.releaseBig("Like")
+					return
+				end
+				-- (Calm again after the wait: no window, replay, build drawer or first minute.)
+				if Controller.getCurrent() == nil and not PokeController.firstMinute() and not ReplayController.isPlaying() and player:GetAttribute("Building") ~= true then
 					Controller.open("Like")
 					break
 				end

@@ -162,7 +162,7 @@ function showNext()
 	-- the rest of the card never eats a shot at a dummy behind it.)
 	local onTap = item.onTap
 	if onTap then
-		pad.PaddingRight = UDim.new(0, 44)
+		pad.PaddingRight = UDim.new(0, 48)
 		local tap = Instance.new("TextButton")
 		tap.Name = "Dismiss"
 		tap.Text = "\u{00D7}"
@@ -172,7 +172,7 @@ function showNext()
 		tap.BackgroundTransparency = 1
 		tap.Selectable = false
 		tap.AnchorPoint = Vector2.new(0, 0.5)
-		tap.Size = UDim2.fromOffset(40, 40)
+		tap.Size = UDim2.fromOffset(44, 44) -- (the touch floor)
 		tap.Position = UDim2.new(1, 2, 0.5, 0)
 		tap.ZIndex = 5
 		tap.Parent = label
@@ -233,13 +233,18 @@ function showNext()
 	end
 	task.delay(showTime(item.text), hide, label)
 end
-
 -- Whether something holds toasts back for this reason now ("card": the view card is up).
 -- Whether a toast is on screen now (phase 0: the first minute's hint steps aside for it).
 function Toast.isShowing(): boolean
 	return current ~= nil
 end
 
+-- Whether toasts are held now (for any reason): a message given now would only wait.
+function Toast.isPaused(): boolean
+	return paused
+end
+
+-- Whether something holds toasts back for this reason now ("card": the view card is up).
 function Toast.isHeld(reason: string): boolean
 	return holds[reason] == true
 end

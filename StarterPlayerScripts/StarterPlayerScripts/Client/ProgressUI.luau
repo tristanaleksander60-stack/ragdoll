@@ -367,8 +367,9 @@ function offerEgg(force: boolean)
 		while not calm() and state.eggs > 0 do
 			task.wait(1)
 		end
-		offerWaiting = false
+		-- (offerWaiting stays set until the card is up or not needed: one waiter at a time.)
 		if state.eggs <= 0 or Controller.isOpen("EggReady") then
+			offerWaiting = false
 			return
 		end
 		lastOffer = os.clock()
@@ -383,6 +384,7 @@ function offerEgg(force: boolean)
 		while true do
 			Notify.waitBig("EggReady")
 			if state.eggs <= 0 or Controller.isOpen("EggReady") then
+				offerWaiting = false
 				Notify.releaseBig("EggReady")
 				return
 			end
@@ -392,6 +394,7 @@ function offerEgg(force: boolean)
 			Notify.releaseBig("EggReady")
 			task.wait(2)
 		end
+		offerWaiting = false
 		Controller.open("EggReady")
 	end)
 end

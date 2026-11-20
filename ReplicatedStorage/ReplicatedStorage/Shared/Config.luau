@@ -155,6 +155,7 @@ local Config = {
 	-- kind, dedupe, quiet after windows; false = every message straight to Toast as before.
 	NOTIFY = true,
 	NOTIFY_BIG_AFTER_REVEAL = 20, -- s after a newcomer's HUD reveal before the first big pop-up
+	NOTIFY_REVEAL_KEEP = 2, -- rewards that waited through a newcomer's quiet: only the newest this many show
 	EXPERIENCE_NOTIFY = true, -- ask for Roblox Experience Notifications opt-in after a wow moment
 	NOTIFY_OPTIN_AFTER = 480, -- s of play before that ask (never on join)
 	LAB_ZONES = true, -- v4 C1: lab zones, today's machine, NEW tags (Server/Systems/LabZones)
