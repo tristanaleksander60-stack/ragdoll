@@ -66,6 +66,26 @@ function DailyGoals.forDay(day: number): { Goal }
 end
 
 -- Eggs for a daily visit on day `streak` of the streak (1, 2, ...).
+-- V8-3.4 (a reason for tomorrow, Config.STREAK_V8): the streak after a claim on UTC day `today`,
+-- given the last claimed day and the week (today // 7) a freeze was last used. One missed day a week
+-- is forgiven by a freeze. Returns the new streak and whether a freeze was used.
+function DailyGoals.nextStreak(lastDay: number, streak: number, today: number, freezeWeek: number): (number, boolean)
+	local gap = today - lastDay
+	if gap <= 0 then
+		return streak, false
+	elseif gap == 1 then
+		return streak + 1, false
+	elseif gap == 2 and streak > 0 and freezeWeek < today // 7 then
+		return streak + 1, true
+	end
+	return 1, false
+end
+
+-- What tomorrow's claim brings, for the "TOMORROW" line: a weapon id or nil, and the eggs.
+function DailyGoals.tomorrowOf(streak: number): (string?, number)
+	return DailyGoals.streakWeapon(streak + 1), DailyGoals.streakEggs(streak + 1)
+end
+
 function DailyGoals.streakEggs(streak: number): number
 	local i = ((math.max(1, streak) - 1) % #DailyGoals.STREAK_EGGS) + 1
 	return DailyGoals.STREAK_EGGS[i]

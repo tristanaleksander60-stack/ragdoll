@@ -580,7 +580,30 @@ function ProgressUI.reveal(id: string, label: string)
 	end)
 end
 
+-- V8-3.4 (a reason for tomorrow, Config.STREAK_V8): once, TOMORROW_AT s into a visit with today's
+-- daily claimed, what tomorrow's claim brings.
+local function tomorrowLine()
+	local latest: any = nil
+	ProgressUI.onState(function(s: any)
+		latest = s
+	end)
+	task.delay((Config :: any).TOMORROW_AT, function()
+		local s = latest
+		if not s or not s.dailyToday or (tonumber(s.streak) or 0) < 1 then
+			return
+		end
+		local DailyGoals = require(Shared:WaitForChild("DailyGoals")) :: any
+		local weapon, eggs = DailyGoals.tomorrowOf(s.streak)
+		local toy = if weapon then Toys.byId[weapon] else nil
+		local prize = if toy then "the " .. string.upper(toy.label) else string.format("%d free egg%s", eggs, if eggs == 1 then "" else "s")
+		Notify.say("info", string.format("TOMORROW: Day %d = %s. Come back!", s.streak + 1, prize), Color3.fromRGB(255, 210, 74), "tip_tomorrow")
+	end)
+end
+
 function ProgressUI.start()
+	if (Config :: any).STREAK_V8 then
+		tomorrowLine()
+	end
 	remote = Net.event(Net.Names.Progress)
 	build()
 	remote.OnClientEvent:Connect(function(kind: unknown, data: unknown)

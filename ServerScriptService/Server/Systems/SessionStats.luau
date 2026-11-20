@@ -55,6 +55,8 @@ export type Record = {
 	portrait: boolean?,
 	step: number,
 	unlocks: number?,
+	streak: number?,
+	dailyClaimed: boolean?,
 	firstUnlockAt: number?,
 	-- V8-0.8 (see why they leave): times are seconds from the server's join, like firstShot;
 	-- frame0 is when the client drew its first frame, so a report subtracts it.
@@ -353,6 +355,10 @@ local function write(player: Player)
 	r.owner = player.UserId == game.CreatorId
 	r.test = (require(script.Parent:WaitForChild("TestAccount")) :: any).is(player) or nil
 	r.newPlayer = player:GetAttribute("Newcomer") == true
+	-- (V8-3.4: the daily streak and whether today's was claimed this visit.)
+	local streakNow = player:GetAttribute("Streak")
+	r.streak = if type(streakNow) == "number" then streakNow else nil
+	r.dailyClaimed = player:GetAttribute("DailyClaimed") == true or nil
 	r.stage = SessionStats.stageOf(r)
 	joinedAt[player] = nil
 	messages[player] = nil

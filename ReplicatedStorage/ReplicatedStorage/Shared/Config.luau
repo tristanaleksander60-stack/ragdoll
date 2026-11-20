@@ -310,6 +310,11 @@ local Config = {
 	-- V8-2.5 (dummy types and a SPAWN key): H drops a MINI, HEAVY, BOUNCY or FLOPPY dummy where you aim
 	-- in your own lab (server-checked, a cap per device, Reset removes them: DummySpawn, SpawnKey).
 	DUMMY_TYPES = true,
+	-- V8-3.4 (a reason for tomorrow): one missed day a week is forgiven by a streak freeze
+	-- (DailyGoals.nextStreak, profile freezeWeek); TOMORROW_AT s into a visit, "TOMORROW: Day N = ...";
+	-- Session_v1 keeps streak and dailyClaimed.
+	STREAK_V8 = true,
+	TOMORROW_AT = 80,
 }
 
 return table.freeze(Config)

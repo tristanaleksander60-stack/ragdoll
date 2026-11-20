@@ -75,6 +75,7 @@ export type Profile = {
 	best: { [string]: number },
 	lastDay: number, -- the UTC day of the last daily egg
 	streak: number, -- days in a row
+	freezeWeek: number?, -- (V8-3.4) the UTC week (day // 7) a streak freeze was last used
 	noPranks: boolean, -- switched "Friends can prank me" off (FriendsService)
 	freeDay: number, -- the UTC day of the last free ULTRA minutes (MoneyService)
 	seen: string, -- the last version whose What's New was shown
@@ -105,7 +106,7 @@ local V8_MOVED: { [string]: number } = { Poke = 3, Shove = 6, Slap = 7, Heal = 8
 local OLD_UNLOCK: { [string]: number } = { Crossbow = 10, NailGun = 20, Slime = 30, Shrink = 50, Chicken = 75, Float = 100, Slowmo = 125, Portal = 150 }
 -- Every field this version writes (anything else stored is kept as it is: keepUnknown).
 local KNOWN_FIELDS: { [string]: boolean } = {}
-for _, key in { "takedowns", "eggs", "hats", "hat", "best", "lastDay", "noPranks", "freeDay", "seen", "radio", "keys", "gifts", "freeUntil", "streak", "owned", "pending", "ladder", "bought", "oldEggs", "playSeconds", "settings", "goals", "eco" } do
+for _, key in { "takedowns", "eggs", "hats", "hat", "best", "lastDay", "noPranks", "freeDay", "seen", "radio", "keys", "gifts", "freeUntil", "streak", "owned", "pending", "ladder", "bought", "oldEggs", "playSeconds", "settings", "goals", "eco", "freezeWeek" } do
 	KNOWN_FIELDS[key] = true
 end
 local BOUGHT_KEPT = 30
@@ -237,6 +238,9 @@ local function clean(raw: unknown): Profile
 	if type(t.streak) == "number" and t.streak == t.streak then
 		p.streak = math.clamp(math.floor(t.streak), 0, 10000)
 	end
+	if type(t.freezeWeek) == "number" and t.freezeWeek == t.freezeWeek then
+		p.freezeWeek = math.clamp(math.floor(t.freezeWeek), 0, 1e7)
+	end
 	if type(t.best) == "table" then
 		for gameId, score in t.best do
 			if type(gameId) == "string" and #gameId <= 24 and type(score) == "number" and score == score then
@@ -348,6 +352,7 @@ local function merge(stored: Profile, session: Profile): Profile
 	else
 		m.lastDay, m.streak = stored.lastDay, stored.streak
 	end
+	m.freezeWeek = math.max(stored.freezeWeek or 0, session.freezeWeek or 0) -- (V8-3.4)
 	for gameId, score in stored.best do
 		m.best[gameId] = score
 	end
@@ -492,6 +497,7 @@ function saveLocked(player: Player, profile: Profile): boolean
 				gifts = merged.gifts,
 				freeUntil = merged.freeUntil,
 				streak = merged.streak,
+				freezeWeek = merged.freezeWeek,
 				owned = merged.owned,
 				pending = merged.pending,
 				ladder = merged.ladder,
@@ -530,6 +536,7 @@ local function saveOnto(player: Player, session: Profile): boolean
 				takedowns = m.takedowns, eggs = m.eggs, hats = m.hats, hat = m.hat, best = m.best,
 				lastDay = m.lastDay, noPranks = m.noPranks, freeDay = m.freeDay, seen = m.seen,
 				radio = m.radio, keys = m.keys, gifts = m.gifts, freeUntil = m.freeUntil, streak = m.streak,
+				freezeWeek = m.freezeWeek,
 				owned = m.owned, pending = m.pending, ladder = m.ladder, bought = m.bought,
 				oldEggs = math.min(m.oldEggs, m.eggs),
 				playSeconds = m.playSeconds, settings = m.settings, goals = m.goals, eco = m.eco,
@@ -1608,6 +1615,11 @@ function ProgressService.daily(player: Player, today: number?): number
 		return 0
 	end
 	local streak = if p.lastDay == day - 1 then p.streak + 1 else 1
+	-- (V8-3.4, Config.STREAK_V8: one missed day a week is forgiven by a freeze.)
+	local froze = false
+	if (Config :: any).STREAK_V8 then
+		streak, froze = DailyGoals.nextStreak(p.lastDay, p.streak, day, p.freezeWeek or 0)
+	end
 	local eggs = DailyGoals.streakEggs(streak) -- (the 7-day calendar: 1 1 2 1 1 2 3)
 	if p.eggs + eggs > Progress.MAX_EGGS then
 		-- (Full slots: the day's eggs wait, the streak with them, and come as soon as there is room:
@@ -1620,6 +1632,13 @@ function ProgressService.daily(player: Player, today: number?): number
 	end
 	p.streak = streak
 	p.lastDay = day
+	if froze then
+		p.freezeWeek = day // 7
+		remote:FireClient(player, "Notice", string.format("\u{2744}\u{FE0F} Your weekly STREAK FREEZE saved your %d-day streak!", streak - 1))
+	end
+	-- (V8-3.4: the visit record and the client read these.)
+	player:SetAttribute("Streak", streak)
+	player:SetAttribute("DailyClaimed", true)
 	-- (Round 5: a named weapon day. Already yours, earned or owned: an extra egg instead.)
 	local weaponId = DailyGoals.streakWeapon(streak)
 	local weapon = if weaponId then Toys.byId[weaponId] else nil

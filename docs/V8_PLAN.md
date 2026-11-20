@@ -1547,3 +1547,13 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - **Not built:** a phone "+DUMMY" button, R revive under the crosshair (R is reload), types as an unlock track.
 - **V8-2.8 done in part:** `Shared/MachineNames` names machines and labs, "JONAS' LAB" instead of "JONAS'S", on the lab sign and the privacy fence. T31 updated. The 3-labels-at-once rule is not built.
 - **V8-2.1/2.2/2.3/2.4/2.6/2.7/2.9/2.10 waiting:** these are the identity choice (owner), the lab re-layout, prop and sound art, voices, the creature and event lists (owner) and the maps. They are world and art work that needs the owner's identity sentence (2.1) first.
+- **V8-3.4 done in part (switch `STREAK_V8`):**
+  - **Freeze:** one missed day a week is forgiven by a streak freeze (`DailyGoals.nextStreak`, profile field `freezeWeek` through clean, merge and both save paths). The player is told "STREAK FREEZE saved your N-day streak".
+  - **Tomorrow:** 80 s into a visit with today claimed: "TOMORROW: Day N = the AK / 2 free eggs. Come back!" (`DailyGoals.tomorrowOf`).
+  - **Records:** Session_v1 keeps `streak` and `dailyClaimed`.
+  - **Tests:** T137 passes; T16, T27, T42 and T113 pass.
+  - **Not built:** the 20 h rolling window (UTC days stay), the welcome-back CLAIM card, exclusive streak prizes, the Daily Stunt, dares by size, an 8-gift ladder.
+- **V8-3.1/3.2/3.3/3.5/3.6/3.7 waiting:**
+  - 3.1, 3.2 and 3.6 need a 2-client test (friends together, invites with LaunchData, lab event slots);
+  - 3.3 is a UI merge best done with V8-6.7's one HUD;
+  - 3.5 and 3.7 need the owner (notification strings, Open Cloud package, the group id).
