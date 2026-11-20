@@ -58,3 +58,9 @@
   - Returning players see none of this.
   - Tests: T23/T38/T45/T55/T60/T98 pass. Captures FV_10s and FV_cannon3.
 - **Area 1 score: 5 → 8.** Left: a phone check of the objective line's spot; a real cannon/wrecking ride through the steps (MCP cannot press keys).
+- **Area 13 (measured, PC in Studio):**
+  - Idle lab: 60 fps, worst frame 19 ms.
+  - Four events at once (gorilla, bull herd, lightning storm, UFO): client 60 fps, worst 21 ms, 2835 parts streamed in; server heartbeat 60/s, worst 20 ms; send 42 KB/s.
+  - P2: 42 KB/s for one player in full chaos is near the ~50 KB/s comfort line; watch it with several players in events.
+  - The phone tier cannot be emulated over MCP. A real phone test is the owner's.
+  - Score 5 → 7.
