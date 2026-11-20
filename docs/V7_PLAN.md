@@ -243,3 +243,10 @@ They lead from the spawn or arrival to each thing you can do there.
   - **Tests:** T107_EventBanner (all 21 events have a picture, a one-line name and a duration) and T100 pass. LayoutCheck shows 0 problems.
   - **Captures:** v7_5_banner_full2, v7_5_banner_chip2.
   - **Left for a later round:** a restyle of the next-mission card, the toasts and the other pops into the same family. They already use the UI v2 tokens from V6, so they were not touched here.
+- **V7-6 done (20 Nov):**
+  - LayoutCheck now has 16 screens. The new ones are PC 2560x1440, PC ultrawide 3440x1440, and console TV 1080p and 720p (`pad`, TV overscan off).
+  - The only problem found was a false one: on the 720p TV, the bar was checked against the keyboard-only gift guide. Fixed in the check (`controls(..., pad)`).
+  - The safe-area audit of every ScreenGui is OK.
+  - The audit table is in docs/AUDIT.md ("V7-6").
+  - LayoutCheck shows 0 problems.
+  - **Left:** a device-emulator capture grid and a real-console check (owner, or a later session).

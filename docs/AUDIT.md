@@ -92,3 +92,35 @@
   - A returning player gets the full HUD and LAB VIEW at once.
   - LayoutCheck 0 problems; T23/T38/T45/T55/T60/T100 pass.
   - Score 7.2 → about 9 (my estimate; the 2 review rounds are used up). Left: the steps are still "you ride the machines", not the spec's "put a dummy in the machine"; there is no BULLSEYE step; the reveal toggles rather than slides.
+
+## V7-6: every screen piece on every platform (20 Nov 2026)
+**How it was checked:**
+- **LayoutCheck** (in the real client, Studio hook `DevLayoutCheck`) on 16 screens:
+  - phones: 4 landscape, 4 portrait;
+  - iPad;
+  - PC 1280x720, 1366x768, 1920x1080, 2560x1440 and ultrawide 3440x1440;
+  - console TV 1080p and 720p (new, `pad = true`; 5% TV overscan taken off; 4K TV = the 1080p layout scaled up).
+
+  Each screen is checked in the first minute and mid-game, in the player view and the lab view. The checks cover overlaps (with a 4 px gap), taps under 44 px, off-screen pieces, toast text, catalog fit and contrast.
+- **The code:** every edge-anchored ScreenGui uses `CoreUISafeInsets`. The 13 without it are full-screen effects that are meant to ignore the inset: crosshair, ammo, gun feel, slow-mo tint, replay, director, arrival flash, egg opening, takedown pop, portal black, the touch crosshair, the grab dot, and the level line that follows the bar.
+
+**Result:** **0 problems** on all 16 screens. The new console sizes found 2 overlaps on the 720p TV. The full bar goes onto two rows there and was being checked against Streamer Mode's gift guide, which needs a keyboard (`CreatorUI.streamDevice`), so a console never shows it. LayoutCheck now knows that (`controls(..., pad)`).
+
+| Piece | Phone landscape | Phone portrait | Tablet | PC (720p to ultrawide) | Console TV |
+|---|---|---|---|---|---|
+| Left column (Shop/Weapons/Lab, or Shop + Menu on phones) | OK, safe area, 44 px | OK | OK | OK (key chips) | OK (MENU shows every launcher to a pad) |
+| Bar (WEAPONS + slots) | OK, one row clear of GRAB/SHOOT | OK, over the thumb row | OK | OK, one row | OK; 720p goes onto 2 rows, clear |
+| Thumb buttons (SHOOT/GRAB/RUN/THROW/ZOOM/RAGDOLL) | OK, bottom right, >= 44 px | OK, thumb row | OK | n/a (keys) | n/a (pad buttons, glyphs in hints) |
+| Toasts / Notify | OK, text shrinks to fit | OK, full width under the top cluster | OK | OK | OK |
+| Event banner (V7-5) | OK, scaled to the width, then a corner chip | OK | OK | OK | OK |
+| Experiment / next-mission card | OK (phone: in the WEAPONS box, hidden by PHONE_HUD_MAX7) | OK | OK, top middle | OK | OK |
+| Chase bar, arena lines, nuke banner | OK | OK (event bars under the corners) | OK | OK | OK |
+| Dead monitor | OK | OK, full width over the thumb row | OK | OK | OK |
+| Windows (catalog, shop, rewards) | OK, fit, body scrolls | OK | OK | OK | OK (focus ring `Theme.Focus`) |
+| Level badge, XP, NEXT pill | OK (hidden in QUIET_START) | OK | OK | OK | OK |
+| First minute | 6 things at most (limit 7) | 6 | OK | OK | OK |
+
+**Not proven here (needs a real device or the owner):**
+- a capture grid from the device emulator (the MCP cannot switch the emulator, so the checks are the LayoutCheck rects plus the PC captures);
+- the real TV safe zone on an Xbox or PlayStation;
+- reading distance on a sofa (the text floor is 14 px at the touch scale; on a 1080p TV, 17 design units).

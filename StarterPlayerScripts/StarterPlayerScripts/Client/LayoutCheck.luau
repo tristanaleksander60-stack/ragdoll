@@ -37,7 +37,7 @@ local LayoutCheck = {}
 
 type Rect = { x: number, y: number, w: number, h: number, name: string }
 
-type Screen = { name: string, size: Vector2, touch: boolean }
+type Screen = { name: string, size: Vector2, touch: boolean, pad: boolean? }
 
 -- Landscape, in the core UI safe area every HUD layer uses (notches, the home indicator and
 -- Roblox's 58 px top bar taken off).
@@ -50,6 +50,12 @@ LayoutCheck.SCREENS = {
 	{ name = "PC 1366x768", size = Vector2.new(1366, 654), touch = false },
 	{ name = "PC 1280x720", size = Vector2.new(1280, 606), touch = false }, -- (a short window: the column is drawn smaller)
 	{ name = "PC 1920x1080", size = Vector2.new(1920, 964), touch = false },
+	-- V7-6: big PC screens and the TV (a console draws its UI at 1080p logical size; 4K is the same
+	-- layout, scaled up), with the TV's 5% overscan edge taken off.
+	{ name = "PC 2560x1440", size = Vector2.new(2560, 1324), touch = false },
+	{ name = "PC ultrawide 3440x1440", size = Vector2.new(3440, 1324), touch = false },
+	{ name = "Console TV 1080p", size = Vector2.new(1824, 1026), touch = false, pad = true },
+	{ name = "Console TV 720p", size = Vector2.new(1216, 684), touch = false, pad = true },
 	-- Phase 0 (19 Nov 2026): 95 % of phone visits hold the phone upright. Portrait phones, in the
 	-- safe area (Roblox's 58 px top bar and the home indicator / navigation bar taken off).
 	{ name = "iPhone 14 portrait 390x844", size = Vector2.new(390, 752), touch = true },
@@ -180,7 +186,7 @@ end
 -- open, a replay on offer, the grab pad up).
 local guideWidest = 300 -- (set from CreatorUI.guideWidthMax when run starts)
 
-local function controls(screen: Vector2, touch: boolean, lab: boolean): { Rect }
+local function controls(screen: Vector2, touch: boolean, lab: boolean, pad: boolean?): { Rect }
 	local ctx: HudSlots.Context = ctxOf(screen, touch, lab)
 	local list: { Rect } = {}
 	local names = { "View", "Replay", "Chaos", "Mode", "Play", "Counter" }
@@ -217,7 +223,7 @@ local function controls(screen: Vector2, touch: boolean, lab: boolean): { Rect }
 		table.insert(list, slotRect(name, ctx, screen))
 	end
 	-- Streamer Mode's gift guide (PC only: CreatorUI.streamDevice), at the widest any pairing makes it.
-	if not touch then
+	if not touch and not pad then -- (V7-6: a console has no keyboard: never there)
 		local w = guideWidest
 		table.insert(list, { x = screen.X - 10 - w, y = CreatorUI.GUIDE_TOP, w = w, h = CreatorUI.GUIDE_HEIGHT, name = "Guide" })
 	end
@@ -316,7 +322,7 @@ function LayoutCheck.scene(s: Screen, lab: boolean, withTools: boolean): ({ Rect
 		h = plan.size.Y,
 		name = "Bar",
 	}
-	local all = controls(s.size, s.touch, lab)
+	local all = controls(s.size, s.touch, lab, s.pad)
 	table.insert(all, bar)
 	-- The help line under the bar (a computer, the full bar).
 	if not s.touch and withTools then
@@ -589,7 +595,7 @@ function LayoutCheck.run(): string
 				local phone = math.min(s.size.X, s.size.Y) <= 500
 				local p = HospitalCharts.plan(s.size, s.touch, lab)
 				local monitor: Rect = { x = (s.size.X - p.size.X) / 2, y = s.size.Y - p.bottom - p.size.Y, w = p.size.X, h = p.size.Y, name = "Monitor" }
-				local all = controls(s.size, s.touch, lab)
+				local all = controls(s.size, s.touch, lab, s.pad)
 				local centre, tw, ty = HudSlots.toastBox(s.size, ctxOf(s.size, s.touch, lab))
 				table.insert(all, { x = centre - tw / 2, y = ty or 10, w = tw, h = toastH(s.size), name = "Toast" })
 				local hits = {}
