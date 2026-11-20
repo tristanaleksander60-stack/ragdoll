@@ -160,9 +160,22 @@ end
 
 DRESS.Vacuum = function(f, at)
 	-- The robot's living-room corner: a soft rug under its round, and its charging dock.
-	local rug = part(f, "Habitat_Rug", Vector3.new(52, 0.08, 22), at * CFrame.new(0, 0.1, 0), -- (V9-0 review: top 0.14, border top 0.11: both clearly under the yard road (top 0.21), no flicker)
-		 Color3.fromRGB(150, 130, 108), Enum.Material.Fabric)
-	part(f, "Habitat_RugBorder", Vector3.new(54, 0.06, 24), rug.CFrame * CFrame.new(0, -0.02, 0), Color3.fromRGB(96, 80, 66), Enum.Material.Fabric)
+	-- (V9-0 review: the rug lies on the yard grass (top 0.20), its top at 0.28 and its border's at 0.23,
+	-- and it shrinks until it no longer reaches any path, so it never lies over or under the yard road.)
+	local size = Vector3.new(52, 0.08, 22)
+	local lab: Instance? = f
+	while lab and lab.Parent and lab.Parent.Name ~= "Playground" do
+		lab = lab.Parent
+	end
+	if lab then
+		local PathBuilder = require(script.Parent:WaitForChild("PathBuilder")) :: any
+		local paving = PathBuilder.pavingIn(lab)
+		while size.Z > 10 and PathBuilder.overPaving(paving, at * CFrame.new(0, 0.24, 0), size + Vector3.new(2, 0, 2), 0.3) do
+			size = Vector3.new(math.max(30, size.X - 4), size.Y, size.Z - 2)
+		end
+	end
+	local rug = part(f, "Habitat_Rug", size, at * CFrame.new(0, 0.24, 0), Color3.fromRGB(150, 130, 108), Enum.Material.Fabric)
+	part(f, "Habitat_RugBorder", size + Vector3.new(2, -0.02, 2), rug.CFrame * CFrame.new(0, -0.04, 0), Color3.fromRGB(96, 80, 66), Enum.Material.Fabric)
 	local dock = at * CFrame.new(0, 0, 12.5)
 	part(f, "Habitat_Dock", Vector3.new(3, 1.6, 1.2), dock * CFrame.new(0, 0.8, 0), Color3.fromRGB(40, 42, 48), Enum.Material.SmoothPlastic)
 	part(f, "Habitat_DockLight", Vector3.new(0.6, 0.3, 0.1), dock * CFrame.new(0, 1.2, -0.62), Color3.fromRGB(90, 230, 120), Enum.Material.Neon)

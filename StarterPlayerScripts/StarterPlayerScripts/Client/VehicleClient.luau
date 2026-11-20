@@ -11,11 +11,11 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local CarDrive = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("CarDrive")) :: any
 
 local VehicleClient = {}
 
 VehicleClient.GRIP = 6 -- how fast a sideways slide dies (1/s)
-VehicleClient.TURN_FULL = 12 -- studs/s at which steering is at full strength
 
 local player = Players.LocalPlayer
 local hinted = false
@@ -29,6 +29,9 @@ local function grounded(body: BasePart, car: Instance): boolean
 	return Workspace:Raycast(body.Position, Vector3.new(0, -reach, 0), rayParams) ~= nil
 end
 
+local steerNow = 0 -- (V9-0c: the eased steer, CarDrive)
+VehicleClient.reading = { along = 0, top = 1, seated = false } -- (the speedometer reads it: Client/Speedometer)
+
 local function drive(seat: VehicleSeat, dt: number)
 	local body = seat.AssemblyRootPart
 	local car = seat.Parent
@@ -39,21 +42,27 @@ local function drive(seat: VehicleSeat, dt: number)
 	end
 	local look = body.CFrame.LookVector
 	local fwd = Vector3.new(look.X, 0, look.Z)
+	local v = body.AssemblyLinearVelocity
+	VehicleClient.reading.top = spec.speed
+	VehicleClient.reading.along = if fwd.Magnitude > 0.2 then Vector3.new(v.X, 0, v.Z):Dot(fwd.Unit) else 0
+	-- (V9-0c: tipped over a little: it rights itself, so it never gets stuck on its side or spinning.)
+	local up = body.CFrame.UpVector
+	if up.Y < 0.92 then
+		local axis = up:Cross(Vector3.yAxis)
+		body.AssemblyAngularVelocity += axis * math.min(1, (1 - up.Y) * 6) * 10 * dt
+	end
 	if fwd.Magnitude < 0.2 or not grounded(body, car) then
 		return -- (in the air or on its side: physics only)
 	end
 	fwd = fwd.Unit
-	local throttle, steer = seat.ThrottleFloat, seat.SteerFloat
-	local v = body.AssemblyLinearVelocity
 	local flat = Vector3.new(v.X, 0, v.Z)
 	local along = flat:Dot(fwd)
-	local target = if throttle > 0 then spec.speed * throttle elseif throttle < 0 then spec.reverse * throttle else 0
-	local newAlong = along + (target - along) * math.min(1, dt * spec.accel)
+	local newAlong, newSteer, yawRate = CarDrive.step(spec, along, steerNow, seat.ThrottleFloat, seat.SteerFloat, dt)
+	steerNow = newSteer
 	local side = (flat - fwd * along) * math.max(0, 1 - dt * VehicleClient.GRIP)
 	body.AssemblyLinearVelocity = fwd * newAlong + side + Vector3.new(0, v.Y, 0)
-	local strength = math.clamp(math.abs(newAlong) / VehicleClient.TURN_FULL, 0, 1) * (if newAlong >= 0 then 1 else -1)
 	local av = body.AssemblyAngularVelocity
-	body.AssemblyAngularVelocity = Vector3.new(av.X * 0.8, -steer * spec.turn * strength, av.Z * 0.8)
+	body.AssemblyAngularVelocity = Vector3.new(av.X * 0.8, yawRate, av.Z * 0.8)
 end
 
 function VehicleClient.start()
@@ -65,6 +74,7 @@ function VehicleClient.start()
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		local seat = humanoid and humanoid.SeatPart
 		if seat and seat:IsA("VehicleSeat") and seat:GetAttribute("LabCar") ~= nil then
+			VehicleClient.reading.seated = true
 			if not hinted then
 				hinted = true
 				local ok, Toast = pcall(function()
@@ -75,6 +85,9 @@ function VehicleClient.start()
 				end
 			end
 			drive(seat, dt)
+		else
+			VehicleClient.reading.seated = false
+			steerNow = 0
 		end
 	end)
 end

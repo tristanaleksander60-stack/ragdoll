@@ -680,3 +680,11 @@ Write the baseline into `docs/PERF.md`.
   - **Paths:** `PathBuilder.lab` has its own pcall.
   - **Talk:** every tool use (`PokeController.onUsedAlso`) and R2 count as attacks for Talk.
   - **Tests:** T150 also checks that no kerb lies across paving; T158 requires live prompts; T128 doubles the cap while the creator's GOD MODE shows. T150/T158/T148/T128/T103/T106/T147 pass.
+- 21 Nov 2026, V9-0 review round 2: V9-0a 8.7 (pass), V9-0f 8.6 (pass), V9-0 8.3 (the rug only). The rug now lies on the yard grass (top 0.28) and shrinks until it reaches no path (`PathBuilder.overPaving`), so it is never level with or over the yard road.
+- 21 Nov 2026, V9-0c DONE (PC):
+  - **Cause:** reproduced in Studio. Seated, `AvatarMoves.ownAim` treated the driver as "standing" (no MoveDirection) and turned the body to the mouse / screen centre. The body is welded to the seat, so the car followed the camera and drove in circles: with AimTestPoint 90 degrees to the side the heading went 47 -> -33 in 2 s with no input.
+  - **Fix:** a seated body never turns (ownAim and AvatarMoves.play) and has no aim pose (it sits upright). After the fix, the same check turns 0 degrees.
+  - **Drive:** `Shared/CarDrive` (pure), used by VehicleClient: eased steer (back to 0 within 0.25 s), a speed-scaled turn (none on the spot, flipped in reverse), stronger braking against the roll, reverse, and a self-righting nudge when tipped.
+  - **Speedometer:** `Client/Speedometer`, a round gauge with a sweeping needle, km/h, a D/R/N chip and a red zone at top speed. It pops in when seated and sits just above the tool bar on every screen.
+  - **Tests:** T153_CarDrives passes for Car and Truck (0.0 degrees in 3 s on throttle, left/right, stops turning, brake + reverse, gauge); T52 still passes.
+  - **Not done:** separate GAS/BRAKE pedals on phones. The thumbstick drives (X steer, Y throttle), and the circle on phones came from the same body turn (screen-centre aim).

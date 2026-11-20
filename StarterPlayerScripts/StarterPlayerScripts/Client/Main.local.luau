@@ -154,6 +154,7 @@ safe("NpcGlow", function() require(Client:WaitForChild("NpcGlow")).start() end)
 safe("PortalUI", function() require(Client:WaitForChild("PortalUI")).start() end) -- SINGLEPLAYER / MULTIPLAYER portals, the server list (round 5)
 safe("HudPlus", function() require(Client:WaitForChild("HudPlus")).start() end) -- big WEAPONS, LEVEL, today's deal, sandbox column (round 5)
 safe("VehicleClient", function() require(Client:WaitForChild("VehicleClient")).start() end) -- v3 Phase C: drive the lab cars
+safe("Speedometer", function() require(Client:WaitForChild("Speedometer")).start() end) -- V9-0c: the round gauge while you drive
 safe("HudV3", function() require(Client:WaitForChild("HudV3")).start() end) -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)
 safe("RewardsUI", function() require(Client:WaitForChild("RewardsUI")).start() end) -- REWARDS: daily, play gift, dares, trophies, group (round 5)
 safe("GiftClock", function() require(Client:WaitForChild("GiftClock")).start() end) -- the clock to the next free gift for time played

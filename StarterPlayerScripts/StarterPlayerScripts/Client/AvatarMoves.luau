@@ -343,8 +343,10 @@ function AvatarMoves.play(character: Model?, toyId: string, target: Vector3, opt
 		local yaw = math.atan2(-ahead.X, -ahead.Z) -- + is to the left
 		if moving and SHOTS[name] and math.abs(yaw) <= AIM_MAX then
 			aim = CFrame.Angles(0, yaw, 0)
-		else
+		elseif humanoid == nil or humanoid.SeatPart == nil then -- (V9-0c: never turn a seated body: it turns its car)
 			root.CFrame = CFrame.lookAt(root.Position, root.Position + flat)
+		else
+			aim = CFrame.Angles(0, math.clamp(yaw, -AIM_MAX, AIM_MAX), 0)
 		end
 	end
 	-- A gun already carried in a stance: it comes up and kicks (no move of its own).
@@ -780,7 +782,10 @@ local function ownAim(character: Model, dt: number): Vector2?
 	local pitch = math.asin(math.clamp(rel.Y, -1, 1))
 	-- Further round than the waist turns: a standing body turns to face it (till it is nearly ahead).
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	local standing = humanoid ~= nil and humanoid.MoveDirection.Magnitude < 0.1 and playing[character] == nil
+	-- (V9-0c, owner 21 Nov 2026: "the car just drives in a circle": a seated avatar is welded to its seat,
+	-- so turning its root turned the whole car towards the mouse / screen centre, and the camera
+	-- following the car kept it turning. Seated, the body never turns: the upper body aims alone.)
+	local standing = humanoid ~= nil and humanoid.MoveDirection.Magnitude < 0.1 and playing[character] == nil and humanoid.SeatPart == nil
 	if math.abs(yaw) > AIM_TURN_MAX then
 		turning = true
 	elseif math.abs(yaw) < 0.15 then
@@ -872,7 +877,10 @@ end
 local function stanceStep(dt: number)
 	frameNo += 1
 	local me = Players.LocalPlayer.Character
-	myAim = if me and me.Parent then ownAim(me, dt) else nil
+	-- (V9-0c: seated in a car the body stays seated: no aim pose leaning out of the car.)
+	local meHumanoid = me and me:FindFirstChildOfClass("Humanoid")
+	local seated = meHumanoid ~= nil and meHumanoid.SeatPart ~= nil
+	myAim = if me and me.Parent and not seated then ownAim(me, dt) else nil
 	sendAim()
 	local camera = Workspace.CurrentCamera
 	local eye = if camera then camera.CFrame.Position else Vector3.zero
