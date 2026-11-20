@@ -298,7 +298,8 @@ end
 handlers.ZeroG = function(_job, onEnd)
 	local before = Workspace.Gravity
 	onEnd(function()
-		Workspace.Gravity = before
+		local admin = Workspace:GetAttribute("AdminGravity") -- (V6-2: the owner's choice wins over the old value)
+		Workspace.Gravity = if type(admin) == "number" then admin else before
 	end)
 	Workspace.Gravity = LOW_GRAVITY
 end

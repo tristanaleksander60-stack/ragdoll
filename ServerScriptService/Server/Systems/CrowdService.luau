@@ -1360,7 +1360,7 @@ end
 -- V6-2: the owner's admin menu sets how many people a zone has (+/- `delta`, at most `max`).
 function CrowdService.adjust(zoneId: string, delta: number, max: number): number
 	local zone = zoneById[zoneId]
-	if not zone then
+	if not zone or not zone.populated then -- (an empty room drops strays at once)
 		return -1
 	end
 	local list = CrowdService.people(zoneId)
@@ -1369,6 +1369,13 @@ function CrowdService.adjust(zoneId: string, delta: number, max: number): number
 			spawnOne(zone)
 		end
 	else
+		local free = {}
+		for _, m in list do
+			if m:GetAttribute("Held") ~= true then -- (never one someone is holding)
+				table.insert(free, m)
+			end
+		end
+		list = free
 		for i = 1, math.min(-delta, #list) do
 			local model = list[#list - i + 1]
 			local npc = byModel[model]

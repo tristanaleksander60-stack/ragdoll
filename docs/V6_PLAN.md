@@ -262,3 +262,37 @@ What to do:
   - **For everyone:** `Client/AdminWorld` draws the time of day (Workspace `AdminClock`) and the rain, snow or fog (`AdminWeather`); a phone gets a third of the drops.
   - T101 (non-owner refused for every tool, fixed choices only, the tools work and are logged) passes; T41/T43 pass.
   - Captures: admin_server, admin_players, admin_world, admin_debug, admin_rain6.
+- **V6-2 blind review 7.4 → fix round 1:**
+  - GO TO / BRING:
+    - refused into a private lab the mover may not enter (it would be thrown straight back out: "use SPECTATE");
+    - refused for someone in a vehicle or frozen;
+    - `Place` follows the move.
+  - Admin bodies are marked `AdminGuest` and vanish after `GUEST_LIFE` 90 s, so they never hold the shared body budget. CLEAR SPAWNED removes only those, never held bodies.
+  - When the owner leaves, gravity, time, weather and the spawned bodies go too (`AdminTools.ownerLeft`). The ZeroG event's end keeps the owner's gravity (`AdminGravity`).
+  - Events from the menu: at most one waiting, and `force` only when nothing is running (paid events are never stuck behind a queue).
+  - Crowd: labs have no crowd, so the owner gets a notice instead of a wrong number. Held people are never removed. An empty room is refused.
+  - Debug:
+    - not paced;
+    - the server's part count walked at most every 15 s, the client's every 10 s.
+  - AdminWorld:
+    - no admin snow while the Christmas snow falls;
+    - no drops with less motion;
+    - no rain or snow in the roofed rooms (Y > 500);
+    - a third of the drops on any touch screen under 900 px;
+    - every emitter property set per kind;
+    - fog added on top of each place's own air (re-added after a place change);
+    - the time held every frame.
+  - Strict casts for the frozen choice tables.
+  - Not done: "clear props" (there are no admin props yet) and remote rates in Debug.
+- **V6-3 director mode (20 Nov, `Config.DIRECTOR`), `Client/Director`, owner only (player attribute `IsOwner`, set by AdminService; actions checked on the server):**
+  - F8 on/off. Every ScreenGui and world billboard is hidden (kept off every frame), plus Roblox's own UI.
+  - A 9:16 safe frame. H = REC: the panel and frame lines hide, and the sides go black.
+  - Cameras: FREE (WASD/QE, right mouse to look, wheel = speed), ORBIT and FOLLOW (click a body to pick it), DRONE, FIRST, PATH (P adds the view, ENTER plays a Catmull-Rom spline over 6 s, eased).
+  - Lens: FOV -/+, DOF (focus on the picked body), SHAKE, 9:16.
+  - Time on this screen: 1x, 0.5x, 0.25x, 0.1x, FREEZE (SlowMotion bubbles round the view).
+  - Actions: ROW/RING/TOWER, LAUNCH the picked dummy, EVENT > (cycles), RESET ALL, REPLAY 10s (with the director camera).
+  - Presets: 1-5 load, Shift+1-5 save (`OwnerSetting` "DirectorPresets", never in Studio).
+  - One-tap shots: CANNON (framed along the flight to the bullseye), CAR ROW, SPIDER (waits for V6-5's `SpiderWeb`), GORILLA, TOWER, MEGA BOMB. Each sets the camera and slows the big moment.
+  - Server: AdminTools `LaunchDummy`, `Shot`, `DirectorSave`, `DirectorGet`; remote messages `DirectorFocus` / `DirectorPresets` on the Admin remote.
+  - T102 passes; T101/T41/T43/T98 pass.
+  - Captures: director_on2 (no game UI), director_cannon_rec and director_tower2 (REC 9:16).

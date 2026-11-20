@@ -85,38 +85,45 @@ end
 -- Runs one admin tool. Returns (done, what the server log says, what the owner's log shows, a
 -- notice for the owner's screen).
 function AdminTools.run(by: Player, kind: string, arg: unknown): (boolean, string?, string?, string?)
+	if kind == "LaunchDummy" or kind == "Shot" or kind == "DirectorSave" or kind == "DirectorGet" then
+		return AdminTools.director(by, kind, arg)
+	end
 	local who = string.format("%s (%d)", by.Name, by.UserId)
 	if kind == "Event" then
 		if type(arg) ~= "string" or not Events.byId[arg] then
 			return false
 		end
 		local EventService = lazy("EventService")
-		local place = EventService.trigger(arg, by.DisplayName, "Free", true, nil, by.UserId)
+		-- (Review fix: the owner never builds a queue in front of paid events: one waiting at most.)
+		if EventService.queued() >= 1 then
+			return false, nil, nil, "An event is waiting already: try after it starts"
+		end
+		local place = EventService.trigger(arg, by.DisplayName, "Free", EventService.current() == nil, nil, by.UserId)
 		if not place then
 			return false, nil, nil, "That event could not start now"
 		end
 		return true, who .. " started " .. arg, by.DisplayName .. " started " .. arg
 	elseif kind == "Gravity" then
-		if not table.find(AdminTools.GRAVITY, arg) then
+		if not table.find(AdminTools.GRAVITY :: { any }, arg) then
 			return false
 		end
 		Workspace.Gravity = arg :: number
 		Workspace:SetAttribute("AdminGravity", if arg == 196.2 then nil else arg)
 		return true, who .. " set gravity " .. tostring(arg), "Gravity " .. tostring(arg)
 	elseif kind == "Clock" then
-		if arg ~= "Auto" and (type(arg) ~= "string" or AdminTools.CLOCK[arg] == nil) then
+		if arg ~= "Auto" and (type(arg) ~= "string" or (AdminTools.CLOCK :: any)[arg] == nil) then
 			return false
 		end
-		Workspace:SetAttribute("AdminClock", if arg == "Auto" then nil else AdminTools.CLOCK[arg :: string])
+		Workspace:SetAttribute("AdminClock", if arg == "Auto" then nil else (AdminTools.CLOCK :: any)[arg])
 		return true, who .. " set the time " .. tostring(arg), "Time: " .. tostring(arg)
 	elseif kind == "Weather" then
-		if type(arg) ~= "string" or not AdminTools.WEATHER[arg] then
+		if type(arg) ~= "string" or not (AdminTools.WEATHER :: any)[arg] then
 			return false
 		end
 		Workspace:SetAttribute("AdminWeather", if arg == "Clear" then nil else arg)
 		return true, who .. " set the weather " .. arg, "Weather: " .. arg
 	elseif kind == "Announce" then
-		local text = if type(arg) == "string" then AdminTools.ANNOUNCE[arg] else nil
+		local text = if type(arg) == "string" then (AdminTools.ANNOUNCE :: any)[arg] else nil
 		if not text then
 			return false
 		end
@@ -127,7 +134,7 @@ function AdminTools.run(by: Player, kind: string, arg: unknown): (boolean, strin
 		return true, who .. " announced " .. tostring(arg), "Announced: " .. text
 	elseif kind == "Kick" then
 		local target = targetOf(arg)
-		local reason = if type(arg) == "table" and type((arg :: any).reason) == "string" then AdminTools.KICK[(arg :: any).reason] else nil
+		local reason = if type(arg) == "table" and type((arg :: any).reason) == "string" then (AdminTools.KICK :: any)[(arg :: any).reason] else nil
 		if not target or not reason then
 			return false
 		end
@@ -143,10 +150,30 @@ function AdminTools.run(by: Player, kind: string, arg: unknown): (boolean, strin
 		if not target or not a or not b then
 			return false, nil, nil, "That player has no body right now"
 		end
-		if kind == "Goto" then
-			(by.Character :: Model):PivotTo(b.CFrame * CFrame.new(0, 0, 5))
-		else
-			(target.Character :: Model):PivotTo(a.CFrame * CFrame.new(0, 0, -5))
+		-- (Review fix: never into a private lab the mover may not enter (Lab.keepOut would throw them
+		-- straight back out), never someone in a car (the whole car would come along) or in ice.)
+		local mover = if kind == "Goto" then by else target
+		local moverRoot = if kind == "Goto" then a else b
+		local dest = if kind == "Goto" then b else a
+		local moverHum = (mover.Character :: Model):FindFirstChildOfClass("Humanoid")
+		if moverHum and moverHum.SeatPart then
+			return false, nil, nil, mover.DisplayName .. " is in a vehicle: try when they are out"
+		end
+		if moverRoot.Anchored then
+			return false, nil, nil, mover.DisplayName .. " is frozen right now"
+		end
+		local Lab = lazy("Lab")
+		local _, index = Lab.zoneAt(dest.Position)
+		if index and not Lab.mayEnter(mover, index) then
+			return false, nil, nil, "That is a private lab: use SPECTATE to watch it"
+		end
+		local spot = if kind == "Goto" then dest.CFrame * CFrame.new(0, 0, 5) else dest.CFrame * CFrame.new(0, 0, -5);
+		(mover.Character :: Model):PivotTo(spot)
+		-- (The place the mover is in now: lighting, crowd and the rest read it.)
+		local other = if kind == "Goto" then target else by
+		local place = other:GetAttribute("Place")
+		if place ~= nil then
+			mover:SetAttribute("Place", place)
 		end
 		return true, string.format("%s %s %s (%d)", who, if kind == "Goto" then "went to" else "brought", target.Name, target.UserId), (if kind == "Goto" then "Went to " else "Brought ") .. target.DisplayName
 	elseif kind == "Trial" then
@@ -180,7 +207,7 @@ function AdminTools.run(by: Player, kind: string, arg: unknown): (boolean, strin
 	elseif kind == "Spawn" then
 		local count = if type(arg) == "table" then (arg :: any).count else nil
 		local shape = if type(arg) == "table" then (arg :: any).shape else nil
-		if not table.find(AdminTools.SPAWN_COUNTS, count) or type(shape) ~= "string" or not AdminTools.SHAPES[shape] then
+		if not table.find(AdminTools.SPAWN_COUNTS :: { any }, count) or type(shape) ~= "string" or not AdminTools.SHAPES[shape] then
 			return false
 		end
 		local root = rootOf(by)
@@ -196,7 +223,7 @@ function AdminTools.run(by: Player, kind: string, arg: unknown): (boolean, strin
 		local DummyFactory = lazy("DummyFactory")
 		for _, at in AdminTools.layout(shape, n, root.Position, root.CFrame.LookVector) do
 			local model = DummyFactory.spawn(at, root.Position, by)
-			model:SetAttribute("NoCredit", true) -- (guests: never counted as takedowns)
+			AdminTools.markGuest(model)
 		end
 		return true, string.format("%s spawned %d dummies (%s)", who, n, shape), string.format("Spawned %d (%s)", n, shape)
 	elseif kind == "Crowd" then
@@ -205,33 +232,228 @@ function AdminTools.run(by: Player, kind: string, arg: unknown): (boolean, strin
 		end
 		local place = by:GetAttribute("Place")
 		local CrowdService = lazy("CrowdService")
+		-- (Labs have no crowd: said so, never the plaza's number by mistake.)
 		local n = CrowdService.adjust(if type(place) == "string" then place else "Plaza", arg :: number, AdminTools.CROWD_MAX)
 		if n < 0 then
-			n = CrowdService.adjust("Plaza", arg :: number, AdminTools.CROWD_MAX)
+			return false, nil, nil, "No crowd here: go to the plaza or a map"
 		end
 		return true, string.format("%s set the crowd to %d", who, n), "Crowd here: " .. n
 	elseif kind == "ClearDummies" then
+		-- (Only the bodies this menu or the director made: other guests and held bodies are left.)
 		local n = 0
 		local folder = Workspace:FindFirstChild("Dummies")
 		for _, m in if folder then folder:GetChildren() else {} do
-			if m:IsA("Model") and m:GetAttribute("NoCredit") == true then
+			if m:IsA("Model") and m:GetAttribute("AdminGuest") == true and m:GetAttribute("Held") ~= true then
 				m:Destroy()
 				n += 1
 			end
 		end
-		return true, who .. " cleared " .. n .. " guest dummies", "Cleared " .. n
+		return true, who .. " cleared " .. n .. " spawned dummies", "Cleared " .. n
 	end
 	return false
 end
 
--- The Debug tab's numbers.
-function AdminTools.debug(): { [string]: any }
-	local parts, ragdolls = 0, 0
-	for _, d in Workspace:GetDescendants() do
-		if d:IsA("BasePart") then
-			parts += 1
+------------------------------------------------------------------------------------------------
+-- V6-3: the director menu's server half (Client/Director). Same owner check and pacing.
+--   LaunchDummy model        one body in Workspace.Dummies flies (up and away from the owner)
+--   Shot id                  sets up one of the one-tap TikTok shots in the owner's own lab; the
+--                            owner's screen is told where to look ("DirectorFocus")
+--   DirectorSave presets     the 5 shot presets, kept for every server (OwnerSetting; never in Studio)
+AdminTools.SHOTS = table.freeze({ Cannon = true, CarRow = true, Spider = true, Gorilla = true, Tower = true, MegaBomb = true })
+AdminTools.PRESETS_MAX = 5
+AdminTools.LAUNCH_SPEED = 95
+
+local presets: any = nil -- the OwnerSetting (made at start)
+local focusRemote: ((Player, string, any) -> ())? = nil
+
+local function finite(n: unknown, lo: number, hi: number): boolean
+	return type(n) == "number" and n == n and n >= lo and n <= hi
+end
+
+-- A preset: { c = 12 numbers (a CFrame), fov 20-110, slow 0.05-1 }.
+function AdminTools.cleanPresets(raw: unknown): { any }?
+	if type(raw) ~= "table" or #(raw :: any) > AdminTools.PRESETS_MAX then
+		return nil
+	end
+	local out = {}
+	for i = 1, AdminTools.PRESETS_MAX do
+		local p = (raw :: any)[i]
+		if p == nil or p == false then
+			out[i] = false
+		elseif type(p) == "table" and type(p.c) == "table" and #p.c == 12 and finite(p.fov, 20, 110) and finite(p.slow, 0.05, 1) then
+			local c = {}
+			for k = 1, 12 do
+				if not finite(p.c[k], -1e5, 1e5) then
+					return nil
+				end
+				c[k] = p.c[k]
+			end
+			out[i] = { c = c, fov = p.fov, slow = p.slow }
+		else
+			return nil
 		end
 	end
+	return out
+end
+
+local function guest(at: Vector3, look: Vector3?, by: Player): Model
+	local model = lazy("DummyFactory").spawn(at, look, by)
+	AdminTools.markGuest(model)
+	return model
+end
+
+local function ownLabPart(by: Player, name: string): BasePart?
+	local pg = Workspace:FindFirstChild("Playground")
+	local Lab = lazy("Lab")
+	for _, f in if pg then pg:GetChildren() else {} do
+		local part = f:FindFirstChild(name, true)
+		if part and part:IsA("BasePart") and Lab.ownerAt(part.Position) == by then
+			return part
+		end
+	end
+	return nil
+end
+
+function AdminTools.director(by: Player, kind: string, arg: unknown): (boolean, string?, string?, string?)
+	local who = string.format("%s (%d)", by.Name, by.UserId)
+	if kind == "LaunchDummy" then
+		local model = if typeof(arg) == "Instance" then arg :: Instance else nil
+		local folder = Workspace:FindFirstChild("Dummies")
+		if not model or not model:IsA("Model") or not folder or model.Parent ~= folder then
+			return false
+		end
+		local root = rootOf(by)
+		local pivot = (model :: Model):GetPivot().Position
+		local away = if root then Vector3.new(pivot.X - root.Position.X, 0, pivot.Z - root.Position.Z) else Vector3.zero
+		away = if away.Magnitude > 0.1 then away.Unit else Vector3.new(0, 0, -1)
+		lazy("DummyControl").push(model, away * AdminTools.LAUNCH_SPEED * 0.6 + Vector3.new(0, AdminTools.LAUNCH_SPEED, 0), by)
+		return true, who .. " launched a dummy", "Launched a dummy"
+	elseif kind == "Shot" then
+		if type(arg) ~= "string" or not AdminTools.SHOTS[arg] then
+			return false
+		end
+		local root = rootOf(by)
+		if not root then
+			return false
+		end
+		local look = root.CFrame.LookVector
+		local focus: Vector3 = root.Position
+		local shotTo: Vector3? = nil
+		if arg == "Cannon" then
+			local pad = ownLabPart(by, "CannonPad")
+			if not pad then
+				return false, nil, nil, "Go to your own lab for this shot"
+			end
+			guest(pad.Position + Vector3.new(0, 4, 0), nil, by)
+			focus = pad.Position
+			local okL, landing = pcall(function()
+				return lazy("Playground").cannonLanding(pad.Position + Vector3.new(0, 0.5, 0))
+			end)
+			shotTo = if okL then landing else nil
+		elseif arg == "CarRow" then
+			local base = root.Position + Vector3.new(look.X, 0, look.Z).Unit * 40
+			for _, at in AdminTools.layout("Row", 8, base - Vector3.new(look.X, 0, look.Z).Unit * 14, look) do
+				guest(at, root.Position, by)
+			end
+			focus = base
+			shotTo = base + Vector3.new(look.X, 0, look.Z).Unit * 30
+		elseif arg == "Tower" then
+			local base = root.Position + Vector3.new(look.X, 0, look.Z).Unit * 18 + Vector3.new(0, 34, 0)
+			for i = 1, 5 do
+				local model = guest(base + Vector3.new((i - 3) * 3, 0, 0), nil, by)
+				task.delay(0.6, function()
+					if model.Parent then
+						lazy("DummyControl").push(model, Vector3.new(look.X, 0, look.Z).Unit * 70 + Vector3.new((i - 3) * 6, 20, 0), by)
+					end
+				end)
+			end
+			focus = base
+			shotTo = base + Vector3.new(look.X, 0, look.Z).Unit * 30
+		elseif arg == "Spider" then
+			local web = ownLabPart(by, "SpiderWeb")
+			if not web then
+				return false, nil, nil, "The spider is not in your lab yet"
+			end
+			guest(web.Position + Vector3.new(0, 14, 0), nil, by)
+			focus = web.Position
+		elseif arg == "Gorilla" or arg == "MegaBomb" then
+			local id = if arg == "Gorilla" then "GorillaRampage" else "MegaBomb"
+			if not Events.byId[id] then
+				return false
+			end
+			local place = lazy("EventService").trigger(id, by.DisplayName, "Free", true, nil, by.UserId)
+			if not place then
+				return false, nil, nil, "That event could not start now"
+			end
+			focus = if typeof(place) == "Vector3" then place else lazy("EventService").whereFor(by.UserId)
+		end
+		local f = focusRemote
+		if f then
+			f(by, "DirectorFocus", { shot = arg, at = focus, to = shotTo })
+		end
+		return true, who .. " set up the " .. arg .. " shot", "Shot: " .. arg
+	elseif kind == "DirectorSave" then
+		local clean = AdminTools.cleanPresets(arg)
+		if not clean or not presets then
+			return false
+		end
+		lazy("OwnerSetting").set(presets, clean)
+		return true, who .. " saved the director presets", "Presets saved"
+	elseif kind == "DirectorGet" then
+		local f = focusRemote
+		if f then
+			f(by, "DirectorPresets", if presets then presets.value else {})
+		end
+		return true
+	end
+	return false
+end
+
+-- Admin-made bodies: guests (never takedowns), gone after GUEST_LIFE s so they never hold the
+-- shared body budget for long (paid Dummy Rain, the horde, the chases).
+AdminTools.GUEST_LIFE = 90
+function AdminTools.markGuest(model: Model)
+	model:SetAttribute("NoCredit", true)
+	model:SetAttribute("AdminGuest", true)
+	task.delay(AdminTools.GUEST_LIFE, function()
+		if model.Parent and model:GetAttribute("Held") ~= true then
+			model:Destroy()
+		end
+	end)
+end
+
+-- The owner left: their world changes end with them (gravity, time, weather, spawned bodies).
+function AdminTools.ownerLeft()
+	Workspace.Gravity = 196.2
+	Workspace:SetAttribute("AdminGravity", nil)
+	Workspace:SetAttribute("AdminClock", nil)
+	Workspace:SetAttribute("AdminWeather", nil)
+	local folder = Workspace:FindFirstChild("Dummies")
+	for _, m in if folder then folder:GetChildren() else {} do
+		if m:GetAttribute("AdminGuest") == true then
+			m:Destroy()
+		end
+	end
+end
+
+-- (The world's part count is walked at most every PARTS_EVERY s: never a spike each poll.)
+AdminTools.PARTS_EVERY = 15
+local partsCache = { n = 0, at = -math.huge }
+
+-- The Debug tab's numbers.
+function AdminTools.debug(): { [string]: any }
+	local ragdolls = 0
+	if os.clock() - partsCache.at > AdminTools.PARTS_EVERY then
+		partsCache.at = os.clock()
+		local n = 0
+		for _, d in Workspace:GetDescendants() do
+			if d:IsA("BasePart") then
+				n += 1
+			end
+		end
+		partsCache.n = n
+	end
+	local parts = partsCache.n
 	local folder = Workspace:FindFirstChild("Dummies")
 	ragdolls = if folder then #folder:GetChildren() else 0
 	return {
@@ -247,7 +469,14 @@ function AdminTools.debug(): { [string]: any }
 	}
 end
 
-function AdminTools.start()
+function AdminTools.start(fire: ((Player, string, any) -> ())?)
+	focusRemote = fire
+	task.spawn(function()
+		-- (Kept for every server live; in Studio only in memory: never a live store write.)
+		presets = lazy("OwnerSetting").new("DirectorPresets", {}, function(v: unknown): boolean
+			return AdminTools.cleanPresets(v) ~= nil
+		end, function() end, not RunService:IsStudio())
+	end)
 	LogService.MessageOut:Connect(function(message: string, kind: Enum.MessageType)
 		if kind == Enum.MessageType.MessageError then
 			table.insert(errors, 1, string.sub(message, 1, 160))
@@ -270,6 +499,7 @@ end
 AdminTools.KINDS = table.freeze({
 	Event = true, Gravity = true, Clock = true, Weather = true, Announce = true, Kick = true,
 	Goto = true, Bring = true, Trial = true,
+	LaunchDummy = true, Shot = true, DirectorSave = true, DirectorGet = true,
 	ResetLab = true, ReviveAll = true, Spawn = true, Crowd = true, ClearDummies = true,
 })
 

@@ -464,6 +464,10 @@ function AdminService.request(player: Player, kind: unknown, arg: unknown): bool
 	if not Owner.isOwner(player) then
 		return false -- (never told: a non-owner learns nothing of what is here)
 	end
+	if kind == "Debug" then
+		remote:FireClient(player, "Debug", AdminTools.debug()) -- (not paced: the tab polls it)
+		return true
+	end
 	if kind == "Spectate" then
 		return spectate(player, arg) -- (not paced: STOP must always work at once)
 	end
@@ -531,7 +535,9 @@ end
 
 function AdminService.start()
 	remote = Net.event(Net.Names.Admin)
-	AdminTools.start()
+	AdminTools.start(function(p: Player, kind: string, data: any)
+		remote:FireClient(p, kind, data)
+	end)
 	remote.OnServerEvent:Connect(function(player: Player, kind: unknown, arg: unknown)
 		AdminService.request(player, kind, arg)
 	end)
@@ -560,6 +566,10 @@ function AdminService.start()
 	Players.PlayerAdded:Connect(refresh)
 	-- A new body is a fresh start: no size, ice, spin or chase carried over from the old one.
 	local function watch(p: Player)
+		-- (V6-3: a hint for the owner's screen only, F8 director mode; every action is still checked here.)
+		if Owner.isOwner(p) then
+			p:SetAttribute("IsOwner", true)
+		end
 		p.CharacterAdded:Connect(function()
 			busy[p] = nil
 			local ice = ices[p]
@@ -581,6 +591,7 @@ function AdminService.start()
 			task.defer(function()
 				if not ownerHere() then
 					AdminService.setAllWeapons(false)
+					AdminTools.ownerLeft() -- (V6-2 review: gravity, time, weather and spawned bodies go too)
 				end
 			end)
 		end

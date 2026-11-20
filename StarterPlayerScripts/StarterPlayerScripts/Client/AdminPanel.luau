@@ -288,6 +288,7 @@ local function buildDebug(p: Frame, isShown: () -> boolean)
 	header(p, "LAST ERRORS")
 	local errs = caption(p, "none")
 	local frames, t0, fps = 0, os.clock(), 60
+	local parts, partsAt = 0, -math.huge
 	RunService.RenderStepped:Connect(function()
 		frames += 1
 		local now = os.clock()
@@ -301,11 +302,16 @@ local function buildDebug(p: Frame, isShown: () -> boolean)
 			task.wait(2)
 			if isShown() then
 				send("Debug")
-				local parts = 0
-				for _, d in Workspace:GetDescendants() do
-					if d:IsA("BasePart") then
-						parts += 1
+				-- (The part walk every 10 s only: no spike on the owner's screen each poll.)
+				if os.clock() - partsAt > 10 then
+					partsAt = os.clock()
+					local n = 0
+					for _, d in Workspace:GetDescendants() do
+						if d:IsA("BasePart") then
+							n += 1
+						end
 					end
+					parts = n
 				end
 				local ping = math.floor(Players.LocalPlayer:GetNetworkPing() * 1000)
 				mine.Text = string.format("%d fps   %d MB   %d parts streamed   ping %d ms", math.floor(fps + 0.5), math.floor(Stats:GetTotalMemoryUsageMb()), parts, ping)

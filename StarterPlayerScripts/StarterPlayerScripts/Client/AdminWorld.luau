@@ -17,12 +17,22 @@ AdminWorld.FOG_ADD = 0.35 -- Atmosphere density added for Fog
 
 local sky: Part? = nil
 local emitter: ParticleEmitter? = nil
-local fogBase: number? = nil
+local fogOn = false
+local kindNow: string? = nil
 
-local function phoneScale(): number
+AdminWorld.SKY_ROOMS_Y = 500 -- above this the rooms have roofs: no rain or snow inside
+
+-- The drops: a third on a phone or a small tablet, none with less motion asked for.
+local function rateScale(): number
+	local ok, Theme = pcall(function()
+		return require(game:GetService("ReplicatedStorage"):WaitForChild("LihFolkUI"):WaitForChild("LihFolkUITheme")) :: any
+	end)
+	if ok and Theme.isReducedMotion and Theme.isReducedMotion() then
+		return 0
+	end
 	local cam = Workspace.CurrentCamera
-	local small = cam ~= nil and math.min(cam.ViewportSize.X, cam.ViewportSize.Y) < 600
-	return if game:GetService("UserInputService").TouchEnabled and small then 1 / 3 else 1
+	local short = if cam then math.min(cam.ViewportSize.X, cam.ViewportSize.Y) else 720
+	return if game:GetService("UserInputService").TouchEnabled and short < 900 then 1 / 3 else 1
 end
 
 local function ensureSky(): (Part, ParticleEmitter)
@@ -46,17 +56,29 @@ local function ensureSky(): (Part, ParticleEmitter)
 	return p, e
 end
 
-local function setWeather(kind: string?)
+-- Fog is added to whatever density the place's own air has now (ZoneLighting sets it per place).
+local function fog(on: boolean)
 	local atmo = Lighting:FindFirstChildOfClass("Atmosphere")
-	if atmo then
-		if fogBase == nil then
-			fogBase = atmo.Density
-		end
-		TweenService:Create(atmo, TweenInfo.new(2), { Density = (fogBase :: number) + (if kind == "Fog" then AdminWorld.FOG_ADD else 0) }):Play()
+	if not atmo then
+		return
 	end
+	if on and not fogOn then
+		TweenService:Create(atmo, TweenInfo.new(2), { Density = math.min(1, atmo.Density + AdminWorld.FOG_ADD) }):Play()
+	elseif not on and fogOn then
+		TweenService:Create(atmo, TweenInfo.new(2), { Density = math.max(0, atmo.Density - AdminWorld.FOG_ADD) }):Play()
+	end
+	fogOn = on
+end
+
+local function setWeather(kind: string?)
+	kindNow = kind
+	fog(kind == "Fog")
 	local _, e = ensureSky()
+	-- (Every property set for each kind: nothing carries over from the last one.)
+	e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	e.SpreadAngle = Vector2.zero
+	e.Acceleration = Vector3.zero
 	if kind == "Rain" then
-		e.Texture = "rbxasset://textures/particles/smoke_main.dds"
 		e.Color = ColorSequence.new(Color3.fromRGB(200, 215, 235))
 		e.Size = NumberSequence.new(0.35)
 		e.Squash = NumberSequence.new(4) -- (thin streaks, not dots)
@@ -66,21 +88,25 @@ local function setWeather(kind: string?)
 		e.Transparency = NumberSequence.new(0.15)
 		e.Speed = NumberRange.new(55, 65)
 		e.Lifetime = NumberRange.new(0.8, 1)
-		e.Rate = AdminWorld.RATE.Rain * phoneScale()
-		e.Enabled = true
-	elseif kind == "Snow" then
-		e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+		e.Rate = AdminWorld.RATE.Rain * rateScale()
+		e.Enabled = e.Rate > 0
+	elseif kind == "Snow" and Workspace:GetAttribute("Christmas") ~= true then
+		-- (In the Christmas season ChristmasFx snows already: never two snows at once.)
 		e.Color = ColorSequence.new(Color3.new(1, 1, 1))
 		e.Size = NumberSequence.new(0.35)
 		e.Squash = NumberSequence.new(0)
+		e.LightEmission = 0.6
+		e.Brightness = 2
 		e.Orientation = Enum.ParticleOrientation.FacingCamera
 		e.Transparency = NumberSequence.new(0.1)
 		e.Speed = NumberRange.new(6, 9)
-		e.Lifetime = NumberRange.new(7, 9)
+		e.Lifetime = NumberRange.new(5, 6)
 		e.SpreadAngle = Vector2.new(15, 15)
-		e.Rate = AdminWorld.RATE.Snow * phoneScale()
-		e.Enabled = true
+		e.Acceleration = Vector3.new(1.2, 0, 0.6)
+		e.Rate = AdminWorld.RATE.Snow * rateScale()
+		e.Enabled = e.Rate > 0
 	else
+		e.Rate = 0 -- (so the sky check never turns it back on)
 		e.Enabled = false
 	end
 end
@@ -91,23 +117,38 @@ function AdminWorld.start()
 		setWeather(if type(w) == "string" then w else nil)
 	end
 	Workspace:GetAttributeChangedSignal("AdminWeather"):Connect(weather)
+	Workspace:GetAttributeChangedSignal("Christmas"):Connect(weather)
 	weather()
-	-- The sky part follows the camera; the owner's time of day wins over the place's light (which
-	-- may set its own on every place change).
-	local acc = 0
-	RunService.RenderStepped:Connect(function(dt)
+	-- A new place sets its own air: the fog goes back on top of it a moment later.
+	local player = game:GetService("Players").LocalPlayer
+	player:GetAttributeChangedSignal("Place"):Connect(function()
+		if fogOn then
+			fogOn = false
+			task.delay(1.2, function()
+				if kindNow == "Fog" then
+					fog(true)
+				end
+			end)
+		end
+	end)
+	-- The sky part follows the camera (and stops in the roofed rooms high up); the owner's time of
+	-- day wins over the place's light every frame (a place change sets its own at once).
+	RunService.RenderStepped:Connect(function()
 		local s = sky
 		local cam = Workspace.CurrentCamera
-		if s and cam and emitter and emitter.Enabled then
+		local e = emitter
+		if s and cam and e and (kindNow == "Rain" or kindNow == "Snow") then
+			local high = cam.CFrame.Position.Y > AdminWorld.SKY_ROOMS_Y
 			s.CFrame = CFrame.new(cam.CFrame.Position + Vector3.new(0, 40, 0))
-		end
-		acc += dt
-		if acc >= 0.5 then
-			acc = 0
-			local clock = Workspace:GetAttribute("AdminClock")
-			if type(clock) == "number" and math.abs(Lighting.ClockTime - clock) > 0.01 then
-				Lighting.ClockTime = clock
+			if high and e.Enabled then
+				e.Enabled = false
+			elseif not high and not e.Enabled and e.Rate > 0 then
+				e.Enabled = true
 			end
+		end
+		local clock = Workspace:GetAttribute("AdminClock")
+		if type(clock) == "number" and Lighting.ClockTime ~= clock then
+			Lighting.ClockTime = clock
 		end
 	end)
 	-- Back to the place's own time when the owner picks AUTO.

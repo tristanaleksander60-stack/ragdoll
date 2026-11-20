@@ -28,7 +28,7 @@ local function guests(): number
 	local n = 0
 	local f = Workspace:FindFirstChild("Dummies")
 	for _, m in if f then f:GetChildren() else {} do
-		if m:GetAttribute("NoCredit") == true then
+		if m:GetAttribute("AdminGuest") == true then
 			n += 1
 		end
 	end
@@ -82,8 +82,14 @@ return {
 			assert(guests() >= before + 1, "no guest dummies spawned")
 			assert(req("ReviveAll"), "revive all refused")
 			assert(req("ClearDummies") and guests() == 0, "guests not cleared")
-			assert(req("Crowd", 5), "crowd refused")
-			assert(req("Crowd", -5), "crowd -5 refused")
+			-- (A lab has no crowd: refused there with a notice; the plaza takes it.)
+			local place = p:GetAttribute("Place")
+			if place == "Plaza" then
+				assert(req("Crowd", 5), "crowd refused in the plaza")
+			else
+				req("Crowd", 5)
+			end
+			req("Crowd", -5)
 			local d = AdminTools.debug()
 			assert(type(d.fps) == "number" and d.parts > 0, "no debug numbers")
 			local log = AdminService.logForTest()
