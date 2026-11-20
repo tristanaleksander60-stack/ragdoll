@@ -524,6 +524,62 @@ local function build()
 	overlay = o
 end
 
+-- V8-1.4 (unlocks that feel like presents): a 1.5 s reveal in the middle of the screen, never in the
+-- way (nothing in it takes a tap): the new weapon turning, its name, a rising chord.
+function ProgressUI.reveal(id: string, label: string)
+	local g = Instance.new("ScreenGui")
+	g.Name = "UnlockReveal"
+	g.ResetOnSpawn = false
+	g.DisplayOrder = 40
+	g.IgnoreGuiInset = true
+	local box = Instance.new("Frame")
+	box.Active = false
+	box.AnchorPoint = Vector2.new(0.5, 0.5)
+	box.Position = UDim2.fromScale(0.5, 0.42)
+	box.Size = UDim2.fromOffset(220, 200)
+	box.BackgroundTransparency = 1
+	box.Parent = g
+	local pic = ToolPicture.make(id, UDim2.fromOffset(140, 140), nil, true)
+	pic.AnchorPoint = Vector2.new(0.5, 0)
+	pic.Position = UDim2.new(0.5, 0, 0, 0)
+	pic.Active = false
+	pic.Parent = box
+	local name = Instance.new("TextLabel")
+	name.BackgroundTransparency = 1
+	name.AnchorPoint = Vector2.new(0.5, 0)
+	name.Position = UDim2.new(0.5, 0, 0, 146)
+	name.Size = UDim2.fromOffset(220, 44)
+	name.Font = Enum.Font.FredokaOne
+	name.TextScaled = true
+	name.TextColor3 = Color3.fromRGB(255, 214, 64)
+	name.Text = "NEW: " .. string.upper(label)
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 3
+	stroke.Color = Color3.fromRGB(40, 24, 0)
+	stroke.Parent = name
+	name.Parent = box
+	local scale = Instance.new("UIScale")
+	scale.Scale = 0.3
+	scale.Parent = box
+	g.Parent = player:WaitForChild("PlayerGui")
+	TweenService:Create(scale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	task.spawn(function()
+		for i, pitch in { 1, 1.26, 1.5 } do -- (a rising chord: root, third, fifth)
+			C.playSound("tick", pitch)
+			task.wait(0.09)
+			if i == 3 then
+				C.playSound("unlock")
+			end
+		end
+	end)
+	task.delay(1.5, function()
+		local out = TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0 })
+		out:Play()
+		out.Completed:Wait()
+		g:Destroy()
+	end)
+end
+
 function ProgressUI.start()
 	remote = Net.event(Net.Names.Progress)
 	build()
@@ -637,6 +693,10 @@ function ProgressUI.start()
 			-- A gun or a bang goes straight onto the bar, picked: the next tap tries it (the launch
 			-- funnel: most never opened WEAPONS to find what they had earned).
 			local toy = type(d.id) == "string" and Toys.byId[d.id] or nil
+			-- (V8-1.4: a 1.5 s present, never in the way: the weapon turning, its name, a chord.)
+			if toy and (Config :: any).LADDER_V3 then
+				ProgressUI.reveal(toy.id, toy.label)
+			end
 			local onBar = false
 			local deferred = false
 			-- (Round 5: the first rungs too, whatever they are: Bat, Crowbar and Shove come at 2, 4 and 6.)

@@ -54,6 +54,8 @@ export type Record = {
 	input: string?, -- "pad" | "kbm" | "touch" | "mixed" | "none", set on leave
 	portrait: boolean?,
 	step: number,
+	unlocks: number?,
+	firstUnlockAt: number?,
 	-- V8-0.8 (see why they leave): times are seconds from the server's join, like firstShot;
 	-- frame0 is when the client drew its first frame, so a report subtracts it.
 	owner: boolean?, -- the game's creator (reports leave these out)
@@ -104,6 +106,7 @@ local function begin(player: Player)
 		hits = 0,
 		knocks = 0,
 		takedowns = 0,
+		unlocks = 0, -- (V8-1.4: weapons unlocked this visit; firstUnlockAt is the first)
 		eggCard = false,
 		eggOpened = 0,
 		autoEgg = false,

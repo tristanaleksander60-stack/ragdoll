@@ -48,6 +48,9 @@ return {
 		if not p then
 			return "skipped (no player)"
 		end
+		waitFor(function()
+			return SessionStats.recordFor(p) ~= nil -- (run first, the record may not exist yet)
+		end, 15)
 		local rec = SessionStats.recordFor(p)
 		assert(rec, "no visit record for the player")
 		SessionStats.onClient(p, "Frame0")

@@ -294,6 +294,11 @@ local Config = {
 	-- paying its stars as BOLTS; the place is kept for every visit (Missions_v1). After the chain a
 	-- newcomer never gets a creature or map card.
 	MISSION_CHAIN = true,
+	-- V8-1.4 (unlocks that feel like presents): one "next weapon" for every surface (Shared/NextGoal);
+	-- BOLTS buy only weapons BOLTS_BUY_GAP or more KOs away (they bought the rung one KO off); every
+	-- unlock gets a 1.5 s reveal that never blocks (ProgressUI.reveal).
+	LADDER_V3 = true,
+	BOLTS_BUY_GAP = 5,
 }
 
 return table.freeze(Config)

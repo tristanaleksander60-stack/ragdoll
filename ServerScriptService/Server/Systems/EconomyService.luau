@@ -59,7 +59,7 @@ local function state(player: Player): any?
 	end
 	local nextId, price = Economy.nextBuy(Toys.list, function(id: string): boolean
 		return ProgressService.isMine(player, id)
-	end)
+	end, ProgressService.takedownsOf(player) or 0) -- (V8-1.4: 5+ KOs away)
 	local codes = {}
 	for _, entry in Config.LIKE_CODES do
 		table.insert(codes, { likes = entry.likes, code = if entry.live then entry.code else "" })
@@ -138,7 +138,7 @@ function EconomyService.buyNext(player: Player): string?
 	end
 	local id, price = Economy.nextBuy(Toys.list, function(toyId: string): boolean
 		return ProgressService.isMine(player, toyId)
-	end)
+	end, ProgressService.takedownsOf(player) or 0) -- (V8-1.4: the same pick as shown)
 	if not id or not price or e.bolts < price then
 		return nil
 	end

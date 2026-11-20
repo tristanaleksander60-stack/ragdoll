@@ -175,6 +175,10 @@ local function exciting(toy: Toys.Toy): boolean
 end
 
 function HudPlus.goalOf(takedowns: number, owned: { [string]: boolean }): (Toys.Toy?, number)
+	-- (V8-1.4: one goal for every surface: Shared/NextGoal.)
+	if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).LADDER_V3 then
+		return (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("NextGoal")) :: any).of(takedowns, owned)
+	end
 	local best: Toys.Toy? = nil
 	local from = 0
 	for _, toy in Toys.list do

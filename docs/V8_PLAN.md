@@ -1511,3 +1511,14 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - **Card:** the mission card has no clock (`1,240/2,000` for CRASH).
   - **Tests:** T120 passes. T60 updated (the chain is done before its deck check, and it waits for the player); T63, T66, T67 and T103 pass.
   - **Not built:** the FirstVisit line merged into the card (both still run; FirstVisit holds the reveal), and a crate prize on a mission.
+- **V8-1.4 done in part (switch `LADDER_V3`):**
+  - **One goal:** `Shared/NextGoal.of` is the one "next weapon" for the WEAPONS button, HudV3's Next pill and the phone pill.
+  - **BOLTS:** they buy only weapons `BOLTS_BUY_GAP` (5) or more KOs away (before, they bought the rung one KO off).
+  - **Reveal:** every unlock gets a 1.5 s reveal that never blocks (`ProgressUI.reveal`: the weapon turning, NEW: NAME, a rising chord).
+  - **Visit record:** Session_v1 now counts `unlocks` and `firstUnlockAt`.
+  - **Tests:** T121 passes; T35, T58, T63 and T64 pass; T113 now waits for its record.
+  - **Not built:**
+    - the sawtooth ladder retune;
+    - the BOLTS counter on phones;
+    - stars and Level merged into one Lab Rank;
+    - eggs leaving the loop and crates showing their prize.

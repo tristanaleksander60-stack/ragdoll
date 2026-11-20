@@ -875,6 +875,8 @@ function ProgressService.tellUnlocks(player: Player, from: number, to: number)
 		local p = profiles[player]
 		if at > 0 and from < at and to >= at and not (p and p.owned[toy.id]) then
 			remote:FireClient(player, "Unlock", { id = toy.id, name = toy.label })
+			SessionStats.count(player, "unlocks") -- (V8-1.4)
+			SessionStats.mark(player, "firstUnlockAt")
 			ProgressService.lastUnlock[player] = toy.label
 			Metrics.event(player, "Unlock", 1, toy.id)
 		end

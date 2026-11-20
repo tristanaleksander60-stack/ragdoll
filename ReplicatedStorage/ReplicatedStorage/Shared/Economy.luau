@@ -131,10 +131,13 @@ function Economy.priceOf(unlockAt: number): number
 end
 
 -- The cheapest weapon not yet yours (by the ladder), given what is yours: (id, price) or nil.
-function Economy.nextBuy(list: { any }, isMine: (string) -> boolean): (string?, number?)
+-- takedowns (V8-1.4, Config.LADDER_V3): only weapons BOLTS_BUY_GAP or more KOs away (BOLTS bought the
+-- rung one takedown off: the KO would have given it anyway).
+function Economy.nextBuy(list: { any }, isMine: (string) -> boolean, takedowns: number?): (string?, number?)
 	local best: any = nil
+	local floor = if takedowns and (Config :: any).LADDER_V3 then takedowns + (Config :: any).BOLTS_BUY_GAP else 0
 	for _, toy in list do
-		if toy.unlockAt > 0 and not isMine(toy.id) and (best == nil or toy.unlockAt < best.unlockAt) then
+		if toy.unlockAt > 0 and toy.unlockAt >= floor and not isMine(toy.id) and (best == nil or toy.unlockAt < best.unlockAt) then
 			best = toy
 		end
 	end
