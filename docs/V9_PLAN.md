@@ -630,6 +630,27 @@ It follows the UI v2 tokens, phones included (out of the thumb zone), and hides 
 - Each place travels and returns.
 - Travel is refused while seated or grabbing.
 
+**Owner addition (21 Nov): much nicer portals and a map board.**
+> "Gør portalerne langt flottere og tilføj et sted hvor man kan se et skilt med forskellige maps og så kan man vælge der hvilket map man vil skifte til."
+
+- **Every portal, beautiful:** the Places portal, PortalSolo and PortalMulti in the lab, and the portal at every map's arrival.
+  - **Frame:** a real ornate ring or arch model (carved stone with glowing runes, or polished metal with lights), at a proper size, about 14-18 studs tall.
+  - **Surface:** a **living swirl**: a layered, slowly turning texture with depth, soft refraction, sparkles drifting in, and a glow that lights the ground in front (a PointLight within FX_CAPS).
+  - **Sound and motion:** a calm hum that rises as you come near; a small pull of particles toward you within 15 studs.
+  - **Colour per kind:** gold = Places, blue = Solo, green = Multiplayer, each with its own icon on top.
+  - **Entering:** a whoosh, a quick swirl filling the screen, then the arrival (with streaming ahead).
+- **The Map Board:** a big world billboard (like the leader's "Maps" board) about 20-25 studs from the spawn, angled toward it (V9-0h / V9-0n), on a sturdy frame with lights.
+  - **Tiles:** a tile per place with its real picture (the map card pictures), its name and how many players are there now, plus a NEW tag. The tiles glow on hover.
+  - **Use:** click or tap a tile, or walk up and press E for the focused tile (pads: the left stick picks a tile). That opens the same travel confirm as the portal carousel: the picture, one line, GO. GO uses the V8-2.10 travel.
+  - **Build:** the board is a SurfaceGui on a real frame model, readable at 30 studs, and works on PC, phone and pad.
+  - **On every map** there is a smaller copy of the board by the arrival, with "My lab" first.
+
+**Tests (T159 extended):**
+- every tile travels to its place;
+- the board is visible from the spawn at 1920x1080 and 414x896;
+- the portal colours match their kind;
+- travel is refused while seated or grabbing.
+
 ## V9-1 The water: a real aquarium, the whale under water, a shark
 - **The aquarium.** Replace the flat glass "WhalePool" with a real aquarium/lagoon in the creature yard:
   - glass walls with frames and rivets, deep enough to see into (about 14-18 studs deep, partly sunk into the ground, with a viewing side facing the path);
