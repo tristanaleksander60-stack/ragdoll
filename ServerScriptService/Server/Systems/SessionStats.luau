@@ -57,6 +57,7 @@ export type Record = {
 	unlocks: number?,
 	streak: number?,
 	robux: number?,
+	build: string?,
 	shopOpen: number?,
 	promptShown: number?,
 	promptDone: number?,
@@ -114,6 +115,7 @@ local function begin(player: Player)
 		takedowns = 0,
 		unlocks = 0, -- (V8-1.4: weapons unlocked this visit; firstUnlockAt is the first)
 		robux = 0, -- (V8-5.5: the money funnel this visit)
+		build = (workspace:GetAttribute("Build") :: string?), -- (V8-6.2: the build stamp's commit)
 		shopOpen = 0,
 		promptShown = 0,
 		promptDone = 0,

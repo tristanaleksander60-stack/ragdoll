@@ -17,6 +17,10 @@ Når du skriver `/klar`, kører den hele planen igennem. Når alt er færdigt og
   - The full self-test suite passes; only the known flaky tests (CLAUDE.md) may fail, and each one passes when rerun alone.
   - LayoutCheck shows 0 problems on every screen, consoles included.
   - The latest pushed commit on `release` is what is in Studio: `git status` is clean, and the scripts have landed through Script Sync.
+  - **Sync check (V8-6.2):**
+    1. Run `perl tools/stamp.pl` and commit the stamp.
+    2. Let Script Sync land it.
+    3. Run `tools/SyncCheck.luau` in Studio (Edit). It must say "OK n scripts"; any "differs" or "missing" stops the publish.
 - **Play:**
   - A 10-minute play session on PC and in the phone emulator shows no errors in the output.
   - A 2-client test of the multiplayer parts shows no errors.

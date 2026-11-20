@@ -42,6 +42,12 @@ local WeaponShop = require(Systems:WaitForChild("WeaponShop"))
 
 local log = Log.new("Boot")
 log.info(string.format("%s %s (phase %d) server started", Config.GameName, Config.Version, Config.Phase))
+-- (V8-6.2: the build stamp, tools/stamp.pl: which commit this server runs.)
+pcall(function()
+	local stamp = require(script.Parent:WaitForChild("BuildStamp", 5)) :: any
+	log.info(string.format("build %s (%s)", tostring(stamp.commit), tostring(stamp.made)))
+	workspace:SetAttribute("Build", stamp.commit)
+end)
 
 -- V8-0.9 (safe boot): every system starts under pcall (Shared\SafeStart), so one error no longer
 -- stops the systems after it (saving above all). A failure is listed in workspace attribute

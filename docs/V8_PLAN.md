@@ -1565,3 +1565,13 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - **Report:** SessionReport shows the money funnel per device.
   - **Tests:** T145 passes; T29, T58, T68 and T113 pass.
 - **V8-5.1/5.2/5.3/5.4/5.6 waiting (owner):** the products, prices and passes come from the dashboard. The phone-first shop window and the trial-end BUY card belong with them.
+- **V8-6.2 done:**
+  - **Stamp:** `tools/stamp.pl` writes `Server/BuildStamp.luau`: the commit, the time, and an FNV-1a checksum of each of the 332 synced scripts (carriage returns left out).
+  - **Check:** `tools/SyncCheck.luau` compares them in Studio. The first run gave 0 of 332 differing.
+  - **Where it shows:** the server logs the build at boot, `workspace` has attribute Build, and Session_v1 stores `build`.
+  - **Gate:** RELEASE.md now runs the sync check.
+- **V8-6.1/6.3/6.4/6.5/6.6/6.7/6.8 waiting:**
+  - 6.1 is the owner's DEV and STAGING places;
+  - 6.3 needs CI tools that are not on this PC (no lune, selene or luau-lsp);
+  - 6.4, 6.5, 6.7 and 6.8 are large rebuilds (a test arena and multiplayer runner, journey tests, one HUD, ProfileStore), each its own session;
+  - 6.6 needs the ConfigService decision (owner).
