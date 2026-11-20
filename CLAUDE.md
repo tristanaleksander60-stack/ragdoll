@@ -6,6 +6,8 @@ Talk to the owner in Danish, short and plain.
 ## How every session runs (owner order, 19 Nov 2026)
 The owner types **`/klar`** (`.claude/commands/klar.md`) or **"klar"**. Then follow `docs/MASTER_PROMPT.md` ("The prompt"): the owner's fix list in `docs/V4_PLAN.md` (20 Nov 2026), step by step from its State line (v3 leftovers in `docs/V3_PLAN.md`): automatically and without questions; quality first, then speed, then cost. The PC session (Studio + Roblox Studio MCP) is the main one. A cloud session (no Studio) only does research and code, and lists the Studio steps under PC TODO.
 
+The owner types **`/tjek`** (`.claude/commands/tjek.md`) for a full quality audit of the whole game on every parameter, then fixes to 9/10+ per area (`docs/AUDIT_PROMPT.md`, results in `docs/AUDIT.md`).
+
 ## Code and deploy
 - This folder is synced into Studio with Script Sync (each service is the sync root):
   - `ServerScriptService/` -> ServerScriptService (code in `Server/`)
