@@ -18,6 +18,7 @@ DrawnIcons.ASSETS = {
 	sandbox = "rbxassetid://91079374186462",
 	gift = "rbxassetid://121323709806351",
 	present = "rbxassetid://100227731520689", -- (UI audit 21 Nov 2026: REWARDS, a present)
+	guide_feed = "rbxassetid://128651332389460", -- (21 Nov 2026: the lab guide signs, a dummy and an arrow)
 	star = "rbxassetid://75052165451326",
 	crown = "rbxassetid://97120792689619",
 	toolbox = "rbxassetid://87530964149060",

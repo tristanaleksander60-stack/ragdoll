@@ -80,7 +80,14 @@ local function ladder(results: { string })
 			table.insert(weapons, Toys.byId[id].label)
 		end
 	end
-	if v8 then
+	local v9 = (require(game:GetService("ReplicatedStorage").Shared.Config) :: any).START_BAR_V9 == true
+	if v9 then
+		-- (Start bar v9: Popper, Bat and Punch to hit with, Grab and the Grenade besides; Launch at 3,
+		-- the Rocket among the hardest.)
+		assert(#weapons == 3, string.format("a new player has %d weapons (want 3)", #weapons))
+		assert(Toys.SLOTS == 6 and #Toys.defaultLoadout == 4, "the bar is not 6 slots with 4 tools at the start (v9)")
+		assert(Toys.byId.Launch.unlockAt == 3 and Toys.byId.Rocket.unlockAt >= 400, "Launch is not at 3 or the Rocket not among the hard ones")
+	elseif v8 then
 		-- (V8-0.3: Popper, Bat, Launch and Punch to hit with, Grab and the Grenade besides; the
 		-- Rocket at 3.)
 		assert(#weapons == 4, string.format("a new player has %d weapons (want 4)", #weapons))

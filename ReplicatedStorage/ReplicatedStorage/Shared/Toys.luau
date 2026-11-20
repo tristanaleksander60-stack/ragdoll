@@ -136,7 +136,12 @@ end
 
 -- V8-0.3 (Config.V8_START_BAR): rungs moved for the full start bar: its tools open from the start,
 -- the Rocket is the first unlock; Poke, Slap and Shove leave the early rungs and Heal comes later.
-local V8_RUNGS: { [string]: number } = { Bat = 0, Grenade = 0, Launch = 0, Rocket = 3, Poke = 18, Shove = 22, Slap = 24, Heal = 60 }
+local V8_RUNGS: { [string]: number } = if Config.START_BAR_V9
+	then { Bat = 0, Grenade = 0, Launch = 3, Poke = 18, Shove = 22, Slap = 24, Heal = 60 }
+	else { Bat = 0, Grenade = 0, Launch = 0, Rocket = 3, Poke = 18, Shove = 22, Slap = 24, Heal = 60 }
+-- Start bar v9 (Config.START_BAR_V9): rungs set as they finally stand (after the squeeze): the Rocket is
+-- one of the hardest to get, between the Portal (437) and the Plasma Blade (491).
+local HARD_RUNGS: { [string]: number } = if Config.START_BAR_V9 then { Rocket = 470 } else {}
 
 local function add(id: string, spec: Spec)
 	assert(byId[id] == nil, "tool " .. id .. " listed twice")
@@ -153,6 +158,12 @@ local function add(id: string, spec: Spec)
 		local s0 = table.clone(spec) :: any
 		s0.unlockAt = squeeze(rung)
 		spec = s0
+	end
+	local hard = HARD_RUNGS[id]
+	if hard and spec.unlockAt ~= hard then
+		local sh = table.clone(spec) :: any
+		sh.unlockAt = hard
+		spec = sh
 	end
 	local mild = if Config.TOY_NAMES then TOY_NAMES[id] else nil
 	if mild then
@@ -304,7 +315,11 @@ local CATEGORIES: { Category } = { "Melee", "Guns", "Explosives", "Specials" }
 -- takedowns (players from before keep them: ProgressService.grandfather, LADDER 3).
 -- V8-0.3 (Config.V8_START_BAR): a full bar from the first second, like the big ragdoll games: the
 -- G17 (Popper), Grab, Bat, Grenade and Launch, 5 of 6; slot 6 is the first unlock (the Rocket, at 3).
-local DEFAULT_LOADOUT = if Config.V8_START_BAR then { "Blaster", "Grab", "Bat", "Grenade", "Launch" } else { "Blaster", "Grab", "Punch" }
+-- Start bar v9 (Config.START_BAR_V9): 4 of 6, the Popper, Grab, Bat and Grenade; slots 5 and 6 wait for
+-- the first presents (Launch at 3).
+local DEFAULT_LOADOUT = if Config.START_BAR_V9 then { "Blaster", "Grab", "Bat", "Grenade" }
+	elseif Config.V8_START_BAR then { "Blaster", "Grab", "Bat", "Grenade", "Launch" }
+	else { "Blaster", "Grab", "Punch" }
 -- How many slots the bar has (a fixed number, not the starting bar's length: round 5).
 -- (Phase 0, 19 Nov: back to 6. The cut to 3 in 0.16 made every new weapon a "pick a slot to
 -- replace" step right when WEAPONS unlocks; it lines up with the ~19 s session drop: AUDIT.md 1.3.)

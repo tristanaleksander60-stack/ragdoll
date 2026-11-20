@@ -276,3 +276,36 @@ Phases 0-4b, A-M, N1-N5, N7 (graphics accepted as is), M1-M8 done. M9 was under 
   - What knocks them: a touch at 14+ studs/s, a shot (`HitService` onShot), a blast (`Blasts`).
   - The server simulates them; they go home after 10 s still (30 s at most) and on RESET (`SandboxService`).
   - Test: T146_UiAudit.
+
+## Sounds, start bar, banners, paths, lab guide (21 Nov 2026, release 0.28.0)
+- The owner: "you decide everything from the vault and the big ragdoll games".
+- **Every weapon its own sound:**
+  - Guns: `SoundManifest.GUNS`. AutoShotgun and GoldenDeagle now have their own banks.
+  - Everything else: `SoundManifest.TOOLS`, keyed by tool. `on` is "Hit" or "Place", plus bank, volume, pitch, cut and `maxSpeed`. `TOOL_ALIAS` maps BananaPeel to Banana.
+  - FxController `toolSound` plays it in `onFx`. A tool with one skips its old shared identity sound and the cartoon BONK.
+  - 45 new banks (`tool...`), mostly Roblox-licensed Pro Sound Effects; the few community uploads have their creator noted. All load-checked.
+  - Tool banks preload in a second wave (20 s on phones).
+  - Punch keeps the shared Punch Kit thud. Bat, Golf, Axe, Chainsaw and Crowbar keep their WEAPON_HITS banks.
+  - Test: T147.
+- **Start bar v9 (`Config.START_BAR_V9`):**
+  - Players start with 4 tools (Popper, Grab, Bat, Grenade) and 2 empty slots. The big games start small: BRP 3 slots, RDP 1 tool and 3 empty.
+  - Launch is the first present at 3.
+  - The Rocket is among the hardest (`Toys.HARD_RUNGS` Rocket = 470, the R$199 tier) and is out of `WOW_POOL`.
+  - Ladder 5 (`ProgressService.grandfather`): older profiles keep Launch, plus the Rocket if they had 3+ takedowns.
+  - Tests T110 and T35 were updated.
+- **Banners:**
+  - `Shared/BannerRules` (pure) and `Client/Banner`. `Toast.show` hands these lines to the banner: SURPRISE! X, BULLSEYE!, CHASE!, CHASE CLEARED!, KNOCKED OUT!
+  - Look: a coloured ribbon that unrolls, a round badge with a drawn icon or an emoji, a gold title that pops in, a sub-pill and a sting.
+  - Vault timing: enter 0.26 s, exit 0.16 s, hold 2.6 s (1.4 s when busy), a queue of 4.
+  - Toasts wait while a banner shows, and the experiment card steps aside. Toasts also got an accent strip in their colour.
+- **Paths (`Config.PATHS_V3`, `PathBuilder.dressLine`):**
+  - Warm sandstone cobbles (`PAVING_V3`) with a grass verge.
+  - Lamp posts every 26 studs, sides taking turns; a PointLight in every second one, 8 per lab at most.
+  - Grass tufts and flowers at uneven gaps.
+  - `DRESS_MAX` 300; `PathPlan.BUDGET` is now 780.
+- **Lab guide (`Config.LAB_GUIDE`):** `Server/Systems/LabGuide` (built after LabCreatures) and `Client/LabGuideClient`.
+  - **Signs:** every creature gets a studs-sized sign over its head: the drawn `guide_feed` picture (a dummy and an arrow) and FEED ME! (WASH ME! for the washer, LOAD ME! for the slingshot).
+  - **Rings:** every creature and every PUT RAGDOLL HERE station gets a cyan neon drop ring. Cyan is the one "use me" colour.
+  - **Button:** a ProximityPrompt ("Feed / Spider", E or ButtonX, reach 18). It tosses the lab's nearest free dummy in an arc (`LabGuide.arc`) into the creature's trigger.
+  - **Carrying a dummy:** the nearest ring lights up with a bouncing DROP HERE!.
+  - Tested: E at the spider puts a dummy in the web.

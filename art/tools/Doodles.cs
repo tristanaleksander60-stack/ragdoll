@@ -358,6 +358,17 @@ public static partial class Doodles
 				Add(Oval(128, 140, 74, 92), Rgb(255, 244, 222));
 				Flat(Oval(102, 112, 16, 16), Orange); Flat(Oval(156, 150, 13, 13), Orange); Flat(Oval(112, 186, 10, 10), Orange);
 				break;
+			case "guide_feed":
+				// (21 Nov 2026: the lab's guide signs: a crash-test dummy and a big arrow, "put one in".)
+				Add(Rect(34, 156, 20, 52), White); Add(Rect(62, 156, 20, 52), White);
+				Add(Rect(30, 100, 56, 62), White);
+				Add(Turn(Rect(8, 104, 18, 46), 18, 17, 104), White); Add(Turn(Rect(90, 104, 18, 46), -18, 99, 104), White);
+				Add(Oval(58, 70, 28, 28), White);
+				Flat(Poly(58, 70, 58, 46, 76, 52, 82, 70), Yellow); Flat(Poly(58, 70, 58, 94, 40, 88, 34, 70), Yellow);
+				Flat(Poly(58, 70, 82, 70, 76, 88, 58, 94), Black); Flat(Poly(58, 70, 34, 70, 40, 52, 58, 46), Black);
+				Line(Orange, 22, 118, 132, 150, 100, 188, 106);
+				Add(Poly(176, 76, 232, 118, 172, 146), Orange);
+				break;
 			case "present":
 				// (UI audit 21 Nov 2026: REWARDS is a present, not an egg; the play gift pays BOLTS.)
 				Add(Turn(Oval(98, 66, 34, 20), 28, 98, 66), Yellow);
@@ -847,7 +858,7 @@ public static partial class Doodles
 	}
 
 	public static string[] Names = {
-		"shop", "settings", "sandbox", "gift", "present", "star", "crown", "toolbox", "map", "friends", "camera", "music", "keys", "eye", "shake", "heart",
+		"shop", "settings", "sandbox", "gift", "present", "guide_feed", "star", "crown", "toolbox", "map", "friends", "camera", "music", "keys", "eye", "shake", "heart",
 		"event_DummyRain", "event_MegaBomb", "event_ZeroG", "event_BouncyFloor", "event_FlashFreeze",
 		"tool_Blaster", "tool_Deagle", "tool_Shotgun", "tool_NailGun", "tool_Crossbow", "tool_Portal", "tool_Slime",
 		"tool_Grab", "tool_Poke", "tool_Slap", "tool_Shove", "tool_Punch", "tool_Kick", "tool_Uppercut", "tool_MegaSlap", "tool_Glove",

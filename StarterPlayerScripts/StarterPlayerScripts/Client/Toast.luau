@@ -14,6 +14,7 @@ local TweenService = game:GetService("TweenService")
 
 local Theme = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUITheme"))
 local HudSlots = require(script.Parent:WaitForChild("HudSlots"))
+local Banner = require(script.Parent:WaitForChild("Banner"))
 
 -- (10 Nov 2026, the audit: 1.8 s for every line was too short to read a long one on a phone, and
 -- a short queue dropped the launch's lines: time now follows the text, more may wait, longer.)
@@ -194,6 +195,24 @@ function showNext()
 		shine.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(205, 210, 225))
 		shine.Parent = label
 		label.TextStrokeTransparency = 0.1
+		-- (21 Nov 2026: a strip of the message's own colour down its left edge, and a soft shadow.)
+		local accent = Instance.new("Frame")
+		accent.Name = "Accent"
+		accent.BorderSizePixel = 0
+		accent.BackgroundColor3 = item.color
+		accent.Position = UDim2.new(0, -pad.PaddingLeft.Offset, 0, -pad.PaddingTop.Offset)
+		accent.Size = UDim2.new(0, 6, 1, pad.PaddingTop.Offset + pad.PaddingBottom.Offset)
+		local ac = Instance.new("UICorner")
+		ac.CornerRadius = UDim.new(0, 3)
+		ac.Parent = accent
+		accent.Parent = label
+		local shadow = Instance.new("UIStroke")
+		shadow.Name = "Glow"
+		shadow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		shadow.Color = item.color
+		shadow.Transparency = 0.75
+		shadow.Thickness = 1
+		shadow.Parent = accent
 		if not Theme.isReducedMotion() then
 			local pop = Instance.new("UIScale")
 			pop.Scale = 0.85
@@ -342,6 +361,11 @@ end
 -- messages that must clear something else at the top of the screen (the event banner).
 -- icon: an image id drawn left of the text (V6-1). onTap: called when the player taps it away.
 function Toast.show(text: string, color: Color3?, top: (() -> number)?, icon: string?, onTap: (() -> ())?)
+	-- (21 Nov 2026: a big moment, SURPRISE!, BULLSEYE!, a chase, gets the centre banner instead:
+	-- Shared/BannerRules, Client/Banner.)
+	if Banner.tryLine(text) then
+		return
+	end
 	local elsewhere = redirect
 	if elsewhere then
 		elsewhere(text, color) -- (a bar has the toast's place: it shows the message itself)

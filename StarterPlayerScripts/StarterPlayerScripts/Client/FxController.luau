@@ -1021,14 +1021,45 @@ local bigStop: (length: number) -> () = function(_length: number) end
 -- (v2: the hits that send a body flying from a launcher: it streaks at once, FeelV2.noteLaunch.)
 local LAUNCHERS: { [string]: string } = { CannonPad = "Launch", Throw = "Throw", SpringPad = "Launch", Trampoline = "Launch", Launch = "Launch", Uppercut = "Launch" }
 
+-- 21 Nov 2026 (the owner: "custom sounds for every single weapon"): a tool's own sound
+-- (SoundManifest.TOOLS) for this event, if it has one now. True when it played.
+local TOOL_SOUNDS = SoundManifest.TOOLS
+local TOOL_ALIAS = SoundManifest.TOOL_ALIAS
+local function toolSound(kind: string, position: Vector3, speed: number, toyId: string, sourceUserId: number?, priority: boolean): boolean
+	local s = TOOL_SOUNDS[TOOL_ALIAS[toyId] or toyId]
+	if not s then
+		return false
+	end
+	if s.on == "Hit" then
+		if kind ~= "Hit" then
+			return false
+		end
+	elseif s.on == "Place" then
+		-- (Your own at once on Place; anyone else's when the server says they used it.)
+		if not (kind == "Place" or (kind == "Used" and sourceUserId ~= nil and sourceUserId ~= localUserId)) then
+			return false
+		end
+	else
+		return false
+	end
+	if s.maxSpeed and speed >= s.maxSpeed then
+		return false
+	end
+	play(s.bank, position, s.volume, s.pitch, { cut = s.cut, fade = s.fade, priority = priority, vary = 0.04 })
+	return true
+end
+
 -- The moment a blow lands: the thud, the weapon's own sound, sparks, shake and blood.
 local function impact(position: Vector3, speed: number, toyId: string, priority: boolean)
 	local power = math.clamp(speed / 40, 0.2, 2.5)
 	local near = nearness(position)
 	-- Small hits are lighter and higher, big hits deeper and louder.
 	play("hit", position, 0.3 + 0.28 * power, 1.25 - 0.18 * math.min(power, 2), { priority = priority })
-	-- The weapon's own sound on top (a bat's crack, an axe's chop, a chainsaw's grind).
-	local own = WEAPON_HITS[toyId]
+	-- The weapon's own sound on top (a bat's crack, an axe's chop, a chainsaw's grind); a tool with a
+	-- TOOLS sound already played it in onFx.
+	local ts = TOOL_SOUNDS[toyId]
+	local custom = ts ~= nil and ts.on == "Hit"
+	local own = if custom then nil else WEAPON_HITS[toyId]
 	if own then
 		play(own.bank, position, own.volume, own.pitch, { cut = own.cut, from = own.from, priority = priority })
 	end
@@ -1054,7 +1085,7 @@ local function impact(position: Vector3, speed: number, toyId: string, priority:
 		local blast = toyId == "TNT" or toyId == "BigBoom" or toyId == "StickyBomb"
 		BloodFx.burst(position, if blast then power * 1.4 else power)
 	end
-	styleLayer(position, toyId, power, near, own ~= nil)
+	styleLayer(position, toyId, power, near, own ~= nil or custom)
 end
 
 -- byHandFlag: whether the hitter's avatar did it by hand (the hitter decided; sent with the hit). Nil
@@ -1099,6 +1130,9 @@ local function onFx(kind: string, position: Vector3, speed: number, toyId: strin
 			return
 		end
 	end
+	-- (21 Nov 2026: the tool's own sound, SoundManifest.TOOLS, on top of what follows; a tool with one
+	-- skips its old shared identity sound below.)
+	local custom = toolSound(kind, position, speed, toyId, sourceUserId, priority)
 	-- Only moments the player can actually see are worth a replay.
 	if kind == "Hit" and isBig(toyId) and ((toyId ~= "Bowling" and toyId ~= "Machine") or speed > 30) and nearness(position) > 0 then
 		local listener = FxController.onBigEvent
@@ -1112,10 +1146,14 @@ local function onFx(kind: string, position: Vector3, speed: number, toyId: strin
 	end
 	if kind == "Hit" then
 		if toyId == "Grab" then
-			play("whoosh", position, 0.25, 1.6) -- a light "fwip" as the grip takes hold
+			if not custom then
+				play("whoosh", position, 0.25, 1.6) -- a light "fwip" as the grip takes hold
+			end
 			return
 		elseif toyId == "Trampoline" then
-			play("boing", position, 0.75, 1)
+			if not custom then
+				play("boing", position, 0.75, 1)
+			end
 			play("whistle", position, 0.3, 1.25)
 			sparks(position, 6, 1)
 			return
@@ -1128,21 +1166,29 @@ local function onFx(kind: string, position: Vector3, speed: number, toyId: strin
 			return
 		elseif toyId == "Heal" then
 			-- Patched up: a bright little "ding" and a few sparkles.
-			play("whoosh", position, 0.25, 1.9)
+			if not custom then
+				play("whoosh", position, 0.25, 1.9)
+			end
 			sparks(position, 8, 0.7)
 			return
 		elseif toyId == "Freeze" then
-			play("freeze", position, 0.6, 1.35)
+			if not custom then
+				play("freeze", position, 0.6, 1.35)
+			end
 			sparks(position, 14, 1.6, ICE_COLORS)
 			return
 		elseif toyId == "Zap" then
-			play("zap", position, 0.6, 1.1)
+			if not custom then
+				play("zap", position, 0.6, 1.1)
+			end
 			sparks(position, 16, 1.4, ZAP_COLORS)
 			shakeAmount = math.max(shakeAmount, near * 0.3)
 			return
 		elseif toyId == "Balloon" or (toyId == "StickyBomb" and speed < 14) then
 			-- Stuck on: a light squeak, the real moment comes later.
-			play("boing", position, 0.35, 1.6)
+			if not custom then
+				play("boing", position, 0.35, 1.6)
+			end
 			sparks(position, 5, 0.5, if toyId == "Balloon" then POP_COLORS else nil)
 			return
 		elseif toyId == "BalloonPop" then
@@ -1159,13 +1205,17 @@ local function onFx(kind: string, position: Vector3, speed: number, toyId: strin
 			sparks(position, 18, 2.2, HOLE_COLORS)
 			return
 		elseif toyId == "SpringPad" then
-			play("boing", position, 0.85, 0.85)
+			if not custom then
+				play("boing", position, 0.85, 0.85)
+			end
 			play("whistle", position, 0.45, 1.4)
 			sparks(position, 8, 1.2)
 			fovKick = math.max(fovKick, 5 * near)
 			return
 		elseif toyId == "BananaPeel" then
-			play("zip", position, 0.6, 1.1)
+			if not custom then
+				play("zip", position, 0.6, 1.1)
+			end
 			play("whistle", position, 0.3, 0.8)
 			play("land", position, 0.5, 1)
 			sparks(position, 6, 0.8, STAR_COLORS)
@@ -1498,9 +1548,34 @@ function FxController.start()
 			loadList(list)
 		end
 	end
-	for _, list in BANK do
-		loadList(list)
+	-- (21 Nov 2026: the 43 tool banks, "tool...", load in a second wave, so a phone's first shots and
+	-- hits are never behind them; a tool used before then grows its voice on demand.)
+	for name, list in BANK do
+		if string.sub(name, 1, 4) ~= "tool" then
+			loadList(list)
+		end
 	end
+	local function preloadNow(list: { Instance })
+		game:GetService("ContentProvider"):PreloadAsync(list, function(id: string, status: Enum.AssetFetchStatus)
+			if status == Enum.AssetFetchStatus.Failure then
+				for _, ids in BANK do
+					local i = table.find(ids, id)
+					if i then
+						table.remove(ids, i)
+					end
+				end
+			end
+		end)
+	end
+	task.delay(if PHONE then 20 else 6, function()
+		preload = {}
+		for name, list in BANK do
+			if string.sub(name, 1, 4) == "tool" then
+				loadList(list)
+			end
+		end
+		preloadNow(preload)
+	end)
 	task.spawn(function()
 		game:GetService("ContentProvider"):PreloadAsync(preload, function(id: string, status: Enum.AssetFetchStatus)
 			-- (Only a real failure: a slow phone's timeout keeps the id, a late play is dropped anyway.)

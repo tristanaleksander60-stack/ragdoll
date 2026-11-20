@@ -20,8 +20,9 @@ local SoundManifest = {}
 local PSE = "Roblox Creator Store / Pro Sound Effects (SFX)"
 local APM = "Roblox Creator Store / APM Music"
 local COMMUNITY = "Roblox Creator Store / community upload"
+local ROBLOX = "Roblox Creator Store / Roblox"
 
-SoundManifest.SOURCES = table.freeze({ PSE = PSE, APM = APM, COMMUNITY = COMMUNITY })
+SoundManifest.SOURCES = table.freeze({ PSE = PSE, APM = APM, COMMUNITY = COMMUNITY, ROBLOX = ROBLOX })
 
 type Entry = { id: number, title: string, source: string, creator: string? }
 
@@ -221,6 +222,54 @@ local SOUNDS: { [string]: { Entry } } = {
 		{ id = 9114001456, title = "Crossbow Fire 16", source = PSE },
 		{ id = 9114000843, title = "Crossbow Fire 2", source = PSE },
 	},
+	-- 21 Nov 2026 (the owner: "custom sounds for every single weapon"): each tool's own sound
+	-- (SoundManifest.TOOLS says when it plays). Roblox-licensed Pro Sound Effects where one fits; a few
+	-- community uploads, each with its uploader; all load-checked in Studio on 21 Nov.
+	toolPoke = { { id = 9117848644, title = "Pops Mouth Popping Multiple Versions 7 (SFX)", source = PSE } },
+	toolSlap = { { id = 9114771792, title = "Hand Slap Claps 3 (SFX)", source = PSE } },
+	toolShove = { { id = 9113518407, title = "Body Hit Wall 2 (SFX)", source = PSE } },
+	toolKick = { { id = 9117967965, title = "Punching Bag Hits 7 (SFX)", source = PSE } },
+	toolUppercut = { { id = 9113502506, title = "Body Hits 8 (SFX)", source = PSE } },
+	toolPan = { { id = 9125782644, title = "Pot Clank Hit Metal Pan Some Ring Handle Sto (SFX)", source = PSE } },
+	toolGlove = { { id = 9117969420, title = "Punching Bag Hits 22 (SFX)", source = PSE } },
+	toolHammer = { { id = 9114578351, title = "Giant Pvc Pipe Big Rubber Mallet Hits 6 (SFX)", source = PSE } },
+	toolMegaSlap = { { id = 9114773313, title = "Hand Slap Single Hits 16 (SFX)", source = PSE } },
+	toolCleaver = { { id = 9116333353, title = "Machete Cutting Cactus 101 (SFX)", source = PSE } },
+	toolKatana = { { id = 9119749145, title = "Sword Swish 102 (SFX)", source = PSE } },
+	toolPlasma = { { id = 9114330003, title = "Energy Cloud Whooshing By Very Fast 16 (SFX)", source = PSE } },
+	toolGrab = { { id = 9113534108, title = "Body Pats Cloth Hits 24 (SFX)", source = PSE } },
+	toolLaunch = { { id = 9125577652, title = "Giant Air Blast Low Bursts Pound Many Versio (SFX)", source = PSE } },
+	toolRocket = { { id = 9126009951, title = "Super Animal Rocket By Hissing Jet Whooshes  (SFX)", source = PSE } },
+	toolBalloon = { { id = 134057288, title = "Balloon Inflating", source = COMMUNITY, creator = "Polyhex" } },
+	toolFreeze = { { id = 9125611419, title = "Ice Freeze Large Piece Crackles Liquid Nitro (SFX)", source = PSE } },
+	toolZap = { { id = 9114277757, title = "Electric Zaps 12 (SFX)", source = PSE } },
+	toolBlackHole = { { id = 9126236071, title = "Wind Suck Slow Backwards Swooshing Build Up  (SFX)", source = PSE } },
+	toolHeal = { { id = 9116394545, title = "Magic Glows Soft Clusters Of Chiming Hits 1 (SFX)", source = PSE } },
+	toolAnvil = { { id = 9113132828, title = "Anvil Hit Sharp Metallic Clanks Bouncing 6 (SFX)", source = PSE } },
+	toolTrampoline = { { id = 12222124, title = "Short spring sound.wav", source = ROBLOX } },
+	toolSpringPad = { { id = 9119529711, title = "Spring Metal Movements 11 (SFX)", source = PSE } },
+	toolBanana = { { id = 9119198132, title = "Slide Whistle 5 (SFX)", source = PSE } },
+	toolFan = { { id = 9113840530, title = "Cloth Whooshes Pass Bys Light And Air Wind 1 (SFX)", source = PSE } },
+	toolBowling = { { id = 4692687595, title = "Bowling Strike Sound Effect", source = COMMUNITY, creator = "Yolobedstemor and Friends group" } },
+	toolSlime = { { id = 9119990151, title = "Tentacle Slime 3 (SFX)", source = PSE } },
+	toolShrink = { { id = 9119197920, title = "Slide Whistle 3 (SFX)", source = PSE } },
+	toolChicken = { { id = 77584650945481, title = "chicken cluck", source = COMMUNITY, creator = "ShamelessShady" } },
+	toolFloat = { { id = 9116395089, title = "Magic Glows Soft Clusters Of Chiming Hits 4 (SFX)", source = PSE } },
+	toolSlowmo = { { id = 9120061271, title = "Time Wave Ripple Slow 1 (SFX)", source = PSE } },
+	toolPortal = { { id = 9126102694, title = "Time Warp Searing Build Up Large Suck Rumble (SFX)", source = PSE } },
+	toolGravity = { { id = 9116236630, title = "Laser Cannon 1702 (SFX)", source = PSE } },
+	toolCannon = { { id = 9119382813, title = "Sonic Boom 4 (SFX)", source = PSE } },
+	toolFirecracker = { { id = 89568781479045, title = "Firecracker Sound Effect", source = COMMUNITY, creator = "HazQ_R" } },
+	toolFuse = { { id = 121953406020749, title = "fuse", source = COMMUNITY, creator = "Alika0946" } },
+	toolShockwave = { { id = 9119382258, title = "Sonic Boom 1 (SFX)", source = PSE } },
+	toolSticky = { { id = 9119667390, title = "Suction Cup Dart 15 (SFX)", source = PSE } },
+	toolBigBoom = { { id = 9119382815, title = "Sonic Boom 5 (SFX)", source = PSE } },
+	toolGrenadePin = { { id = 9114659662, title = "Grenade Pull Pin 1 (SFX)", source = PSE } },
+	toolC4Beep = { { id = 9125530803, title = "Electronic Blips Sharp Crystalline Beeps Gat (SFX)", source = PSE } },
+	toolRpg = { { id = 12222065, title = "Launching rocket.wav", source = ROBLOX } },
+	toolNuke = { { id = 9114224354, title = "Earthquake Explosion 1 (SFX)", source = PSE } },
+	autoShotgun = { { id = 9112912844, title = "12 Gauge Shotgun 301 (SFX)", source = PSE } },
+	goldenDeagle = { { id = 9117402631, title = "Pistol Single Shots 5 (SFX)", source = PSE } },
 }
 SoundManifest.SOUNDS = SOUNDS
 
@@ -296,7 +345,7 @@ local GUNS: { [string]: Gun } = {
 		fallback = { bank = "shotgun", volume = 1, pitch = 0.88 }, dry = "dryfire", reload = "reloadShell" },
 	TommyGun = { fire = "tommy", volume = 0.82, pitch = 1, cut = 0.26, fade = 0.1, vary = 0.04, maxDistance = 420,
 		fallback = { bank = "g17", volume = 0.78, pitch = 0.95 }, reload = "reloadTommy" },
-	AutoShotgun = { fire = "shotgun", volume = 0.9, pitch = 1.1, cut = 0.55, fade = 0.25, vary = 0.04, maxDistance = 460,
+	AutoShotgun = { fire = "autoShotgun", volume = 0.9, pitch = 1, cut = 0.55, fade = 0.25, vary = 0.04, maxDistance = 460,
 		fallback = { bank = "boom", volume = 0.55, pitch = 1.4 }, reload = "reloadShell" },
 	LMG = { fire = "lmg", volume = 0.85, pitch = 1, cut = 0.3, fade = 0.12, vary = 0.04, maxDistance = 500,
 		fallback = { bank = "deagle", volume = 0.8, pitch = 1.3 }, reload = "reloadMinigun" },
@@ -306,10 +355,72 @@ local GUNS: { [string]: Gun } = {
 		fallback = { bank = "zip", volume = 0.6, pitch = 1.7 }, reload = "reloadRifle" },
 	Railgun = { fire = "rail", volume = 1, pitch = 0.7, cut = 1, fade = 0.5, vary = 0.02, maxDistance = 650,
 		fallback = { bank = "deagle", volume = 1, pitch = 0.6 }, dry = "dryfire", reload = "reloadRifle" },
-	GoldenDeagle = { fire = "deagle", volume = 1, pitch = 0.96, cut = 1.35, fade = 0.3, vary = 0.03, maxDistance = 460,
+	GoldenDeagle = { fire = "goldenDeagle", volume = 1, pitch = 1, cut = 1.35, fade = 0.3, vary = 0.03, maxDistance = 460,
 		fallback = { bank = "boom", volume = 0.45, pitch = 1.9 }, dry = "dryfire", reload = "reloadPistol" },
 }
 SoundManifest.GUNS = table.freeze(GUNS)
+
+-- 21 Nov 2026 (the owner: "custom sounds for every single weapon"): each non-gun tool's own sound
+-- (the guns have theirs in GUNS). FxController plays it on top of the shared thud:
+--   on        "Hit"   when the tool's blow, stick or effect lands on a body (also your own,
+--                     predicted the moment you tap);
+--             "Place" when it is put down or thrown (your own at once, anyone else's when they do);
+--   bank      a SOUNDS bank; volume, pitch as for any sound; cut s it is heard at most (fade over the
+--             end); maxSpeed: only below this hit speed (a sticky bomb's stick, not its bang).
+-- A tool with a sound here never gets the cartoon BONK or its old shared identity sound as well.
+export type ToolSound = { on: string, bank: string, volume: number, pitch: number, cut: number, fade: number?, maxSpeed: number? }
+local TOOLS: { [string]: ToolSound } = {
+	-- By hand.
+	Poke = { on = "Hit", bank = "toolPoke", volume = 0.55, pitch = 1.1, cut = 0.6 },
+	Slap = { on = "Hit", bank = "toolSlap", volume = 0.7, pitch = 1, cut = 0.6 },
+	Shove = { on = "Hit", bank = "toolShove", volume = 0.6, pitch = 1, cut = 0.6 },
+	Kick = { on = "Hit", bank = "toolKick", volume = 0.65, pitch = 1, cut = 0.8 },
+	Uppercut = { on = "Hit", bank = "toolUppercut", volume = 0.65, pitch = 1, cut = 0.9 },
+	Pan = { on = "Hit", bank = "toolPan", volume = 0.6, pitch = 1, cut = 0.9 },
+	Glove = { on = "Hit", bank = "toolGlove", volume = 0.6, pitch = 1, cut = 0.6 },
+	Hammer = { on = "Hit", bank = "toolHammer", volume = 0.65, pitch = 1, cut = 1 },
+	MegaSlap = { on = "Hit", bank = "toolMegaSlap", volume = 0.8, pitch = 0.92, cut = 0.7 },
+	Cleaver = { on = "Hit", bank = "toolCleaver", volume = 0.5, pitch = 1.1, cut = 0.6 },
+	Katana = { on = "Hit", bank = "toolKatana", volume = 0.55, pitch = 1, cut = 0.7 },
+	PlasmaBlade = { on = "Hit", bank = "toolPlasma", volume = 0.5, pitch = 1, cut = 0.8 },
+	Grab = { on = "Hit", bank = "toolGrab", volume = 0.5, pitch = 1, cut = 0.5 },
+	Launch = { on = "Hit", bank = "toolLaunch", volume = 0.7, pitch = 1, cut = 1, fade = 0.3 },
+	GravityGun = { on = "Hit", bank = "toolGravity", volume = 0.6, pitch = 1, cut = 1, fade = 0.3 },
+	-- Put on a body.
+	Rocket = { on = "Hit", bank = "toolRocket", volume = 0.7, pitch = 1, cut = 1.4, fade = 0.4 },
+	Balloon = { on = "Hit", bank = "toolBalloon", volume = 0.6, pitch = 1, cut = 0.7 },
+	Freeze = { on = "Hit", bank = "toolFreeze", volume = 0.6, pitch = 1, cut = 1.6, fade = 0.5 },
+	Zap = { on = "Hit", bank = "toolZap", volume = 0.6, pitch = 1, cut = 0.9 },
+	Heal = { on = "Hit", bank = "toolHeal", volume = 0.55, pitch = 1, cut = 1.4, fade = 0.4 },
+	Shrink = { on = "Hit", bank = "toolShrink", volume = 0.5, pitch = 1.2, cut = 1.2, fade = 0.3 },
+	Chicken = { on = "Hit", bank = "toolChicken", volume = 0.7, pitch = 1, cut = 0.95 },
+	StickyBomb = { on = "Hit", bank = "toolSticky", volume = 0.6, pitch = 1, cut = 0.8, maxSpeed = 14 },
+	C4 = { on = "Hit", bank = "toolC4Beep", volume = 0.55, pitch = 1, cut = 0.56, maxSpeed = 14 },
+	-- Bangs that go off where they land.
+	Firecracker = { on = "Hit", bank = "toolFirecracker", volume = 0.6, pitch = 1, cut = 1.5, fade = 0.5 },
+	Shockwave = { on = "Hit", bank = "toolShockwave", volume = 0.75, pitch = 1, cut = 2.5, fade = 1 },
+	BigBoom = { on = "Hit", bank = "toolBigBoom", volume = 0.8, pitch = 1, cut = 3, fade = 1.2 },
+	Nuke = { on = "Hit", bank = "toolNuke", volume = 1, pitch = 1, cut = 5, fade = 2 },
+	Anvil = { on = "Hit", bank = "toolAnvil", volume = 0.75, pitch = 1, cut = 1.6, fade = 0.5 },
+	Bowling = { on = "Hit", bank = "toolBowling", volume = 0.7, pitch = 1, cut = 2, fade = 0.6 },
+	Trampoline = { on = "Hit", bank = "toolTrampoline", volume = 0.7, pitch = 1, cut = 0.62 },
+	SpringPad = { on = "Hit", bank = "toolSpringPad", volume = 0.65, pitch = 1, cut = 1.1, fade = 0.3 },
+	Banana = { on = "Hit", bank = "toolBanana", volume = 0.55, pitch = 1, cut = 1.4, fade = 0.3 },
+	-- Put down or thrown: heard as it goes.
+	TNT = { on = "Place", bank = "toolFuse", volume = 0.5, pitch = 1, cut = 2.5, fade = 0.5 },
+	Grenade = { on = "Place", bank = "toolGrenadePin", volume = 0.6, pitch = 1, cut = 1.3 },
+	RPG = { on = "Place", bank = "toolRpg", volume = 0.8, pitch = 1, cut = 1.8, fade = 0.4 },
+	Cannon = { on = "Place", bank = "toolCannon", volume = 0.7, pitch = 1, cut = 2.5, fade = 1 },
+	BlackHole = { on = "Place", bank = "toolBlackHole", volume = 0.6, pitch = 1, cut = 3, fade = 1 },
+	Fan = { on = "Place", bank = "toolFan", volume = 0.55, pitch = 1, cut = 2, fade = 0.6 },
+	Slime = { on = "Place", bank = "toolSlime", volume = 0.6, pitch = 1, cut = 1 },
+	Float = { on = "Place", bank = "toolFloat", volume = 0.55, pitch = 1, cut = 2, fade = 0.6 },
+	Slowmo = { on = "Place", bank = "toolSlowmo", volume = 0.6, pitch = 1, cut = 2.5, fade = 0.8 },
+	Portal = { on = "Place", bank = "toolPortal", volume = 0.6, pitch = 1, cut = 2.5, fade = 0.8 },
+}
+SoundManifest.TOOLS = table.freeze(TOOLS)
+-- Hits that arrive under another name than their tool's (the banana's slip).
+SoundManifest.TOOL_ALIAS = table.freeze({ BananaPeel = "Banana" }) :: { [string]: string }
 
 -- Flat list for tests and asset audits.
 SoundManifest.ALL = (function()

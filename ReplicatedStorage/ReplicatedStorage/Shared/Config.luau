@@ -5,7 +5,7 @@ local Config = {
 	GameName = "Ragdoll Havoc", -- (the owner's name for the game, 10 Nov 2026)
 	-- Bumped with every change that goes live (round 5): SessionStats keeps it per visit, so the
 	-- numbers of one build can be told from another's.
-	Version = "0.27.1", -- (0.27.1 UI audit before the ads, 21 Nov 2026: one WEAPONS button, a quiet start, signs in the world, knockable barrels/crates/cones, the weapon in your hand in 3D; 0.27.0 V8-1..6: CRASH score and the long cannon arc, missions, readable hits, fair chase, spawn dummies, streak freeze, admins, 21 Nov 2026; 0.26.0 V8-0: the first hit lands, a full bar from the start, a calm first minutes, the cannon in view, 21 Nov 2026; 0.25.0 v7: paths, crash-test dummies, event banner card, console layout, 20 Nov 2026; 0.24.0 v6: notifications, admin and director menus, bigger lab with garden, creature yard, birds, map shop, 20 Nov 2026; 0.18.0 phase 0; 0.19.0 phases 1-3; 0.20.0 the release; 0.21.0 v3 look, cars, animals; 0.22.0 open-air maps, launchers, disasters, train, throw tower, 19 Nov 2026; 0.23.0 v4: talk to NPCs, real gorilla and bulls, 11 surprises, cars, slow-mo, lab zones, 20 Nov 2026; SessionStats also keeps game.PlaceVersion)
+	Version = "0.28.0", -- (0.28.0, 21 Nov 2026: every weapon its own sound, a 4-tool start bar with Launch at 3 and the Rocket among the hardest, SURPRISE-style banners, nicer lab paths, a FEED button, sign and drop ring at every creature and station; 0.27.1 UI audit before the ads, 21 Nov 2026: one WEAPONS button, a quiet start, signs in the world, knockable barrels/crates/cones, the weapon in your hand in 3D; 0.27.0 V8-1..6: CRASH score and the long cannon arc, missions, readable hits, fair chase, spawn dummies, streak freeze, admins, 21 Nov 2026; 0.26.0 V8-0: the first hit lands, a full bar from the start, a calm first minutes, the cannon in view, 21 Nov 2026; 0.25.0 v7: paths, crash-test dummies, event banner card, console layout, 20 Nov 2026; 0.24.0 v6: notifications, admin and director menus, bigger lab with garden, creature yard, birds, map shop, 20 Nov 2026; 0.18.0 phase 0; 0.19.0 phases 1-3; 0.20.0 the release; 0.21.0 v3 look, cars, animals; 0.22.0 open-air maps, launchers, disasters, train, throw tower, 19 Nov 2026; 0.23.0 v4: talk to NPCs, real gorilla and bulls, 11 surprises, cars, slow-mo, lab zones, 20 Nov 2026; SessionStats also keeps game.PlaceVersion)
 	Phase = 3,
 	-- Heavy weapons and close blasts can cut a limb off (round 2, N2). Roblox lists severed body
 	-- parts as Restricted (18+, ID-checked players only): switching this off keeps the game at a
@@ -165,6 +165,7 @@ local Config = {
 	BIRDS = false, -- V6-6: client-side flocks (Client/Birds) round the lab and the open-air maps (20 Nov 2026, the owner: "remove the birds"; true brings them back)
 	MAP_SHOP = true, -- V6-7: showcase booths on the maps selling Shop.OFFERS map items (Server/Systems/MapShopService); id 0 = no booth live
 	PATHS = true, -- V7-2: earthen paths to everything in the lab, and repainted terrain paths on the plaza and open-air maps (Shared/PathPlan, Server/Systems/PathBuilder)
+	PATHS_V3 = true, -- 21 Nov 2026 (the owner: "make the paths round the lab much nicer"): a gravel shoulder, lamp posts that glow and flower tufts along every lab path (PathBuilder.dressLine)
 	BIRDS_MAX = table.freeze({ pc = 24, tablet = 14, phone = 8 }), -- birds out at once per device
 	NOTIFY = true,
 	BANNER_V7 = true, -- V7-5: the event banner as a picture card that shrinks into a chip
@@ -261,6 +262,16 @@ local Config = {
 	-- (PokeController.slotFor: the weakest slot, only for a stronger tool; never a gun, a bang, Grab,
 	-- the G17 or the Bat; a prize always lands; never picked while firing).
 	V8_START_BAR = true,
+	-- Start bar v9 (21 Nov 2026, the owner: "the best start weapons, the Rocket one of the hard ones";
+	-- the big games start small: BRP 3 slots on PC, RDP 1 tool and 3 empty slots): 4 tools at the
+	-- first join (Popper, Grab, Bat, Grenade) and 2 empty slots that the first unlocks fill; Launch is
+	-- the first present at 3 KOs; the Rocket is among the hardest (Toys.HARD_RUNGS). Ladder 5 keeps
+	-- what older players had. false = the V8 bar of 5 with the Rocket at 3.
+	START_BAR_V9 = true,
+	-- The lab guide (21 Nov 2026, the owner: "a 9-year-old must understand everything in the lab"): a
+	-- sign, a glowing drop ring and a FEED button at every creature and station (Server/Systems/LabGuide,
+	-- Client/LabGuideClient). false = none.
+	LAB_GUIDE = true,
 	V8_HAND_RULES = true,
 	-- V8-0.4 (one voice on screen): no false toasts (starters "unlocked", "come back tomorrow" on a
 	-- first visit, hidden buttons named, a tip for a hazard already done, two unlock lines that

@@ -147,6 +147,7 @@ safe("FeelV2", function() require(Client:WaitForChild("FeelV2")).start() end) --
 safe("ChaseHud", function() require(Client:WaitForChild("ChaseHud")).start() end)
 safe("StuntHud", function() require(Client:WaitForChild("StuntHud")).start() end) -- V8-1.1: the CRASH score, the cannon's slow-mo beat, AGAIN
 safe("SpawnKey", function() require(Client:WaitForChild("SpawnKey")).start() end) -- V8-2.5: H drops a dummy of a type where you aim
+safe("LabGuideClient", function() require(Client:WaitForChild("LabGuideClient")).start() end) -- 21 Nov 2026: the lab guide's rings breathe; DROP HERE! while you carry a dummy
 safe("NpcGlow", function() require(Client:WaitForChild("NpcGlow")).start() end)
 safe("PortalUI", function() require(Client:WaitForChild("PortalUI")).start() end) -- SINGLEPLAYER / MULTIPLAYER portals, the server list (round 5)
 safe("HudPlus", function() require(Client:WaitForChild("HudPlus")).start() end) -- big WEAPONS, LEVEL, today's deal, sandbox column (round 5)

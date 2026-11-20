@@ -405,15 +405,174 @@ function PathBuilder.trail(into: Instance, a: Vector2, b: Vector2, y: number, co
 	return PathBuilder.walkway(into, corners(PathPlan.curve(a, b, seed), Vector2.zero), y, PathBuilder.WALK_WIDTH, color, material, PathBuilder.KERB)
 end
 
+-- 21 Nov 2026 (Config.PATHS_V3, the owner: "make the paths round the lab much nicer"). Vault (Roads,
+-- Rivers and Paths; Teaching Through Level Design): a wider, lower shoulder under the paving, lamps
+-- along the leading lines, and no even scatter. Along each lab path:
+--   * a shoulder of fine warm gravel, a little wider than the kerbs, so the path sits in the ground;
+--   * a lamp post every LAMP_EVERY studs, sides taking turns, its lantern glowing warm (a light in
+--     every second one, at most LAMP_LIGHTS per lab);
+--   * tufts of grass with now and then a flower along the shoulder, at uneven gaps.
+-- Pictures only like the rest of the path: nothing collides, nothing is queried.
+PathBuilder.SHOULDER = Color3.fromRGB(92, 146, 70) -- (a grass verge: colour on the grey lab floor, the flowers grow in it)
+PathBuilder.SHOULDER_W = 2 -- studs of verge outside each kerb
+PathBuilder.PAVING_V3 = Color3.fromRGB(214, 184, 138) -- (warm sandstone cobbles, not grey on grey)
+PathBuilder.LAMP_EVERY = 26
+PathBuilder.LAMP_LIGHTS = 8
+PathBuilder.DRESS_MAX = 300 -- parts of dressing per lab at most (shoulder first, then lamps, then tufts)
+PathBuilder.TUFT_GAP = Vector2.new(7, 15) -- studs between tufts (uneven, from a hash)
+PathBuilder.LAMP_POST = Color3.fromRGB(46, 50, 58)
+PathBuilder.LAMP_GLOW = Color3.fromRGB(255, 214, 150)
+PathBuilder.FLOWERS = { Color3.fromRGB(255, 120, 170), Color3.fromRGB(255, 214, 70), Color3.fromRGB(250, 250, 255), Color3.fromRGB(170, 120, 255) }
+
+local function hash(x: number, z: number, salt: number): number
+	local v = math.sin(x * 12.9898 + z * 78.233 + salt * 37.719) * 43758.5453
+	return v - math.floor(v)
+end
+
+local function deco(into: Instance, name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, shape: Enum.PartType?): Part
+	local p = Instance.new("Part")
+	p.Name = name
+	if shape then
+		p.Shape = shape
+	end
+	p.Size = size
+	p.CFrame = cf
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.CastShadow = false
+	p.Color = color
+	p.Material = material
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.Parent = into
+	return p
+end
+
+-- Inside any other lab path (a junction): nothing is placed there.
+local function onOtherPath(p: Vector2, lines: { { Vector2 } }, own: number, margin: number): boolean
+	for i, pts in lines do
+		if i ~= own then
+			for k = 1, #pts - 1 do
+				local a, b = pts[k], pts[k + 1]
+				local ab = b - a
+				local t = if ab.Magnitude > 0.001 then math.clamp((p - a):Dot(ab) / ab:Dot(ab), 0, 1) else 0
+				if (p - (a + ab * t)).Magnitude < margin then
+					return true
+				end
+			end
+		end
+	end
+	return false
+end
+
+-- The shoulder, lamps and tufts of one lab path (its points in world x, z; y its floor). `state`
+-- carries the lamp count and the light budget across the lab's paths.
+function PathBuilder.dressLine(into: Instance, points: { Vector2 }, y: number, width: number, own: number, lines: { { Vector2 } }, state: { lamps: number, lights: number, parts: number }): number
+	local n = 0
+	local function room(k: number): boolean
+		return state.parts + n + k <= PathBuilder.DRESS_MAX
+	end
+	local flat = CFrame.Angles(0, 0, math.rad(90))
+	local wide = width + 2 * (PathBuilder.KERB_W + PathBuilder.SHOULDER_W)
+	local edge = width / 2 + PathBuilder.KERB_W + PathBuilder.SHOULDER_W * 0.55
+	-- The shoulder: under the paving and the kerbs, a hair above the floor.
+	for i, a in points do
+		deco(into, "PathShoulderJoint", Vector3.new(0.04, wide, wide), CFrame.new(a.X, y + 0.004 + (own % 5) * 0.0015, a.Y) * flat, PathBuilder.SHOULDER, Enum.Material.Grass, Enum.PartType.Cylinder)
+		n += 1
+		local b = points[i + 1]
+		if b and (b - a).Magnitude > 0.05 then
+			local mid = (a + b) / 2
+			deco(into, "PathShoulder", Vector3.new(wide, 0.04, (b - a).Magnitude), CFrame.lookAt(Vector3.new(mid.X, y + 0.005 + (own % 5) * 0.0015, mid.Y), Vector3.new(b.X, y + 0.005 + (own % 5) * 0.0015, b.Y)), PathBuilder.SHOULDER, Enum.Material.Grass)
+			n += 1
+		end
+	end
+	-- Walk the line: lamps every LAMP_EVERY studs, tufts at uneven gaps.
+	local walked = 0
+	local nextLamp = PathBuilder.LAMP_EVERY * 0.5
+	local nextTuft = PathBuilder.TUFT_GAP.X
+	for i = 1, #points - 1 do
+		local a, b = points[i], points[i + 1]
+		local len = (b - a).Magnitude
+		if len > 0.05 then
+			local dir = (b - a) / len
+			local across = Vector2.new(-dir.Y, dir.X)
+			local s = 0
+			while s < len do
+				local at = a + dir * s
+				local total = walked + s
+				if total >= nextLamp then
+					nextLamp += PathBuilder.LAMP_EVERY
+					state.lamps += 1
+					local side = if state.lamps % 2 == 0 then 1 else -1
+					local spot = at + across * side * (width / 2 + PathBuilder.KERB_W + 0.9)
+					if room(4) and not onOtherPath(spot, lines, own, width / 2 + 1.2) then
+						local post = deco(into, "PathLampPost", Vector3.new(0.4, 6, 0.4), CFrame.new(spot.X, y + 3, spot.Y), PathBuilder.LAMP_POST, Enum.Material.Metal)
+						post.CastShadow = true
+						deco(into, "PathLampCap", Vector3.new(1.3, 0.3, 1.3), CFrame.new(spot.X, y + 6.85, spot.Y), PathBuilder.LAMP_POST, Enum.Material.Metal)
+						local glow = deco(into, "PathLampGlow", Vector3.new(1, 1, 1), CFrame.new(spot.X, y + 6.3, spot.Y), PathBuilder.LAMP_GLOW, Enum.Material.Neon, Enum.PartType.Ball)
+						deco(into, "PathLampFoot", Vector3.new(0.9, 0.3, 0.9), CFrame.new(spot.X, y + 0.15, spot.Y), PathBuilder.LAMP_POST, Enum.Material.Metal)
+						n += 4
+						if state.lamps % 2 == 0 and state.lights < PathBuilder.LAMP_LIGHTS then
+							state.lights += 1
+							local light = Instance.new("PointLight")
+							light.Color = PathBuilder.LAMP_GLOW
+							light.Range = 18
+							light.Brightness = 0.9
+							light.Shadows = false
+							light.Parent = glow
+						end
+					end
+				end
+				if total >= nextTuft then
+					local r = hash(at.X, at.Y, own)
+					nextTuft += PathBuilder.TUFT_GAP.X + (PathBuilder.TUFT_GAP.Y - PathBuilder.TUFT_GAP.X) * r
+					local side = if r < 0.5 then 1 else -1
+					local spot = at + across * side * edge
+					if room(5) and not onOtherPath(spot, lines, own, width / 2 + 0.8) then
+						-- A tuft: three blades of grass leaning out, and every third one a flower.
+						for k = 1, 3 do
+							local lean = (k - 2) * 18 + r * 10
+							deco(into, "PathTuft", Vector3.new(0.25, 1.3 + 0.4 * (k % 2), 0.7), CFrame.new(spot.X + (k - 2) * 0.35, y + 0.6, spot.Y) * CFrame.Angles(0, r * 6, math.rad(lean)), Color3.fromRGB(80 + k * 8, 150 + k * 10, 70), Enum.Material.Grass)
+						end
+						n += 3
+						if hash(at.Y, at.X, own + 7) < 0.4 then
+							local colour = PathBuilder.FLOWERS[1 + math.floor(hash(at.X, at.Y, 3) * #PathBuilder.FLOWERS) % #PathBuilder.FLOWERS]
+							deco(into, "PathFlower", Vector3.new(0.75, 0.75, 0.75), CFrame.new(spot.X, y + 1.4, spot.Y), colour, Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+							deco(into, "PathFlowerHeart", Vector3.new(0.32, 0.32, 0.32), CFrame.new(spot.X, y + 1.5, spot.Y - 0.3), Color3.fromRGB(255, 200, 60), Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+							n += 2
+						end
+					end
+				end
+				s += 1
+			end
+			walked += len
+		end
+	end
+	state.parts += n
+	return n
+end
+
 -- The lab's paths, into its Playground folder; `floorY` is the top of the lab floor.
 function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folder
 	local folder = Instance.new("Folder")
 	folder.Name = "Paths"
 	local count = 0
 	local o2 = Vector2.new(origin.X, origin.Z)
+	local allLines: { { Vector2 } } = {}
+	for i in PathPlan.LAB_SEGMENTS do
+		allLines[i] = corners(PathPlan.segment(i), o2)
+	end
+	local dressState = { lamps = 0, lights = 0, parts = 0 }
 	for i in PathPlan.LAB_SEGMENTS do
 		-- (Each segment a hair apart in height: where two meet they never flicker.)
-		count += PathBuilder.walkway(folder, corners(PathPlan.segment(i), o2), floorY + 0.01 + (i % 3) * 0.003, PathBuilder.WALK_WIDTH, PathBuilder.GRAVEL, Enum.Material.Cobblestone, PathBuilder.KERB)
+		local y = floorY + 0.01 + (i % 3) * 0.003
+		local v3 = (require(Shared:WaitForChild("Config")) :: any).PATHS_V3 == true
+		count += PathBuilder.walkway(folder, allLines[i], y, PathBuilder.WALK_WIDTH, if v3 then PathBuilder.PAVING_V3 else PathBuilder.GRAVEL, Enum.Material.Cobblestone, PathBuilder.KERB)
+		if v3 then
+			count += PathBuilder.dressLine(folder, allLines[i], floorY, PathBuilder.WALK_WIDTH, i, allLines, dressState)
+		end
 	end
 	count += PathBuilder.finishKerbs(folder)
 	-- The signposts: at each fork, one board per way out, beside the path on the side no path takes.

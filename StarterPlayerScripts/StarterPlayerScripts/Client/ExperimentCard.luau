@@ -81,6 +81,7 @@ local function shown(): boolean
 	return (current ~= nil or party ~= nil)
 		and not (gui and gui:FindFirstChild("StuntCard")) -- (V8-1.1: the CRASH card has the top for a moment)
 		and not (gui and gui:FindFirstChild("FirstVisitGoal")) -- (UI audit 21 Nov 2026: one goal at a time; the first visit's line first)
+		and not (gui and gui:FindFirstChild("Banner") and (gui :: any).Banner:FindFirstChild("Moment")) -- (21 Nov 2026: a big moment's banner has the top for its few seconds)
 		and not PokeController.firstMinute()
 		and not PokeController.isPicking()
 		and not PokeController.isDoctor() -- (rests with the tools while the monitor has the bar's place)

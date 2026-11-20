@@ -98,7 +98,9 @@ export type Goals = { day: number, p: { number }, claimed: { boolean }, bonus: b
 -- The weapon ladder (round 2, N4) moved most tools from "open from the start" up to kills. A profile
 -- from before keeps every tool it had then, once: the old ladder's open tools, and its kill unlocks
 -- that its takedowns had reached (OLD_UNLOCK; everything else was open).
-local LADDER = 4
+-- Ladder 5 (Config.START_BAR_V9, 21 Nov 2026): Launch left the start bar for 3 takedowns and the Rocket
+-- went from 3 up among the hardest; a profile from before keeps both as it had them.
+local LADDER = if (Config :: any).START_BAR_V9 then 5 else 4
 local ROUND5_STARTERS = { "Bat", "Crowbar", "Shove" } -- (on everyone's bar before round 5)
 -- Ladder 4 (V8-0.3, Config.V8_START_BAR): Poke, Shove, Slap and Heal moved up the ladder. What a
 -- player had already earned on their old rungs stays theirs (blind review, 21 Nov).
@@ -1052,7 +1054,9 @@ ProgressService.REVEAL_DELAY = 3.2 -- s: the opening plays out before the prize 
 ProgressService.EGG_NEAR = 6 -- an egg's weapon is one of this many next up the ladder...
 ProgressService.EGG_ANY = 0.15 -- ...or, this often, any weapon still locked (a lucky jump)
 ProgressService.WOW_EGGS = 2 -- the first this many eggs give a big, loud weapon (WOW_POOL)
-ProgressService.WOW_POOL = { "Grenade", "Rocket", "C4", "Minigun", "TNT", "RPG" }
+ProgressService.WOW_POOL = if (Config :: any).START_BAR_V9
+	then { "C4", "Minigun", "TNT", "RPG", "StickyBomb" } -- (V9: the Rocket is a hard one now, never an early egg; the Grenade is a starter)
+	else { "Grenade", "Rocket", "C4", "Minigun", "TNT", "RPG" }
 
 -- The weapons a player cannot use yet, lowest first.
 local function lockedOf(p: Profile): { Toys.Toy }
@@ -1460,6 +1464,12 @@ function ProgressService.grandfather(profile: Profile, takedowns: number, eggs: 
 			if takedowns >= oldRung and Toys.byId[id] then
 				profile.owned[id] = true
 			end
+		end
+	end
+	if was < 5 and (Config :: any).START_BAR_V9 then
+		profile.owned.Launch = true -- (on everyone's bar from 0.26 to 0.27)
+		if takedowns >= 3 then
+			profile.owned.Rocket = true -- (it opened at 3 then)
 		end
 	end
 	profile.ladder = LADDER

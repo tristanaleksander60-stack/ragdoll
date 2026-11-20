@@ -1049,6 +1049,10 @@ function Playground.build(labOrigin: Vector3, name: string?)
 			end
 			if (Config :: any).LAB_CREATURES then
 				require(script.Parent.LabCreatures).build(folder, origin)
+				-- (21 Nov 2026: signs, rings and a FEED button at every creature and station: LabGuide.)
+				if (Config :: any).LAB_GUIDE then
+					require(script.Parent.LabGuide).build(folder, origin)
+				end
 			end
 		end)
 		if not ok then
