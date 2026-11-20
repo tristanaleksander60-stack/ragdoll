@@ -46,6 +46,8 @@ DrawnIcons.ASSETS = {
 	event_Sinkhole = "rbxassetid://133461716376709",
 	event_BalloonDrop = "rbxassetid://81962505406948",
 	event_MoonGravity = "rbxassetid://74032897867913",
+	event_GiantDummy = "rbxassetid://105417379542275",
+	event_TrainRun = "rbxassetid://133694200620154",
 	-- Every weapon and tool.
 	tool_Blaster = "rbxassetid://108854870039876",
 	tool_Deagle = "rbxassetid://92665121427767",

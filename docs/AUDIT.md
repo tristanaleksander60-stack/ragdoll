@@ -64,3 +64,4 @@
   - P2: 42 KB/s for one player in full chaos is near the ~50 KB/s comfort line; watch it with several players in events.
   - The phone tier cannot be emulated over MCP. A real phone test is the owner's.
   - Score 5 → 7.
+- Area 7: card pictures for GiantDummy and TrainRun. 13 of 18 events have a real picture; RocketRain, Earthquake and MeteorShower show a word.
