@@ -57,6 +57,15 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.27.0",
+		lines = {
+			"THE CANNON: a huge arc with slow-mo, a CRASH score, your best and AGAIN",
+			"8 MISSIONS that pay BOLTS, with no timers",
+			"DROP YOUR OWN DUMMIES: press H for MINI, HEAVY, BOUNCY and FLOPPY",
+			"KO COMBOS, readable hits, a fairer chase and a weekly STREAK FREEZE",
+		},
+	},
+	{
 		version = "0.26.0",
 		lines = {
 			"A FULL BAR from the start: Popper, Grab, Bat, Grenade and Launch. The Rocket comes at 3 KOs",

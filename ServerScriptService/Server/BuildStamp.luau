@@ -2,8 +2,8 @@
 -- V8-6.2 (build stamp): written by tools/stamp.pl, never by hand. The commit this build sits on,
 -- when it was made, and every synced script's checksum (tools/SyncCheck.luau compares them).
 return table.freeze({
-	commit = "5f34427",
-	made = "2026-11-20 16:32 UTC",
+	commit = "2d320e7",
+	made = "2026-11-20 16:33 UTC",
 	scripts = table.freeze({
 		["ReplicatedStorage.LihFolkUI.LihFolkUIComponents"] = 3868685012,
 		["ReplicatedStorage.LihFolkUI.LihFolkUIController"] = 1243885188,
@@ -20,7 +20,7 @@ return table.freeze({
 		["ReplicatedStorage.Shared.Build.Orientation"] = 1858308706,
 		["ReplicatedStorage.Shared.Build.ShareCode"] = 410680843,
 		["ReplicatedStorage.Shared.Christmas"] = 2419567707,
-		["ReplicatedStorage.Shared.Config"] = 3609386945,
+		["ReplicatedStorage.Shared.Config"] = 1178481151,
 		["ReplicatedStorage.Shared.DailyGoals"] = 877806491,
 		["ReplicatedStorage.Shared.DeviceTier"] = 396681250,
 		["ReplicatedStorage.Shared.DrawnIcons"] = 2033821578,
@@ -56,7 +56,7 @@ return table.freeze({
 		["ReplicatedStorage.Shared.SafeStart"] = 189934283,
 		["ReplicatedStorage.Shared.Schedule"] = 3065761922,
 		["ReplicatedStorage.Shared.ShareCode"] = 289148684,
-		["ReplicatedStorage.Shared.Shop"] = 469531429,
+		["ReplicatedStorage.Shared.Shop"] = 993275922,
 		["ReplicatedStorage.Shared.SoundManifest"] = 3040172449,
 		["ReplicatedStorage.Shared.StuntMath"] = 334998312,
 		["ReplicatedStorage.Shared.Toys"] = 3812822940,
