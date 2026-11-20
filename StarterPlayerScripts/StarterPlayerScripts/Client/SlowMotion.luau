@@ -36,7 +36,7 @@ local C = Config :: any
 SlowMotion.SCALE = C.SLOWMO_SCALE or 0.25 -- how fast time runs in a bubble
 SlowMotion.FEEL_REACH = 30 -- studs past a bubble's edge where the camera still feels it
 SlowMotion.EASE = 0.35 -- s to ease the feel in or out
-SlowMotion.RESTORE_MAX = 90 -- studs/s: a body leaving a bubble gets its speed back up to this
+SlowMotion.RESTORE_MAX = if (Config :: any).REACTIONS_V8 then 230 else 90 -- studs/s: a body leaving a bubble gets its speed back up to this (V8-1.2: no 90 cap; 230 = the launch cap)
 SlowMotion.SPIN_MAX = 30 -- rad/s: and its spin up to this
 SlowMotion.AUTO_RADIUS = 12
 SlowMotion.AUTO_TIME = 0.9
@@ -232,9 +232,15 @@ local function stepBodies()
 	table.clear(seenBody)
 	if folder and #bubbles > 0 then
 		local me = player.UserId
-		for _, body in folder:GetChildren() do
+		-- (V8-1.2: your own body too, as much as the dummies: it is simulated here as well.)
+		local bodies = folder:GetChildren()
+		local own = player.Character
+		if (Config :: any).REACTIONS_V8 and own then
+			table.insert(bodies, own)
+		end
+		for _, body in bodies do
 			local pelvis = body:FindFirstChild("LowerTorso")
-			if body:IsA("Model") and pelvis and pelvis:IsA("BasePart") and body:GetAttribute("SimulatedBy") == me and inside(pelvis.Position) then
+			if body:IsA("Model") and pelvis and pelvis:IsA("BasePart") and (body:GetAttribute("SimulatedBy") == me or body == own) and inside(pelvis.Position) then
 				seenBody[body] = true
 				addTrail(body)
 				for _, part in body:GetChildren() do

@@ -1496,3 +1496,9 @@ A separate read-only audit (20 Nov) for the owner's "Sørg for alt er super sati
   - **Found in play:** the first slow-mo version scaled each part of an assembly, about 15 times over, and shot the body into space. It now works per assembly.
   - **Tests:** T117 passes (2.5 s in the air, bullseye, CRASH 1518, best kept). T17, T18 and T50 pass. LayoutCheck has a StuntCard box.
   - **Not built:** the lab's daily best board.
+- **V8-1.2 done in part (switch `REACTIONS_V8`):**
+  - **Hits:** `Client/HitWords` puts a word over the struck body (Dizzy for a head hit, Wobbly for a leg hit, Knocked out when out cold; at most 2 on screen) and dizzy stars round the head. Melee and big hits get a 70 ms hit-stop on the body (per assembly, the speed given back), and none with Motion LESS. Seen in Studio ("Wobbly" over a dummy, 0 client errors).
+  - **Camera:** the shake and recoil are undone each frame before the camera scripts (BindToRenderStep at Camera-1, `FxController.lastShake`), so a camera that reads its own CFrame never drifts.
+  - **Slow-mo:** it slows your own body too (SlowMotion.stepBodies), and speed comes back up to 230 instead of the 90 cap.
+  - **Tests:** T109 and T38 pass; T24 failed as known flaky.
+  - **Not built:** the phone SLOW-MO button (the phone MENU is full: LayoutCheck's 4-row limit on the iPhone SE), and T118/T119 (client-only behaviour).

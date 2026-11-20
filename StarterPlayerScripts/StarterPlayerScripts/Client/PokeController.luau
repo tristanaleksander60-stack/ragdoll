@@ -1484,6 +1484,14 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 				end
 				-- V8-0.2: the hit tick and, when it went down, the KO stamp and a dry "thock" now, from
 				-- this screen; the server stays the count's source of truth.
+				-- V8-1.2: a word, dizzy stars and a hit-stop on the body for what the hit did.
+				if (Config :: any).REACTIONS_V8 and okHit then
+					pcall(function()
+						local Poses = require(Shared:WaitForChild("Ragdoll"):WaitForChild("Poses")) :: any
+						local HitWords = require(script.Parent:WaitForChild("HitWords")) :: any
+						HitWords.onHit(simulated, Poses.regionOf(onPart.Name), after, toy.speed, toy.gun == true)
+					end)
+				end
 				if (Config :: any).V8_FIRST_HIT then
 					local knocked = after == "Ragdoll" and before ~= "Ragdoll" and before ~= "Out"
 					pcall(function()

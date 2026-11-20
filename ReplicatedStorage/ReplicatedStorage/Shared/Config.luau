@@ -284,6 +284,11 @@ local Config = {
 	-- CANNON_AIR s to the same bullseye, with a slow-mo beat at the top (StuntHud).
 	STUNT_SCORE = true,
 	CANNON_AIR = 2.2,
+	-- V8-1.2 (hits you can read): a word over the struck body (Dizzy / Wobbly / Knocked out, at most
+	-- 2), dizzy stars after a head hit, a 70 ms hit-stop on the body for melee and big hits
+	-- (HitWords); the camera shake is undone each frame (no drift); slow-mo slows your own body too,
+	-- and gives speed back with no 90 cap (SlowMotion).
+	REACTIONS_V8 = true,
 }
 
 return table.freeze(Config)

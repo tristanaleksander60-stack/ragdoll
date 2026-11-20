@@ -56,6 +56,7 @@ local SHAKE_RANGE = 70 -- studs
 local SPARK_COLORS = { Color3.fromRGB(255, 220, 60), Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 140, 40) }
 
 local FxController = {}
+FxController.lastShake = nil :: CFrame? -- (V8-1.2: the shake put on the camera this frame; FeelUndo takes it off)
 
 local fxFolder: Folder
 local shakeAmount = 0
@@ -1289,14 +1290,18 @@ local function onRender(dt: number)
 		if offset ~= CFrame.identity then
 			camera.CFrame = camera.CFrame * offset
 		end
+		-- (V8-1.2: taken off again before the camera scripts run next frame (FeelUndo), so a camera
+		-- that reads its own CFrame never keeps the shake or the recoil: no drift.)
+		FxController.lastShake = offset
 	end
 	if shakeAmount > 0.001 and not Settings.shake() then
 		shakeAmount = 0 -- (SETTINGS: camera shake off)
 	end
 	if shakeAmount > 0.001 then
 		local a = shakeAmount
-		camera.CFrame = camera.CFrame
-			* CFrame.Angles(rng:NextNumber(-a, a) * 0.05, rng:NextNumber(-a, a) * 0.05, rng:NextNumber(-a, a) * 0.03)
+		local jolt = CFrame.Angles(rng:NextNumber(-a, a) * 0.05, rng:NextNumber(-a, a) * 0.05, rng:NextNumber(-a, a) * 0.03)
+		camera.CFrame = camera.CFrame * jolt
+		FxController.lastShake = (FxController.lastShake or CFrame.identity) * jolt -- (V8-1.2: undone next frame)
 		shakeAmount = math.max(0, shakeAmount - dt * 1.6)
 	end
 	-- (The only writer of FieldOfView: a hit's kick and the sprint's widening add up here.)
@@ -1514,6 +1519,15 @@ function FxController.start()
 		play(bank, position, volume, pitch)
 	end
 	Net.event(Net.Names.Fx).OnClientEvent:Connect(onFx)
+	-- (V8-1.2: last frame's shake comes off just before the camera scripts, so it never builds up.)
+	RunService:BindToRenderStep("RagdollLabFeelUndo", Enum.RenderPriority.Camera.Value - 1, function()
+		local last = FxController.lastShake
+		local camera = Workspace.CurrentCamera
+		if last and last ~= CFrame.identity and camera then
+			camera.CFrame = camera.CFrame * last:Inverse()
+		end
+		FxController.lastShake = nil
+	end)
 	RunService:BindToRenderStep("RagdollLabFx", Enum.RenderPriority.Camera.Value + 1, onRender)
 	-- The hit-stop holds the camera still for its few frames (after every other camera update).
 	RunService:BindToRenderStep("RagdollLabHitStop", Enum.RenderPriority.Camera.Value + 5, function()
