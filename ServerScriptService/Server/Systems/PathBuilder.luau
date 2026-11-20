@@ -330,6 +330,23 @@ end
 -- path with the place's name on both faces (fixed words, PathPlan.LABELS).
 PathBuilder.WOOD = Color3.fromRGB(150, 108, 70)
 PathBuilder.BOARD = Color3.fromRGB(196, 156, 104)
+-- 21 Nov 2026 (Config.ICON_SIGNS): a signpost board shows the place's picture and an arrow, no word.
+PathBuilder.LABEL_ICONS = {
+	CANNON = "tool_Cannon",
+	LAVA = "sign_lava",
+	BULLSEYE = "sign_target",
+	["BIG BUTTON"] = "sign_button",
+	["LAUNCH PADS"] = "sign_up",
+	MACE = "sign_wrecking",
+	TOWER = "sign_tower",
+	PORTALS = "tool_Portal",
+	["WRECKING BALL"] = "sign_wrecking",
+	CARS = "sign_car",
+	GARDEN = "heart",
+	MONSTERS = "sign_monster",
+	WORKSHOP = "toolbox",
+} :: { [string]: string }
+
 function PathBuilder.signpost(into: Instance, at: Vector3, ways: { { dir: Vector2, label: string } }): number
 	local post = Instance.new("Part")
 	post.Name = "PathSignPost"
@@ -361,6 +378,42 @@ function PathBuilder.signpost(into: Instance, at: Vector3, ways: { { dir: Vector
 		board.Color = PathBuilder.BOARD
 		board.Material = Enum.Material.WoodPlanks
 		board.Parent = into
+		local iconName = PathBuilder.LABEL_ICONS[way.label]
+		local DrawnIcons = require(Shared:WaitForChild("DrawnIcons")) :: any
+		local iconId = if iconName and (require(Shared:WaitForChild("Config")) :: any).ICON_SIGNS then DrawnIcons.ASSETS[iconName] else nil
+		if iconId then
+			-- (A taller board: the picture square at the arrow's tip, the arrow behind it.)
+			board.Size = Vector3.new(0.14, 1.5, 3.6)
+			for _, face in { Enum.NormalId.Left, Enum.NormalId.Right } do
+				local gui = Instance.new("SurfaceGui")
+				gui.Face = face
+				gui.CanvasSize = Vector2.new(360, 150)
+				gui.LightInfluence = 1
+				gui.MaxDistance = 90
+				local right = face == Enum.NormalId.Right
+				local pic = Instance.new("ImageLabel")
+				pic.BackgroundTransparency = 1
+				pic.Size = UDim2.fromOffset(136, 136)
+				pic.AnchorPoint = Vector2.new(if right then 1 else 0, 0.5)
+				pic.Position = UDim2.new(if right then 1 else 0, if right then -8 else 8, 0.5, 0)
+				pic.ScaleType = Enum.ScaleType.Fit
+				pic.Image = iconId
+				pic.Parent = gui
+				local arrow = Instance.new("TextLabel")
+				arrow.BackgroundTransparency = 1
+				arrow.AnchorPoint = Vector2.new(if right then 0 else 1, 0.5)
+				arrow.Position = UDim2.new(if right then 0 else 1, if right then 10 else -10, 0.5, 0)
+				arrow.Size = UDim2.fromOffset(190, 120)
+				arrow.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
+				arrow.TextScaled = true
+				arrow.TextColor3 = Color3.fromRGB(58, 40, 26)
+				arrow.Text = if right then "\u{279C}" else "\u{2B05}"
+				arrow.Parent = gui
+				gui.Parent = board
+			end
+			n += 1
+			continue
+		end
 		for _, face in { Enum.NormalId.Left, Enum.NormalId.Right } do
 			local gui = Instance.new("SurfaceGui")
 			gui.Face = face
@@ -418,7 +471,10 @@ PathBuilder.SHOULDER_W = 2 -- studs of verge outside each kerb
 PathBuilder.PAVING_V3 = Color3.fromRGB(214, 184, 138) -- (warm sandstone cobbles, not grey on grey)
 PathBuilder.LAMP_EVERY = 26
 PathBuilder.LAMP_LIGHTS = 8
-PathBuilder.DRESS_MAX = 300 -- parts of dressing per lab at most (shoulder first, then lamps, then tufts)
+PathBuilder.DRESS_MAX = 700 -- parts of dressing per lab at most (verge first, then lamps, then bushes and tufts)
+PathBuilder.SOIL = Color3.fromRGB(78, 60, 42) -- (the planted edge round the grass verge)
+PathBuilder.BUSH_GAP = Vector2.new(11, 19) -- studs between bush clumps (uneven, from a hash)
+PathBuilder.BUSHES = { Color3.fromRGB(62, 118, 52), Color3.fromRGB(80, 140, 60), Color3.fromRGB(96, 152, 70) }
 PathBuilder.TUFT_GAP = Vector2.new(7, 15) -- studs between tufts (uneven, from a hash)
 PathBuilder.LAMP_POST = Color3.fromRGB(46, 50, 58)
 PathBuilder.LAMP_GLOW = Color3.fromRGB(255, 214, 150)
@@ -477,15 +533,58 @@ function PathBuilder.dressLine(into: Instance, points: { Vector2 }, y: number, w
 	local flat = CFrame.Angles(0, 0, math.rad(90))
 	local wide = width + 2 * (PathBuilder.KERB_W + PathBuilder.SHOULDER_W)
 	local edge = width / 2 + PathBuilder.KERB_W + PathBuilder.SHOULDER_W * 0.55
-	-- The shoulder: under the paving and the kerbs, a hair above the floor.
+	-- The shoulder: under the paving and the kerbs, a hair above the floor. (21 Nov 2026, the owner: "make
+	-- the grass much nicer": a raised verge with a planted edge of dark soil round it, a bed in a park,
+	-- not a green stripe painted on the floor.)
+	local soilWide = wide + 0.7
+	local lift = 0.12 -- the verge stands a little proud of the lab floor
 	for i, a in points do
-		deco(into, "PathShoulderJoint", Vector3.new(0.04, wide, wide), CFrame.new(a.X, y + 0.004 + (own % 5) * 0.0015, a.Y) * flat, PathBuilder.SHOULDER, Enum.Material.Grass, Enum.PartType.Cylinder)
-		n += 1
+		local h = y + (own % 5) * 0.0015
+		deco(into, "PathSoilJoint", Vector3.new(lift, soilWide, soilWide), CFrame.new(a.X, h + lift / 2 - 0.004, a.Y) * flat, PathBuilder.SOIL, Enum.Material.Ground, Enum.PartType.Cylinder)
+		deco(into, "PathShoulderJoint", Vector3.new(lift, wide, wide), CFrame.new(a.X, h + lift / 2 + 0.006, a.Y) * flat, PathBuilder.SHOULDER, Enum.Material.Grass, Enum.PartType.Cylinder)
+		n += 2
 		local b = points[i + 1]
 		if b and (b - a).Magnitude > 0.05 then
 			local mid = (a + b) / 2
-			deco(into, "PathShoulder", Vector3.new(wide, 0.04, (b - a).Magnitude), CFrame.lookAt(Vector3.new(mid.X, y + 0.005 + (own % 5) * 0.0015, mid.Y), Vector3.new(b.X, y + 0.005 + (own % 5) * 0.0015, b.Y)), PathBuilder.SHOULDER, Enum.Material.Grass)
-			n += 1
+			local look = CFrame.lookAt(Vector3.new(mid.X, h, mid.Y), Vector3.new(b.X, h, b.Y))
+			deco(into, "PathSoil", Vector3.new(soilWide, lift, (b - a).Magnitude), look + Vector3.new(0, lift / 2 - 0.003, 0), PathBuilder.SOIL, Enum.Material.Ground)
+			deco(into, "PathShoulder", Vector3.new(wide, lift, (b - a).Magnitude), look + Vector3.new(0, lift / 2 + 0.007, 0), PathBuilder.SHOULDER, Enum.Material.Grass)
+			n += 2
+		end
+	end
+	-- Bushes along the verge's outer edge: clumps of two or three round shrubs in mixed greens, at
+	-- uneven gaps, sides by a hash (vault: no even scatter).
+	local bushAt = PathBuilder.BUSH_GAP.X * 0.6
+	local walkedB = 0
+	for i = 1, #points - 1 do
+		local a, b = points[i], points[i + 1]
+		local len = (b - a).Magnitude
+		if len > 0.05 then
+			local dir = (b - a) / len
+			local across = Vector2.new(-dir.Y, dir.X)
+			while bushAt < walkedB + len do
+				local at = a + dir * (bushAt - walkedB)
+				local r = hash(at.X, at.Y, own + 40)
+				bushAt += PathBuilder.BUSH_GAP.X + (PathBuilder.BUSH_GAP.Y - PathBuilder.BUSH_GAP.X) * r
+				local side = if r < 0.5 then 1 else -1
+				local spot = at + across * side * (width / 2 + PathBuilder.KERB_W + PathBuilder.SHOULDER_W * 0.7)
+				if room(4) and not onOtherPath(spot, lines, own, width / 2 + 1.4) then
+					local count = if r > 0.66 then 3 else 2
+					for k = 1, count do
+						local size = 1.3 + hash(at.X + k, at.Y, 7) * 0.9
+						local off = Vector2.new(k - (count + 1) / 2, 0) * 1.1
+						local p = spot + dir * off.X
+						deco(into, "PathBush", Vector3.new(size, size, size), CFrame.new(p.X, y + lift + size * 0.38, p.Y), PathBuilder.BUSHES[1 + (k + math.floor(r * 10)) % #PathBuilder.BUSHES], Enum.Material.Grass, Enum.PartType.Ball)
+					end
+					n += count
+					if r > 0.55 and room(1) then
+						local colour = PathBuilder.FLOWERS[1 + math.floor(r * 37) % #PathBuilder.FLOWERS]
+						deco(into, "PathFlower", Vector3.new(0.6, 0.6, 0.6), CFrame.new(spot.X + dir.X * 0.4, y + lift + 1.5, spot.Y + dir.Y * 0.4), colour, Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+						n += 1
+					end
+				end
+			end
+			walkedB += len
 		end
 	end
 	-- Walk the line: lamps every LAMP_EVERY studs, tufts at uneven gaps.
@@ -562,7 +661,13 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 	local o2 = Vector2.new(origin.X, origin.Z)
 	local allLines: { { Vector2 } } = {}
 	for i in PathPlan.LAB_SEGMENTS do
-		allLines[i] = corners(PathPlan.segment(i), o2)
+		-- (21 Nov 2026: a straight segment is one long slab, its two ends: few parts on the long yard road.)
+		local stones = PathPlan.segment(i)
+		if (PathPlan.LAB_SEGMENTS[i] :: any)[3] == true and #stones >= 2 then
+			allLines[i] = { o2 + stones[1].at, o2 + stones[#stones].at }
+		else
+			allLines[i] = corners(stones, o2)
+		end
 	end
 	local dressState = { lamps = 0, lights = 0, parts = 0 }
 	for i in PathPlan.LAB_SEGMENTS do
@@ -575,6 +680,20 @@ function PathBuilder.lab(into: Instance, origin: Vector3, floorY: number): Folde
 		end
 	end
 	count += PathBuilder.finishKerbs(folder)
+	-- (21 Nov 2026, Config.LAYOUT_V2: the spawn is the hub, a round paved square where the ways meet:
+	-- a node, not a knot of path ends. Flat paving only: the keep-clear circle allows it.)
+	if (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 then
+		local hub = o2 + PathPlan.LAB_HUB
+		local flat = CFrame.Angles(0, 0, math.rad(90))
+		deco(folder, "PlazaSoil", Vector3.new(0.12, 19.4, 19.4), CFrame.new(hub.X, floorY + 0.06, hub.Y) * flat, PathBuilder.SOIL, Enum.Material.Ground, Enum.PartType.Cylinder)
+		deco(folder, "PlazaGrass", Vector3.new(0.13, 18.6, 18.6), CFrame.new(hub.X, floorY + 0.07, hub.Y) * flat, PathBuilder.SHOULDER, Enum.Material.Grass, Enum.PartType.Cylinder)
+		deco(folder, "PlazaRing", Vector3.new(0.3, 15.6, 15.6), CFrame.new(hub.X, floorY + 0.16, hub.Y) * flat, PathBuilder.KERB, Enum.Material.Slate, Enum.PartType.Cylinder)
+		deco(folder, "Plaza", Vector3.new(0.34, 14.4, 14.4), CFrame.new(hub.X, floorY + 0.18, hub.Y) * flat, PathBuilder.PAVING_V3, Enum.Material.Cobblestone, Enum.PartType.Cylinder)
+		-- A rosette set into it: a darker ring and a centre stone.
+		deco(folder, "PlazaRose", Vector3.new(0.36, 7, 7), CFrame.new(hub.X, floorY + 0.19, hub.Y) * flat, PathBuilder.PAVING_V3:Lerp(PathBuilder.KERB, 0.35), Enum.Material.Cobblestone, Enum.PartType.Cylinder)
+		deco(folder, "PlazaHeart", Vector3.new(0.38, 5.6, 5.6), CFrame.new(hub.X, floorY + 0.2, hub.Y) * flat, PathBuilder.PAVING_V3, Enum.Material.Cobblestone, Enum.PartType.Cylinder)
+		count += 6
+	end
 	-- The signposts: at each fork, one board per way out, beside the path on the side no path takes.
 	local P = PathPlan.LAB_POINTS :: any
 	for _, name in PathPlan.SIGNS do

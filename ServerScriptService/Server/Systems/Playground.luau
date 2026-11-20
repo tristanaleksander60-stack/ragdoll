@@ -527,8 +527,62 @@ end
 -- A short word over an attraction (the game's own words; nobody types anything here).
 -- LOOK_V3 (19 Nov 2026, like the big ragdoll games: almost no text in the world): the shouting
 -- words go, the stations keep a small plain name seen only up close.
+-- 21 Nov 2026 (Config.ICON_SIGNS, the owner: "no big text in the world, nice signs and icons a child
+-- understands"): an attraction's word becomes its picture, a round white badge floating over it (in
+-- studs: smaller far off), the drawn pictograms of DrawnIcons; a word with no picture is left out.
+Playground.SIGN_ICONS = {
+	["SKY LAUNCH"] = "sign_up",
+	["FLING PAD"] = "sign_fling",
+	["ROCKET WALL"] = "sign_crash",
+	["CRASH WALL"] = "sign_crash",
+	["BIG RED BUTTON"] = "sign_button",
+	["BULLSEYE"] = "sign_target",
+	["LAVA!"] = "sign_lava",
+} :: { [string]: string }
+local function iconBadge(icon: string, onto: BasePart, height: number, color: Color3)
+	local DrawnIcons = require(Shared:WaitForChild("DrawnIcons")) :: any
+	local id = DrawnIcons.ASSETS[icon]
+	if not id then
+		return
+	end
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "IconSign"
+	gui.Size = UDim2.fromScale(4.2, 4.2)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, math.min(height, 7), 0)
+	gui.MaxDistance = 110
+	gui.LightInfluence = 0
+	local disc = Instance.new("Frame")
+	disc.Size = UDim2.fromScale(1, 1)
+	disc.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	local round = Instance.new("UICorner")
+	round.CornerRadius = UDim.new(0.5, 0)
+	round.Parent = disc
+	local ring = Instance.new("UIStroke")
+	ring.Thickness = 4
+	ring.Color = color
+	ring.Parent = disc
+	local pic = Instance.new("ImageLabel")
+	pic.BackgroundTransparency = 1
+	pic.AnchorPoint = Vector2.new(0.5, 0.5)
+	pic.Position = UDim2.fromScale(0.5, 0.5)
+	pic.Size = UDim2.fromScale(0.78, 0.78)
+	pic.ScaleType = Enum.ScaleType.Fit
+	pic.Image = id
+	pic.Parent = disc
+	disc.Parent = gui
+	gui.Parent = onto
+end
+Playground.iconBadge = iconBadge
+
 local V3_DROP = { ["PUT RAGDOLL HERE"] = true, ["LAVA!"] = true, ["BULLSEYE"] = true, ["SPIKE MACE"] = true }
 local function sign(text: string, onto: BasePart, height: number, color: Color3)
+	if (Config :: any).ICON_SIGNS then
+		local icon = Playground.SIGN_ICONS[text]
+		if icon then
+			iconBadge(icon, onto, height, color)
+		end
+		return
+	end
 	if Config.LOOK_V3 then
 		if V3_DROP[text] then
 			return
@@ -596,13 +650,23 @@ local function sign(text: string, onto: BasePart, height: number, color: Color3)
 end
 
 local function buildLava()
-	-- Front left, between the fall tower and the dummies' row.
+	-- Front left, between the fall tower and the dummies' row. (21 Nov 2026: it stays here, at the edge of the
+	-- spawn's view beside the bullseye: a destination, not a danger by the spawn; the west side has no room
+	-- for it and a path.)
 	local x, z, w, d = -27.5, -41, 21, 18
 	local pool = part("LavaPool", Vector3.new(w, 0.4, d), at(x, 0.2, z), LAVA, Enum.Material.CrackedLava)
 	pool:SetAttribute("LaunchVelocity", Vector3.new(0, 105, 0)) -- (dummies too: PropContacts)
 	CollectionService:AddTag(pool, "DummyAvoid") -- (a fleeing dummy turns aside: ActiveRagdoll)
-	hazardRim(x, z, w, d, 0.6)
-	for _, spot in { Vector3.new(-6, 0, -4), Vector3.new(5, 0, 3), Vector3.new(-2, 0, 6) } do
+	-- (21 Nov 2026, Config.LAVA_V2: a real pit, LavaPit: a rounded glowing pool, rocks, embers, a sound
+	-- and a warning picture; the pool part stays the trigger.)
+	local v2 = (Config :: any).LAVA_V2 == true
+	if v2 then
+		require(script.Parent.LavaPit).dress(pool, origin.Y + 0.02)
+	else
+		hazardRim(x, z, w, d, 0.6)
+	end
+	local flames: { Vector3 } = if v2 then {} else { Vector3.new(-6, 0, -4), Vector3.new(5, 0, 3), Vector3.new(-2, 0, 6) }
+	for _, spot in flames do
 		local flame = Instance.new("Fire")
 		flame.Size = 6
 		flame.Heat = 12
@@ -615,12 +679,14 @@ local function buildLava()
 		holder.Transparency = 1
 		flame.Parent = holder
 	end
-	local glow = Instance.new("PointLight")
-	glow.Color = LAVA
-	glow.Range = 22
-	glow.Brightness = 2
-	glow.Parent = pool
-	sign("LAVA!", pool, 7, LAVA)
+	if not v2 then
+		local glow = Instance.new("PointLight")
+		glow.Color = LAVA
+		glow.Range = 22
+		glow.Brightness = 2
+		glow.Parent = pool
+		sign("LAVA!", pool, 7, LAVA)
+	end
 	-- Step in: up you go, a little to one side.
 	throwOnTouch(pool, 1.5, 120, "CannonPad", function(root)
 		local side = Vector3.new(root.Position.X - pool.Position.X, 0, root.Position.Z - pool.Position.Z)
@@ -676,6 +742,9 @@ end
 local function buildMace()
 	-- Behind the spawn, on the left: a post with an arm going round, a spiked ball at its end.
 	local x, z = -30, 32
+	if (Config :: any).LAYOUT_V2 then
+		x, z = Playground.MACE_V2_AT.X, Playground.MACE_V2_AT.Y -- (21 Nov 2026: back a little, clear of the moved lava and the new paths)
+	end
 	local post = part("MacePost", Vector3.new(3, 5, 3), at(x, 2.5, z), DARK, Enum.Material.Metal)
 	-- (V7-1: the big painted box round the mace goes with the other floor boxes: ZONE_FLOOR.)
 	if (Config :: any).ZONE_FLOOR then
@@ -822,6 +891,12 @@ end
 -- season. The spots are clear of the rest of the lab (T66 checks it in a play test).
 -- (V8-0.9: moved off the paths and out of the car park: PathPlan.OBSTACLES keeps them clear, T106.)
 Playground.CHRISTMAS_SPOTS = { Chimney = Vector2.new(45, 66), Present = Vector2.new(-40, 58), Sleigh = Vector2.new(-10, -60) }
+-- 21 Nov 2026 (Config.LAYOUT_V2): the lab re-laid out (vault and the biggest ragdoll games: the spawn faces
+-- the test range and the cannon, the hazards gather on the west side, every path joins another).
+Playground.MACE_V2_AT = Vector2.new(-38, 48)
+if (Config :: any).LAYOUT_V2 then
+	Playground.CHRISTMAS_SPOTS = { Chimney = Vector2.new(45, 66), Present = Vector2.new(-56, 62), Sleigh = Vector2.new(-10, -60) }
+end
 local BRICK = Color3.fromRGB(150, 50, 40)
 local XMAS_GREEN = Color3.fromRGB(40, 150, 70)
 local GOLD = Color3.fromRGB(255, 200, 60)

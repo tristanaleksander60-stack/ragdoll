@@ -309,3 +309,33 @@ Phases 0-4b, A-M, N1-N5, N7 (graphics accepted as is), M1-M8 done. M9 was under 
   - **Button:** a ProximityPrompt ("Feed / Spider", E or ButtonX, reach 18). It tosses the lab's nearest free dummy in an arc (`LabGuide.arc`) into the creature's trigger.
   - **Carrying a dummy:** the nearest ring lights up with a bouncing DROP HERE!.
   - Tested: E at the spider puts a dummy in the web.
+
+## The new lab (21 Nov 2026, release 0.29.0)
+- The owner: "always use the vault AND the biggest ragdoll games; publish it all".
+- **Research of 20 Nov.** The biggest game is Hyper Realistic Ragdoll: 125K CCU, 19 min sessions, a full kit with 3 guns from the start, one "Next" goal, machines that teach themselves.
+  - Players quit over UI clutter and constant pop-ups with sounds, no goal and pay walls.
+  - The direct competitor is Dummy Lab: 6.9 min sessions, 25 passes.
+- **Start bar (`START_BAR_V9`):** full 6: Popper, Buzz Blaster (SMG 0), Grab, Bat, Grenade, Launch (0). The Rocket stays at 470. T110 and T35 were updated.
+- **Paths (`LAYOUT_V2`, PathPlan V2 block):** a network, not a tree.
+  - A round plaza at the spawn hub, plus east, south and west loops.
+  - A yard road joins both garden walks (`GARDEN_WALK_NORTH` -66 starts them by the spider and the plant).
+  - The only ends are at things: the bullseye, the lava's rocks, the tower's stairs and the portals.
+  - The west garden crossing and both -30 crossings are gone; they ran into barriers and the portals.
+  - The mace moved to (-38, 48) and the Christmas present to (-56, 62).
+  - Straight segments are one slab.
+  - Verges are raised grass on a dark soil edge, with bush clumps, flowers and lamps.
+  - `PathPlan.BUDGET` is 1400 and `DRESS_MAX` is 700.
+  - The lava stays at its spot, beside the bullseye at the edge of the spawn view; the west has no room.
+- **Lava (`LAVA_V2`, `Server/Systems/LavaPit`, `Client/LavaClient`):**
+  - The pool is overlapping CrackedLava discs whose colour breathes, with crust islands that drift.
+  - The rim is V3Assets "Rock" meshes on a scorched ring.
+  - Embers, haze and blobs (LightInfluence 0), a flickering PointLight and a bubbling sound (PSE, slowed).
+  - A warning sign post (sign_lava). The trigger shrinks to fit inside the oval.
+- **Icons (`ICON_SIGNS`):**
+  - 15 drawn pictograms (`sign_*`, `hud_*` in DrawnIcons).
+  - Playground word signs became round icon badges (`Playground.iconBadge`).
+  - Signposts show icon + arrow (`PathBuilder.LABEL_ICONS`); today's machine is a gold star badge.
+  - The HUD key chips are key + icon, and the help line is click → tool → arrow → dummy/floor.
+  - Dummy lines are emoji (`DummyLines.EMOJI_*`).
+- **Lab guide:** the cannon (Fire), the lava (Toss) and the trampoline (Bounce) got buttons too (`LabGuide.MACHINES`). Rings are dashed glowing pieces round an invisible part (`GuideRingSeg`).
+- **Fewer pop-ups:** "Walking again" is gone, the lab-view how-to shows once a visit, and `TOMORROW_AT` moved from 80 to 480.

@@ -12,7 +12,16 @@ local LabGuideClient = {}
 LabGuideClient.TAG = "GuideRing"
 LabGuideClient.NEAR = 140 -- studs: rings further away are left alone
 LabGuideClient.CARRY_REACH = 90 -- studs: the ring that lights up while you carry a dummy
-LabGuideClient.REST = 0.55 -- a ring's transparency at rest (it breathes 0.12 around it)
+LabGuideClient.REST = 0.3 -- a ring's pieces at rest (they breathe 0.15 around it)
+
+-- A ring is an invisible part carrying its glowing pieces: they take the look.
+local function setRing(ring: BasePart, transparency: number)
+	for _, seg in ring:GetChildren() do
+		if seg:IsA("BasePart") then
+			seg.Transparency = transparency
+		end
+	end
+end
 
 local player = Players.LocalPlayer
 local marker: BillboardGui? = nil
@@ -80,8 +89,7 @@ function LabGuideClient.start()
 			if ring:IsA("BasePart") then
 				local d = (ring.Position - here).Magnitude
 				if d < LabGuideClient.NEAR then
-					ring.LocalTransparencyModifier = 0
-					ring.Transparency = LabGuideClient.REST + 0.12 * math.sin(t * 2.6 + ring.Position.X * 0.1)
+					setRing(ring, LabGuideClient.REST + 0.15 * math.sin(t * 2.6 + ring.Position.X * 0.1))
 					if carrying and d < bestD then
 						best, bestD = ring, d
 					end
@@ -90,11 +98,11 @@ function LabGuideClient.start()
 		end
 		-- The ring you would drop into: bright, a little bigger, and DROP HERE! over it.
 		if lit and lit ~= best then
-			lit.Transparency = LabGuideClient.REST
+			setRing(lit, LabGuideClient.REST)
 			lit = nil
 		end
 		if best then
-			best.Transparency = 0.15 + 0.1 * math.sin(t * 8)
+			setRing(best, 0.05 + 0.1 * math.sin(t * 8))
 			lit = best
 			local m = marker or makeMarker()
 			marker = m

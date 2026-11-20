@@ -147,7 +147,7 @@ local function card(name: string, word: string, icon: string, parent: Instance, 
 	return b
 end
 
-local function chip(parent: Instance, key: string, word: string, order: number)
+local function chip(parent: Instance, key: string, word: string, order: number, icon: string?)
 	local f = Instance.new("Frame")
 	f.Name = "Chip_" .. word
 	f.BackgroundTransparency = 1
@@ -170,6 +170,17 @@ local function chip(parent: Instance, key: string, word: string, order: number)
 	k.Text = key
 	corner(k, 6)
 	k.Parent = f
+	-- (21 Nov 2026, Config.ICON_SIGNS: the key and a drawn picture of what it does, no word.)
+	if icon and (Config :: any).ICON_SIGNS then
+		local Icons = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIIcons")) :: any
+		if Icons.has(icon) then
+			local pic = Icons.make(icon, UDim2.fromOffset(38, 38))
+			pic.Name = "Picture"
+			pic.Parent = f
+			f.Parent = parent
+			return
+		end
+	end
 	local w = Instance.new("TextLabel")
 	w.Name = "Word"
 	w.BackgroundTransparency = 1
@@ -204,11 +215,11 @@ local function drawChips()
 	-- back, so the PC top right is the gift and the next weapon.)
 	-- Three keys only: 1st person and revive all are in the LAB window and KEYS; five chips ran
 	-- into the help line on a small window.
-	for _, pair in { { "Ragdoll", "Ragdoll" }, { "View", "Lab view" }, { "SlowMo", "Slow-mo" } } do
+	for _, pair in { { "Ragdoll", "Ragdoll", "hud_ragdoll" }, { "View", "Lab view", "eye" }, { "SlowMo", "Slow-mo", "hud_slowmo" } } do
 		local key = keyOf(pair[1])
 		if key then
 			order += 1
-			chip(c, key, pair[2], order)
+			chip(c, key, pair[2], order, pair[3])
 		end
 	end
 end

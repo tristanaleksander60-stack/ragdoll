@@ -42,6 +42,13 @@ LabGuide.WORDS = table.freeze({
 	Slingshot = { "Load", "Slingshot", "LOAD ME!" },
 }) :: { [string]: { string } }
 
+-- The lab's machines that get a toss button too (part name -> verb, object, no sign: they have theirs).
+LabGuide.MACHINES = table.freeze({
+	CannonPad = { "Fire", "Cannon", "" },
+	LavaPool = { "Toss", "Lava", "" },
+	TrampolinePad = { "Bounce", "Trampoline", "" },
+}) :: { [string]: { string } }
+
 local spotLast: { [Instance]: number } = {}
 local playerLast: { [Player]: number } = {}
 local tossedCount = 0
@@ -179,11 +186,18 @@ local function addSpot(into: Instance, origin: Vector3, id: string, target: () -
 	point.Transparency = 1
 	point:SetAttribute("GuideId", id)
 	local floorY = groundUnder(at, origin.Y)
-	local ring = anchoredPart(LabGuide.TAG, Vector3.new(0.14, LabGuide.RING, LabGuide.RING), CFrame.new(at.X, floorY + 0.08, at.Z) * CFrame.Angles(0, 0, math.rad(90)), into)
-	ring.Shape = Enum.PartType.Cylinder
-	ring.Material = Enum.Material.Neon
-	ring.Color = LabGuide.ACCENT
-	ring.Transparency = 0.55
+	-- (A dashed ring of glowing pieces, a drop zone: it marks the spot without covering what is there,
+	-- the lava or the cannon's pad. The ring part itself is invisible and carries the pieces.)
+	local ring = anchoredPart(LabGuide.TAG, Vector3.new(0.2, 0.2, 0.2), CFrame.new(at.X, floorY + 0.12, at.Z), into)
+	ring.Transparency = 1
+	local pieces = 14
+	for k = 1, pieces do
+		local a = k / pieces * math.pi * 2
+		local seg = anchoredPart("GuideRingSeg", Vector3.new(LabGuide.RING * math.pi / pieces * 0.62, 0.12, 0.5), CFrame.new(at.X + math.cos(a) * LabGuide.RING / 2, floorY + 0.14, at.Z + math.sin(a) * LabGuide.RING / 2) * CFrame.Angles(0, -a + math.pi / 2, 0), ring)
+		seg.Material = Enum.Material.Neon
+		seg.Color = LabGuide.ACCENT
+		seg.Transparency = 0.25
+	end
 	ring:SetAttribute("GuideId", id)
 	CollectionService:AddTag(ring, LabGuide.TAG)
 	sign(point, words[3], signHeight)
@@ -204,7 +218,13 @@ local function addSpot(into: Instance, origin: Vector3, id: string, target: () -
 			local now = target()
 			if (now - point.Position).Magnitude > 0.5 then
 				point.CFrame = CFrame.new(now)
-				ring.CFrame = CFrame.new(now.X, groundUnder(now, origin.Y) + 0.08, now.Z) * CFrame.Angles(0, 0, math.rad(90))
+				local moveBy = CFrame.new(now.X, groundUnder(now, origin.Y) + 0.12, now.Z) * ring.CFrame:Inverse()
+				for _, seg in ring:GetChildren() do
+					if seg:IsA("BasePart") then
+						seg.CFrame = moveBy * seg.CFrame
+					end
+				end
+				ring.CFrame = moveBy * ring.CFrame
 			end
 			-- (The sign stands clear over the creature's head: its top, measured, plus a little.)
 			local top = if signTop then signTop() else nil
@@ -283,6 +303,18 @@ function LabGuide.build(folder: Instance, origin: Vector3)
 			end
 			local name = string.upper(string.sub(station, 1, 1)) .. string.lower(string.sub(station, 2))
 			addSpot(into, origin, "Station:" .. station, target, { "Launch", name, "" }, 0)
+		end
+	end
+	-- (21 Nov 2026, research: the biggest games' machines teach themselves: 44 % of one game's players
+	-- launched a dummy with its fan. The cannon, the lava and the trampoline get the same button.)
+	for name, words in LabGuide.MACHINES do
+		local partOf = folder:FindFirstChild(name, true)
+		if partOf and partOf:IsA("BasePart") then
+			local p = partOf
+			local function target(): Vector3
+				return p.Position + Vector3.new(0, 1.5, 0)
+			end
+			addSpot(into, origin, "Station:" .. name, target, words, 0)
 		end
 	end
 	-- (A station already has its own sign: its guide sign is left out.)

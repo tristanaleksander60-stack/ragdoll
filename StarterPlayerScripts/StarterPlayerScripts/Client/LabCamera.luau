@@ -514,15 +514,16 @@ local function buildRecenterButton()
 		if ReplayController.isPlaying() then
 			return -- the replay owns the camera until it ends
 		end
+		local told = hintShown
 		hintShown = true -- switching says how the lab view works
 		local toLab = not ViewMode.isLab()
 		ViewMode.set(if toLab then "Lab" else "Player")
-		if toLab then
+		-- (21 Nov 2026, research: constant pop-ups drive players away: the how-to once a visit, and no
+		-- "Walking again": the view itself says it.)
+		if toLab and not told then
 			Toast.show(if ViewMode.isTouch()
 				then "Lab view: drag to look around, pinch to zoom"
 				else "Lab view: right-drag to look around, scroll to zoom, WASD to move")
-		else
-			Toast.show("Walking again")
 		end
 	end
 	view.Activated:Connect(toggleView)

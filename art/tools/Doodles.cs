@@ -358,6 +358,85 @@ public static partial class Doodles
 				Add(Oval(128, 140, 74, 92), Rgb(255, 244, 222));
 				Flat(Oval(102, 112, 16, 16), Orange); Flat(Oval(156, 150, 13, 13), Orange); Flat(Oval(112, 186, 10, 10), Orange);
 				break;
+			// (21 Nov 2026, the owner: "no big text, signs and icons a child understands": the lab's
+			// pictogram set. World signs and the HUD use the same pictures.)
+			case "sign_lava":
+				Add(Poly(128, 22, 238, 222, 18, 222), Red);
+				Flat(Poly(128, 54, 210, 204, 46, 204), White);
+				Add(Poly(128, 84, 162, 150, 150, 192, 106, 192, 94, 150), Orange);
+				Flat(Poly(128, 128, 144, 160, 136, 186, 120, 186, 112, 160), Yellow);
+				break;
+			case "sign_target":
+				Add(Oval(128, 128, 104, 104), Red); Add(Oval(128, 128, 76, 76), White);
+				Add(Oval(128, 128, 48, 48), Red); Add(Oval(128, 128, 20, 20), White);
+				break;
+			case "sign_up":
+				Add(Poly(128, 18, 214, 118, 164, 118, 164, 238, 92, 238, 92, 118, 42, 118), Blue);
+				break;
+			case "sign_fling":
+				Line(Purple, 30, 40, 200, 70, 110, 140, 70, 196, 84);
+				Add(Poly(176, 40, 240, 92, 168, 130), Purple);
+				break;
+			case "sign_crash":
+				Add(Rect(176, 30, 52, 196), Iron);
+				Ink(5, 176, 80, 228, 80); Ink(5, 176, 130, 228, 130); Ink(5, 176, 180, 228, 180);
+				Add(Poly(28, 104, 140, 104, 140, 82, 176, 128, 140, 174, 140, 152, 28, 152), Red);
+				break;
+			case "sign_wrecking":
+				Ink(10, 128, 18, 128, 112);
+				Add(Rect(84, 12, 88, 16), Iron);
+				Add(Oval(128, 162, 66, 66), Red);
+				Flat(Oval(104, 138, 16, 12), Rgb(255, 150, 150));
+				break;
+			case "sign_bounce":
+				Add(Rect(36, 176, 184, 22), Blue);
+				Ink(10, 52, 196, 40, 232); Ink(10, 204, 196, 216, 232);
+				Add(Poly(128, 30, 176, 92, 148, 92, 148, 150, 108, 150, 108, 92, 80, 92), Green);
+				break;
+			case "sign_button":
+				Add(Rect(40, 150, 176, 56), Steel);
+				Add(Oval(128, 140, 70, 34), Rgb(170, 30, 30));
+				Add(Oval(128, 124, 70, 34), Red);
+				break;
+			case "sign_tower":
+				Add(Rect(60, 40, 70, 196), Rgb(206, 208, 212));
+				Add(Rect(60, 40, 70, 20), Yellow);
+				Add(Poly(164, 60, 226, 60, 226, 150, 250, 150, 195, 220, 140, 150, 164, 150), Orange);
+				break;
+			case "sign_car":
+				Add(Poly(36, 150, 60, 96, 190, 96, 222, 150), Red);
+				Add(Rect(24, 146, 208, 44), Red);
+				Flat(Poly(78, 104, 124, 104, 124, 144, 66, 144), Cyan); Flat(Poly(136, 104, 182, 104, 204, 144, 136, 144), Cyan);
+				Add(Oval(74, 192, 24, 24), Black); Add(Oval(182, 192, 24, 24), Black);
+				break;
+			case "sign_monster":
+				Add(Oval(128, 140, 90, 76), Purple);
+				Add(Oval(96, 116, 22, 26), White); Add(Oval(160, 116, 22, 26), White);
+				Flat(Oval(100, 122, 9, 11), Black); Flat(Oval(156, 122, 9, 11), Black);
+				Add(Poly(80, 166, 176, 166, 160, 196, 96, 196), Black);
+				Flat(Poly(96, 166, 108, 166, 102, 180), White); Flat(Poly(148, 166, 160, 166, 154, 180), White);
+				break;
+			case "hud_click":
+				Add(Oval(128, 140, 66, 96), White);
+				Flat(Poly(128, 44, 128, 128, 62, 128, 70, 80, 96, 52), Orange);
+				Ink(6, 128, 44, 128, 128); Ink(6, 62, 128, 194, 128);
+				break;
+			case "hud_tap":
+				Add(Oval(150, 70, 30, 30), Rgb(255, 230, 120));
+				Add(Poly(116, 92, 140, 92, 140, 150, 196, 150, 204, 236, 112, 236, 92, 176, 116, 176), Skin);
+				break;
+			case "hud_ragdoll":
+				Add(Oval(150, 58, 30, 30), White);
+				Add(Turn(Rect(96, 86, 52, 84), -28, 122, 128), White);
+				Add(Turn(Rect(36, 82, 70, 22), 20, 70, 92), White); Add(Turn(Rect(160, 116, 70, 22), 40, 196, 126), White);
+				Add(Turn(Rect(70, 170, 22, 66), 30, 82, 200), White); Add(Turn(Rect(128, 172, 22, 66), -20, 140, 204), White);
+				break;
+			case "hud_slowmo":
+				Add(Oval(128, 132, 96, 96), Cyan);
+				Add(Oval(128, 132, 76, 76), White);
+				Ink(10, 128, 132, 128, 78); Ink(10, 128, 132, 166, 150);
+				Add(Rect(108, 24, 40, 16), Iron);
+				break;
 			case "guide_feed":
 				// (21 Nov 2026: the lab's guide signs: a crash-test dummy and a big arrow, "put one in".)
 				Add(Rect(34, 156, 20, 52), White); Add(Rect(62, 156, 20, 52), White);
@@ -858,7 +937,7 @@ public static partial class Doodles
 	}
 
 	public static string[] Names = {
-		"shop", "settings", "sandbox", "gift", "present", "guide_feed", "star", "crown", "toolbox", "map", "friends", "camera", "music", "keys", "eye", "shake", "heart",
+		"shop", "settings", "sandbox", "gift", "present", "guide_feed", "sign_lava", "sign_target", "sign_up", "sign_fling", "sign_crash", "sign_wrecking", "sign_bounce", "sign_button", "sign_tower", "sign_car", "sign_monster", "hud_click", "hud_tap", "hud_ragdoll", "hud_slowmo", "star", "crown", "toolbox", "map", "friends", "camera", "music", "keys", "eye", "shake", "heart",
 		"event_DummyRain", "event_MegaBomb", "event_ZeroG", "event_BouncyFloor", "event_FlashFreeze",
 		"tool_Blaster", "tool_Deagle", "tool_Shotgun", "tool_NailGun", "tool_Crossbow", "tool_Portal", "tool_Slime",
 		"tool_Grab", "tool_Poke", "tool_Slap", "tool_Shove", "tool_Punch", "tool_Kick", "tool_Uppercut", "tool_MegaSlap", "tool_Glove",

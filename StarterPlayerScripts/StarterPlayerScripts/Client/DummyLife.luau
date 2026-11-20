@@ -1067,6 +1067,12 @@ local function showLine(life: Life, kind: string, now: number)
 	end
 	local text = life.lineText :: TextLabel
 	text.Text = DummyLines.pick(list, life.seed, life.lineTurn)
+	-- (21 Nov 2026, Config.ICON_SIGNS, the owner: "no text to read": a face says it, bigger, no words.)
+	if (Config :: any).ICON_SIGNS then
+		local faces = if kind == "Fear" then DummyLines.EMOJI_FEAR elseif kind == "Ouch" then DummyLines.EMOJI_OUCH else DummyLines.EMOJI_IDLE
+		text.Text = DummyLines.pick(faces, life.seed, life.lineTurn)
+		text.TextSize = 30
+	end
 	text.TextColor3 = if kind == "Idle" then DummyLines.IDLE_COLOR else DummyLines.FEAR_COLOR
 	;(life.line :: BillboardGui).Enabled = true
 	life.lineKind = kind

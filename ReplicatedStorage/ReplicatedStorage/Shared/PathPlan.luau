@@ -11,7 +11,7 @@ PathPlan.STEP = 2.4 -- studs between two path stones (they overlap well: smooth 
 PathPlan.WIDTH_MIN = 5.2 -- (the paved walk with both kerbs: what T106 keeps clear of the machines)
 PathPlan.WIDTH_MAX = 5.6
 PathPlan.BOW = 0.08 -- how far a path bows sideways, as a share of its length (at most 4 studs)
-PathPlan.BUDGET = 780 -- path parts per lab at most (walkway slabs, joints, kerbs, and since 21 Nov PATHS_V3 dressing up to PathBuilder.DRESS_MAX 300; phones: flat, anchored, no shadows, no collisions)
+PathPlan.BUDGET = 1400 -- path parts per lab at most (walkway slabs, joints, kerbs, and since 21 Nov PATHS_V3 dressing up to PathBuilder.DRESS_MAX 700; phones: flat, anchored, no shadows, no collisions)
 
 -- The lab: x, z from the lab's origin (measured from the built lab, 20 Nov 2026). Not a fan from
 -- one point (that read as a code-built "spider", review fix round 2): a tree. A trunk leaves the
@@ -159,6 +159,109 @@ PathPlan.OBSTACLES = table.freeze({
 	{ name = "XmasPresent", min = Vector2.new(-43.5, 54.5), max = Vector2.new(-36.5, 61.5) },
 	{ name = "XmasSleigh", min = Vector2.new(-14, -68), max = Vector2.new(-6, -52) },
 } :: { Obstacle })
+
+-- 21 Nov 2026 (Config.LAYOUT_V2, the owner: "paths must not stop out of the blue, they must all hang
+-- together"; vault: a path that just ends is the strongest wrong-way signal, optional ways branch off
+-- and join again). A network instead of a tree:
+--   * from the spawn (the hub) to both sides of the test range: the bullseye and the lava;
+--   * an east loop past the wrecking ball, the cars and the cannon, out to the east garden;
+--   * a south road along the launch pads, joining both sides;
+--   * a west way to the tower's stairs, and to the portals;
+--   * a road through the creature yard joining the two garden walks (the garden, the yard and the
+--     lab are one big loop).
+-- The only ends left are at a thing: the bullseye, the lava's rocks, the tower's stairs, the portals.
+local LAYOUT_V2 = (require(script.Parent:WaitForChild("Config")) :: any).LAYOUT_V2 == true
+-- The garden's long walks (LabGarden): their x, and where they now start and end.
+PathPlan.GARDEN_WALK_X = 99.8
+PathPlan.GARDEN_WALK_NORTH = -66
+PathPlan.GARDEN_WALK_SOUTH = 67
+if LAYOUT_V2 then
+	PathPlan.LAB_HUB = Vector2.new(0, 0)
+	PathPlan.LAB_POINTS = table.freeze({
+		Spawn = Vector2.new(0, 0),
+		E = Vector2.new(28, -2),
+		NE = Vector2.new(25.5, -24),
+		NE2 = Vector2.new(25, -32),
+		N1 = Vector2.new(12, -31),
+		BULL = Vector2.new(4, -33), -- (at the bullseye's edge)
+		W = Vector2.new(-28, 0),
+		NW = Vector2.new(-27, -20),
+		LV = Vector2.new(-27, -26), -- (at the lava's rocks)
+		C0 = Vector2.new(44, -3),
+		C1 = Vector2.new(37, 14),
+		C2 = Vector2.new(42, 30),
+		WR = Vector2.new(41, -12),
+		CAR = Vector2.new(56, -6),
+		S1 = Vector2.new(4, 22),
+		S2 = Vector2.new(2, 42.5),
+		SE = Vector2.new(40, 42.5),
+		SW = Vector2.new(-18, 40),
+		W2 = Vector2.new(-28, 28),
+		WL = Vector2.new(-40, -3),
+		TS = Vector2.new(-52, -4), -- (the tower's stairs)
+		PW = Vector2.new(-48, 26),
+		P1 = Vector2.new(-58, 36),
+		GardenEast = Vector2.new(80, 30),
+		YW = Vector2.new(-18, 66),
+		Yard = Vector2.new(-6, 80),
+		YP1 = Vector2.new(-60, 78),
+		YP2 = Vector2.new(45, 78),
+		GardenWestEnd = Vector2.new(-PathPlan.GARDEN_WALK_X, PathPlan.GARDEN_WALK_SOUTH),
+		GardenEastEnd = Vector2.new(PathPlan.GARDEN_WALK_X, PathPlan.GARDEN_WALK_SOUTH),
+	})
+	PathPlan.LAB_SEGMENTS = table.freeze({
+		-- From the spawn (the hub) to the test range's sides: the bullseye and the lava.
+		{ "Spawn", "E" }, { "E", "NE" }, { "NE", "NE2", true }, { "NE2", "N1", true }, { "N1", "BULL", true },
+		{ "Spawn", "W" }, { "W", "NW" }, { "NW", "LV", true },
+		-- East: a loop past the wrecking ball, the cars and the cannon; out to the east garden.
+		{ "E", "WR", true }, { "WR", "CAR" }, { "CAR", "C0" }, { "C0", "E" },
+		{ "E", "C1" }, { "C1", "C2" }, { "C2", "GardenEast", true },
+		-- South: the big button, the launch pads, joining both sides.
+		{ "Spawn", "S1" }, { "S1", "S2" }, { "S2", "SE", true }, { "SE", "C2" }, { "S2", "SW", true },
+		{ "SW", "W2" }, { "W2", "W", true },
+		-- West: the tower's stairs; the portals (the west garden is reached through the yard: no room
+		-- for a way between the portals and the rocket).
+		{ "W", "WL" }, { "WL", "TS" }, { "W2", "PW", true }, { "PW", "P1" },
+		-- The creature yard: from the launch pads, and across to both garden walks.
+		{ "SW", "YW", true }, { "YW", "Yard" }, { "Yard", "YP1", true }, { "YP1", "GardenWestEnd", true },
+		{ "Yard", "YP2", true }, { "YP2", "GardenEastEnd", true },
+	})
+	PathPlan.LAB_ROUTES = table.freeze({
+		{ name = "BULL", to = PathPlan.LAB_POINTS.BULL },
+		{ name = "LV", to = PathPlan.LAB_POINTS.LV },
+		{ name = "TS", to = PathPlan.LAB_POINTS.TS },
+		{ name = "Yard", to = PathPlan.LAB_POINTS.Yard },
+		{ name = "GardenEast", to = PathPlan.LAB_POINTS.GardenEast },
+		{ name = "P1", to = PathPlan.LAB_POINTS.P1 },
+		{ name = "GardenWestEnd", to = PathPlan.LAB_POINTS.GardenWestEnd },
+		{ name = "GardenEastEnd", to = PathPlan.LAB_POINTS.GardenEastEnd },
+	})
+	PathPlan.LABELS = table.freeze({
+		NE = "BULLSEYE",
+		C1 = "CANNON",
+		WR = "WRECKING BALL",
+		NW = "LAVA",
+		WL = "TOWER",
+		SE = "LAUNCH PADS",
+		SW = "MONSTERS",
+		YW = "MONSTERS",
+		PW = "PORTALS",
+		W2 = "PORTALS",
+		GardenEast = "GARDEN",
+	})
+	PathPlan.SIGNS = table.freeze({ "E", "W", "S2", "SW" })
+	-- The mace moved back, the Christmas present with it; the lava's box takes in its rim of rocks.
+	local moved: { [string]: Obstacle } = {
+		Lava = { name = "Lava", min = Vector2.new(-41, -53), max = Vector2.new(-14, -29) },
+		Mace = { name = "Mace", at = Vector2.new(-38, 48), radius = 16.5 },
+		XmasPresent = { name = "XmasPresent", min = Vector2.new(-59.5, 58.5), max = Vector2.new(-52.5, 65.5) },
+	}
+	local list: { Obstacle } = {}
+	for _, o in PathPlan.OBSTACLES do
+		table.insert(list, moved[o.name] or o)
+	end
+	PathPlan.OBSTACLES = table.freeze(list)
+end
 
 -- Terrain material per open-air place (what the grass under a path turns into).
 PathPlan.TERRAIN = table.freeze({

@@ -126,6 +126,11 @@ DummyLines.DISTANCE = 45 -- studs: further away no line is drawn (UI audit 21 No
 
 -- One line of a list, picked by a seed (the same dummy does not say the same thing twice in a row:
 -- the turn moves on each time).
+-- 21 Nov 2026 (Config.ICON_SIGNS): the same moods as faces, no reading (DummyLife shows these).
+DummyLines.EMOJI_IDLE = { "\u{1F634}", "\u{1F914}", "\u{1F643}", "\u{1F440}", "\u{1F62C}", "\u{1F971}", "\u{1F60E}" }
+DummyLines.EMOJI_FEAR = { "\u{1F631}", "\u{1F640}", "\u{1F628}", "\u{1F62D}" }
+DummyLines.EMOJI_OUCH = { "\u{1F915}", "\u{1F4AB}", "\u{1F635}", "\u{1F92F}" }
+
 function DummyLines.pick(list: { string }, seed: number, turn: number): string
 	local n = #list
 	return list[((math.floor(seed * 7) + turn) % n) + 1]

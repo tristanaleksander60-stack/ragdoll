@@ -409,9 +409,73 @@ function PokeController.helpText(id: string, lab: boolean): string
 	return table.concat(parts, "  \u{00B7}  ")
 end
 
+-- 21 Nov 2026 (Config.ICON_SIGNS, the owner: "no distracting text, icons a child understands"): the
+-- help line as pictures: the mouse's click, the tool in your hand, an arrow, what it is used on (a
+-- dummy, or the floor for a thing you put down). A pad keeps its words (its buttons have names).
+local HELP_ICON = 28
+local function iconHelp(label: TextLabel, id: string): boolean
+	local okPad = string.sub(UserInputService:GetLastInputType().Name, 1, 7) == "Gamepad"
+	if not (Config :: any).ICON_SIGNS or okPad then
+		local strip = label:FindFirstChild("IconStrip")
+		if strip then
+			strip:Destroy()
+		end
+		return false
+	end
+	local Icons = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIIcons")) :: any
+	local toy = Toys.byId[id]
+	local target = if toy and (toy.kind == "place") then "sign_target" else "guide_feed"
+	local key = id .. "|" .. target
+	local strip = label:FindFirstChild("IconStrip")
+	if strip and strip:GetAttribute("Key") == key then
+		return true
+	end
+	if strip then
+		strip:Destroy()
+	end
+	local row = Instance.new("Frame")
+	row.Name = "IconStrip"
+	row:SetAttribute("Key", key)
+	row.BackgroundTransparency = 1
+	row.Size = UDim2.fromScale(1, 1)
+	local list = Instance.new("UIListLayout")
+	list.FillDirection = Enum.FillDirection.Horizontal
+	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	list.VerticalAlignment = Enum.VerticalAlignment.Center
+	list.Padding = UDim.new(0, 6)
+	list.SortOrder = Enum.SortOrder.LayoutOrder
+	list.Parent = row
+	local function add(name: string, order: number)
+		if Icons.has(name) then
+			local pic = Icons.make(name, UDim2.fromOffset(HELP_ICON, HELP_ICON))
+			pic.LayoutOrder = order
+			pic.Parent = row
+		end
+	end
+	add("hud_click", 1)
+	add("tool_" .. id, 2)
+	local arrow = Instance.new("TextLabel")
+	arrow.BackgroundTransparency = 1
+	arrow.Size = UDim2.fromOffset(22, HELP_ICON)
+	arrow.LayoutOrder = 3
+	arrow.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
+	arrow.TextSize = 22
+	arrow.TextColor3 = Color3.fromRGB(255, 214, 90)
+	arrow.Text = "\u{279C}"
+	arrow.Parent = row
+	add(target, 4)
+	row.Parent = label
+	return true
+end
+
 local function refreshHelp()
 	local label = helpLabel
 	if label then
+		if iconHelp(label, selected) then
+			label.Text = ""
+			label.Size = UDim2.fromOffset(4 * HELP_ICON + 4 * 6 + 22 + 24, PokeController.HELP_H + 8)
+			return
+		end
 		label.Text = PokeController.helpText(selected, ViewMode.isLab())
 		local parent = label.Parent
 		if parent and parent:IsA("LayerCollector") then

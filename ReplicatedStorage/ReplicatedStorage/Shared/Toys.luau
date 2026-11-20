@@ -137,7 +137,7 @@ end
 -- V8-0.3 (Config.V8_START_BAR): rungs moved for the full start bar: its tools open from the start,
 -- the Rocket is the first unlock; Poke, Slap and Shove leave the early rungs and Heal comes later.
 local V8_RUNGS: { [string]: number } = if Config.START_BAR_V9
-	then { Bat = 0, Grenade = 0, Launch = 3, Poke = 18, Shove = 22, Slap = 24, Heal = 60 }
+	then { Bat = 0, Grenade = 0, Launch = 0, SMG = 0, Poke = 18, Shove = 22, Slap = 24, Heal = 60 }
 	else { Bat = 0, Grenade = 0, Launch = 0, Rocket = 3, Poke = 18, Shove = 22, Slap = 24, Heal = 60 }
 -- Start bar v9 (Config.START_BAR_V9): rungs set as they finally stand (after the squeeze): the Rocket is
 -- one of the hardest to get, between the Portal (437) and the Plasma Blade (491).
@@ -315,9 +315,10 @@ local CATEGORIES: { Category } = { "Melee", "Guns", "Explosives", "Specials" }
 -- takedowns (players from before keep them: ProgressService.grandfather, LADDER 3).
 -- V8-0.3 (Config.V8_START_BAR): a full bar from the first second, like the big ragdoll games: the
 -- G17 (Popper), Grab, Bat, Grenade and Launch, 5 of 6; slot 6 is the first unlock (the Rocket, at 3).
--- Start bar v9 (Config.START_BAR_V9): 4 of 6, the Popper, Grab, Bat and Grenade; slots 5 and 6 wait for
--- the first presents (Launch at 3).
-local DEFAULT_LOADOUT = if Config.START_BAR_V9 then { "Blaster", "Grab", "Bat", "Grenade" }
+-- Start bar v9 (Config.START_BAR_V9, research 21 Nov 2026: the biggest ragdoll game now, 125K players,
+-- 19 min sessions, starts every player with a full kit with 3 guns): all 6 slots full: two guns (the
+-- Popper and the Buzz Blaster), Grab, Bat, the Grenade and Launch. The Rocket stays among the hardest.
+local DEFAULT_LOADOUT = if Config.START_BAR_V9 then { "Blaster", "SMG", "Grab", "Bat", "Grenade", "Launch" }
 	elseif Config.V8_START_BAR then { "Blaster", "Grab", "Bat", "Grenade", "Launch" }
 	else { "Blaster", "Grab", "Punch" }
 -- How many slots the bar has (a fixed number, not the starting bar's length: round 5).

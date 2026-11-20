@@ -100,6 +100,39 @@ end
 
 LabZones.PX_PER_STUD = 19 -- a sign designed in px: its size in studs (260 px = 13.7 studs)
 
+-- A gold star over today's machine (Config.ICON_SIGNS): the drawn star on a dark round badge.
+local function starBadge(parent: Instance, adornee: BasePart, offset: number)
+	local DrawnIcons = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("DrawnIcons")) :: any
+	local g = Instance.new("BillboardGui")
+	g.Name = "ZoneSign"
+	g.Adornee = adornee
+	g.Size = UDim2.fromScale(4.5, 4.5)
+	g.StudsOffsetWorldSpace = Vector3.new(0, offset, 0)
+	g.MaxDistance = 140
+	g.LightInfluence = 0
+	local disc = Instance.new("Frame")
+	disc.Size = UDim2.fromScale(1, 1)
+	disc.BackgroundColor3 = Color3.fromRGB(34, 28, 52)
+	disc.BackgroundTransparency = 0.1
+	local round = Instance.new("UICorner")
+	round.CornerRadius = UDim.new(0.5, 0)
+	round.Parent = disc
+	local ring = Instance.new("UIStroke")
+	ring.Thickness = 4
+	ring.Color = Color3.fromRGB(255, 205, 60)
+	ring.Parent = disc
+	local pic = Instance.new("ImageLabel")
+	pic.BackgroundTransparency = 1
+	pic.AnchorPoint = Vector2.new(0.5, 0.5)
+	pic.Position = UDim2.fromScale(0.5, 0.5)
+	pic.Size = UDim2.fromScale(0.8, 0.8)
+	pic.ScaleType = Enum.ScaleType.Fit
+	pic.Image = DrawnIcons.ASSETS.star or ""
+	pic.Parent = disc
+	disc.Parent = g
+	g.Parent = parent
+end
+
 local function sign(parent: Instance, adornee: BasePart, text: string, color: Color3, offset: number, size: Vector2)
 	local g = Instance.new("BillboardGui")
 	g.Name = "ZoneSign"
@@ -197,7 +230,12 @@ function LabZones.build(folder: Instance, origin: Vector3)
 			column.Material = Enum.Material.Neon
 		end
 		local machine = if target.Parent and target.Parent:IsA("Model") then target.Parent else target
-		sign(into, anchorAt(topOf(machine, target.Position)), "\u{2B50} TODAY'S MACHINE: " .. pick.label, Color3.fromRGB(255, 205, 60), 4, Vector2.new(260, 40))
+		-- (21 Nov 2026, Config.ICON_SIGNS: a big gold star over it says "today's one", no words.)
+		if (Config :: any).ICON_SIGNS then
+			starBadge(into, anchorAt(topOf(machine, target.Position)), 5)
+		else
+			sign(into, anchorAt(topOf(machine, target.Position)), "\u{2B50} TODAY'S MACHINE: " .. pick.label, Color3.fromRGB(255, 205, 60), 4, Vector2.new(260, 40))
+		end
 	end
 	-- NEW tags.
 	if LabZones.newShowing(os.time()) then

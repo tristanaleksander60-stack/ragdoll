@@ -99,9 +99,16 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 			-- (V7-2: the walk curves gently, its stones overlap: soft edges, no hard rectangle.)
 			local PathBuilder = require(script.Parent:WaitForChild("PathBuilder")) :: any
 			local o2 = Vector2.new(origin.X, origin.Z)
-			PathBuilder.trail(folder, o2 + Vector2.new(pathX, LabGarden.Z_BACK + 4), o2 + Vector2.new(pathX, LabGarden.Z_FRONT - 3), origin.Y + 0.24, PATH, Enum.Material.Cobblestone, if side > 0 then 101 else 102)
-			for k, z in { -30, 30 } do
-				PathBuilder.trail(folder, o2 + Vector2.new(side * (inner - 1), z), o2 + Vector2.new(pathX, z), origin.Y + 0.25, PATH, Enum.Material.Cobblestone, 110 + k + (if side > 0 then 0 else 5))
+			-- (21 Nov 2026, Config.LAYOUT_V2: the walk starts by the spider or the plant, never in the open;
+			-- its south end meets the yard road; the crossing at -30 ran into the lab's side barriers and goes;
+			-- the warm paving of the lab's paths.)
+			local v2 = (require(Shared:WaitForChild("Config")) :: any).LAYOUT_V2 == true
+			local PathPlan = require(Shared:WaitForChild("PathPlan")) :: any
+			local walkColor = if v2 then PathBuilder.PAVING_V3 else PATH
+			local northZ = if v2 then PathPlan.GARDEN_WALK_NORTH else LabGarden.Z_BACK + 4
+			PathBuilder.trail(folder, o2 + Vector2.new(pathX, northZ), o2 + Vector2.new(pathX, LabGarden.Z_FRONT - 3), origin.Y + 0.24, walkColor, Enum.Material.Cobblestone, if side > 0 then 101 else 102)
+			for k, z in if v2 then (if side > 0 then { 30 } else {}) else { -30, 30 } do
+				PathBuilder.trail(folder, o2 + Vector2.new(side * (inner - 1), z), o2 + Vector2.new(pathX, z), origin.Y + 0.25, walkColor, Enum.Material.Cobblestone, 110 + k + (if side > 0 then 0 else 5))
 			end
 		else
 			part(folder, "GardenPath", Vector3.new(6, 0.24, depth - 6), CFrame.new(origin + Vector3.new(pathX, 0.12, zMid)), PATH, Enum.Material.Cobblestone)

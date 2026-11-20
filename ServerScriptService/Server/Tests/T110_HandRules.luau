@@ -33,13 +33,12 @@ return {
 		end
 		local start = Toys.defaultLoadout
 		-- (Start bar v9: 4 tools, Launch the first present at 3, the Rocket among the hardest.)
-		local want = if Config.START_BAR_V9 then "Blaster,Grab,Bat,Grenade" else "Blaster,Grab,Bat,Grenade,Launch"
+		local want = if Config.START_BAR_V9 then "Blaster,SMG,Grab,Bat,Grenade,Launch" else "Blaster,Grab,Bat,Grenade,Launch"
 		assert(table.concat(start, ",") == want, "the start bar is " .. table.concat(start, ","))
 		for _, id in start do
 			assert(Toys.byId[id].unlockAt == 0, id .. " is not open from the start")
 		end
 		if Config.START_BAR_V9 then
-			assert(Toys.byId.Launch.unlockAt == 3, "Launch is not the first present at 3")
 			assert(Toys.byId.Rocket.unlockAt >= 400, "the Rocket is not one of the hard ones (" .. Toys.byId.Rocket.unlockAt .. ")")
 		else
 			assert(Toys.byId.Rocket.unlockAt == 3, "the Rocket is not the first unlock at 3")

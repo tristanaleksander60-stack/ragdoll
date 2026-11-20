@@ -57,12 +57,12 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
-		version = "0.28.0",
+		version = "0.29.0",
 		lines = {
-			"FEED THE MONSTERS: press FEED at the spider, the frog or any creature and a dummy flies in",
-			"Every weapon has its own sound now",
-			"Big SURPRISE and BULLSEYE banners, and new park paths with lamps and flowers",
-			"The ROCKET is now a rare prize. Can you earn it?",
+			"A NEW LAB: paths that all join up, a plaza, grass, bushes, lamps and a real LAVA PIT",
+			"FEED THE MONSTERS and press FIRE, TOSS or BOUNCE: a dummy flies right in",
+			"Start with 6 weapons, and every weapon has its own sound",
+			"Pictures instead of words, big SURPRISE banners, and the ROCKET is a rare prize",
 		},
 	},
 	{
