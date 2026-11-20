@@ -360,3 +360,16 @@ Big hits get an automatic short slow-mo moment. The X-ray replay gets real slow 
   - Not built: Experience Notifications. Sending needs Open Cloud from outside the game; 13+ only, at most 1 a day.
 - **E2 done:** art/store/v4 holds 5 thumbnails and 2 icons from real captures, plus the A/B steps (README).
 - **E3:** 0.23.0 What's New and store text v4. Publishing and measuring are the owner's (see the report).
+- **Full suite after phase C/D/E (20 Nov): 81/85.**
+  - T19 and T32 are flaky.
+  - T21 failed on the ⚡ glyph without FE0F; fixed and passes.
+  - T45 failed (no greeter) in the full run and passes alone.
+  - T23/T45/T21/T66 pass.
+- **LayoutCheck run through MCP: 25 "problems".** That run gets its own module copies, where no drawn icons are registered (EMOJI FALLBACK on every HUD icon, the WEAPONS slab measured as text). No HUD layout changed in v4 (NpcTalk is its own scaled card). Run it inside the game's own client before release.
+- **State:** all of A-E done in a first version. Left:
+  - C1: move the machines into their zones, machines bought with Bolts.
+  - C4: card pictures for 9 events (a word shows).
+  - D1: 3 captures per map and the owner's sign-off.
+  - D2: the rest of the windows through UI_CLEAN.
+  - E1: Experience Notifications.
+  - Re-reviews.

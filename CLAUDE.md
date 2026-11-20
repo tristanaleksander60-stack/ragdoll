@@ -196,3 +196,15 @@ Phases 0-4b, A-M, N1-N5, N7 (graphics accepted as is), M1-M8 done. M9 was under 
 
 ## v4 (20 Nov 2026, PC, branch `release`; plan docs/V4_PLAN.md)
 - A1-A6, B1-B4 done (details in V4_PLAN.md). New remote **NpcCommand** (Net; server Open/Done/Refused, client Follow/Stay/Attack/Bye, validated in Server/Systems/NpcCommand). New systems: SoundMix (client), GroundGuard, MapActivities, OutdoorMaps, NpcCommand; Client NpcTalk. Crowd roles Worker/Farmer/Soldier/Beachgoer; DummyLines.PLACE.
+- **v4 C-E (20 Nov, release 0.23.0):**
+  - C1 LabZones: zones, today's machine by UTC day, NEW tags.
+  - C2 VehicleFeel: wheels on Welds, lean, lights, engine/horn/crash; remote **VehicleHorn**, server-checked.
+  - C3 rigged gorilla and bull. `ServerStorage.V3Assets.GorillaRig`/`BullRig` live in the place file only; Client/CreatureAnim animates them by `Gait`.
+  - C4 Surprises: 11 events and mini surprises (`LAB_SURPRISES`).
+  - C5 Client/SlowMotion (`SLOWMO_V2`).
+  - D1 `ARENA_V2` sports hall. D2 `UI_CLEAN` leaderboards and real event card pictures (art/events).
+  - E0 docs/RESEARCH_V4.md. E1 `FIRST_WOW_AT` 50. E2 art/store/v4. E3 What's New and STORE_TEXT v4.
+  - Blind reviews:
+    - A+B 7.6/6.5, fixed;
+    - C 7.5, fixed;
+    - no re-reviews run.

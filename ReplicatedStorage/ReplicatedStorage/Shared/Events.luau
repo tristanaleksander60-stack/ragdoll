@@ -37,7 +37,7 @@ local list: { Event } = {
 	{ id = "BowlingAvalanche", name = "Bowling Avalanche", blurb = "Giant bowling balls roll through the lab", duration = 10, productId = 0, icon = "event_BowlingAvalanche", glyph = "\u{1F3B3}", color = "#2E3A55" },
 	{ id = "RocketRain", name = "Rocket Rain", blurb = "Little fireworks rockets rain down and pop dummies about", duration = 12, productId = 0, icon = "event_RocketRain", glyph = "\u{1F680}", color = "#E8503A" },
 	{ id = "MagnetStorm", name = "Magnet Storm", blurb = "A huge magnet pulls every dummy in, then lets go", duration = 14, productId = 0, icon = "event_MagnetStorm", glyph = "\u{1F9F2}", color = "#C83A3A" },
-	{ id = "LightningStorm", name = "Lightning Storm", blurb = "A storm cloud throws bolts that fling dummies", duration = 14, productId = 0, icon = "event_LightningStorm", glyph = "\u{26A1}", color = "#5A6178" },
+	{ id = "LightningStorm", name = "Lightning Storm", blurb = "A storm cloud throws bolts that fling dummies", duration = 14, productId = 0, icon = "event_LightningStorm", glyph = "\u{26A1}\u{FE0F}", color = "#5A6178" },
 	{ id = "Sinkhole", name = "Sinkhole", blurb = "A hole sucks dummies in and spits them sky-high", duration = 16, productId = 0, icon = "event_Sinkhole", glyph = "\u{1F573}\u{FE0F}", color = "#5B4636" },
 	{ id = "Earthquake", name = "Earthquake", blurb = "The whole lab shakes and everything hops about", duration = 12, productId = 0, icon = "event_Earthquake", glyph = "\u{1F30B}", color = "#8A6B4A" },
 	{ id = "FanBlast", name = "Giant Fan", blurb = "A giant fan blows the lab across the floor", duration = 12, productId = 0, icon = "event_FanBlast", glyph = "\u{1F32C}\u{FE0F}", color = "#6FA8D8" },
