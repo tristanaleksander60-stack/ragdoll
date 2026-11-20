@@ -162,7 +162,7 @@ local Config = {
 	DIRECTOR = true, -- V6-3: the owner's F8 director mode for filming (Client/Director; AdminTools Shot/LaunchDummy/DirectorSave)
 	LAB_V6 = true, -- V6-4: wider plots (Zones.PLOT_SPACING 250) with a garden on both sides (Server/Systems/LabGarden)
 	LAB_CREATURES = true, -- V6-5: the creature yard in front of each lab (Server/Systems/LabCreatures): spider, plant, frog, whale, chicken, washer, slingshot, mole, vacuum
-	BIRDS = true, -- V6-6: client-side flocks (Client/Birds) round the lab and the open-air maps
+	BIRDS = false, -- V6-6: client-side flocks (Client/Birds) round the lab and the open-air maps (20 Nov 2026, the owner: "remove the birds"; true brings them back)
 	MAP_SHOP = true, -- V6-7: showcase booths on the maps selling Shop.OFFERS map items (Server/Systems/MapShopService); id 0 = no booth live
 	PATHS = true, -- V7-2: earthen paths to everything in the lab, and repainted terrain paths on the plaza and open-air maps (Shared/PathPlan, Server/Systems/PathBuilder)
 	BIRDS_MAX = table.freeze({ pc = 24, tablet = 14, phone = 8 }), -- birds out at once per device
