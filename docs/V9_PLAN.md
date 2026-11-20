@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0s (first, quick), V9-0t, V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0m, V9-0n, V9-0o, V9-0p, V9-0q, V9-0r, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5c, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -69,6 +69,54 @@ Run all of `docs/FIX_PATHS_SHOP.md`:
   - a saved last place of "Arena" falls back to the lab.
 - **Tests:** tests that need the arena skip with a clear SKIP while the switch is off (T26, T31, the minigame tests); everything else passes.
 - **Report:** note in State that the arena is hidden and how to turn it back on.
+
+## V9-0t Codes to advertise in the description (owner, 21 Nov; quick)
+> "Tilføj codes som vi kan reklamere for i description."
+
+**Now:**
+- `Economy.redeem` reads `Config.LIKE_CODES` (codes tied to like milestones, all empty and not live).
+- The only code box is inside the EXPERIMENTS window (ExperimentCard "Redeem"), which few players find.
+- Codes tied to like counts come too close to rewarding likes (Roblox policy), so do not use them.
+
+**Change:**
+- **One code list** `Shared/Codes` (or `Config.CODES`):
+
+  ```
+  { code, reward = { bolts?, trialWeapon?, trialMinutes?, cosmetic?, cosmeticHours? }, from, to, live }
+  ```
+
+  The codes are case-insensitive and spaces are ignored. The dates are in UTC; outside them, the code answers "This code has expired". Each player may use a code once (`eco.codes`, saved with UpdateAsync, as now).
+- **The starting codes** (live at the next publish):
+
+  | Code | Gives | Live |
+  |---|---|---|
+  | `RELEASE` | 500 BOLTS | from now |
+  | `BETA` | 300 BOLTS + a 30-minute free try of a top weapon (the Railgun, through TrialService rules) | during the beta |
+  | `RAGDOLL` | 250 BOLTS | from now |
+  | `CHRISTMAS` | 750 BOLTS + the Fire Trail for 24 h | from 1 Dec to 31 Dec |
+
+  Keep old `LIKE_CODES` off.
+- **A CODES button in the HUD menu (More):**
+  - a clean, small window: one text box, REDEEM, a result line with the reward icon, and confetti on success;
+  - clear messages: invalid, already used, expired;
+  - phone and pad friendly;
+  - also reachable from SHOP (a small "Have a code?" link).
+- **Server:**
+  - a rate limit of 5 tries per minute per player;
+  - no hints about which codes exist;
+  - every redeem goes through the existing remote with its validator;
+  - grants use the existing paths (Bolts, TrialService, offers' cosmetic attribute with an expiry);
+  - nothing is sold.
+- **Optional:** a code that only works for players in the Roblox group, when `Shop.GROUP_ID` is set (group join is allowed as a reward; likes and favourites are not).
+- **Docs:** `docs/CODES.md` lists every code, its reward and dates, plus the line for the game description. Update `STORE_TEXT.md`.
+
+**Tests:** T173_Codes.
+- Each code grants once.
+- A second try says "already used".
+- Mixed case and spaces work.
+- An expired or not-yet code is refused.
+- The rate limit works.
+- The CODES window fits on 16 LayoutCheck screens.
 
 ## V9-0a Hitting a ragdoll never opens Talk (owner, 21 Nov; do it first, it is quick)
 > "Fiks så at når man forsøger at slå en ragdoll at man ikke åbner talk menuen hele tiden."
