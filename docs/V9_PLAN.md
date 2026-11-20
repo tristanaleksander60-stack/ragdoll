@@ -4,7 +4,7 @@
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
 ## How it runs
-- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
+- One `/klar` runs all of V9 in order: V9-0a, V9-0, V9-0f, V9-0g, V9-0h, V9-0i, V9-0j, V9-0k, V9-0l, V9-0b, V9-0c, V9-0d, V9-0e, V9-1, V9-2, V9-2b, V9-2c, then V9-3, V9-3b, V9-3c, V9-4, V9-4b, V9-5, V9-5b, V9-6, then `docs/RELEASE.md` (it publishes by itself).
 - **Then** go back to V8 at its State line.
 - Between steps, report in Danish and go straight on. Do not wait for the owner.
 - **Ids:** the owner is creating the products and passes while this runs. If ids arrive in chat, paste them in (V9-0, F5) and carry on.
@@ -201,6 +201,178 @@ The reference capture is `art/store/look_target/leader_hub.webp`. It shows the l
   - T112 (spawn view), T106/T150 (paths), T36, T26, T50, T103 and T153 updated;
   - a new T163_HubLayout: a 40-stud clear spawn circle; every attraction on the rim between 40 and 150 studs; none fully hidden from the spawn camera; no part z-fighting on the floor.
 - **Phone budget** held.
+
+## V9-0i A shop people want to spend in: right pictures, 3D and interactive (owner, 21 Nov)
+> "Fiks alle ikonerne i shop så de passer til de rigtige og gør hele shoppen 3d interaktiv og super flot fordi folk skal bruge penge derinde."
+
+**What the capture shows** (`art/store/look_target/shop_now.png`):
+- **Wrong pictures:** Starter Crate, All Guns and Lab Controls all show the egg icon, because `EventShop.buildOffers` falls back to `OFFER_ICONS[offer.key] or "gift"`, and the new keys have no entry.
+- **Buttons:** one card shows "R$ 49" and the others only "BUY".
+- **Cards:** flat and alike: a small icon, a name and a short line.
+
+**1. The right picture on every item:**
+- **Pictures:** use the finished 512x512 pictures in `art/shop/` (`<key>.png`, `event_<id>.png`, made by `art/tools/build-product-icons.py`), the GOD MODE picture, the weapon-tier pictures, ULTRA and VIP.
+- **Upload** them with Studio MCP `upload_image` (the same way as the DrawnIcons: serve `art\` over a localhost HttpListener, batches of 8). Put the ids in `Shared/DrawnIcons` (`shop_<key>`, `shopevent_<id>`).
+- **Mapping:** map every OFFERS / PASSES / Events / weapon-tier key to its picture in one table. A test fails if any sold item has no own picture (no fallback egg or gift).
+
+**2. A 3D, interactive shop:**
+- **Layout:**
+  - tabs **FEATURED · PASSES · ITEMS · EVENTS · BOLTS**;
+  - FEATURED opens first, with a big hero banner (GOD MODE or Everything) and a "BEST VALUE" ribbon;
+  - cards in a clean grid, the UI v2 tokens and rarity frames by price.
+- **Each card:**
+  - **Live 3D:** a live 3D model of the item in a ViewportFrame (Ui3D): the pet, the trampoline, the fan, the spider, the gun set fanned out, the crate opening, the rocket, a dummy in the suit or in gold, the event's star model.
+  - **Motion:** it turns slowly; on hover or focus the card lifts, tilts toward the mouse (parallax), lights up and speeds the turn. On phones, a tap = focus, and a second tap opens the detail.
+  - **Price:** shown the same way on every card, with the Robux mark ("R$ 149"), never a bare "BUY".
+  - **States:** OWNED ✓ / EQUIP for owned items, and TRYING for items on trial.
+- **Detail view** (click a card):
+  - a big turning 3D model you can drag to rotate;
+  - what you get, as 2-3 icon bullets;
+  - TRY 60 s where it exists (the booth/God trial rules);
+  - a big gold BUY.
+  - For events, a short looping preview (the event card picture with motion, or a mini 3D scene).
+- **Buying:**
+  - Roblox's own prompt;
+  - on success, the card bursts (confetti, a coin shower), the item flies to the HUD/bar, a "YOURS!" banner (V9-0g sizes on phones) and the purchase sound;
+  - on cancel, nothing nags.
+- **Feel:** gentle easing; a press squish (KitStyle.press); hover and click sounds; numbers count up; the window opens with a soft scale and a blur of the world behind.
+- **Performance:** only visible cards render 3D (Ui3D budget). Off-screen ones are a still picture, and the low tier uses the still pictures. The window opens in under 0.3 s.
+- **Phones and pads:**
+  - 2 cards per row on phones, 44 px targets, and LayoutCheck 0;
+  - pad focus moves card to card with a clear yellow ring, A opens the detail and X buys.
+- **Fair and policy-safe:** no fake timers or fake discounts, real prices only, and nothing random sold.
+
+**Tests:** T164_ShopPictures and T165_Shop3D.
+- Every sold key has its own uploaded picture.
+- Every card shows a price.
+- Owned items show OWNED.
+- The visible 3D cards stay within the budget.
+- The detail view opens and closes.
+- The shop fits on 16 LayoutCheck screens.
+
+**Capture:** before/after of FEATURED, PASSES and a detail view, on PC and phone.
+
+## V9-0j There is always a ragdoll to shoot (owner, 21 Nov)
+> "Sørg også for at der også går ragdolls rundt omkring i ens lab så der altid er en at skyde."
+
+**Now:**
+- the lab's dummy row (6 dummies; dead ones revive after `REVIVE_AFTER` 10 s);
+- `VisitorService` (3 roaming visitors per owner, phone tier 1, `ROOM_KEEP` 8; VipLab more);
+- the GOD MODE spawns;
+- creatures and the feed terminals take dummies out of play for a while.
+
+So a player can stand there with no standing target.
+
+**Rule: never zero standing targets.**
+- In the owner's lab there are always at least `LAB_MIN_TARGETS` standing dummies (PC 6, tablet 5, phone 4). At least 2 of them are within about 40 studs of the player and in front of the camera when possible.
+- **Kept up live:** checked every 1-2 s, cheap, only while the owner is in their lab (sleep otherwise, V9-5b). When the count drops (KO'd, in a creature, launched, thrown off), a new dummy **walks in** from the rim of the hub (V9-0h): through a small gate/door, or popping out of a spawn tube with a puff.
+- **Life:** the roaming ones wander the hub floor on loose routes:
+  - they stop at machines (cannon, trampoline, ring), look around and wave;
+  - some sit or chat in pairs (DummyLife lines, small);
+  - they flee briefly from bangs, but never out of the lab, and never more than V8's coward rule.
+  - Visitors and the new walkers share one pool, so the counts never add up past the cap.
+- **Caps:**
+  - the total bodies per lab stay within the device tier (`DEVICE_CAPS` / FX_CAPS ragdolls);
+  - KO'd bodies past the cap are cleaned (the oldest first, after `REVIVE_AFTER`);
+  - a body lying still for a long time is recycled.
+- **Newcomers:** the first minute still follows V8 (the greeter, calm, first hits knock flat).
+- **Party labs:** the same count, shared.
+
+**Tests:** T166_AlwaysTargets.
+- KO every dummy in the lab: within 3 s at least the minimum is standing again.
+- The body count never passes the tier cap.
+- With no owner in the lab, the loop is idle.
+
+**Capture:** after 20 s of nonstop shooting, standing dummies are still in view, on PC and phone.
+
+## V9-0k The hub floor as soft 3D pads, not flat white tiles (owner, 21 Nov)
+> "Gulvet ligner lige nu hvide fliser, det skal mere ligne 3d puder agtig."
+
+**Now:** V9-0h laid the hub floor as a light tile texture on a flat part, so it reads as flat white bathroom tiles.
+
+**Target** (as in the leader's hub, `leader_hub.webp`): big square slabs that look **3D and soft, like padded cushions or rounded concrete pads**:
+- each slab slightly raised, with a rounded/bevelled edge catching the light;
+- a dark groove between slabs;
+- a light warm grey, not pure white;
+- a tiny colour and roughness variation per slab.
+
+**How** (pick the cheapest that really looks 3D; check it on the low tier):
+1. **Real geometry, instanced:** one rounded-slab MeshPart (a Creator Store bevelled tile/pad mesh, or a rounded box) reused for every slab.
+   - The same MeshId, so Roblox instances it cheaply.
+   - About 12-16 studs per slab, about 0.6-1 stud thick, with a 0.3-0.5 stud groove.
+   - Anchored, CanQuery/CanTouch off on the visual slabs. One flat invisible collision floor underneath keeps the physics and the ragdolls exactly as now (no bumps).
+   - Only the owner's lab is drawn (PlotPrivacy), so the part count stays low. Use a slab budget per lab in Config.
+2. **Or a PBR MaterialVariant with a strong pillow normal map:** a ColorMap + NormalMap + RoughnessMap of rounded pads, `StudsPerTile` = the slab size, uploaded through Studio MCP like the icons. Use it if 1 costs too much on phones.
+3. **Possibly both:** real slabs near the spawn, the MaterialVariant further out.
+
+**Rules:**
+- **Light:** the light shading comes from the bevel. It must read in the V9-0b bright light and still let white dummies stand out (a greyscale check: dummies brighter than the floor).
+- **No z-fighting or shimmer** (V9-0d scan = 0).
+- **Ground level:** cars drive smoothly; the trampoline, ring and machines sit flush on it.
+- **Christmas:** snow from 1 Dec lies lightly on top.
+- **Switch:** `Config.HUB_FLOOR_PADS`.
+
+**Tests:** T163 extended.
+- The floor collision is one flat surface.
+- The slab count is within the budget.
+- No overlap pairs.
+
+**Capture:** spawn view, close-up and top-down, before and after, PC and phone, next to the leader's floor.
+
+## V9-0l GOD MODE free for everyone in the beta, fully 3D, and easy to spawn many where you aim (owner, 21 Nov)
+> "Gør så alle får GODMODE efter nogle sekunder hvor det passer ind, og så skal den opgraderes til komplet 3d interaktiv og flot og stå som gratis fordi vi lige er åbnet og stadig er i beta selvfølgelig på engelsk. Gør også godmode meget bedre så det lettere at spawne fx. 10 hurtigt hvor man vil, ikke bare random steder."
+
+**1. Free for everyone during the beta** (`Config.GOD_FREE_BETA` = true):
+- **Who:** every player gets GOD MODE free, server-side (the same path as owning the pass: the player attribute `God`, the caps, the gold beam).
+- **When "it fits"** (V8 calm rules, V9-0g phone sizes):
+  - **a newcomer:** after their first wow (the first 3-5 KOs or the first cannon launch), or at about 90 s at the latest, at a calm moment (no shot for 2 s);
+  - **a returning player:** about 10 s after joining.
+- **The reveal:** a short golden reveal, "GOD MODE unlocked: FREE during beta!", with the God icon flying into its HUD button and a chime. Small on phones. Once per player: it is remembered on the profile, so later visits only get a tiny "God Mode is still free in beta" chip once a day at most.
+- **Shop:**
+  - the GOD MODE card shows **"FREE · BETA"** (English) instead of a price, with an OPEN button;
+  - it is not sold while free: hide BUY, so nobody pays for what is free;
+  - the 60 s trial logic is skipped while it is free.
+- **People who already bought the pass** get something extra so they never feel cheated: a "Founder" gold name tag or title and a gold God beam colour no one else has, and they keep GOD MODE for good after the beta.
+- **When the beta ends** (the owner flips the switch): pass owners keep it; everyone else goes back to the trial plus BUY. An in-game note comes a few days before (the What's New rhythm), never a surprise.
+- **All texts in English.**
+
+**2. The God window, fully 3D and beautiful:**
+- **Look:**
+  - a sleek panel (UI v2 tokens);
+  - each dummy kind (TINY, HEAVY, BOUNCY, FLOPPY plus any V8 types) shown as a **live turning 3D dummy** in a ViewportFrame, tilting on hover, with a rarity glow and its name;
+  - a gold header with the God icon and "FREE · BETA".
+- **Controls:**
+  - **Kind:** pick the dummy kind.
+  - **Amount:** a quick picker **1 · 5 · 10 · 25** (within the device cap) and a slider.
+  - **Pattern:** **Point · Line · Circle · Grid · Tower · Rain**.
+  - **Spacing:** a small slider.
+  - **CLEAR MINE:** removes the dummies you spawned.
+- **Keyboard:** G toggles the window or the placing mode; the mouse wheel changes the amount; Q/E rotate the pattern; R/F change the spacing.
+
+**3. Spawning where you want, fast:**
+- **Placing mode:** a ghost preview of the whole pattern follows the aim point on the floor (raycast; it snaps to surfaces, in your own or a party lab only). It shows how many and where, green when the spot is valid and red when not (inside a wall or a machine, outside the lab).
+- **Click / tap / RT** spawns the whole pattern at once, with the gold beam and a satisfying pop per dummy (staggered over about 0.3 s). **Hold and drag** "paints" dummies along the drag (rate-limited).
+- **Phones:**
+  - tap the floor to place;
+  - a big SPAWN button repeats at the last spot;
+  - the pattern and amount sit in a compact bar (44 px targets, out of the thumb zone).
+- **Pads:** the aim point at the screen centre, RT spawns, and the D-pad changes the amount and pattern.
+- **Server:**
+  - checks every request: the place is in your lab, the amount is within the tier cap (twice the cap with God);
+  - a rate limit;
+  - the oldest of your spawned dummies are recycled when the cap is hit (never an error spam).
+  - The remote goes through `Net` with a validator and is listed in CLAUDE.md.
+
+**Tests:** T148 updated and a new T167_GodSpawn.
+- With `GOD_FREE_BETA`, every player has God after the grant moment, and newcomers not before their first wow or 90 s.
+- The shop shows FREE · BETA with no BUY.
+- Pass owners get the Founder extra.
+- A 10-dummy line spawns where aimed, with all 10 inside the lab.
+- A spot outside the lab is refused.
+- The cap and the rate limit hold.
+- The window fits on 16 LayoutCheck screens.
+
+**Capture:** the reveal, the 3D window, a 10-dummy line and a ring being placed, on PC and phone.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
