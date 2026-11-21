@@ -7,6 +7,23 @@
 1. **Bullet holes show on every dummy again.** Find why they are gone (likely the grey matte skin, `DUMMY_TONE`, or the skin layer in `DummySkins` hiding or covering the hole decals). Every gun hit leaves a visible hole or mark on the dummy's skin at the hit point, on PC and phone. Mild style if `BLOOD` is off.
 2. **The reaction depends on where you hit.** A right-arm hit jerks the right arm back and the body turns to that side; a left-arm hit does the same on the left. Legs make the dummy limp on that leg, the head snaps back, and the torso pushes the body back. This is the per-part flinch of V9-0ac; do that part now if it is not live.
 3. **Remove one of the two map places by the spawn:** remove the ring portal "MAPS 5/17" and keep the **Map Board** (the tiles with GO). The board is the one place to pick a map. Nothing is lost: the board covers every map.
+**V9-NOW additions (owner, 21 Nov; same hotfix, fast and cheap, never sloppy):**
+6. **Purple blood on:** `Config.BLOOD = "purple"` (the owner's earlier choice). Small purple drips fall from the hit point and leave little purple marks on the floor that fade after a few seconds. Cartoon and short, capped per device tier; the hit puffs stay.
+   - **Owner decision noted:** this moves away from the all-ages "mild" setting.
+   - Keep `SEVERING` off.
+   - Keep the vitals monitor words as they are unless the owner says "fulde ord".
+7. **The neon launch pads become real pads:**
+   - the station pads (the orange, pink and cyan glowing discs with dashed rings and their floating arrow badges) become real models: a cheap, good-looking launch pad or plate from the Creator Store (metal pad, rubber mat, warning stripes, malware pass) in one style;
+   - no neon fill, no hologram rings;
+   - the icon becomes a painted mark or a small physical sign (the V9-0v style);
+   - the terminals stay.
+8. **The black thing through the dummies' arms:** a dark bar, ring or part sticks through both arms (seen at the elbow). It is most likely the V7-4 joint rings or the belt (`DummySkins.DETAILS`) mis-sized or offset after the grey tone / scale changes, or a visible joint/constraint part. Make the rings sit flush on the skin, or remove them. Check every pose and ragdolled state.
+9. **Recoil on every gun:**
+   - every shooting weapon gets visible recoil: the camera kick up and to the side (scaled per gun: Popper small, shotgun and DMR big, minigun a steady shake), the viewmodel or third-person arm kick, and the gun model snapping back (`GunFeel` / `AmmoClient.onSpent` / `FeelV2`);
+   - it recovers smoothly;
+   - a Settings slider can lower it, and the reduced-motion setting softens it;
+   - all numbers live in Config per gun.
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
