@@ -753,6 +753,19 @@ end
 local function dart(position: Vector3, sourceUserId: number?, toyId: string?, noStick: boolean?, priority: boolean?)
 	local shooter = Players:GetPlayerByUserId(sourceUserId or localUserId)
 	local from, feet = gunOf(shooter and shooter.Character)
+	if toyId == "Bow" then
+		-- (Owner, 21 Nov 2026: "the bow shoots twice". The archer's own screen already flew, stuck and sounded its
+		-- arrow (Client/BowClient): the server's echo draws nothing there. Other screens: the twang and the arrow
+		-- stuck where it landed, never a gun's streak or flash from the bow.)
+		if shooter == nil or shooter.UserId == localUserId then
+			return
+		end
+		fireGun(toyId, start0(from, position), feet, priority)
+		if not noStick and from then
+			stickDart(position, (position - from.Position).Unit, toyId)
+		end
+		return
+	end
 	local real = REAL_GUNS[toyId or ""]
 	fireGun(toyId or "", start0(from, position), feet, priority)
 	if FeelV2.ON and from and toyId and (from.Position - position).Magnitude < 400 then
@@ -886,6 +899,10 @@ end
 -- (Cut short: a nail gun at a wall must not hold every voice.)
 local RICOCHET_CHANCE = 0.25 -- of a round into stone, wood or the ground
 local function shotAt(position: Vector3, sourceUserId: number?, toyId: string, priority: boolean)
+	if toyId == "Bow" then
+		dart(position, sourceUserId, toyId, false, priority) -- (an arrow: stuck where it landed, no bullet hole or ricochet)
+		return
+	end
 	dart(position, sourceUserId, toyId, true, priority)
 	local struck = surfaceStruck(position, sourceUserId)
 	if not struck then
@@ -1058,6 +1075,9 @@ local function toolSound(kind: string, position: Vector3, speed: number, toyId: 
 	end
 	if s.maxSpeed and speed >= s.maxSpeed then
 		return false
+	end
+	if toyId == "Bow" and (sourceUserId == nil or sourceUserId == localUserId) then
+		return true -- (the archer's own arrow already thudded in BowClient: no second one)
 	end
 	play(s.bank, position, s.volume, s.pitch, { cut = s.cut, fade = s.fade, priority = priority, vary = 0.04 })
 	return true

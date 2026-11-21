@@ -410,6 +410,10 @@ local function buildTerminal(into: Instance, origin: Vector3, id: string, target
 		elseif d:IsA("BasePart") and (d.Name == "PathSlab" or d.Name == "PathJoint" or d.Name == "PathStone") then
 			-- (V9-NOW: never on a walk either; the washer's and the vacuum's stood on the yard road, T150.)
 			table.insert(boxes, { cf = d.CFrame, size = d.Size })
+		elseif d:IsA("BasePart") and d.Name == "Walkway" and d.Parent and d.Parent:FindFirstChild("SwingBall") then
+			-- (Owner, 21 Nov 2026: "the swinging ball only swings 20% and back": a terminal stood in its run and
+			-- stopped it at 24 degrees. Its whole arc is kept clear: the run, wider and longer, as the ball reaches.)
+			table.insert(boxes, { cf = d.CFrame, size = d.Size + Vector3.new(6, 0, 12) })
 		elseif d:IsA("Model") and d:GetAttribute("Creature") ~= nil then
 			local bcf, bsize = d:GetBoundingBox()
 			table.insert(boxes, { cf = bcf, size = bsize })
