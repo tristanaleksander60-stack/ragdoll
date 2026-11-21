@@ -2244,3 +2244,25 @@ Write the baseline into `docs/PERF.md`.
   - **P5:** checked that a launched lab body keeps one network owner the whole flight.
   - **Tests:** T185_PhysicsFeel passes: surfaces; hurt (damage 33) sways 6.8° while a whole body sways 0.0°; a launch 22 studs up kept one owner for all 178 frames. T181, T24 and T80 pass.
   - **Still left:** the catch step on a push, the landing roll, the get-up blend by how it lies, the players' own ragdoll, the far-body LOD and the heap cost, the rivals side by side.
+- 21 Nov 2026, Phase M / V9-0e DONE (PC): the Map Board and the ring portals (`Config.MAP_BOARD`).
+  - **The lab:** in the spawn's view and angled to it:
+    - **the Map Board** (`Server/Systems/MapBoard`), 16° left of the spawn's facing, 24 studs out. A lit frame with three lamps, a gold trim and a big screen.
+      - Each client draws the tiles (`Client/MapBoardClient`) as a SurfaceGui in PlayerGui, so they can be tapped. A tile shows the place's picture, its name, the players there now (the server's `Count_<id>`, every 3 s), NEW for a place not visited this visit, and YOU ARE HERE.
+      - A tile opens the travel confirm (window `MapGo`: the picture, one line, GO). GO goes through `PlaceMenu.go`.
+      - E or a pad's X (`MapBoardPrompt`) opens MAPS.
+    - **the gold PLACES portal**, 55° left, 24 studs out (where the bullseye goes with V9-0ae):
+      - a carved stone ring with gold runes and a keystone (glyph + word, both faces);
+      - a ForceField swirl with four beam arms the client turns (near ones only), sparkles drifting out, and a floor glow (WorldLight, within the device's cap);
+      - walking in opens MAPS (Portal "Open" PortalPlaces; Session `used.portalPlaces`).
+  - **Every open-air map:** a copy by its arrival, with My Lab first and the portal beside it.
+  - **SINGLEPLAYER / MULTIPLAYER** are now the same ring family (PortalService): blue and green, each with its own glyph and word. They keep their spots and names.
+  - **Travel is now refused** while seated, holding a player (PlayerGrab) or holding a body (WorldMaps.refusal).
+  - **The hint:** once a visit, after 180 s in the lab with no trip, the portal sparkles and one tip points to it.
+  - **Tests:**
+    - T159_PlacesPortal passes: the board is 11° off the view's middle (the phone's half-view is 18°) and the portal 37° (PC 51°); the colours match their kind; 5 maps have their own board and portal; every place travels and comes home; the board counts the traveller; travel is refused from a seat and while holding a body.
+    - T51 and T163 pass. LayoutCheck 0 problems.
+  - **Captures:** art/captures/v9e/spawn_view.jpg and island_arrival.jpg.
+  - **Not done:**
+    - a calm portal hum (no licensed calm hum among the sounds yet);
+    - the "Visit 2 places" experiment card;
+    - pads cannot pick a tile on the board itself (E/X opens the MAPS window instead).

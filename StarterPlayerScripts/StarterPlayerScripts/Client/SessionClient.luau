@@ -45,7 +45,7 @@ end
 
 -- V9-0w: a note for Session_v1 (FpAuto, FpStay).
 function SessionClient.note(kind: string, data: any?)
-	if kind == "FpAuto" or kind == "FpStay" then
+	if kind == "FpAuto" or kind == "FpStay" or kind == "MapBoard" then -- (V9-0e: a trip from the Map Board)
 		send(kind, data)
 	end
 end

@@ -142,7 +142,9 @@ function PortalUI.start()
 	remote.OnClientEvent:Connect(function(kind: unknown, data: unknown)
 		local d = if type(data) == "table" then data :: any else {}
 		if kind == "Open" then
-			if d.portal == "PortalSolo" then
+			if d.portal == "PortalPlaces" then
+				Controller.open("Maps") -- (V9-0e: the gold PLACES portal opens the places)
+			elseif d.portal == "PortalSolo" then
 				Controller.open("Solo")
 			else
 				Controller.open("Servers")

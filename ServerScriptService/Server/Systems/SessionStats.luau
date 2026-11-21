@@ -255,6 +255,8 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 		r.plat = if r.touch and not r.keys then (if short > 0 and short <= 500 then "phone" else "tablet")
 			elseif r.pad and not r.keys then "console"
 			else "pc"
+	elseif kind == "MapBoard" then
+		SessionStats.used(player, "mapBoard") -- (V9-0e: a trip chosen on the Map Board)
 	elseif kind == "Used" and type(data) == "string" then
 		-- (Phase 0: the first time this visit an input family is really used.)
 		if data == "pad" then

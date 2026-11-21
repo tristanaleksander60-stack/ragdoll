@@ -1086,6 +1086,15 @@ function Playground.build(labOrigin: Vector3, name: string?)
 		pedestal(48, 6, 7.5) -- the human cannon
 		-- Round 5, phase 4: SINGLEPLAYER and MULTIPLAYER behind the spawn.
 		require(script.Parent.PortalService).buildPortals(folder, origin)
+		-- V9-0e: the Map Board and the gold PLACES portal in the spawn's view (a failure never costs the lab).
+		if (Config :: any).MAP_BOARD then
+			local okBoard, errBoard = pcall(function()
+				require(script.Parent.MapBoard).buildLab(folder, origin)
+			end)
+			if not okBoard then
+				log.warn("MapBoard failed in " .. folder.Name .. ": " .. tostring(errBoard))
+			end
+		end
 		for _, s in STATIONS do
 			pedestal(s.x, s.z, 6.5)
 		end

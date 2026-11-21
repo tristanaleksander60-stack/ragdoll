@@ -136,6 +136,7 @@ safe("Crosshair", function() Crosshair.start() end) -- with a gun picked: a cros
 safe("TouchShoot", function() require(Client:WaitForChild("TouchShoot")).start() end) -- touch: SHOOT button, centre crosshair, "tap a dummy" (round 5)
 safe("BloodFx", function() require(Client:WaitForChild("BloodFx")).useHoles(BulletHoles) end) -- bodies bleed from their bullet holes
 safe("PlaceMenu", function() PlaceMenu.start() end)
+safe("MapBoardClient", function() (require(Client:WaitForChild("MapBoardClient")) :: any).start() end) -- V9-0e: the Map Board tiles, the portal swirls
 safe("ZoneLighting", function() ZoneLighting.start() end)
 safe("Settings", function() require(Client:WaitForChild("Settings")).start() end) -- SETTINGS, in MENU (round 3, M6)
 safe("ChristmasFx", function() require(Client:WaitForChild("ChristmasFx")).start() end) -- falling snow while the Christmas theme is on (round 3, M7)

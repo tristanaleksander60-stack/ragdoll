@@ -253,6 +253,27 @@ function PortalService.buildPortals(folder: Instance, origin: Vector3)
 	local Config = require(game:GetService("ReplicatedStorage").Shared.Config) :: any
 	if Config.UI_CLEAN then
 		local function door(name: string, z: number, color: Color3, text: string)
+			if Config.MAP_BOARD then
+				-- (V9-0e: the same ring family as the gold PLACES portal: SINGLEPLAYER blue, MULTIPLAYER
+				-- green, each with its word and glyph on the keystone; same spot, same touch.)
+				local MapBoard = require(script.Parent:WaitForChild("MapBoard")) :: any
+				local at = origin + Vector3.new(-66, 0, z)
+				local gm, swirl = MapBoard.gate(folder, at, origin + Vector3.new(0, 0, z), if name == "PortalSolo" then "Solo" else "Multi", MapBoard.RING_SMALL)
+				gm.Name = name
+				swirl:SetAttribute("Portal", name)
+				local lastTouch: { [Player]: number } = {}
+				table.insert(portalTouch, lastTouch)
+				swirl.Touched:Connect(function(other)
+					local character = other:FindFirstAncestorOfClass("Model")
+					local player = character and Players:GetPlayerFromCharacter(character)
+					if not player or os.clock() - (lastTouch[player] or -math.huge) < 4 then
+						return
+					end
+					lastTouch[player] = os.clock()
+					remote:FireClient(player, "Open", { portal = name })
+				end)
+				return
+			end
 			local m = Instance.new("Model")
 			m.Name = name
 			local base = CFrame.new(origin + Vector3.new(-66, 0, z)) * CFrame.Angles(0, math.rad(-90), 0)

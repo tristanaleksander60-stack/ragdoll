@@ -820,6 +820,26 @@ function WorldMaps.refusal(player: Player, id: unknown): string?
 	if character:GetAttribute("BodyLoose") or (state ~= nil and state ~= "Standing") then
 		return "Get up first to travel!"
 	end
+	-- (V9-0e: never out of a seat, nor with someone or a body in your hands: the car or the body would be
+	-- left behind mid-ride or mid-throw.)
+	local seat = humanoid.SeatPart
+	if seat and seat.Parent then -- (a seat since removed can linger in SeatPart: it no longer holds anyone)
+		return "Get out of the seat first"
+	end
+	local okGrab, grabbing = pcall(function()
+		return (require(script.Parent:WaitForChild("PlayerGrab")) :: any).holdingOf(player)
+	end)
+	if okGrab and grabbing then
+		return "Let go first"
+	end
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if dummies then
+		for _, d in dummies:GetChildren() do
+			if d:GetAttribute("Held") == true and d:GetAttribute("SimulatedBy") == player.UserId then
+				return "Let go first"
+			end
+		end
+	end
 	return nil
 end
 

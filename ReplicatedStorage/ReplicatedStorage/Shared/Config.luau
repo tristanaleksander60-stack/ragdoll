@@ -398,6 +398,10 @@ local Config = {
 	-- Big forces (blasts, the cannon, cars, heavy blows, throws) still ragdoll at once.
 	-- V9-0ab (owner, 21 Nov 2026: "if you fall out of your map you spawn back in your lab"): Server/Systems/OutOfBounds.
 	OUT_OF_BOUNDS = true,
+	-- V9-0e / Phase M (owner, 21 Nov 2026: "much nicer portals and a sign with the maps where you choose"): the Map Board
+	-- and the gold PLACES ring portal in every lab's spawn view, a copy at every map's arrival, Solo/Multi in
+	-- the same ring family (Server/Systems/MapBoard, Client/MapBoardClient).
+	MAP_BOARD = true,
 	SHOT_FLINCH = true,
 	SHOT_ONE_KILL_POWER = 2.4,
 	NEWCOMER_DAMAGE = 2.5,

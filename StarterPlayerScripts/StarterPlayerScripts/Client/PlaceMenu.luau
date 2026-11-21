@@ -363,4 +363,9 @@ function PlaceMenu.goForTest(id: string)
 	go(id)
 end
 
+-- V9-0e: the Map Board's GO (Client/MapBoardClient) travels the same way the cards do.
+function PlaceMenu.go(id: string)
+	go(id)
+end
+
 return PlaceMenu
