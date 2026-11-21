@@ -945,6 +945,44 @@ They stay kid-safe and cartoon. Every car has its own top speed, mass and handli
 
 **Capture:** the garage row from the spawn, a bowling strike sequence and a ramp jump, PC and phone.
 
+**Owner addition (21 Nov): first person inside the car, with a real interior.**
+> "Gør så man kommer i first person ind i biler og ser bilen indendørs med interiør."
+
+- **Entering a car:** the camera glides into the **driver's seat in first person** (head height, slight look-ahead).
+  - **V** (Select on a pad, the eye button on a phone) switches between the cockpit view and the chase camera behind the car.
+  - The last choice is remembered per player.
+  - **Leaving the car** returns you to the camera you had on foot.
+- **Every vehicle gets a real interior** that is seen from the inside: dashboard, steering wheel, seats, doors, windows (glass slightly tinted, with a faint reflection), mirrors and roof. Use models that come with interiors (Creator Store, malware pass), or add a fitted interior set. Low-poly but clean, matched to each vehicle (the sports car low and sporty, the monster truck high cab, the tank's hatch view, the go-kart open, the bus's big windscreen, the ice-cream truck's van cab).
+- **Alive from inside:**
+  - the steering wheel turns with the steering;
+  - the driver's hands (the player's own arms, `Viewmodel` style) hold the wheel;
+  - a **dashboard speedometer** with a needle that matches V9-0c's gauge (the HUD gauge hides in the cockpit view, or shrinks);
+  - the gear/R light, indicators and headlights glow on the dash;
+  - the horn button on the wheel;
+  - a small engine vibration and camera bob;
+  - a head turn that follows the steering a little;
+  - road bumps you feel.
+- **Hitting dummies from inside** (V9-0y): a bump and a camera jolt, dummies flying over the bonnet and windscreen (no glass breaking into shards; a cartoon crack at most), and the combo pill.
+- **Readable:**
+  - the window frames never block the road ahead (an FOV tuned per vehicle, about 75-85);
+  - the bonnet visible for aiming;
+  - in portrait phones, a slightly wider FOV.
+- **The body:** the player's own character is hidden in the cockpit view except the arms (no head clipping into the camera).
+- **Phones and pads:**
+  - the drive controls (V9-0c pedals and steering) sit over the cockpit without covering the windscreen;
+  - LayoutCheck shows 0 problems.
+- **Performance:** interiors load only for the car you sit in (stream them in on entering), and the low tier uses a simpler dash.
+
+**Tests:** T177 extended.
+- Entering puts the camera in the driver's seat.
+- V toggles to the chase cam.
+- The wheel turns with the steer.
+- The dash speedometer matches the speed (±2).
+- Leaving restores the camera.
+- No parts of the player's own body block the view.
+
+**Capture:** the cockpit of 3 vehicles while driving into dummies, PC and phone.
+
 ## V9-0z GOD MODE dummies come alive (owner, 21 Nov; quick, Phase A)
 > "Fiks så at de ragdolls man spawner i godmode ikke bare bliver stående."
 
@@ -1100,44 +1138,6 @@ So you rarely get a second or third shot in.
 **Tests:** T182_ViewmodelTouch. With `DevTouch` on (Studio), in first person, a Popper, a shotgun, a bat and a grenade each show a viewmodel inside the screen bounds on 3 phone sizes (portrait and landscape), and a shot triggers the kick.
 
 **Capture:** phone first person with the Popper, in landscape and portrait.
-
-**Owner addition (21 Nov): first person inside the car, with a real interior.**
-> "Gør så man kommer i first person ind i biler og ser bilen indendørs med interiør."
-
-- **Entering a car:** the camera glides into the **driver's seat in first person** (head height, slight look-ahead).
-  - **V** (Select on a pad, the eye button on a phone) switches between the cockpit view and the chase camera behind the car.
-  - The last choice is remembered per player.
-  - **Leaving the car** returns you to the camera you had on foot.
-- **Every vehicle gets a real interior** that is seen from the inside: dashboard, steering wheel, seats, doors, windows (glass slightly tinted, with a faint reflection), mirrors and roof. Use models that come with interiors (Creator Store, malware pass), or add a fitted interior set. Low-poly but clean, matched to each vehicle (the sports car low and sporty, the monster truck high cab, the tank's hatch view, the go-kart open, the bus's big windscreen, the ice-cream truck's van cab).
-- **Alive from inside:**
-  - the steering wheel turns with the steering;
-  - the driver's hands (the player's own arms, `Viewmodel` style) hold the wheel;
-  - a **dashboard speedometer** with a needle that matches V9-0c's gauge (the HUD gauge hides in the cockpit view, or shrinks);
-  - the gear/R light, indicators and headlights glow on the dash;
-  - the horn button on the wheel;
-  - a small engine vibration and camera bob;
-  - a head turn that follows the steering a little;
-  - road bumps you feel.
-- **Hitting dummies from inside** (V9-0y): a bump and a camera jolt, dummies flying over the bonnet and windscreen (no glass breaking into shards; a cartoon crack at most), and the combo pill.
-- **Readable:**
-  - the window frames never block the road ahead (an FOV tuned per vehicle, about 75-85);
-  - the bonnet visible for aiming;
-  - in portrait phones, a slightly wider FOV.
-- **The body:** the player's own character is hidden in the cockpit view except the arms (no head clipping into the camera).
-- **Phones and pads:**
-  - the drive controls (V9-0c pedals and steering) sit over the cockpit without covering the windscreen;
-  - LayoutCheck shows 0 problems.
-- **Performance:** interiors load only for the car you sit in (stream them in on entering), and the low tier uses a simpler dash.
-
-**Tests:** T177 extended.
-- Entering puts the camera in the driver's seat.
-- V toggles to the chase cam.
-- The wheel turns with the steer.
-- The dash speedometer matches the speed (±2).
-- Leaving restores the camera.
-- No parts of the player's own body block the view.
-
-**Capture:** the cockpit of 3 vehicles while driving into dummies, PC and phone.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
