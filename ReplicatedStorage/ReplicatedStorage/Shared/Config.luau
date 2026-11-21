@@ -5,7 +5,7 @@ local Config = {
 	GameName = "Ragdoll Havoc", -- (the owner's name for the game, 10 Nov 2026)
 	-- Bumped with every change that goes live (round 5): SessionStats keeps it per visit, so the
 	-- numbers of one build can be told from another's.
-	Version = "0.31.0", -- (0.31.0, 21 Nov 2026, V9 milestone 1: GOD MODE free in the beta with aimed patterns, the time dial (Z), grey matte ragdolls, the first shot in first person, bigger unlock gaps, the 3D shop, codes, the town square, padded hub floor, always a ragdoll to shoot; 0.30.0, 21 Nov 2026: wide paths (twice as wide, no stub at the bullseye), GOD MODE: create life with a free 60 s try; 0.29.0, 21 Nov 2026: connected path network with a plaza, grass verges with bushes, a real lava pit, icons instead of words, a full 6-weapon start bar, toss buttons at the cannon, lava and trampoline, fewer pop-ups; 0.28.0, 21 Nov 2026: every weapon its own sound, a 4-tool start bar with Launch at 3 and the Rocket among the hardest, SURPRISE-style banners, nicer lab paths, a FEED button, sign and drop ring at every creature and station; 0.27.1 UI audit before the ads, 21 Nov 2026: one WEAPONS button, a quiet start, signs in the world, knockable barrels/crates/cones, the weapon in your hand in 3D; 0.27.0 V8-1..6: CRASH score and the long cannon arc, missions, readable hits, fair chase, spawn dummies, streak freeze, admins, 21 Nov 2026; 0.26.0 V8-0: the first hit lands, a full bar from the start, a calm first minutes, the cannon in view, 21 Nov 2026; 0.25.0 v7: paths, crash-test dummies, event banner card, console layout, 20 Nov 2026; 0.24.0 v6: notifications, admin and director menus, bigger lab with garden, creature yard, birds, map shop, 20 Nov 2026; 0.18.0 phase 0; 0.19.0 phases 1-3; 0.20.0 the release; 0.21.0 v3 look, cars, animals; 0.22.0 open-air maps, launchers, disasters, train, throw tower, 19 Nov 2026; 0.23.0 v4: talk to NPCs, real gorilla and bulls, 11 surprises, cars, slow-mo, lab zones, 20 Nov 2026; SessionStats also keeps game.PlaceVersion)
+	Version = "0.31.1", -- (0.31.1, 21 Nov 2026, V9-NOW hotfix: bullet holes on every dummy, a reaction by where it is hit, one map place (the board); 0.31.0, 21 Nov 2026, V9 milestone 1: GOD MODE free in the beta with aimed patterns, the time dial (Z), grey matte ragdolls, the first shot in first person, bigger unlock gaps, the 3D shop, codes, the town square, padded hub floor, always a ragdoll to shoot; 0.30.0, 21 Nov 2026: wide paths (twice as wide, no stub at the bullseye), GOD MODE: create life with a free 60 s try; 0.29.0, 21 Nov 2026: connected path network with a plaza, grass verges with bushes, a real lava pit, icons instead of words, a full 6-weapon start bar, toss buttons at the cannon, lava and trampoline, fewer pop-ups; 0.28.0, 21 Nov 2026: every weapon its own sound, a 4-tool start bar with Launch at 3 and the Rocket among the hardest, SURPRISE-style banners, nicer lab paths, a FEED button, sign and drop ring at every creature and station; 0.27.1 UI audit before the ads, 21 Nov 2026: one WEAPONS button, a quiet start, signs in the world, knockable barrels/crates/cones, the weapon in your hand in 3D; 0.27.0 V8-1..6: CRASH score and the long cannon arc, missions, readable hits, fair chase, spawn dummies, streak freeze, admins, 21 Nov 2026; 0.26.0 V8-0: the first hit lands, a full bar from the start, a calm first minutes, the cannon in view, 21 Nov 2026; 0.25.0 v7: paths, crash-test dummies, event banner card, console layout, 20 Nov 2026; 0.24.0 v6: notifications, admin and director menus, bigger lab with garden, creature yard, birds, map shop, 20 Nov 2026; 0.18.0 phase 0; 0.19.0 phases 1-3; 0.20.0 the release; 0.21.0 v3 look, cars, animals; 0.22.0 open-air maps, launchers, disasters, train, throw tower, 19 Nov 2026; 0.23.0 v4: talk to NPCs, real gorilla and bulls, 11 surprises, cars, slow-mo, lab zones, 20 Nov 2026; SessionStats also keeps game.PlaceVersion)
 	Phase = 3,
 	-- Heavy weapons and close blasts can cut a limb off (round 2, N2). Roblox lists severed body
 	-- parts as Restricted (18+, ID-checked players only): switching this off keeps the game at a
@@ -31,7 +31,8 @@ local Config = {
 	-- Mild content (phase 0; the owner's earlier choices stay one switch away):
 	--   BLOOD "off": hits show cartoon stars, sparks and dust (HitFxConfig "Stylised"), and the
 	--   Settings row is hidden; "purple": the owner's purple cartoon blood, players may turn it off.
-	BLOOD = "off" :: "off" | "purple",
+	-- V9-NOW 6 (owner, 21 Nov 2026: "purple blood on"; a move away from the all-ages "mild" setting, the owner's call):
+	BLOOD = "purple" :: "off" | "purple",
 	--   TOY_NAMES: toy-style names for the real-gun nicknames (G17 -> Popper ...; Toys.TOY_NAMES).
 	--   Internal ids stay, so saves, products and sounds are untouched. false = the old names.
 	TOY_NAMES = true,
@@ -402,6 +403,41 @@ local Config = {
 	-- and the gold PLACES ring portal in every lab's spawn view, a copy at every map's arrival, Solo/Multi in
 	-- the same ring family (Server/Systems/MapBoard, Client/MapBoardClient).
 	MAP_BOARD = true,
+	-- V9-NOW (owner, 21 Nov 2026: "remove one of the two map places"): the gold PLACES ring portal is gone; the Map Board
+	-- (tiles with GO) is the one place to pick a map, in the lab and at every map. true = the portal again.
+	MAP_PORTAL = false,
+	-- V9-NOW 10 (owner, 21 Nov 2026): the small vitals monitor shows the body your round just hit, for HospitalCharts.HOLD
+	-- (3) s; a new hit restarts it, another body switches it; no hover. false = the old dead-body hover (Settings).
+	MONITOR_ON_HIT = true,
+	-- V9-NOW 7 (owner, 21 Nov 2026: "real launch pads instead of neon"): every launch pad is a steel plate with a
+	-- rubber mat, bolts, painted colour and pictogram (Playground.realPad); no glowing rings on them (LabGuide).
+	REAL_PADS = true,
+	-- V9-NOW 9 (owner, 21 Nov 2026: "recoil on every gun"): your own shot kicks the camera up by `up` degrees and to a
+	-- random side by `side`, `shake` adds a little trauma (the minigun's steady shake); it settles back smoothly
+	-- (FeelTuning.KICK_RETURN). Settings "Recoil" FULL/HALF/OFF scales it, Motion LESS halves it. A gun not here
+	-- uses FeelTuning.GUN_FX kick.
+	RECOIL = {
+		Blaster = { up = 1.0, side = 0.3, shake = 0 }, -- (the Popper: small)
+		Deagle = { up = 2.6, side = 0.7, shake = 0.04 },
+		GoldenDeagle = { up = 2.6, side = 0.7, shake = 0.04 },
+		Revolver = { up = 2.3, side = 0.6, shake = 0.03 },
+		SMG = { up = 0.55, side = 0.35, shake = 0 },
+		TommyGun = { up = 0.6, side = 0.4, shake = 0 },
+		AK = { up = 0.9, side = 0.45, shake = 0.01 },
+		M4 = { up = 0.75, side = 0.35, shake = 0.01 },
+		LMG = { up = 0.7, side = 0.45, shake = 0.02 },
+		Minigun = { up = 0.25, side = 0.2, shake = 0.05 }, -- (a steady shake, not a climb)
+		Sniper = { up = 4.2, side = 0.9, shake = 0.08 },
+		DMR = { up = 2.2, side = 0.5, shake = 0.04 },
+		Shotgun = { up = 3.8, side = 1.0, shake = 0.1 },
+		AutoShotgun = { up = 2.6, side = 0.8, shake = 0.06 },
+		DoubleBarrel = { up = 4.8, side = 1.2, shake = 0.14 },
+		FlareGun = { up = 1.8, side = 0.5, shake = 0.02 },
+		LaserRifle = { up = 0.3, side = 0.15, shake = 0 },
+		Railgun = { up = 5.0, side = 0.8, shake = 0.16 },
+		Crossbow = { up = 1.2, side = 0.3, shake = 0 },
+		NailGun = { up = 0.3, side = 0.2, shake = 0 },
+	},
 	-- V9-2b / Phase T (owner, 21 Nov 2026: "a little computer terminal you walk up to and press FEED, spam allowed"): a
 	-- terminal by every creature and machine instead of the floating prompt (LabGuide, Client/TerminalClient).
 	FEED_TERMINAL = true,

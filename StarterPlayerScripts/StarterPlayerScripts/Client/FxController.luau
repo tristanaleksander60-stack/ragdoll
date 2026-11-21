@@ -934,7 +934,15 @@ local function roundInBody(position: Vector3, sourceUserId: number?, toyId: stri
 	local along = hitDirection(position, sourceUserId or localUserId)
 	local body = bodyAt(position)
 	local dry = dryHit()
-	local part = if body and not dry then BulletHoles.body(body, position) else nil
+	-- (V9-NOW, owner 21 Nov 2026: "bullet holes on every dummy": a dry hit leaves one too, in the mild style:
+	-- a dark round hole with a grey scorch ring, never purple.)
+	local part = if body then BulletHoles.body(body, position, dry) else nil
+	-- (V9-NOW 10: your own round puts that body on the small vitals monitor for 3 s.)
+	if body and sourceUserId == localUserId then
+		pcall(function()
+			(require(script.Parent:WaitForChild("HospitalCharts")) :: any).ownHit(body)
+		end)
+	end
 	-- (A player in the plaza takes no wound: a knock, not a round in flesh.)
 	if dry and not onPlayerBody(position) then
 		play("hit", position, 0.42, 1.2, { priority = priority })
@@ -944,6 +952,10 @@ local function roundInBody(position: Vector3, sourceUserId: number?, toyId: stri
 		end
 	elseif hasBank("flesh") and not onPlayerBody(position) then
 		play("flesh", position, 0.5, 1, { cut = 0.5, priority = priority })
+		-- (V9-NOW 6: with the purple blood on, the hit puff stays: a smaller white-yellow puff at the hole.)
+		if body and (require(Shared:WaitForChild("Config")) :: any).V8_FIRST_HIT == true then
+			sparks(position, rng:NextInteger(3, 6), 0.4, PUFF_COLORS)
+		end
 	else
 		play("hit", position, 0.28, 1.45, { priority = priority })
 	end

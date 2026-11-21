@@ -37,6 +37,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
 local Anatomy = require(Shared:WaitForChild("Anatomy"))
 local Theme = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUITheme"))
+local Config = require(Shared:WaitForChild("Config"))
 
 local Client = script.Parent
 local Toast = require(Client:WaitForChild("Toast"))
@@ -187,6 +188,9 @@ HospitalCharts.AUTO_SCREEN = Vector2.new(667, 375) -- the phone whose monitor it
 HospitalCharts.AUTO_GRACE = 0.35 -- s off the body before it goes (no flicker between two limbs)
 local auto = false
 local autoSeenAt = 0
+local shotBody: Model? = nil -- (V9-NOW 10: the body your last round hit, and when)
+local shotAt = -math.huge
+local fadeAuto: () -> () -- (set below, beside endAuto)
 local endAuto: () -> () -- (the small monitor off: set below, where it is made)
 local slideOut: Tween? = nil -- (doctor mode sliding away: cancelled if the small monitor takes the screen)
 
@@ -1041,6 +1045,46 @@ endAuto = function()
 	setAuto(nil)
 end
 
+-- V9-NOW 10: the small monitor shrinks away (FADE s), then goes; a hit meanwhile keeps it (shotStep).
+HospitalCharts.HOLD = 3 -- s after your last hit
+HospitalCharts.FADE = 0.18
+HospitalCharts.TOUCH_TOP = 58 -- px under the safe area's top (the top cluster's row)
+local fading = false
+function fadeAuto()
+	if fading or not auto then
+		return
+	end
+	if GuiService.ReducedMotionEnabled then
+		setAuto(nil)
+		return
+	end
+	fading = true
+	local tween = TweenService:Create(popScale(), TweenInfo.new(HospitalCharts.FADE, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0.6 })
+	tween.Completed:Once(function()
+		fading = false
+		local b = shotBody
+		if not (b and b.Parent and os.clock() - shotAt < HospitalCharts.HOLD) then
+			setAuto(nil)
+		else
+			popScale().Scale = 1 -- (hit again while it shrank: back up)
+		end
+	end)
+	tween:Play()
+end
+
+-- Your round hit `body` (FeelBus "OwnHit", from FxController and PokeController): on the monitor for HOLD s.
+function HospitalCharts.ownHit(body: Model?)
+	if not body or not body.Parent or not (Config :: any).MONITOR_ON_HIT then
+		return
+	end
+	shotBody, shotAt = body, os.clock()
+end
+
+-- Tests: what the small monitor shows now (nil: it is not up).
+function HospitalCharts.shownForTest(): Model?
+	return if auto and not fading then patient else nil
+end
+
 -- Beside the mouse, never over the aim: on the side it was on until the mouse is well past the
 -- middle (no jumping to and fro across it) or that side has no room; always whole on the screen
 -- and above the tool bar.
@@ -1240,8 +1284,52 @@ function HospitalCharts.start()
 		end
 	end)
 	local refreshAt = 0
+	-- V9-NOW 10 (owner, 21 Nov 2026: "only for the dummy you shoot, for 3 s"): the small monitor shows the
+	-- body your last round hit, on every device; a new hit restarts the HOLD, a hit on another body switches
+	-- to it, and HOLD s after the last hit it shrinks away. No hover, nothing left up while you do not shoot.
+	local function shotStep(dt: number)
+		local t = os.clock()
+		local b = shotBody
+		local live = b ~= nil and b.Parent ~= nil and t - shotAt < HospitalCharts.HOLD
+			and not ReplayController.isPlaying() and player:GetAttribute("Building") ~= true
+		if not live then
+			if auto then
+				fadeAuto()
+			end
+			return
+		end
+		if auto and patient ~= b then
+			watch(b) -- (another body hit: the panel switches at once, a fresh trace)
+			for _, list in { (ui :: Ui).columns, (ui :: Ui).pleth } do
+				for _, c in list do
+					c.Visible = false
+				end
+			end
+			cursor = 0
+		end
+		setAuto(b)
+		local last = UserInputService:GetLastInputType()
+		local mouse = UserInputService.MouseEnabled and last ~= Enum.UserInputType.Touch and not string.find(last.Name, "Gamepad", 1, true)
+		if mouse then
+			followMouse(UserInputService:GetMouseLocation())
+		else
+			-- (Touch and pads: the top middle, under the top cluster, smaller on a phone; the aim stays clear.)
+			local u = ui :: Ui
+			u.panel.AnchorPoint = Vector2.new(0.5, 0)
+			u.panel.Position = UDim2.new(0.5, 0, 0, HospitalCharts.TOUCH_TOP)
+		end
+		if t >= refreshAt then
+			refreshAt = t + 1
+			redraw()
+		end
+		sweep(dt)
+	end
 	-- Round 4, M11: outside doctor mode, the small monitor over a dead body under the mouse.
 	local function autoStep(dt: number)
+		if (Config :: any).MONITOR_ON_HIT then
+			shotStep(dt)
+			return
+		end
 		local t = os.clock()
 		-- (A mouse in use: not a touch, not a gamepad that leaves the mouse where it last was.)
 		local last = UserInputService:GetLastInputType()

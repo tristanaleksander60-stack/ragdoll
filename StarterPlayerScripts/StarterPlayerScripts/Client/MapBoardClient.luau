@@ -364,7 +364,7 @@ local function hint()
 		end
 	end
 	pcall(function()
-		(require(Client:WaitForChild("Notify")) :: any).say("tip", "Explore other maps: step into the gold portal!", Color3.fromRGB(255, 196, 64), "placesPortal")
+		(require(Client:WaitForChild("Notify")) :: any).say("tip", if (Config :: any).MAP_PORTAL then "Explore other maps: step into the gold portal!" else "Explore other maps: pick one on the MAPS board!", Color3.fromRGB(255, 196, 64), "placesPortal")
 	end)
 end
 

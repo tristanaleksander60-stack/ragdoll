@@ -87,10 +87,26 @@ function FeelV2.addTrauma(amount: number)
 	end
 end
 
+-- V9-NOW 9: your own shot: up by Config.RECOIL[gun].up, to a random side by .side, a little trauma (.shake);
+-- scaled by Settings "Recoil" and halved by Motion LESS. Guns not in Config.RECOIL use GUN_FX kick.
+local kickYaw = 0
 function FeelV2.kick(toyId: string)
+	local scale = Settings.recoil() * (if reducedMotion() then 0.5 else 1)
+	if scale <= 0 then
+		return
+	end
+	local own = ((Config :: any).RECOIL or {})[toyId]
 	local spec = FeelTuning.GUN_FX[toyId]
-	if spec then
-		kick = math.min(FeelTuning.KICK_MAX, kick + spec.kick)
+	local up = if own then own.up elseif spec then spec.kick else nil
+	if not up then
+		return
+	end
+	kick = math.min(FeelTuning.KICK_MAX, kick + up * scale)
+	if own then
+		kickYaw = math.clamp(kickYaw + (if math.random() < 0.5 then -1 else 1) * own.side * scale, -FeelTuning.KICK_MAX / 2, FeelTuning.KICK_MAX / 2)
+		if own.shake > 0 then
+			trauma = math.min(1, trauma + own.shake * scale)
+		end
 	end
 end
 
@@ -98,12 +114,13 @@ function FeelV2.cameraStep(dt: number): CFrame
 	fps = fps + (1 / math.max(dt, 1 / 240) - fps) * math.min(1, dt * 4)
 	trauma = math.max(0, trauma - FeelTuning.TRAUMA_DECAY * dt)
 	kick = math.max(0, kick - (FeelTuning.KICK_RETURN + kick * 6) * dt)
+	kickYaw -= kickYaw * math.min(1, dt * 10) -- (the side kick eases back smoothly)
+	-- (V9-NOW 9: Shake off stops the trauma shake; the recoil has its own setting, Settings "Recoil".)
 	if not Settings.shake() then
-		trauma, kick = 0, 0
-		return CFrame.identity
+		trauma = 0
 	end
 	local shake = FeelTuning.shakeOf(trauma) * (if reducedMotion() then 0.5 else 1)
-	if shake < 0.0005 and kick < 0.01 then
+	if shake < 0.0005 and kick < 0.01 and math.abs(kickYaw) < 0.01 then
 		return CFrame.identity
 	end
 	noiseTime += dt * FeelTuning.shakeHz(fps)
@@ -111,7 +128,7 @@ function FeelV2.cameraStep(dt: number): CFrame
 	local pitch = deg * math.clamp(math.noise(noiseTime, 1.3) * 2, -1, 1)
 	local yaw = deg * math.clamp(math.noise(noiseTime, 7.7) * 2, -1, 1)
 	local roll = FeelTuning.SHAKE_ROLL_DEG * shake * math.clamp(math.noise(noiseTime, 13.1) * 2, -1, 1)
-	return CFrame.Angles(math.rad(pitch + kick), math.rad(yaw), math.rad(roll))
+	return CFrame.Angles(math.rad(pitch + kick), math.rad(yaw + kickYaw), math.rad(roll))
 end
 
 ------------------------------------------------------------------------------------------------

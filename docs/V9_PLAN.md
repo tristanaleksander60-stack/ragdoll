@@ -2441,3 +2441,15 @@ Write the baseline into `docs/PERF.md`.
       - P4: weight in hits;
       - P5: the settle assist's heap cost (measure it again, or drop the assist);
       - P6: videos side by side with the rivals, plus two blind video reviews.
+- 21 Nov 2026, **V9-NOW done** (PC, release 0.31.1; points 1-3, 6-10 and 13; 11 and 12 NOT done yet, next):
+  - **1 Holes:** the cause was `FxController.dryHit()` (V8_FIRST_HIT with BLOOD off) skipping `BulletHoles.body`. Every round now leaves a hole (mild style: dark hole in a grey scorch ring).
+  - **13 Holes on the skin:** the skins' collision is Box, so the old ray stopped on the box. A hole now sits on the ellipse inscribed in the skin box (`BulletHoles.SKIN_FIT` 0.96), facing its normal, welded to the limb.
+  - **2 Reaction by part:** `ActiveRagdoll.shotReaction` (SHOT_FLINCH): arm = trunk yaw to that side (`SHOT_ARM_TURN` 5 rad/s), torso = push back (`SHOT_TORSO_PUSH` 2.5; 4 floored bodies in T181), head = push back + Neck 42; leg limp as before. Poses: arm Waist 22, head Neck 42.
+  - **3 One map place:** `Config.MAP_PORTAL = false` (no gold PLACES ring in labs or maps); the hint points at the MAPS board. T159 updated.
+  - **6 Purple blood:** `Config.BLOOD = "purple"`; splats go after 4 s (`SPLAT_HOLD`), phone cap 110 parts; the hit puff stays. SEVERING still off, monitor words unchanged.
+  - **7 Real pads:** `Config.REAL_PADS`: `Playground.realPad` (diamond-plate steel, rubber mat, bolts, painted colour ring, pictogram decal; no neon, no floating badge) on the 3 stations, the cannon pad and the chimney; no glowing guide rings on Station: spots. Code-built, not a Creator Store model (the store's pads were scripted unknowns); T50 accepts `RealPad`.
+  - **8 Dark bar through the arms:** the V7-4 joint rings (sized on the hidden limb blocks) are off on DUMMY_TONE dummies.
+  - **9 Recoil:** `Config.RECOIL` per gun (up/side/shake) in `FeelV2.kick`; Settings "Recoil" FULL/HALF/OFF (saved, `recoil`), Motion LESS halves it; Shake off no longer kills recoil. Viewmodel kick unchanged; no third-person arm kick yet.
+  - **10 Monitor on hit:** `Config.MONITOR_ON_HIT`: `HospitalCharts.ownHit` (from FxController own rounds and PokeController's local hit) shows that body 3 s (`HOLD`), switches on another, shrinks away; mouse = beside the cursor, touch/pad = top middle. No self-test (client only); T178 is the ladder test, not this.
+  - **Tests:** T159, T181, T50, T66, T57, T154, T109, T23, T38, T45, T33, T34, T80, T112, T146, T147, T16 passed in this session (T33 coward and T15 flaky once). No full suite, no LayoutCheck (owner: one quick check only).
+  - **Sync:** Script Sync was off in this Studio session; every change was put in by the MCP and checked by checksum (390 scripts equal). BuildStamp in Studio is the old one.

@@ -127,7 +127,10 @@ local function dress(model: Model)
 			w.Parent = r
 			r.Parent = folder
 		end
-		for _, side in { "Left", "Right" } do
+		-- (V9-NOW 8, owner 21 Nov 2026: "a black thing through the arms": the rings are sized on the hidden limb
+		-- blocks, wider than the sculpted grey skin, so at the elbow they stuck out as a dark bar. The grey matte
+		-- dummies (DUMMY_TONE) wear none; the old white mannequins keep them.)
+		for _, side in if TONE then {} else { "Left", "Right" } do
 			ring(side .. "LowerArm", true, 0.14, 1.16) -- elbow
 			ring(side .. "LowerLeg", true, 0.16, 1.14) -- knee
 			ring(side .. "Foot", true, 0.12, 1.12) -- ankle

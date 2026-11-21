@@ -69,8 +69,8 @@ end
 function Poses.flinch(region: Region, side: number, limbSide: number, t: number): Pose
 	if region == "head" then
 		return {
-			Neck = ang(28, -18 * side, 8 * side),
-			Waist = ang(10, 0, 0),
+			Neck = ang(42, -18 * side, 8 * side), -- (V9-NOW: snaps further back, it reads from the shooter)
+			Waist = ang(14, 0, 0),
 			RightShoulder = ang(140, 0, 25),
 			LeftShoulder = ang(140, 0, -25),
 			RightElbow = ang(120, 0, 0),
@@ -85,7 +85,7 @@ function Poses.flinch(region: Region, side: number, limbSide: number, t: number)
 			[other .. "Shoulder"] = ang(60, 0, -15 * limbSide),
 			[other .. "Elbow"] = ang(80, 0, 0),
 			Neck = ang(-10, -45 * limbSide, 0),
-			Waist = ang(0, -10 * limbSide, 0),
+			Waist = ang(0, -22 * limbSide, 0), -- (V9-NOW: the trunk turns with the struck arm)
 		}
 	elseif region == "leg" then
 		local struck = if limbSide > 0 then "Right" else "Left"

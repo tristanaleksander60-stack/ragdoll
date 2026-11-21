@@ -68,6 +68,14 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.31.1",
+		lines = {
+			"Bullet holes on every ragdoll, and they react to where you hit them",
+			"Purple blood is back, real launch pads and recoil on every gun",
+			"The vitals monitor pops up for the ragdoll you shoot; pick maps on the MAPS board",
+		},
+	},
+	{
 		version = "0.31.0",
 		lines = {
 			"GOD MODE is FREE in the beta: drop 1 to 25 ragdolls right where you aim",

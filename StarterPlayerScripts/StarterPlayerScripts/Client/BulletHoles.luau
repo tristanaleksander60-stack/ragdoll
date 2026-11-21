@@ -21,6 +21,7 @@ BulletHoles.MAX_WORLD = 60 -- holes in the world on this screen
 BulletHoles.WORLD_HOLD = 25 -- s a hole in the world stays
 BulletHoles.MAX_PER_BODY = 8
 BulletHoles.BLEEDS_FOR = 60 -- s a hole on a body is a place it bleeds from
+BulletHoles.SKIN_FIT = 0.96 -- (V9-NOW 13: the ellipse a hole sits on, as a share of the skin box; a touch inside its edge)
 
 local HOLE = Color3.fromRGB(26, 24, 30)
 local SCORCH = Color3.fromRGB(92, 88, 84)
@@ -73,7 +74,13 @@ local function disc(diameter: number, color: Color3, cframe: CFrame, transparenc
 end
 
 -- Back to the spare pile (its weld, if it was on a body, goes).
-local function release(p: BasePart)
+local release: (BasePart) -> ()
+function release(p: BasePart)
+	-- (V9-NOW: a mild hole carries its scorch ring: that goes back first.)
+	local ring = p:FindFirstChild("BulletScorch")
+	if ring and ring:IsA("BasePart") then
+		release(ring)
+	end
 	-- (Gone with its limb already, a torn-off arm that fell out of the world: nothing to keep.)
 	local ok = pcall(function()
 		local weld = p:FindFirstChildOfClass("WeldConstraint")
@@ -192,7 +199,7 @@ end
 
 -- A round hit a body at `at`: a hole on that spot of the limb, which moves with it. Returns the
 -- part it is on (nil: no body part there).
-function BulletHoles.body(model: Model, at: Vector3): BasePart?
+function BulletHoles.body(model: Model, at: Vector3, mild: boolean?): BasePart?
 	local part, normal = nearestPart(model, at)
 	if not part then
 		return nil
@@ -217,19 +224,31 @@ function BulletHoles.body(model: Model, at: Vector3): BasePart?
 	-- on it (the block underneath is hidden on this screen).
 	local skin = DummySkins.skinOf(part)
 	if skin then
-		local params = RaycastParams.new()
-		params.FilterType = Enum.RaycastFilterType.Include
-		params.FilterDescendantsInstances = { skin }
-		local wasQuery = skin.CanQuery
-		skin.CanQuery = true
-		local from = at + (at - part.Position).Unit * 2
-		local hit = Workspace:Raycast(from, (part.Position - from).Unit * 6, params)
-		skin.CanQuery = wasQuery
-		if hit then
-			worldAt, worldNormal = hit.Position, hit.Normal
+		-- V9-NOW 13 (owner, 21 Nov 2026: "holes hang outside the dummy"): the skins' collision is their box
+		-- (CollisionFidelity Box, not changeable in a live game), so a ray stopped on the box, off the visible
+		-- mesh. The limb is about an elliptic cylinder inscribed in that box (the torso and the feet too): the
+		-- hole goes on that ellipse under the hit point, facing out along its normal, and is welded to the limb.
+		local l = skin.CFrame:PointToObjectSpace(at)
+		local a = skin.Size.X / 2 * BulletHoles.SKIN_FIT
+		local b = skin.Size.Z / 2 * BulletHoles.SKIN_FIT
+		local x, z = l.X, l.Z
+		if math.abs(x) < 1e-3 and math.abs(z) < 1e-3 then
+			local back = skin.CFrame:VectorToObjectSpace(worldNormal)
+			x, z = back.X, back.Z
+			if math.abs(x) < 1e-3 and math.abs(z) < 1e-3 then
+				z = -1
+			end
 		end
+		local k = 1 / math.sqrt((x / a) ^ 2 + (z / b) ^ 2)
+		local px, pz = x * k, z * k
+		local py = math.clamp(l.Y, -skin.Size.Y / 2 * 0.85, skin.Size.Y / 2 * 0.85)
+		local n = Vector3.new(px / (a * a), 0, pz / (b * b)).Unit
+		worldAt = skin.CFrame:PointToWorldSpace(Vector3.new(px, py, pz))
+		worldNormal = skin.CFrame:VectorToWorldSpace(n)
 	end
-	local hole = disc(0.24, BODY_HOLE, flatOn(worldAt, worldNormal, 0.02))
+	-- (V9-NOW: mild = BLOOD off: a dark hole in a grey scorch ring, a little bigger so it reads on the grey
+	-- matte skin from a few studs off; the ring is welded to the hole and goes with it.)
+	local hole = disc(if mild then 0.3 else 0.24, if mild then HOLE else BODY_HOLE, flatOn(worldAt, worldNormal, 0.03))
 	hole.Name = "BulletHole"
 	hole.Anchored = false
 	local weld = Instance.new("WeldConstraint")
@@ -237,6 +256,16 @@ function BulletHoles.body(model: Model, at: Vector3): BasePart?
 	weld.Part1 = hole
 	weld.Parent = hole
 	hole.Parent = part
+	if mild then
+		local ring = disc(0.56, SCORCH, flatOn(worldAt, worldNormal, 0.02), 0.35)
+		ring.Name = "BulletScorch"
+		ring.Anchored = false
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = hole
+		w.Part1 = ring
+		w.Parent = ring
+		ring.Parent = hole
+	end
 	table.insert(list, { part = hole, at = os.clock() })
 	if not watched[model] then
 		watched[model] = true

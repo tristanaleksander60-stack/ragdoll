@@ -1605,6 +1605,12 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 				ActiveRagdoll.ownHit = true
 				local okHit, after = pcall(ActiveRagdoll.hit, simulated, onPart, HitMath.toyImpulse(toy, direction, mass), at, nil, HitMath.gunOf(toy))
 				ActiveRagdoll.ownHit = false
+				-- (V9-NOW 10: a round on your own dummy shows it on the monitor this frame, before the server's echo.)
+				if toy.gun then
+					pcall(function()
+						(require(script.Parent:WaitForChild("HospitalCharts")) :: any).ownHit(simulated)
+					end)
+				end
 				if not okHit then
 					warn("[Poke] local hit failed: " .. tostring(after))
 					after = nil

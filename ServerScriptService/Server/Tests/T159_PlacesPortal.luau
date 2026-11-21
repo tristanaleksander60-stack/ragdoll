@@ -65,11 +65,14 @@ return {
 		local place = lab and lab:FindFirstChild("MapPlace")
 		local board = place and place:FindFirstChild("MapBoard")
 		local gate = place and place:FindFirstChild("GatePlaces")
-		assert(board and gate, "the lab has no Map Board or PLACES portal")
+		-- (V9-NOW: MAP_PORTAL off = the board is the one map place; no gold portal anywhere.)
+		local portal = Config.MAP_PORTAL == true
+		assert(board, "the lab has no Map Board")
+		assert(if portal then gate ~= nil else gate == nil, if portal then "the lab has no PLACES portal" else "the gold PLACES portal is still in the lab")
 		local spawn = Lab.originFor(p)
 		local facing = Lab.SPAWN_FACING
 		local boardOff = offAxis(spawn, facing, (board :: Model):GetPivot().Position)
-		local gateOff = offAxis(spawn, facing, (gate :: Model):GetPivot().Position)
+		local gateOff = if gate then offAxis(spawn, facing, (gate :: Model):GetPivot().Position) else 0
 		-- (Fix round 1: the whole board, both edges, on an upright phone; not just its middle.)
 		local bcf = (board :: Model):GetPivot()
 		local half = MapBoard.SCREEN.X / 2
@@ -78,12 +81,12 @@ return {
 			assert(off < halfWidth(414, 896), string.format("an edge of the board is %.0f deg off the spawn view (upright phone half view %.0f)", off, halfWidth(414, 896)))
 		end
 		assert(boardOff < halfWidth(1920, 1080), string.format("the board is %.0f deg off the spawn view", boardOff))
-		assert(gateOff < halfWidth(1920, 1080), string.format("the PLACES portal is %.0f deg off the spawn view (1920x1080 half view %.0f)", gateOff, halfWidth(1920, 1080)))
+		assert(not gate or gateOff < halfWidth(1920, 1080), string.format("the PLACES portal is %.0f deg off the spawn view (1920x1080 half view %.0f)", gateOff, halfWidth(1920, 1080)))
 		local boardDistance = ((board :: Model):GetPivot().Position - spawn) * Vector3.new(1, 0, 1)
 		assert(boardDistance.Magnitude > 18 and boardDistance.Magnitude < 30, string.format("the board is %.0f studs from the spawn (want 20-25)", boardDistance.Magnitude))
 		table.insert(results, string.format("board %.0f deg off the view at %.0f studs, portal %.0f deg (phone half view %.0f, PC %.0f)", boardOff, boardDistance.Magnitude, gateOff, halfWidth(414, 896), halfWidth(1920, 1080)))
 		-- Colours by kind.
-		assert(runeColor(gate :: Model) == MapBoard.COLORS.Places, "the PLACES portal is not gold")
+		assert(not gate or runeColor(gate :: Model) == MapBoard.COLORS.Places, "the PLACES portal is not gold")
 		for name, kind in { PortalSolo = "Solo", PortalMulti = "Multi" } do
 			local g = lab:FindFirstChild(name)
 			assert(g and g:GetAttribute("GateKind") == kind and runeColor(g) == MapBoard.COLORS[kind], name .. " is not in its ring colour")
@@ -97,7 +100,7 @@ return {
 				local copy = built and built:FindFirstChild("MapPlace")
 				local copyBoard = copy and copy:FindFirstChild("MapBoard")
 				local screen = copyBoard and copyBoard:FindFirstChild("Screen")
-				assert(screen and screen:GetAttribute("Home") == true and copy:FindFirstChild("GatePlaces"), pl.id .. " has no board with My lab first, or no portal")
+				assert(screen and screen:GetAttribute("Home") == true and (copy:FindFirstChild("GatePlaces") ~= nil) == portal, pl.id .. " has no board with My lab first, or its portal is wrong")
 				maps += 1
 			end
 		end
@@ -164,6 +167,10 @@ return {
 			table.insert(results, "refused from a seat (" .. tostring(why) .. ") and holding a body")
 			-- (Fix round 1) Stepping into the gold portal: standing in it DWELL s opens the maps; a loose
 			-- body in it opens nothing.
+			if not gate then
+				table.insert(results, "no gold portal (MAP_PORTAL off): the board is the one map place")
+				return
+			end
 			local swirl = (gate :: Model):WaitForChild("Swirl") :: BasePart
 			assert(swirl and not swirl.CanTouch, "the PLACES swirl still takes touches")
 			local joinedWas = p:GetAttribute("V8JoinedAt")

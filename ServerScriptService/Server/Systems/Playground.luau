@@ -82,6 +82,52 @@ local function at(x: number, y: number, z: number): CFrame
 	return CFrame.new(origin + Vector3.new(x, y, z))
 end
 
+-- V9-NOW 7 (owner, 21 Nov 2026: "the neon launch pads become real pads"): one style for every launch pad
+-- (Config.REAL_PADS): the pad itself turns into a dark diamond-plate steel plate, with a black rubber mat on
+-- top, four bolts and the pad's colour as a painted ring and its pictogram painted on the mat (a Decal, no
+-- floating badge). Nothing glows. The pad keeps its name, size and attributes, so every launch rule is the same.
+local PAD_STEEL = Color3.fromRGB(78, 82, 90)
+local PAD_RUBBER = Color3.fromRGB(34, 35, 38)
+local PAD_BOLT = Color3.fromRGB(150, 154, 160)
+local function realPad(pad: BasePart, color: Color3, icon: string?)
+	pad.Material = Enum.Material.DiamondPlate
+	pad.Color = PAD_STEEL
+	pad.Reflectance = 0
+	local top = pad.CFrame * CFrame.new(0, pad.Size.Y / 2, 0)
+	local w, d = pad.Size.X, pad.Size.Z
+	local function deco(name: string, size: Vector3, cf: CFrame, c: Color3, material: Enum.Material, shape: Enum.PartType?): Part
+		local p = part(name, size, cf, c, material, shape)
+		p.Material = material
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.CastShadow = false
+		return p
+	end
+	local mat = deco("PadMat", Vector3.new(w - 1.2, 0.08, d - 1.2), top * CFrame.new(0, 0.04, 0), PAD_RUBBER, Enum.Material.Rubber)
+	-- (The colour as paint: a flat ring on the mat, never neon.)
+	local r = math.min(w, d) / 2 - 1
+	deco("PadPaint", Vector3.new(0.02, r * 2, r * 2), top * CFrame.new(0, 0.09, 0) * CFrame.Angles(0, 0, math.rad(90)), color, Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
+	deco("PadPaintInner", Vector3.new(0.022, r * 2 - 0.9, r * 2 - 0.9), top * CFrame.new(0, 0.092, 0) * CFrame.Angles(0, 0, math.rad(90)), PAD_RUBBER, Enum.Material.Rubber, Enum.PartType.Cylinder)
+	for _, c in { Vector2.new(1, 1), Vector2.new(-1, 1), Vector2.new(1, -1), Vector2.new(-1, -1) } do
+		deco("PadBolt", Vector3.new(0.12, 0.38, 0.38), top * CFrame.new(c.X * (w / 2 - 0.35), 0.05, c.Y * (d / 2 - 0.35)) * CFrame.Angles(0, 0, math.rad(90)), PAD_BOLT, Enum.Material.Metal, Enum.PartType.Cylinder)
+	end
+	local DrawnIcons = require(Shared:WaitForChild("DrawnIcons")) :: any
+	local id = icon and DrawnIcons.ASSETS[icon]
+	if id then
+		local mark = deco("PadMark", Vector3.new(r * 1.25, 0.02, r * 1.25), top * CFrame.new(0, 0.1, 0), PAD_RUBBER, Enum.Material.SmoothPlastic)
+		mark.Transparency = 1
+		local decal = Instance.new("Decal")
+		decal.Texture = id
+		decal.Face = Enum.NormalId.Top
+		decal.Color3 = Color3.new(1, 1, 1)
+		decal.Parent = mark
+	end
+	pad:SetAttribute("RealPad", true)
+	return mat
+end
+Playground.realPad = realPad
+
 local function buildTower()
 	-- 20 stairs climbing towards -Z on the west side, then the platform.
 	local x, z0 = -52, -8
@@ -179,6 +225,11 @@ local function buildCannon()
 	-- An arrow on the pad and a barrel behind it, both pointing where you will fly.
 	local flat = Vector3.new(CANNON_DIRECTION.X, 0, CANNON_DIRECTION.Z).Unit
 	local arrow = part("CannonArrow", Vector3.new(1.2, 0.1, 5), CFrame.lookAt((at(x, 1.05, z)).Position, (at(x, 1.05, z)).Position + flat), WHITE, Enum.Material.Neon)
+	if (Config :: any).REAL_PADS then
+		realPad(padPart, ORANGE, nil)
+		arrow.Material = Enum.Material.SmoothPlastic -- (painted on, over the mat)
+		arrow.CFrame += Vector3.new(0, 0.12, 0)
+	end
 	arrow.CanCollide = false
 	arrow.CanQuery = false
 	local barrelBase = (at(x, 0, z)).Position - flat * 6
@@ -870,8 +921,12 @@ local function buildStations()
 		pad:SetAttribute("LaunchVelocity", s.velocity)
 		pad:SetAttribute("Station", s.name)
 		hazardRim(s.x, s.z, 7, 7, 0.6)
-		sign(s.name, pad, 8, s.color)
-		sign("PUT RAGDOLL HERE", pad, 5, WHITE)
+		if (Config :: any).REAL_PADS then
+			realPad(pad, s.color, Playground.SIGN_ICONS[s.name])
+		else
+			sign(s.name, pad, 8, s.color)
+			sign("PUT RAGDOLL HERE", pad, 5, WHITE)
+		end
 		throwOnTouch(pad, 1.5, 130, "CannonPad", function(_root)
 			return s.velocity
 		end)
@@ -918,6 +973,9 @@ local function buildChristmas(): Folder
 	local stack = part("Chimney", Vector3.new(7, 14, 7), at(c.X, 7, c.Y), BRICK, Enum.Material.Brick)
 	sign("CHIMNEY", stack, 10, WHITE)
 	local hearth = part("ChimneyPad", Vector3.new(7, 0.6, 5), at(c.X, 0.3, c.Y - 6), RED, Enum.Material.Neon)
+	if (Config :: any).REAL_PADS then
+		realPad(hearth, RED, nil) -- (V9-NOW 7: the same real pad, no glow)
+	end
 	throwOnTouch(hearth, 1.5, 120, "CannonPad", function()
 		return Vector3.new(0, 200, 0)
 	end, function(player: Player)

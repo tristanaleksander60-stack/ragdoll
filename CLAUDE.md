@@ -29,6 +29,7 @@ The owner types **`/tjek`** (`.claude/commands/tjek.md`) for a full quality audi
 - Copy what the top Roblox ragdoll games do (Ragdoll Engine, Ragdoll Reality, Fling Things and People).
 
 ## Owner decisions
+- **21 Nov 2026 (V9-NOW):** `Config.BLOOD = "purple"` again (owner), `MAP_PORTAL` false (board only), `REAL_PADS`, `MONITOR_ON_HIT` (monitor 3 s after your hit), `RECOIL` per gun + Settings "Recoil".
 - Purple blood; severed limbs allowed behind the `SEVERING` switch in Config; real-ish gun names via nicknames (G17, Deagle), no trademarks. **Phase 0 (19 Nov) changed the defaults, each one switch away:** `Config.SEVERING = false`, `Config.BLOOD = "off"` ("purple" = the old choice), `Config.TOY_NAMES = true` (G17 -> Popper ...; ids unchanged), `Config.MILD_TEXT = true` (hit line by body region). Owner to confirm.
 - Gunshot sounds: community uploads.
 - Own lab per player, others' plots not visible, shared plaza (players can hit each other, no damage), friends enter a lab by invite.
@@ -372,3 +373,24 @@ Phases 0-4b, A-M, N1-N5, N7 (graphics accepted as is), M1-M8 done. M9 was under 
   - `LADDER_V9`: bigger unlock gaps.
     - Ladder 6 grandfathers every weapon a profile had already reached.
     - `Toys.V8_UNLOCK` keeps the old rungs.
+
+## V9 Phases P, T, M (21 Nov 2026, PC, branch `release`; details in docs/V9_PLAN.md State and docs/PHYSICS.md)
+- **Physics (V9-P, V9-0ac):**
+  - Rounds only flinch (`SHOT_FLINCH`); bodies drop by damage (`VitalsService` Damage/Blood).
+  - Settle assist: `ActiveRagdoll.settleAllowed`. Brace: `Bracing` attribute.
+  - The leg limp is replicated through `LegShotLeft/Right`. GOD kinds use `ActiveRagdoll.refreshMass`.
+  - Bench: `Tests/Lib/PhysicsBench` and T183 (`ServerStorage.BenchRuns` = N gives medians).
+  - Three fix rounds are used up; what is left is parked in State.
+- **Remote `Terminal`** (Net, V9-2b):
+  - client → server: "Press" (the terminal's screen part);
+  - server → client: "Refused" (screen, why);
+  - checked in `LabGuide.press`: owner or party guest, within 24 studs, 4 presses/s, a queue of 6 (a terminal can set its own: the Compressor);
+  - spares: at most `SPARE_MAX` 3 a lab, counted in its body cap, gone when free after 40 s or when the player leaves.
+  - Terminals: `LabGuide.addTerminal`. Client: `TerminalClient`. Switch: `Config.FEED_TERMINAL`.
+- **Map Board and portals** (`Config.MAP_BOARD`):
+  - `Server/Systems/MapBoard`: the board 10° left of the spawn's facing, 24 studs out; the gold PLACES gate 26° right, 27 studs out; copies at every map's arrival; walk-in with a 0.6 s dwell (`MapBoard.mayWalkIn`).
+  - `Client/MapBoardClient`: tiles as a SurfaceGui in PlayerGui, and the MapGo confirm.
+  - Solo/Multi are rings too (blue/green).
+  - Travel streams the place in first (`WorldMaps.travel`), and is refused while seated or holding.
+- **OutOfBounds:** falls home; holds the body still 0.25 s and sets `Place`.
+- **Compressor** (`Server/Systems/Compressor`, `Config.COMPRESSOR`, V9-0m): built, but not wired yet.

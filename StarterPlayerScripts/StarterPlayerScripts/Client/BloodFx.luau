@@ -27,10 +27,12 @@ local RED = Anatomy.BLOOD -- (the name stays: it is the blood's colour, now purp
 local LIGHT = Color3.fromRGB(196, 130, 255) -- highlight drops
 local INK = Anatomy.BLOOD_DARK -- the thin dark edge under the blobs (cartoon outline)
 local GRAVITY = 80 -- studs/s², snappier than the world: cartoon arcs
-local MAX_PARTS = 260 -- live blood parts on this screen (splats past it push the oldest out)
+-- (V9-NOW 6: capped by device: a phone keeps far fewer.)
+local UserInputService = game:GetService("UserInputService")
+local MAX_PARTS = if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then 110 else 260 -- live blood parts on this screen (splats past it push the oldest out)
 local MAX_BURSTS = 6 -- per BURST_WINDOW
 local BURST_WINDOW = 0.25
-local SPLAT_HOLD = 10 -- s a splat stays before it fades
+local SPLAT_HOLD = 4 -- s a splat stays before it fades (V9-NOW 6: little marks that go after a few seconds; was 10)
 local DRIP_EVERY = 0.45 -- s between two drips from a bleeding body
 local DRIP_RANGE = 90 -- studs from the camera: further off, nobody sees the drips
 local SPLAT_FADE = 0.7

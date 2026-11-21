@@ -296,9 +296,12 @@ function MapBoard.buildLab(folder: Instance, origin: Vector3)
 	holder.Name = "MapPlace"
 	local boardAt = aroundSpawn(origin, facing, MapBoard.BOARD_ANGLE, MapBoard.BOARD_DISTANCE)
 	MapBoard.board(holder, boardAt, spawn)
-	local gateAt = aroundSpawn(origin, facing, MapBoard.PORTAL_ANGLE, MapBoard.PORTAL_DISTANCE)
-	local _, swirl = MapBoard.gate(holder, gateAt, spawn, "Places")
-	MapBoard.watchSwirl(swirl)
+	-- (V9-NOW: Config.MAP_PORTAL false = no gold ring portal; the board is the one map place.)
+	if (Config :: any).MAP_PORTAL then
+		local gateAt = aroundSpawn(origin, facing, MapBoard.PORTAL_ANGLE, MapBoard.PORTAL_DISTANCE)
+		local _, swirl = MapBoard.gate(holder, gateAt, spawn, "Places")
+		MapBoard.watchSwirl(swirl)
+	end
 	holder.Parent = folder
 end
 
@@ -312,9 +315,11 @@ function MapBoard.buildMap(id: string, arrival: CFrame, into: Instance)
 	local at = arrival.Position
 	local boardAt = floorUnder(at + look * 7 - right * 15)
 	MapBoard.board(holder, boardAt, at + look * 4, MapBoard.MAP_SCALE, true)
-	local gateAt = floorUnder(at + look * 7 + right * 16)
-	local _, swirl = MapBoard.gate(holder, gateAt, at + look * 4, "Places", MapBoard.MAP_SCALE)
-	MapBoard.watchSwirl(swirl)
+	if (Config :: any).MAP_PORTAL then
+		local gateAt = floorUnder(at + look * 7 + right * 16)
+		local _, swirl = MapBoard.gate(holder, gateAt, at + look * 4, "Places", MapBoard.MAP_SCALE)
+		MapBoard.watchSwirl(swirl)
+	end
 	holder:SetAttribute("Place", id)
 	holder.Parent = into
 end

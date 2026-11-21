@@ -54,6 +54,21 @@ return {
 			end
 		end
 		assert(#terminals >= 12 and #terminals == rings, string.format("%d terminals for %d spots", #terminals, rings))
+		-- (Fix round 1: no terminal stands in the lava, a trigger box or a creature.)
+		for _, d in (lab :: Instance):GetDescendants() do
+			local boxCf, boxSize = nil :: CFrame?, nil :: Vector3?
+			if d:IsA("BasePart") and (string.find(d.Name, "Trigger", 1, true) or string.find(d.Name, "Lava", 1, true)) then
+				boxCf, boxSize = d.CFrame, d.Size
+			elseif d:IsA("Model") and d:GetAttribute("Creature") ~= nil then
+				boxCf, boxSize = d:GetBoundingBox()
+			end
+			if boxCf and boxSize then
+				for _, t in terminals do
+					local rel = boxCf:PointToObjectSpace(t:GetPivot().Position)
+					assert(not (math.abs(rel.X) < boxSize.X / 2 and math.abs(rel.Z) < boxSize.Z / 2), tostring(t:GetAttribute("GuideId")) .. "'s terminal stands inside " .. d:GetFullName())
+				end
+			end
+		end
 		local results = { string.format("%d terminals, one per spot, facing the way you come", #terminals) }
 		local character = p.Character :: Model
 		local home = character:GetPivot()
@@ -78,6 +93,18 @@ return {
 				return LabGuide.termTossedForTest() == before + 1
 			end, 3), "one press did not send one dummy in")
 			table.insert(results, "one press, one dummy in")
+			-- (Fix round 1: the next press sends another dummy, not the one just thrown.)
+			task.wait(0.3)
+			LabGuide.press(p, screen)
+			task.wait(0.6)
+			local thrown = 0
+			for _, m in Lab.dummiesOf(p) do
+				if ((m:GetAttribute("GuideTossUntil") :: number?) or 0) > os.clock() then
+					thrown += 1
+				end
+			end
+			assert(thrown >= 2, thrown .. " different dummies in flight after two presses (want 2)")
+			table.insert(results, "two presses, two different dummies")
 			-- 20 at once.
 			task.wait(1.1)
 			local taken = 0
@@ -124,8 +151,9 @@ return {
 				end
 				return false
 			end, 3)
-			local bodies = #VisitorService.bodiesOf(p)
-			assert(bodies <= cap, string.format("%d bodies in a lab capped at %d", bodies, cap))
+			local spareCount = #LabGuide.sparesForTest(p)
+			local bodies = #VisitorService.bodiesOf(p) + spareCount
+			assert(bodies <= cap and spareCount <= LabGuide.SPARE_MAX, string.format("%d bodies (%d spares) in a lab capped at %d", bodies, spareCount, cap))
 			if spare then
 				table.insert(results, string.format("no free dummy: a spare from the chute (%d of %d bodies)", bodies, cap))
 				spare:Destroy()

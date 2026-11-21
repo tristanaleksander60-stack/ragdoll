@@ -23,7 +23,8 @@ local function body(player: Player): string
 			pads += 1
 			assert(typeof(p:GetAttribute("LaunchVelocity")) == "Vector3", "a station pad has no launch")
 			-- (21 Nov 2026, Config.ICON_SIGNS: the word sign is now a picture badge, "IconSign".)
-			assert(p:FindFirstChild("Sign") or p:FindFirstChild("IconSign"), "a station pad has no sign")
+			-- (V9-NOW 7, Config.REAL_PADS: a real pad carries its picture painted on (RealPad), no floating badge.)
+			assert(p:FindFirstChild("Sign") or p:FindFirstChild("IconSign") or p:GetAttribute("RealPad") == true, "a station pad has no sign")
 		end
 	end
 	assert(pads == #Playground.STATIONS, string.format("%d station pads (want %d)", pads, #Playground.STATIONS))

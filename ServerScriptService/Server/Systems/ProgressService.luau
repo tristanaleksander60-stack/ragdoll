@@ -173,12 +173,12 @@ end
 -- A stored profile made safe (anything odd dropped).
 -- SETTINGS (round 3, M6), checked: three small choices and three switches (round 4, M11: the dead
 -- body's monitor), nothing else kept.
-local SETTING_CHOICES = { sfx = 3, motion = 3, ui = 3, notices = 4 } -- (notices: V9-0g)
-function ProgressService.cleanSettings(raw: any): { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean, notices: number }?
+local SETTING_CHOICES = { sfx = 3, motion = 3, ui = 3, notices = 4, recoil = 3 } -- (notices: V9-0g; recoil: V9-NOW 9)
+function ProgressService.cleanSettings(raw: any): { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean, notices: number, recoil: number }?
 	if type(raw) ~= "table" then
 		return nil
 	end
-	local out = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1 }
+	local out = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1, recoil = 1 }
 	for key, most in SETTING_CHOICES do
 		local n = raw[key]
 		if type(n) == "number" and n == math.floor(n) and n >= 1 and n <= most then
