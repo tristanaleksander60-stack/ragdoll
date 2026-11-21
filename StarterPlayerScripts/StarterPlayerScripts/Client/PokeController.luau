@@ -1636,6 +1636,49 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 						end
 					end
 				end
+				-- (V9-0ac fix round 3: under SHOT_FLINCH a round never knocks a body over by itself; it drops
+				-- when the server says it is out (Vital). A drop within KO_WATCH s of your round gets the
+				-- same KO stamp, tick, combo chime and buzz a knock-down had.)
+				if (Config :: any).SHOT_FLINCH and toy.gun and after ~= "Ragdoll" then
+					local body = onPart:FindFirstAncestorOfClass("Model")
+					if body and body:GetAttribute("Vital") == "Alive" and body:GetAttribute("KOWatch") == nil then
+						body:SetAttribute("KOWatch", true) -- (this screen only)
+						local conn: RBXScriptConnection? = nil
+						local finished = false
+						local function finish(dropped: boolean)
+							if finished then
+								return
+							end
+							finished = true
+							if conn then
+								conn:Disconnect()
+							end
+							body:SetAttribute("KOWatch", nil)
+							if dropped then
+								pcall(function()
+									(require(script.Parent:WaitForChild("Crosshair")) :: any).localHit(true)
+								end)
+								C.playSound("tick", 0.62)
+								if (Config :: any).AUDIO_V8 then
+									pcall(function()
+										local n = (require(script.Parent:WaitForChild("Crosshair")) :: any).combo()
+										C.playSound("reward", math.min(1.6, 0.9 + 0.12 * math.max(0, n - 1)))
+										;(require(script.Parent:WaitForChild("Haptics")) :: any).pulse(if n >= 3 then 0.8 else 0.5, 0.08)
+									end)
+								end
+							end
+						end
+						conn = body:GetAttributeChangedSignal("Vital"):Connect(function()
+							local v = body:GetAttribute("Vital")
+							if v == "Unconscious" or v == "Dead" then
+								finish(true)
+							end
+						end)
+						task.delay(1.5, function()
+							finish(false)
+						end)
+					end
+				end
 			end
 			-- Round 4, M10: the shooter hears the impact this frame (<50 ms), whether or not they
 			-- own the target's simulation. The server echo for our own UserId is suppressed by the

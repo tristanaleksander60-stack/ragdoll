@@ -2351,3 +2351,22 @@ Write the baseline into `docs/PERF.md`.
   - **Client** (`PlaceMenu.go`): a gold fade covers the trip; the arrival flash takes it over, and a refusal lifts it.
   - **Tests:** T159 passes, and now puts the maps it visited back to sleep (`CrowdService.emptyForTest`), since T26, which runs after it, expects Site empty. T26 passes.
   - **Still missing:** a loading card and a screen-filling swirl.
+- 21 Nov 2026, V9-0ac fix round 3, the last one allowed (PC). The re-review after round 2 scored V9-P 6.5 and V9-0ac 7.5.
+  - **Fixed:**
+    - **KO feedback is back for gun drops:** a body your round drops within 1.5 s (its Vital going Unconscious or Dead) gets the KO! stamp, the tick, the combo chime and the buzz (PokeController).
+    - **The greeter** counts as a takedown when it really drops (in 3 newcomer rounds), not on a first round it only flinches from (HitService).
+    - **No state change from a round** on a body stumbling, walking or running away: it keeps going, the hit part jerks, a leg round still limps it. Before, a stumbling body could tip over and a running one stopped dead.
+    - **Blades knock out by their zone again** (the round rule is for rounds only).
+    - **`refreshMass`** resizes the walk's drive too.
+  - **Tests:** T181 (a walking body shot 3 times keeps going), T45 (the greeter drops after 3 rounds, +1 once), T23, T109, T38, T147 and T154 pass.
+  - **Parked** (the three fix rounds are used up; the review lists, State and PHYSICS.md keep them):
+    - the client-side death prediction (the drop waits one round trip on the shooter's screen);
+    - a dying beat (the knees first);
+    - a stagger step;
+    - a hand on the wound;
+    - a leg buckle other screens see;
+    - **V9-P:**
+      - P3: a catch step, a landing roll, a get-up blend from the side, players' own ragdolls;
+      - P4: weight in hits;
+      - P5: the settle assist's heap cost (measure it again, or drop the assist);
+      - P6: videos side by side with the rivals, plus two blind video reviews.

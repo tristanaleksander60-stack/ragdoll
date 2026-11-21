@@ -525,7 +525,8 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 		-- (V9-0ac fix round 2: under SHOT_FLINCH a round never knocks a living body out by its zone (a
 		-- round in the spine from behind floored it): only a blow does, or a round strong enough to kill
 		-- at once. A round drops it by its damage.)
-		local roundKO = not blunt and not ((Config :: any).SHOT_FLINCH and power < ((Config :: any).SHOT_ONE_KILL_POWER or math.huge))
+		-- (Fix round 3: the rule is for rounds only: a blade still knocks out by its zone.)
+		local roundKO = not blunt and not ((Config :: any).SHOT_FLINCH and o.round and power < ((Config :: any).SHOT_ONE_KILL_POWER or math.huge))
 		if zone.knockout and power >= (if blunt then BLUNT_KNOCKOUT else 0.6) and (blunt or roundKO) then
 			v.knockUntil = math.max(v.knockUntil, now + KNOCK_HOLD)
 		end

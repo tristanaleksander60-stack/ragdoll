@@ -215,6 +215,10 @@ type Terminal = {
 	comboAt: number,
 	presser: Player?,
 	noticeAt: number,
+	-- (Optional, per terminal: another machine's own press (the Compressor), its own pace and queue.)
+	action: ((any) -> ())?,
+	every: number?,
+	queueMax: number?,
 }
 local terminals: { [Instance]: Terminal } = {}
 local pressTimes: { [Player]: { number } } = {}
@@ -289,10 +293,18 @@ local function work(t: Terminal)
 	t.working = true
 	task.spawn(function()
 		while t.queue > 0 and t.screen.Parent do
-			tossOne(t)
+			local act = t.action
+			if act then
+				local okAct, errAct = pcall(act, t)
+				if not okAct then
+					warn("[LabGuide] terminal action: " .. tostring(errAct))
+				end
+			else
+				tossOne(t)
+			end
 			t.queue -= 1
 			t.screen:SetAttribute("Queue", t.queue)
-			task.wait(math.max(LabGuide.TERM_FASTEST, LabGuide.TERM_EVERY - 0.02 * t.combo))
+			task.wait(t.every or math.max(LabGuide.TERM_FASTEST, LabGuide.TERM_EVERY - 0.02 * t.combo))
 		end
 		t.working = false
 	end)
@@ -322,7 +334,7 @@ function LabGuide.press(player: Player, screen: Instance): (boolean, string?)
 	if #times >= LabGuide.TERM_RATE then
 		return false, "slow down"
 	end
-	if t.queue >= LabGuide.TERM_QUEUE then
+	if t.queue >= (t.queueMax or LabGuide.TERM_QUEUE) then
 		return false, "queue full"
 	end
 	table.insert(times, now)
@@ -338,11 +350,12 @@ function LabGuide.press(player: Player, screen: Instance): (boolean, string?)
 end
 
 -- The terminal for one spot: on the floor TERM_OUT studs from the spot towards the lab's spawn, facing it.
-local function buildTerminal(into: Instance, origin: Vector3, id: string, target: () -> Vector3, words: { string })
+local function buildTerminal(into: Instance, origin: Vector3, id: string, target: () -> Vector3, words: { string }, opts: { action: ((any) -> ())?, every: number?, queueMax: number?, faceFrom: Vector3?, out: number? }?): BasePart
 	local at = target()
-	local toward = Vector3.new(origin.X - at.X, 0, origin.Z - at.Z)
+	local from = (opts and opts.faceFrom) or origin
+	local toward = Vector3.new(from.X - at.X, 0, from.Z - at.Z)
 	local dir = if toward.Magnitude > 0.1 then toward.Unit else Vector3.zAxis
-	local base = at + dir * LabGuide.TERM_OUT
+	local base = at + dir * ((opts and opts.out) or LabGuide.TERM_OUT)
 	base = Vector3.new(base.X, groundUnder(base, origin.Y), base.Z)
 	local cf = CFrame.lookAt(base, base + dir) -- (faces the way you come)
 	local m = Instance.new("Model")
@@ -406,6 +419,9 @@ local function buildTerminal(into: Instance, origin: Vector3, id: string, target
 		comboAt = 0,
 		presser = nil,
 		noticeAt = 0,
+		action = opts and opts.action,
+		every = opts and opts.every,
+		queueMax = opts and opts.queueMax,
 	}
 	terminals[screen] = t
 	screen.Destroying:Connect(function()
@@ -415,7 +431,10 @@ local function buildTerminal(into: Instance, origin: Vector3, id: string, target
 		LabGuide.press(player, screen)
 	end)
 	m.Parent = into
+	return screen
 end
+-- (V9-0m: another machine's terminal, with its own press: the Compressor.)
+LabGuide.addTerminal = buildTerminal
 
 function LabGuide.start()
 	if not (Config :: any).FEED_TERMINAL then

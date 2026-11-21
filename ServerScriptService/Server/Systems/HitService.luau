@@ -284,7 +284,10 @@ function HitService.applyToy(toy: Toys.Toy, part: BasePart, position: Vector3, d
 			SessionStats.count(requester, "hits")
 			-- Round 5, phase 00: the first hit on your greeter is always a takedown (31% of new players
 			-- left with none: a round in an arm only flinches, and the greeter runs from a gun).
-			if model:GetAttribute("Greeter") == requester.UserId then
+			-- (V9-0ac fix round 3: under SHOT_FLINCH the greeter counts when it really drops (the newcomer's
+			-- rounds do NEWCOMER_DAMAGE: two or three), not on a first round it only flinches from. A blow
+			-- or a throw still credits it at once.)
+			if model:GetAttribute("Greeter") == requester.UserId and not ((Config :: any).SHOT_FLINCH and toy.gun) then
 				ProgressService.greeterHit(requester, model)
 			end
 		end

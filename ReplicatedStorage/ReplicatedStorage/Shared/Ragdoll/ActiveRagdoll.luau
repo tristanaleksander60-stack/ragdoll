@@ -2142,9 +2142,11 @@ function ActiveRagdoll.hit(model: Model, part: BasePart, impulse: Vector3, posit
 		emit("FirstHit", rig, position, speed)
 	elseif current == "Out" then
 		enter(rig, "Out") -- still out cold, just moved
-	elseif gun and gun > 0 and (GameConfig :: any).SHOT_FLINCH and (current == "GettingUp" or current == "Crawling") and rig.held == 0 then
+	elseif gun and gun > 0 and (GameConfig :: any).SHOT_FLINCH and (current == "GettingUp" or current == "Crawling" or current == "Stumble" or current == "Walking" or current == "Fleeing") and rig.held == 0 then
 		-- (V9-0ac fix round 1: a round on a body getting up or crawling does not floor it again; the
-		-- struck part jerks, it carries on.)
+		-- struck part jerks, it carries on. Fix round 3: nor one stumbling (its weak legs tipped it over),
+		-- nor one walking or running away (it stopped dead): it keeps going, a leg round still limps it.)
+		ActiveRagdoll.gunReaction(rig, rig.hitRegion, gun, now, rig.hitLimbSide)
 		impulse *= LIMB_PUSH
 	elseif gun and gun > 0 and current ~= "Ragdoll" and current ~= "GettingUp" and current ~= "Crawling" and rig.held == 0 then
 		local reaction = ActiveRagdoll.gunReaction(rig, rig.hitRegion, gun, now, rig.hitLimbSide)
@@ -2422,6 +2424,7 @@ function ActiveRagdoll.refreshMass(model: Model)
 	if type(offset) == "number" and offset > 0 then
 		rig.standOffset = offset
 	end
+	rig.drive.MaxAxesForce = Vector3.new(1, 0, 1) * rig.mass * Config.NORMAL_GRAVITY * 2 -- (fix round 3: the walk too)
 	enter(rig, rig.state) -- (the state's forces again, at the new weight)
 end
 

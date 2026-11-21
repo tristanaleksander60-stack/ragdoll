@@ -160,6 +160,24 @@ return {
 			end, 2.2)
 			assert(not magDownAlive, "a full AK magazine knocked it down while it was still alive")
 			table.insert(results, string.format("from behind and the side: up; AutoShotgun: up or dropped by damage; 8 AK rounds: never down alive (ended %s)", tostring(mag:GetAttribute("Vital"))))
+			-- (Fix round 3) A body walking away when shot: it keeps going (no stop, no fall), a leg round
+			-- limps it.
+			local walker = fresh()
+			task.wait(0.8)
+			local wp = part(walker, "LowerTorso").Position
+			walker:SetAttribute("Home", wp + Vector3.new(0, 0, 45))
+			walker:SetAttribute("HomeLook", wp + Vector3.new(0, 0, 60))
+			local tw = os.clock()
+			while walker:GetAttribute("RagdollState") ~= "Walking" and os.clock() - tw < 4 do
+				task.wait(0.1)
+			end
+			assert(walker:GetAttribute("RagdollState") == "Walking", "the walker never walked: " .. tostring(walker:GetAttribute("RagdollState")))
+			local walkDown = burst(walker, { "UpperTorso", "RightUpperLeg", "UpperTorso" }, "Blaster", 3, 0.25, 0.6)
+			local still = walker:GetAttribute("RagdollState")
+			local moved = (part(walker, "LowerTorso").Position - wp).Magnitude
+			assert(not walkDown, "rounds knocked a walking body down")
+			assert(still == "Walking" or still == "Fleeing", "a walking body stopped when shot: " .. tostring(still))
+			table.insert(results, string.format("a walking body shot 3 times kept going (%s, %.0f studs)", tostring(still), moved))
 			-- (Fix round 2) A body the player's own client simulates (the real lab case).
 			local Players = game:GetService("Players")
 			local owner = Players:GetPlayers()[1]

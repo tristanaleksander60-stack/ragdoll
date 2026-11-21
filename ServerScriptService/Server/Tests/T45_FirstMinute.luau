@@ -56,6 +56,32 @@ local function body(player: Player, root: BasePart): string
 	local chest, arm = chestPart :: BasePart, armPart :: BasePart
 	local before = ProgressService.takedownsOf(player) or 0
 	local shots0, hits0, td0 = r.shots, r.hits, r.takedowns
+	local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
+	if Config.SHOT_FLINCH then
+		-- (V9-0ac fix round 3: the greeter counts when it really drops, by its damage, once.)
+		local VitalsService = require(Systems:WaitForChild("VitalsService")) :: any
+		VitalsService.liveForTest(true)
+		local rounds = 0
+		local okRounds, errRounds = pcall(function()
+			while (ProgressService.takedownsOf(player) or 0) < before + 1 and rounds < 12 do
+				rounds += 1
+				HitService.lastRefusal[player] = nil
+				HitService.onRequest(player, chest, chest.Position, (chest.Position - root.Position).Unit, "Blaster")
+				task.wait(0.4)
+			end
+			waitFor(function()
+				return (ProgressService.takedownsOf(player) or 0) >= before + 1
+			end, 3)
+		end)
+		VitalsService.liveForTest(false)
+		assert(okRounds, errRounds)
+		local afterDrop = ProgressService.takedownsOf(player) or 0
+		assert(afterDrop == before + 1, string.format("the greeter's drop gave %d takedowns (want 1) after %d rounds", afterDrop - before, rounds))
+		assert(r.shots > shots0 and r.hits > hits0 and r.takedowns > td0, string.format("the visit record did not count it (shots %d hits %d takedowns %d)", r.shots, r.hits, r.takedowns))
+		assert(type(r.firstShot) == "number", "the first shot was not timed")
+		table.insert(results, string.format("greeter dropped by its damage after %d rounds: takedowns %d -> %d, once", rounds, before, afterDrop))
+		GreeterService.resetForTest(player)
+	else
 	HitService.lastRefusal[player] = nil
 	-- (An arm: the round only flinches the body, and it still counts.)
 	HitService.onRequest(player, arm, arm.Position, (arm.Position - root.Position).Unit, "Blaster")
@@ -73,6 +99,7 @@ local function body(player: Player, root: BasePart): string
 	assert((ProgressService.takedownsOf(player) or 0) == after, "the greeter gave a second free takedown")
 	table.insert(results, string.format("greeter's first shot (an arm): takedowns %d -> %d, once", before, after))
 	GreeterService.resetForTest(player)
+	end -- (SHOT_FLINCH off: the round 5 rule)
 
 	-- 2. The fall reported before the server's own hit: counted when the hit arrives.
 	local at = root.Position + root.CFrame.LookVector * 10
