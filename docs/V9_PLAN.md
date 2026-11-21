@@ -109,6 +109,13 @@
     - **Test:** a scan in a new check: no Neon part bigger than 0.5 stud in the lab or maps (except the listed effects).
     - **Capture:** the owner's angle, before and after.
 
+19. **The Rocket Wall pictogram sits inside the wall:** the round icon badge of the "Rocket Wall" station is half buried in the crash wall.
+    - Move it out to the approach side, in front of and above the wall's top edge, facing the player, fully visible (V9-0q rule; physical sign style V9-0v when that lands).
+    - Check every other station and machine badge the same way: no icon intersects a part.
+20. **Move the Map Board next to the other portals:** the Map Board (the map tiles with GO) stands together with the Solo and Multiplayer portals as one "travel corner".
+    - Group it with the portals, the same facing and a shared path, still visible from the spawn.
+    - Update PathPlan, LabGuide, the T159 / T163 positions and the "keep free" spot in V9-0n.
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
