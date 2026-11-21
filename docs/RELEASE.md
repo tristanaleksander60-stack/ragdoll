@@ -5,7 +5,7 @@
 When `/klar` has run every step of the current plan, the session publishes the game by itself. It publishes only if every gate below passes. This replaces the old rule "never publish", for this path only.
 
 ## For the owner (Danish)
-Når du skriver `/klar`, kører den hele planen igennem. Når alt er færdigt og testet, udgiver den spillet selv og genstarter de gamle servere, så alle får den nye version. Hvis noget ikke består testene, udgiver den IKKE. Så får du en kort besked om, hvad der mangler. Den udgiver højst én gang per `/klar`.
+Når du skriver `/klar`, kører den hele planen igennem. Når alt er færdigt og testet, udgiver den spillet selv. De gamle servere bliver IKKE genstartet: ingen bliver smidt ud, og nye servere starter på den nye version. Hvis noget ikke består testene, udgiver den IKKE. Så får du en kort besked om, hvad der mangler. Den udgiver højst én gang per `/klar`.
 
 ## When
 - Only after the last step of the plan is done or parked: all of V7, then V6-8.
@@ -56,9 +56,11 @@ Use the first method that works:
    - If the scope or an approved folder is missing, tell the owner in one Danish line exactly what to add, and use method 3 this time.
 3. **Last resort:** one Danish line to the owner: "Tryk Alt+P (Publish to Roblox) nu, så kører jeg videre." Wait, then check that the live version went up.
 
-## 4. Restart old servers (= "Shut Down All Servers")
-- **Open Cloud:** `POST https://apis.roblox.com/cloud/v2/universes/10774775314:restartServers`. It needs the scope `universe:write`, and it restarts the servers running an older version.
-- **If that is not possible:** tell the owner in one Danish line: "Creator Hub → Ragdoll Havoc → ⋯ → Shut Down All Servers."
+## 4. Do NOT restart the old servers (owner order, 21 Nov 2026)
+- **Never** call Open Cloud `restartServers`, never "Shut Down All Servers", never "Restart servers for updates", and never ask the owner to do it as part of a release.
+- Running servers keep their version until they close by themselves. New servers start on the new version. Players in old servers are never kicked.
+- The check in step 5 reads only the players who join new servers (Session_v1 `pv`). Expect a mixed population for a while; that is fine.
+- Only the owner may restart servers, by hand, if they ask for it themselves.
 
 ## 5. Check after publishing
 - The live place version number went up by one.

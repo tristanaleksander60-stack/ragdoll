@@ -94,7 +94,7 @@ Run `docs/RELEASE.md`:
 1. the gate (tests, LayoutCheck, play sessions, Studio-only flags off, version, What's New);
 2. the backup;
 3. **publish by yourself**;
-4. restart the old servers;
+4. do NOT restart the old servers (owner order 21 Nov: running servers keep their version, nobody is kicked);
 5. the check after publishing;
 6. the Danish report.
 

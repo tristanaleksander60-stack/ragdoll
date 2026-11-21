@@ -8,12 +8,26 @@
 
 Do the rest **in this order**. Each phase builds on the one before: things are first made at their final size, then placed, then labelled, then sold. Nothing is done twice.
 
-**Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it.
+**Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it. **Then Phase M at once, then Phase V.**
+
+**Phase M: the map place, right after the physics** (owner, 21 Nov: priority). As soon as V9-P (and V9-0ac with it) is done, build **V9-0e**: the physical place by the spawn where you **see every map and teleport to it**. That means the Map Board with a tile per place (picture, name, players there now, GO), the beautiful Places portal, the matching board and portal home on every map, and the nicer Solo/Multi portals.
+- **Placement:** it stands 20-25 studs from the spawn in the hub (V9-0h), in the spawn view, facing the player. Its spot is held free for it in the later placement pass (V9-0n only fine-tunes it).
+- **Publish** right after it passes (through `docs/RELEASE.md`), so players get it at once.
+
+**Phase V: first person in the cars, with interiors, right after Phase M** (owner, 21 Nov: priority). Build the cockpit part of **V9-0y** ("first person inside the car, with a real interior") for the vehicles that exist now:
+- the driver's-seat camera with V / Select / the eye button to the chase cam;
+- a real interior per vehicle, the turning wheel with the hands, the dash speedometer and the lights;
+- the feel (vibration, bumps, a head turn);
+- phone and pad controls that never cover the windscreen.
+
+If a current vehicle has no usable interior, swap it for a model that has one (or add a fitted interior set) **now**. That part of V9-0y's "bigger, better cars" is pulled forward with it. The rest of V9-0y (more cars, dummy bowling, ramps and boost pads) stays in Phase B, and every new car there must come with an interior that passes the same cockpit test.
+- **Tests:** the T177 cockpit checks.
+- **Publish** right after it passes (through `docs/RELEASE.md`).
 
 **Phase A: quick wins, no layout needed** (players feel them at once)
 1. **V9-0o** grey matte dummies. Every later capture uses them.
 2. **V9-0w** first shot → first person.
-3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive, then **V9-0aa**: the vitals monitor, then **V9-0ab**: falling off any map takes you home, then **V9-0ac**: shots flinch, death drops, then **V9-0ad**: weapons visible in first person on phones.
+3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive, then **V9-0aa**: the vitals monitor, then **V9-0ab**: falling off any map takes you home, then **V9-0ac**: shots flinch, death drops, then **V9-0ad**: weapons visible in first person on phones, then **V9-0ae**: the bullseye removed.
 4. **V9-3b** wider unlock gaps (Config and tests only).
 5. **V9-2c** the Z time dial and bubble.
 6. **Publish** through `docs/RELEASE.md` (milestone 1).
@@ -22,10 +36,10 @@ Do the rest **in this order**. Each phase builds on the one before: things are f
 7. **V9-0r** hero scale **together with V9-3** lab machines (the same objects: size, animation and sound in one pass).
 8. **V9-3c** the rocket pad and **V9-0m** the compressor (new hero machines, at hero scale).
 9. **V9-1** the aquarium with whale and shark, then **V9-2** every creature (the juicy eating), then **V9-2b** the feed terminals.
-10. **V9-0y + V9-0x** cars: bigger, more of them, fun to drive into dummies, and they react to shots and blasts (one cars pass).
+10. **V9-0y + V9-0x** cars: more of them, fun to drive into dummies, and they react to shots and blasts (one cars pass; the cockpit is already done in Phase V, new cars get interiors too).
 
 **Phase C: place and label everything** (only now, when all sizes are final)
-11. **V9-0n** the placement pass for the lab, with **V9-0e** portals and the Map Board as part of the spawn area.
+11. **V9-0n** the placement pass for the lab (the Map Board and portals from Phase M keep their spot; only fine-tune them).
 12. **V9-0v** physical signs, with **V9-0q** (visible) and **V9-0p** (moving creatures; the vacuum gets its mounted flag and smoothed motion) in the same pass.
 13. **Publish** (milestone 2).
 
@@ -1155,6 +1169,30 @@ So you rarely get a second or third shot in.
 **Tests:** T182_ViewmodelTouch. With `DevTouch` on (Studio), in first person, a Popper, a shotgun, a bat and a grenade each show a viewmodel inside the screen bounds on 3 phone sizes (portrait and landscape), and a shot triggers the kick.
 
 **Capture:** phone first person with the Popper, in landscape and portrait.
+
+## V9-0ae The bullseye is removed (owner, 21 Nov; quick, Phase A)
+> "Fjern bullseye."
+
+Remove the bullseye target from play, behind a switch (`Config.BULLSEYE = false`; the code stays so it can come back):
+- **World:** the bullseye part and its score rings, its sign/icon badge, its LabGuide ring and its PathPlan route end are not built.
+  - Lab / Playground: `cannonLanding`, the hub layout, the test row behind it.
+  - Also LabZones' `MACHINES` "today's machine" list, MachineNames, WorldDress and OutdoorMaps (the Island catapult target, if it uses one).
+- **The cannon** stays and lands on the open floor (V9-0n landing zone). Its flight is unchanged.
+- **Scoring and texts that need the bullseye** are removed or switched to cannon-only versions. Nothing must ask for the bullseye any more:
+  - StuntScore / StuntMath / StuntHud (the bullseye scoring);
+  - the BULLSEYE! banner (BannerRules, Toast);
+  - experiment cards and journal pages (Experiments, ExperimentService);
+  - the onboarding / FirstVisit steps (OnboardingController);
+  - the LikePrompt "wow" trigger (use another wow, such as a cannon launch over N studs or a combo);
+  - PlayerGrab's toss-combo trap list;
+  - Economy texts;
+  - What's New / STORE_TEXT / TRAILER shot lists.
+- **Badge "Bullseye"** (live id 3887603893235173): it can no longer be earned. Leave the badge on Roblox; owners keep it. Optional: re-point it to a cannon feat ("Launch a dummy 100 studs").
+- **The rest of the V9 plan:** wherever it says "bullseye" (the spawn view, landing zones, the rocket and cannon landings, the trailer), read **"the open landing floor in view of the spawn"**.
+- **Tests:**
+  - every test that builds or scores the bullseye skips while the switch is off;
+  - a new check makes sure no part, sign, banner, card or route named Bullseye is reachable live;
+  - T112 (spawn view) and T163 (hub layout) updated.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
