@@ -153,7 +153,7 @@ function Economy.nextBuy(list: { any }, isMine: (string) -> boolean, takedowns: 
 	if not best then
 		return nil, nil
 	end
-	return best.id, Economy.priceOf(best.unlockAt)
+	return best.id, Economy.priceOf(best.priceRung or best.unlockAt) -- (V9-3b: the price of its rung before the stretch)
 end
 
 -- A like-milestone code: its bolts if it is live and not used yet by this profile.

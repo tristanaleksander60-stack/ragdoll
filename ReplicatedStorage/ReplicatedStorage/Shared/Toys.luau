@@ -54,6 +54,7 @@ export type Toy = {
 	-- Takedowns it takes to unlock (phase H; 0: open from the start). The server refuses a locked
 	-- tool (ProgressService.isUnlocked); the catalog shows the lock and the number.
 	unlockAt: number,
+	priceRung: number?, -- V9-3b: the rung before the stretch (Bolts prices follow it)
 	-- How strong it is, as a ladder rung (V8-0.3): the rung before V8_RUNGS moved the start bar's
 	-- tools to 0, so HandRules can still tell a Launch (12) from a Crowbar (4).
 	rank: number,
@@ -326,13 +327,69 @@ local DEFAULT_LOADOUT = if Config.START_BAR_V9 then { "Blaster", "SMG", "Grab", 
 -- replace" step right when WEAPONS unlocks; it lines up with the ~19 s session drop: AUDIT.md 1.3.)
 local SLOTS = 6
 
+-- V9-3b (owner, 21 Nov 2026: "bigger gaps between unlocking new weapons"; Config.LADDER_V9): the
+-- first rungs stay as they are (up to LADDER_V9_KEEP: the first presents in the first minutes), then
+-- every rung above is re-spaced on one smooth curve: the gap after the kept rungs is
+-- LADDER_V9_FIRST_GAP and each next gap LADDER_V9_GROWTH times the one before, in the old order
+-- (tools that shared a rung still share it). The Rocket keeps its place among the hardest. Each
+-- weapon's old rung is kept (V8_UNLOCK): a profile from before keeps what it had reached
+-- (ProgressService ladder 6), Bolts prices follow the old rung (priceRung), and the Robux tiers'
+-- bounds move with the curve, so no weapon changes price.
+local V8_UNLOCK: { [string]: number } = {}
+local stretchFrom: { number } = {} -- the old rungs above the kept ones, in order
+local stretchTo: { [number]: number } = {} -- old rung -> new rung
+if (Config :: any).LADDER_V9 then
+	local keep = (Config :: any).LADDER_V9_KEEP
+	for _, toy in list do
+		local r = toy.unlockAt
+		if r > keep and r ~= math.huge and not table.find(stretchFrom, r) then
+			table.insert(stretchFrom, r)
+		end
+	end
+	table.sort(stretchFrom)
+	local at, gap = keep, (Config :: any).LADDER_V9_FIRST_GAP
+	for _, r in stretchFrom do
+		at += gap
+		stretchTo[r] = math.floor(at + 0.5)
+		gap *= (Config :: any).LADDER_V9_GROWTH
+	end
+	for i, toy in list do
+		V8_UNLOCK[toy.id] = toy.unlockAt
+		local new = stretchTo[toy.unlockAt]
+		if new then
+			local t = table.clone(toy) :: any
+			t.unlockAt = new
+			t.priceRung = toy.unlockAt
+			local frozen = table.freeze(t) :: Toy
+			list[i] = frozen
+			byId[toy.id] = frozen
+		end
+	end
+end
+
+-- A rung as the V9 ladder has it (an old rung, or a bound between rungs: the new rung of the
+-- highest old rung at or under it).
+local function stretch(old: number): number
+	if not (Config :: any).LADDER_V9 or old == math.huge or old <= (Config :: any).LADDER_V9_KEEP then
+		return old
+	end
+	local best: number? = nil
+	for _, r in stretchFrom do
+		if r <= old then
+			best = stretchTo[r]
+		end
+	end
+	return best or old
+end
+
 -- Buy now with Robux (round 2, N4): four price tiers by how far up the ladder a weapon is (the
 -- owner makes one developer product per tier: MoneyService). R$.
 local PRICE_TIERS = table.freeze({
-	-- (Phase 2: the bounds move with the retuned ladder, so every weapon keeps its price.)
-	{ key = "Weapon25", upTo = squeeze(60), robux = 25 },
-	{ key = "Weapon49", upTo = squeeze(200), robux = 49 },
-	{ key = "Weapon99", upTo = squeeze(500), robux = 99 },
+	-- (Phase 2: the bounds move with the retuned ladder, so every weapon keeps its price; V9-3b: and
+	-- with the stretched one.)
+	{ key = "Weapon25", upTo = stretch(squeeze(60)), robux = 25 },
+	{ key = "Weapon49", upTo = stretch(squeeze(200)), robux = 49 },
+	{ key = "Weapon99", upTo = stretch(squeeze(500)), robux = 99 },
 	{ key = "Weapon199", upTo = math.huge, robux = 199 },
 })
 -- BUY shows only for a weapon still this many takedowns away or more: one nearly earned is never
@@ -364,6 +421,8 @@ return table.freeze({
 	categories = table.freeze(CATEGORIES),
 	TOY_NAMES = table.freeze(TOY_NAMES), -- (phase 0: shown when Config.TOY_NAMES)
 	defaultLoadout = table.freeze(DEFAULT_LOADOUT),
+	V8_UNLOCK = table.freeze(V8_UNLOCK), -- (V9-3b: each weapon's rung before the stretch; empty when LADDER_V9 is off)
+	stretch = stretch,
 	priceTiers = PRICE_TIERS,
 	priceTier = priceTier,
 	canBuy = canBuy,

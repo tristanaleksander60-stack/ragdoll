@@ -19,9 +19,12 @@ return {
 			end
 		end
 		table.sort(rungs)
-		assert(rungs[5] <= 20, "the fifth weapon needs " .. rungs[5] .. " takedowns (10 min at 2/min = 20)")
+		-- (V9-3b, LADDER_V9: the gaps grow on purpose after the first rungs; the fifth comes one curve step
+		-- later, still inside the first ~12 minutes.)
+		local fifthMax = if Config.LADDER_V9 then Config.LADDER_V9_KEEP + 2 * Config.LADDER_V9_FIRST_GAP + 1 else 20
+		assert(rungs[5] <= fifthMax, "the fifth weapon needs " .. rungs[5] .. " takedowns (at most " .. fifthMax .. ")")
 		if Config.LADDER_V2 then
-			assert(rungs[#rungs] <= 650, "the top of the ladder is " .. rungs[#rungs])
+			assert(rungs[#rungs] <= (if Config.LADDER_V9 then Config.LADDER_V9_TOP else 650), "the top of the ladder is " .. rungs[#rungs])
 			-- The Minigun (58 on the old ladder) and the Railgun (1,050) keep their places.
 			assert(Toys.byId.Minigun.unlockAt < Toys.byId.Deagle.unlockAt and Toys.byId.Railgun.unlockAt < Toys.byId.GoldenDeagle.unlockAt, "the order changed")
 			-- (V8-0.3 moves the first rungs on purpose: the full start bar, T110.)

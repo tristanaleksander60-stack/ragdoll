@@ -355,6 +355,9 @@ local function buildTop(onRewards: () -> ())
 	topGui = g
 end
 
+local nextGoalId: string? = nil -- (V9-3b: the goal the bar showed last, and how full)
+local nextFrac = 0
+
 -- The pill's numbers: kills since the last exciting unlock, out of the step to the next one.
 function HudV3.drawNext(takedowns: number)
 	local owned: { [string]: boolean } = {}
@@ -375,6 +378,21 @@ function HudV3.drawNext(takedowns: number)
 		t.Text = "Next: " .. toy.short
 		n.Text = string.format("%d / %d", have, need)
 		TweenService:Create(fill, TweenInfo.new(0.3, Enum.EasingStyle.Quad), { Size = UDim2.fromScale(have / need, 1) }):Play()
+		-- (V9-3b: the longer gaps never feel empty: a soft tick and a glint when the bar passes half
+		-- way and 90 %, for the same goal, going up.)
+		local frac = have / need
+		if nextGoalId == toy.id then
+			for _, mark in { 0.5, 0.9 } do
+				if nextFrac < mark and frac >= mark and frac < 1 then
+					pcall(function()
+						(require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIComponents")) :: any).playSound("tick", if mark >= 0.9 then 1.35 else 1.15)
+					end)
+					fill.BackgroundColor3 = Color3.fromRGB(190, 255, 200)
+					TweenService:Create(fill, TweenInfo.new(0.5), { BackgroundColor3 = Color3.fromRGB(80, 210, 110) }):Play()
+				end
+			end
+		end
+		nextGoalId, nextFrac = toy.id, frac
 	else
 		t.Text = "Every weapon is yours"
 		n.Text = ""

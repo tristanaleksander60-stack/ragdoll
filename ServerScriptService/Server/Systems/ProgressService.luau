@@ -100,7 +100,9 @@ export type Goals = { day: number, p: { number }, claimed: { boolean }, bonus: b
 -- that its takedowns had reached (OLD_UNLOCK; everything else was open).
 -- Ladder 5 (Config.START_BAR_V9, 21 Nov 2026): Launch left the start bar for 3 takedowns and the Rocket
 -- went from 3 up among the hardest; a profile from before keeps both as it had them.
-local LADDER = if (Config :: any).START_BAR_V9 then 5 else 4
+-- Ladder 6 (V9-3b, Config.LADDER_V9, 21 Nov 2026): the rungs above the first ones were stretched; a
+-- profile from before keeps every weapon its takedowns had reached on the old rungs (Toys.V8_UNLOCK).
+local LADDER = if (Config :: any).LADDER_V9 and (Config :: any).START_BAR_V9 then 6 elseif (Config :: any).START_BAR_V9 then 5 else 4
 local ROUND5_STARTERS = { "Bat", "Crowbar", "Shove" } -- (on everyone's bar before round 5)
 -- Ladder 4 (V8-0.3, Config.V8_START_BAR): Poke, Shove, Slap and Heal moved up the ladder. What a
 -- player had already earned on their old rungs stays theirs (blind review, 21 Nov).
@@ -1475,6 +1477,13 @@ function ProgressService.grandfather(profile: Profile, takedowns: number, eggs: 
 		profile.owned.Launch = true -- (on everyone's bar from 0.26 to 0.27)
 		if takedowns >= 3 then
 			profile.owned.Rocket = true -- (it opened at 3 then)
+		end
+	end
+	if was < 6 and (Config :: any).LADDER_V9 then
+		for id, oldRung in Toys.V8_UNLOCK do
+			if oldRung > 0 and oldRung ~= math.huge and takedowns >= oldRung and Toys.byId[id] then
+				profile.owned[id] = true
+			end
 		end
 	end
 	profile.ladder = LADDER

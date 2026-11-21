@@ -64,6 +64,15 @@ local Config = {
 	LADDER_V2 = true,
 	LADDER_KEEP = 30,
 	LADDER_V2_SCALE = 0.363,
+	-- V9-3b (owner, 21 Nov 2026: "bigger gaps between unlocking new weapons"): rungs up to LADDER_V9_KEEP stay (the
+	-- first presents); above, one smooth curve: the first gap LADDER_V9_FIRST_GAP, each next gap
+	-- LADDER_V9_GROWTH times the one before (62 rungs: the top about 1,700, 2.8x the old 600; never past
+	-- LADDER_V9_TOP). Players keep what they had reached (ladder 6); every weapon keeps its price.
+	LADDER_V9 = true,
+	LADDER_V9_KEEP = 15,
+	LADDER_V9_FIRST_GAP = 5,
+	LADDER_V9_GROWTH = 1.05,
+	LADDER_V9_TOP = 1800,
 	-- Codes the owner turns on by hand when the like count reaches a milestone (never a reward for
 	-- liking: Roblox forbids it; anyone may type a live code). Set `code` and `live = true`.
 	LIKE_CODES = table.freeze({
