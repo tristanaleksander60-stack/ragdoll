@@ -8,7 +8,11 @@
 
 Do the rest **in this order**. Each phase builds on the one before: things are first made at their final size, then placed, then labelled, then sold. Nothing is done twice.
 
-**Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it.
+**Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it. **Then Phase M at once.**
+
+**Phase M: the map place, right after the physics** (owner, 21 Nov: priority). As soon as V9-P (and V9-0ac with it) is done, build **V9-0e**: the physical place by the spawn where you **see every map and teleport to it**. That means the Map Board with a tile per place (picture, name, players there now, GO), the beautiful Places portal, the matching board and portal home on every map, and the nicer Solo/Multi portals.
+- **Placement:** it stands 20-25 studs from the spawn in the hub (V9-0h), in the spawn view, facing the player. Its spot is held free for it in the later placement pass (V9-0n only fine-tunes it).
+- **Publish** right after it passes (through `docs/RELEASE.md`), so players get it at once.
 
 **Phase A: quick wins, no layout needed** (players feel them at once)
 1. **V9-0o** grey matte dummies. Every later capture uses them.
@@ -25,7 +29,7 @@ Do the rest **in this order**. Each phase builds on the one before: things are f
 10. **V9-0y + V9-0x** cars: bigger, more of them, fun to drive into dummies, and they react to shots and blasts (one cars pass).
 
 **Phase C: place and label everything** (only now, when all sizes are final)
-11. **V9-0n** the placement pass for the lab, with **V9-0e** portals and the Map Board as part of the spawn area.
+11. **V9-0n** the placement pass for the lab (the Map Board and portals from Phase M keep their spot; only fine-tune them).
 12. **V9-0v** physical signs, with **V9-0q** (visible) and **V9-0p** (moving creatures; the vacuum gets its mounted flag and smoothed motion) in the same pass.
 13. **Publish** (milestone 2).
 
