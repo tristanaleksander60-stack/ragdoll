@@ -68,6 +68,13 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.33.7",
+		lines = {
+			"No more feed computers: throw your ragdolls in yourself!",
+			"Skip a mission (-) or hide the card (=); E uses what you stand at",
+		},
+	},
+	{
 		version = "0.33.6",
 		lines = {
 			"Terminals and the MAPS board: press them up close, turn the camera freely",

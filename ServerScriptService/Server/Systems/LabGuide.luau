@@ -631,7 +631,7 @@ local function addSpot(into: Instance, origin: Vector3, id: string, target: () -
 				end
 			end
 		end)
-	else
+	elseif (Config :: any).GUIDE_PROMPTS ~= false then -- (owner, 21 Nov 2026: no feed buttons either; you throw the ragdoll in)
 		local p = Instance.new("ProximityPrompt")
 		p.Name = "Guide"
 		p.ActionText = words[1]
