@@ -444,7 +444,7 @@ end
 --   guarded  the server could not see the spot from the hitter (HitService): no zone that kills
 --            or bleeds out fast (GUARDED)
 --   round    a gun's round (Toys: gun): any of it to the head kills at once (HEADSHOT)
-export type WoundOptions = { sever: number?, zone: Anatomy.Zone?, blunt: boolean?, guarded: boolean?, round: boolean? }
+export type WoundOptions = { sever: number?, zone: Anatomy.Zone?, blunt: boolean?, guarded: boolean?, round: boolean?, boost: number? }
 function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by: Player?, power: number, options: WoundOptions?): (string?, Anatomy.Zone?)
 	local o: WoundOptions = options or {}
 	local blunt = o.blunt == true
@@ -500,7 +500,11 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 			local nowT = os.clock()
 			local worn = math.max(0, (v.damage or 0) - (nowT - (v.damageAt or nowT)) * Config.DAMAGE_DECAY)
 			v.damageAt = nowT
-			v.damage = worn + power * Config.DAMAGE_PER_POWER * region * (if blunt then Config.DAMAGE_BLUNT else 1)
+			v.damage = worn + power * Config.DAMAGE_PER_POWER * region * (if blunt then Config.DAMAGE_BLUNT else 1) * (o.boost or 1)
+			-- (V9-0ac: a round heavy enough (Sniper, Railgun) kills with one body shot; a limb only hurts.)
+			if (Config :: any).SHOT_FLINCH and o.round and not blunt and not zone.limb and power >= (Config :: any).SHOT_ONE_KILL_POWER then
+				v.damage = math.max(v.damage :: number, Config.BODY_HP)
+			end
 			model:SetAttribute("Damage", math.floor(v.damage :: number))
 			-- (A hit that already took all the blood dies of that: the heart gives out, in step.)
 			if not quiet() and (v.damage :: number) >= Config.BODY_HP and v.blood > Anatomy.DEAD_AT then

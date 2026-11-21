@@ -105,8 +105,15 @@ local function body(player: Player, root: BasePart): string
 	local now = os.clock()
 	assert(ActiveRagdoll.gunReaction(rig, "arm", 1, now) == "Flinch", "one arm shot took it down")
 	assert(ActiveRagdoll.gunReaction(rig, "leg", 1, now + 0.4, 1) == "Flinch", "an arm and a leg took it down")
-	assert(ActiveRagdoll.gunReaction(rig, "arm", 1, now + 0.8, 1) == "Ragdoll", "three rounds in the limbs did not take it down")
-	table.insert(results, "three rounds in the limbs fell it")
+	local flinch = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SHOT_FLINCH
+	if flinch then
+		-- (V9-0ac: rounds never knock a living body down; the damage drops it: T181.)
+		assert(ActiveRagdoll.gunReaction(rig, "arm", 1, now + 0.8, 1) == "Flinch", "a third limb round knocked it down")
+		table.insert(results, "three rounds in the limbs only flinch it (V9-0ac)")
+	else
+		assert(ActiveRagdoll.gunReaction(rig, "arm", 1, now + 0.8, 1) == "Ragdoll", "three rounds in the limbs did not take it down")
+		table.insert(results, "three rounds in the limbs fell it")
+	end
 
 	-- 4. The first egg opens by itself for a player who never opened one.
 	local p = ProgressService.profileForTest(player)

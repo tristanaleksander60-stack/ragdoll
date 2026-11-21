@@ -98,8 +98,8 @@ safe("DummySim", function() DummySim.start() end)
 -- V8-0.2: a newcomer's first Config.FIRST_HITS hits knock a dummy flat (ActiveRagdoll.firstHitsLeft,
 -- on this screen, which simulates the lab's dummies). Armed once, when the server says Newcomer.
 safe("FirstHits", function()
-	if not (Config :: any).V8_FIRST_HIT then
-		return
+	if not (Config :: any).V8_FIRST_HIT or (Config :: any).SHOT_FLINCH then
+		return -- (V9-0ac: a newcomer's first KOs come from more damage, not a knock-flat: HitService)
 	end
 	local AR = require(Shared:WaitForChild("Ragdoll"):WaitForChild("ActiveRagdoll")) :: any
 	AR.FIRST_HIT_PUSH = (Config :: any).FIRST_HIT_PUSH

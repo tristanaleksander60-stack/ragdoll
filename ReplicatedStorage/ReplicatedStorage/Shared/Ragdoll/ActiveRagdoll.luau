@@ -1777,6 +1777,20 @@ local LIMB_PUSH = 0.3 -- share of a round's shove on an arm or a leg that it sti
 -- same leg twice only buckles it again).
 local LIMB_SHOTS_TO_FELL = 3 -- rounds to the arms and legs within SHOT_MEMORY that take it down (round 5)
 function ActiveRagdoll.gunReaction(rig: any, region: string, gun: number, now: number, side: number?): string
+	-- V9-0ac (GameConfig.SHOT_FLINCH): a round never knocks a living body down. An arm or the head
+	-- flinches, a leg buckles (it limps on), the body staggers back from a strong round and flinches
+	-- from a light one. It drops when the damage kills it (VitalsService), never from the push.
+	if (GameConfig :: any).SHOT_FLINCH then
+		if region == "leg" then
+			local shot = rig.legShotAt or {}
+			rig.legShotAt = shot
+			shot[if side == 1 then "Right" else "Left"] = now
+		end
+		if region == "torso" or region == "body" then
+			return if gun >= GUN_FELLS then "Stumble" else "Flinch"
+		end
+		return "Flinch"
+	end
 	-- Round 5, phase 00: rounds add up. A third one in the arms or legs within SHOT_MEMORY takes it
 	-- down too (a phone player's taps land on limbs as often as not; they kept shooting and nothing fell).
 	if region == "arm" or region == "leg" then

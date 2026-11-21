@@ -2111,3 +2111,20 @@ Write the baseline into `docs/PERF.md`.
   - **Next:** P1 (mass and joints), then the settling and the heap's cost.
   - **Also this session:** the full suite after the Phase A fix round gave 118 pass, 5 fail. T19, T24, T25 and T32 are the known flaky ones; T108 passes alone.
   - **Left open:** the Phase A re-review was started but stopped by the owner, so it is not done.
+- 21 Nov 2026, V9-0ac DONE (PC, part of V9-P P3/P4): shots make dummies flinch, not fall (`Config.SHOT_FLINCH`).
+  - **The rule** (`ActiveRagdoll.gunReaction`): a round never knocks a living body down.
+    - An arm or the head flinches: the struck arm swings back, the head snaps back with the hands up.
+    - A leg buckles at the knee and the body limps on. Both legs no longer drop it.
+    - The body staggers back from a strong round (power ≥ 0.9) and flinches from a light one.
+    - `LIMB_SHOTS_TO_FELL` and the 3-nails rule apply only with the switch off.
+  - **It drops when it dies** (VitalsService's damage, existing since v4 A5). That works out to Popper 6 body rounds, Deagle 4, AK 6, SMG 10 (fast) and shotgun pellets 1-2 close.
+    - A headshot kills at once.
+    - A body round of `SHOT_ONE_KILL_POWER` 2.5 or more (Sniper, Railgun) kills at once.
+    - Death goes limp through the existing Vital path.
+  - **Newcomers:** instead of the old "first 3 hits knock flat" (off under SHOT_FLINCH), a newcomer's hits do `NEWCOMER_DAMAGE` 2.5x the damage until `FIRST_HITS` takedowns (HitService). The first KO comes in 3 Popper rounds.
+  - **Big forces still ragdoll at once:** blasts, the cannon, cars, heavy blows and throws (the deltaV path is unchanged).
+  - **Tests:**
+    - T181_FlinchNotFall passes: no round downs a living body; Popper 6, newcomer 3; a headshot and a Sniper body round at once; a blast at once.
+    - T38 and T45 check the new rule (the round 5 checks run only with the switch off).
+    - T109, T23, T24 and T33 pass.
+  - **Not done:** the 4-frame capture of three flinches and the fall, and a hand going to the wound spot (the existing flinch poses: the head snaps back with the hands up, the torso curls, the arm swings back, the knee buckles).

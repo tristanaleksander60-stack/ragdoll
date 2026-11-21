@@ -87,6 +87,13 @@ local function shoot(toyId: string, model: Model, partName: string): string?
 end
 
 local function run(results: { string })
+	-- (V9-0ac, Config.SHOT_FLINCH: a round never knocks a living body down; that rule is T181's. These
+	-- checks of the round 5 rule run only with the switch off.)
+	if (Config :: any).SHOT_FLINCH then
+		assert(ActiveRagdoll.gunReaction({}, "arm", 1.6, os.clock()) == "Flinch" and ActiveRagdoll.gunReaction({}, "torso", 1.6, os.clock()) == "Stumble", "V9-0ac: an arm round flinches, a strong body round staggers")
+		table.insert(results, "the rule is V9-0ac's (flinch, not fall: T181)")
+	end
+	if not (Config :: any).SHOT_FLINCH then
 	-- 1. The rule itself.
 	local rig: any = {}
 	local now = os.clock()
@@ -165,6 +172,8 @@ local function run(results: { string })
 	assert(type(noted:GetAttribute("LegShotRight")) == "number", "a leg round left no note on the body")
 	assert(ActiveRagdoll.gunReaction({ model = noted }, "leg", 1, os.clock(), -1) == "Ragdoll", "a new simulator forgot the other leg")
 	table.insert(results, "a leg round is noted on the body: a new simulator takes it down with the other leg")
+
+	end -- (the round 5 rule, SHOT_FLINCH off)
 
 	-- 3. Every round lowers the pulse and costs blood; the head more.
 	local a, b = body(Vector3.new(4, 0, -40)), body(Vector3.new(12, 0, -40))

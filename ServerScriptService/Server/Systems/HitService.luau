@@ -28,6 +28,7 @@ local GunThreat = require(Shared.GunThreat)
 local Anatomy = require(Shared.Anatomy)
 local SessionStats = require(script.Parent.SessionStats)
 local Ammo = require(Shared.Ammo)
+local Config = require(Shared.Config)
 local WeaponMechanics = require(script.Parent.WeaponMechanics)
 -- (An extra round of a gun's own mechanics never starts more: per player, so one player's rounds
 -- never switch off another's: review fix.)
@@ -285,7 +286,13 @@ function HitService.applyToy(toy: Toys.Toy, part: BasePart, position: Vector3, d
 			local blunt = not toy.gun and toy.sever <= 0
 			local sever = HitService.severFor(toy, requester, position)
 			-- (Round 4, M10: a gun's round, the NailGun's too, kills at once in the head: VitalsService.)
-			VitalsService.wound(model, woundPart, woundAt, requester, toy.wound, { sever = sever, blunt = blunt, guarded = guarded, round = toy.gun == true })
+			-- (V9-0ac: a newcomer's first takedowns come in 2-3 shots: their hits do NEWCOMER_DAMAGE times the damage
+			-- until FIRST_HITS takedowns, instead of the old knock-flat rule.)
+			local boost: number? = nil
+			if (Config :: any).SHOT_FLINCH and requester and requester:GetAttribute("Newcomer") == true and (ProgressService.takedownsOf(requester) or 0) < ((Config :: any).FIRST_HITS or 3) then
+				boost = (Config :: any).NEWCOMER_DAMAGE
+			end
+			VitalsService.wound(model, woundPart, woundAt, requester, toy.wound, { sever = sever, blunt = blunt, guarded = guarded, round = toy.gun == true, boost = boost })
 		end
 		-- Round 5: each gun's own (pellets, a round through bodies, a flare, gold sparks). Never
 		-- from inside one of its own extra rounds.

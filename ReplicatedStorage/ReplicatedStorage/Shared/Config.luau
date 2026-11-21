@@ -389,6 +389,16 @@ local Config = {
 	-- (docs/PHYSICS.md, the bench T183). MASS: each part's mass, a real body's spread (pelvis 14 %, thighs
 	-- 10 %, upper arms 2.7 %...) over the same total as before (6.4), so the ActiveRagdoll forces stay right;
 	-- only dummies (a player's avatar walks as Roblox makes it).
+	-- V9-0ac (owner, 21 Nov 2026: "ragdolls should not fall so fast, so you get to shoot them several times; they
+	-- should not fall from being shot, they should fall when they die"): a round never knocks a living dummy
+	-- down (ActiveRagdoll.gunReaction: a flinch, a stagger, a limp), it drops when the damage kills it
+	-- (VitalsService: about 6 Popper rounds, 4 Deagle, 10 SMG, 1-2 shotgun; a headshot at once; a body round
+	-- of SHOT_ONE_KILL_POWER or more (Sniper, Railgun) at once). A newcomer's rounds do NEWCOMER_DAMAGE times
+	-- the damage until FIRST_HITS takedowns (the first KO within 2-3 shots), instead of knocking flat.
+	-- Big forces (blasts, the cannon, cars, heavy blows, throws) still ragdoll at once.
+	SHOT_FLINCH = true,
+	SHOT_ONE_KILL_POWER = 2.5,
+	NEWCOMER_DAMAGE = 2.5,
 	PHYSICS_V9 = true,
 	PHYSICS = table.freeze({
 		MASS = table.freeze({
