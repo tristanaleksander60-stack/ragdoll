@@ -30,6 +30,7 @@ The owner types **`/tjek`** (`.claude/commands/tjek.md`) for a full quality audi
 
 ## Owner decisions
 - **21 Nov 2026 (V9-NOW):** `Config.BLOOD = "purple"` again (owner), `MAP_PORTAL` false (board only), `REAL_PADS`, `MONITOR_ON_HIT` (monitor 3 s after your hit), `RECOIL` per gun + Settings "Recoil".
+- **21 Nov 2026 (V9-NOW 11-16, 0.32.0):** `TARGET_BLOCKS` (Knockables "Block"), `DOUBLE_EVENT` (Shared/DoubleEvent, 48 h from 21 Nov 14:10 UTC), `WHATS_NEW_AUTO_CLOSE`, monitor fixed in the corner, `Client/Cockpit` (VEHICLES.cockpit + start/screech/wind sounds). Script Sync was off: changes went in through the Studio MCP and were checked by checksum.
 - Purple blood; severed limbs allowed behind the `SEVERING` switch in Config; real-ish gun names via nicknames (G17, Deagle), no trademarks. **Phase 0 (19 Nov) changed the defaults, each one switch away:** `Config.SEVERING = false`, `Config.BLOOD = "off"` ("purple" = the old choice), `Config.TOY_NAMES = true` (G17 -> Popper ...; ids unchanged), `Config.MILD_TEXT = true` (hit line by body region). Owner to confirm.
 - Gunshot sounds: community uploads.
 - Own lab per player, others' plots not visible, shared plaza (players can hit each other, no damage), friends enter a lab by invite.

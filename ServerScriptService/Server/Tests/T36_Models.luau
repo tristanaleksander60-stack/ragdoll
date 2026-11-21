@@ -236,7 +236,7 @@ local function body(results: { string })
 				count[c.Name] = (count[c.Name] or 0) + 1
 			end
 			for _, d in c:GetDescendants() do
-				assert(N7Models.allowed(d) or d:IsA("SurfaceGui") or d:IsA("GuiObject") or d:IsA("UIComponent"), "something odd in a lab's props: " .. d:GetFullName())
+				assert(N7Models.allowed(d) or d:IsA("SurfaceGui") or d:IsA("GuiObject") or d:IsA("UIComponent") or d:IsA("TouchTransmitter") or d:IsA("WeldConstraint"), "something odd in a lab's props: " .. d:GetFullName())
 			end
 		end
 		assert((count.LabBench or 0) >= 2 and (count.Barrier or 0) >= 8 and (count.Cone or 0) >= 8, lab.Name .. " is not dressed")

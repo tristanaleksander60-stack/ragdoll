@@ -17,8 +17,12 @@ Knockables.ROLES = table.freeze({ Barrel = 0.55, Crate = 0.7, Cone = 0.3, Block 
 -- V9-NOW 11 (owner, 21 Nov 2026: "the big target blocks topple when shot"): a Block is tall and heavy: a shot gives it
 -- only BLOCK_SHOT studs/s and a tip (no hop), so a few hits rock it over; it lands with a heavy thud and dust,
 -- and can knock its neighbour. A shot must land on it (its box, BLOCK_MARGIN), not just near it.
-Knockables.BLOCK_SHOT = 3.2 -- studs/s a shot pushes a block
-Knockables.BLOCK_TIP = 0.42 -- rad/s of tip per stud/s of push (the top goes first)
+Knockables.BLOCK_SHOT = 3.2 -- (a shot's push: only its direction counts for a block, see BLOCK_WOBBLE)
+Knockables.BLOCK_WOBBLE = 8 -- studs/s of the block's mass pushed at its top by one shot: it rocks (about 6 degrees)
+Knockables.BLOCK_TOPPLE = 16 -- the same for the push that tips it over (measured: 13 tips a 9 x 12.8 x 7 block)
+Knockables.BLOCK_HITS = 4 -- shots within BLOCK_MEMORY s that topple it
+Knockables.BLOCK_MEMORY = 2.5
+Knockables.BLOCK_HARD = 20 -- studs/s: a push this hard (a car, a thrown body, a blast) topples it at once
 Knockables.BLOCK_MARGIN = 0.8 -- studs round its box that still count as on it
 Knockables.FALLEN_TILT = 55 -- degrees off upright: it fell (the thud)
 Knockables.KNOCK_SPEED = 14 -- studs/s: a touch at least this fast (relative) knocks it
@@ -42,6 +46,8 @@ type Entry = {
 	lastKnock: number,
 	role: string,
 	fell: boolean?,
+	hits: number?,
+	hitAt: number?,
 }
 
 local entries: { [BasePart]: Entry } = {}
@@ -56,6 +62,7 @@ local function goHome(e: Entry)
 	e.model:PivotTo(e.home) -- (its pivot is the body: the welded pieces come along)
 	e.model:SetAttribute("Loose", nil)
 	e.fell = nil
+	e.hits = 0
 end
 
 -- V9-NOW 11: a fallen block lands with a heavy thud and a puff of dust (on every screen: a server sound and emitter).
@@ -101,12 +108,21 @@ local function knock(e: Entry, velocity: Vector3)
 		end)
 	end
 	if e.role == "Block" then
-		-- (A block rocks over, it does not hop: the push tips its top the way it was pushed.)
+		-- (A block rocks, it never hops: a push at its top (the ground holds its foot, a turn about its centre
+		-- alone is cancelled by the floor). Shots rock it; the BLOCK_HITS-th within BLOCK_MEMORY s, or one hard
+		-- push, tips it over.)
 		local flat = Vector3.new(velocity.X, 0, velocity.Z)
 		if flat.Magnitude > 0.01 then
-			body.AssemblyAngularVelocity += Vector3.yAxis:Cross(flat.Unit) * flat.Magnitude * Knockables.BLOCK_TIP
+			if now - (e.hitAt or -math.huge) > Knockables.BLOCK_MEMORY then
+				e.hits = 0
+			end
+			e.hits = (e.hits or 0) + 1
+			e.hitAt = now
+			local hard = flat.Magnitude >= Knockables.BLOCK_HARD or (e.hits :: number) >= Knockables.BLOCK_HITS
+			local k = if hard then Knockables.BLOCK_TOPPLE else Knockables.BLOCK_WOBBLE
+			local top = body.Position + body.CFrame.UpVector * body.Size.Y * 0.45
+			body:ApplyImpulseAtPosition(flat.Unit * body.AssemblyMass * k, top)
 		end
-		body.AssemblyLinearVelocity += velocity
 		return
 	end
 	local spin = Vector3.new(math.random() - 0.5, math.random() - 0.5, math.random() - 0.5) * 10

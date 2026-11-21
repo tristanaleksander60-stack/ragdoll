@@ -419,14 +419,14 @@ local Config = {
 	-- V9-NOW 7 (owner, 21 Nov 2026: "real launch pads instead of neon"): every launch pad is a steel plate with a
 	-- rubber mat, bolts, painted colour and pictogram (Playground.realPad); no glowing rings on them (LabGuide).
 	REAL_PADS = true,
-	-- V9-NOW 14 (owner, 21 Nov 2026): s the What's New window stays before it closes by itself (EventShop).
+	-- V9-NOW 14 (owner, 21 Nov 2026): seconds the What's New window stays before it closes by itself (EventShop).
 	WHATS_NEW_AUTO_CLOSE = 3,
-	-- V9-NOW 12 (owner, 21 Nov 2026): 2X KOs (toward unlocks) and 2X BOLTS (not codes or bought bolts; stacks with the
-	-- 2x BOLTS pass) from `from` to `to`, UTC seconds (Shared/DoubleEvent). Starts with this publish, 48 hours.
 	-- V9-NOW 11 (owner, 21 Nov 2026): the crash wall behind the row is three big target blocks that topple when shot
 	-- (Lab.targetBlocks, Knockables "Block"). false = the old one-piece CrashWall mesh.
 	TARGET_BLOCKS = true,
-	DOUBLE_EVENT = { from = 1795269600, to = 1795269600 + 48 * 3600 },
+	-- V9-NOW 12 (owner, 21 Nov 2026): 2X KOs (toward unlocks) and 2X BOLTS (not codes or bought bolts; stacks with the
+	-- 2x BOLTS pass) from `from` to `to`, UTC seconds (Shared/DoubleEvent). Starts with this publish, 48 hours.
+	DOUBLE_EVENT = { from = 1795270200, to = 1795270200 + 48 * 3600 }, -- (21 Nov 2026 14:10 UTC to 23 Nov 14:10 UTC)
 	-- V9-NOW 9 (owner, 21 Nov 2026: "recoil on every gun"): your own shot kicks the camera up by `up` degrees and to a
 	-- random side by `side`, `shake` adds a little trauma (the minigun's steady shake); it settles back smoothly
 	-- (FeelTuning.KICK_RETURN). Settings "Recoil" FULL/HALF/OFF scales it, Motion LESS halves it. A gun not here

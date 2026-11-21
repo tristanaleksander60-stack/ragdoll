@@ -17,6 +17,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config")) :: any
+local CarDrive = require(Shared:WaitForChild("CarDrive")) :: any
 
 local Client = script.Parent
 local SoundMix = require(Client:WaitForChild("SoundMix")) :: any
@@ -26,6 +27,7 @@ local Cockpit = {}
 Cockpit.EYE_FORWARD = 0.25 -- studs ahead of the (hidden) head, so the head's inside never shows
 Cockpit.EYE_UP = 0.15
 Cockpit.STEER_LOOK = math.rad(10) -- the view leans into a turn a little
+Cockpit.LOOK_DOWN = math.rad(7) -- a little down from level: the road, the hood and the wheel's rim in view
 Cockpit.WHEEL_TURN = math.rad(120) -- the steering wheel's turn at full lock
 Cockpit.SCREECH_SPEED = 28 -- studs/s: a hard turn or hard braking above this screeches
 Cockpit.WIND_FROM = 18 -- studs/s: wind from here, full at WIND_FULL
@@ -163,8 +165,9 @@ local function buildExtras(r: Ride)
 		return p
 	end
 	local kind = seat:GetAttribute("LabCar")
-	local reach = if kind == "Truck" then 1.9 else 1.7
-	local height = if kind == "Truck" then 2.3 else 2.1
+	-- (In view from the eye: about 0.6 under it and 1.8 ahead, so the rim shows at the foot of the screen.)
+	local reach = if kind == "Truck" then 2.3 else 2.1
+	local height = if kind == "Truck" then 2.7 else 2.5
 	-- The wheel: a ring of 14 short pieces round a hub, tilted towards the driver, on a column. The ring is its own
 	-- assembly welded to a hub that turns (a Weld whose C0 this screen sets: Cockpit's step).
 	local center = seat.CFrame * CFrame.new(0, height, -reach) * CFrame.Angles(math.rad(-25), 0, 0)
@@ -186,7 +189,7 @@ local function buildExtras(r: Ride)
 	table.insert(r.extras, hub)
 	r.wheel = hub
 	r.wheelBase = turn.C0
-	local radius = 0.62
+	local radius = 0.48
 	for i = 1, 14 do
 		local a = i / 14 * math.pi * 2
 		local p = Instance.new("Part")
@@ -220,7 +223,7 @@ local function buildExtras(r: Ride)
 	end
 	piece("CockpitColumn", Vector3.new(0.16, 0.16, 0.9), center * CFrame.new(0, 0, -0.5), Color3.fromRGB(30, 30, 34))
 	-- The speedometer: a small lit panel on the dash, right of the wheel.
-	local dash = piece("CockpitDash", Vector3.new(0.9, 0.5, 0.06), center * CFrame.new(0.95, 0.15, -0.35), Color3.fromRGB(14, 16, 20))
+	local dash = piece("CockpitDash", Vector3.new(0.5, 0.24, 0.05), center * CFrame.new(0.85, 0.05, -0.4), Color3.fromRGB(14, 16, 20))
 	local gui = Instance.new("SurfaceGui")
 	gui.Face = Enum.NormalId.Back
 	gui.LightInfluence = 0
@@ -233,7 +236,7 @@ local function buildExtras(r: Ride)
 	t.TextColor3 = Color3.fromRGB(120, 240, 255)
 	t.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold)
 	t.TextScaled = true
-	t.Text = "0 mph"
+	t.Text = "0 km/h"
 	t.Parent = gui
 	r.speedText = t
 end
@@ -314,7 +317,8 @@ local function step(dt: number)
 	end
 	local t = r.speedText
 	if t then
-		t.Text = string.format("%d mph", math.floor(speed * 0.682 + 0.5)) -- (a stud as a foot: studs/s -> mph)
+		local kmh = CarDrive.reading(along) -- (the same km/h as the round gauge: Speedometer)
+		t.Text = tostring(kmh) .. " km/h"
 	end
 	-- Sounds.
 	local hardTurn = math.abs(steer) > 0.6 and speed > Cockpit.SCREECH_SPEED
@@ -347,7 +351,7 @@ local function step(dt: number)
 		local head = character and character:FindFirstChild("Head")
 		if camera and head and head:IsA("BasePart") then
 			camera.CameraType = Enum.CameraType.Scriptable
-			local rot = body.CFrame.Rotation * CFrame.Angles(0, -steer * Cockpit.STEER_LOOK, 0)
+			local rot = body.CFrame.Rotation * CFrame.Angles(0, -steer * Cockpit.STEER_LOOK, 0) * CFrame.Angles(-Cockpit.LOOK_DOWN, 0, 0)
 			camera.CFrame = CFrame.new(head.Position + body.CFrame.UpVector * Cockpit.EYE_UP + fwd * Cockpit.EYE_FORWARD) * rot
 		end
 		-- (Anything put on later, a hat or a tool: hidden too.)

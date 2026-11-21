@@ -58,11 +58,13 @@ return {
 		end
 		local before = eco.bolts
 		EconomyService.experimentDone(player, today[1])
-		local want = today[1].stars * Config.BOLTS_PER_STAR + Config.DAILY_BONUS
+		-- (V9-NOW 12: inside the 2X event every bolt payout doubles.)
+		local x2 = (require(Shared.DoubleEvent) :: any).mult(Config.DOUBLE_EVENT, os.time())
+		local want = (today[1].stars * Config.BOLTS_PER_STAR + Config.DAILY_BONUS) * x2
 		assert(eco.bolts == before + want, string.format("a daily experiment paid %d, want %d", eco.bolts - before, want))
 		assert(eco.daily[today[1].id], "the daily experiment was not ticked")
 		EconomyService.experimentDone(player, today[1])
-		assert(eco.bolts == before + want + today[1].stars * Config.BOLTS_PER_STAR, "the daily bonus paid twice")
+		assert(eco.bolts == before + want + today[1].stars * Config.BOLTS_PER_STAR * x2, "the daily bonus paid twice")
 		-- Buying: enough bolts buys the next weapon (and spends them); none left over is refused.
 		eco.bolts = 0
 		assert(EconomyService.buyNext(player) == nil, "a weapon for no bolts")
