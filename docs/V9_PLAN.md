@@ -57,6 +57,13 @@
     - it follows the limb when the body moves or ragdolls;
     - no offset from the old body part under the skin, and no holes in the air when the skin is scaled (grey tone, dummy types).
 
+14. **What's New closes by itself after 3 s** (owner, 21 Nov):
+    - The What's New window (and the returners' What's New chip, if shown) fades out 3 s after it opens.
+    - Tapping it or pressing a key closes it sooner.
+    - If the player taps or scrolls inside it, the 3 s timer stops, so they can read; it then closes when they leave it or press close.
+    - Put the number in Config (`WHATS_NEW_AUTO_CLOSE = 3`).
+    - It still shows only once per version.
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
