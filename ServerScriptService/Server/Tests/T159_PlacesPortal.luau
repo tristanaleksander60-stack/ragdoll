@@ -129,6 +129,13 @@ return {
 			local back = WorldMaps.travel(p, "Lab")
 			assert(back and p:GetAttribute("Place") == "Lab", "the trip home failed")
 			table.insert(results, "travelled to " .. table.concat(went, ", ") .. " and home; the board counted the player")
+			-- (The maps visited go back to sleep now, as if left a while ago: later tests expect them empty.)
+			pcall(function()
+				local CrowdService = require(Systems:WaitForChild("CrowdService")) :: any
+				for _, id in went do
+					CrowdService.emptyForTest(id)
+				end
+			end)
 			-- Refused while seated or holding a body.
 			task.wait(Places.TRAVEL_GAP + 0.05)
 			local seat = Instance.new("Seat")

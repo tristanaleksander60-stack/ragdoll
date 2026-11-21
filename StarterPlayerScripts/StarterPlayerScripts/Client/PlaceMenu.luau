@@ -188,6 +188,19 @@ function go(id: string)
 	end
 	locked = true
 	refresh()
+	-- (V9-0e fix round 1, the V8-2.10 travel: a gold fade covers the trip while the server streams the
+	-- place in; the arrival flash takes it over, a refusal lifts it.)
+	local cover = flash
+	if cover then
+		cover.BackgroundColor3 = Color3.fromRGB(60, 44, 10)
+		cover.BackgroundTransparency = 1
+		TweenService:Create(cover, TweenInfo.new(0.25), { BackgroundTransparency = 0.1 }):Play()
+		task.delay(6, function()
+			if cover.BackgroundTransparency < 0.5 and not locked then
+				TweenService:Create(cover, TweenInfo.new(0.3), { BackgroundTransparency = 1 }):Play()
+			end
+		end)
+	end
 	remote:FireServer(id)
 	task.delay(PRESS_LOCK, function()
 		locked = false
@@ -349,6 +362,9 @@ function PlaceMenu.start()
 			Toast.show(detail)
 			locked = false
 			refresh()
+			if flash then
+				TweenService:Create(flash, TweenInfo.new(0.2), { BackgroundTransparency = 1 }):Play() -- (the trip's fade lifts)
+			end
 		end
 	end)
 	UserInputService.InputBegan:Connect(function(input, processed)

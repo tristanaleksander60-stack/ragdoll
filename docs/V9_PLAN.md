@@ -2346,3 +2346,8 @@ Write the baseline into `docs/PERF.md`.
     - **Pads** cannot pick a tile on the board itself, and ButtonX may clash with PadGrab near the board.
     - **No board on the Plaza.**
     - **Layout:** LayoutCheck does not open Maps or MapGo.
+- 21 Nov 2026, Phase M: the V8-2.10 travel, part (PC):
+  - **Server** (`WorldMaps.travel`): the place is streamed in round the arrival first (`RequestStreamAroundAsync`, with StreamingEnabled), then the move.
+  - **Client** (`PlaceMenu.go`): a gold fade covers the trip; the arrival flash takes it over, and a refusal lifts it.
+  - **Tests:** T159 passes, and now puts the maps it visited back to sleep (`CrowdService.emptyForTest`), since T26, which runs after it, expects Site empty. T26 passes.
+  - **Still missing:** a loading card and a screen-filling swirl.

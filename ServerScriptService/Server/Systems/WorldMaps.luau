@@ -865,6 +865,16 @@ function WorldMaps.travel(player: Player, id: unknown): (boolean, string?)
 	end
 	lastTrip[player] = os.clock()
 	local jitter = Vector3.new(math.random() * 6 - 3, 0, math.random() * 4 - 2)
+	-- (V9-0e fix round 1, the V8-2.10 travel: the place is streamed in around the arrival before the move,
+	-- so nobody lands on a map that is not there yet; the client covers the wait with its gold fade.)
+	if Workspace.StreamingEnabled then
+		pcall(function()
+			player:RequestStreamAroundAsync((target + jitter).Position, 4)
+		end)
+		if not player.Parent or player.Character ~= character then
+			return false, "Not now"
+		end
+	end
 	character:PivotTo(target + jitter)
 	local root = character:FindFirstChild("HumanoidRootPart")
 	if root and root:IsA("BasePart") then
