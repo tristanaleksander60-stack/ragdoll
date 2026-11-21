@@ -396,6 +396,8 @@ local Config = {
 	-- of SHOT_ONE_KILL_POWER or more (Sniper, Railgun) at once). A newcomer's rounds do NEWCOMER_DAMAGE times
 	-- the damage until FIRST_HITS takedowns (the first KO within 2-3 shots), instead of knocking flat.
 	-- Big forces (blasts, the cannon, cars, heavy blows, throws) still ragdoll at once.
+	-- V9-0ab (owner, 21 Nov 2026: "if you fall out of your map you spawn back in your lab"): Server/Systems/OutOfBounds.
+	OUT_OF_BOUNDS = true,
 	SHOT_FLINCH = true,
 	SHOT_ONE_KILL_POWER = 2.5,
 	NEWCOMER_DAMAGE = 2.5,

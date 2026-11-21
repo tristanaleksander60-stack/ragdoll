@@ -2129,3 +2129,16 @@ Write the baseline into `docs/PERF.md`.
     - T109, T23, T24 and T33 pass.
   - **Not done:** the 4-frame capture of three flinches and the fall, and a hand going to the wound spot (the existing flinch poses: the head snaps back with the hands up, the torso curls, the arm swings back, the knee buckles).
 - 21 Nov 2026, V9-P P3 reflex (PC): a living body falling towards the ground braces: arms out, head tucked, knees bent (`PHYSICS.BRACE_HEIGHT` 7, `BRACE_FALL` 8; `Poses.brace`). It windmills higher up. T183 (drop40 settles in 0.49 s), T24, T82 and T181 pass. The P2/P5 status is in docs/PHYSICS.md.
+- 21 Nov 2026, V9-0ab DONE (PC): falling off any map takes you home (`Config.OUT_OF_BOUNDS`, `Server/Systems/OutOfBounds`).
+  - **The rule:** every 0.5 s the server checks every player. A player who is in no place gets sent home. The places are:
+    - the ground row (the labs and the plaza, from 40 under the floor to 700 over it, so cannon flights are fine);
+    - any map or room with a floor, inside its size plus 60 studs, from 40 under its floor to 400 over its top.
+  - **Going home:** they go to their own lab, or to their Prank Party's lab. They leave the seat first, the fall's speed is dropped, and they get a puff and "Back in your lab". No death screen; tools and progress are kept.
+  - **Not checked** during Zero-G or low gravity.
+  - **Bodies and props:** dummies already come back through the lab's and the walkers' own rules (V9-0j); props through Knockables.
+  - **T179_OutOfBounds passes:**
+    - inside: the labs, the plaza, a flight high over the lab, the Island;
+    - out: under the floor, under the Island, off its edge, between the ground and the maps;
+    - a player under the Island came home to their lab with their tools;
+    - one high over the lab was left alone.
+  - **Not done:** a client-side fade before the move (the server's move and the puff only).
