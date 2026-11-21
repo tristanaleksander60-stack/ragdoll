@@ -19,12 +19,12 @@ DummySpawn.REACH = 80 -- studs from you to the spot
 DummySpawn.GAP = 1.5 -- s between two spawns
 DummySpawn.CAP = table.freeze({ phone = 3, tablet = 5, pc = 6, console = 6 }) :: { [string]: number }
 
-type Spec = { scale: number, density: number, elasticity: number, color: Color3, plate: string }
+type Spec = { scale: number, density: number, elasticity: number, color: Color3, plate: string, pace: number? }
 DummySpawn.TYPES = table.freeze({
-	MINI = { scale = 0.6, density = 0.7, elasticity = 0.3, color = Color3.fromRGB(120, 210, 255), plate = "MINI" },
-	HEAVY = { scale = 1.3, density = 3, elasticity = 0.1, color = Color3.fromRGB(58, 66, 84), plate = "HEAVY" }, -- (V9-0o: dark steel, never the grey of a plain dummy)
-	BOUNCY = { scale = 1, density = 0.9, elasticity = 1, color = Color3.fromRGB(255, 140, 220), plate = "BOUNCY" },
-	FLOPPY = { scale = 1, density = 0.25, elasticity = 0.2, color = Color3.fromRGB(255, 220, 120), plate = "FLOPPY" },
+	MINI = { scale = 0.6, density = 0.7, elasticity = 0.3, color = Color3.fromRGB(120, 210, 255), plate = "MINI", pace = 1.4 },
+	HEAVY = { scale = 1.3, density = 3, elasticity = 0.1, color = Color3.fromRGB(58, 66, 84), plate = "HEAVY", pace = 0.7 }, -- (V9-0o: dark steel, never the grey of a plain dummy)
+	BOUNCY = { scale = 1, density = 0.9, elasticity = 1, color = Color3.fromRGB(255, 140, 220), plate = "BOUNCY", pace = 1.15 },
+	FLOPPY = { scale = 1, density = 0.25, elasticity = 0.2, color = Color3.fromRGB(255, 220, 120), plate = "FLOPPY", pace = 0.85 },
 }) :: { [string]: Spec }
 
 local mine: { [Player]: { Model } } = {}
@@ -245,6 +245,89 @@ function DummySpawn.spawnFor(player: Player, kind: unknown, at: unknown): (Model
 end
 
 ------------------------------------------------------------------------------------------------
+-- V9-0z (owner, 21 Nov 2026: "the ragdolls you spawn in GOD MODE should not just stand there"; and "they
+-- should disappear after they are knocked out once"): a GOD MODE body lives like the lab's own:
+--   * it holds its pattern HOLD_SHAPE s (the shape reads and can be filmed), then wanders: every
+--     WANDER_EVERY s a new Home on open floor WANDER_NEAR..WANDER_FAR studs off, which ActiveRagdoll's
+--     brain walks it to (at its kind's Pace: TINY quick, HEAVY slow); it flinches, runs and falls like
+--     the others;
+--   * "Stay in place" (the God window) keeps it standing where it came down (set-ups, bowling pins);
+--   * one KO and it goes: once it is down (any knock, a death), it lies ONE_USE_REST s (the fall is
+--     enjoyed and counted), then a puff and it is gone, freeing its slot. Never while held, in a
+--     machine, or still in the air (waits up to AIR_WAIT s).
+
+DummySpawn.HOLD_SHAPE = 2.5
+DummySpawn.WANDER_EVERY = { 6, 10 } -- s
+DummySpawn.WANDER_NEAR = 8
+DummySpawn.WANDER_FAR = 18
+DummySpawn.ONE_USE_REST = 3 -- s down before it goes
+DummySpawn.AIR_WAIT = 5
+
+local function poof(model: Model)
+	local pelvis = model:FindFirstChild("LowerTorso")
+	if pelvis and pelvis:IsA("BasePart") then
+		pcall(function()
+			(require(script.Parent:WaitForChild("FxService")) :: any).hit(pelvis.Position, 18, "Shove")
+		end)
+	end
+	-- (Its slot is free at once: out of its maker's list too.)
+	for _, list in mine do
+		local i = table.find(list, model)
+		if i then
+			table.remove(list, i)
+		end
+	end
+	model:Destroy()
+end
+
+local function bringToLife(model: Model, owner: Player, stay: boolean)
+	task.spawn(function()
+		local VisitorService = require(script.Parent:WaitForChild("VisitorService")) :: any
+		local born = os.clock()
+		local nextWander = born + DummySpawn.HOLD_SHAPE
+		local downAt: number? = nil
+		while model.Parent do
+			local state = model:GetAttribute("RagdollState")
+			local vital = model:GetAttribute("Vital")
+			local spent = model:GetAttribute("Spent") == true
+			local down = spent or state == "Ragdoll" or state == "Out" or (vital ~= nil and vital ~= "Alive")
+			if down and os.clock() - born > 0.5 then
+				if not spent then
+					model:SetAttribute("Spent", true) -- (one KO: it stays down until it goes; never revived)
+				end
+				downAt = downAt or os.clock()
+				local busy = model:GetAttribute("Held") == true or model:GetAttribute("InMachine") ~= nil or model:GetAttribute("MachineHidden") == true
+				local flying = model:GetAttribute("Airborne") == true and os.clock() - (downAt :: number) < DummySpawn.AIR_WAIT
+				if busy then
+					downAt = os.clock() -- (its rest starts once it is let go)
+				elseif not flying and os.clock() - (downAt :: number) >= DummySpawn.ONE_USE_REST then
+					poof(model)
+					return
+				end
+			elseif not stay and os.clock() >= nextWander and owner.Parent then
+				local pelvis = model:FindFirstChild("LowerTorso")
+				if pelvis and pelvis:IsA("BasePart") then
+					for _ = 1, 6 do
+						local a = math.random() * math.pi * 2
+						local r = DummySpawn.WANDER_NEAR + math.random() * (DummySpawn.WANDER_FAR - DummySpawn.WANDER_NEAR)
+						local spot = VisitorService.floorAt(owner, pelvis.Position + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r))
+						if spot then
+							local home = Vector3.new(spot.X, pelvis.Position.Y, spot.Z)
+							model:SetAttribute("Home", home)
+							model:SetAttribute("HomeLook", home + Vector3.new(math.cos(a), 0, math.sin(a)) * 5)
+							break
+						end
+					end
+				end
+				nextWander = os.clock() + DummySpawn.WANDER_EVERY[1] + math.random() * (DummySpawn.WANDER_EVERY[2] - DummySpawn.WANDER_EVERY[1])
+			end
+			task.wait(0.25)
+		end
+	end)
+end
+DummySpawn.bringToLifeForTest = bringToLife
+
+------------------------------------------------------------------------------------------------
 -- V9-0l (owner, 21 Nov 2026: "make GOD MODE much better so it is easy to spawn e.g. 10 quickly where you
 -- want"): a whole pattern at once where you aim (Shared/GodPattern). The server checks it all:
 --   * a known kind and pattern, an amount 1-25 cut to the cap, numbers that are numbers;
@@ -306,7 +389,7 @@ local function refreshCap(player: Player)
 end
 DummySpawn.refreshCap = refreshCap
 
-function DummySpawn.spawnMany(player: Player, kind: unknown, at: unknown, pattern: unknown, count: unknown, spacing: unknown, yaw: unknown): (number, string?)
+function DummySpawn.spawnMany(player: Player, kind: unknown, at: unknown, pattern: unknown, count: unknown, spacing: unknown, yaw: unknown, stay: unknown?): (number, string?)
 	if not Config.DUMMY_TYPES then
 		return 0, "off"
 	end
@@ -441,6 +524,11 @@ function DummySpawn.spawnMany(player: Player, kind: unknown, at: unknown, patter
 			model.Name = "SpawnedDummy"
 			model:SetAttribute("GodLab", owner.UserId)
 			dress(model, spec)
+			-- (V9-0z: it lives: its kind's pace and gait, a wander after the pattern has been seen, gone after one KO.)
+			model:SetAttribute("Pace", spec.pace)
+			model:SetAttribute("Gait", if kind == "BOUNCY" then "Hop" elseif kind == "FLOPPY" then "Wobble" else nil)
+			model:SetAttribute("StayPut", stay == true or nil)
+			bringToLife(model, owner, stay == true)
 			table.insert(list, model)
 			-- (Never past the cap, even when two patterns overlap in time: the oldest spare one goes.)
 			while #list > cap and recycle(false) do
@@ -650,7 +738,7 @@ function DummySpawn.start()
 		return
 	end
 	-- lihfolk-ignore: remote-unvalidated-args (what is only compared with fixed words; kind, at, pattern, count, spacing and yaw are checked in spawnFor and spawnMany)
-	;(remote :: RemoteEvent).OnServerEvent:Connect(function(player: Player, what: unknown, kind: unknown, at: unknown, pattern: unknown, count: unknown, spacing: unknown, yaw: unknown)
+	;(remote :: RemoteEvent).OnServerEvent:Connect(function(player: Player, what: unknown, kind: unknown, at: unknown, pattern: unknown, count: unknown, spacing: unknown, yaw: unknown, stay: unknown)
 		if what == "Try" then
 			DummySpawn.tryFor(player) -- (V9-0f: the SHOP card's TRY; once a visit, nothing to validate)
 			return
@@ -668,8 +756,8 @@ function DummySpawn.start()
 			return
 		end
 		if what == "SpawnMany" then
-			-- (V9-0l: kind, at, pattern, count, spacing, yaw: every one checked in spawnMany.)
-			local n, why = DummySpawn.spawnMany(player, kind, at, pattern, count, spacing, yaw)
+			-- (V9-0l: kind, at, pattern, count, spacing, yaw: every one checked in spawnMany; V9-0z: stay = true keeps them standing.)
+			local n, why = DummySpawn.spawnMany(player, kind, at, pattern, count, spacing, yaw, stay)
 			if n == 0 and why and why ~= "slow down" then
 				remote:FireClient(player, "Refused", why)
 			end

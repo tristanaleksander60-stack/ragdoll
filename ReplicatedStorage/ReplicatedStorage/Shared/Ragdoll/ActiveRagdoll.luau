@@ -1210,6 +1210,12 @@ local function updateMoving(rig: Rig, dt: number)
 
 	-- Hold the pelvis at walking (or crawling) height over the ground below it.
 	local height = if state == "Crawling" then CRAWL_HEIGHT else rig.standOffset + WALK_HOVER
+	-- (V9-0z: a GOD MODE kind walks its own way: Gait "Hop" (BOUNCY) bobs up and down as it goes,
+	-- "Wobble" (FLOPPY) rolls from side to side; set by DummySpawn.)
+	local gait = rig.model:GetAttribute("Gait")
+	if gait == "Hop" and state ~= "Crawling" and rig.speed > 1 then
+		height += math.abs(math.sin(os.clock() * 7)) * 1.6
+	end
 	rig.lift.Position = Vector3.new(here.X, groundY + height, here.Z)
 
 	-- Upright and facing the heading; crawling: face down, head first, chest a little up.
@@ -1219,7 +1225,12 @@ local function updateMoving(rig: Rig, dt: number)
 		local y = (up * math.cos(CRAWL_PITCH) - rig.heading * math.sin(CRAWL_PITCH)).Unit
 		rig.balance.CFrame = CFrame.fromMatrix(Vector3.zero, x, y)
 	else
-		rig.balance.CFrame = CFrame.fromMatrix(Vector3.zero, up, -rig.heading)
+		local upright = up
+		if gait == "Wobble" and rig.speed > 0.5 then
+			local roll = math.sin(os.clock() * 5) * 0.18
+			upright = (up * math.cos(roll) + rig.heading:Cross(up).Unit * math.sin(roll)).Unit
+		end
+		rig.balance.CFrame = CFrame.fromMatrix(Vector3.zero, upright, -rig.heading)
 	end
 end
 
@@ -1315,7 +1326,8 @@ end
 -- down until it is patched up.
 local function vitalDown(rig: Rig): boolean
 	local vital = rig.model:GetAttribute("Vital")
-	return vital == "Unconscious" or vital == "Dead"
+	-- (V9-0z: a spent GOD MODE body, KO'd once, stays down until it goes: DummySpawn.)
+	return vital == "Unconscious" or vital == "Dead" or rig.model:GetAttribute("Spent") == true
 end
 
 local function update(dt: number)

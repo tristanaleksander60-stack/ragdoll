@@ -70,6 +70,10 @@ local kindCards: { [string]: any } = {}
 local amountButtons: { [number]: any } = {}
 local patternButtons: { [string]: any } = {}
 local spacingLabel: TextLabel? = nil
+-- V9-0z: STAY PUT keeps the new ones standing where they come down (set-ups: bowling pins, a wall); off,
+-- they hold the pattern a moment, then walk about.
+local stay = false
+local stayButton: any = nil
 
 -- Placing.
 local placing = false
@@ -353,7 +357,7 @@ end
 
 local function create(at: Vector3, count: number, pat: string)
 	lastSpot = at
-	Net.event(Net.Names.Spawn):FireServer("SpawnMany", kind, at, pat, count, spacing, yaw())
+	Net.event(Net.Names.Spawn):FireServer("SpawnMany", kind, at, pat, count, spacing, yaw(), stay)
 end
 
 -- Kept for the old path (a phone's single tap from the window before V9-0l): one where you look.
@@ -580,6 +584,10 @@ refresh = function()
 	for p, b in patternButtons do
 		b.setRole(if p == pattern then "premium" else "neutral")
 	end
+	if stayButton then
+		stayButton.setRole(if stay then "premium" else "neutral")
+		stayButton.setText(if stay then "\u{2714} STAY PUT" else "STAY PUT")
+	end
 	if spacingLabel then
 		spacingLabel.Text = string.format("%.1f studs", spacing)
 	end
@@ -740,8 +748,13 @@ local function build()
 	actions.LayoutOrder = 9
 	actions.Parent = box
 	C.list(actions, Enum.FillDirection.Horizontal, 10, Enum.HorizontalAlignment.Center)
-	local place = C.Button({ name = "Place", text = "PLACE", icon = "god", role = "go", size = UDim2.new(0.58, 0, 1, 0), layoutOrder = 1, parent = actions, onActivated = startPlacing })
-	C.Button({ name = "ClearMine", text = "CLEAR MINE", role = "danger", size = UDim2.new(0.36, 0, 1, 0), layoutOrder = 2, parent = actions, onActivated = function()
+	local place = C.Button({ name = "Place", text = "PLACE", icon = "god", role = "go", size = UDim2.new(0.44, 0, 1, 0), layoutOrder = 1, parent = actions, onActivated = startPlacing })
+	-- (V9-0z: STAY PUT, next to PLACE: lit gold with a tick while on.)
+	stayButton = C.Button({ name = "StayPut", text = "STAY PUT", role = "neutral", size = UDim2.new(0.25, 0, 1, 0), layoutOrder = 2, parent = actions, onActivated = function()
+		stay = not stay
+		refresh()
+	end })
+	C.Button({ name = "ClearMine", text = "CLEAR MINE", role = "danger", size = UDim2.new(0.25, 0, 1, 0), layoutOrder = 3, parent = actions, onActivated = function()
 		Net.event(Net.Names.Spawn):FireServer("Clear")
 	end })
 	window.defaultSelection = place.hit

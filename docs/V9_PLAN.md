@@ -2142,3 +2142,20 @@ Write the baseline into `docs/PERF.md`.
     - a player under the Island came home to their lab with their tools;
     - one high over the lab was left alone.
   - **Not done:** a client-side fade before the move (the server's move and the puff only).
+- 21 Nov 2026, V9-0z DONE (PC): GOD MODE dummies come alive and are one-use.
+  - **They live** (`DummySpawn` bringToLife):
+    - a body holds its pattern `HOLD_SHAPE` 2.5 s, then every 6-10 s gets a new Home on open floor 8-18 studs off (`VisitorService.floorAt`), which the ordinary dummy brain walks it to;
+    - it runs from bangs like the lab's cowards, and DummyLife looks and lines as for every body.
+  - **The kinds:**
+    - `Pace` TINY 1.4, HEAVY 0.7, BOUNCY 1.15, FLOPPY 0.85;
+    - `Gait`: BOUNCY "Hop" bobs as it walks, FLOPPY "Wobble" rolls side to side (ActiveRagdoll's walk).
+  - **STAY PUT** (God window, next to PLACE, gold with a tick when on; SpawnMany's 7th value `stay`, attribute `StayPut`): the bodies stand where they came down.
+  - **One KO and it goes:**
+    - once down (any knock, a death), the body is `Spent`; ActiveRagdoll keeps it limp, so it never gets up;
+    - it lies `ONE_USE_REST` 3 s, then a puff (FxService) and it is gone, its slot freed at once;
+    - held, in a machine or hidden, its rest starts when it is let go; still in the air, it waits up to 5 s.
+    - Its takedown counts as usual. The lab's own dummies and walkers revive as before.
+  - **Tests:**
+    - T184_GodLife passes: a BOUNCY body walked off; a STAY PUT body stood (0.01 studs in 12 s); one KO: down, never up, gone after 3.2 s, slot free, takedown counted.
+    - T167 passes. LayoutCheck 0 problems.
+  - **Known:** GOD MODE kinds set one density on every part after spawning, so the P1 mass spread and the forces sized from `Mass` are stale for them. That is in the V9-P fix round.
