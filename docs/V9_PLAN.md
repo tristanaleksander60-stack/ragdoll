@@ -2319,3 +2319,30 @@ Write the baseline into `docs/PERF.md`.
     - a stranger's press is not tested (it needs a 2-client test);
     - no hunger or ready bar on the screen (the creatures publish no hunger);
     - the creature does not get more excited with the combo.
+- 21 Nov 2026, Phase M fix round 1 (PC). The blind review scored the system 7.3 and the UI 6.5.
+  - **Fixed:**
+    - **The portal is stepped into, not touched:**
+      - the server looks every 0.2 s at who stands in a PLACES swirl (`MapBoard.insideSwirl`), and opens the maps after 0.6 s (`DWELL`);
+      - only for a body standing on its feet, out of a seat, neither holding nor held, not in a chase, and past a newcomer's quiet start (`MapBoard.mayWalkIn`; Newcomer + V8JoinedAt on the server);
+      - the swirl has CanTouch off, so the dummies lying round it send no touches.
+    - **Placement:**
+      - the board is 10° left and narrower (13 x 7.4), so its whole width fits an upright phone;
+      - the portal is 26° right, 27 studs out, right of the wrecking ball and clear of the dummies' row, the leaderboard and the cannon;
+      - capture: art/captures/v9e/spawn_view_round1.jpg.
+    - **Solid frames:** stones, plinth, keystone, posts, feet, beam and bezel.
+    - **Sizes:** Solo/Multi are 0.85 of the ring and map copies 0.9 (about 14-15 studs tall). Map copies stand to the sides of the way in, not across the map's first view.
+    - **The MapGo confirm fits** (470 tall, one layout, a 170 px picture).
+    - **The tiles:**
+      - chips 0.28 of a tile (about 1 stud), and zero counts are hidden;
+      - tiles ignore taps during a newcomer's quiet start (FirstVisit's NewcomerUntil, in `time()`);
+      - one word: MAPS on the keystone, the board and the window; "Pick a map".
+    - **The hint** finds the portal by tag and says "step into the gold portal!".
+    - **OutOfBounds sets `Place`**, so the board shows the right YOU ARE HERE after a fall off a map.
+  - **Tests:** T159 passes: the board 7° off the middle with both edges inside the upright phone's 18° half-view; the portal 18° off; stepping in opens the maps after 0.6 s; a loose body in the portal opens nothing. T51 and T179 pass.
+  - **Left:**
+    - **No V8-2.10 travel:** no stream-ahead, loading card, whoosh or screen-filling swirl; travel is still the instant move.
+    - **Missing portal looks:** no textured layered swirl and no hum; it is a block-built ring, with no map picture panels round it and no particle pull.
+    - **NEW** is per visit, not per profile.
+    - **Pads** cannot pick a tile on the board itself, and ButtonX may clash with PadGrab near the board.
+    - **No board on the Plaza.**
+    - **Layout:** LayoutCheck does not open Maps or MapGo.

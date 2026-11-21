@@ -96,16 +96,12 @@ local function openConfirm(id: string)
 end
 
 local function buildConfirm()
-	local window = C.Window({ name = "MapGo", title = "Travel", theme = "codes", icon = "map", size = Vector2.new(520, 440), scroll = false })
+	local window = C.Window({ name = "MapGo", title = "Maps", theme = "codes", icon = "map", size = Vector2.new(520, 470), scroll = false })
 	local body = window.body
-	local list = Instance.new("UIListLayout")
-	list.Padding = UDim.new(0, 10)
-	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	list.SortOrder = Enum.SortOrder.LayoutOrder
-	list.Parent = body
+	-- (Fix round 1: the window's body already lays its children out in a list; one layout only.)
 	local img = Instance.new("ImageLabel")
 	img.Name = "Picture"
-	img.Size = UDim2.new(1, -20, 0, 210)
+	img.Size = UDim2.new(1, -20, 0, 170)
 	img.ScaleType = Enum.ScaleType.Crop
 	img.BackgroundColor3 = Color3.fromRGB(20, 24, 36)
 	img.LayoutOrder = 1
@@ -172,7 +168,7 @@ local function tile(parent: Instance, id: string, order: number, counts: BasePar
 	chip.Name = "Count"
 	chip.BackgroundColor3 = Color3.fromRGB(10, 12, 20)
 	chip.BackgroundTransparency = 0.1
-	chip.Size = UDim2.new(0.34, 0, 0.18, 0)
+	chip.Size = UDim2.new(0.42, 0, 0.28, 0)
 	chip.Position = UDim2.fromScale(0.03, 0.04)
 	chip.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
 	chip.TextScaled = true
@@ -184,8 +180,8 @@ local function tile(parent: Instance, id: string, order: number, counts: BasePar
 	local new = Instance.new("TextLabel")
 	new.Name = "New"
 	new.BackgroundColor3 = Color3.fromRGB(255, 196, 64)
-	new.Size = UDim2.new(0.28, 0, 0.18, 0)
-	new.Position = UDim2.fromScale(0.69, 0.04)
+	new.Size = UDim2.new(0.36, 0, 0.28, 0)
+	new.Position = UDim2.fromScale(0.61, 0.04)
 	new.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
 	new.TextScaled = true
 	new.TextColor3 = Color3.fromRGB(40, 24, 0)
@@ -211,7 +207,7 @@ local function tile(parent: Instance, id: string, order: number, counts: BasePar
 	local function redraw()
 		local n = counts:GetAttribute("Count_" .. id)
 		chip.Text = "\u{1F465} " .. tostring(if type(n) == "number" then n else 0)
-		chip.Visible = id ~= "Lab"
+		chip.Visible = id ~= "Lab" and type(n) == "number" and n > 0 -- (fix round 1: "0" on every tile said nobody goes there)
 		local isHere = here() == id
 		hereTag.Visible = isHere
 		new.Visible = not isHere and not visited[id] and id ~= "Lab" and id ~= "Plaza"
@@ -226,6 +222,11 @@ local function tile(parent: Instance, id: string, order: number, counts: BasePar
 		TweenService:Create(stroke, TweenInfo.new(0.12), { Color = Color3.fromRGB(60, 66, 90), Thickness = 3 }):Play()
 	end)
 	b.Activated:Connect(function()
+		-- (Fix round 1: a newcomer's stray tap in the first quiet seconds never takes them out of the lab.)
+		local quietUntil = player:GetAttribute("NewcomerUntil")
+		if type(quietUntil) == "number" and time() < quietUntil then -- (FirstVisit sets it in time())
+			return
+		end
 		if here() ~= id then
 			openConfirm(id)
 		end
@@ -275,7 +276,7 @@ local function buildBoard(screen: BasePart)
 	sub.TextScaled = true
 	sub.TextXAlignment = Enum.TextXAlignment.Right
 	sub.TextColor3 = Color3.fromRGB(200, 210, 235)
-	sub.Text = "Tap a map to go"
+	sub.Text = "Pick a map"
 	sub.Parent = canvas
 	local grid = Instance.new("Frame")
 	grid.BackgroundTransparency = 1
@@ -340,8 +341,9 @@ local function hint()
 	local camera = Workspace.CurrentCamera
 	local best: BasePart? = nil
 	local bestD = math.huge
-	for _, gate in Workspace:GetDescendants() do
-		if gate:IsA("Model") and gate:GetAttribute("GateKind") == "Places" then
+	for _, arms in CollectionService:GetTagged("PortalSwirl") do
+		local gate = arms.Parent
+		if gate and gate:IsA("Model") and gate:GetAttribute("GateKind") == "Places" then
 			local swirl = gate:FindFirstChild("Swirl")
 			if swirl and swirl:IsA("BasePart") and camera then
 				local d = (swirl.Position - camera.CFrame.Position).Magnitude
@@ -362,7 +364,7 @@ local function hint()
 		end
 	end
 	pcall(function()
-		(require(Client:WaitForChild("Notify")) :: any).say("tip", "Explore other places: walk into the gold portal \u{2192}", Color3.fromRGB(255, 196, 64), "placesPortal")
+		(require(Client:WaitForChild("Notify")) :: any).say("tip", "Explore other maps: step into the gold portal!", Color3.fromRGB(255, 196, 64), "placesPortal")
 	end)
 end
 

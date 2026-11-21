@@ -74,8 +74,12 @@ function OutOfBounds.sendHome(player: Player): boolean
 	if hostPlayer and Lab.plotIndex(hostPlayer) then
 		character:PivotTo(CFrame.new(Lab.originFor(hostPlayer) + Vector3.new(0, 4, 0)))
 		sent = true
+		player:SetAttribute("Place", if hostPlayer == player then "Lab" else Places.labId(Lab.plotIndex(hostPlayer)))
 	else
 		sent = Lab.sendHome(player)
+		if sent then
+			player:SetAttribute("Place", "Lab") -- (V9-0e fix round 1: the Map Board and the counts know you are home)
+		end
 	end
 	-- (Its fall is over: no speed carried home. The player's own client simulates the body, so a speed set
 	-- here would be overwritten: the root is held anchored a moment, which stops it on every screen.)

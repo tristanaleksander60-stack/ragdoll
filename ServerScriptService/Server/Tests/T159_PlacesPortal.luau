@@ -70,7 +70,14 @@ return {
 		local facing = Lab.SPAWN_FACING
 		local boardOff = offAxis(spawn, facing, (board :: Model):GetPivot().Position)
 		local gateOff = offAxis(spawn, facing, (gate :: Model):GetPivot().Position)
-		assert(boardOff < halfWidth(1920, 1080) and boardOff < halfWidth(414, 896), string.format("the board is %.0f deg off the spawn view (phone half view %.0f)", boardOff, halfWidth(414, 896)))
+		-- (Fix round 1: the whole board, both edges, on an upright phone; not just its middle.)
+		local bcf = (board :: Model):GetPivot()
+		local half = MapBoard.SCREEN.X / 2
+		for _, edge in { bcf.Position + bcf.RightVector * half, bcf.Position - bcf.RightVector * half } do
+			local off = offAxis(spawn, facing, edge)
+			assert(off < halfWidth(414, 896), string.format("an edge of the board is %.0f deg off the spawn view (upright phone half view %.0f)", off, halfWidth(414, 896)))
+		end
+		assert(boardOff < halfWidth(1920, 1080), string.format("the board is %.0f deg off the spawn view", boardOff))
 		assert(gateOff < halfWidth(1920, 1080), string.format("the PLACES portal is %.0f deg off the spawn view (1920x1080 half view %.0f)", gateOff, halfWidth(1920, 1080)))
 		local boardDistance = ((board :: Model):GetPivot().Position - spawn) * Vector3.new(1, 0, 1)
 		assert(boardDistance.Magnitude > 18 and boardDistance.Magnitude < 30, string.format("the board is %.0f studs from the spawn (want 20-25)", boardDistance.Magnitude))
@@ -148,6 +155,34 @@ return {
 			dummy:Destroy()
 			assert(whyHeld == "Let go first", "travel was allowed holding a body: " .. tostring(whyHeld))
 			table.insert(results, "refused from a seat (" .. tostring(why) .. ") and holding a body")
+			-- (Fix round 1) Stepping into the gold portal: standing in it DWELL s opens the maps; a loose
+			-- body in it opens nothing.
+			local swirl = (gate :: Model):WaitForChild("Swirl") :: BasePart
+			assert(swirl and not swirl.CanTouch, "the PLACES swirl still takes touches")
+			local joinedWas = p:GetAttribute("V8JoinedAt")
+			p:SetAttribute("V8JoinedAt", workspace:GetServerTimeNow() - 600) -- (past a newcomer's quiet start)
+			local stand = swirl.CFrame * CFrame.new(0, 0, 0)
+			character:PivotTo(CFrame.new(stand.Position.X, stand.Position.Y - 2, stand.Position.Z))
+			local root = character:WaitForChild("HumanoidRootPart") :: BasePart
+			root.Anchored = true
+			task.wait(0.2)
+			assert(MapBoard.insideSwirl(swirl, root.Position), "standing in the swirl does not count as in it")
+			character:SetAttribute("BodyLoose", true)
+			local opened0 = MapBoard.lastOpenForTest(p)
+			for _ = 1, 6 do
+				MapBoard.pollForTest()
+				task.wait(MapBoard.POLL)
+			end
+			assert(MapBoard.lastOpenForTest(p) == opened0, "a loose body in the portal opened the maps")
+			character:SetAttribute("BodyLoose", nil)
+			for _ = 1, 6 do
+				MapBoard.pollForTest()
+				task.wait(MapBoard.POLL)
+			end
+			root.Anchored = false
+			p:SetAttribute("V8JoinedAt", joinedWas)
+			assert(MapBoard.lastOpenForTest(p) ~= opened0, "standing in the portal did not open the maps")
+			table.insert(results, "stepping in opens the maps after " .. MapBoard.DWELL .. " s; a loose body does not")
 		end)
 		character:PivotTo(home)
 		assert(ok, err)

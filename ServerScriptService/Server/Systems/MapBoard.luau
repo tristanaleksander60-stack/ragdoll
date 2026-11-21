@@ -27,15 +27,17 @@ local Places = require(Shared:WaitForChild("Places")) :: any
 
 local MapBoard = {}
 
-MapBoard.BOARD_ANGLE = 16 -- degrees left of the spawn's facing
+MapBoard.BOARD_ANGLE = 10 -- degrees left of the spawn's facing (fix round 1: the whole board in an upright phone's view)
 MapBoard.BOARD_DISTANCE = 24 -- studs from the spawn
-MapBoard.PORTAL_ANGLE = 55 -- (left of the board, clear of it: two gates need ~39 degrees apart at 24 studs)
-MapBoard.PORTAL_DISTANCE = 24
-MapBoard.SCREEN = Vector2.new(15, 8.5) -- studs (a lab's; a map's copy is MAP_SCALE of it)
+MapBoard.PORTAL_ANGLE = -26 -- (fix round 1: right of the wrecking ball, clear of the dummies' row, the leaderboard and the cannon)
+MapBoard.PORTAL_DISTANCE = 27
+MapBoard.SCREEN = Vector2.new(13, 7.4) -- studs (a lab's; a map's copy is MAP_SCALE of it)
 MapBoard.SCREEN_LIFT = 3.2 -- studs from the floor to the screen's bottom edge
 MapBoard.RING_RADIUS = 6 -- studs (the PLACES gate; Solo/Multi are RING_SMALL of it)
-MapBoard.RING_SMALL = 0.72
-MapBoard.MAP_SCALE = 0.8
+MapBoard.RING_SMALL = 0.85
+MapBoard.MAP_SCALE = 0.9
+MapBoard.DWELL = 0.6 -- s standing in the swirl before the maps open (a run or a fling through it opens nothing)
+MapBoard.POLL = 0.2 -- s between two looks at who stands in a swirl
 MapBoard.COUNT_EVERY = 3 -- s
 MapBoard.TOUCH_GAP = 4 -- s between two openings for one player
 
@@ -44,7 +46,7 @@ MapBoard.COLORS = table.freeze({
 	Solo = Color3.fromRGB(80, 170, 255), -- blue
 	Multi = Color3.fromRGB(80, 220, 120), -- green
 })
-MapBoard.LABELS = table.freeze({ Places = "PLACES", Solo = "SINGLEPLAYER", Multi = "MULTIPLAYER" })
+MapBoard.LABELS = table.freeze({ Places = "MAPS", Solo = "SINGLEPLAYER", Multi = "MULTIPLAYER" })
 MapBoard.GLYPHS = table.freeze({ Places = "\u{1F5FA}\u{FE0F}", Solo = "\u{1F464}", Multi = "\u{1F465}" })
 
 local STONE = Color3.fromRGB(70, 66, 80)
@@ -207,6 +209,12 @@ function MapBoard.gate(parent: Instance, base: Vector3, toward: Vector3, kind: s
 	light.Parent = swirl
 	CollectionService:AddTag(light, "WorldLight")
 	CollectionService:AddTag(arms, "PortalSwirl")
+	-- (Fix round 1: the stone is solid: nobody walks through a plinth or a ring stone.)
+	for _, d in m:GetChildren() do
+		if d:IsA("BasePart") and (d.Name == "Plinth" or d.Name == "Step" or d.Name == "Stone" or d.Name == "Keystone") then
+			d.CanCollide = true
+		end
+	end
 	m.Parent = parent
 	return m, swirl
 end
@@ -261,6 +269,11 @@ function MapBoard.board(parent: Instance, base: Vector3, toward: Vector3, scale:
 	prompt.MaxActivationDistance = 16
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = screen
+	for _, d in m:GetChildren() do
+		if d:IsA("BasePart") and (d.Name == "Post" or d.Name == "Foot" or d.Name == "Beam" or d.Name == "Bezel") then
+			d.CanCollide = true -- (fix round 1: a solid frame)
+		end
+	end
 	m.Parent = parent
 	return m
 end
@@ -285,44 +298,124 @@ function MapBoard.buildLab(folder: Instance, origin: Vector3)
 	MapBoard.board(holder, boardAt, spawn)
 	local gateAt = aroundSpawn(origin, facing, MapBoard.PORTAL_ANGLE, MapBoard.PORTAL_DISTANCE)
 	local _, swirl = MapBoard.gate(holder, gateAt, spawn, "Places")
-	MapBoard.onTouch(swirl)
+	MapBoard.watchSwirl(swirl)
 	holder.Parent = folder
 end
 
--- A map's copy by its arrival: My lab first on the board, the PLACES portal beside it.
+-- A map's copy by its arrival: My lab first on the board, the PLACES portal beside it. (Fix round 1: to
+-- the sides of the way in, not across the map's first view.)
 function MapBoard.buildMap(id: string, arrival: CFrame, into: Instance)
 	local holder = Instance.new("Folder")
 	holder.Name = "MapPlace"
 	local look = arrival.LookVector
 	local right = arrival.RightVector
 	local at = arrival.Position
-	local boardAt = floorUnder(at + look * 14 - right * 9)
-	MapBoard.board(holder, boardAt, at, MapBoard.MAP_SCALE, true)
-	local gateAt = floorUnder(at + look * 15 + right * 10)
-	local _, swirl = MapBoard.gate(holder, gateAt, at, "Places", MapBoard.MAP_SCALE)
-	MapBoard.onTouch(swirl)
+	local boardAt = floorUnder(at + look * 7 - right * 15)
+	MapBoard.board(holder, boardAt, at + look * 4, MapBoard.MAP_SCALE, true)
+	local gateAt = floorUnder(at + look * 7 + right * 16)
+	local _, swirl = MapBoard.gate(holder, gateAt, at + look * 4, "Places", MapBoard.MAP_SCALE)
+	MapBoard.watchSwirl(swirl)
 	holder:SetAttribute("Place", id)
 	holder.Parent = into
 end
 
 local remote: RemoteEvent? = nil
-local lastTouch: { [Player]: number } = {}
+local lastOpen: { [Player]: number } = {}
+local dwellSince: { [Player]: number } = {}
+local swirls: { BasePart } = {}
 
--- Walking into a PLACES swirl: the places open on that player's screen (paced).
-function MapBoard.onTouch(swirl: BasePart)
-	swirl.Touched:Connect(function(other)
-		local character = other:FindFirstAncestorOfClass("Model")
-		local player = character and Players:GetPlayerFromCharacter(character)
-		if not player or os.clock() - (lastTouch[player] or -math.huge) < MapBoard.TOUCH_GAP then
-			return
+-- (Fix round 1) A PLACES swirl is stepped into, not touched: the server looks every POLL s at who stands in
+-- one (CanTouch off: no touch traffic from the dummies lying round it).
+function MapBoard.watchSwirl(swirl: BasePart)
+	swirl.CanTouch = false
+	table.insert(swirls, swirl)
+	swirl.Destroying:Connect(function()
+		local i = table.find(swirls, swirl)
+		if i then
+			table.remove(swirls, i)
 		end
-		lastTouch[player] = os.clock()
-		remote = remote or Net.event(Net.Names.Portal)
-		;(remote :: RemoteEvent):FireClient(player, "Open", { portal = "PortalPlaces" })
-		pcall(function()
-			(require(script.Parent:WaitForChild("SessionStats")) :: any).used(player, "portalPlaces")
-		end)
 	end)
+end
+
+-- Whether a point stands in a swirl: inside the ring, within 2.5 studs of its face (pure but for the part).
+function MapBoard.insideSwirl(swirl: BasePart, at: Vector3): boolean
+	-- (The swirl is a cylinder turned so its axis (local X) points out of the ring's face.)
+	local p = swirl.CFrame:PointToObjectSpace(at)
+	local radius = swirl.Size.Y / 2
+	return math.abs(p.X) < 2.5 and (p.Y * p.Y + p.Z * p.Z) < (radius * 0.85) ^ 2
+end
+
+-- Whether a player may be taken to the maps by stepping in: standing on their feet, not in a seat, not
+-- holding or held, not in a chase, past a newcomer's quiet start (fix round 1: a run, a fling, a car or a
+-- throw through the portal opens nothing).
+function MapBoard.mayWalkIn(player: Player): boolean
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not character or not humanoid or humanoid.Health <= 0 then
+		return false
+	end
+	local state = character:GetAttribute("RagdollState")
+	if character:GetAttribute("BodyLoose") or (state ~= nil and state ~= "Standing") then
+		return false
+	end
+	local seat = humanoid.SeatPart
+	if seat and seat.Parent then
+		return false
+	end
+	local okGrab, busy = pcall(function()
+		local PlayerGrab = require(script.Parent:WaitForChild("PlayerGrab")) :: any
+		return PlayerGrab.holdingOf(player) ~= nil or PlayerGrab.heldByOf(player) ~= nil
+	end)
+	if okGrab and busy then
+		return false
+	end
+	if type(player:GetAttribute("ChaseLeft")) == "number" and (player:GetAttribute("ChaseLeft") :: number) > 0 then -- (a chase on: ChaseService)
+		return false
+	end
+	-- (A newcomer's quiet start, as the server knows it: Newcomer and the join time, Config.QUIET_START s.)
+	local joined = player:GetAttribute("V8JoinedAt")
+	if player:GetAttribute("Newcomer") == true and type(joined) == "number" and Workspace:GetServerTimeNow() - joined < (Config.QUIET_START or 0) then
+		return false
+	end
+	return true
+end
+
+local function openFor(player: Player)
+	lastOpen[player] = os.clock()
+	remote = remote or Net.event(Net.Names.Portal)
+	;(remote :: RemoteEvent):FireClient(player, "Open", { portal = "PortalPlaces" })
+	pcall(function()
+		(require(script.Parent:WaitForChild("SessionStats")) :: any).used(player, "portalPlaces")
+	end)
+end
+
+local function poll()
+	local now = os.clock()
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		local inside = false
+		if root and root:IsA("BasePart") then
+			for _, swirl in swirls do
+				if (swirl.Position - root.Position).Magnitude < swirl.Size.Y and MapBoard.insideSwirl(swirl, root.Position) then
+					inside = true
+					break
+				end
+			end
+		end
+		if inside and MapBoard.mayWalkIn(player) then
+			dwellSince[player] = dwellSince[player] or now
+			if now - (dwellSince[player] :: number) >= MapBoard.DWELL and now - (lastOpen[player] or -math.huge) >= MapBoard.TOUCH_GAP then
+				openFor(player)
+			end
+		else
+			dwellSince[player] = nil
+		end
+	end
+end
+MapBoard.pollForTest = poll
+function MapBoard.lastOpenForTest(player: Player): number?
+	return lastOpen[player]
 end
 
 -- Players in each place now (by their Place attribute), written on every board.
@@ -380,8 +473,19 @@ function MapBoard.start()
 			task.wait(MapBoard.COUNT_EVERY)
 		end
 	end)
+	-- (Fix round 1: who stands in a PLACES swirl, every POLL s.)
+	task.spawn(function()
+		while true do
+			task.wait(MapBoard.POLL)
+			local ok, err = pcall(poll)
+			if not ok then
+				warn("[MapBoard] " .. tostring(err))
+			end
+		end
+	end)
 	Players.PlayerRemoving:Connect(function(p)
-		lastTouch[p] = nil
+		lastOpen[p] = nil
+		dwellSince[p] = nil
 	end)
 end
 
