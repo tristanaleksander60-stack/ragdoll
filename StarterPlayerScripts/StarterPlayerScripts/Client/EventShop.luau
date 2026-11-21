@@ -1271,7 +1271,55 @@ local function buildWhatsNew()
 	})
 	window.defaultSelection = ok.hit
 	Controller.register(window)
+	-- V9-NOW 14 (owner, 21 Nov 2026: "What's New closes by itself after 3 s"): it closes Config.WHATS_NEW_AUTO_CLOSE s
+	-- after it opens; a key or a tap outside it closes it sooner; a tap or a scroll inside it stops the clock (they
+	-- are reading), then it waits for GOT IT, the X or a tap outside. Still once per version (SeenNew).
+	local UserInputService = game:GetService("UserInputService")
+	local openToken = 0
+	local held = false
+	local function inside(at: Vector3): boolean
+		local p, s = window.panel.AbsolutePosition, window.panel.AbsoluteSize
+		local y = at.Y + game:GetService("GuiService"):GetGuiInset().Y
+		return at.X >= p.X and at.X <= p.X + s.X and y >= p.Y and y <= p.Y + s.Y
+	end
+	local function closeIt()
+		if Controller.isOpen("WhatsNew") then
+			Controller.close("WhatsNew")
+		end
+	end
+	UserInputService.InputBegan:Connect(function(input)
+		if not Controller.isOpen("WhatsNew") then
+			return
+		end
+		local t = input.UserInputType
+		if t == Enum.UserInputType.MouseButton1 or t == Enum.UserInputType.Touch then
+			if inside(input.Position) then
+				held = true
+			else
+				closeIt()
+			end
+		elseif t == Enum.UserInputType.Keyboard or string.find(t.Name, "Gamepad", 1, true) then
+			if not held then
+				task.defer(closeIt) -- (after the key's own handling: the kit's B/Esc may close it already)
+			end
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if Controller.isOpen("WhatsNew") and input.UserInputType == Enum.UserInputType.MouseWheel and inside(input.Position) then
+			held = true
+		end
+	end)
 	Controller.onChanged(function(name, open)
+		if name == "WhatsNew" and open then
+			openToken += 1
+			held = false
+			local mine = openToken
+			task.delay((Config :: any).WHATS_NEW_AUTO_CLOSE or 3, function()
+				if mine == openToken and not held then
+					closeIt()
+				end
+			end)
+		end
 		if name == "WhatsNew" and not open and moneyRemote then
 			(moneyRemote :: RemoteEvent):FireServer("SeenNew")
 		end

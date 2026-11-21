@@ -13,7 +13,14 @@ local RunService = game:GetService("RunService")
 local Knockables = {}
 
 -- role -> density of its body (a barrel heavier than a cone)
-Knockables.ROLES = table.freeze({ Barrel = 0.55, Crate = 0.7, Cone = 0.3 }) :: { [string]: number }
+Knockables.ROLES = table.freeze({ Barrel = 0.55, Crate = 0.7, Cone = 0.3, Block = 0.3 }) :: { [string]: number }
+-- V9-NOW 11 (owner, 21 Nov 2026: "the big target blocks topple when shot"): a Block is tall and heavy: a shot gives it
+-- only BLOCK_SHOT studs/s and a tip (no hop), so a few hits rock it over; it lands with a heavy thud and dust,
+-- and can knock its neighbour. A shot must land on it (its box, BLOCK_MARGIN), not just near it.
+Knockables.BLOCK_SHOT = 3.2 -- studs/s a shot pushes a block
+Knockables.BLOCK_TIP = 0.42 -- rad/s of tip per stud/s of push (the top goes first)
+Knockables.BLOCK_MARGIN = 0.8 -- studs round its box that still count as on it
+Knockables.FALLEN_TILT = 55 -- degrees off upright: it fell (the thud)
 Knockables.KNOCK_SPEED = 14 -- studs/s: a touch at least this fast (relative) knocks it
 Knockables.CARRY = 0.6 -- share of the toucher's speed it takes
 Knockables.LIFT = 10 -- studs/s up on every knock (it hops, it does not slide)
@@ -33,6 +40,8 @@ type Entry = {
 	looseAt: number?,
 	stillSince: number?,
 	lastKnock: number,
+	role: string,
+	fell: boolean?,
 }
 
 local entries: { [BasePart]: Entry } = {}
@@ -46,6 +55,34 @@ local function goHome(e: Entry)
 	e.body.AssemblyAngularVelocity = Vector3.zero
 	e.model:PivotTo(e.home) -- (its pivot is the body: the welded pieces come along)
 	e.model:SetAttribute("Loose", nil)
+	e.fell = nil
+end
+
+-- V9-NOW 11: a fallen block lands with a heavy thud and a puff of dust (on every screen: a server sound and emitter).
+local THUD_IDS = { "rbxassetid://9113480917", "rbxassetid://9113525391" } -- (SoundManifest land: PSE body falls)
+local function thud(body: BasePart)
+	local s = Instance.new("Sound")
+	s.SoundId = THUD_IDS[math.random(1, #THUD_IDS)]
+	s.Volume = 1.2
+	s.PlaybackSpeed = 0.62 -- (lower: a heavy block, not a body)
+	s.RollOffMaxDistance = 120
+	s.Parent = body
+	s:Play()
+	local dust = Instance.new("ParticleEmitter")
+	dust.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	dust.Color = ColorSequence.new(Color3.fromRGB(205, 196, 178))
+	dust.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.45), NumberSequenceKeypoint.new(1, 1) })
+	dust.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2), NumberSequenceKeypoint.new(1, 5) })
+	dust.Lifetime = NumberRange.new(0.8, 1.4)
+	dust.Speed = NumberRange.new(4, 9)
+	dust.SpreadAngle = Vector2.new(80, 20)
+	dust.Rate = 0
+	dust.Parent = body
+	dust:Emit(18)
+	task.delay(3, function()
+		s:Destroy()
+		dust:Destroy()
+	end)
 end
 
 -- Knocks a knockable with this velocity change (studs/s).
@@ -62,6 +99,15 @@ local function knock(e: Entry, velocity: Vector3)
 		pcall(function()
 			body:SetNetworkOwner(nil)
 		end)
+	end
+	if e.role == "Block" then
+		-- (A block rocks over, it does not hop: the push tips its top the way it was pushed.)
+		local flat = Vector3.new(velocity.X, 0, velocity.Z)
+		if flat.Magnitude > 0.01 then
+			body.AssemblyAngularVelocity += Vector3.yAxis:Cross(flat.Unit) * flat.Magnitude * Knockables.BLOCK_TIP
+		end
+		body.AssemblyLinearVelocity += velocity
+		return
 	end
 	local spin = Vector3.new(math.random() - 0.5, math.random() - 0.5, math.random() - 0.5) * 10
 	body.AssemblyLinearVelocity += velocity + Vector3.new(0, Knockables.LIFT, 0)
@@ -127,7 +173,7 @@ function Knockables.make(model: Model, role: string)
 	body.Parent = model
 	model.PrimaryPart = body
 	model:SetAttribute("Knockable", role)
-	local e: Entry = { model = model, body = body, home = body.CFrame, looseAt = nil, stillSince = nil, lastKnock = 0 }
+	local e: Entry = { model = model, body = body, home = body.CFrame, looseAt = nil, stillSince = nil, lastKnock = 0, role = role }
 	entries[body] = e
 	body.Touched:Connect(function(other: BasePart)
 		onTouched(e, other)
@@ -155,7 +201,15 @@ end
 function Knockables.shot(point: Vector3, from: Vector3): boolean
 	for body, e in entries do
 		local half = body.Size.Magnitude / 2
-		if (body.Position - point).Magnitude <= half + Knockables.SHOT_REACH then
+		if e.role == "Block" then
+			local l = body.CFrame:PointToObjectSpace(point)
+			local s = body.Size / 2 + Vector3.one * Knockables.BLOCK_MARGIN
+			if math.abs(l.X) <= s.X and math.abs(l.Y) <= s.Y and math.abs(l.Z) <= s.Z then
+				local dir = point - from
+				knock(e, (if dir.Magnitude > 0.01 then dir.Unit else Vector3.zAxis) * Knockables.BLOCK_SHOT)
+				return true
+			end
+		elseif (body.Position - point).Magnitude <= half + Knockables.SHOT_REACH then
 			local dir = point - from
 			knock(e, (if dir.Magnitude > 0.01 then dir.Unit else Vector3.zAxis) * Knockables.SHOT_SPEED)
 			return true
@@ -220,6 +274,10 @@ function Knockables.start()
 			local loose = e.looseAt
 			if loose then
 				local body = e.body
+				if e.role == "Block" and not e.fell and body.CFrame.UpVector.Y < math.cos(math.rad(Knockables.FALLEN_TILT)) then
+					e.fell = true
+					thud(body)
+				end
 				if body.Position.Y < e.home.Position.Y - Knockables.FALL_LIMIT or now - loose > Knockables.RETURN_MAX then
 					goHome(e)
 				elseif body.AssemblyLinearVelocity.Magnitude < Knockables.REST_SPEED then

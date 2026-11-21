@@ -35,6 +35,7 @@ VehicleService.SPECS = {
 }
 
 VehicleService.HORN_GAP = 0.8 -- s between two honks
+VehicleService.SEAT_SINK = 0.15 -- studs the hips sink into the cushion (V9-NOW 16: never floating over it)
 
 local DARK = Color3.fromRGB(26, 26, 30)
 local GLASS = Color3.fromRGB(150, 190, 220)
@@ -256,8 +257,16 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 					c:Destroy()
 				end
 			end
-			local at = body.CFrame:PointToObjectSpace(driverSpot.Position)
-			seat.CFrame = body.CFrame * CFrame.new(at + Vector3.new(0, 0.2, 0))
+			-- (V9-NOW 16, owner 21 Nov 2026: "sit properly": the seat's top on the cushion's top, so the hips rest on
+			-- it, not 0.7 studs over its middle (floating) nor in it. The cushion's top is its highest face along
+			-- the car's up.)
+			local up = body.CFrame.UpVector
+			local half = driverSpot.Size / 2
+			local rise = math.abs(driverSpot.CFrame.RightVector:Dot(up)) * half.X + math.abs(driverSpot.CFrame.UpVector:Dot(up)) * half.Y
+				+ math.abs(driverSpot.CFrame.LookVector:Dot(up)) * half.Z
+			local top = driverSpot.Position + up * rise
+			local at = body.CFrame:PointToObjectSpace(top)
+			seat.CFrame = body.CFrame * CFrame.new(at - Vector3.new(0, seat.Size.Y / 2 + VehicleService.SEAT_SINK, 0))
 			weld(body, seat)
 		end
 		-- Each wheel's axle (body space) and radius, for the screens.

@@ -691,7 +691,7 @@ function ProgressUI.start()
 			-- (V9-0g review: in compact notices the small "KO xN" counter always counts, not only at first.)
 			if time() < ProgressUI.POP_FOR or (require(script.Parent:WaitForChild("NoticeState")) :: any).compact() then
 				local d = data :: any
-				ProgressUI.popTakedown(1 + (if type(d.bonus) == "number" then d.bonus else 0))
+				ProgressUI.popTakedown((1 + (if type(d.bonus) == "number" then d.bonus else 0)) * (if type(d.mult) == "number" then d.mult else 1)) -- (V9-NOW 12: "+2" in the 2X event)
 			end
 		elseif kind == "AutoEgg" then
 			-- The first egg opens by itself (round 5, phase 00), once the first minute's bar is free.

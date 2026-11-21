@@ -733,6 +733,77 @@ local function prop(parent: Instance, name: string, at: Vector3, facing: Vector3
 	model.Parent = parent
 end
 
+-- V9-NOW 11 (owner, 21 Nov 2026: "the big target blocks topple when shot"): the crash wall behind the row is three
+-- big cream blocks (a red target on the first, a black ring and chevron on the others) instead of one mesh, each a
+-- Knockables "Block": shots rock them over, blasts throw them, cars and bodies knock them, a falling one can knock
+-- its neighbour; they stand back up at their spot after 10 s still (30 s at most) and on RESET.
+Lab.TARGET_BLOCK = Vector3.new(9, 12.8, 7)
+local function targetBlocks(parent: Instance, center: Vector3, ground: number)
+	local Knockables = require(script.Parent:WaitForChild("Knockables")) :: any
+	local cream = Color3.fromRGB(236, 230, 205)
+	local size = Lab.TARGET_BLOCK
+	for i = -1, 1 do
+		local m = Instance.new("Model")
+		m.Name = "TargetBlock"
+		local block = Instance.new("Part")
+		block.Name = "Block"
+		block.Size = size
+		block.Color = cream
+		block.Material = Enum.Material.SmoothPlastic
+		block.CFrame = CFrame.new(center.X + i * (size.X + 0.4), ground + size.Y / 2, center.Z)
+		block.Anchored = true
+		block.Parent = m
+		for _, face in { Enum.NormalId.Back, Enum.NormalId.Front } do
+			local gui = Instance.new("SurfaceGui")
+			gui.Face = face
+			gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			gui.PixelsPerStud = 20
+			gui.LightInfluence = 1
+			gui.Parent = block
+			local function circle(scale: number, color: Color3, ring: number?): Frame
+				local f = Instance.new("Frame")
+				f.AnchorPoint = Vector2.new(0.5, 0.5)
+				f.Position = UDim2.fromScale(0.5, 0.36)
+				f.Size = UDim2.fromScale(scale, scale * size.X / size.Y)
+				f.BackgroundColor3 = color
+				f.BackgroundTransparency = if ring then 1 else 0
+				local c = Instance.new("UICorner")
+				c.CornerRadius = UDim.new(0.5, 0)
+				c.Parent = f
+				if ring then
+					local s = Instance.new("UIStroke")
+					s.Color = color
+					s.Thickness = ring
+					s.Parent = f
+				end
+				f.Parent = gui
+				return f
+			end
+			if i == -1 then
+				circle(0.7, Color3.fromRGB(210, 40, 40))
+				circle(0.52, Color3.fromRGB(250, 250, 250))
+				circle(0.34, Color3.fromRGB(210, 40, 40))
+				circle(0.16, Color3.fromRGB(250, 250, 250))
+			else
+				circle(0.6, Color3.fromRGB(30, 30, 32), 22)
+			end
+			-- (The chevron at the foot: two dark bars meeting in a point.)
+			for _, side in { -1, 1 } do
+				local bar = Instance.new("Frame")
+				bar.AnchorPoint = Vector2.new(0.5, 0.5)
+				bar.Position = UDim2.fromScale(0.5 + side * 0.2, 0.8)
+				bar.Size = UDim2.fromScale(0.5, 0.06)
+				bar.Rotation = side * -22
+				bar.BackgroundColor3 = Color3.fromRGB(30, 30, 32)
+				bar.BorderSizePixel = 0
+				bar.Parent = gui
+			end
+		end
+		m.Parent = parent
+		Knockables.make(m, "Block")
+	end
+end
+
 local function paint(parent: Instance, name: string, size: Vector3, at: Vector3, color: Color3, material: Enum.Material?): Part
 	local p = Instance.new("Part")
 	p.Name = name
@@ -797,7 +868,11 @@ local function dressPlot(plot: Plot)
 		paint(folder, "Hazard", Vector3.new(1.5, 0.06, 1.6), Vector3.new(o.X - 19.5 + i * 3, ground + 0.22, rowZ + 8), if i % 2 == 0 then yellow else Color3.fromRGB(24, 24, 28))
 	end
 	-- The crash wall behind the row, a workbench either side of it.
-	prop(folder, "CrashWall", Vector3.new(o.X, ground, o.Z - 74), Vector3.new(0, 0, 1), 28)
+	if (Config :: any).TARGET_BLOCKS then
+		targetBlocks(folder, Vector3.new(o.X, ground, o.Z - 74), ground)
+	else
+		prop(folder, "CrashWall", Vector3.new(o.X, ground, o.Z - 74), Vector3.new(0, 0, 1), 28)
+	end
 	for _, x in { -22, 22 } do
 		prop(folder, "LabBench", Vector3.new(o.X + x, ground, o.Z - 76), Vector3.new(0, 0, 1), 9)
 	end

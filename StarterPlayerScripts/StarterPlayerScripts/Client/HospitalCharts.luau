@@ -988,6 +988,15 @@ function HospitalCharts.isAuto(): boolean
 end
 
 -- The small monitor's pop-in scale (made the first time it is needed).
+-- V9-NOW 15: the small monitor's size on this screen (a phone: smaller, a small PC window: a little smaller).
+local function autoFit(): number
+	local u = ui
+	local screen = if u then u.gui.AbsoluteSize else Vector2.new(1920, 1080)
+	if ViewMode.isTouch() or math.min(screen.X, screen.Y) <= 500 then
+		return HospitalCharts.FIT_PHONE
+	end
+	return if screen.X < 1200 then HospitalCharts.FIT_SMALL else 1
+end
 local function popScale(): UIScale
 	local u = ui :: Ui
 	local s = u.panel:FindFirstChild("AutoPop")
@@ -1024,9 +1033,9 @@ local function setAuto(body: Model?)
 				end
 			end
 			cursor = 0
-			popScale().Scale = if GuiService.ReducedMotionEnabled then 1 else 0.9
+			popScale().Scale = autoFit() * (if GuiService.ReducedMotionEnabled then 1 else 0.9)
 			if not GuiService.ReducedMotionEnabled then
-				TweenService:Create(popScale(), TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+				TweenService:Create(popScale(), TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = autoFit() }):Play()
 			end
 		end
 		u.gui.Enabled = true
@@ -1048,7 +1057,10 @@ end
 -- V9-NOW 10: the small monitor shrinks away (FADE s), then goes; a hit meanwhile keeps it (shotStep).
 HospitalCharts.HOLD = 3 -- s after your last hit
 HospitalCharts.FADE = 0.18
-HospitalCharts.TOUCH_TOP = 58 -- px under the safe area's top (the top cluster's row)
+HospitalCharts.TOUCH_TOP = 94 -- px under the safe area's top (under the top row and the 2X chip)
+HospitalCharts.CORNER = 12 -- px from the right edge and above the tool bar (V9-NOW 15)
+HospitalCharts.FIT_PHONE = 0.62
+HospitalCharts.FIT_SMALL = 0.8
 local fading = false
 function fadeAuto()
 	if fading or not auto then
@@ -1059,14 +1071,14 @@ function fadeAuto()
 		return
 	end
 	fading = true
-	local tween = TweenService:Create(popScale(), TweenInfo.new(HospitalCharts.FADE, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0.6 })
+	local tween = TweenService:Create(popScale(), TweenInfo.new(HospitalCharts.FADE, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = autoFit() * 0.6 })
 	tween.Completed:Once(function()
 		fading = false
 		local b = shotBody
 		if not (b and b.Parent and os.clock() - shotAt < HospitalCharts.HOLD) then
 			setAuto(nil)
 		else
-			popScale().Scale = 1 -- (hit again while it shrank: back up)
+			popScale().Scale = autoFit() -- (hit again while it shrank: back up)
 		end
 	end)
 	tween:Play()
@@ -1308,15 +1320,17 @@ function HospitalCharts.start()
 			cursor = 0
 		end
 		setAuto(b)
-		local last = UserInputService:GetLastInputType()
-		local mouse = UserInputService.MouseEnabled and last ~= Enum.UserInputType.Touch and not string.find(last.Name, "Gamepad", 1, true)
-		if mouse then
-			followMouse(UserInputService:GetMouseLocation())
+		-- V9-NOW 15 (owner, 21 Nov 2026: "fixed in the bottom-right corner"): never follows the mouse. A computer or a pad:
+		-- bottom right, above the tool bar. A touch screen: top right, under the top cluster (its thumb buttons have the
+		-- bottom right), smaller.
+		local u = ui :: Ui
+		local c = HospitalCharts.CORNER
+		if ViewMode.isTouch() then
+			u.panel.AnchorPoint = Vector2.new(1, 0)
+			u.panel.Position = UDim2.new(1, -c, 0, HospitalCharts.TOUCH_TOP)
 		else
-			-- (Touch and pads: the top middle, under the top cluster, smaller on a phone; the aim stays clear.)
-			local u = ui :: Ui
-			u.panel.AnchorPoint = Vector2.new(0.5, 0)
-			u.panel.Position = UDim2.new(0.5, 0, 0, HospitalCharts.TOUCH_TOP)
+			u.panel.AnchorPoint = Vector2.new(1, 1)
+			u.panel.Position = UDim2.new(1, -c, 1, -(PokeController.height() + c))
 		end
 		if t >= refreshAt then
 			refreshAt = t + 1

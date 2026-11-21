@@ -68,6 +68,14 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.32.0",
+		lines = {
+			"\u{26A1} 2X KOs + BOLTS for 48 hours!",
+			"Drive from the driver's seat: a real cockpit, a turning wheel, engine, tyres and wind",
+			"Shoot the big target blocks until they topple over",
+		},
+	},
+	{
 		version = "0.31.1",
 		lines = {
 			"Bullet holes on every ragdoll, and they react to where you hit them",

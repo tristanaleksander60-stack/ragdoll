@@ -12,6 +12,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
+local DoubleEvent = require(Shared:WaitForChild("DoubleEvent")) -- (V9-NOW 12)
 local Net = require(Shared:WaitForChild("Net"))
 local Economy = require(Shared:WaitForChild("Economy"))
 local Experiments = require(Shared:WaitForChild("Experiments"))
@@ -82,6 +83,9 @@ function EconomyService.give(player: Player, n: number, text: string?, exact: bo
 		return false
 	end
 	local times = if not exact and player:GetAttribute("DoubleBolts") == true then 2 else 1 -- (Shop.OFFERS DoubleBolts)
+	if not exact then
+		times *= DoubleEvent.mult((Config :: any).DOUBLE_EVENT, os.time()) -- (V9-NOW 12: the 2X event; stacks with the pass: 4x)
+	end
 	e.bolts += math.floor(n) * times
 	ProgressService.ecoChanged(player)
 	if text then

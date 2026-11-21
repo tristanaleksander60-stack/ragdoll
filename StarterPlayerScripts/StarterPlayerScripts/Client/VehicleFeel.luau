@@ -213,7 +213,7 @@ local function step(f: CarFeel, dt: number, camPos: Vector3)
 			end
 			local k = math.clamp(speed / 60, 0, 1)
 			e.PlaybackSpeed = 0.75 + k * 0.9
-			e.Volume = 0.25 + k * 0.4
+			e.Volume = (0.25 + k * 0.4) * (if body:GetAttribute("CockpitLocal") then 1.5 else 1) -- (V9-NOW 16: louder inside, Cockpit)
 		elseif e.IsPlaying then
 			e:Stop()
 		end

@@ -131,6 +131,7 @@ safe("CodesWindow", function() require(Client:WaitForChild("CodesWindow")).start
 safe("Spectate", function() require(Client:WaitForChild("Spectate")).start() end) -- the owner's SPECTATE (admin menu)
 safe("Ghosts", function() Ghosts.start() end)
 safe("HospitalCharts", function() HospitalCharts.start() end)
+safe("DoubleEventChip", function() require(Client:WaitForChild("DoubleEventChip")).start() end) -- (V9-NOW 12: the 2X chip)
 safe("HitInfo", function() HitInfo.start() end) -- what you are shooting: two lines that add up (round 2, N2; round 3, M2)
 safe("Crosshair", function() Crosshair.start() end) -- with a gun picked: a crosshair and hit marks (round 3, M2)
 safe("TouchShoot", function() require(Client:WaitForChild("TouchShoot")).start() end) -- touch: SHOOT button, centre crosshair, "tap a dummy" (round 5)
@@ -160,6 +161,7 @@ safe("NpcGlow", function() require(Client:WaitForChild("NpcGlow")).start() end)
 safe("PortalUI", function() require(Client:WaitForChild("PortalUI")).start() end) -- SINGLEPLAYER / MULTIPLAYER portals, the server list (round 5)
 safe("HudPlus", function() require(Client:WaitForChild("HudPlus")).start() end) -- big WEAPONS, LEVEL, today's deal, sandbox column (round 5)
 safe("VehicleClient", function() require(Client:WaitForChild("VehicleClient")).start() end) -- v3 Phase C: drive the lab cars
+safe("Cockpit", function() require(Client:WaitForChild("Cockpit")).start() end) -- V9-NOW 16: the driver's seat view, wheel, speedometer, car sounds
 safe("Speedometer", function() require(Client:WaitForChild("Speedometer")).start() end) -- V9-0c: the round gauge while you drive
 safe("PlazaClient", function() require(Client:WaitForChild("PlazaClient")).start() end) -- V9-0d: the town square (stage dance, photo spot, its sounds)
 safe("HudV3", function() require(Client:WaitForChild("HudV3")).start() end) -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)

@@ -5,7 +5,7 @@ local Config = {
 	GameName = "Ragdoll Havoc", -- (the owner's name for the game, 10 Nov 2026)
 	-- Bumped with every change that goes live (round 5): SessionStats keeps it per visit, so the
 	-- numbers of one build can be told from another's.
-	Version = "0.31.1", -- (0.31.1, 21 Nov 2026, V9-NOW hotfix: bullet holes on every dummy, a reaction by where it is hit, one map place (the board); 0.31.0, 21 Nov 2026, V9 milestone 1: GOD MODE free in the beta with aimed patterns, the time dial (Z), grey matte ragdolls, the first shot in first person, bigger unlock gaps, the 3D shop, codes, the town square, padded hub floor, always a ragdoll to shoot; 0.30.0, 21 Nov 2026: wide paths (twice as wide, no stub at the bullseye), GOD MODE: create life with a free 60 s try; 0.29.0, 21 Nov 2026: connected path network with a plaza, grass verges with bushes, a real lava pit, icons instead of words, a full 6-weapon start bar, toss buttons at the cannon, lava and trampoline, fewer pop-ups; 0.28.0, 21 Nov 2026: every weapon its own sound, a 4-tool start bar with Launch at 3 and the Rocket among the hardest, SURPRISE-style banners, nicer lab paths, a FEED button, sign and drop ring at every creature and station; 0.27.1 UI audit before the ads, 21 Nov 2026: one WEAPONS button, a quiet start, signs in the world, knockable barrels/crates/cones, the weapon in your hand in 3D; 0.27.0 V8-1..6: CRASH score and the long cannon arc, missions, readable hits, fair chase, spawn dummies, streak freeze, admins, 21 Nov 2026; 0.26.0 V8-0: the first hit lands, a full bar from the start, a calm first minutes, the cannon in view, 21 Nov 2026; 0.25.0 v7: paths, crash-test dummies, event banner card, console layout, 20 Nov 2026; 0.24.0 v6: notifications, admin and director menus, bigger lab with garden, creature yard, birds, map shop, 20 Nov 2026; 0.18.0 phase 0; 0.19.0 phases 1-3; 0.20.0 the release; 0.21.0 v3 look, cars, animals; 0.22.0 open-air maps, launchers, disasters, train, throw tower, 19 Nov 2026; 0.23.0 v4: talk to NPCs, real gorilla and bulls, 11 surprises, cars, slow-mo, lab zones, 20 Nov 2026; SessionStats also keeps game.PlaceVersion)
+	Version = "0.32.0", -- (0.32.0, 21 Nov 2026, V9-NOW 11-16: target blocks that topple, the 2X KO + BOLTS event, What's New closes itself, the monitor in the corner, cars with a cockpit and sounds; 0.31.1, 21 Nov 2026, V9-NOW hotfix: bullet holes on every dummy, a reaction by where it is hit, one map place (the board); 0.31.0, 21 Nov 2026, V9 milestone 1: GOD MODE free in the beta with aimed patterns, the time dial (Z), grey matte ragdolls, the first shot in first person, bigger unlock gaps, the 3D shop, codes, the town square, padded hub floor, always a ragdoll to shoot; 0.30.0, 21 Nov 2026: wide paths (twice as wide, no stub at the bullseye), GOD MODE: create life with a free 60 s try; 0.29.0, 21 Nov 2026: connected path network with a plaza, grass verges with bushes, a real lava pit, icons instead of words, a full 6-weapon start bar, toss buttons at the cannon, lava and trampoline, fewer pop-ups; 0.28.0, 21 Nov 2026: every weapon its own sound, a 4-tool start bar with Launch at 3 and the Rocket among the hardest, SURPRISE-style banners, nicer lab paths, a FEED button, sign and drop ring at every creature and station; 0.27.1 UI audit before the ads, 21 Nov 2026: one WEAPONS button, a quiet start, signs in the world, knockable barrels/crates/cones, the weapon in your hand in 3D; 0.27.0 V8-1..6: CRASH score and the long cannon arc, missions, readable hits, fair chase, spawn dummies, streak freeze, admins, 21 Nov 2026; 0.26.0 V8-0: the first hit lands, a full bar from the start, a calm first minutes, the cannon in view, 21 Nov 2026; 0.25.0 v7: paths, crash-test dummies, event banner card, console layout, 20 Nov 2026; 0.24.0 v6: notifications, admin and director menus, bigger lab with garden, creature yard, birds, map shop, 20 Nov 2026; 0.18.0 phase 0; 0.19.0 phases 1-3; 0.20.0 the release; 0.21.0 v3 look, cars, animals; 0.22.0 open-air maps, launchers, disasters, train, throw tower, 19 Nov 2026; 0.23.0 v4: talk to NPCs, real gorilla and bulls, 11 surprises, cars, slow-mo, lab zones, 20 Nov 2026; SessionStats also keeps game.PlaceVersion)
 	Phase = 3,
 	-- Heavy weapons and close blasts can cut a limb off (round 2, N2). Roblox lists severed body
 	-- parts as Restricted (18+, ID-checked players only): switching this off keeps the game at a
@@ -286,6 +286,13 @@ local Config = {
 		engineSound = 80317022777602,
 		hornSound = 127513531122725,
 		crashSound = 70951531892215,
+		-- V9-NOW 16 (owner, 21 Nov 2026): the cockpit (Client/Cockpit): the driver's-seat camera from the moment you sit
+		-- (V / Select / the VIEW button: the chase camera), a turning wheel and a speedometer, and these sounds
+		-- (free Creator Store audio): engine start (zKevin), tyre screech (diman's group), wind (Great British Air).
+		cockpit = true,
+		startSound = 5830481291,
+		screechSound = 73429750798250,
+		windSound = 5813077875,
 		feel = true, -- spinning/steering wheels, body roll, lights, engine pitch, dust (Client/VehicleFeel)
 	}),
 	BIG_BUTTON_GAP = 75, -- s between two presses of a lab's BIG RED BUTTON (a random free event)
@@ -412,6 +419,14 @@ local Config = {
 	-- V9-NOW 7 (owner, 21 Nov 2026: "real launch pads instead of neon"): every launch pad is a steel plate with a
 	-- rubber mat, bolts, painted colour and pictogram (Playground.realPad); no glowing rings on them (LabGuide).
 	REAL_PADS = true,
+	-- V9-NOW 14 (owner, 21 Nov 2026): s the What's New window stays before it closes by itself (EventShop).
+	WHATS_NEW_AUTO_CLOSE = 3,
+	-- V9-NOW 12 (owner, 21 Nov 2026): 2X KOs (toward unlocks) and 2X BOLTS (not codes or bought bolts; stacks with the
+	-- 2x BOLTS pass) from `from` to `to`, UTC seconds (Shared/DoubleEvent). Starts with this publish, 48 hours.
+	-- V9-NOW 11 (owner, 21 Nov 2026): the crash wall behind the row is three big target blocks that topple when shot
+	-- (Lab.targetBlocks, Knockables "Block"). false = the old one-piece CrashWall mesh.
+	TARGET_BLOCKS = true,
+	DOUBLE_EVENT = { from = 1795269600, to = 1795269600 + 48 * 3600 },
 	-- V9-NOW 9 (owner, 21 Nov 2026: "recoil on every gun"): your own shot kicks the camera up by `up` degrees and to a
 	-- random side by `side`, `shake` adds a little trauma (the minigun's steady shake); it settles back smoothly
 	-- (FeelTuning.KICK_RETURN). Settings "Recoil" FULL/HALF/OFF scales it, Motion LESS halves it. A gun not here

@@ -32,6 +32,7 @@ local DailyGoals = require(Shared:WaitForChild("DailyGoals"))
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
 local Toys = require(Shared:WaitForChild("Toys"))
 local Config = require(Shared:WaitForChild("Config"))
+local DoubleEvent = require(Shared:WaitForChild("DoubleEvent")) -- (V9-NOW 12)
 
 local DummyControl = require(script.Parent.DummyControl)
 local Metrics = require(script.Parent.Metrics)
@@ -1019,9 +1020,11 @@ function credit(player: Player, model: Model, now: number)
 		bonus = math.min(if c.count >= 2 * ProgressService.COMBO_STEP then 2 else 1, ProgressService.COMBO_BONUS_MAX - c.bonus)
 		c.bonus += bonus
 	end
-	local count = 1 + bonus
+	-- (V9-NOW 12: the 2X event: every KO counts twice toward the unlocks while it runs; the pop says "+2".)
+	local mult = DoubleEvent.mult((Config :: any).DOUBLE_EVENT, os.time())
+	local count = (1 + bonus) * mult
 	local pelvis = model:FindFirstChild("LowerTorso")
-	remote:FireClient(player, "Combo", { count = c.count, bonus = bonus, at = if pelvis and pelvis:IsA("BasePart") then pelvis.Position else nil })
+	remote:FireClient(player, "Combo", { count = c.count, bonus = bonus, mult = mult, at = if pelvis and pelvis:IsA("BasePart") then pelvis.Position else nil })
 	local boost = ProgressService.boost
 	if boost and boost(player) then
 		boostHalf[player] = (boostHalf[player] or 0) + 1
