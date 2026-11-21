@@ -128,6 +128,43 @@ function PromptGate.start()
 			task.defer(add, d) -- (after its maker set its name, keys and style)
 		end
 	end)
+	-- (Owner, 21 Nov 2026: "keybinds on everything, so you never leave first person": USE (E) presses the nearest
+	-- thing in reach, a terminal, a board, a button or a booth, with no aiming; never in the lab view or building.)
+	local Keybinds = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Keybinds")) :: any
+	UserInputService.InputBegan:Connect(function(input, processed)
+		if not Keybinds.live(processed) or input.UserInputType ~= Enum.UserInputType.Keyboard or not Keybinds.is("Use", input.KeyCode) then
+			return
+		end
+		local Client = script.Parent
+		local okView, lab = pcall(function()
+			return (require(Client:WaitForChild("ViewMode")) :: any).isLab()
+		end)
+		local okBuild, building = pcall(function()
+			return (require(Client:WaitForChild("BuildController")) :: any).isActive()
+		end)
+		if (okView and lab) or (okBuild and building) then
+			return
+		end
+		local character = Players.LocalPlayer.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if not (root and root:IsA("BasePart")) then
+			return
+		end
+		local best: ProximityPrompt? = nil
+		local bestDist = math.huge
+		for p in entries do
+			local part = partOf(p)
+			if p.Enabled and part then
+				local d = (root.Position - part.Position).Magnitude
+				if d <= p.MaxActivationDistance + PromptGate.EXTRA_REACH and d < bestDist then
+					best, bestDist = p, d
+				end
+			end
+		end
+		if best then
+			press(best)
+		end
+	end)
 	UserInputService.LastInputTypeChanged:Connect(function()
 		local now = isPad()
 		if now ~= padMode then

@@ -65,7 +65,7 @@ Experiments.KINDS = table.freeze({ Takedown = true, Cannon = true, Bullseye = tr
 -- timer (SKIP from SKIP_AFTER s), each paying its stars (BOLTS through ExperimentService.onReward).
 -- The position is kept for every visit (ExperimentService, DataStore Missions_v1).
 Experiments.NO_TIMER = 1e9
-Experiments.SKIP_AFTER = 60 -- s a chain card stays before it may be skipped
+Experiments.SKIP_AFTER = 0 -- s a chain card stays before it may be skipped (owner, 21 Nov 2026: skip at once)
 Experiments.CHAIN = table.freeze({
 	{ id = "Chain1", text = "KO a dummy", kind = "Takedown", target = 1, seconds = Experiments.NO_TIMER, stars = 1 },
 	{ id = "Chain2", text = "Swing the BAT", kind = "Tool:Bat", target = 1, seconds = Experiments.NO_TIMER, stars = 1 },

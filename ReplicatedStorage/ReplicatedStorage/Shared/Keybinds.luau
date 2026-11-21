@@ -17,7 +17,7 @@
 
 local UserInputService = game:GetService("UserInputService")
 
-export type Context = "Global" | "Play" | "Build"
+export type Context = "Global" | "Play" | "Build" | "Lab"
 export type Action = { id: string, label: string, context: Context, default: string, group: string }
 
 local Keybinds = {}
@@ -43,8 +43,13 @@ Keybinds.ACTIONS = table.freeze({
 	{ id = "Reload", label = "Reload", context = "Play", default = "R", group = "PLAY" },
 	{ id = "Grab", label = "Grab", context = "Play", default = "G", group = "PLAY" },
 	{ id = "SpawnDummy", label = "Spawn a dummy (press again: next type)", context = "Play", default = "H", group = "PLAY" }, -- (V8-2.5)
-	{ id = "CamLeft", label = "Lab view: turn left", context = "Play", default = "Q", group = "PLAY" },
-	{ id = "CamRight", label = "Lab view: turn right", context = "Play", default = "E", group = "PLAY" },
+	-- (Owner, 21 Nov 2026: "keybinds on everything, so you never leave first person". The lab view's turn keys have
+	-- their own context (Lab, never on with the player view's keys), so E is also USE in the player view.)
+	{ id = "CamLeft", label = "Lab view: turn left", context = "Lab", default = "Q", group = "PLAY" },
+	{ id = "CamRight", label = "Lab view: turn right", context = "Lab", default = "E", group = "PLAY" },
+	{ id = "Use", label = "Use what you stand at (terminal, board, button)", context = "Play", default = "E", group = "PLAY" },
+	{ id = "MissionSkip", label = "Skip the mission", context = "Play", default = "Minus", group = "PLAY" },
+	{ id = "MissionHide", label = "Hide or show the mission card", context = "Play", default = "Equals", group = "PLAY" },
 	{ id = "Recenter", label = "Lab view: back to the middle", context = "Play", default = "Home", group = "PLAY" },
 	{ id = "CleanUp", label = "Sweep the lab clean", context = "Global", default = "Delete", group = "PLAY" },
 	{ id = "ReplaySkip", label = "Skip a replay", context = "Global", default = "Period", group = "PLAY" },
@@ -66,6 +71,9 @@ Keybinds.ACTIONS = table.freeze({
 	{ id = "Creator", label = "Creator mode (hide the screen buttons)", context = "Global", default = "U", group = "WINDOWS" },
 	{ id = "CreatorWindow", label = "Clips & live window", context = "Global", default = "Comma", group = "WINDOWS" },
 	{ id = "Controls", label = "This list (controls)", context = "Global", default = "K", group = "WINDOWS" },
+	{ id = "GodWindow", label = "GOD MODE", context = "Global", default = "Seven", group = "WINDOWS" },
+	{ id = "LabWindow", label = "Lab window", context = "Global", default = "Eight", group = "WINDOWS" },
+	{ id = "MenuWindow", label = "More (menu)", context = "Global", default = "Nine", group = "WINDOWS" },
 	-- Building
 	{ id = "Build", label = "Build mode on/off", context = "Global", default = "B", group = "BUILD" },
 	{ id = "Turn", label = "Turn the part", context = "Build", default = "R", group = "BUILD" },

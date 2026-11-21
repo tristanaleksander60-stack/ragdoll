@@ -44,6 +44,9 @@ local windowText: TextLabel? = nil
 local ecoText: TextLabel? = nil
 local buyButton: any = nil
 local boltsText: TextLabel? = nil -- UI v2: the balance on its own line
+-- (Owner, 21 Nov 2026: "skip missions, or hide them so they are not on the screen all the time": the card's X hides it
+-- (EXPERIMENTS window: SHOW ON SCREEN brings it back); it stays hidden for new missions too.)
+local hiddenCard = false
 
 -- A friend's code: the toy and the score to beat (nil: not a code).
 function ExperimentCard.challengeOf(code: string): (string?, number?)
@@ -78,7 +81,7 @@ local function shown(): boolean
 	local gui = player:FindFirstChild("PlayerGui")
 	local chase = gui and gui:FindFirstChild("ChaseHud")
 	local arena = gui and gui:FindFirstChild("MinigameHud")
-	return (current ~= nil or party ~= nil)
+	return not hiddenCard and (current ~= nil or party ~= nil)
 		and not (gui and gui:FindFirstChild("StuntCard")) -- (V8-1.1: the CRASH card has the top for a moment)
 		and not (gui and gui:FindFirstChild("FirstVisitGoal")) -- (UI audit 21 Nov 2026: one goal at a time; the first visit's line first)
 		and not (gui and gui:FindFirstChild("Banner") and (gui :: any).Banner:FindFirstChild("Moment")) -- (21 Nov 2026: a big moment's banner has the top for its few seconds)
@@ -180,6 +183,18 @@ local function buildWindow()
 		parent = window.body,
 		onActivated = function()
 			Net.event(Net.Names.Experiment):FireServer("Skip")
+			Controller.close("Experiments")
+		end,
+	})
+	C.Button({
+		text = "SHOW / HIDE ON SCREEN",
+		role = "neutral",
+		size = UDim2.fromOffset(260, 46),
+		layoutOrder = 2,
+		parent = window.body,
+		onActivated = function()
+			hiddenCard = not hiddenCard
+			Toast.show(if hiddenCard then "Missions hidden" else "Missions on screen")
 			Controller.close("Experiments")
 		end,
 	})
@@ -384,6 +399,41 @@ local function build()
 	b.Parent = gui
 	gui.Parent = player:WaitForChild("PlayerGui")
 	card = b
+	-- (Owner, 21 Nov 2026: a skip and a hide on the card itself, no window needed.)
+	local function small(name: string, text: string, color: Color3, onTap: () -> ()): TextButton
+		local s = Instance.new("TextButton")
+		s.Name = name
+		s.Text = text
+		s.FontFace = Theme.Fonts.display
+		s.TextScaled = true
+		s.TextColor3 = Color3.new(1, 1, 1)
+		s.BackgroundColor3 = color
+		s.AnchorPoint = Vector2.new(0, 0.5)
+		s.ZIndex = 3
+		local c = Instance.new("UICorner")
+		c.CornerRadius = UDim.new(0.3, 0)
+		c.Parent = s
+		s.Activated:Connect(onTap)
+		s.Parent = b
+		return s
+	end
+	local skip = small("Skip", ">>", Color3.fromRGB(70, 80, 110), function()
+		Net.event(Net.Names.Experiment):FireServer("Skip")
+	end)
+	local hide = small("Hide", "X", Color3.fromRGB(150, 50, 60), function()
+		hiddenCard = true
+		Toast.show("Missions hidden (" .. (require(Shared:WaitForChild("Keybinds")) :: any).labelOf("MissionHide") .. " or MENU > MISSIONS shows them)")
+	end)
+	local function placeSmall()
+		local h = math.max(18, b.AbsoluteSize.Y - 8)
+		pad.PaddingRight = UDim.new(0, 2 * h + 14)
+		skip.Size = UDim2.fromOffset(h, h)
+		hide.Size = UDim2.fromOffset(h, h)
+		skip.Position = UDim2.new(1, 4, 0.5, 0)
+		hide.Position = UDim2.new(1, 8 + h, 0.5, 0)
+	end
+	b:GetPropertyChangedSignal("AbsoluteSize"):Connect(placeSmall)
+	placeSmall()
 	HudSlots.watch(function()
 		HudSlots.apply(b, "Experiment", HudSlots.context(ViewMode.isTouch(), ViewMode.isLab()))
 	end)
@@ -395,6 +445,19 @@ function ExperimentCard.start()
 	end
 	build()
 	buildWindow()
+	-- (Owner, 21 Nov 2026: keys for both, never leaving first person: MissionSkip (-) and MissionHide (=).)
+	local Keybinds = require(Shared:WaitForChild("Keybinds")) :: any
+	game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
+		if not Keybinds.live(processed) or input.UserInputType ~= Enum.UserInputType.Keyboard then
+			return
+		end
+		if Keybinds.is("MissionSkip", input.KeyCode) and (current ~= nil or party ~= nil) then
+			Net.event(Net.Names.Experiment):FireServer("Skip")
+		elseif Keybinds.is("MissionHide", input.KeyCode) then
+			hiddenCard = not hiddenCard
+			Toast.show(if hiddenCard then "Missions hidden (" .. Keybinds.labelOf("MissionHide") .. " shows them)" else "Missions on screen")
+		end
+	end)
 	Net.event(Net.Names.Experiment).OnClientEvent:Connect(function(kind: unknown, data: unknown)
 		if type(data) ~= "table" then
 			return

@@ -253,6 +253,12 @@ function ControlsUI.start()
 			Controller.toggle("Eggs")
 		elseif Keybinds.is("Shop", input.KeyCode) then
 			Controller.toggle("Events")
+		elseif Keybinds.is("GodWindow", input.KeyCode) then -- (owner, 21 Nov 2026: keys for every window)
+			Controller.toggle("God")
+		elseif Keybinds.is("LabWindow", input.KeyCode) then
+			Controller.toggle("Lab")
+		elseif Keybinds.is("MenuWindow", input.KeyCode) then
+			Controller.toggle("Menu")
 		end
 	end)
 end
