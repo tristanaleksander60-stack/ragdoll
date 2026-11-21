@@ -8,11 +8,21 @@
 
 Do the rest **in this order**. Each phase builds on the one before: things are first made at their final size, then placed, then labelled, then sold. Nothing is done twice.
 
-**Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it. **Then Phase M at once.**
+**Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it. **Then Phase M at once, then Phase V.**
 
 **Phase M: the map place, right after the physics** (owner, 21 Nov: priority). As soon as V9-P (and V9-0ac with it) is done, build **V9-0e**: the physical place by the spawn where you **see every map and teleport to it**. That means the Map Board with a tile per place (picture, name, players there now, GO), the beautiful Places portal, the matching board and portal home on every map, and the nicer Solo/Multi portals.
 - **Placement:** it stands 20-25 studs from the spawn in the hub (V9-0h), in the spawn view, facing the player. Its spot is held free for it in the later placement pass (V9-0n only fine-tunes it).
 - **Publish** right after it passes (through `docs/RELEASE.md`), so players get it at once.
+
+**Phase V: first person in the cars, with interiors, right after Phase M** (owner, 21 Nov: priority). Build the cockpit part of **V9-0y** ("first person inside the car, with a real interior") for the vehicles that exist now:
+- the driver's-seat camera with V / Select / the eye button to the chase cam;
+- a real interior per vehicle, the turning wheel with the hands, the dash speedometer and the lights;
+- the feel (vibration, bumps, a head turn);
+- phone and pad controls that never cover the windscreen.
+
+If a current vehicle has no usable interior, swap it for a model that has one (or add a fitted interior set) **now**. That part of V9-0y's "bigger, better cars" is pulled forward with it. The rest of V9-0y (more cars, dummy bowling, ramps and boost pads) stays in Phase B, and every new car there must come with an interior that passes the same cockpit test.
+- **Tests:** the T177 cockpit checks.
+- **Publish** right after it passes (through `docs/RELEASE.md`).
 
 **Phase A: quick wins, no layout needed** (players feel them at once)
 1. **V9-0o** grey matte dummies. Every later capture uses them.
@@ -26,7 +36,7 @@ Do the rest **in this order**. Each phase builds on the one before: things are f
 7. **V9-0r** hero scale **together with V9-3** lab machines (the same objects: size, animation and sound in one pass).
 8. **V9-3c** the rocket pad and **V9-0m** the compressor (new hero machines, at hero scale).
 9. **V9-1** the aquarium with whale and shark, then **V9-2** every creature (the juicy eating), then **V9-2b** the feed terminals.
-10. **V9-0y + V9-0x** cars: bigger, more of them, fun to drive into dummies, and they react to shots and blasts (one cars pass).
+10. **V9-0y + V9-0x** cars: more of them, fun to drive into dummies, and they react to shots and blasts (one cars pass; the cockpit is already done in Phase V, new cars get interiors too).
 
 **Phase C: place and label everything** (only now, when all sizes are final)
 11. **V9-0n** the placement pass for the lab (the Map Board and portals from Phase M keep their spot; only fine-tune them).
