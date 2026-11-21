@@ -8,7 +8,7 @@
 
 Do the rest **in this order**. Each phase builds on the one before: things are first made at their final size, then placed, then labelled, then sold. Nothing is done twice.
 
-**Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it. **Then Phase T (terminals, priority 2), then Phase S (compressor and much bigger things, priority 3), then Phase M (map place), then Phase V (car cockpit).**
+**Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it. **Then Phase T (terminals, priority 2), then Phase M (map place, priority 3), then Phase S (compressor and much bigger things, priority 4), then Phase V (car cockpit, priority 5).**
 
 **Phase T: the computer terminals, priority 2, right after the physics** (owner, 21 Nov). Build **V9-2b** now: a small computer terminal by **every thing in the lab you can put a ragdoll into or launch one with**. That covers every creature (spider, plant, frog, whale, chicken, washer, slingshot, mole, vacuum), the cannon, the lava, the trampoline, the launch stations and the wrecking ball, plus any other machine that takes a dummy today.
 - **The terminal:** a real model with a screen (the creature or machine picture, the hunger or ready bar, a big glowing FEED / FIRE / LAUNCH button). Click or tap it, or press E / ButtonX. Spam is allowed (about 4 presses a second, a queue of 6, a combo "x5!" on the screen). A spare dummy drops from a chute when no free one is left, within the body cap.
@@ -18,18 +18,18 @@ Do the rest **in this order**. Each phase builds on the one before: things are f
 - **Tests:** T154.
 - **Publish** right after it passes (through `docs/RELEASE.md`).
 
-**Phase S: the Compressor and much bigger things, priority 3, right after Phase T** (owner, 21 Nov).
+**Phase M: the map place, priority 3, right after Phase T** (owner, 21 Nov). As soon as Phase T is done, build **V9-0e**: the physical place by the spawn where you **see every map and teleport to it**. That means the Map Board with a tile per place (picture, name, players there now, GO), the beautiful Places portal, the matching board and portal home on every map, and the nicer Solo/Multi portals.
+- **Placement:** it stands 20-25 studs from the spawn in the hub (V9-0h), in the spawn view, facing the player. Its spot is held free for it in the later placement pass (V9-0n only fine-tunes it).
+- **Publish** right after it passes (through `docs/RELEASE.md`), so players get it at once.
+
+**Phase S: the Compressor and much bigger things, priority 4, right after Phase M** (owner, 21 Nov).
 1. **V9-0m** the Compressor (the hydraulic pancake press), built with its Phase T terminal from the start.
 2. **V9-0r** hero scale **together with V9-3** (the lab machines): the cannon and cannonball, slingshot, spider, the creatures, the wrecking ball, mace, trampoline, tower and button, all at hero size, each with its own animation and sounds.
    - Every terminal from Phase T moves with its thing, and every trigger, launch and landing is re-tuned to the new size.
    - The rocket pad (V9-3c) stays in Phase B, but is built at hero scale.
 - **Publish** right after it passes (through `docs/RELEASE.md`).
 
-**Phase M: the map place, right after Phase S** (owner, 21 Nov: priority). As soon as Phase S is done, build **V9-0e**: the physical place by the spawn where you **see every map and teleport to it**. That means the Map Board with a tile per place (picture, name, players there now, GO), the beautiful Places portal, the matching board and portal home on every map, and the nicer Solo/Multi portals.
-- **Placement:** it stands 20-25 studs from the spawn in the hub (V9-0h), in the spawn view, facing the player. Its spot is held free for it in the later placement pass (V9-0n only fine-tunes it).
-- **Publish** right after it passes (through `docs/RELEASE.md`), so players get it at once.
-
-**Phase V: first person in the cars, with interiors, right after Phase M** (owner, 21 Nov: priority). Build the cockpit part of **V9-0y** ("first person inside the car, with a real interior") for the vehicles that exist now:
+**Phase V: first person in the cars, with interiors, priority 5, right after Phase S** (owner, 21 Nov: priority). Build the cockpit part of **V9-0y** ("first person inside the car, with a real interior") for the vehicles that exist now:
 - the driver's-seat camera with V / Select / the eye button to the chase cam;
 - a real interior per vehicle, the turning wheel with the hands, the dash speedometer and the lights;
 - the feel (vibration, bumps, a head turn);
