@@ -2298,3 +2298,24 @@ Write the baseline into `docs/PERF.md`.
   - **Tests:** T181 (from behind, the side, AutoShotgun, a full AK magazine, a client-simulated body), T183, T185 (the settle rules, the brace live, the leg limp), T157, T24, T38, T184, T179 and T18 pass.
   - **Left:** PHYSICS.md, "Still open after round 2".
   - **Next:** one more re-review (the last fix round allowed), while Phase T is built.
+- 21 Nov 2026, Phase T / V9-2b DONE (PC): feed terminals, spam allowed (`Config.FEED_TERMINAL`).
+  - **Where:** by every guided spot (9 creatures, the 3 PUT RAGDOLL HERE stations, the cannon, the lava, the trampoline: 15), 7 studs out on the near side, facing the way you come. The terminal replaces LabGuide's floating prompt; the ring and the sign stay.
+  - **The model:** a console on a post, a screen, a glowing cyan button with the E / pad prompt, and a gold chute.
+  - **The screen** (`Client/TerminalClient`, a SurfaceGui in PlayerGui, so it can be tapped):
+    - the drawn "dummy ->" picture and FEED SPIDER;
+    - a big FEED! button (remote **Terminal** "Press");
+    - the combo "x5!" and the queue as six lights.
+  - Any press flashes the 3D button and beeps on screens nearby.
+  - **The server checks** (`LabGuide.press`):
+    - the lab's player or a party guest (`Zones.mayReach`), within 24 studs;
+    - 4 presses a second per player, a queue of 6;
+    - each queued press sends the next free dummy in an arc, every 0.28 s, faster with the combo (to 0.14).
+  - **No free dummy:** a spare drops from the chute within the lab's body cap and goes after 40 s.
+  - **Tests:**
+    - T154_FeedTerminal passes: 15 terminals, one per spot, facing the way you come; one press, one dummy in; 20 at once: 4 taken, combo x5; refused from far away; with no free dummy, a spare from the chute (6 of 22 bodies);
+    - T147 passes (a prompt per ring still).
+  - **Capture:** art/captures/v9-2b/terminal_spider.jpg.
+  - **Not done:**
+    - a stranger's press is not tested (it needs a 2-client test);
+    - no hunger or ready bar on the screen (the creatures publish no hunger);
+    - the creature does not get more excited with the combo.

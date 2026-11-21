@@ -402,6 +402,9 @@ local Config = {
 	-- and the gold PLACES ring portal in every lab's spawn view, a copy at every map's arrival, Solo/Multi in
 	-- the same ring family (Server/Systems/MapBoard, Client/MapBoardClient).
 	MAP_BOARD = true,
+	-- V9-2b / Phase T (owner, 21 Nov 2026: "a little computer terminal you walk up to and press FEED, spam allowed"): a
+	-- terminal by every creature and machine instead of the floating prompt (LabGuide, Client/TerminalClient).
+	FEED_TERMINAL = true,
 	-- V9-P fix round 2: the plaster strips on a broken limb are not drawn (on the sculpted skins they read as
 	-- stray geometry); they still mark the break (DummyLife's limp), and the vitals monitor shows it.
 	PLASTER_VISIBLE = false,

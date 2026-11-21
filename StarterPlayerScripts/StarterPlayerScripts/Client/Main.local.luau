@@ -137,6 +137,7 @@ safe("TouchShoot", function() require(Client:WaitForChild("TouchShoot")).start()
 safe("BloodFx", function() require(Client:WaitForChild("BloodFx")).useHoles(BulletHoles) end) -- bodies bleed from their bullet holes
 safe("PlaceMenu", function() PlaceMenu.start() end)
 safe("MapBoardClient", function() (require(Client:WaitForChild("MapBoardClient")) :: any).start() end) -- V9-0e: the Map Board tiles, the portal swirls
+safe("TerminalClient", function() (require(Client:WaitForChild("TerminalClient")) :: any).start() end) -- V9-2b: the feed terminals' screens
 safe("ZoneLighting", function() ZoneLighting.start() end)
 safe("Settings", function() require(Client:WaitForChild("Settings")).start() end) -- SETTINGS, in MENU (round 3, M6)
 safe("ChristmasFx", function() require(Client:WaitForChild("ChristmasFx")).start() end) -- falling snow while the Christmas theme is on (round 3, M7)

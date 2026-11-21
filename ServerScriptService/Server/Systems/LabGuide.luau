@@ -18,6 +18,8 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local DrawnIcons = require(Shared:WaitForChild("DrawnIcons")) :: any
+local Config = require(Shared:WaitForChild("Config")) :: any
+local Net = require(Shared:WaitForChild("Net")) :: any
 
 local LabGuide = {}
 
@@ -179,6 +181,264 @@ function LabGuide.toss(player: Player, owner: Player, target: Vector3): boolean
 	return true
 end
 
+------------------------------------------------------------------------------------------------
+-- V9-2b / Phase T (owner, 21 Nov 2026: "a little computer terminal you walk up to and press FEED, and spam
+-- it if you like"; Config.FEED_TERMINAL): by every thing in the lab that takes a dummy (the creatures, the
+-- cannon, the lava, the trampoline, the PUT RAGDOLL HERE stations) a terminal on the near side, facing the
+-- way you come: a console on a post, a screen (tag FeedTerminalScreen: each client draws its big FEED
+-- button and the combo, Client/TerminalClient), a glowing button with the E / pad prompt, and a chute the
+-- spare dummies drop from. It replaces the floating prompt.
+-- Every press is checked here (remote Terminal "Press", or the prompt): the lab's player or a party guest,
+-- within TERM_REACH studs, at most TERM_RATE presses a second, a queue of TERM_QUEUE. Each queued press
+-- sends the next dummy flying in an arc into it; a quick run of presses is a combo ("x5!") and the feeding
+-- speeds up a little. With no free dummy, a spare drops from the chute, within the lab's body cap, and
+-- goes after SPARE_LIFE s if nothing took it.
+
+LabGuide.TERM_REACH = 24 -- studs from the terminal
+LabGuide.TERM_RATE = 4 -- presses a second, per player
+LabGuide.TERM_QUEUE = 6
+LabGuide.TERM_EVERY = 0.28 -- s between two queued tosses (a combo shortens it, to TERM_FASTEST)
+LabGuide.TERM_FASTEST = 0.14
+LabGuide.COMBO_GAP = 1.5 -- s without a press ends a combo
+LabGuide.SPARE_LIFE = 40 -- s
+LabGuide.TERM_OUT = 7 -- studs from the spot towards the lab's spawn
+
+type Terminal = {
+	screen: BasePart,
+	button: BasePart,
+	chute: Vector3,
+	origin: Vector3,
+	target: () -> Vector3,
+	queue: number,
+	working: boolean,
+	combo: number,
+	comboAt: number,
+	presser: Player?,
+	noticeAt: number,
+}
+local terminals: { [Instance]: Terminal } = {}
+local pressTimes: { [Player]: { number } } = {}
+local termTossed = 0
+
+-- Who may press: the lab's player, or someone the lab lets reach in (a party guest).
+local function mayUse(player: Player, t: Terminal): (boolean, Player?)
+	local owner = lazy("Lab").ownerAt(t.origin + Vector3.new(0, 1, 0))
+	if not owner then
+		return false, nil
+	end
+	if player ~= owner then
+		local ok, may = pcall(function()
+			return (require(Shared:WaitForChild("Zones")) :: any).mayReach(player, t.target())
+		end)
+		if not (ok and may) then
+			return false, owner
+		end
+	end
+	return true, owner
+end
+
+-- A spare from the chute when no free dummy is left, within the lab's body cap; it goes after
+-- SPARE_LIFE s if nothing took it.
+local function spare(owner: Player, t: Terminal): Model?
+	local VisitorService = lazy("VisitorService")
+	if #VisitorService.bodiesOf(owner) >= VisitorService.capFor(owner) then
+		return nil
+	end
+	local model = lazy("DummyFactory").spawn(t.chute, t.target(), owner)
+	model:SetAttribute("Spare", true)
+	task.delay(LabGuide.SPARE_LIFE, function()
+		if model.Parent and model:GetAttribute("Held") ~= true and model:GetAttribute("InMachine") == nil then
+			model:Destroy()
+		end
+	end)
+	return model
+end
+
+local function tossOne(t: Terminal)
+	local presser = t.presser
+	local owner = lazy("Lab").ownerAt(t.origin + Vector3.new(0, 1, 0))
+	if not presser or not owner then
+		return
+	end
+	local target = t.target() + Vector3.new(0, 1.5, 0)
+	if LabGuide.toss(presser, owner, target) then
+		termTossed += 1
+		return
+	end
+	local m = spare(owner, t)
+	if m then
+		task.wait(0.35) -- (out of the chute first)
+		local pelvis = m:FindFirstChild("LowerTorso")
+		if m.Parent and pelvis and pelvis:IsA("BasePart") then
+			local v = LabGuide.arc(pelvis.Position, target)
+			lazy("DummyControl").hit(m, pelvis, v * ((m:GetAttribute("Mass") :: number?) or 10), pelvis.Position, v.Magnitude + 20, nil)
+			termTossed += 1
+		end
+	elseif os.clock() - t.noticeAt > 5 then
+		t.noticeAt = os.clock()
+		pcall(function()
+			lazy("ProgressService").notice(presser, "No free dummy right now. Try again in a moment!")
+		end)
+	end
+end
+
+local function work(t: Terminal)
+	if t.working then
+		return
+	end
+	t.working = true
+	task.spawn(function()
+		while t.queue > 0 and t.screen.Parent do
+			tossOne(t)
+			t.queue -= 1
+			t.screen:SetAttribute("Queue", t.queue)
+			task.wait(math.max(LabGuide.TERM_FASTEST, LabGuide.TERM_EVERY - 0.02 * t.combo))
+		end
+		t.working = false
+	end)
+end
+
+-- One press, checked. Returns whether it was taken and, if not, why.
+function LabGuide.press(player: Player, screen: Instance): (boolean, string?)
+	local t = terminals[screen]
+	if not t then
+		return false, "no terminal"
+	end
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not (root and root:IsA("BasePart")) or (root.Position - t.screen.Position).Magnitude > LabGuide.TERM_REACH then
+		return false, "too far"
+	end
+	local ok = mayUse(player, t)
+	if not ok then
+		return false, "not your lab"
+	end
+	local now = os.clock()
+	local times = pressTimes[player] or {}
+	pressTimes[player] = times
+	while times[1] and now - times[1] > 1 do
+		table.remove(times, 1)
+	end
+	if #times >= LabGuide.TERM_RATE then
+		return false, "slow down"
+	end
+	if t.queue >= LabGuide.TERM_QUEUE then
+		return false, "queue full"
+	end
+	table.insert(times, now)
+	t.combo = if now - t.comboAt < LabGuide.COMBO_GAP then t.combo + 1 else 1
+	t.comboAt = now
+	t.presser = player
+	t.queue += 1
+	t.screen:SetAttribute("Queue", t.queue)
+	t.screen:SetAttribute("Combo", t.combo)
+	t.screen:SetAttribute("PressedAt", Workspace:GetServerTimeNow())
+	work(t)
+	return true, nil
+end
+
+-- The terminal for one spot: on the floor TERM_OUT studs from the spot towards the lab's spawn, facing it.
+local function buildTerminal(into: Instance, origin: Vector3, id: string, target: () -> Vector3, words: { string })
+	local at = target()
+	local toward = Vector3.new(origin.X - at.X, 0, origin.Z - at.Z)
+	local dir = if toward.Magnitude > 0.1 then toward.Unit else Vector3.zAxis
+	local base = at + dir * LabGuide.TERM_OUT
+	base = Vector3.new(base.X, groundUnder(base, origin.Y), base.Z)
+	local cf = CFrame.lookAt(base, base + dir) -- (faces the way you come)
+	local m = Instance.new("Model")
+	m.Name = "FeedTerminal"
+	m:SetAttribute("GuideId", id)
+	local dark = Color3.fromRGB(36, 40, 52)
+	local post = anchoredPart("Post", Vector3.new(0.9, 3, 0.9), cf * CFrame.new(0, 1.5, 0), m)
+	post.Color = dark
+	post.Material = Enum.Material.Metal
+	post.CastShadow = true
+	local foot = anchoredPart("Foot", Vector3.new(2.6, 0.3, 2.2), cf * CFrame.new(0, 0.15, 0), m)
+	foot.Color = dark
+	foot.Material = Enum.Material.DiamondPlate
+	-- The console, tilted back towards you.
+	local console = anchoredPart("Console", Vector3.new(3.6, 2.4, 0.9), cf * CFrame.new(0, 3.6, 0) * CFrame.Angles(math.rad(-28), 0, 0), m)
+	console.Color = dark
+	console.Material = Enum.Material.Metal
+	console.CastShadow = true
+	local screen = anchoredPart("Screen", Vector3.new(3.2, 2, 0.08), console.CFrame * CFrame.new(0, 0.05, -0.48), m)
+	screen.Color = Color3.fromRGB(12, 16, 28)
+	screen.Material = Enum.Material.SmoothPlastic
+	screen.CanQuery = true -- (the taps reach the SurfaceGui on it)
+	screen:SetAttribute("Verb", words[1])
+	screen:SetAttribute("Object", words[2])
+	screen:SetAttribute("GuideId", id)
+	CollectionService:AddTag(screen, "FeedTerminalScreen")
+	-- The big glowing button on the ledge under the screen (the E / pad prompt lives here).
+	local button = anchoredPart("Button", Vector3.new(0.5, 1.3, 1.3), cf * CFrame.new(0, 2.05, -0.75) * CFrame.Angles(0, 0, math.rad(90)), m)
+	button.Shape = Enum.PartType.Cylinder
+	button.Material = Enum.Material.Neon
+	button.Color = LabGuide.ACCENT
+	button.CanQuery = true
+	local ledge = anchoredPart("Ledge", Vector3.new(3, 0.4, 1.4), cf * CFrame.new(0, 1.85, -0.5), m)
+	ledge.Color = dark
+	ledge.Material = Enum.Material.Metal
+	-- The chute on top, where spares drop from.
+	local chute = anchoredPart("Chute", Vector3.new(1.4, 2.2, 1.4), cf * CFrame.new(1.2, 5.6, 0.6), m)
+	chute.Shape = Enum.PartType.Cylinder
+	chute.CFrame = cf * CFrame.new(1.2, 5.6, 0.6) * CFrame.Angles(0, 0, math.rad(90))
+	chute.Color = Color3.fromRGB(255, 196, 64)
+	chute.Material = Enum.Material.Metal
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "Terminal"
+	prompt.ActionText = words[1]
+	prompt.ObjectText = words[2]
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
+	prompt.MaxActivationDistance = 12
+	prompt.RequiresLineOfSight = false
+	prompt.HoldDuration = 0
+	prompt.Parent = button
+	local t: Terminal = {
+		screen = screen,
+		button = button,
+		chute = cf * Vector3.new(1.2, 8, 0.6),
+		origin = origin,
+		target = target,
+		queue = 0,
+		working = false,
+		combo = 0,
+		comboAt = 0,
+		presser = nil,
+		noticeAt = 0,
+	}
+	terminals[screen] = t
+	screen.Destroying:Connect(function()
+		terminals[screen] = nil
+	end)
+	prompt.Triggered:Connect(function(player: Player)
+		LabGuide.press(player, screen)
+	end)
+	m.Parent = into
+end
+
+function LabGuide.start()
+	if not (Config :: any).FEED_TERMINAL then
+		return
+	end
+	Net.event(Net.Names.Terminal).OnServerEvent:Connect(function(player: Player, kind: unknown, screen: unknown)
+		if kind == "Press" and typeof(screen) == "Instance" then
+			LabGuide.press(player, screen)
+		end
+	end)
+	Players.PlayerRemoving:Connect(function(player)
+		pressTimes[player] = nil
+	end)
+end
+
+-- Tests: the terminals built, and how many tosses they made.
+function LabGuide.terminalsForTest(): { [Instance]: any }
+	return terminals
+end
+function LabGuide.termTossedForTest(): number
+	return termTossed
+end
+
 -- One guided spot: its point (sign and button), its ring, and what the button does.
 local function addSpot(into: Instance, origin: Vector3, id: string, target: () -> Vector3, words: { string }, signHeight: number, signTop: (() -> number?)?)
 	local at = target()
@@ -201,6 +461,20 @@ local function addSpot(into: Instance, origin: Vector3, id: string, target: () -
 	ring:SetAttribute("GuideId", id)
 	CollectionService:AddTag(ring, LabGuide.TAG)
 	sign(point, words[3], signHeight)
+	if (Config :: any).FEED_TERMINAL then
+		-- (V9-2b: a terminal you walk up to instead of a prompt in the air; the ring and the sign stay.)
+		buildTerminal(into, origin, id, target, words)
+		task.spawn(function()
+			while point.Parent do
+				task.wait(1)
+				local now = target()
+				if (now - point.Position).Magnitude > 0.5 then
+					point.CFrame = CFrame.new(now)
+				end
+			end
+		end)
+		return
+	end
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "Guide"
 	prompt.ActionText = words[1]
