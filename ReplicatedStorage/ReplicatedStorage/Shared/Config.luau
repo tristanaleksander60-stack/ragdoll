@@ -412,6 +412,10 @@ local Config = {
 		SETTLE_DAMP = 3,
 		-- Joint friction (x Roblox's own), by the part the socket sits in: the neck and the spine swing with weight.
 		JOINT_FRICTION = table.freeze({ Head = 2, UpperTorso = 1.5 }),
+		-- A living body falling (faster than BRACE_FALL studs/s down) with the ground within BRACE_HEIGHT studs
+		-- braces: arms out to catch it, head tucked (Poses.brace); higher up it windmills.
+		BRACE_HEIGHT = 7,
+		BRACE_FALL = 8,
 	}),
 	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges

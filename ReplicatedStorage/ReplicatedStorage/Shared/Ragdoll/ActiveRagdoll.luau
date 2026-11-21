@@ -1378,7 +1378,14 @@ local function update(dt: number)
 			if profile == "Held" then
 				applyPose(rig, Poses.dangle(rig.stateTime))
 			elseif profile == "Airborne" then
-				applyPose(rig, Poses.flail(rig.stateTime))
+				-- (V9-P3: falling towards the ground it braces: the arms reach out to catch it, the head
+				-- tucks, the knees bend; high up it windmills.)
+				local P = (GameConfig :: any).PHYSICS
+				local bracing = false
+				if (GameConfig :: any).PHYSICS_V9 and P and P.BRACE_HEIGHT and rig.pelvis.AssemblyLinearVelocity.Y < -P.BRACE_FALL then
+					bracing = Workspace:Raycast(rig.pelvis.Position, Vector3.new(0, -P.BRACE_HEIGHT, 0), rig.rayParams) ~= nil
+				end
+				applyPose(rig, if bracing then Poses.brace(rig.stateTime) else Poses.flail(rig.stateTime))
 			end
 			if not flying and rig.held == 0 then
 				settle(rig, dt)

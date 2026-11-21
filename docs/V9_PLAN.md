@@ -2128,3 +2128,4 @@ Write the baseline into `docs/PERF.md`.
     - T38 and T45 check the new rule (the round 5 checks run only with the switch off).
     - T109, T23, T24 and T33 pass.
   - **Not done:** the 4-frame capture of three flinches and the fall, and a hand going to the wound spot (the existing flinch poses: the head snaps back with the hands up, the torso curls, the arm swings back, the knee buckles).
+- 21 Nov 2026, V9-P P3 reflex (PC): a living body falling towards the ground braces: arms out, head tucked, knees bent (`PHYSICS.BRACE_HEIGHT` 7, `BRACE_FALL` 8; `Poses.brace`). It windmills higher up. T183 (drop40 settles in 0.49 s), T24, T82 and T181 pass. The P2/P5 status is in docs/PHYSICS.md.

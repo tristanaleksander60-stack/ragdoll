@@ -70,3 +70,14 @@ Side-by-side captures of Hyper Realistic Ragdoll, Ragdoll Engine, Bloody Ragdoll
 - P4: impacts, including V9-0ac's flinch, not fall.
 
 **Checked:** T183, T23, T38, T45, T82, T109, T166, T50, T22 and T21 pass. T33 fails alone with the physics on and off alike: it depends on the order of the tests, and it passes in the full suite.
+
+## P2-P5 status (21 Nov 2026)
+- **P2, the solver:**
+  - Bodies already collide as boxes (`CollisionFidelity` Box on all 15 parts).
+  - Each body has 19 NoCollisionConstraints between parts that are joined, so there is no self-contact jitter, and limbs still collide with the rest of the body.
+  - The lab's collision floor is the thick Baseplate.
+  - The speed caps (`MAX_LINEAR_SPEED` 180, `guardLimbs`) hold: no spikes in any scene.
+  - `Workspace.PhysicsSteppingMethod` cannot be read from a script here, so it stays as the place has it (Adaptive).
+- **P3, reflexes:** a living body falling faster than `BRACE_FALL` (8 studs/s) with the ground within `BRACE_HEIGHT` (7 studs) braces: arms out, head tucked, knees bent (`Poses.brace`). Higher up it windmills, as before. Out-cold and dead bodies stay limp.
+- **P4, impacts:** V9-0ac's flinch, not fall (`SHOT_FLINCH`, T181). Big forces still ragdoll at once.
+- **P5, cost:** one body costs 1.5-2.8 ms of server physics in a scene, and a 20-body heap 21 ms while it lands. Lab bodies are simulated by their lab's player (one owner for life), so on a live server the heap cost lands on that player's device, under `FX_CAPS` ragdolls (low 8, mid 14, high 22).
