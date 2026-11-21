@@ -44,8 +44,10 @@ SlowMotion.AUTO_GAP = C.SLOWMO_AUTO_GAP or 8
 SlowMotion.AUTO_STRENGTH = 0.95 -- a BigHit at least this strong
 SlowMotion.TRAILS_MAX = 6
 
-type Bubble = { centre: Vector3, radius: number, ends: number, part: BasePart? }
-type Slowed = { last: Vector3, lastSpin: Vector3 }
+-- (V9-2c: a bubble has its own speed `scale` (0.1x-3x); a time bubble (`timeBubble`) follows its
+-- owner, and inside it time runs truly at `scale`: speeds x scale, gravity x scale^2.)
+type Bubble = { centre: Vector3, radius: number, ends: number, part: BasePart?, scale: number, timeBubble: boolean, owner: number? }
+type Slowed = { last: Vector3, lastSpin: Vector3, scale: number, timeBubble: boolean }
 
 local player = Players.LocalPlayer
 local bubbles: { Bubble } = {}
@@ -62,18 +64,22 @@ local vignette: ScreenGui? = nil
 
 local lowEnd = FeelV2.tier == "low"
 
-local function inside(position: Vector3): boolean
+-- The bubble a point is in (nil: none). A time bubble at 1x does nothing.
+local function bubbleAt(position: Vector3): Bubble?
 	for _, b in bubbles do
-		if (position - b.centre).Magnitude <= b.radius then
-			return true
+		if b.scale ~= 1 and (position - b.centre).Magnitude <= b.radius then
+			return b
 		end
 	end
-	return false
+	return nil
 end
 
 local function feelTarget(camPos: Vector3): number
 	local best = 0
 	for _, b in bubbles do
+		if b.scale >= 1 then
+			continue -- (the slow-mo look is for slow time only: a fast bubble has its own colour)
+		end
 		local d = (camPos - b.centre).Magnitude - b.radius
 		local k = if d <= 0 then 1 else math.clamp(1 - d / SlowMotion.FEEL_REACH, 0, 1)
 		best = math.max(best, k)
@@ -225,8 +231,47 @@ end
 -- the network. Each assembly is touched once (its root part), never once per part.
 local seen: { [BasePart]: boolean } = {}
 local seenBody: { [Model]: boolean } = {}
-local function stepBodies()
-	local s = SlowMotion.SCALE
+local function capped(v: Vector3, most: number): Vector3
+	return if v.Magnitude > most then v.Unit * most else v
+end
+
+-- V9-2c: in a time bubble, gravity itself runs at s^2 (a VectorForce on each of the body's assemblies,
+-- made on this screen, which simulates it): every controller and joint of the body then acts as it
+-- does anywhere, and only a hard knock in one step (a hit, a landing: more than IMPULSE studs/s) is
+-- slowed to s of itself. Fast bubbles never amplify a knock (it would bounce bodies off the floor).
+SlowMotion.IMPULSE = 6 -- studs/s in one step that reads as a knock, not as gravity or a joint
+
+local function timeForce(root: BasePart, s: number): VectorForce
+	local force = root:FindFirstChild("TimeForce")
+	if not (force and force:IsA("VectorForce")) then
+		local a = Instance.new("Attachment")
+		a.Name = "TimeAttach"
+		a.Parent = root
+		local f = Instance.new("VectorForce")
+		f.Name = "TimeForce"
+		f.Attachment0 = a
+		f.RelativeTo = Enum.ActuatorRelativeTo.World
+		f.ApplyAtCenterOfMass = true
+		f.Parent = root
+		force = f
+	end
+	local vf = force :: VectorForce
+	vf.Force = Vector3.new(0, root.AssemblyMass * Workspace.Gravity * (1 - s * s), 0)
+	return vf
+end
+
+local function dropForce(root: BasePart)
+	local f = root:FindFirstChild("TimeForce")
+	if f then
+		f:Destroy()
+	end
+	local a = root:FindFirstChild("TimeAttach")
+	if a then
+		a:Destroy()
+	end
+end
+
+local function stepBodies(_dt: number)
 	local folder = Workspace:FindFirstChild("Dummies")
 	table.clear(seen)
 	table.clear(seenBody)
@@ -240,22 +285,46 @@ local function stepBodies()
 		end
 		for _, body in bodies do
 			local pelvis = body:FindFirstChild("LowerTorso")
-			if body:IsA("Model") and pelvis and pelvis:IsA("BasePart") and (body:GetAttribute("SimulatedBy") == me or body == own) and inside(pelvis.Position) then
+			local b = if body:IsA("Model") and pelvis and pelvis:IsA("BasePart") and (body:GetAttribute("SimulatedBy") == me or body == own) then bubbleAt(pelvis.Position) else nil
+			-- (V9-2c: a time bubble leaves the players' own walking speed alone.)
+			if b and not (b.timeBubble and body:FindFirstChildOfClass("Humanoid") and Players:GetPlayerFromCharacter(body)) then
+				local s = b.scale
 				seenBody[body] = true
-				addTrail(body)
+				if s < 1 then
+					addTrail(body)
+				end
 				for _, part in body:GetChildren() do
 					local root = if part:IsA("BasePart") then part.AssemblyRootPart else nil
 					if root and not seen[root] and not root.Anchored then
 						seen[root] = true
 						local v, w = root.AssemblyLinearVelocity, root.AssemblyAngularVelocity
 						local st = slowed[root]
-						if not st then
-							-- On the way in: its speed drops to the bubble's time.
-							local nv, nw = v * s, w * s
+						if not st or st.scale ~= s or st.timeBubble ~= b.timeBubble then
+							-- On the way in (or the speed changed): its speed to the bubble's time.
+							local from = if st then st.scale else 1
+							local nv = capped(v * (s / from), SlowMotion.RESTORE_MAX)
+							local nw = capped(w * (s / from), SlowMotion.SPIN_MAX)
 							root.AssemblyLinearVelocity = nv
 							root.AssemblyAngularVelocity = nw
-							slowed[root] = { last = nv, lastSpin = nw }
+							slowed[root] = { last = nv, lastSpin = nw, scale = s, timeBubble = b.timeBubble }
+							if b.timeBubble then
+								timeForce(root, s)
+							end
+						elseif b.timeBubble then
+							timeForce(root, s) -- (its mass can change: a limb lost or a gadget stuck on)
+							local dv = v - st.last
+							local nv = v
+							if s < 1 and dv.Magnitude > SlowMotion.IMPULSE then
+								nv = st.last + dv * s
+							end
+							nv = capped(nv, SlowMotion.RESTORE_MAX)
+							if nv ~= v then
+								root.AssemblyLinearVelocity = nv
+							end
+							st.last = nv
+							st.lastSpin = w
 						else
+							-- The old spell's bubble: each step keeps s of what the physics changed.
 							local nv = st.last + (v - st.last) * s
 							local nw = st.lastSpin + (w - st.lastSpin) * s
 							root.AssemblyLinearVelocity = nv
@@ -269,9 +338,11 @@ local function stepBodies()
 		end
 	end
 	-- Out of every bubble: its speed back (capped both ways), its trail gone.
-	for root, _ in slowed do
+	for root, st in slowed do
 		if not seen[root] then
 			slowed[root] = nil
+			local s = st.scale
+			dropForce(root)
 			if root.Parent and not root.Anchored then
 				local back = root.AssemblyLinearVelocity / s
 				if back.Magnitude > SlowMotion.RESTORE_MAX then
@@ -299,8 +370,25 @@ local function addBubble(part: Instance)
 	end
 	local radius = (part:GetAttribute("Radius") :: number?) or part.Size.X / 2
 	local ends = (part:GetAttribute("Ends") :: number?) or (Workspace:GetServerTimeNow() + 6)
-	local b: Bubble = { centre = part.Position, radius = radius, ends = ends, part = part }
+	local timeBubble = part:GetAttribute("TimeBubble") == true
+	local b: Bubble = {
+		centre = part.Position,
+		radius = radius,
+		ends = ends,
+		part = part,
+		scale = (part:GetAttribute("Scale") :: number?) or SlowMotion.SCALE,
+		timeBubble = timeBubble,
+		owner = part:GetAttribute("Owner") :: number?,
+	}
 	table.insert(bubbles, b)
+	-- (V9-2c: a time bubble's speed and size change while it lasts, and every screen draws it.)
+	if timeBubble then
+		part.AttributeChanged:Connect(function()
+			b.scale = (part:GetAttribute("Scale") :: number?) or b.scale
+			b.radius = (part:GetAttribute("Radius") :: number?) or b.radius
+		end)
+		SlowMotion.drawTimeBubble(b)
+	end
 	-- The way in: a low whoosh.
 	local cam = Workspace.CurrentCamera
 	if FeelV2.play and cam and (cam.CFrame.Position - b.centre).Magnitude < radius + SlowMotion.FEEL_REACH then
@@ -308,9 +396,72 @@ local function addBubble(part: Instance)
 	end
 end
 
+-- V9-2c: a time bubble on every screen: a clear shimmering sphere round its owner (ForceField), blue
+-- when slow, orange when fast, with a soft rim; it follows the owner every frame and eases to a new
+-- size. A simpler, fainter one on low-end devices.
+SlowMotion.SLOW_COLOR = Color3.fromRGB(110, 190, 255)
+SlowMotion.FAST_COLOR = Color3.fromRGB(255, 160, 60)
+local timeVisuals: { [Bubble]: { shell: BasePart, rim: BasePart?, size: number } } = {}
+
+function SlowMotion.drawTimeBubble(b: Bubble)
+	local folder = Workspace:FindFirstChild("TimeBubbles") or Instance.new("Folder")
+	folder.Name = "TimeBubbles"
+	folder.Parent = Workspace
+	local function ball(name: string, material: Enum.Material, transparency: number): BasePart
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Shape = Enum.PartType.Ball
+		p.Anchored = true
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.CastShadow = false
+		p.Material = material
+		p.Transparency = transparency
+		p.Size = Vector3.one * b.radius * 2
+		p.CFrame = CFrame.new(b.centre)
+		p.Parent = folder
+		return p
+	end
+	local shell = ball("TimeShell", Enum.Material.ForceField, if lowEnd then 0.5 else 0.15)
+	local rim: BasePart? = nil -- (a glass rim drew as a faceted white shape: the shimmering shell alone reads best)
+	timeVisuals[b] = { shell = shell, rim = rim, size = b.radius * 2 }
+end
+
+local function owners(b: Bubble): Vector3?
+	local owner = if b.owner then Players:GetPlayerByUserId(b.owner) else nil
+	local root = owner and owner.Character and owner.Character:FindFirstChild("HumanoidRootPart")
+	return if root and root:IsA("BasePart") then root.Position else nil
+end
+
+local function drawTimeBubbles(dt: number)
+	for b, v in timeVisuals do
+		if not table.find(bubbles, b) then
+			v.shell:Destroy()
+			if v.rim then
+				v.rim:Destroy()
+			end
+			timeVisuals[b] = nil
+			continue
+		end
+		local at = owners(b) or b.centre
+		b.centre = at
+		v.size += (b.radius * 2 - v.size) * math.min(1, dt * 6)
+		local colour = if b.scale < 1 then SlowMotion.SLOW_COLOR elseif b.scale > 1 then SlowMotion.FAST_COLOR else Color3.fromRGB(220, 230, 240)
+		v.shell.Size = Vector3.one * v.size
+		v.shell.CFrame = CFrame.new(at)
+		v.shell.Color = colour
+		if v.rim then
+			v.rim.Size = Vector3.one * (v.size + 0.4)
+			v.rim.CFrame = CFrame.new(at)
+			v.rim.Color = colour
+		end
+	end
+end
+
 -- A short slow moment round a point on this screen only (a big hit).
 function SlowMotion.moment(at: Vector3, radius: number?, seconds: number?)
-	table.insert(bubbles, { centre = at, radius = radius or SlowMotion.AUTO_RADIUS, ends = Workspace:GetServerTimeNow() + (seconds or SlowMotion.AUTO_TIME), part = nil })
+	table.insert(bubbles, { centre = at, radius = radius or SlowMotion.AUTO_RADIUS, ends = Workspace:GetServerTimeNow() + (seconds or SlowMotion.AUTO_TIME), part = nil, scale = SlowMotion.SCALE, timeBubble = false, owner = nil })
 end
 
 -- V6-3 (director): one lasting bubble that follows a point (the camera's focus) until released;
@@ -329,7 +480,7 @@ function SlowMotion.director(at: Vector3?, radius: number?)
 		b.centre = at
 		b.radius = radius or b.radius
 	else
-		local new: Bubble = { centre = at, radius = radius or 90, ends = math.huge, part = nil }
+		local new: Bubble = { centre = at, radius = radius or 90, ends = math.huge, part = nil, scale = SlowMotion.SCALE, timeBubble = false, owner = nil }
 		table.insert(bubbles, new)
 		directorBubble = new
 	end
@@ -365,19 +516,24 @@ function SlowMotion.start()
 			SlowMotion.moment(data.position)
 		end
 	end)
-	RunService.PreSimulation:Connect(function()
+	RunService.PreSimulation:Connect(function(dt: number)
 		local now = Workspace:GetServerTimeNow()
 		for i = #bubbles, 1, -1 do
 			local b = bubbles[i]
 			if now >= b.ends or (b.part ~= nil and b.part.Parent == nil) then
 				table.remove(bubbles, i)
+			elseif b.timeBubble then
+				b.centre = owners(b) or b.centre -- (V9-2c: round its owner, this very step)
 			end
 		end
 		if #bubbles > 0 or next(slowed) or next(trails) then
-			stepBodies()
+			stepBodies(dt)
 		end
 	end)
 	RunService.RenderStepped:Connect(function(dt: number)
+		if next(timeVisuals) then
+			drawTimeBubbles(dt)
+		end
 		local cam = Workspace.CurrentCamera
 		local target = if cam then feelTarget(cam.CFrame.Position) else 0
 		local rate = dt / SlowMotion.EASE

@@ -381,6 +381,10 @@ local Config = {
 	-- find out they can"): the first shot ever glides into first person once (Client/FirstShotFP; keyboard
 	-- and pad, where V / Select bring you back). Settings can turn it off.
 	FIRST_SHOT_FP = true,
+	-- V9-2c (owner, 21 Nov 2026: "Z opens a small menu where you turn time faster or slower in a bubble round
+	-- yourself"): Z opens the time dial (Client/TimeDial): 0.1x-3x in a bubble that follows you, in your own lab
+	-- (SandboxService.setTime, Client/SlowMotion). false = Z is the old slow-mo spell over the lab.
+	TIME_DIAL = true,
 	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges
 	-- (V3Assets VergeBushRound/Leafy, VergeFlowers*; tools/ImportV9Foliage.luau). false = the old balls and blocks.

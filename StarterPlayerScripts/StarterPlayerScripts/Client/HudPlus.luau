@@ -387,7 +387,11 @@ function HudPlus.sandbox(name: string)
 	if name == "FirstPerson" then
 		FirstPerson.toggle()
 	elseif name == "SlowMo" then
-		Net.event(Net.Names.Sandbox):FireServer("SlowMo")
+		if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then
+			(require(script.Parent:WaitForChild("TimeDial")) :: any).toggle() -- (V9-2c: the time dial)
+		else
+			Net.event(Net.Names.Sandbox):FireServer("SlowMo")
+		end
 	elseif name == "Revive" then
 		Net.event(Net.Names.Sandbox):FireServer("Revive")
 	elseif name == "Reset" then

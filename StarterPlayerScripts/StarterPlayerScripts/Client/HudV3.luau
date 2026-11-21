@@ -222,7 +222,7 @@ local function drawChips()
 	-- back, so the PC top right is the gift and the next weapon.)
 	-- Three keys only: 1st person and revive all are in the LAB window and KEYS; five chips ran
 	-- into the help line on a small window.
-	for _, pair in { { "Ragdoll", "Ragdoll", "hud_ragdoll" }, { "View", "Lab view", "eye" }, { "SlowMo", "Slow-mo", "hud_slowmo" } } do
+	for _, pair in { { "Ragdoll", "Ragdoll", "hud_ragdoll" }, { "View", "Lab view", "eye" }, { "SlowMo", if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "Time" else "Slow-mo", "hud_slowmo" } } do
 		local key = keyOf(pair[1])
 		if key then
 			order += 1
@@ -432,7 +432,7 @@ local function buildLab()
 		local k = keyOf(id)
 		return if k then line .. "  (" .. k .. ")" else line
 	end
-	row(1, "Slow-mo", keyed("SlowMo", "A slow-motion bubble over your lab"), "motion", "SLOW", "info", function()
+	row(1, if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "Time" else "Slow-mo", keyed("SlowMo", if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "Faster or slower time round you" else "A slow-motion bubble over your lab"), "motion", if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "TIME" else "SLOW", "info", function()
 		HudPlus.sandbox("SlowMo")
 	end)
 	local fp = row(2, "First person", keyed("FirstPerson", "See the weapon in your hands"), "eye", "OFF", "neutral", function()
