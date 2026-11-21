@@ -163,6 +163,13 @@ function OfferService.deliver(player: Player, key: string, purchaseId: string, t
 end
 
 -- Asks Roblox which offer passes the player owns (retried while Roblox does not answer).
+-- Tests: whether Roblox's first word on a player's passes is in (after it, apply() no longer
+-- re-sets the pass attributes a test cleared with resetForTest).
+local checkedOnce: { [Player]: boolean } = {}
+function OfferService.checkedForTest(player: Player): boolean
+	return checkedOnce[player] == true
+end
+
 local function checkOwnership(player: Player)
 	local unknown = {}
 	for _, offer in Shop.OFFERS do
@@ -188,6 +195,7 @@ local function checkOwnership(player: Player)
 			end
 		end
 		OfferService.apply(player)
+		checkedOnce[player] = true
 		unknown = still
 		if #unknown == 0 then
 			return
@@ -277,6 +285,7 @@ function OfferService.start()
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		owned[player] = nil
+		checkedOnce[player] = nil
 		lastBuy[player] = nil
 		lastTry[player] = nil
 	end)

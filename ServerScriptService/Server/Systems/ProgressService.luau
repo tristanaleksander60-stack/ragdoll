@@ -1364,6 +1364,10 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 		local p = profiles[player]
 		local settings = ProgressService.cleanSettings(arg)
 		if p and settings then
+			-- (V9-0w: a once-only flag the profile holds is never taken back by a later save.)
+			if p.settings and (p.settings :: any).fpTaught == true then
+				(settings :: any).fpTaught = true
+			end
 			p.settings = settings
 			scheduleSave(player)
 		end

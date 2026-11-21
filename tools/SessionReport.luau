@@ -200,6 +200,17 @@ for name, n in screens do
 end
 table.insert(lines, "On screen at leave: " .. (if #sc > 0 then table.concat(sc, ", ") else "-"))
 
+-- V9-0w: the first shot's glide into first person: how many got it, and how long they stayed.
+local fpN, fpStays = 0, {}
+for _, r in rows do
+	if r.fpAuto then
+		fpN += 1
+		table.insert(fpStays, r.fpStay or 0)
+	end
+end
+table.sort(fpStays)
+table.insert(lines, string.format("First person on first shot: %s of visits, stayed median %ds (%d records)", pct(fpN, #rows), fpStays[math.max(1, (#fpStays + 1) // 2)] or 0, fpN))
+
 local text = table.concat(lines, "\n")
 print(text)
 return text

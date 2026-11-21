@@ -1871,3 +1871,38 @@ Write the baseline into `docs/PERF.md`.
   - **The look:** a shimmering ForceField sphere round its owner on every screen, eased to its size, blue slow / orange fast (fainter on low-end); the C5 slow-mo grade only for slow bubbles.
   - **Tests:** T157_TimeBubble (bad speeds/sizes/flags and a stranger's ground refused; on with its speed and size, following the player; a dummy dropped 16 studs: 0.41 s outside, 1.60 s at 0.25x = 3.9x, much quicker at 2x, normal again after; the gravity comes from a parabola fitted to what the server sees, so replication delay does not count) and T46 pass. Captures: the dial (PC, upright iPhone), the bubble at 0.1x from inside and outside, 3x orange.
   - **Not done:** creatures/machines/particles/sounds running at s inside (the bubble times the bodies), a clock-tick sound, ripples at the edge.
+- 21 Nov 2026, blind review of Phase A: V9-0l fix round 8.0, V9-0o 8.7 (pass), V9-0w 7.7, V9-3b 8.6 (pass), V9-2c 6.3. Fix round (PC):
+  - **V9-2c:**
+    - **Phones:** MENU's phone entry is now LAB and opens the LAB window (TIME, first person, REVIVE ALL, RESET, BUILD, lab view), as off a phone; MENU stays at 8 (a 9th entry scrolled on landscape phones: LayoutCheck 0 again). Capture: the LAB window on an upright iPhone.
+    - **Never scaled twice:** SlowMotion keeps its state per body, not per assembly: a body going limp or getting up (assemblies split or merge) is never rescaled; its speed is scaled once in and once out; the gravity VectorForce sits on every part (mass x g x (1 - s^2)), so a split or merge never changes the sum; a change of bubble kind removes the old forces.
+    - **Controlled bodies on bubble time:** the model's local `TimeScale` makes ActiveRagdoll walk at s and hold its lift at s^2 gravity in a fast bubble (no sagging at 9g).
+    - **Fast bubbles:** a knock inside is sped up s times (never a landing), so leaving (÷ s) gives a launch its speed back.
+    - **Per-device cap:** a time bubble times at most `BODIES_MAX` (low 8, mid 14, high 22) bodies on a device.
+    - **The dial:** quick taps send only the last choice after 0.3 s, so the lit button and the bubble agree; Enter's START closes the window (Z, Enter = the old one quick slow-mo); a toast when the bubble goes off because you left your lab.
+    - **Privacy:** a bubble shell is drawn only in the plot this screen stands in.
+    - **Docs:** the Time message in `Net.luau` and CLAUDE.md.
+    - **T157 again:** 3.8x at 0.25x, quicker at 2x, normal after.
+    - **Still not done:** creatures/machines/particles/sounds at s inside, a clock-tick, edge ripples, a fast-bubble tint, dragging the dial; props and knockables (server-simulated) are not timed; no LayoutCheck rule for the TIME window (the kit fits windows to the screen; checked by capture on PC and an upright iPhone).
+  - **V9-0l:**
+    - **The creature yard** (`PathPlan.YARD`, `PathPlan.inYard`) counts as no free floor on the server (VisitorService.floorAt, so walkers too) and red on the client.
+    - **Party guests:** only their own bodies in that lab count for that lab's budget; held or machine-held bodies are never recycled; a guest's bodies go when their party ends (`PartyLab` changes), when the host leaves, and on the host's RESET (`DummySpawn.clearLab`).
+    - **Phone:** a tap that starts on the move stick never places (MoveStick).
+    - **Feedback:** the minute's budget is told ("Easy! Wait a moment"), and a click on a red spot says "Not there".
+    - **The cap preview:** `GodCap` is refreshed once the device's first word (Hello) is in, not at a fixed 5 s.
+    - **The first reveal** is remembered only when the screen says it showed it ("Seen"); a lost one comes again next visit. Players from before the beta (10+ takedowns) count as returning (10 s).
+    - **HEAVY** is dark steel (58, 66, 84), with white plate text, so it never reads as a plain grey dummy.
+    - **Docs:** Spawn messages in `Net.luau` and CLAUDE.md.
+    - **T167:** Seen, the minute's budget ("busy"), real visitors making room.
+    - **Still not done:** no party test (Studio has one player), no LayoutCheck rule for the God window and bar (checked by capture on PC and an upright iPhone).
+  - **V9-0w:**
+    - **Pad:** Select right after the glide goes back to the player view (`FirstShotFP.takeSwitchBack`); the pill says "Select to switch back".
+    - **fpTaught** is saved at once (`Settings.saveNow`) and never lost: the client keeps the profile's flag even when changed first, and the server never takes it back.
+    - **FpStay** is sent every 15 s while it lasts (the server keeps the most), so a stay to the end is counted; `tools/SessionReport` shows it.
+    - **The tip:** "Tip: V for first person" once, 5 min after switching back, if they never returned.
+    - **Phones:** still no auto glide (no one-tap way back); first person is now reachable on a phone in MENU → LAB.
+  - **V9-3b:** one tick at a time on a big jump; T178's Bolts check compares with the price before V9; the Config comment has the measured numbers.
+  - **Suite fixes found by the full run:**
+    - T128 uses the server's cap.
+    - T40: present drops use the plaza floor the most spots share (the middle is the fountain since V9-0d); presents never fall back onto a seat. T40 passes.
+    - The horde runs down the two clear lanes either side of the town square (`HordeService.LANE_X` 13; measured clear from z 120 to the lab). T28 passes; its plaza hit uses a start-bar tool (onboarding).
+    - T35 waits for OfferService's first pass answer (`checkedForTest`) before clearing the passes.

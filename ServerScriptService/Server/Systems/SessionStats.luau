@@ -315,8 +315,9 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 	-- player then stayed in first person.
 	elseif kind == "FpAuto" and (r :: any).fpAuto == nil then
 		(r :: any).fpAuto = since(player)
-	elseif kind == "FpStay" and (r :: any).fpAuto ~= nil and (r :: any).fpStay == nil then
-		(r :: any).fpStay = clean(data, 0, 36000)
+	elseif kind == "FpStay" and (r :: any).fpAuto ~= nil then
+		-- (sent every 15 s while it lasts, and at the switch back: the most is kept)
+		(r :: any).fpStay = math.max((r :: any).fpStay or 0, clean(data, 0, 36000) or 0)
 	elseif kind == "Screen" and type(data) == "string" then
 		if data == "play" or data == "window" or data == "chase" or data == "objective" then
 			r.screen = data

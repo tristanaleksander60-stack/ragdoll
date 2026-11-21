@@ -60,14 +60,18 @@ return {
 				task.wait(DummySpawn.GAP + 0.05)
 				DummySpawn.spawnFor(p, "BOUNCY", here)
 			end
-			-- (With live ids the creator owns GOD MODE in Studio, and Roblox may say so mid-test: twice the cap.)
-			local cap = if p:GetAttribute("God") == true then 12 else 6
+			-- (With live ids the creator owns GOD MODE in Studio, and Roblox may say so mid-test: twice the cap;
+			-- V9-0l: in the beta the first creation gives GOD MODE. The server's own cap, whichever it is.)
+			local cap = DummySpawn.capFor(p)
 			assert(#DummySpawn.of(p) <= cap, "more spawned dummies than the cap: " .. #DummySpawn.of(p))
 			DummySpawn.clear(p)
 			assert(#DummySpawn.of(p) == 0, "clear left dummies")
 		end)
 		DummySpawn.clear(p)
 		DummySpawn.resetTrialForTest(p)
+		if DummySpawn.resetBetaForTest then
+			DummySpawn.resetBetaForTest(p)
+		end
 		p:SetAttribute("God", hadGod)
 		assert(ok, err)
 		return "MINI dropped with its plate; outside the lab, out of reach and junk refused; the cap holds; clear removes them; JONAS' LAB"

@@ -408,4 +408,11 @@ function PathPlan.clear(stones: { Stone }, obstacles: { Obstacle }): (boolean, s
 	return true
 end
 
+-- V9-0l: the creature yard in front of the lab (LabCreatures.YARD_Z 92, 38 deep): no body is dropped
+-- or walks in there (its creatures' triggers are boxes nobody can see from above). Lab-local x, z.
+PathPlan.YARD = table.freeze({ zMin = 92 - 19 - 2, zMax = 92 + 19 + 2 })
+function PathPlan.inYard(p: Vector2): boolean
+	return p.Y > PathPlan.YARD.zMin and p.Y < PathPlan.YARD.zMax
+end
+
 return PathPlan

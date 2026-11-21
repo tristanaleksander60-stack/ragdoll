@@ -453,16 +453,33 @@ function ChristmasService.drop(count: number?): { Model }
 	for k = 1, count or ChristmasService.GIFTS do
 		-- (Open floor: never in the tree or among its presents.)
 		local treeAt = Vector3.new(middle.X + math.cos(math.rad(TREE_ANGLE)) * TREE_RADIUS, 0, middle.Z + math.sin(math.rad(TREE_ANGLE)) * TREE_RADIUS)
-		local plazaFloor = floorAt(middle.X, middle.Z, middle.Y)
+		-- (The plaza's floor: the height most of eight spots round the middle share. The middle itself
+		-- is the fountain since V9-0d, and props stand higher.)
+		local votes: { [number]: number } = {}
+		local plazaFloor, best = middle.Y, 0
+		for i = 0, 7 do
+			local a = i * math.pi / 4
+			local h = math.floor(floorAt(middle.X + math.cos(a) * 20, middle.Z + math.sin(a) * 20, middle.Y) * 20 + 0.5) / 20
+			votes[h] = (votes[h] or 0) + 1
+			if votes[h] > best then
+				best, plazaFloor = votes[h], h
+			end
+		end
 		local ang, x, z = 0, middle.X, middle.Z
-		for _ = 1, 12 do
+		local open = false
+		-- (V9-0d's town square fills more of the plaza: more tries, and never a fallback onto a seat.)
+		for _ = 1, 60 do
 			ang = rng:NextNumber(0, math.pi * 2)
 			local r = rng:NextNumber(8, 34)
 			x, z = middle.X + math.cos(ang) * r, middle.Z + math.sin(ang) * r
 			-- (And on the open floor: not on the fountain, a bench, a sign or a lamp.)
 			if (Vector3.new(x, 0, z) - treeAt).Magnitude > TREE_KEEP and math.abs(floorAt(x, z, middle.Y) - plazaFloor) < 0.3 then
+				open = true
 				break
 			end
+		end
+		if not open then
+			continue -- (no open floor found this time: one present fewer, never one on a seat)
 		end
 		local y = floorAt(x, z, middle.Y)
 		local gift = present(f, CFrame.new(x, y + 30 + k * 2, z) * CFrame.Angles(0, ang, 0), 2, WRAPS[k % #WRAPS + 1], false)

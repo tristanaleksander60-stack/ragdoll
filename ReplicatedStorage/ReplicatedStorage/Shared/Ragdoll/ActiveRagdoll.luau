@@ -303,6 +303,13 @@ local function setJoint(joint: AnimationConstraint, t: Tone.JointTone, hasSocket
 	joint.IsKinematic = t.kinematic
 end
 
+-- V9-2c: the time a body runs at on this screen (a time bubble: Client/SlowMotion sets the model's
+-- TimeScale here, locally; 1 anywhere else).
+local function timeScaleOf(rig: Rig): number
+	local ts = rig.model:GetAttribute("TimeScale")
+	return if type(ts) == "number" and ts > 0 then ts else 1
+end
+
 local function applyProfile(rig: Rig, profile: string)
 	for name, joint in rig.joints do
 		local t = Tone.get(profile, name)
@@ -538,7 +545,7 @@ local function updateGetUp(rig: Rig)
 		strength = 0.15 + 0.5 * a
 		height = firstHeight
 		balanceShare = 0.5 * a
-		rig.lift.MaxForce = rig.mass * Config.NORMAL_GRAVITY * 3 * a
+		rig.lift.MaxForce = rig.mass * Config.NORMAL_GRAVITY * 3 * a * math.max(1, timeScaleOf(rig) ^ 2)
 	else
 		local a = math.clamp((t - GETUP_FIRST_STAGE) / (GETUP_TIME - GETUP_FIRST_STAGE), 0, 1)
 		local eased = 1 - (1 - a) * (1 - a)
@@ -546,7 +553,7 @@ local function updateGetUp(rig: Rig)
 		strength = 0.65 + 0.35 * eased
 		height = firstHeight + (rig.standOffset - firstHeight) * eased
 		balanceShare = 0.5 + 0.5 * eased
-		rig.lift.MaxForce = rig.mass * Config.NORMAL_GRAVITY * 4
+		rig.lift.MaxForce = rig.mass * Config.NORMAL_GRAVITY * 4 * math.max(1, timeScaleOf(rig) ^ 2)
 		if a >= 1 then
 			enter(rig, "Standing")
 			return
@@ -1170,7 +1177,13 @@ local function updateMoving(rig: Rig, dt: number)
 	-- It walks where it faces, so it never moonwalks or slides sideways.
 	local facing = math.max(0, rig.heading:Dot(wantHeading))
 	rig.speed += (wantSpeed * facing - rig.speed) * (1 - math.exp(-SPEED_EASE * dt))
-	rig.drive.VectorVelocity = rig.heading * rig.speed
+	-- (V9-2c: inside a time bubble it walks at the bubble's time: TimeScale, set on this screen by
+	-- Client/SlowMotion; its lift holds the bubble's gravity.)
+	local ts = timeScaleOf(rig)
+	rig.drive.VectorVelocity = rig.heading * rig.speed * ts
+	if ts > 1 and rig.lift.Enabled then
+		rig.lift.MaxAxesForce = Vector3.new(0, rig.mass * Config.NORMAL_GRAVITY * 4 * ts * ts, 0)
+	end
 
 	-- Hold the pelvis at walking (or crawling) height over the ground below it.
 	local height = if state == "Crawling" then CRAWL_HEIGHT else rig.standOffset + WALK_HOVER

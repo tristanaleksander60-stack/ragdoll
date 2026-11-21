@@ -33,7 +33,7 @@ end
 
 -- The pill: how to go back, for this input.
 function FirstShotRules.hintFor(pad: boolean, key: string): string
-	return if pad then "First person! Select to change view" else "First person! " .. key .. " to switch back"
+	return if pad then "First person! Select to switch back" else "First person! " .. key .. " to switch back"
 end
 
 return FirstShotRules

@@ -167,6 +167,12 @@ local function ladder(results: { string })
 end
 
 local function eggs(results: { string }, player: Player, profile: any)
+	-- (The creator owns every pass in Studio: Roblox's first word on them first, then none: PassToys.)
+	local OfferService = require(script.Parent.Parent:WaitForChild("Systems"):WaitForChild("OfferService")) :: any
+	waitFor(function()
+		return OfferService.checkedForTest(player)
+	end, 20)
+	OfferService.resetForTest(player)
 	-- A fresh start: no takedowns, no weapons.
 	profile.takedowns = 0
 	ProgressService.setOwnedForTest(player, {})

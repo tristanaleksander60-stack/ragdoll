@@ -382,14 +382,20 @@ function HudV3.drawNext(takedowns: number)
 		-- way and 90 %, for the same goal, going up.)
 		local frac = have / need
 		if nextGoalId == toy.id then
+			-- (A big jump past both marks at once: one tick, the higher one.)
+			local crossed: number? = nil
 			for _, mark in { 0.5, 0.9 } do
 				if nextFrac < mark and frac >= mark and frac < 1 then
-					pcall(function()
-						(require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIComponents")) :: any).playSound("tick", if mark >= 0.9 then 1.35 else 1.15)
-					end)
-					fill.BackgroundColor3 = Color3.fromRGB(190, 255, 200)
-					TweenService:Create(fill, TweenInfo.new(0.5), { BackgroundColor3 = Color3.fromRGB(80, 210, 110) }):Play()
+					crossed = mark
 				end
+			end
+			if crossed then
+				local mark = crossed :: number
+				pcall(function()
+					(require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIComponents")) :: any).playSound("tick", if mark >= 0.9 then 1.35 else 1.15)
+				end)
+				fill.BackgroundColor3 = Color3.fromRGB(190, 255, 200)
+				TweenService:Create(fill, TweenInfo.new(0.5), { BackgroundColor3 = Color3.fromRGB(80, 210, 110) }):Play()
 			end
 		end
 		nextGoalId, nextFrac = toy.id, frac

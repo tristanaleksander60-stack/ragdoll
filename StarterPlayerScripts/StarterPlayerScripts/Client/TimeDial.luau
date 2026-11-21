@@ -35,6 +35,7 @@ local big: TextLabel? = nil
 local speedButtons: { [number]: any } = {}
 local sizeButtons: { [number]: any } = {}
 local startButton: any = nil
+local sendToken = 0
 
 local function isOn(): boolean
 	return type(player:GetAttribute("TimeScale")) == "number"
@@ -75,14 +76,28 @@ local function pick(s: number?, r: number?)
 		size = r
 	end
 	C.playSound("tick", if speed < 1 then 0.8 + speed * 0.3 else 1 + speed * 0.1)
+	-- (Quick taps: only the last choice goes, 0.3 s after it (the server takes one change per 0.25 s),
+	-- so the lit button and the bubble always agree.)
 	if isOn() then
-		send(true)
+		sendToken += 1
+		local token = sendToken
+		task.delay(0.3, function()
+			if token == sendToken and isOn() then
+				send(true)
+			end
+		end)
 	end
 	refresh()
 end
 
 local function toggleOn()
-	send(not isOn())
+	local starting = not isOn()
+	send(starting)
+	if starting then
+		if Controller.isOpen("Time") then
+			Controller.toggle("Time") -- (the bubble is on: the view clear again, so Z then Enter is one quick slow-mo)
+		end
+	end
 end
 
 local function step(by: number)

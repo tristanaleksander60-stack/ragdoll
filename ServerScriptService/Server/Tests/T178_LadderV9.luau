@@ -95,7 +95,7 @@ return {
 			return false
 		end, 100)
 		local bought = id and Toys.byId[id]
-		assert(bought and price == Economy.priceOf(bought.priceRung or bought.unlockAt), "the Bolts price does not follow the old rung")
+		assert(bought and price == Economy.priceOf(Toys.V8_UNLOCK[bought.id]), "the Bolts price is not the price before V9 (" .. tostring(price) .. ")")
 		-- A profile from before keeps everything it had reached.
 		local ProgressService = require(Systems:WaitForChild("ProgressService")) :: any
 		local profile = { owned = {}, oldEggs = 0, eggs = 0, ladder = 5 } :: any

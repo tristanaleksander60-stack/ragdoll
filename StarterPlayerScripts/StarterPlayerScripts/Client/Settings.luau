@@ -130,6 +130,15 @@ local function save()
 	end)
 end
 
+-- V9-0w: the current choices to the server now, not after the usual short wait.
+function Settings.saveNow()
+	saveToken += 1
+	local r = remote
+	if r then
+		r:FireServer("Settings", table.clone(values))
+	end
+end
+
 -- A change from the window (or a test): applied at once and kept.
 function Settings.set(key: string, value: any)
 	local next = table.clone(values) :: any
@@ -280,7 +289,16 @@ function Settings.start()
 		if kind == "Settings" then
 			loaded = true
 		end
-		if kind ~= "Settings" or touched then
+		if kind == "Settings" and touched then
+			-- (Changed here first: this session's choices win, but a once-only flag the profile holds
+			-- is never lost: V9-0w fpTaught.)
+			if type(data) == "table" and (data :: any).fpTaught == true and not values.fpTaught then
+				values.fpTaught = true
+				save()
+			end
+			return
+		end
+		if kind ~= "Settings" then
 			return
 		end
 		touched = true

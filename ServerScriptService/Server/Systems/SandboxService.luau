@@ -73,7 +73,11 @@ function SandboxService.run(player: Player, action: unknown): string?
 		return "revived " .. n
 	elseif action == "Reset" then
 		pcall(function()
-			(require(script.Parent:WaitForChild("DummySpawn")) :: any).clear(player) -- (V8-2.5: the spawned ones go)
+			local DummySpawn = require(script.Parent:WaitForChild("DummySpawn")) :: any
+			DummySpawn.clear(player) -- (V8-2.5: the spawned ones go)
+			if DummySpawn.clearLab then
+				DummySpawn.clearLab(player) -- (V9-0l: and party guests' in this lab)
+			end
 		end)
 		local n = Lab.rewind(player)
 		local origin = player:GetAttribute("LabOrigin")
@@ -212,6 +216,9 @@ function SandboxService.start()
 				local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 				if not player.Parent or not b.Parent or not (root and root:IsA("BasePart")) or not inTimeLab(player) then
 					dropBubble(player)
+					if player.Parent then
+						notice(player, "Time bubble off: it works in your own lab")
+					end
 				else
 					b.CFrame = CFrame.new(root.Position)
 				end

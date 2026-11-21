@@ -554,6 +554,11 @@ function Controller.isOpen(name: string): boolean
 	return entry ~= nil and entry.open
 end
 
+-- Whether a window of that name exists (registered).
+function Controller.isRegistered(name: string): boolean
+	return entries[name] ~= nil
+end
+
 function Controller.getCurrent(): string?
 	return current
 end

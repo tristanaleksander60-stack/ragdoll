@@ -22,7 +22,7 @@ DummySpawn.CAP = table.freeze({ phone = 3, tablet = 5, pc = 6, console = 6 }) ::
 type Spec = { scale: number, density: number, elasticity: number, color: Color3, plate: string }
 DummySpawn.TYPES = table.freeze({
 	MINI = { scale = 0.6, density = 0.7, elasticity = 0.3, color = Color3.fromRGB(120, 210, 255), plate = "MINI" },
-	HEAVY = { scale = 1.3, density = 3, elasticity = 0.1, color = Color3.fromRGB(150, 150, 160), plate = "HEAVY" },
+	HEAVY = { scale = 1.3, density = 3, elasticity = 0.1, color = Color3.fromRGB(58, 66, 84), plate = "HEAVY" }, -- (V9-0o: dark steel, never the grey of a plain dummy)
 	BOUNCY = { scale = 1, density = 0.9, elasticity = 1, color = Color3.fromRGB(255, 140, 220), plate = "BOUNCY" },
 	FLOPPY = { scale = 1, density = 0.25, elasticity = 0.2, color = Color3.fromRGB(255, 220, 120), plate = "FLOPPY" },
 }) :: { [string]: Spec }
@@ -178,7 +178,8 @@ local function dress(model: Model, spec: Spec)
 		t.BackgroundColor3 = spec.color
 		t.Font = Enum.Font.FredokaOne
 		t.TextScaled = true
-		t.TextColor3 = Color3.fromRGB(20, 20, 30)
+		local lum = 0.299 * spec.color.R + 0.587 * spec.color.G + 0.114 * spec.color.B
+		t.TextColor3 = if lum < 0.45 then Color3.new(1, 1, 1) else Color3.fromRGB(20, 20, 30) -- (V9-0o: readable on dark steel)
 		t.Text = spec.plate
 		local c = Instance.new("UICorner")
 		c.CornerRadius = UDim.new(0, 12)
@@ -347,7 +348,7 @@ function DummySpawn.spawnMany(player: Player, kind: unknown, at: unknown, patter
 	end
 	n = math.min(n, DummySpawn.PER_MINUTE - #times)
 	if n <= 0 then
-		return 0, "slow down"
+		return 0, "busy" -- (the minute's budget: told, unlike the short gaps)
 	end
 	lastMany[player] = now
 	-- Each spot: open floor of that lab (a tower stacks up from it, the rain falls onto it).
@@ -362,10 +363,17 @@ function DummySpawn.spawnMany(player: Player, kind: unknown, at: unknown, patter
 	if #spots == 0 then
 		return 0, "no free floor there"
 	end
-	-- Room. GOD MODE wins over the automatic visitors; then the player's own oldest make room.
+	-- Room. GOD MODE wins over the automatic visitors; then the player's own oldest make room, but
+	-- never one held or in a machine, and for this lab's budget only one in this lab (a party guest's
+	-- bodies at home free nothing in the host's lab).
 	local EventService = require(script.Parent:WaitForChild("EventService")) :: any
 	local list = mine[player] or {}
 	mine[player] = list
+	for i = #list, 1, -1 do
+		if not list[i].Parent then
+			table.remove(list, i)
+		end
+	end
 	local labCap = VisitorService.capFor(owner)
 	local function labUsed(): number
 		return #VisitorService.bodiesOf(owner) + DummySpawn.pendingFor(owner)
@@ -373,21 +381,43 @@ function DummySpawn.spawnMany(player: Player, kind: unknown, at: unknown, patter
 	local function serverFree(): number
 		return EventService.dummyRoom() - VisitorService.ROOM_KEEP
 	end
+	local function spare(m: Model): boolean
+		return m.Parent ~= nil and not m:GetAttribute("Held") and not m:GetAttribute("InMachine") and not m:GetAttribute("MachineHidden")
+	end
+	local hereSpare, anySpare = 0, 0
+	for _, m in list do
+		if spare(m) then
+			anySpare += 1
+			if m:GetAttribute("GodLab") == owner.UserId then
+				hereSpare += 1
+			end
+		end
+	end
 	if labUsed() + #spots > labCap then
 		VisitorService.makeRoom(owner, labUsed() + #spots - labCap)
 	end
-	local fits = math.min(#spots, cap, math.max(0, labCap - labUsed()) + #list, math.max(0, serverFree()) + #list)
+	local fits = math.min(#spots, cap - (#list - anySpare), math.max(0, labCap - labUsed()) + hereSpare, math.max(0, serverFree()) + anySpare)
 	if fits <= 0 then
 		return 0, "full"
 	end
 	while #spots > fits do
 		table.remove(spots)
 	end
-	while #list > 0 and (#list + #spots > cap or labUsed() + #spots > labCap or serverFree() < #spots) do
-		local oldest = table.remove(list, 1)
-		if oldest then
-			oldest:Destroy()
+	local function recycle(onlyHere: boolean): boolean
+		for i, m in list do
+			if spare(m) and (not onlyHere or m:GetAttribute("GodLab") == owner.UserId) then
+				table.remove(list, i)
+				m:Destroy()
+				return true
+			end
 		end
+		return false
+	end
+	while labUsed() + #spots > labCap and recycle(true) do
+		-- (the oldest of yours in this lab first)
+	end
+	while (#list + #spots > cap or serverFree() < #spots) and recycle(false) do
+		-- (then the oldest of yours anywhere)
 	end
 	for _ = 1, #spots do
 		table.insert(times, now)
@@ -412,12 +442,9 @@ function DummySpawn.spawnMany(player: Player, kind: unknown, at: unknown, patter
 			model:SetAttribute("GodLab", owner.UserId)
 			dress(model, spec)
 			table.insert(list, model)
-			-- (Never past the cap, even when two patterns overlap in time.)
-			while #list > cap do
-				local oldest = table.remove(list, 1)
-				if oldest then
-					oldest:Destroy()
-				end
+			-- (Never past the cap, even when two patterns overlap in time: the oldest spare one goes.)
+			while #list > cap and recycle(false) do
+				-- (recycled)
 			end
 		end)
 	end
@@ -443,8 +470,24 @@ DummySpawn.BETA_EARLIEST = 60 -- s: never inside the busy first minute
 DummySpawn.BETA_LATEST = 120 -- s
 DummySpawn.BETA_CALM = 3 -- s without a shot or a takedown before the reveal
 DummySpawn.BETA_RETURNING = 10 -- s
+DummySpawn.BETA_VETERAN = 10 -- takedowns: a player from before the beta is no newcomer
 
 local granted: { [Player]: boolean } = {}
+local revealOwed: { [Player]: boolean } = {} -- (the first reveal sent, not yet seen)
+
+-- The screen showed the first reveal: remembered in the profile now.
+function DummySpawn.revealSeen(player: Player)
+	if not revealOwed[player] then
+		return
+	end
+	revealOwed[player] = nil
+	local ProgressService = require(script.Parent:WaitForChild("ProgressService")) :: any
+	local e = ProgressService.ecoOf(player)
+	if e then
+		e.codes.GODBETA = true
+		ProgressService.ecoChanged(player)
+	end
+end
 local lastShot: { [Player]: number } = {}
 
 -- Whether a newcomer's moment has come. Pure (T167).
@@ -485,11 +528,14 @@ function DummySpawn.grantBeta(player: Player, asked: boolean?): boolean
 		Economy.rollDay(e, os.time() // 86400) -- (the chip is once a UTC day)
 		local first = not e.codes.GODBETA
 		local chip = not first and not e.daily.GodChip
-		e.codes.GODBETA = true
-		if not first then
+		-- (The first reveal is remembered only once the screen says it showed it: "Seen". Lost in a busy
+		-- moment, it comes again next visit. A day's chip is remembered at once.)
+		if first then
+			revealOwed[player] = true
+		else
 			e.daily.GodChip = true
+			ProgressService.ecoChanged(player)
 		end
-		ProgressService.ecoChanged(player)
 		if first and asked then
 			Net.event(Net.Names.Spawn):FireClient(player, "Granted", "asked")
 		elseif first or chip then
@@ -501,7 +547,19 @@ end
 
 -- When a joining player gets it (the moment that fits).
 local function scheduleBeta(player: Player)
-	task.delay(5, refreshCap, player) -- (the device is known by then: SessionStats)
+	-- (The device, once its first word (Hello) is in: SessionStats; a slow phone can take a while.)
+	task.spawn(function()
+		local SessionStats = require(script.Parent:WaitForChild("SessionStats")) :: any
+		local t0 = os.clock()
+		while player.Parent and os.clock() - t0 < 60 do
+			local r = SessionStats.recordFor(player)
+			if r and r.plat and r.plat ~= "?" then
+				break
+			end
+			task.wait(1)
+		end
+		refreshCap(player)
+	end)
 	if not Config.GOD_FREE_BETA then
 		return
 	end
@@ -516,7 +574,8 @@ local function scheduleBeta(player: Player)
 			task.wait(1)
 		end
 		local e = ProgressService.ecoOf(player)
-		if e and e.codes.GODBETA then
+		-- (Returning: GOD MODE seen before, or a player from before the beta (BETA_VETERAN takedowns).)
+		if e and (e.codes.GODBETA or (ProgressService.takedownsOf(player) or 0) >= DummySpawn.BETA_VETERAN) then
 			task.wait(DummySpawn.BETA_RETURNING)
 			DummySpawn.grantBeta(player)
 			return
@@ -543,6 +602,38 @@ local function scheduleBeta(player: Player)
 end
 DummySpawn.scheduleBetaForTest = scheduleBeta
 
+-- V9-0l: removes every GOD MODE body in `owner`'s lab, a party guest's too (the host's RESET, the host
+-- leaving). `except`: one player whose own are kept.
+function DummySpawn.clearLab(owner: Player, except: Player?)
+	for who, list in mine do
+		if who ~= except then
+			for i = #list, 1, -1 do
+				local m = list[i]
+				if m:GetAttribute("GodLab") == owner.UserId then
+					table.remove(list, i)
+					m:Destroy()
+				end
+			end
+		end
+	end
+end
+
+-- A guest's bodies in someone else's lab (their party ended): gone.
+local function clearAway(player: Player)
+	local list = mine[player]
+	if not list then
+		return
+	end
+	for i = #list, 1, -1 do
+		local m = list[i]
+		local lab = m:GetAttribute("GodLab")
+		if lab ~= nil and lab ~= player.UserId then
+			table.remove(list, i)
+			m:Destroy()
+		end
+	end
+end
+
 -- Removes a player's spawned dummies (Reset, leaving).
 function DummySpawn.clear(player: Player)
 	for _, m in mine[player] or {} do
@@ -566,6 +657,10 @@ function DummySpawn.start()
 		end
 		if what == "Claim" then
 			DummySpawn.grantBeta(player, true) -- (V9-0l: the SHOP's FREE · BETA card asks for it now; beta only, once)
+			return
+		end
+		if what == "Seen" then
+			DummySpawn.revealSeen(player) -- (V9-0l: the first reveal showed; only when one was sent)
 			return
 		end
 		if what == "Clear" then
@@ -595,6 +690,9 @@ function DummySpawn.start()
 	end)
 	local function joined(player: Player)
 		scheduleBeta(player)
+		player:GetAttributeChangedSignal("PartyLab"):Connect(function()
+			clearAway(player) -- (the party ended or moved: what they made in the host's lab goes)
+		end)
 		player:GetAttributeChangedSignal("God"):Connect(function()
 			refreshCap(player)
 		end)
@@ -605,6 +703,8 @@ function DummySpawn.start()
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		DummySpawn.clear(player)
+		DummySpawn.clearLab(player) -- (the guests' bodies in the leaving host's lab too)
+		revealOwed[player] = nil
 		last[player] = nil
 		trialUsed[player] = nil
 		lastMany[player] = nil

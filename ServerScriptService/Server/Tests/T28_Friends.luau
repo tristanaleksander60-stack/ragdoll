@@ -103,7 +103,9 @@ local function body(results: { string }, player: Player)
 	do
 		local HitService = require(script.Parent.Parent:WaitForChild("Systems"):WaitForChild("HitService"))
 		local Toys = require(game:GetService("ReplicatedStorage").Shared.Toys)
-		local punch = Toys.byId.Punch
+		-- (A tool on the start bar: a newcomer's first minutes allow only those, OnboardingService; the
+		-- V9 start bar has no Punch.)
+		local punch = Toys.byId[Toys.defaultLoadout[4]] or Toys.byId.Punch
 		local wasAt = player.Character:GetPivot() -- (put back after: the horde below runs at the player)
 		PlayerRagdoll.getUp(player) -- (still down from the nuke above)
 		waitFor(function()
@@ -112,7 +114,7 @@ local function body(results: { string }, player: Player)
 		player.Character:PivotTo(CFrame.new(plaza))
 		task.wait(HitService.PLAZA_GAP) -- (and clear of any knock before)
 		local root = player.Character:FindFirstChild("HumanoidRootPart") :: BasePart
-		assert(HitService.plazaHit(player, player, punch, root.Position, Vector3.new(1, 0, 0)), "a plaza hit did not land (down: " .. tostring(PlayerRagdoll.isDown(player)) .. ")")
+		assert(HitService.plazaHit(player, player, punch, root.Position, Vector3.new(1, 0, 0)), "a plaza hit did not land (down: " .. tostring(PlayerRagdoll.isDown(player)) .. ", refused: " .. tostring(HitService.lastRefusal[player] and HitService.lastRefusal[player].reason) .. ", at " .. tostring(root.Position) .. ")")
 		assert(not HitService.plazaHit(player, player, punch, root.Position, Vector3.new(1, 0, 0)), "a second plaza hit straight after landed")
 		local told = HitService.lastRefusal[player]
 		assert(told and told.reason == "GettingUp", "the second hit was refused without a word")
@@ -217,7 +219,8 @@ local function body(results: { string }, player: Player)
 	local first = h.runners[1].model
 	local startZ = (first:FindFirstChild("LowerTorso") :: BasePart).Position.Z
 	task.wait(2)
-	assert((first:FindFirstChild("LowerTorso") :: BasePart).Position.Z < startZ - 4, "the horde does not charge at the lab")
+	local nowAt = (first:FindFirstChild("LowerTorso") :: BasePart).Position
+	assert(nowAt.Z < startZ - 4, string.format("the horde does not charge at the lab (z %.1f -> %.1f, at %.0f,%.0f, state %s, sim %s, home %s, role %s)", startZ, nowAt.Z, nowAt.X, nowAt.Y, tostring(first:GetAttribute("RagdollState")), tostring(first:GetAttribute("SimulatedBy")), tostring(first:GetAttribute("Home")), tostring(first:GetAttribute("Role"))))
 	local chest = first:FindFirstChild("UpperTorso") :: BasePart
 	DummyControl.hit(first, chest, Vector3.new(0, 70, 0) * ((first:GetAttribute("Mass") :: number?) or 10), chest.Position, nil, player)
 	assert(waitFor(function()

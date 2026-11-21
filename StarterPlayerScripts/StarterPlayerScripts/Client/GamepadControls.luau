@@ -105,7 +105,15 @@ local function cycleView()
 		LabCamera.toggleView() -- back to the player view
 	elseif FirstPerson.isOn() then
 		FirstPerson.set(false)
-		LabCamera.toggleView()
+		-- (V9-0w: right after the first shot's glide, Select is "switch back": to the player view,
+		-- not on to the lab view.)
+		local justTaught = false
+		pcall(function()
+			justTaught = (require(Client:WaitForChild("FirstShotFP")) :: any).takeSwitchBack()
+		end)
+		if not justTaught then
+			LabCamera.toggleView()
+		end
 	else
 		FirstPerson.set(true)
 	end

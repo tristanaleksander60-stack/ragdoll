@@ -227,8 +227,19 @@ return {
 				local floorParams = RaycastParams.new()
 				floorParams.FilterType = Enum.RaycastFilterType.Exclude
 				floorParams.FilterDescendantsInstances = { Workspace:FindFirstChild("Christmas") :: Instance, Workspace:FindFirstChild("Dummies") :: Instance, p.Character :: Instance }
-				local mid = Workspace:Raycast(Vector3.new(foot.X + 22, foot.Y + 30, foot.Z), Vector3.new(0, -60, 0), floorParams)
-				local floorY = if mid then mid.Position.Y else foot.Y
+				-- (The plaza's floor: the height most spots round its middle share; the middle itself is the
+				-- fountain since V9-0d.)
+				local votes: { [number]: number } = {}
+				local floorY, best = foot.Y, 0
+				for i = 0, 7 do
+					local a = i * math.pi / 4
+					local hit = Workspace:Raycast(Vector3.new(foot.X + 22 + math.cos(a) * 20, foot.Y + 30, foot.Z + math.sin(a) * 20), Vector3.new(0, -60, 0), floorParams)
+					local h = math.floor((if hit then hit.Position.Y else foot.Y) * 20 + 0.5) / 20
+					votes[h] = (votes[h] or 0) + 1
+					if votes[h] > best then
+						best, floorY = votes[h], h
+					end
+				end
 				for _ = 1, 8 do
 					for _, g in ChristmasService.drop(5) do
 						local at = (g.PrimaryPart :: BasePart).Position

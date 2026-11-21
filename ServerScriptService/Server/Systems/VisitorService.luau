@@ -269,6 +269,9 @@ end
 -- Whether a lab spot (x, z from the lab's spawn) is in a machine's footprint (PathPlan.OBSTACLES).
 local function inMachine(p: Vector2): boolean
 	local PathPlan = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PathPlan")) :: any
+	if (Config :: any).LAB_CREATURES and PathPlan.inYard(p) then
+		return true -- (V9-0l: the creature yard)
+	end
 	for _, o in PathPlan.OBSTACLES do
 		if o.at and o.radius and (p - o.at).Magnitude < o.radius + 3 then
 			return true

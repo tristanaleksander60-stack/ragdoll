@@ -39,7 +39,7 @@ return {
 		end
 		-- The pill per input.
 		assert(string.find(Rules.hintFor(false, "V"), "V to switch back", 1, true), "the keyboard pill does not name V")
-		assert(string.find(Rules.hintFor(true, "V"), "Select", 1, true), "the pad pill does not name Select")
+		assert(string.find(Rules.hintFor(true, "V"), "Select to switch back", 1, true), "the pad pill does not name Select")
 		-- The profile's flags.
 		local ProgressService = require(Systems:WaitForChild("ProgressService")) :: any
 		local fresh = ProgressService.cleanSettings({})

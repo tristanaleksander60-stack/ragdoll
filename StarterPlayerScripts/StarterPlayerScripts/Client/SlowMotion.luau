@@ -47,11 +47,9 @@ SlowMotion.TRAILS_MAX = 6
 -- (V9-2c: a bubble has its own speed `scale` (0.1x-3x); a time bubble (`timeBubble`) follows its
 -- owner, and inside it time runs truly at `scale`: speeds x scale, gravity x scale^2.)
 type Bubble = { centre: Vector3, radius: number, ends: number, part: BasePart?, scale: number, timeBubble: boolean, owner: number? }
-type Slowed = { last: Vector3, lastSpin: Vector3, scale: number, timeBubble: boolean }
 
 local player = Players.LocalPlayer
 local bubbles: { Bubble } = {}
-local slowed: { [BasePart]: Slowed } = {}
 local trails: { [Model]: Trail } = {}
 local amount = 0 -- 0..1 the feel, eased
 local lastAuto = -math.huge
@@ -226,54 +224,91 @@ local function dropTrail(body: Model)
 	end
 end
 
--- One physics step: every slowed assembly keeps SCALE of what the step changed. Only bodies this
--- client simulates (attribute SimulatedBy = our UserId): writing anyone else's would only fight
--- the network. Each assembly is touched once (its root part), never once per part.
-local seen: { [BasePart]: boolean } = {}
+-- One physics step. Only bodies this client simulates (attribute SimulatedBy = our UserId): writing
+-- anyone else's would only fight the network. The state is kept per BODY, not per assembly: a body
+-- that goes limp or gets up splits or merges its assemblies, and that must never scale it twice.
+-- Its speed is scaled once on the way in and once on the way out (each assembly once, then).
 local seenBody: { [Model]: boolean } = {}
 local function capped(v: Vector3, most: number): Vector3
 	return if v.Magnitude > most then v.Unit * most else v
 end
 
--- V9-2c: in a time bubble, gravity itself runs at s^2 (a VectorForce on each of the body's assemblies,
--- made on this screen, which simulates it): every controller and joint of the body then acts as it
--- does anywhere, and only a hard knock in one step (a hit, a landing: more than IMPULSE studs/s) is
--- slowed to s of itself. Fast bubbles never amplify a knock (it would bounce bodies off the floor).
+-- V9-2c: in a time bubble, gravity itself runs at s^2: a VectorForce on every part of the body (made
+-- on this screen, which simulates it), so a split or a merge never changes the sum. Every controller
+-- and joint acts as anywhere (ActiveRagdoll walks and lifts at the bubble's time: the model's local
+-- TimeScale); a hard knock in one step (> IMPULSE studs/s) is slowed to s of itself, or in a fast
+-- bubble sped up s times (but never a landing: it would bounce the body off the floor).
 SlowMotion.IMPULSE = 6 -- studs/s in one step that reads as a knock, not as gravity or a joint
+SlowMotion.BODIES_MAX = { low = 8, mid = 14, high = 22 } -- bodies one bubble times on this device
 
-local function timeForce(root: BasePart, s: number): VectorForce
-	local force = root:FindFirstChild("TimeForce")
-	if not (force and force:IsA("VectorForce")) then
-		local a = Instance.new("Attachment")
-		a.Name = "TimeAttach"
-		a.Parent = root
-		local f = Instance.new("VectorForce")
-		f.Name = "TimeForce"
-		f.Attachment0 = a
-		f.RelativeTo = Enum.ActuatorRelativeTo.World
-		f.ApplyAtCenterOfMass = true
-		f.Parent = root
-		force = f
+type BodyState = { scale: number, timeBubble: boolean, last: { [BasePart]: Vector3 }, lastSpin: { [BasePart]: Vector3 } }
+local bodyStates: { [Model]: BodyState } = {}
+
+local function rootsOf(body: Model): { BasePart }
+	local out: { BasePart } = {}
+	local seenRoot: { [BasePart]: boolean } = {}
+	for _, part in body:GetChildren() do
+		local root = if part:IsA("BasePart") then part.AssemblyRootPart else nil
+		if root and not seenRoot[root] and not root.Anchored then
+			seenRoot[root] = true
+			table.insert(out, root)
+		end
 	end
-	local vf = force :: VectorForce
-	vf.Force = Vector3.new(0, root.AssemblyMass * Workspace.Gravity * (1 - s * s), 0)
-	return vf
+	return out
 end
 
-local function dropForce(root: BasePart)
-	local f = root:FindFirstChild("TimeForce")
-	if f then
-		f:Destroy()
+local function setForces(body: Model, s: number?)
+	for _, part in body:GetChildren() do
+		if part:IsA("BasePart") then
+			local f = part:FindFirstChild("TimeForce")
+			if s == nil then
+				if f then
+					f:Destroy()
+				end
+				local a = part:FindFirstChild("TimeAttach")
+				if a then
+					a:Destroy()
+				end
+			elseif not part.Massless then
+				if not (f and f:IsA("VectorForce")) then
+					local a = Instance.new("Attachment")
+					a.Name = "TimeAttach"
+					a.Parent = part
+					local nf = Instance.new("VectorForce")
+					nf.Name = "TimeForce"
+					nf.Attachment0 = a
+					nf.RelativeTo = Enum.ActuatorRelativeTo.World
+					nf.ApplyAtCenterOfMass = true
+					nf.Parent = part
+					f = nf
+				end
+				(f :: VectorForce).Force = Vector3.new(0, part:GetMass() * Workspace.Gravity * (1 - (s :: number) ^ 2), 0)
+			end
+		end
 	end
-	local a = root:FindFirstChild("TimeAttach")
-	if a then
-		a:Destroy()
+	body:SetAttribute("TimeScale", s) -- (local: ActiveRagdoll here walks and lifts at it)
+end
+
+-- Its speed from one time to another (into a bubble, out of it, or a speed change), once per assembly.
+local function rescale(body: Model, k: number)
+	for _, root in rootsOf(body) do
+		root.AssemblyLinearVelocity = capped(root.AssemblyLinearVelocity * k, SlowMotion.RESTORE_MAX)
+		root.AssemblyAngularVelocity = capped(root.AssemblyAngularVelocity * k, SlowMotion.SPIN_MAX)
+	end
+end
+
+local function leave(body: Model, st: BodyState)
+	bodyStates[body] = nil
+	if body.Parent then
+		if st.timeBubble then
+			setForces(body, nil)
+		end
+		rescale(body, 1 / st.scale)
 	end
 end
 
 local function stepBodies(_dt: number)
 	local folder = Workspace:FindFirstChild("Dummies")
-	table.clear(seen)
 	table.clear(seenBody)
 	if folder and #bubbles > 0 then
 		local me = player.UserId
@@ -283,78 +318,83 @@ local function stepBodies(_dt: number)
 		if (Config :: any).REACTIONS_V8 and own then
 			table.insert(bodies, own)
 		end
+		local most = SlowMotion.BODIES_MAX[FeelV2.tier] or 14
+		local counts: { [Bubble]: number } = {}
 		for _, body in bodies do
 			local pelvis = body:FindFirstChild("LowerTorso")
 			local b = if body:IsA("Model") and pelvis and pelvis:IsA("BasePart") and (body:GetAttribute("SimulatedBy") == me or body == own) then bubbleAt(pelvis.Position) else nil
-			-- (V9-2c: a time bubble leaves the players' own walking speed alone.)
-			if b and not (b.timeBubble and body:FindFirstChildOfClass("Humanoid") and Players:GetPlayerFromCharacter(body)) then
+			-- (V9-2c: a time bubble leaves the players' own walking speed alone, and times at most
+			-- BODIES_MAX bodies on this device; the old spell's bubble times all.)
+			if b and b.timeBubble and body:FindFirstChildOfClass("Humanoid") and Players:GetPlayerFromCharacter(body) then
+				b = nil
+			end
+			if b and b.timeBubble then
+				local n = (counts[b] or 0) + 1
+				if n > most and not bodyStates[body :: Model] then
+					b = nil
+				else
+					counts[b] = n
+				end
+			end
+			if b then
+				local model = body :: Model
 				local s = b.scale
-				seenBody[body] = true
+				seenBody[model] = true
 				if s < 1 then
-					addTrail(body)
+					addTrail(model)
 				end
-				for _, part in body:GetChildren() do
-					local root = if part:IsA("BasePart") then part.AssemblyRootPart else nil
-					if root and not seen[root] and not root.Anchored then
-						seen[root] = true
-						local v, w = root.AssemblyLinearVelocity, root.AssemblyAngularVelocity
-						local st = slowed[root]
-						if not st or st.scale ~= s or st.timeBubble ~= b.timeBubble then
-							-- On the way in (or the speed changed): its speed to the bubble's time.
-							local from = if st then st.scale else 1
-							local nv = capped(v * (s / from), SlowMotion.RESTORE_MAX)
-							local nw = capped(w * (s / from), SlowMotion.SPIN_MAX)
-							root.AssemblyLinearVelocity = nv
-							root.AssemblyAngularVelocity = nw
-							slowed[root] = { last = nv, lastSpin = nw, scale = s, timeBubble = b.timeBubble }
-							if b.timeBubble then
-								timeForce(root, s)
-							end
-						elseif b.timeBubble then
-							timeForce(root, s) -- (its mass can change: a limb lost or a gadget stuck on)
-							local dv = v - st.last
-							local nv = v
-							if s < 1 and dv.Magnitude > SlowMotion.IMPULSE then
-								nv = st.last + dv * s
-							end
-							nv = capped(nv, SlowMotion.RESTORE_MAX)
-							if nv ~= v then
-								root.AssemblyLinearVelocity = nv
-							end
-							st.last = nv
-							st.lastSpin = w
-						else
-							-- The old spell's bubble: each step keeps s of what the physics changed.
-							local nv = st.last + (v - st.last) * s
-							local nw = st.lastSpin + (w - st.lastSpin) * s
-							root.AssemblyLinearVelocity = nv
-							root.AssemblyAngularVelocity = nw
-							st.last = nv
-							st.lastSpin = nw
-						end
+				local st = bodyStates[model]
+				if not st or st.scale ~= s or st.timeBubble ~= b.timeBubble then
+					-- On the way in (or the speed or the kind of bubble changed): its speed to the
+					-- bubble's time, once; the forces for this bubble (none for the old spell's).
+					local from = if st then st.scale else 1
+					rescale(model, s / from)
+					if b.timeBubble then
+						setForces(model, s)
+					elseif st and st.timeBubble then
+						setForces(model, nil)
 					end
+					st = { scale = s, timeBubble = b.timeBubble, last = {}, lastSpin = {} }
+					bodyStates[model] = st
 				end
+				local state = st :: BodyState
+				local last, lastSpin = {}, {}
+				for _, root in rootsOf(model) do
+					local v, w = root.AssemblyLinearVelocity, root.AssemblyAngularVelocity
+					-- (A new assembly (a split, a merge) starts from where it is: never scaled again.)
+					local lv, lw = state.last[root] or v, state.lastSpin[root] or w
+					local nv, nw = v, w
+					if state.timeBubble then
+						local dv = v - lv
+						if dv.Magnitude > SlowMotion.IMPULSE then
+							local landing = lv.Y < -5 and dv.Y > 0
+							if s < 1 then
+								nv = lv + dv * s
+							elseif not landing then
+								nv = capped(lv + dv * s, SlowMotion.RESTORE_MAX)
+							end
+						end
+					else
+						-- The old spell's bubble: each step keeps s of what the physics changed.
+						nv = lv + (v - lv) * s
+						nw = lw + (w - lw) * s
+					end
+					if nv ~= v then
+						root.AssemblyLinearVelocity = nv
+					end
+					if nw ~= w then
+						root.AssemblyAngularVelocity = nw
+					end
+					last[root], lastSpin[root] = nv, nw
+				end
+				state.last, state.lastSpin = last, lastSpin
 			end
 		end
 	end
-	-- Out of every bubble: its speed back (capped both ways), its trail gone.
-	for root, st in slowed do
-		if not seen[root] then
-			slowed[root] = nil
-			local s = st.scale
-			dropForce(root)
-			if root.Parent and not root.Anchored then
-				local back = root.AssemblyLinearVelocity / s
-				if back.Magnitude > SlowMotion.RESTORE_MAX then
-					back = back.Unit * SlowMotion.RESTORE_MAX
-				end
-				local spin = root.AssemblyAngularVelocity / s
-				if spin.Magnitude > SlowMotion.SPIN_MAX then
-					spin = spin.Unit * SlowMotion.SPIN_MAX
-				end
-				root.AssemblyLinearVelocity = back
-				root.AssemblyAngularVelocity = spin
-			end
+	-- Out of every bubble: its speed back (capped both ways), its forces and trail gone.
+	for body, st in bodyStates do
+		if not seenBody[body] then
+			leave(body, st)
 		end
 	end
 	for body in trails do
@@ -448,6 +488,11 @@ local function drawTimeBubbles(dt: number)
 		b.centre = at
 		v.size += (b.radius * 2 - v.size) * math.min(1, dt * 6)
 		local colour = if b.scale < 1 then SlowMotion.SLOW_COLOR elseif b.scale > 1 then SlowMotion.FAST_COLOR else Color3.fromRGB(220, 230, 240)
+		-- (Only where this screen is: a bubble in a lab hidden from it (PlotPrivacy) never floats there.)
+		local mine = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		local Zones = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Zones")) :: any
+		local here = mine ~= nil and mine:IsA("BasePart") and Zones.plotAt((mine :: BasePart).Position) == Zones.plotAt(at)
+		v.shell.Transparency = if here and b.scale ~= 1 then (if lowEnd then 0.5 else 0.15) else 1
 		v.shell.Size = Vector3.one * v.size
 		v.shell.CFrame = CFrame.new(at)
 		v.shell.Color = colour
@@ -526,7 +571,7 @@ function SlowMotion.start()
 				b.centre = owners(b) or b.centre -- (V9-2c: round its owner, this very step)
 			end
 		end
-		if #bubbles > 0 or next(slowed) or next(trails) then
+		if #bubbles > 0 or next(bodyStates) or next(trails) then
 			stepBodies(dt)
 		end
 	end)

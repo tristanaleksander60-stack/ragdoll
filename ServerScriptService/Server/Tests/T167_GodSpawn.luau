@@ -70,7 +70,10 @@ return {
 			assert(not DummySpawn.grantBeta(p), "the beta gift was given twice in a visit")
 			assert(DummySpawn.mayCreate(p) and not DummySpawn.tryFor(p), "with the beta gift it cannot create, or it got a trial")
 			if e then
-				assert(e.codes.GODBETA == true, "the profile does not remember the first reveal")
+				-- (Remembered only once the screen showed it: "Seen".)
+				assert(not e.codes.GODBETA or hadSeen, "the first reveal was remembered before the screen showed it")
+				DummySpawn.revealSeen(p)
+				assert(e.codes.GODBETA == true, "the profile does not remember the first reveal after Seen")
 			end
 			-- A 10-line where it is aimed, all in the lab.
 			local origin = Lab.originFor(p)
@@ -129,11 +132,15 @@ return {
 			local cap = DummySpawn.capFor(p)
 			local VisitorService = require(Systems:WaitForChild("VisitorService")) :: any
 			local labCap = VisitorService.capFor(p)
+			-- (Real visitors in the lab first: GOD MODE makes them puff away to fit.)
+			VisitorService.tickForTest(p)
+			task.wait(0.3)
+			local visitorsBefore = #VisitorService.of(p)
 			local big = DummySpawn.spawnMany(p, "HEAVY", aim, "Grid", 25, 4, 0)
 			task.wait(DummySpawn.STAGGER + 0.4)
 			local inLab = #VisitorService.bodiesOf(p)
 			assert(big <= cap and #DummySpawn.of(p) <= cap, string.format("%d came, %d stand (cap %d)", big, #DummySpawn.of(p), cap))
-			assert(inLab <= labCap, string.format("%d bodies in the lab after a 25-grid (the lab's budget %d)", inLab, labCap))
+			assert(inLab <= labCap, string.format("%d bodies in the lab after a 25-grid (the lab's budget %d; %d visitors before, %d after)", inLab, labCap, visitorsBefore, #VisitorService.of(p)))
 			assert(p:GetAttribute("GodCap") == cap, "the client's cap (GodCap) is not the server's")
 			-- A minute's budget: once used up, refused.
 			local perMinute = DummySpawn.PER_MINUTE
@@ -141,7 +148,7 @@ return {
 			task.wait(DummySpawn.MANY_GAP + 0.05)
 			local over, overWhy = DummySpawn.spawnMany(p, "MINI", aim, "Point", 1, 4, 0)
 			DummySpawn.PER_MINUTE = perMinute
-			assert(over == 0 and overWhy == "slow down", "the minute's budget did not hold")
+			assert(over == 0 and overWhy == "busy", "the minute's budget did not hold: " .. tostring(overWhy))
 			-- CLEAR MINE.
 			DummySpawn.clear(p)
 			assert(#DummySpawn.of(p) == 0, "CLEAR MINE left bodies")

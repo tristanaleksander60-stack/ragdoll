@@ -24,7 +24,7 @@ local ENTRIES: { any } = {
 	{ window = "God", text = "GOD MODE", role = "premium", phoneOnly = true, godOnly = true }, -- (V9-0f: only for an owner of the pass or during the trial: GodRules)
 	-- (Phase 0: SANDBOX had slipped onto the line above, behind its comment, so a phone had no way
 	-- to build; it is back, and a phone's BUILD button now lives here.)
-	{ window = "Sandbox", text = "SANDBOX", role = "go", phoneOnly = true }, -- (HudMenu.onSandbox)
+	{ window = "Sandbox", text = "LAB", role = "go", phoneOnly = true }, -- (V9-2c: the LAB window (TIME, first person, REVIVE, RESET, BUILD); HudMenu.onSandbox without it)
 	{ window = "Rewards", text = "REWARDS", role = "go", phoneOnly = true }, -- (round 5; off a phone: its own launcher)
 	{ window = "Eggs", text = "RANK & EGGS", role = "go" },
 	{ window = "Experiments", text = "EXPERIMENTS", role = "go", padOnly = true }, -- (phase 1: a pad reaches the card's window here)
@@ -41,6 +41,7 @@ local ENTRIES: { any } = {
 local MENU_ICONS: { [string]: string } = {
 	Maps = "map",
 	God = "god",
+	Time = "hud_slowmo",
 	Sandbox = "sandbox",
 	Rewards = "present",
 	Eggs = "crown",
@@ -152,6 +153,12 @@ function HudMenu.start()
 			layoutOrder = index,
 			parent = grid,
 			onActivated = function()
+				if name == "Sandbox" and Controller.isRegistered and Controller.isRegistered("Lab") then
+					-- (V9-2c: a phone's SANDBOX opens the LAB window: TIME, first person, REVIVE ALL, RESET,
+					-- BUILD and the lab view, as off a phone; MENU stays at 8.)
+					Controller.open("Lab")
+					return
+				end
 				if name == "Sandbox" then
 					Controller.closeAll()
 					local go = HudMenu.onSandbox
@@ -170,6 +177,9 @@ function HudMenu.start()
 				local pad = string.sub(UserInputService:GetLastInputType().Name, 1, 7) == "Gamepad"
 				local columnGone = e.columnToo == true and (require(script.Parent:WaitForChild("HudGate")) :: any).active()
 				local godOk = not e.godOnly or (require(script.Parent:WaitForChild("GodMode")) :: any).launcherShown()
+				if e.timeOnly and not Config.TIME_DIAL then
+					godOk = false -- (V9-2c: the time dial only when it is on)
+				end
 				button.root.Visible = godOk and (if e.phoneOnly then (isPhone() or pad or columnGone) else not isPhone())
 			end
 			UserInputService.LastInputTypeChanged:Connect(show)

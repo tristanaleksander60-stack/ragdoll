@@ -357,3 +357,18 @@ Phases 0-4b, A-M, N1-N5, N7 (graphics accepted as is), M1-M8 done. M9 was under 
   - Icon `god` (art\icons\god.png, DrawnIcons). Tests: T148_GodMode; T128 resets the trial around itself.
 - **Ids live (21 Nov 2026, the owner sent them):** GOD MODE 2093692966 (199). Every Shop.OFFERS id is set (17 passes, Starter Crate 3733992321 and Bolt Crate 3733992403 products), the 16 new event products are in Events.luau, and the badges Havoc Maker, Nuked It and Havoc Legend are in Badges.luau. Each id was checked against Roblox (name, price, for sale; badges enabled). `Shop.GROUP_ID` stays 0 (no group sent). GOD MODE is gated live now (free 60 s trial, then the pass).
 - **The creator owns every pass in Studio** once ids are real: tests that try or sell a pass start with `OfferService.resetForTest`, and they deliver through `OfferService.grantPass` instead of a buy (a real id opens Roblox's own prompt). T105 was updated this way.
+
+## V9 Phase A (21 Nov 2026, PC, branch `release`; details in docs/V9_PLAN.md State)
+- **GOD MODE free in the beta (`Config.GOD_FREE_BETA`):**
+  - Remote **Spawn**, client → server:
+    - `SpawnMany (kind, at, pattern, count, spacing, yaw)`: every value is checked in `DummySpawn.spawnMany`. It covers your own or your party's lab, each spot on open floor (`VisitorService.floorAt`, never the creature yard), the lab's one body budget, the server's room, and 60 bodies a minute.
+    - `Clear`, `Claim`, `Seen`, `Try`, and the old `Spawn`. `Spawn` now goes through the same checks.
+  - Remote **Spawn**, server → client: `Refused (why)` and `Granted (first | asked | chip)`.
+  - Player attributes: `GodBeta`, `Founder`, `GodCap`.
+- **Time dial (`Config.TIME_DIAL`):** remote **Sandbox** `Time (speed, size, on)` goes to `SandboxService.setTime`. Speeds and sizes come only from fixed lists, and changes are paced 0.25 s apart.
+- **Switches:**
+  - `DUMMY_TONE`: grey, matte dummies.
+  - `FIRST_SHOT_FP`: the first shot ever glides into first person; profile settings `fpShot`, `fpStart`, `fpTaught`.
+  - `LADDER_V9`: bigger unlock gaps.
+    - Ladder 6 grandfathers every weapon a profile had already reached.
+    - `Toys.V8_UNLOCK` keeps the old rungs.

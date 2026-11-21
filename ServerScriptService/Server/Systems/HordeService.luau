@@ -35,6 +35,7 @@ HordeService.MAX_RUNNERS = 18
 HordeService.BONUS = 5 -- takedowns for everyone who helped
 HordeService.MIN_RUNNERS = 4 -- fewer room than this under the cap: the horde waits
 local START_OFFSET = Vector3.new(0, 0, 110) -- from the lab's origin: beyond the plaza
+HordeService.LANE_X = 13 -- studs either side of the plaza's middle line: the clear lanes (V9-0d)
 local GROUND_TOP = 600 -- studs above the floor: higher up you are in the rooms, not on the ground
 
 type Runner = { model: Model, down: boolean }
@@ -129,8 +130,11 @@ function HordeService.start(warning: number?): Horde?
 			return
 		end
 		for i = 1, count do
-			local x = (i - (count + 1) / 2) * 4.5
-			local at = start + Vector3.new(x, 0, (i % 3) * 4)
+			-- (V9-0d's town square stands on the plaza's middle line (the stage, the fountain, the toss
+			-- pit): the runners charge in two files down the clear lanes either side of it, measured
+			-- clear from the start to the lab, and keep to them.)
+			local x = (if i % 2 == 1 then -1 else 1) * HordeService.LANE_X
+			local at = start + Vector3.new(x, 0, ((i - 1) // 2) * 4)
 			local model = DummyFactory.spawn(at, at - Vector3.zAxis)
 			model.Name = "HordeRunner"
 			model:SetAttribute("Horde", true)
@@ -143,7 +147,7 @@ function HordeService.start(warning: number?): Horde?
 				end
 			end
 			-- At the lab, spread out across it.
-			local goal = origin + Vector3.new(x * 1.5, 0, -10)
+			local goal = origin + Vector3.new(x, 0, -10) -- (straight down its lane)
 			model:SetAttribute("Home", Vector3.new(goal.X, at.Y, goal.Z))
 			model:SetAttribute("HomeLook", Vector3.new(goal.X, at.Y, goal.Z - 10))
 			local runner: Runner = { model = model, down = false }

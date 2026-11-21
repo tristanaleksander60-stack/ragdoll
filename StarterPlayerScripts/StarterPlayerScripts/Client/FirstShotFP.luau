@@ -35,6 +35,7 @@ FirstShotFP.HINT_TIME = 4 -- s
 
 local player = Players.LocalPlayer
 local busy = false
+local switchBack = false -- (the glide just happened: a pad's Select goes back, not on to the lab view)
 
 -- Whether this screen has a way back out of first person (V on a keyboard, Select on a pad).
 function FirstShotFP.hasWayBack(): boolean
@@ -116,23 +117,59 @@ function FirstShotFP.onShot()
 		return
 	end
 	Settings.set("fpTaught", true)
+	pcall(function()
+		Settings.saveNow() -- (kept at once: leaving right after the first shot never teaches it again)
+	end)
+	switchBack = true
 	glide()
 	hint()
 	pcall(function()
 		SessionClient.note("FpAuto")
 	end)
-	-- How long they stay (Session_v1), until they switch back or the visit ends.
+	-- How long they stay (Session_v1): sent every 15 s while it lasts (the server keeps the most), and
+	-- when they switch back, so one who stays to the end of the visit is counted too.
 	local since = os.clock()
 	local done = false
+	local function note()
+		pcall(function()
+			SessionClient.note("FpStay", math.floor(os.clock() - since))
+		end)
+	end
 	FirstPerson.onChanged(function(on: boolean)
 		if not on and not done then
 			done = true
-			pcall(function()
-				SessionClient.note("FpStay", math.floor(os.clock() - since))
+			note()
+			-- (Back in third person: a tip once, if they never come back to first person in 5 min.)
+			task.delay(300, function()
+				if not FirstPerson.isOn() then
+					local key = "V"
+					pcall(function()
+						key = Keybinds.labelOf("FirstPerson")
+					end)
+					local pad = UserInputService:GetLastInputType().Name:sub(1, 7) == "Gamepad"
+					pcall(function()
+						(require(Client:WaitForChild("Toast")) :: any).show(if pad then "Tip: Select for first person" else "Tip: " .. key .. " for first person", Color3.fromRGB(120, 200, 255), nil, "eye")
+					end)
+				end
 			end)
 		end
 	end)
+	task.spawn(function()
+		while not done and player.Parent do
+			task.wait(15)
+			if not done then
+				note()
+			end
+		end
+	end)
 	busy = false
+end
+
+-- V9-0w: right after the glide, a pad's Select goes back to the player view (once): GamepadControls.
+function FirstShotFP.takeSwitchBack(): boolean
+	local was = switchBack
+	switchBack = false
+	return was
 end
 
 function FirstShotFP.start()

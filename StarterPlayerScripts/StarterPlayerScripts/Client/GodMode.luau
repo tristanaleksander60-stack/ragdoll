@@ -41,7 +41,7 @@ local GodMode = {}
 
 GodMode.TYPES = {
 	{ id = "MINI", word = "TINY", color = Color3.fromRGB(120, 210, 255), hex = "#78D2FF" },
-	{ id = "HEAVY", word = "HEAVY", color = Color3.fromRGB(150, 150, 160), hex = "#9696A0" },
+	{ id = "HEAVY", word = "HEAVY", color = Color3.fromRGB(58, 66, 84), hex = "#3A4254" },
 	{ id = "BOUNCY", word = "BOUNCY", color = Color3.fromRGB(255, 140, 220), hex = "#FF8CDC" },
 	{ id = "FLOPPY", word = "FLOPPY", color = Color3.fromRGB(255, 220, 120), hex = "#FFDC78" },
 }
@@ -226,6 +226,9 @@ local function allowed(spot: Vector3): boolean
 	if typeof(o) == "Vector3" then
 		local PathPlan = require(Shared:WaitForChild("PathPlan")) :: any
 		local p = Vector2.new(spot.X - Zones.plotCenterX(plot), spot.Z - o.Z)
+		if Config.LAB_CREATURES and PathPlan.inYard(p) then
+			return false -- (the creature yard)
+		end
 		for _, ob in PathPlan.OBSTACLES do
 			if ob.at and ob.radius and (p - ob.at).Magnitude < ob.radius + 3 then
 				return false
@@ -339,6 +342,15 @@ local function drawGhosts()
 	end
 end
 
+-- A click on a red spot says why nothing came (at most every 1.5 s).
+local notThereAt = 0
+local function notThere()
+	if os.clock() - notThereAt > 1.5 then
+		notThereAt = os.clock()
+		;(require(script.Parent:WaitForChild("Toast")) :: any).show("Not there: only open floor in your lab")
+	end
+end
+
 local function create(at: Vector3, count: number, pat: string)
 	lastSpot = at
 	Net.event(Net.Names.Spawn):FireServer("SpawnMany", kind, at, pat, count, spacing, yaw())
@@ -448,6 +460,14 @@ local function startPlacing()
 	ContextActionService:BindActionAtPriority("GodPlaceClick", function(_, state: Enum.UserInputState, input: InputObject)
 		if input.UserInputType == Enum.UserInputType.Touch then
 			-- (A phone: a short tap is the spot; a swipe stays the camera's, so it is passed on.)
+			local onStick = false
+			pcall(function()
+				onStick = (require(script.Parent:WaitForChild("MoveStick")) :: any).has(input, false)
+			end)
+			if onStick then
+				touchStarts[input] = nil
+				return Enum.ContextActionResult.Pass -- (the finger on the move stick only walks: MoveStick)
+			end
 			if state == Enum.UserInputState.Begin then
 				touchStarts[input] = { at = Vector2.new(input.Position.X, input.Position.Y), t = os.clock() }
 			elseif state == Enum.UserInputState.End then
@@ -461,6 +481,8 @@ local function startPlacing()
 						aimAt = at
 						if allowed(at) then
 							create(at, math.min(amount, GodMode.cap()), pattern)
+						else
+							notThere()
 						end
 					end
 				end
@@ -473,6 +495,8 @@ local function startPlacing()
 			local at = aimAt
 			if at and allowed(at) then
 				create(at, math.min(amount, GodMode.cap()), pattern)
+			elseif at then
+				notThere()
 			end
 			painting = true
 			lastPaint = os.clock() + 0.25 -- (a click is a click: painting starts once held and moved)
@@ -867,6 +891,7 @@ local function reveal(first: boolean, skipWait: boolean?)
 		Toast.show("God Mode is still free in beta", Color3.fromRGB(255, 205, 64))
 		return
 	end
+	Net.event(Net.Names.Spawn):FireServer("Seen") -- (shown: the profile remembers it now)
 	C.playSound("purchase")
 	if compact then
 		Toast.show("GOD MODE unlocked: FREE during beta!", Color3.fromRGB(255, 205, 64))
@@ -956,6 +981,7 @@ function GodMode.start()
 				["too far"] = "Too far away",
 				["no free floor there"] = "No free floor there",
 				["full"] = "Your lab is full",
+				["busy"] = "Easy! Wait a moment",
 			} :: any)[why]
 			if words then
 				(require(script.Parent:WaitForChild("Toast")) :: any).show(words)
