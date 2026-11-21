@@ -126,16 +126,19 @@ local function buildConfirm()
 	confirm = window
 end
 
+-- (Owner, 21 Nov 2026: "the view cannot turn near it": GUI buttons on a world screen eat the mouse. The tiles are
+-- pictures; a ClickDetector on the screen part finds the tile under the click (tapOf).)
+local tapOf: { [GuiObject]: () -> () } = {}
+
 -- One tile on a board.
-local function tile(parent: Instance, id: string, order: number, counts: BasePart): (ImageButton, () -> ())
+local function tile(parent: Instance, id: string, order: number, counts: BasePart): (ImageLabel, () -> ())
 	local place = Places.byId[id]
-	local b = Instance.new("ImageButton")
+	local b = Instance.new("ImageLabel")
 	b.Name = id
 	b.LayoutOrder = order
 	b.Image = place.image or ""
 	b.ScaleType = Enum.ScaleType.Crop
 	b.BackgroundColor3 = Color3.fromRGB(30, 36, 52)
-	b.AutoButtonColor = false
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 18)
 	corner.Parent = b
@@ -221,7 +224,7 @@ local function tile(parent: Instance, id: string, order: number, counts: BasePar
 	b.MouseLeave:Connect(function()
 		TweenService:Create(stroke, TweenInfo.new(0.12), { Color = Color3.fromRGB(60, 66, 90), Thickness = 3 }):Play()
 	end)
-	b.Activated:Connect(function()
+	tapOf[b] = function()
 		-- (Fix round 1: a newcomer's stray tap in the first quiet seconds never takes them out of the lab.)
 		local quietUntil = player:GetAttribute("NewcomerUntil")
 		if type(quietUntil) == "number" and time() < quietUntil then -- (FirstVisit sets it in time())
@@ -230,6 +233,9 @@ local function tile(parent: Instance, id: string, order: number, counts: BasePar
 		if here() ~= id then
 			openConfirm(id)
 		end
+	end
+	b.Destroying:Once(function()
+		tapOf[b] = nil
 	end)
 	return b, redraw
 end
@@ -310,6 +316,26 @@ local function buildBoard(screen: BasePart)
 	screen.Destroying:Connect(function()
 		gui:Destroy()
 		boards[screen] = nil
+	end)
+	-- (The click: where the pointer meets the screen, in the screen's pixels, picks the tile there.)
+	local click = Instance.new("ClickDetector")
+	click.Name = "BoardClick"
+	click.MaxActivationDistance = 60
+	click.Parent = screen
+	click.MouseClick:Connect(function()
+		local hit = player:GetMouse().Hit.Position
+		local rel = screen.CFrame:PointToObjectSpace(hit)
+		local px = (screen.Size.X / 2 - rel.X) * gui.PixelsPerStud
+		local py = (screen.Size.Y / 2 - rel.Y) * gui.PixelsPerStud
+		for t, tap in tapOf do
+			if t:IsDescendantOf(gui) then
+				local at, size = t.AbsolutePosition, t.AbsoluteSize
+				if px >= at.X and px <= at.X + size.X and py >= at.Y and py <= at.Y + size.Y then
+					tap()
+					break
+				end
+			end
+		end
 	end)
 	gui.Parent = player:WaitForChild("PlayerGui")
 	boards[screen] = { gui = gui, redraw = redraw }

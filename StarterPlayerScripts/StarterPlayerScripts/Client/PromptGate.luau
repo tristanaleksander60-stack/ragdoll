@@ -16,6 +16,9 @@ local PromptGate = {}
 
 PromptGate.KEEP = table.freeze({ Drive = true, TalkPrompt = true }) :: { [string]: boolean }
 PromptGate.EXTRA_REACH = 4 -- studs a click may come from past the prompt's own reach
+-- (A thing whose own screen takes the click (the Map Board picks the tile under it): its prompt gets no click of its own,
+-- E (USE) and a pad still press it.)
+PromptGate.NO_CLICK = table.freeze({ MapBoardPrompt = true }) :: { [string]: boolean }
 
 type Entry = { prompt: ProximityPrompt, key: Enum.KeyCode, style: Enum.ProximityPromptStyle, exclusivity: Enum.ProximityPromptExclusivity, click: ClickDetector? }
 local entries: { [ProximityPrompt]: Entry } = {}
@@ -88,7 +91,7 @@ local function add(p: ProximityPrompt)
 	end
 	local e: Entry = { prompt = p, key = p.KeyboardKeyCode, style = p.Style, exclusivity = p.Exclusivity, click = nil }
 	entries[p] = e
-	if existing then
+	if existing or PromptGate.NO_CLICK[p.Name] then
 		-- (The thing is clickable already, a terminal's button: its own click does the job; nothing doubled.)
 	elseif part then
 		-- (A local detector: this screen's clicks and taps on the thing.)
