@@ -70,8 +70,8 @@ Shop.WHATS_NEW = table.freeze({
 	{
 		version = "0.33.7",
 		lines = {
+			"New code: HAVOC (750 BOLTS + a free Minigun try). Type it in CODES!",
 			"No more feed computers: throw your ragdolls in yourself!",
-			"Skip a mission (-) or hide the card (=); E uses what you stand at",
 		},
 	},
 	{

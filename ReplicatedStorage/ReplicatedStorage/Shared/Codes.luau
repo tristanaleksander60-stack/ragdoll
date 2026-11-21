@@ -30,6 +30,8 @@ Codes.LIST = table.freeze({
 	table.freeze({ code = "RELEASE", bolts = 500, live = true }),
 	table.freeze({ code = "BETA", bolts = 300, trialWeapon = "Railgun", trialMinutes = 30, beta = true, live = true }),
 	table.freeze({ code = "RAGDOLL", bolts = 250, live = true }),
+	-- (Owner, 21 Nov 2026: a code for the description: 750 BOLTS and a 15-minute Minigun try.)
+	table.freeze({ code = "HAVOC", bolts = 750, trialWeapon = "Minigun", trialMinutes = 15, live = true }),
 	table.freeze({ code = "CHRISTMAS", bolts = 750, cosmetic = "FireTrail", cosmeticHours = 24, from = utc(2026, 12, 1), to = utc(2026, 12, 31, 23, 59, 59), live = true }),
 } :: { Entry })
 
