@@ -125,6 +125,13 @@
     - Server only: the starter is stored on the event job, and each KO during the event is credited once.
     - **Test selv:** press the red button and watch the KO count go up.
 
+22. **Move the portals out of the middle** (owner, 21 Nov): the Solo and Multiplayer portals (and the Map Board with them, item 20) now stand in the middle of the lab, right in front of the dummies, where you spawn.
+    - Move the whole travel corner (Map Board, Solo ring, Multi ring) to the **edge of the hub**: to one side of the spawn view, about 35-50 studs from the spawn, on the rim, near a path.
+    - Visible from the spawn but **never between the spawn and the dummies or machines**.
+    - Nothing in the 40-stud spawn circle or in front of the test row.
+    - Update the `MapBoard` / `PortalService` positions, PathPlan, LabGuide and T159/T163.
+    - **Test selv:** spawn and look straight ahead; only dummies and machines in front, the portals off to the side.
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
