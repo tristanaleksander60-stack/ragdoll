@@ -85,6 +85,11 @@
       - They are heard inside the car (louder, muffled outside sounds a little) and outside (falls off with distance), through SoundMix.
     - **Test selv list:** what to try in each vehicle.
 
+17. **Remove the bullseye now** (owner, 21 Nov, asked again): do all of **V9-0ae** in this hotfix if it is not live yet.
+    - The target part, its rings, sign and drop ring go, and so does the scoring, the BULLSEYE! banner, the cards and the onboarding step.
+    - The cannon lands on the open floor.
+    - Nothing named Bullseye is left in the game.
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
