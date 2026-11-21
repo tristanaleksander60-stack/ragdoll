@@ -11,7 +11,7 @@ Do the rest **in this order**. Each phase builds on the one before: things are f
 **Phase A: quick wins, no layout needed** (players feel them at once)
 1. **V9-0o** grey matte dummies. Every later capture uses them.
 2. **V9-0w** first shot → first person.
-3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive, then **V9-0aa**: the vitals monitor, then **V9-0ab**: falling off any map takes you home, then **V9-0ac**: shots flinch, death drops.
+3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive, then **V9-0aa**: the vitals monitor, then **V9-0ab**: falling off any map takes you home, then **V9-0ac**: shots flinch, death drops, then **V9-0ad**: weapons visible in first person on phones.
 4. **V9-3b** wider unlock gaps (Config and tests only).
 5. **V9-2c** the Z time dial and bubble.
 6. **Publish** through `docs/RELEASE.md` (milestone 1).
@@ -961,6 +961,30 @@ So you rarely get a second or third shot in.
 - Leg hits make it limp.
 
 **Capture:** a 4-frame sequence of 3 flinches and then the fall.
+
+## V9-0ad First person shows the weapon on phones too (owner, 21 Nov; quick, Phase A)
+> "Gør så first person også viser pistoler osv. våben på tlf."
+
+**Problem:** on a phone in first person (the V9-0w switch or the eye button), no gun or tool is visible in the hands. On PC, `Client/Viewmodel` shows the held tool (a clone at 0.55 scale, the forearm, sway, kick, muzzle flash).
+
+**Find the cause in Studio** (device emulator with `DevTouch`, and the real phone path). Check:
+- whether `Viewmodel` is never started or is gated on mouse or keyboard input;
+- whether the clone source (`HeldTool`) is missing on touch because PokeController / TouchShoot equip differently;
+- whether the model sits outside the camera's view on phone aspect ratios (portrait and landscape: the offset is built for 16:9 PC, so it ends up off-screen or behind the near plane);
+- whether a touch-only setting hides it (LocalTransparencyModifier, the QUIET HUD, the low-tier LOD cutting it).
+
+**Fix:**
+- The viewmodel works on every input type.
+- The offset and scale adapt to the screen's aspect and orientation, so the gun sits bottom-right, clear of the SHOOT button and the thumb zone; in portrait it is a little smaller and lower.
+- The sway follows the touch-camera drag (not the mouse).
+- The kick, the muzzle flash and the reload dip play on touch shots (TouchShoot / AmmoClient.onSpent).
+- **All weapons and tools** show in the hands: guns, melee, the grenade, the tools.
+- **The low tier** uses a cheap version (no extra lights, a simple flash), but always shows the weapon.
+- **Pad:** the same check.
+
+**Tests:** T182_ViewmodelTouch. With `DevTouch` on (Studio), in first person, a Popper, a shotgun, a bat and a grenade each show a viewmodel inside the screen bounds on 3 phone sizes (portrait and landscape), and a shot triggers the kick.
+
+**Capture:** phone first person with the Popper, in landscape and portrait.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
