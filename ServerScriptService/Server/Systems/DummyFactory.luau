@@ -31,6 +31,15 @@ if Config.LOOK_V3 then
 	DummyFactory.SHELL_LOW = Config.LOOK_V3_DUMMY_LOW
 	DummyFactory.JOINT = Config.LOOK_V3_DUMMY_ENDS
 end
+-- V9-0o: the grey, matte tone (Config.DUMMY_TONE) over the white.
+local TONE = Config.DUMMY_TONE
+if TONE then
+	DummyFactory.SHELL = TONE.shell
+	DummyFactory.SHELL_LOW = TONE.low
+	DummyFactory.JOINT = TONE.ends
+end
+DummyFactory.MATERIAL = if TONE then TONE.material else Enum.Material.SmoothPlastic
+DummyFactory.REFLECTANCE = if TONE then 0 else 0.04
 DummyFactory.HEAD = 0.86 -- the head's size after the build (a real body's head is smaller than Roblox's)
 -- (Slender human proportions: Roblox's own scales at their thin end, the body type towards Rthro's
 -- longer limbs and smaller head.)
@@ -75,8 +84,8 @@ local function segment(model: Model)
 	end
 	for _, d in model:GetChildren() do
 		if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then
-			d.Material = Enum.Material.SmoothPlastic
-			d.Reflectance = 0.04
+			d.Material = DummyFactory.MATERIAL
+			d.Reflectance = DummyFactory.REFLECTANCE
 			if LOW[d.Name] then
 				d.Color = DummyFactory.SHELL_LOW
 			elseif ENDS[d.Name] then

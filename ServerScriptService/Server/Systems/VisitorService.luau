@@ -23,7 +23,8 @@ VisitorService.VISITORS = 3
 VisitorService.ROOM_KEEP = 8 -- bodies always left free under the cap for events and the horde
 VisitorService.TRY_EVERY = 14 -- s a visitor stays with one thing before it picks another
 VisitorService.SPOTS = { "CannonPad", "StationPad", "TrampolinePad", "LavaPool" }
-local SHIRTS = { Color3.fromRGB(60, 160, 255), Color3.fromRGB(255, 170, 40), Color3.fromRGB(120, 220, 110) }
+-- (V9-0o: no green shirt: green is how a knocked-out body reads.)
+local SHIRTS = { Color3.fromRGB(60, 160, 255), Color3.fromRGB(255, 170, 40), Color3.fromRGB(176, 110, 232) }
 
 type Visitor = { model: Model, pickedAt: number }
 local visitors: { [Player]: { Visitor } } = {}
@@ -100,6 +101,11 @@ local function fill(player: Player)
 		return
 	end
 	want = math.min(want, math.max(0, EventService.dummyRoom() - VisitorService.ROOM_KEEP))
+	-- (V9-0l: and within the lab's one body budget, which GOD MODE bodies share.)
+	want = math.min(want, VisitorService.capFor(player) - #VisitorService.bodiesOf(player) - (require(script.Parent:WaitForChild("DummySpawn")) :: any).pendingFor(player))
+	if want <= 0 then
+		return
+	end
 	local center = Lab.focusFor(player)
 	for i = 1, want do
 		local at = center + Vector3.new(math.random(-20, 20), 3, math.random(15, 40))
@@ -189,7 +195,7 @@ function VisitorService.bodiesOf(player: Player): { Model }
 		end
 	end
 	pcall(function()
-		for _, m in (require(script.Parent:WaitForChild("DummySpawn")) :: any).of(player) do
+		for _, m in (require(script.Parent:WaitForChild("DummySpawn")) :: any).inLab(player) do -- (V9-0l: party guests' too)
 			table.insert(out, m)
 		end
 	end)
@@ -215,6 +221,51 @@ local function puff(at: Vector3)
 	game:GetService("Debris"):AddItem(ball, 0.6)
 end
 
+-- The most bodies a player's lab may hold at once: their device's ragdoll budget (FX_CAPS), which
+-- the row, the visitors and walkers and the GOD MODE ones share.
+function VisitorService.capFor(player: Player): number
+	return ((Config :: any).FX_CAPS :: any)[tierOf(player)].ragdolls
+end
+
+-- V9-0l: makes room for `n` bodies the player asked for (GOD MODE wins over the automatic
+-- visitors): their visitors and walkers puff away, the farthest from them first, never one held or
+-- in a machine. Returns how many went.
+function VisitorService.makeRoom(player: Player, n: number): number
+	local list = visitors[player]
+	if not list or n <= 0 then
+		return 0
+	end
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	local from = if root and root:IsA("BasePart") then root.Position else Lab.originFor(player)
+	local order: { { model: Model, d: number } } = {}
+	for _, v in list do
+		local m = v.model
+		if m.Parent and not m:GetAttribute("Held") and not m:GetAttribute("InMachine") and not m:GetAttribute("MachineHidden") then
+			table.insert(order, { model = m, d = (m:GetPivot().Position - from).Magnitude })
+		end
+	end
+	table.sort(order, function(a, b)
+		return a.d > b.d
+	end)
+	local freed = 0
+	for k = 1, math.min(n, #order) do
+		local m = order[k].model
+		local pelvis = m:FindFirstChild("LowerTorso")
+		if pelvis and pelvis:IsA("BasePart") then
+			puff(pelvis.Position)
+		end
+		downSince[m] = nil
+		m:Destroy()
+		freed += 1
+	end
+	for i = #list, 1, -1 do
+		if not list[i].model.Parent then
+			table.remove(list, i)
+		end
+	end
+	return freed
+end
+
 -- Whether a lab spot (x, z from the lab's spawn) is in a machine's footprint (PathPlan.OBSTACLES).
 local function inMachine(p: Vector2): boolean
 	local PathPlan = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PathPlan")) :: any
@@ -228,33 +279,48 @@ local function inMachine(p: Vector2): boolean
 	return false
 end
 
--- A free spot on the floor near `want` (world): open floor under it (no lava, no machine), nothing
--- standing in the way at body height. nil when none of the tries is free.
-local function freeSpot(origin: Vector3, want: Vector3): Vector3?
+-- Whether one spot (world) is open floor of `owner`'s lab: no machine footprint, a level floor
+-- under it near the lab's height (no lava), nothing solid standing there at body height. Returns
+-- the floor's top, or nil. (V9-0l: GOD MODE checks every body's spot with it too.)
+function VisitorService.floorAt(owner: Player, at: Vector3, tolerance: number?): Vector3?
+	local origin = Lab.originFor(owner)
+	if inMachine(Vector2.new(at.X - origin.X, at.Z - origin.Z)) then
+		return nil
+	end
+	local skip: { Instance } = {}
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if dummies then
+		table.insert(skip, dummies)
+	end
+	for _, p in Players:GetPlayers() do
+		if p.Character then
+			table.insert(skip, p.Character)
+		end
+	end
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	local dummies = Workspace:FindFirstChild("Dummies")
-	params.FilterDescendantsInstances = if dummies then { dummies } else {}
+	params.FilterDescendantsInstances = skip
+	local hit = Workspace:Raycast(Vector3.new(at.X, origin.Y + 30, at.Z), Vector3.new(0, -60, 0), params)
+	if not hit or hit.Normal.Y < 0.9 or math.abs(hit.Position.Y - origin.Y) > (tolerance or 2.5) or string.find(hit.Instance.Name, "Lava") or Lab.ownerAt(hit.Position) ~= owner then
+		return nil
+	end
 	local overlap = OverlapParams.new()
 	overlap.FilterType = Enum.RaycastFilterType.Exclude
-	overlap.FilterDescendantsInstances = if dummies then { dummies } else {}
+	overlap.FilterDescendantsInstances = skip
+	for _, part in Workspace:GetPartBoundsInBox(CFrame.new(hit.Position + Vector3.new(0, 3, 0)), Vector3.new(3, 4.5, 3), overlap) do
+		if part.CanCollide then
+			return nil
+		end
+	end
+	return hit.Position
+end
+
+-- A free spot on the floor of `owner`'s lab near `want` (world). nil when none of the tries is free.
+local function freeSpot(owner: Player, want: Vector3): Vector3?
 	for _, at in { want, want + Vector3.new(4, 0, 0), want + Vector3.new(-4, 0, 0), want + Vector3.new(0, 0, 4), want + Vector3.new(0, 0, -4) } do
-		local lab = Vector2.new(at.X - origin.X, at.Z - origin.Z)
-		if not inMachine(lab) then
-			local hit = Workspace:Raycast(Vector3.new(at.X, origin.Y + 30, at.Z), Vector3.new(0, -60, 0), params)
-			if hit and hit.Normal.Y > 0.9 and math.abs(hit.Position.Y - origin.Y) < 2.5 and not string.find(hit.Instance.Name, "Lava") and Lab.ownerAt(hit.Position) ~= nil then
-				local top = hit.Position
-				local inside = false
-				for _, part in Workspace:GetPartBoundsInBox(CFrame.new(top + Vector3.new(0, 3, 0)), Vector3.new(3, 4.5, 3), overlap) do
-					if part.CanCollide then
-						inside = true
-						break
-					end
-				end
-				if not inside then
-					return top + Vector3.new(0, 3, 0)
-				end
-			end
+		local top = VisitorService.floorAt(owner, at)
+		if top then
+			return top + Vector3.new(0, 3, 0)
 		end
 	end
 	return nil
@@ -284,13 +350,13 @@ local function walkIn(player: Player, list: { Visitor }): boolean
 		-- (In from the rim ahead of the player, a little to one side, so it walks into view.)
 		local a = math.rad(math.random(-40, 40))
 		local dir = Vector3.new(facing.X * math.cos(a) - facing.Z * math.sin(a), 0, facing.X * math.sin(a) + facing.Z * math.cos(a))
-		at = freeSpot(origin, origin + dir * math.random(VisitorService.WALK_IN_RIM - 14, VisitorService.WALK_IN_RIM))
+		at = freeSpot(player, origin + dir * math.random(VisitorService.WALK_IN_RIM - 14, VisitorService.WALK_IN_RIM))
 		if at then
 			break
 		end
 	end
 	if not at then
-		at = freeSpot(origin, here + facing * 20) -- (the rim is busy: closer in, still on free floor)
+		at = freeSpot(player, here + facing * 20) -- (the rim is busy: closer in, still on free floor)
 	end
 	if not at then
 		return false
@@ -391,7 +457,7 @@ function VisitorService.keepTargets(player: Player): number
 		end
 	end
 	-- All that are missing at once (the 3-second rule), within the caps.
-	local room = math.min(cap - #bodies, EventService.dummyRoom() - VisitorService.ROOM_KEEP)
+	local room = math.min(cap - #bodies - (require(script.Parent:WaitForChild("DummySpawn")) :: any).pendingFor(player), EventService.dummyRoom() - VisitorService.ROOM_KEEP) -- (V9-0l: GOD MODE bodies on their way down count)
 	local need = math.max(want - up, VisitorService.NEAR_WANT - near, 0)
 	local n = math.min(need, room)
 	local came = 0
@@ -407,7 +473,8 @@ function VisitorService.keepTargets(player: Player): number
 			local pelvis = m:FindFirstChild("LowerTorso")
 			if m:GetAttribute("WalkIn") and VisitorService.standing(m) and pelvis and pelvis:IsA("BasePart") then
 				local d = Vector3.new(pelvis.Position.X - rootAt.X, 0, pelvis.Position.Z - rootAt.Z)
-				if d.Magnitude > 20 and d.Unit:Dot(facing) < -0.2 then
+				-- (Out of view: behind the player, or far off: then the puff is small and the crowd thins.)
+				if d.Magnitude > 45 or (d.Magnitude > 20 and d.Unit:Dot(facing) < -0.2) then
 					puff(pelvis.Position)
 					downSince[m] = nil
 					m:Destroy()

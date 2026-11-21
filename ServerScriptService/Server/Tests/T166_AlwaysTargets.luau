@@ -114,6 +114,7 @@ return {
 				task.wait(2.2)
 				most = math.max(most, #VisitorService.bodiesOf(player))
 			end
+			cap = VisitorService.capFor(player) -- (the same tier the service uses now: the platform may come in after the test starts)
 			assert(most <= cap, string.format("%d bodies in the lab after mass knockouts (cap %d)", most, cap))
 			return string.format("everything knocked out: %d standing in %.1f s on the real loop (want %d, %s); walkers on free floor; after 3 mass knockouts at most %d bodies (cap %d); none for a newcomer or out of the lab", up, took, want, tier, most, cap)
 		end)

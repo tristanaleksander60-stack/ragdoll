@@ -12,11 +12,16 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
+local TONE = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).DUMMY_TONE
+
 local DummySkins = {}
 
 DummySkins.OVERLAP = 1.12 -- each skin this much longer than its limb: the joints close up
 DummySkins.DETAILS = true -- V7-4: crash-test joint rings, belt and test targets on the mannequins
 DummySkins.TARGET = "rbxassetid://91578612138787" -- the yellow and black crash-test target (art/dummy/target.png)
+-- V9-0o (Config.DUMMY_TONE): matte skins, no shine in the bright sun.
+DummySkins.MATERIAL = if TONE then TONE.material else Enum.Material.SmoothPlastic
+DummySkins.REFLECTANCE = if TONE then 0 else 0.04
 
 local template: Instance? = nil
 local skins: { [BasePart]: MeshPart } = {}
@@ -65,8 +70,8 @@ local function dress(model: Model)
 				skin.CanTouch = false
 				skin.Massless = true
 				skin.TextureID = ""
-				skin.Material = Enum.Material.SmoothPlastic
-				skin.Reflectance = 0.04
+				skin.Material = DummySkins.MATERIAL
+				skin.Reflectance = DummySkins.REFLECTANCE
 				skin.Color = d.Color
 				skin.Size = Vector3.new(d.Size.X, d.Size.Y * DummySkins.OVERLAP, d.Size.Z)
 				skin.CFrame = d.CFrame
@@ -112,8 +117,8 @@ local function dress(model: Model)
 				r.CFrame = at * CFrame.Angles(0, 0, math.rad(90))
 			end
 			r.Color = DARK
-			r.Material = Enum.Material.SmoothPlastic
-			r.Reflectance = 0.06
+			r.Material = DummySkins.MATERIAL
+			r.Reflectance = if TONE then 0 else 0.06
 			r.CanCollide, r.CanQuery, r.CanTouch, r.Massless, r.Anchored = false, false, false, true, false
 			r.CastShadow = false
 			local w = Instance.new("WeldConstraint")

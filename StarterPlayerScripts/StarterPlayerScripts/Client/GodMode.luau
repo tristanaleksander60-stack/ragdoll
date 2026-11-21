@@ -49,6 +49,8 @@ GodMode.REACH = 80 -- studs (DummySpawn.REACH)
 GodMode.PAINT_STEP = 3.5 -- studs the aim moves before a drag paints the next one
 GodMode.PAINT_EVERY = 0.32 -- s between two painted ones (DummySpawn.PAINT_GAP)
 GodMode.TURN_STEP = math.rad(15)
+GodMode.TAP_MOVE = 12 -- px a phone tap may move and still place (more is a camera swipe)
+GodMode.TAP_TIME = 0.35 -- s
 
 local player = Players.LocalPlayer
 local window: any = nil
@@ -76,6 +78,7 @@ local ghostParts: { BasePart } = {}
 local aimAt: Vector3? = nil
 local lastSpot: Vector3? = nil
 local tapped = false -- (a phone: the first tap on the floor this placing)
+local touchStarts: { [InputObject]: { at: Vector2, t: number } } = {}
 local placeBar: ScreenGui? = nil
 local barPattern: any = nil
 local barAmount: any = nil
@@ -125,6 +128,11 @@ end
 -- The most of your own at once (DummySpawn.capFor: what the device's ragdoll budget leaves beside the
 -- row with GOD MODE, else the plain cap).
 function GodMode.cap(): number
+	-- (The server's own number when it has sent it: DummySpawn.refreshCap, attribute GodCap.)
+	local sent = player:GetAttribute("GodCap")
+	if type(sent) == "number" and sent >= 1 then
+		return sent
+	end
 	local FeelTuning = require(Shared:WaitForChild("FeelTuning")) :: any
 	local DeviceTier = require(Shared:WaitForChild("DeviceTier")) :: any
 	local camera = Workspace.CurrentCamera
@@ -184,14 +192,76 @@ local function aimPoint(screen: Vector2?): Vector3?
 	return nil
 end
 
--- Whether a spot may take a body: your own lab, within reach.
+-- The labs a body may go in: your own, and the lab of the Prank Party you are in (PartyLab).
+local function labPlots(): { number }
+	local out: { number } = {}
+	local own = player:GetAttribute("LabPlot")
+	if type(own) == "number" then
+		table.insert(out, own)
+	end
+	local host = player:GetAttribute("PartyLab")
+	if type(host) == "number" then
+		local p = Players:GetPlayerByUserId(host)
+		local hp = p and p:GetAttribute("LabPlot")
+		if type(hp) == "number" then
+			table.insert(out, hp)
+		end
+	end
+	return out
+end
+
+-- Whether a spot may take a body: the server's rule (DummySpawn.spawnMany, VisitorService.floorAt) as
+-- near as this screen sees it: a lab you may create in, within reach, open floor (no machine, no
+-- lava, nothing solid standing there).
 local function allowed(spot: Vector3): boolean
-	local plot = player:GetAttribute("LabPlot")
-	if type(plot) ~= "number" or Zones.plotAt(spot) ~= plot then
+	local plot = Zones.plotAt(spot)
+	if not plot or plot == 0 or not table.find(labPlots(), plot) then
 		return false
 	end
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	return root ~= nil and root:IsA("BasePart") and (root.Position - spot).Magnitude <= GodMode.REACH
+	if not root or not root:IsA("BasePart") or (root.Position - spot).Magnitude > GodMode.REACH then
+		return false
+	end
+	local o = Workspace:GetAttribute("LabOrigin")
+	if typeof(o) == "Vector3" then
+		local PathPlan = require(Shared:WaitForChild("PathPlan")) :: any
+		local p = Vector2.new(spot.X - Zones.plotCenterX(plot), spot.Z - o.Z)
+		for _, ob in PathPlan.OBSTACLES do
+			if ob.at and ob.radius and (p - ob.at).Magnitude < ob.radius + 3 then
+				return false
+			elseif ob.min and ob.max and p.X > ob.min.X - 3 and p.X < ob.max.X + 3 and p.Y > ob.min.Y - 3 and p.Y < ob.max.Y + 3 then
+				return false
+			end
+		end
+	end
+	local skip: { Instance } = {}
+	for _, p in Players:GetPlayers() do
+		if p.Character then
+			table.insert(skip, p.Character)
+		end
+	end
+	for _, name in { "Dummies", "GodGhosts" } do
+		local f = Workspace:FindFirstChild(name)
+		if f then
+			table.insert(skip, f)
+		end
+	end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = skip
+	local hit = Workspace:Raycast(spot + Vector3.new(0, 8, 0), Vector3.new(0, -16, 0), params)
+	if not hit or hit.Normal.Y < 0.9 or string.find(hit.Instance.Name, "Lava") then
+		return false
+	end
+	local overlap = OverlapParams.new()
+	overlap.FilterType = Enum.RaycastFilterType.Exclude
+	overlap.FilterDescendantsInstances = skip
+	for _, part in Workspace:GetPartBoundsInBox(CFrame.new(hit.Position + Vector3.new(0, 3, 0)), Vector3.new(3, 4.5, 3), overlap) do
+		if part.CanCollide then
+			return false
+		end
+	end
+	return true
 end
 
 local function clearGhosts()
@@ -221,6 +291,10 @@ local function ghostPart(folder: Folder, shape: Enum.PartType, size: Vector3, tr
 	return p
 end
 
+-- (The floor checks run 10 times a second, not every frame: 25 rings on a phone.)
+local verdicts: { boolean } = {}
+local verdictAt = 0
+
 local function drawGhosts()
 	local folder = ghosts
 	if not folder then
@@ -232,6 +306,10 @@ local function drawGhosts()
 	local n = math.min(amount, GodMode.cap())
 	local offsets = GodPattern.offsets(pattern, n, spacing, yaw())
 	local at = aimAt
+	local fresh = os.clock() - verdictAt > 0.1
+	if fresh then
+		verdictAt = os.clock()
+	end
 	for i = 1, math.max(#offsets, #ghostParts // 2) do
 		local ring, post = ghostParts[i * 2 - 1], ghostParts[i * 2]
 		if not ring then
@@ -250,7 +328,10 @@ local function drawGhosts()
 		local off = offsets[i]
 		local spot = (at :: Vector3) + Vector3.new(off.X, 0, off.Z)
 		local lift = if pattern == "Tower" then off.Y else 0
-		local colour = if allowed(spot) then Color3.fromRGB(90, 230, 120) else Color3.fromRGB(255, 80, 80)
+		if fresh or verdicts[i] == nil then
+			verdicts[i] = allowed(spot)
+		end
+		local colour = if verdicts[i] then Color3.fromRGB(90, 230, 120) else Color3.fromRGB(255, 80, 80)
 		ring.CFrame = CFrame.new(spot + Vector3.new(0, 0.08 + lift, 0)) * CFrame.Angles(0, 0, math.rad(90))
 		post.CFrame = CFrame.new(spot + Vector3.new(0, 2.3 + lift, 0))
 		ring.Color = colour
@@ -285,6 +366,7 @@ local function stopPlacing()
 	end
 	placing = false
 	painting = false
+	table.clear(touchStarts)
 	clearGhosts()
 	for _, name in { "GodPlaceClick", "GodPlaceBack", "GodPlaceTurn", "GodPlaceSpace", "GodPlaceWheel", "GodPlacePad" } do
 		ContextActionService:UnbindAction(name)
@@ -335,10 +417,10 @@ local function startPlacing()
 		local pad = UserInputService:GetLastInputType().Name:sub(1, 7) == "Gamepad"
 		barHint.Text = if touch then "Tap the floor to place them"
 			elseif pad then "RT place  \u{00B7}  D-pad amount / pattern  \u{00B7}  B done"
-			else "Click: place  \u{00B7}  Drag: paint  \u{00B7}  Q/E: turn  \u{00B7}  Wheel: amount  \u{00B7}  R/F: spacing  \u{00B7}  I: done"
+			else "Click: place  \u{00B7}  Drag: paint  \u{00B7}  Q/E: turn  \u{00B7}  Wheel: amount  \u{00B7}  R/F: spacing  \u{00B7}  X: done"
 		-- (As wide as its words, never wider than the screen less the gutters; the words shrink to fit.)
 		local view = if Workspace.CurrentCamera then Workspace.CurrentCamera.ViewportSize.X else 800
-		barHint.Size = UDim2.fromOffset(math.min(if touch then 300 else 560, view - 32), 26)
+		barHint.Size = UDim2.fromOffset(math.min(if touch then 300 else 640, view - 32), 26)
 		-- (A phone shows no line: the rings at the screen's middle and the bar say it, and an upright
 		-- phone's launchers sit right under the bar.)
 		barHint.Visible = not touch
@@ -365,18 +447,27 @@ local function startPlacing()
 	local priority = Enum.ContextActionPriority.High.Value + 40
 	ContextActionService:BindActionAtPriority("GodPlaceClick", function(_, state: Enum.UserInputState, input: InputObject)
 		if input.UserInputType == Enum.UserInputType.Touch then
-			-- (A phone: the tap is the spot.)
+			-- (A phone: a short tap is the spot; a swipe stays the camera's, so it is passed on.)
 			if state == Enum.UserInputState.Begin then
-				local at = aimPoint(Vector2.new(input.Position.X, input.Position.Y))
-				if at then
-					tapped = true
-					aimAt = at
-					if allowed(at) then
-						create(at, math.min(amount, GodMode.cap()), pattern)
+				touchStarts[input] = { at = Vector2.new(input.Position.X, input.Position.Y), t = os.clock() }
+			elseif state == Enum.UserInputState.End then
+				local start = touchStarts[input]
+				touchStarts[input] = nil
+				local here = Vector2.new(input.Position.X, input.Position.Y)
+				if start and (here - start.at).Magnitude <= GodMode.TAP_MOVE and os.clock() - start.t <= GodMode.TAP_TIME then
+					local at = aimPoint(here)
+					if at then
+						tapped = true
+						aimAt = at
+						if allowed(at) then
+							create(at, math.min(amount, GodMode.cap()), pattern)
+						end
 					end
 				end
+			elseif state == Enum.UserInputState.Cancel then
+				touchStarts[input] = nil
 			end
-			return Enum.ContextActionResult.Sink
+			return Enum.ContextActionResult.Pass
 		end
 		if state == Enum.UserInputState.Begin then
 			local at = aimAt
@@ -396,7 +487,7 @@ local function startPlacing()
 			stopPlacing()
 		end
 		return Enum.ContextActionResult.Sink
-	end, false, priority, Enum.KeyCode.Escape, Enum.KeyCode.ButtonB, Enum.KeyCode.I)
+	end, false, priority, Enum.KeyCode.X, Enum.KeyCode.Backspace, Enum.KeyCode.ButtonB) -- (I is the camera's zoom; Esc is the Roblox menu)
 	ContextActionService:BindActionAtPriority("GodPlaceTurn", function(_, state, input)
 		if state == Enum.UserInputState.Begin then
 			turn += if input.KeyCode == Enum.KeyCode.Q then -GodMode.TURN_STEP else GodMode.TURN_STEP
@@ -625,7 +716,7 @@ local function build()
 	actions.LayoutOrder = 9
 	actions.Parent = box
 	C.list(actions, Enum.FillDirection.Horizontal, 10, Enum.HorizontalAlignment.Center)
-	local place = C.Button({ name = "Place", text = if UserInputService.KeyboardEnabled and not isTouch() then "PLACE (I)" else "PLACE", icon = "god", role = "go", size = UDim2.new(0.58, 0, 1, 0), layoutOrder = 1, parent = actions, onActivated = startPlacing })
+	local place = C.Button({ name = "Place", text = "PLACE", icon = "god", role = "go", size = UDim2.new(0.58, 0, 1, 0), layoutOrder = 1, parent = actions, onActivated = startPlacing })
 	C.Button({ name = "ClearMine", text = "CLEAR MINE", role = "danger", size = UDim2.new(0.36, 0, 1, 0), layoutOrder = 2, parent = actions, onActivated = function()
 		Net.event(Net.Names.Spawn):FireServer("Clear")
 	end })
@@ -748,15 +839,32 @@ end
 
 -- The beta gift on this screen: the first time a golden reveal, the picture popping in under it and
 -- flying to the GOD button; later days a small chip.
-local function reveal(first: boolean)
+local function reveal(first: boolean, skipWait: boolean?)
+	local NoticeState = require(script.Parent:WaitForChild("NoticeState")) :: any
+	-- (Not in a fight, and not over another big moment: the Notify big slot, then 2 s with no shot;
+	-- given up after 30 s, when the gift still works and the GOD button says it.)
+	if not skipWait then
+		local claimed = false
+		pcall(function()
+			claimed = (require(script.Parent:WaitForChild("Notify")) :: any).waitBig("GodReveal", 30)
+		end)
+		local t0 = os.clock()
+		while NoticeState.busy() and os.clock() - t0 < 20 do
+			task.wait(0.5)
+		end
+		if not claimed or NoticeState.busy() then
+			return
+		end
+	end
 	local compact = false
 	pcall(function()
-		compact = (require(script.Parent:WaitForChild("NoticeState")) :: any).compact()
+		compact = NoticeState.compact()
 	end)
-	local keys = UserInputService.KeyboardEnabled and not isTouch()
+	local shown = launcherOnScreen(player:WaitForChild("PlayerGui"))
+	local where = if shown and shown.Name == "God" then "on the left" else "in MENU"
 	local Toast = require(script.Parent:WaitForChild("Toast")) :: any
 	if not first then
-		Toast.show(if keys then "God Mode is still free in beta: press I" else "God Mode is still free in beta", Color3.fromRGB(255, 205, 64))
+		Toast.show("God Mode is still free in beta", Color3.fromRGB(255, 205, 64))
 		return
 	end
 	C.playSound("purchase")
@@ -764,7 +872,7 @@ local function reveal(first: boolean)
 		Toast.show("GOD MODE unlocked: FREE during beta!", Color3.fromRGB(255, 205, 64))
 	else
 		pcall(function()
-			(require(script.Parent:WaitForChild("Banner")) :: any).show({ title = "GOD MODE UNLOCKED", sub = if keys then "FREE during beta! Press I" else "FREE during beta!", color = Color3.fromRGB(255, 196, 46), icon = "god", emoji = "\u{2728}", priority = 4 })
+			(require(script.Parent:WaitForChild("Banner")) :: any).show({ title = "GOD MODE UNLOCKED", sub = "FREE during beta! GOD is " .. where, color = Color3.fromRGB(255, 196, 46), icon = "god", emoji = "\u{2728}", priority = 3 })
 		end)
 	end
 	-- The picture pops in under the banner, then flies to its button.
@@ -820,14 +928,8 @@ function GodMode.start()
 			end
 		end
 	end)
-	-- I opens the window (or leaves placing: bound while placing). (G is Grab.)
-	ContextActionService:BindAction("GodOpen", function(_, state)
-		if state == Enum.UserInputState.Begin and not placing and GodMode.launcherShown() then
-			Controller.toggle("God")
-			return Enum.ContextActionResult.Sink
-		end
-		return Enum.ContextActionResult.Pass
-	end, false, Enum.KeyCode.I) -- (G is Grab: I opens GOD MODE)
+	-- (No key opens the window: every free letter is taken (G is Grab, I and O the camera's zoom). The
+	-- GOD button on the left, or MENU on a phone, opens it.)
 	-- (Studio: the player attribute DevGodPlace starts and stops placing, for checks and captures.)
 	if RunService:IsStudio() then
 		player:GetAttributeChangedSignal("DevGodPlace"):Connect(function()
@@ -849,9 +951,19 @@ function GodMode.start()
 			stopPlacing()
 			Controller.open("God")
 		elseif what == "Refused" and type(why) == "string" and placing then
-			(require(script.Parent:WaitForChild("Toast")) :: any).show(if why == "only in your own lab" then "Only in your own lab" elseif why == "too far" then "Too far away" else tostring(why))
+			local words = ({
+				["only in your own lab"] = "Only in your own lab",
+				["too far"] = "Too far away",
+				["no free floor there"] = "No free floor there",
+				["full"] = "Your lab is full",
+			} :: any)[why]
+			if words then
+				(require(script.Parent:WaitForChild("Toast")) :: any).show(words)
+			end
 		elseif what == "Granted" then
-			task.spawn(reveal, why == "first")
+			-- ("asked": they opened it themselves just now (the SHOP card, a creation): the reveal at
+			-- once, no waiting for a calm moment.)
+			task.spawn(reveal, why == "first" or why == "asked", why == "asked")
 		end
 	end)
 end

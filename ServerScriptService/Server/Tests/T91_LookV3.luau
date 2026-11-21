@@ -64,6 +64,36 @@ return {
 		end
 		assert(count == labs * 2, string.format("%d cars for %d labs", count, labs))
 		assert(#VehicleService.carsForTest() >= count, "service lost track of a car")
-		return string.format("%d labs, %d cars; lines %d/%d/%d", labs, count, #DummyLines.FEAR, #DummyLines.OUCH, #DummyLines.IDLE)
+		-- V9-0o (Config.DUMMY_TONE): a fresh dummy is a mid-light grey (never white, darker than the hub
+		-- floor pads), matte (Plastic, no reflectance), far from the dead green.
+		local tone = ""
+		local TONE = (Config :: any).DUMMY_TONE
+		if TONE then
+			local DummyFactory = require(Systems:WaitForChild("DummyFactory")) :: any
+			local probe = DummyFactory.spawn(Vector3.new(0, 1, -60), nil)
+			local DEAD = Color3.fromRGB(96, 196, 84)
+			local floor = (Config :: any).HUB_FLOOR_PADS
+			local floorLum = if floor then (floor.color.R + floor.color.G + floor.color.B) / 3 else 1
+			local parts = 0
+			local ok, err = pcall(function()
+				for _, d in probe:GetChildren() do
+					if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then
+						parts += 1
+						local c = d.Color
+						local lum = (c.R + c.G + c.B) / 3
+						assert(lum >= 105 / 255 and lum <= 175 / 255, string.format("%s is %d/255 bright: not the mid-light grey", d.Name, math.floor(lum * 255)))
+						assert(lum < floorLum, d.Name .. " is not darker than the hub floor pads")
+						assert(math.abs(c.R - c.G) < 0.06 and math.abs(c.G - c.B) < 0.06, d.Name .. " is not a neutral grey")
+						assert(d.Reflectance == 0 and d.Material == TONE.material and d.Material ~= Enum.Material.SmoothPlastic, d.Name .. " shines (material " .. d.Material.Name .. ", reflectance " .. d.Reflectance .. ")")
+						local dg = math.abs(c.R - DEAD.R) + math.abs(c.G - DEAD.G) + math.abs(c.B - DEAD.B)
+						assert(dg > 0.4, d.Name .. " is too close to the dead green")
+					end
+				end
+			end)
+			probe:Destroy()
+			assert(ok, err)
+			tone = string.format("; %d dummy parts grey %d/255, matte %s, reflectance 0", parts, math.floor(TONE.shell.R * 255), TONE.material.Name)
+		end
+		return string.format("%d labs, %d cars; lines %d/%d/%d", labs, count, #DummyLines.FEAR, #DummyLines.OUCH, #DummyLines.IDLE) .. tone
 	end,
 }

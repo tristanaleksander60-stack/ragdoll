@@ -253,6 +253,17 @@ local Config = {
 	LOOK_V3_DUMMY = Color3.fromRGB(240, 240, 238), -- the plain white of a test mannequin
 	LOOK_V3_DUMMY_LOW = Color3.fromRGB(232, 232, 230), -- forearms and shins, a hair darker
 	LOOK_V3_DUMMY_ENDS = Color3.fromRGB(222, 222, 220), -- hands and feet
+	-- V9-0o (owner, 21 Nov 2026: "make the ragdolls greyer so they are easier to see, and more matte, the sun
+	-- shines a lot now"): a mid-light neutral grey that the bright light never blows out to white, darker
+	-- than the hub floor pads (216, 206, 190) and the sky, far from the dead green; matte (Plastic,
+	-- Reflectance 0) on the body and the client skins. The crash-test details keep their colours; the
+	-- crowd in clothes is not touched. false = the white of LOOK_V3.
+	DUMMY_TONE = {
+		shell = Color3.fromRGB(138, 140, 145), -- (172 still blew out to white in the V9-0b sun: measured side by side)
+		low = Color3.fromRGB(128, 130, 135), -- forearms and shins, a shade darker
+		ends = Color3.fromRGB(116, 118, 124), -- hands and feet
+		material = Enum.Material.Plastic,
+	} :: any,
 	-- v3 Phase C: cars in every lab (VehicleService builds them, VehicleClient drives them on the
 	-- driver's screen). Speeds in studs/s; a hit over HitMath.MACHINE_MIN_SPEED knocks a dummy.
 	VEHICLES = table.freeze({

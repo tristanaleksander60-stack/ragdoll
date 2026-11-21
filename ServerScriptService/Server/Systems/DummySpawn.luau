@@ -64,7 +64,7 @@ end
 -- else the first try starts the free trial. False = refused ("god").
 function DummySpawn.letIn(player: Player): boolean
 	if Config.GOD_FREE_BETA then
-		DummySpawn.grantBeta(player)
+		DummySpawn.grantBeta(player, true)
 		return DummySpawn.hasGod(player)
 	end
 	return DummySpawn.startTrial(player)
@@ -245,16 +245,65 @@ end
 
 ------------------------------------------------------------------------------------------------
 -- V9-0l (owner, 21 Nov 2026: "make GOD MODE much better so it is easy to spawn e.g. 10 quickly where you
--- want"): a whole pattern at once where you aim (Shared/GodPattern). The server checks it all: a known
--- kind and pattern, an amount 1-25 cut to the cap, the aim point in your own lab within REACH, each
--- body's spot in your own lab too (others are left out), and a pace. The oldest of yours make room when
--- the cap is hit; they come down one after another over about 0.3 s, one beam over the middle.
+-- want"): a whole pattern at once where you aim (Shared/GodPattern). The server checks it all:
+--   * a known kind and pattern, an amount 1-25 cut to the cap, numbers that are numbers;
+--   * the aim in your own lab (or the lab of the Prank Party you are in), within REACH;
+--   * each body's spot: open floor of that lab (VisitorService.floorAt: no machine, no lava, nothing
+--     solid there, near the lab's height); others are left out;
+--   * room: the lab's one body budget (the device's FX_CAPS ragdolls, shared with the row and the
+--     visitors: GOD MODE wins, visitors puff away to make room), the server's (EventService), and
+--     your own cap; your oldest make room first;
+--   * a pace: MANY_GAP between patterns, PAINT_GAP between painted singles, PER_MINUTE bodies a minute.
+-- They come down over STAGGER s, one beam over the middle; the lab's player simulates them.
 
 DummySpawn.MANY_GAP = 1 -- s between two patterns
 DummySpawn.PAINT_GAP = 0.3 -- s between two single ones (held and dragged)
 DummySpawn.STAGGER = 0.3 -- s the bodies of one pattern come down over
+DummySpawn.PER_MINUTE = 60 -- bodies a player may create in any minute (painting never churns nonstop)
+DummySpawn.FLOOR_TOLERANCE = 6 -- studs a spot's floor may lie off the lab's height
 
 local lastMany: { [Player]: number } = {}
+local made: { [Player]: { number } } = {} -- when each body of the last minute was made
+local pending: { [number]: number } = {} -- lab owner's UserId -> bodies on their way down
+
+-- The lab a player may create in at `point`: their own, or the lab of the Prank Party they are in.
+function DummySpawn.labOwnerFor(player: Player, point: Vector3): Player?
+	local Lab = require(script.Parent:WaitForChild("Lab")) :: any
+	local owner = Lab.ownerAt(point)
+	if owner == player then
+		return owner
+	end
+	if owner and (Config :: any).PRANK_PARTY and player:GetAttribute("PartyLab") == owner.UserId then
+		return owner
+	end
+	return nil
+end
+
+-- Every GOD MODE body in `owner`'s lab (theirs and their party guests'). VisitorService counts them.
+function DummySpawn.inLab(owner: Player): { Model }
+	local out: { Model } = {}
+	for _, list in mine do
+		for _, m in list do
+			if m.Parent and m:GetAttribute("GodLab") == owner.UserId then
+				table.insert(out, m)
+			end
+		end
+	end
+	return out
+end
+
+-- Bodies on their way down into `owner`'s lab (VisitorService leaves room for them).
+function DummySpawn.pendingFor(owner: Player): number
+	return pending[owner.UserId] or 0
+end
+
+-- The cap the client previews with (attribute GodCap): the server's own number.
+local function refreshCap(player: Player)
+	if player.Parent then
+		player:SetAttribute("GodCap", capFor(player))
+	end
+end
+DummySpawn.refreshCap = refreshCap
 
 function DummySpawn.spawnMany(player: Player, kind: unknown, at: unknown, pattern: unknown, count: unknown, spacing: unknown, yaw: unknown): (number, string?)
 	if not Config.DUMMY_TYPES then
@@ -269,11 +318,11 @@ function DummySpawn.spawnMany(player: Player, kind: unknown, at: unknown, patter
 		return 0, "bad request"
 	end
 	local point = at :: Vector3
-	if point.X ~= point.X or point.Y ~= point.Y or point.Z ~= point.Z then
+	if point.X ~= point.X or point.Y ~= point.Y or point.Z ~= point.Z or point.Magnitude > 1e6 then
 		return 0, "bad request"
 	end
-	local Lab = require(script.Parent:WaitForChild("Lab")) :: any
-	if Lab.ownerAt(point) ~= player then
+	local owner = DummySpawn.labOwnerFor(player, point)
+	if not owner then
 		return 0, "only in your own lab"
 	end
 	local character = player.Character
@@ -285,44 +334,82 @@ function DummySpawn.spawnMany(player: Player, kind: unknown, at: unknown, patter
 		return 0, "god"
 	end
 	local cap = capFor(player)
-	local n = math.clamp(math.floor(count), 1, math.min(25, cap))
+	local n = math.clamp(math.floor(math.clamp(count, 1, 25)), 1, math.min(25, cap))
 	local now = os.clock()
 	local gap = if n == 1 and pattern == "Point" then DummySpawn.PAINT_GAP else DummySpawn.MANY_GAP
 	if now - (lastMany[player] or -math.huge) < gap then
 		return 0, "slow down"
 	end
+	local times = made[player] or {}
+	made[player] = times
+	while #times > 0 and now - times[1] > 60 do
+		table.remove(times, 1)
+	end
+	n = math.min(n, DummySpawn.PER_MINUTE - #times)
+	if n <= 0 then
+		return 0, "slow down"
+	end
 	lastMany[player] = now
-	-- Each spot: inside your own lab, standing on its floor (a tower or the rain from above it).
+	-- Each spot: open floor of that lab (a tower stacks up from it, the rain falls onto it).
+	local VisitorService = require(script.Parent:WaitForChild("VisitorService")) :: any
 	local spots: { Vector3 } = {}
-	for _, off in GodPattern.offsets(pattern, n, spacing, yaw) do
-		local flat = point + Vector3.new(off.X, 0, off.Z)
-		if Lab.ownerAt(flat) == player then
-			table.insert(spots, flat + Vector3.new(0, off.Y, 0))
+	for _, off in GodPattern.offsets(pattern, n, math.clamp(spacing, GodPattern.SPACING_MIN, GodPattern.SPACING_MAX), yaw) do
+		local floor = VisitorService.floorAt(owner, point + Vector3.new(off.X, 0, off.Z), DummySpawn.FLOOR_TOLERANCE)
+		if floor then
+			table.insert(spots, floor + Vector3.new(0, off.Y, 0))
 		end
 	end
 	if #spots == 0 then
-		return 0, "only in your own lab"
+		return 0, "no free floor there"
 	end
+	-- Room. GOD MODE wins over the automatic visitors; then the player's own oldest make room.
+	local EventService = require(script.Parent:WaitForChild("EventService")) :: any
 	local list = mine[player] or {}
 	mine[player] = list
-	while #list + #spots > cap and #list > 0 do
+	local labCap = VisitorService.capFor(owner)
+	local function labUsed(): number
+		return #VisitorService.bodiesOf(owner) + DummySpawn.pendingFor(owner)
+	end
+	local function serverFree(): number
+		return EventService.dummyRoom() - VisitorService.ROOM_KEEP
+	end
+	if labUsed() + #spots > labCap then
+		VisitorService.makeRoom(owner, labUsed() + #spots - labCap)
+	end
+	local fits = math.min(#spots, cap, math.max(0, labCap - labUsed()) + #list, math.max(0, serverFree()) + #list)
+	if fits <= 0 then
+		return 0, "full"
+	end
+	while #spots > fits do
+		table.remove(spots)
+	end
+	while #list > 0 and (#list + #spots > cap or labUsed() + #spots > labCap or serverFree() < #spots) do
 		local oldest = table.remove(list, 1)
 		if oldest then
 			oldest:Destroy()
 		end
 	end
+	for _ = 1, #spots do
+		table.insert(times, now)
+	end
 	local DummyFactory = require(script.Parent:WaitForChild("DummyFactory")) :: any
 	local facingTo = root.Position
-	if DummySpawn.godGated() or Config.GOD_FREE_BETA then
-		beam(point, player:GetAttribute("God") == true)
-	end
+	beam(point, player:GetAttribute("God") == true)
+	local key = owner.UserId
+	pending[key] = (pending[key] or 0) + #spots
 	for i, spot in spots do
 		task.delay((i - 1) * DummySpawn.STAGGER / math.max(1, #spots), function()
-			if not player.Parent then
+			pending[key] = math.max(0, (pending[key] or 1) - 1)
+			if pending[key] == 0 then
+				pending[key] = nil
+			end
+			if not player.Parent or not owner.Parent then
 				return
 			end
-			local model = DummyFactory.spawn(spot + Vector3.new(0, 4, 0), facingTo, player)
+			-- (The lab's player simulates it, as every body in that lab.)
+			local model = DummyFactory.spawn(spot + Vector3.new(0, 4, 0), facingTo, owner)
 			model.Name = "SpawnedDummy"
+			model:SetAttribute("GodLab", owner.UserId)
 			dress(model, spec)
 			table.insert(list, model)
 			-- (Never past the cap, even when two patterns overlap in time.)
@@ -341,63 +428,80 @@ end
 -- V9-0l (owner, 21 Nov 2026: "give everyone GOD MODE after a few seconds where it fits, and show it as
 -- free because we just opened and are still in beta"; Config.GOD_FREE_BETA): everyone gets GOD MODE free,
 -- server-side (attribute GodBeta: the same caps and beam as the pass), at a moment that fits:
---   * a newcomer after their first wow (BETA_KOS takedowns or a cannon launch), at most BETA_LATEST s
---     in, once nothing has happened for BETA_CALM s;
---   * a returning player BETA_RETURNING s after joining.
--- The first time it is a golden reveal on the screen (remote Spawn "Granted" first=true; remembered in the
--- profile, eco.codes GODBETA); later visits a small chip at most once a UTC day (eco.daily GodChip).
+--   * a newcomer never inside the busy first minute (BETA_EARLIEST s), then after a first wow
+--     (BETA_KOS takedowns or a cannon launch) or at BETA_LATEST s, once BETA_CALM s have passed
+--     without a shot or a takedown;
+--   * a returning player BETA_RETURNING s after joining;
+--   * anyone at once who opens it themselves (the SHOP's FREE · BETA card, or a creation).
+-- The first time it is a golden reveal on the screen (remote Spawn "Granted" "first"; remembered in the
+-- profile as eco.codes GODBETA, a name no code has); later visits a small chip at most once a UTC day
+-- (eco.daily GodChip). The reveal waits for the profile, so a returning player never sees it twice.
 -- Who bought the pass is a FOUNDER (MoneyService: attribute and tag, the gold beam) and keeps it for good.
 
 DummySpawn.BETA_KOS = 3
-DummySpawn.BETA_LATEST = 90 -- s
-DummySpawn.BETA_CALM = 2 -- s without a takedown before the reveal
+DummySpawn.BETA_EARLIEST = 60 -- s: never inside the busy first minute
+DummySpawn.BETA_LATEST = 120 -- s
+DummySpawn.BETA_CALM = 3 -- s without a shot or a takedown before the reveal
 DummySpawn.BETA_RETURNING = 10 -- s
 
 local granted: { [Player]: boolean } = {}
+local lastShot: { [Player]: number } = {}
 
--- Whether a newcomer's moment has come: a first wow (BETA_KOS takedowns since joining, or a cannon
--- launch) or BETA_LATEST s in, and BETA_CALM s with nothing happening. Pure (T167).
+-- Whether a newcomer's moment has come. Pure (T167).
 function DummySpawn.betaDue(kosSinceJoin: number, launched: boolean, elapsed: number, calmFor: number): boolean
 	local wow = kosSinceJoin >= DummySpawn.BETA_KOS or launched
-	return (wow or elapsed >= DummySpawn.BETA_LATEST) and calmFor >= DummySpawn.BETA_CALM
+	return elapsed >= DummySpawn.BETA_EARLIEST and (wow or elapsed >= DummySpawn.BETA_LATEST) and calmFor >= DummySpawn.BETA_CALM
 end
 
 -- Tests: forget a player's beta gift this visit.
 function DummySpawn.resetBetaForTest(player: Player)
 	granted[player] = nil
 	player:SetAttribute("GodBeta", nil)
+	refreshCap(player)
 end
 
--- Gives `player` the beta GOD MODE now (once a visit). True if it was given now.
-function DummySpawn.grantBeta(player: Player): boolean
+-- Gives `player` the beta GOD MODE now (once a visit). True if it was given now. `asked`: they opened
+-- it themselves (the SHOP card, a creation): their screen shows it at once.
+function DummySpawn.grantBeta(player: Player, asked: boolean?): boolean
 	if not Config.GOD_FREE_BETA or granted[player] or not player.Parent then
 		return false
 	end
 	granted[player] = true
 	player:SetAttribute("GodBeta", true)
-	local first, chip = true, false
-	pcall(function()
+	refreshCap(player)
+	-- The reveal: once the profile is read (the first time ever, a day's chip, or nothing).
+	task.spawn(function()
 		local ProgressService = require(script.Parent:WaitForChild("ProgressService")) :: any
+		local waited = 0
+		while player.Parent and not ProgressService.ecoOf(player) and waited < 20 do
+			task.wait(0.5)
+			waited += 0.5
+		end
 		local e = ProgressService.ecoOf(player)
-		if e then
-			(require(Shared:WaitForChild("Economy")) :: any).rollDay(e, os.time() // 86400) -- (the chip is once a UTC day)
-			first = not e.codes.GODBETA
-			chip = not first and not e.daily.GodChip
-			e.codes.GODBETA = true
-			if not first then
-				e.daily.GodChip = true
-			end
-			ProgressService.ecoChanged(player)
+		if not e or not player.Parent then
+			return -- (no profile: no reveal rather than a wrong one)
+		end
+		local Economy = require(Shared:WaitForChild("Economy")) :: any
+		Economy.rollDay(e, os.time() // 86400) -- (the chip is once a UTC day)
+		local first = not e.codes.GODBETA
+		local chip = not first and not e.daily.GodChip
+		e.codes.GODBETA = true
+		if not first then
+			e.daily.GodChip = true
+		end
+		ProgressService.ecoChanged(player)
+		if first and asked then
+			Net.event(Net.Names.Spawn):FireClient(player, "Granted", "asked")
+		elseif first or chip then
+			Net.event(Net.Names.Spawn):FireClient(player, "Granted", if first then "first" else "chip")
 		end
 	end)
-	if first or chip then
-		Net.event(Net.Names.Spawn):FireClient(player, "Granted", if first then "first" else "chip")
-	end
 	return true
 end
 
 -- When a joining player gets it (the moment that fits).
 local function scheduleBeta(player: Player)
+	task.delay(5, refreshCap, player) -- (the device is known by then: SessionStats)
 	if not Config.GOD_FREE_BETA then
 		return
 	end
@@ -421,16 +525,17 @@ local function scheduleBeta(player: Player)
 			return ProgressService.takedownsOf(player) or 0
 		end
 		local startKos = kos()
-		local lastKos, calmSince = startKos, os.clock()
+		local lastKos, lastKoAt = startKos, os.clock()
 		while player.Parent and not granted[player] do
 			task.wait(0.5)
 			local k = kos()
 			if k ~= lastKos then
 				lastKos = k
-				calmSince = os.clock()
+				lastKoAt = os.clock()
 			end
 			local launched = (tonumber(player:GetAttribute("CannonShots")) or 0) > 0
-			if DummySpawn.betaDue(k - startKos, launched, os.clock() - started, os.clock() - calmSince) then
+			local calmFor = os.clock() - math.max(lastKoAt, lastShot[player] or 0)
+			if DummySpawn.betaDue(k - startKos, launched, os.clock() - started, calmFor) then
 				DummySpawn.grantBeta(player)
 			end
 		end
@@ -460,7 +565,7 @@ function DummySpawn.start()
 			return
 		end
 		if what == "Claim" then
-			DummySpawn.grantBeta(player) -- (V9-0l: the SHOP's FREE · BETA card asks for it now; beta only, once)
+			DummySpawn.grantBeta(player, true) -- (V9-0l: the SHOP's FREE · BETA card asks for it now; beta only, once)
 			return
 		end
 		if what == "Clear" then
@@ -478,22 +583,35 @@ function DummySpawn.start()
 		if what ~= "Spawn" then
 			return
 		end
-		local model, why = DummySpawn.spawnFor(player, kind, at)
-		if not model and why and why ~= "slow down" then
+		-- (The old single creation: one body, through the same checks as a pattern.)
+		local n, why = DummySpawn.spawnMany(player, kind, at, "Point", 1, 4, 0)
+		if n == 0 and why and why ~= "slow down" then
 			remote:FireClient(player, "Refused", why)
 		end
 	end)
-	-- (V9-0l: the free beta GOD MODE, at a moment that fits.)
-	Players.PlayerAdded:Connect(scheduleBeta)
+	-- (V9-0l: the free beta GOD MODE, at a moment that fits; its "calm" counts shots too.)
+	Net.event(Net.Names.Shot).OnServerEvent:Connect(function(player: Player)
+		lastShot[player] = os.clock()
+	end)
+	local function joined(player: Player)
+		scheduleBeta(player)
+		player:GetAttributeChangedSignal("God"):Connect(function()
+			refreshCap(player)
+		end)
+	end
+	Players.PlayerAdded:Connect(joined)
 	for _, p in Players:GetPlayers() do
-		scheduleBeta(p)
+		joined(p)
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		DummySpawn.clear(player)
 		last[player] = nil
 		trialUsed[player] = nil
 		lastMany[player] = nil
+		made[player] = nil
 		granted[player] = nil
+		lastShot[player] = nil
+		pending[player.UserId] = nil
 	end)
 end
 
