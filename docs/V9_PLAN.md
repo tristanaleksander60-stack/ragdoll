@@ -152,6 +152,29 @@
     - **Server checks:** the draw time and power are capped on the server, and the hit is checked like a gun round. It uses the Ammo/HitService path (arrows: unlimited, no reload).
     - **Test selv:** a short tap vs a full draw on a dummy 30 studs away; a headshot at full draw.
 
+24. **No "hold E" anywhere; press the computer itself** (owner, 21 Nov):
+    - Remove every ProximityPrompt **hold** (HoldDuration > 0) and the "E" prompts on terminals, machines, booths and boards.
+    - **The terminals:** used by clicking or tapping the button on their screen (SurfaceGui/ClickDetector), with the touch target big enough on phones.
+    - **Pads:** a pad user focuses the terminal they look at within reach and presses A or ButtonX once; no hold.
+    - **Keep a single instant key only where there is nothing to click** (getting into a car, Talk): E pressed once, never held.
+    - Search for `HoldDuration` and `ProximityPrompt` and fix them all.
+25. **The yellow thing on top of the terminals:** a plain yellow cylinder sits on top of every computer (the capture). It is probably the spare-dummy chute (V9-2b) drawn as a bare cylinder, or a leftover part.
+    - Make it a real chute/hopper model that fits the terminal's style, or remove it if the spare drop can come from elsewhere (for example a small hatch on the floor beside it).
+    - No bare primitive shapes on terminals.
+26. **New cars, from the Creator Store, that drive smoothly and look cool** (owner: "just remove the cars you have now and put in ones others made that work and that people think are cool"):
+    - Replace the current vehicles with well-rated, popular, ready-made Roblox car kits/models (for example a proven A-Chassis-style car, or a top free "drivable car" kit with good reviews):
+      - smooth steering and real suspension;
+      - wheels that turn and spin;
+      - an interior for the cockpit (item 16), lights, engine sounds;
+      - malware pass on every script (keep only the vehicle's own drive scripts after reading them, remove anything that requires, teleports or fetches from outside).
+      - Pick 3-4 that look cool to players: a sports car, a pickup or monster truck, a jeep, a go-kart.
+      - No brands or logos.
+    - **Hook them into our systems:**
+      - our Drive prompt, our seat and ownership rules, the speedometer and cockpit, dummy hits through PropContacts, the shots and blasts reactions (V9-0x), the out-of-bounds return;
+      - the `VehicleService` reset.
+    - **Steering must feel smooth:** gradual steering with speed-sensitive turning, no snapping, no spinning in circles.
+    - **Test selv:** drive each car in a figure eight and into a row of dummies.
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
