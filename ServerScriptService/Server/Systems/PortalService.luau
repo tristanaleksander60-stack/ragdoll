@@ -258,7 +258,13 @@ function PortalService.buildPortals(folder: Instance, origin: Vector3)
 				-- green, each with its word and glyph on the keystone; same spot, same touch.)
 				local MapBoard = require(script.Parent:WaitForChild("MapBoard")) :: any
 				local at = origin + Vector3.new(-66, 0, z)
-				local gm, swirl = MapBoard.gate(folder, at, origin + Vector3.new(0, 0, z), if name == "PortalSolo" then "Solo" else "Multi", MapBoard.RING_SMALL)
+				local faceTo = origin + Vector3.new(0, 0, z)
+				-- (V9-NOW 20 + 22: with Config.TRAVEL_CORNER the two portals stand either side of the MAPS board on the
+				-- west rim (MapBoard.TRAVEL_SPOTS): one travel corner, out of the spawn's way.)
+				if Config.TRAVEL_CORNER then
+					at, faceTo = MapBoard.travelSpot(origin, name)
+				end
+				local gm, swirl = MapBoard.gate(folder, at, faceTo, if name == "PortalSolo" then "Solo" else "Multi", MapBoard.RING_SMALL)
 				gm.Name = name
 				swirl:SetAttribute("Portal", name)
 				local lastTouch: { [Player]: number } = {}

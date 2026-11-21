@@ -31,6 +31,23 @@ local function halfWidth(w: number, h: number): number
 	return math.deg(math.atan(math.tan(math.rad(35)) * w / h))
 end
 
+-- (V9-NOW 18: under Config.NO_NEON the rune is dulled: its colour is then the kind's, calmed (NoNeon.dull).)
+local function sameKind(gate: Instance, kind: string): boolean
+	local MapBoard = require(script.Parent.Parent:WaitForChild("Systems"):WaitForChild("MapBoard")) :: any
+	local NoNeon = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("NoNeon")) :: any
+	local want = MapBoard.COLORS[kind] :: Color3
+	for _, p in gate:GetDescendants() do
+		if p:IsA("BasePart") and p.Name == "Rune" then
+			local c = p.Color
+			local calm = want:Lerp(Color3.fromRGB(70, 72, 78), NoNeon.CALM)
+			local function near(a: Color3, b: Color3): boolean
+				return math.abs(a.R - b.R) + math.abs(a.G - b.G) + math.abs(a.B - b.B) < 0.03
+			end
+			return near(c, want) or near(c, calm)
+		end
+	end
+	return false
+end
 local function runeColor(gate: Instance): Color3?
 	for _, p in gate:GetDescendants() do
 		if p:IsA("BasePart") and p.Name == "Rune" then
@@ -76,20 +93,34 @@ return {
 		-- (Fix round 1: the whole board, both edges, on an upright phone; not just its middle.)
 		local bcf = (board :: Model):GetPivot()
 		local half = MapBoard.SCREEN.X / 2
-		for _, edge in { bcf.Position + bcf.RightVector * half, bcf.Position - bcf.RightVector * half } do
-			local off = offAxis(spawn, facing, edge)
-			assert(off < halfWidth(414, 896), string.format("an edge of the board is %.0f deg off the spawn view (upright phone half view %.0f)", off, halfWidth(414, 896)))
+		local corner = Config.TRAVEL_CORNER == true
+		if corner then
+			-- (V9-NOW 22, owner: the board and both portals together on the hub's rim, out of the spawn's way:
+			-- each portal within 20 studs of the board, the board 35-50 studs out.)
+			for _, name in { "PortalSolo", "PortalMulti" } do
+				local g = lab:FindFirstChild(name)
+				assert(g and (g:GetPivot().Position - bcf.Position).Magnitude < 20, name .. " is not by the MAPS board")
+			end
+		else
+			for _, edge in { bcf.Position + bcf.RightVector * half, bcf.Position - bcf.RightVector * half } do
+				local off = offAxis(spawn, facing, edge)
+				assert(off < halfWidth(414, 896), string.format("an edge of the board is %.0f deg off the spawn view (upright phone half view %.0f)", off, halfWidth(414, 896)))
+			end
+			assert(boardOff < halfWidth(1920, 1080), string.format("the board is %.0f deg off the spawn view", boardOff))
 		end
-		assert(boardOff < halfWidth(1920, 1080), string.format("the board is %.0f deg off the spawn view", boardOff))
 		assert(not gate or gateOff < halfWidth(1920, 1080), string.format("the PLACES portal is %.0f deg off the spawn view (1920x1080 half view %.0f)", gateOff, halfWidth(1920, 1080)))
 		local boardDistance = ((board :: Model):GetPivot().Position - spawn) * Vector3.new(1, 0, 1)
-		assert(boardDistance.Magnitude > 18 and boardDistance.Magnitude < 30, string.format("the board is %.0f studs from the spawn (want 20-25)", boardDistance.Magnitude))
+		if corner then
+			assert(boardDistance.Magnitude >= 35 and boardDistance.Magnitude <= 50, string.format("the board is %.0f studs from the spawn (want 35-50, the rim)", boardDistance.Magnitude))
+		else
+			assert(boardDistance.Magnitude > 18 and boardDistance.Magnitude < 30, string.format("the board is %.0f studs from the spawn (want 20-25)", boardDistance.Magnitude))
+		end
 		table.insert(results, string.format("board %.0f deg off the view at %.0f studs, portal %.0f deg (phone half view %.0f, PC %.0f)", boardOff, boardDistance.Magnitude, gateOff, halfWidth(414, 896), halfWidth(1920, 1080)))
 		-- Colours by kind.
 		assert(not gate or runeColor(gate :: Model) == MapBoard.COLORS.Places, "the PLACES portal is not gold")
 		for name, kind in { PortalSolo = "Solo", PortalMulti = "Multi" } do
 			local g = lab:FindFirstChild(name)
-			assert(g and g:GetAttribute("GateKind") == kind and runeColor(g) == MapBoard.COLORS[kind], name .. " is not in its ring colour")
+			assert(g and g:GetAttribute("GateKind") == kind and sameKind(g, kind), name .. " is not in its ring colour")
 		end
 		table.insert(results, "PLACES gold, SINGLEPLAYER blue, MULTIPLAYER green")
 		-- Every map's copy.

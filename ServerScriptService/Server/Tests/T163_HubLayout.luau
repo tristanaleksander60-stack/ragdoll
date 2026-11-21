@@ -67,6 +67,12 @@ return {
 		-- Every attraction on the rim (40-150 studs from the spawn), the spawn circle clear.
 		local found, report = 0, {}
 		for _, name in ATTRACTIONS do
+			-- (V9-NOW 20, Config.TRAVEL_CORNER: the two portals stand by the MAPS board in the spawn's view, like the board:
+			-- they are the travel corner, not an attraction on the rim; T159 checks them. The owner swapped the BIG RED BUTTON
+			-- into the board's old spot in the spawn's view.)
+			if Config.TRAVEL_CORNER and (name == "PortalSolo" or name == "PortalMulti" or name == "BigButton") then
+				continue
+			end
 			local thing = lab:FindFirstChild(name, true)
 			if thing and (thing:IsA("BasePart") or thing:IsA("Model")) then
 				found += 1

@@ -431,6 +431,13 @@ local function run(job: Job)
 		-- The banner only once the event has really started.
 		currentEndsAt = Workspace:GetServerTimeNow() + event.duration
 		broadcast()
+		-- (V9-NOW 21: the falls in the starter's lab are their KOs while it runs.)
+		local starter = hostOf(job)
+		if starter and Lab.plotIndex(starter) then
+			pcall(function()
+				(require(script.Parent:WaitForChild("ProgressService")) :: any).startEventCredit(starter, event.name, event.duration)
+			end)
+		end
 		if paid then
 			task.spawn(Purchases.complete, paid.userId, paid.purchaseId) -- delivered
 		end
@@ -644,6 +651,9 @@ function EventService.surpriseNow(player: Player, id: string?, quiet: boolean?):
 	if not quiet then
 		notify(player, string.format("SURPRISE! %s", if event then event.name else name), "ok")
 	end
+	pcall(function() -- (V9-NOW 21: a surprise's falls are the player's KOs too)
+		(require(script.Parent:WaitForChild("ProgressService")) :: any).startEventCredit(player, if event then event.name else name, Surprises.MINI_TIME)
+	end)
 	return name
 end
 local function surpriseLoop()

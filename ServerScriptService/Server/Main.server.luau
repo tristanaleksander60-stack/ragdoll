@@ -77,6 +77,7 @@ safe("StuntScore", function() require(Systems:WaitForChild("StuntScore")).start(
 safe("DummySpawn", function() require(Systems:WaitForChild("DummySpawn")).start() end) -- V8-2.5: spawn a dummy of a type where you aim
 safe("OutOfBounds", function() require(Systems:WaitForChild("OutOfBounds")).start() end) -- V9-0ab: off any map: home to your lab
 safe("MapBoard", function() require(Systems:WaitForChild("MapBoard")).start() end) -- V9-0e: the Map Board and the ring portals
+safe("NoNeon", function() if (require(game:GetService("ReplicatedStorage").Shared.Config) :: any).NO_NEON then require(game:GetService("ReplicatedStorage").Shared.NoNeon).start(6) end end) -- V9-NOW 18: no decorative neon glow
 safe("LabGuide", function() require(Systems:WaitForChild("LabGuide")).start() end) -- V9-2b: the feed terminals' presses
 safe("ExperimentService", function() require(Systems:WaitForChild("ExperimentService")).start() end) -- phase 1: Experiment cards (Shared\Experiments)
 safe("EconomyService", function() require(Systems:WaitForChild("EconomyService")).start() end) -- phase 2: bolts, bone journal, daily experiments, codes

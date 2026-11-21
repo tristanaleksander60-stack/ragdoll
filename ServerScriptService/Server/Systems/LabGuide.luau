@@ -407,15 +407,30 @@ local function buildTerminal(into: Instance, origin: Vector3, id: string, target
 	for _, d in lab:GetDescendants() do
 		if d:IsA("BasePart") and (string.find(d.Name, "Trigger", 1, true) or string.find(d.Name, "Lava", 1, true)) then
 			table.insert(boxes, { cf = d.CFrame, size = d.Size })
+		elseif d:IsA("BasePart") and (d.Name == "PathSlab" or d.Name == "PathJoint" or d.Name == "PathStone") then
+			-- (V9-NOW: never on a walk either; the washer's and the vacuum's stood on the yard road, T150.)
+			table.insert(boxes, { cf = d.CFrame, size = d.Size })
 		elseif d:IsA("Model") and d:GetAttribute("Creature") ~= nil then
 			local bcf, bsize = d:GetBoundingBox()
 			table.insert(boxes, { cf = bcf, size = bsize })
 		end
 	end
+	-- (V9-NOW: the footprint on the floor, whichever way a part lies: its most upright axis is left out, so a lying
+	-- cylinder (the lava's discs, the walks' joints) is measured across its round face, not along its height.)
 	local function blocked(p: Vector3): boolean
 		for _, b in boxes do
 			local rel = b.cf:PointToObjectSpace(p)
-			if math.abs(rel.X) < b.size.X / 2 + 2 and math.abs(rel.Z) < b.size.Z / 2 + 2 then
+			local ups = { math.abs(b.cf.RightVector.Y), math.abs(b.cf.UpVector.Y), math.abs(b.cf.LookVector.Y) }
+			local skip = if ups[1] >= ups[2] and ups[1] >= ups[3] then 1 elseif ups[2] >= ups[3] then 2 else 3
+			local c = { rel.X, rel.Y, rel.Z }
+			local s = { b.size.X, b.size.Y, b.size.Z }
+			local inside = true
+			for i = 1, 3 do
+				if i ~= skip and math.abs(c[i]) >= s[i] / 2 + 2 then
+					inside = false
+				end
+			end
+			if inside then
 				return true
 			end
 		end
@@ -423,12 +438,23 @@ local function buildTerminal(into: Instance, origin: Vector3, id: string, target
 	end
 	local start = (opts and opts.out) or LabGuide.TERM_OUT
 	local base = at + dir * start
-	for step = 0, 10 do
-		local p = at + dir * (start + step * 1.5)
-		base = p
-		if not blocked(p) then
+	local side = Vector3.yAxis:Cross(dir)
+	local found = false
+	for _, sideways in { 0, 4, -4, 8, -8 } do -- (V9-NOW: a step aside when straight out is a walk)
+		for step = 0, 10 do
+			local p = at + dir * (start + step * 1.5) + side * sideways
+			if not blocked(p) then
+				base = p
+				found = true
+				break
+			end
+		end
+		if found then
 			break
 		end
+	end
+	if not found then
+		base = at + dir * (start + 15)
 	end
 	base = Vector3.new(base.X, groundUnder(base, origin.Y), base.Z)
 	local cf = CFrame.lookAt(base, base + dir) -- (faces the way you come)

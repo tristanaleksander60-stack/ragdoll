@@ -103,7 +103,7 @@ local function release()
 			-- (V8-0.4: not once they have done it: no tip for a thing already done.)
 			local done = (Config :: any).V8_ONE_VOICE and (((player:GetAttribute("CannonShots") :: number?) or 0) > 0 or player:GetAttribute("HazardDone") == true)
 			if not done and not ReplayController.isPlaying() and type(plot) == "number" and plot > 0 then
-				Notify.say("tip", "Jump in the LAVA or blast off the CANNON at the BULLSEYE!", Color3.fromRGB(255, 140, 40), "tip_machines")
+				Notify.say("tip", if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BULLSEYE == false then "Jump in the LAVA or blast off the CANNON!" else "Jump in the LAVA or blast off the CANNON at the BULLSEYE!", Color3.fromRGB(255, 140, 40), "tip_machines")
 			end
 		end)
 	end

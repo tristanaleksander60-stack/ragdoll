@@ -941,6 +941,48 @@ local credit: (player: Player, model: Model, now: number) -> ()
 -- a frame behind, and the takedown was lost).
 ProgressService.DOWN_RETRY = 0.8
 
+-- V9-NOW 21 (owner, 21 Nov 2026: "KOs count for every event the player starts, also from the BIG RED BUTTON"): while an
+-- event a player started runs in their own lab (EventService.run, the red button, the Events Pass, admin/director
+-- starts, surprises), every dummy that goes down in that lab with no player's hit behind it is a KO for the starter
+-- (and for the members of their Prank Party): unlocks, the counter, experiments and the 2X event, once per body
+-- (the usual cooldown). The end tells "+N KOs".
+ProgressService.EVENT_TAIL = 8 -- s after the event's end that its falls still count (bodies still flying)
+type EventCredit = { untilAt: number, name: string, count: number, token: number }
+local eventCredit: { [number]: EventCredit } = {}
+local eventToken = 0
+function ProgressService.startEventCredit(starter: Player, name: string, seconds: number)
+	eventToken += 1
+	local mine = eventToken
+	local e: EventCredit = { untilAt = Workspace:GetServerTimeNow() + seconds + ProgressService.EVENT_TAIL, name = name, count = 0, token = mine }
+	eventCredit[starter.UserId] = e
+	task.delay(seconds + ProgressService.EVENT_TAIL + 0.5, function()
+		local now = eventCredit[starter.UserId]
+		if now and now.token == mine then
+			eventCredit[starter.UserId] = nil
+			if now.count > 0 and starter.Parent then
+				ProgressService.notice(starter, string.format("%s: +%d KOs!", string.upper(name), now.count))
+			end
+		end
+	end)
+end
+-- The player whose running event knocked this body down in their lab, or nil.
+local function eventStarterOf(model: Model): (Player?, EventCredit?)
+	local pelvis = model:FindFirstChild("LowerTorso") or model.PrimaryPart
+	if not (pelvis and pelvis:IsA("BasePart")) then
+		return nil, nil
+	end
+	local owner = (require(script.Parent:WaitForChild("Lab")) :: any).ownerAt(pelvis.Position) :: Player?
+	local e = owner and eventCredit[owner.UserId]
+	if owner and e and Workspace:GetServerTimeNow() <= e.untilAt then
+		return owner, e
+	end
+	return nil, nil
+end
+function ProgressService.eventCountForTest(player: Player): number?
+	local e = eventCredit[player.UserId]
+	return if e then e.count else nil
+end
+
 local function onDown(model: Model, state: string, retried: boolean?)
 	if not model.Parent or model:GetAttribute("NoCredit") == true then
 		return -- (a stream's bodies never count: gifts give no lasting value)
@@ -970,6 +1012,18 @@ local function onDown(model: Model, state: string, retried: boolean?)
 		if not retried then
 			-- (Once more a moment later: the hit itself may still be on its way.)
 			task.delay(ProgressService.DOWN_RETRY, onDown, model, state, true)
+			return
+		end
+		-- (V9-NOW 21: no player's hit behind it: an event the lab's player started knocked it down.)
+		local starter, e = eventStarterOf(model)
+		if starter and e and model:GetAttribute("IsDummy") ~= false and not Players:GetPlayerFromCharacter(model) then
+			e.count += 1
+			credit(starter, model, now)
+			for _, other in Players:GetPlayers() do
+				if other ~= starter and other:GetAttribute("PartyLab") == starter.UserId then
+					credit(other, model, now)
+				end
+			end
 		end
 		return
 	end

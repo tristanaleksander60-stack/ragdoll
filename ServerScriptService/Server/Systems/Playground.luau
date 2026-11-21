@@ -938,7 +938,14 @@ local function buildStations()
 	rail.CanQuery = false
 	local wall = part("StationWall", Vector3.new(2, 14, 14), at(rocket.x + 30, 7, rocket.z), Color3.fromRGB(150, 150, 155), Enum.Material.Concrete)
 	Finish.apply(wall, "Wall")
-	sign("CRASH WALL", wall, 9, YELLOW)
+	-- (V9-NOW 19, owner 21 Nov 2026: the badge sat half inside the wall (7 over its middle = its top edge). It hangs
+	-- on its own point now, on the side the dummy comes from and over the wall's top, fully in view.)
+	local badgeAt = part("CrashWallBadge", Vector3.new(0.2, 0.2, 0.2), at(rocket.x + 30 - 1 - 3.5, 14 + 3, rocket.z), YELLOW)
+	badgeAt.Transparency = 1
+	badgeAt.CanCollide = false
+	badgeAt.CanQuery = false
+	badgeAt.CanTouch = false
+	sign("CRASH WALL", badgeAt, 0, YELLOW)
 end
 
 -- Phase 3 (Config.CHRISTMAS_LAB): the Christmas lab, in every lab while the season is on
@@ -1134,7 +1141,9 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	local lab = folder.Name ~= "Plaza"
 	if lab then
 		buildLava()
-		buildBullseye()
+		if (Config :: any).BULLSEYE ~= false then
+			buildBullseye() -- (V9-NOW 17 / V9-0ae: Config.BULLSEYE false = no bullseye; the cannon lands on the open floor)
+		end
 		if (Config :: any).SPIKE_BLOCKS ~= false then
 			buildSpikes() -- (owner, 20 Nov 2026: the red spike plates are gone: Config.SPIKE_BLOCKS)
 		end

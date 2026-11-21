@@ -68,6 +68,14 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.33.0",
+		lines = {
+			"Every event you start counts its KOs for you, the BIG RED BUTTON too",
+			"A calmer lab: real materials instead of glowing neon",
+			"The MAPS board and both portals now stand together by the spawn",
+		},
+	},
+	{
 		version = "0.32.0",
 		lines = {
 			"\u{26A1} 2X KOs + BOLTS for 48 hours!",

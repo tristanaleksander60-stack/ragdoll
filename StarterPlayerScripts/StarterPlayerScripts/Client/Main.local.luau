@@ -132,6 +132,7 @@ safe("Spectate", function() require(Client:WaitForChild("Spectate")).start() end
 safe("Ghosts", function() Ghosts.start() end)
 safe("HospitalCharts", function() HospitalCharts.start() end)
 safe("DoubleEventChip", function() require(Client:WaitForChild("DoubleEventChip")).start() end) -- (V9-NOW 12: the 2X chip)
+safe("NoNeon", function() if (require(Shared:WaitForChild("Config")) :: any).NO_NEON then require(Shared:WaitForChild("NoNeon")).start(4) end end) -- V9-NOW 18: what this screen builds glows no more either
 safe("HitInfo", function() HitInfo.start() end) -- what you are shooting: two lines that add up (round 2, N2; round 3, M2)
 safe("Crosshair", function() Crosshair.start() end) -- with a gun picked: a crosshair and hit marks (round 3, M2)
 safe("TouchShoot", function() require(Client:WaitForChild("TouchShoot")).start() end) -- touch: SHOOT button, centre crosshair, "tap a dummy" (round 5)

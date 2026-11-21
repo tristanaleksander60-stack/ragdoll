@@ -284,6 +284,21 @@ local function aroundSpawn(origin: Vector3, facing: Vector3, degrees: number, di
 	return floorUnder(origin + dir * distance)
 end
 
+-- V9-NOW 20 + 22 (Config.TRAVEL_CORNER; owner, 21 Nov 2026: "the Map Board with the portals", then "out of the middle,
+-- to the edge of the hub", then "swap the red button and all the portals"): one travel corner on the hub's rim, 42 studs
+-- out where the BIG RED BUTTON stood (the button took the board's old spot, PathPlan.BUTTON_AT): the MAPS board in the
+-- middle, SINGLEPLAYER and MULTIPLAYER either side along the rim, all turned to the hub's middle.
+MapBoard.TRAVEL_SPOTS = table.freeze({
+	Board = Vector2.new(-34, 24),
+	PortalSolo = Vector2.new(-26.5, 34.6),
+	PortalMulti = Vector2.new(-41.5, 13.4),
+}) :: { [string]: Vector2 }
+-- Where a piece of the travel corner stands (lab space -> world, on the floor) and the point it faces.
+function MapBoard.travelSpot(origin: Vector3, name: string): (Vector3, Vector3)
+	local s = MapBoard.TRAVEL_SPOTS[name] or Vector2.zero
+	return floorUnder(origin + Vector3.new(s.X, 0, s.Y)), origin -- (turned to the hub's middle)
+end
+
 -- The board and the PLACES portal in one lab (Playground builds the lab).
 function MapBoard.buildLab(folder: Instance, origin: Vector3)
 	if not Config.MAP_BOARD then
@@ -295,7 +310,11 @@ function MapBoard.buildLab(folder: Instance, origin: Vector3)
 	local holder = Instance.new("Folder")
 	holder.Name = "MapPlace"
 	local boardAt = aroundSpawn(origin, facing, MapBoard.BOARD_ANGLE, MapBoard.BOARD_DISTANCE)
-	MapBoard.board(holder, boardAt, spawn)
+	local boardFace = spawn
+	if (Config :: any).TRAVEL_CORNER then
+		boardAt, boardFace = MapBoard.travelSpot(origin, "Board") -- (V9-NOW 22: on the rim with the portals)
+	end
+	MapBoard.board(holder, boardAt, boardFace)
 	-- (V9-NOW: Config.MAP_PORTAL false = no gold ring portal; the board is the one map place.)
 	if (Config :: any).MAP_PORTAL then
 		local gateAt = aroundSpawn(origin, facing, MapBoard.PORTAL_ANGLE, MapBoard.PORTAL_DISTANCE)

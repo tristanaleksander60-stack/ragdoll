@@ -184,6 +184,9 @@ if LAYOUT_V2 then
 	PathPlan.WIDTH_MAX = 8.6
 	PathPlan.WIDE_PAVING = 7.4
 	PathPlan.LAB_HUB = Vector2.new(0, 0)
+	-- (V9-NOW 20, Config.TRAVEL_CORNER: the portals moved to the MAPS board in the spawn's view, beside the spawn's
+	-- plaza; the west walk to their old spot (W2 - PW - P1) is not laid, so no walk ends at nothing.)
+	local corner = (require(script.Parent:WaitForChild("Config")) :: any).TRAVEL_CORNER == true
 	PathPlan.LAB_POINTS = table.freeze({
 		Spawn = Vector2.new(0, 0),
 		E = Vector2.new(28, -2),
@@ -209,27 +212,43 @@ if LAYOUT_V2 then
 		GardenWestEnd = Vector2.new(-PathPlan.GARDEN_WALK_X, PathPlan.GARDEN_WALK_SOUTH),
 		GardenEastEnd = Vector2.new(PathPlan.GARDEN_WALK_X, PathPlan.GARDEN_WALK_SOUTH),
 	})
-	PathPlan.LAB_SEGMENTS = table.freeze({
+	local segments = {
 		-- East arm: a loop past the wrecking ball, the cars and the cannon; on to the east garden.
 		{ "Spawn", "E" }, { "E", "WR" }, { "WR", "CAR" }, { "CAR", "C0", true }, { "C0", "E" },
 		{ "E", "C1" }, { "C1", "C2" }, { "C2", "GardenEast", true },
 		-- South and west: past the big button and the launch pads, round to the west arm.
 		{ "Spawn", "S1" }, { "S1", "S2" }, { "S2", "SW", true }, { "SW", "W2" }, { "W2", "W", true }, { "W", "Spawn" },
 		-- West: to the tower's first step; to the portals.
-		{ "W", "WL" }, { "WL", "TS", true }, { "W2", "PW", true }, { "PW", "P1" },
+		{ "W", "WL" }, { "WL", "TS", true },
 		-- The creature yard and the round through both gardens.
 		{ "SW", "YW", true }, { "YW", "Yard" }, { "Yard", "YP1", true }, { "YP1", "GardenWestEnd", true },
 		{ "Yard", "YP2", true }, { "YP2", "GardenEastEnd", true },
-	})
-	PathPlan.LAB_ROUTES = table.freeze({
+	}
+	if not corner then
+		table.insert(segments, { "W2", "PW", true })
+		table.insert(segments, { "PW", "P1" })
+	end
+	PathPlan.LAB_SEGMENTS = table.freeze(segments)
+	local routes = {
 		{ name = "TS", to = PathPlan.LAB_POINTS.TS },
-		{ name = "P1", to = PathPlan.LAB_POINTS.P1 },
 		{ name = "Yard", to = PathPlan.LAB_POINTS.Yard },
 		{ name = "GardenEast", to = PathPlan.LAB_POINTS.GardenEast },
 		{ name = "GardenWestEnd", to = PathPlan.LAB_POINTS.GardenWestEnd },
 		{ name = "GardenEastEnd", to = PathPlan.LAB_POINTS.GardenEastEnd },
-	})
-	PathPlan.LABELS = table.freeze({
+	}
+	if not corner then
+		table.insert(routes, 2, { name = "P1", to = PathPlan.LAB_POINTS.P1 })
+	end
+	PathPlan.LAB_ROUTES = table.freeze(routes)
+	PathPlan.LABELS = table.freeze(if corner then {
+		C1 = "CANNON",
+		WR = "WRECKING BALL",
+		WL = "TOWER",
+		S2 = "LAUNCH PADS",
+		SW = "MONSTERS",
+		YW = "MONSTERS",
+		GardenEast = "GARDEN",
+	} else {
 		C1 = "CANNON",
 		WR = "WRECKING BALL",
 		WL = "TOWER",
@@ -245,7 +264,7 @@ if LAYOUT_V2 then
 	-- at its thing: a lab part by name (within `reach` studs), or the garden's own walks ("path").)
 	PathPlan.END_TARGETS = table.freeze({
 		TS = { kind = "part", name = "StairEdge", reach = 6 },
-		P1 = { kind = "part", name = "PortalSolo", reach = 12 },
+		P1 = if corner then nil else { kind = "part", name = "PortalSolo", reach = 12 },
 		GardenEast = { kind = "path", reach = 3 },
 		GardenWestEnd = { kind = "path", reach = 3 },
 		GardenEastEnd = { kind = "path", reach = 3 },
@@ -277,6 +296,11 @@ PathPlan.HUB_CLEAR = 0 -- (V9-0h: the radius of floor round the spawn kept free 
 local LAYOUT_V3 = (require(script.Parent:WaitForChild("Config")) :: any).LAYOUT_V3 == true
 if LAYOUT_V3 then
 	PathPlan.BUTTON_AT = Vector2.new(-34, 24)
+	-- (V9-NOW 22 + owner 21 Nov 2026: "swap the red button and all the portals": with Config.TRAVEL_CORNER the button stands
+	-- where the MAPS board stood, in the spawn's view, and the board and both portals take the button's rim spot.)
+	if (require(script.Parent:WaitForChild("Config")) :: any).TRAVEL_CORNER == true then
+		PathPlan.BUTTON_AT = Vector2.new(16, -19)
+	end
 	PathPlan.RAMP_AT = Vector2.new(36, 38) -- (its nearest corner 42 studs out)
 	PathPlan.ROW_Z = -60
 	PathPlan.HUB_CLEAR = 40

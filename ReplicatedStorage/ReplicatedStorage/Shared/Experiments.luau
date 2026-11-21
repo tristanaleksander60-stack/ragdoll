@@ -47,6 +47,15 @@ local LIST: { Def } = {
 	{ id = "Mole", text = "Let the MOLE pop a dummy", kind = "Mole", target = 1, seconds = 150, stars = 1 },
 	{ id = "Vacuum", text = "Let the ROBOT VACUUM suck up a dummy", kind = "Vacuum", target = 1, seconds = 150, stars = 1 },
 }
+-- V9-NOW 17 / V9-0ae (Config.BULLSEYE false): no card asks for the bullseye.
+local NO_BULLSEYE = (require(script.Parent:WaitForChild("Config")) :: any).BULLSEYE == false
+if NO_BULLSEYE then
+	for i = #LIST, 1, -1 do
+		if LIST[i].kind == "Bullseye" then
+			table.remove(LIST, i)
+		end
+	end
+end
 Experiments.LIST = table.freeze(LIST)
 Experiments.KINDS = table.freeze({ Takedown = true, Cannon = true, Bullseye = true, Hazard = true, Egg = true, Chimney = true, Present = true, Toss = true, Tower = true, Map = true, Spider = true, Plant = true, Frog = true, Whale = true, Chicken = true, Washer = true, Slingshot = true, Mole = true, Vacuum = true,
 	-- (V8-1.3: the mission chain's own: a tool used, the wrecking ball, CRASH points.)
@@ -61,7 +70,9 @@ Experiments.CHAIN = table.freeze({
 	{ id = "Chain1", text = "KO a dummy", kind = "Takedown", target = 1, seconds = Experiments.NO_TIMER, stars = 1 },
 	{ id = "Chain2", text = "Swing the BAT", kind = "Tool:Bat", target = 1, seconds = Experiments.NO_TIMER, stars = 1 },
 	{ id = "Chain3", text = "Fire the CANNON", kind = "Cannon", target = 1, seconds = Experiments.NO_TIMER, stars = 1 },
-	{ id = "Chain4", text = "Hit the BULLSEYE", kind = "Bullseye", target = 1, seconds = Experiments.NO_TIMER, stars = 2 },
+	-- (V9-NOW 17: with the bullseye gone, the 4th mission is the lava; the id stays, so saved places are kept.)
+	if NO_BULLSEYE then { id = "Chain4", text = "Jump in the LAVA", kind = "Hazard", target = 1, seconds = Experiments.NO_TIMER, stars = 2 }
+		else { id = "Chain4", text = "Hit the BULLSEYE", kind = "Bullseye", target = 1, seconds = Experiments.NO_TIMER, stars = 2 },
 	{ id = "Chain5", text = "Throw the GRENADE", kind = "Tool:Grenade", target = 1, seconds = Experiments.NO_TIMER, stars = 1 },
 	{ id = "Chain6", text = "Ride the WRECKING BALL", kind = "Wrecking", target = 1, seconds = Experiments.NO_TIMER, stars = 2 },
 	{ id = "Chain7", text = "Get 10 KOs", kind = "Takedown", target = 10, seconds = Experiments.NO_TIMER, stars = 2 },
@@ -88,7 +99,7 @@ local ADVENT_KINDS: { { any } } = {
 	{ "Present", "Open the PRESENT trap", 1 },
 	{ "Takedown", "Take down 12 dummies", 12 },
 	{ "Cannon", "Blast off the CANNON twice", 2 },
-	{ "Bullseye", "Land on the BULLSEYE", 1 },
+	if NO_BULLSEYE then { "Cannon", "Blast off the CANNON 3 times", 3 } else { "Bullseye", "Land on the BULLSEYE", 1 },
 	{ "Chimney", "Go up the CHIMNEY 3 times", 3 },
 }
 function Experiments.advent(day: number): Def?

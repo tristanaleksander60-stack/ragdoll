@@ -54,6 +54,16 @@ Economy.JOURNAL = table.freeze({
 	{ id = "Mole", text = "Whack!", kind = "Mole", need = 1 },
 	{ id = "Vacuum", text = "Sucked up", kind = "Vacuum", need = 1 },
 } :: { Page })
+-- V9-NOW 17 / V9-0ae (Config.BULLSEYE false): the bullseye pages are left out (nothing could fill them).
+if (Config :: any).BULLSEYE == false then
+	local kept = {}
+	for _, page in Economy.JOURNAL do
+		if page.kind ~= "Bullseye" then
+			table.insert(kept, page)
+		end
+	end
+	Economy.JOURNAL = table.freeze(kept)
+end
 
 Economy.GOT_KEPT = 30 -- purchase ids remembered (Purchases keeps 100 per buyer as well)
 

@@ -28,16 +28,23 @@ LabZones.ZONES = table.freeze({
 } :: { Zone })
 
 -- The machines that can be "today's": the part that marks each (by name, in the lab's folder).
-LabZones.MACHINES = table.freeze({
-	{ part = "CannonPad", label = "HUMAN CANNON" },
-	{ part = "Bullseye", label = "BULLSEYE" },
-	{ part = "LavaPool", label = "LAVA PIT" },
-	{ part = "MaceBall", label = "SPINNING MACE" },
-	{ part = "SwingBall", label = "WRECKING BALL" },
-	{ part = "TrampolinePad", label = "TRAMPOLINE" },
-	{ part = "StationPad", label = "LAUNCH STATIONS" },
-	{ part = "BigButton", label = "BIG RED BUTTON" },
-})
+LabZones.MACHINES = (function()
+	local list = {
+		{ part = "CannonPad", label = "HUMAN CANNON" },
+		{ part = "Bullseye", label = "BULLSEYE" },
+		{ part = "LavaPool", label = "LAVA PIT" },
+		{ part = "MaceBall", label = "SPINNING MACE" },
+		{ part = "SwingBall", label = "WRECKING BALL" },
+		{ part = "TrampolinePad", label = "TRAMPOLINE" },
+		{ part = "StationPad", label = "LAUNCH STATIONS" },
+		{ part = "BigButton", label = "BIG RED BUTTON" },
+	}
+	-- (V9-NOW 17 / V9-0ae: with Config.BULLSEYE false the bullseye is never today's machine.)
+	if (Config :: any).BULLSEYE == false then
+		table.remove(list, 2)
+	end
+	return table.freeze(list)
+end)()
 
 -- Today's machine (UTC day; the same on every server). Pure, for the tests.
 function LabZones.todayIndex(unixTime: number): number
