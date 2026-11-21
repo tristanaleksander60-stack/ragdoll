@@ -1000,6 +1000,23 @@ They stay kid-safe and cartoon. Every car has its own top speed, mass and handli
   - It reacts to a shot nearby, falls, and revives like the others.
   - The caps hold.
 
+**Owner addition (21 Nov): GOD MODE dummies are one-use.**
+> "Gør så de ragdolls man spawner fra god-menuen forsvinder efter de er knocked ud 1 gang."
+
+- **One KO and they go:** a dummy created with GOD MODE is **not revived**. After its KO (the V9-0ac death drop, or any big force), it lies for about **3 s** so the hit and the fall can be enjoyed (and filmed).
+- **A nice exit:** it then fades out with a soft puff or poof and a small "pop" sound, kid-safe, never just vanishing mid-air.
+- **Counting:** its KO still counts normally (KO counter, experiments, events).
+- **The rest of the lab is unchanged:** the lab's own dummies and the V9-0j walkers still revive as now, and the walker pool tops the lab back up.
+- **Exceptions:**
+  - a GOD dummy held by Grab, inside a creature or machine (`InMachine`), or in a filming set-up with **"Stay in place"** still leaves after its KO, but only once it is released or out of the machine;
+  - the cleanup never removes a body mid-flight (it waits until it lands or 5 s at most).
+- **Caps:** its slot in the body cap is freed at once when it goes, so the next spawns are never blocked.
+- **Tests (T167 extended):**
+  - a GOD dummy KO'd is gone within 4-5 s and never revives;
+  - a lab dummy KO'd still revives;
+  - the KO is counted;
+  - the cap frees up.
+
 ## V9-0aa A vitals monitor like the leader's (owner, 21 Nov; Phase A)
 > "Tilføj præcis den samme." (the leader's monitor: `art/store/look_target/vitals_leader.png` and `vitals_leader_wide.webp`)
 
