@@ -385,6 +385,24 @@ local Config = {
 	-- yourself"): Z opens the time dial (Client/TimeDial): 0.1x-3x in a bubble that follows you, in your own lab
 	-- (SandboxService.setTime, Client/SlowMotion). false = Z is the old slow-mo spell over the lab.
 	TIME_DIAL = true,
+	-- V9-P (owner, 21 Nov 2026: "make the BEST physics on all of Roblox"): the ragdolls' physics tuning, all here
+	-- (docs/PHYSICS.md, the bench T183). MASS: each part's mass, a real body's spread (pelvis 14 %, thighs
+	-- 10 %, upper arms 2.7 %...) over the same total as before (6.4), so the ActiveRagdoll forces stay right;
+	-- only dummies (a player's avatar walks as Roblox makes it).
+	PHYSICS_V9 = true,
+	PHYSICS = table.freeze({
+		MASS = table.freeze({
+			Head = 0.546, UpperTorso = 2.047, LowerTorso = 0.955,
+			LeftUpperArm = 0.184, RightUpperArm = 0.184, LeftLowerArm = 0.109, RightLowerArm = 0.109, LeftHand = 0.041, RightHand = 0.041,
+			LeftUpperLeg = 0.682, RightUpperLeg = 0.682, LeftLowerLeg = 0.314, RightLowerLeg = 0.314, LeftFoot = 0.096, RightFoot = 0.096,
+		}),
+		-- A limp body on the ground slower than SETTLE_SPEED studs/s loses SETTLE_DAMP of its speed per second
+		-- (a soft body: no long rolling after a big fall). ActiveRagdoll.settle.
+		SETTLE_SPEED = 10,
+		SETTLE_DAMP = 3,
+		-- Joint friction (x Roblox's own), by the part the socket sits in: the neck and the spine swing with weight.
+		JOINT_FRICTION = table.freeze({ Head = 2, UpperTorso = 1.5 }),
+	}),
 	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges
 	-- (V3Assets VergeBushRound/Leafy, VergeFlowers*; tools/ImportV9Foliage.luau). false = the old balls and blocks.

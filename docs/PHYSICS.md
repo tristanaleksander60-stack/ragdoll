@@ -40,3 +40,33 @@ The bench (`ServerScriptService/Server/Tests/Lib/PhysicsBench.luau`) runs a fixe
 
 ## Rivals
 Side-by-side captures of Hyper Realistic Ragdoll, Ragdoll Engine, Bloody Ragdoll Physics and Fling Things and People come with P6. They need the owner's captures or public videos.
+
+## After P1 + the settle assist (21 Nov 2026, `Config.PHYSICS_V9` on)
+
+**Settle times** are now counted from the hardest moment (the impact or the launch).
+
+| scene | peak | spikes | sunk | settle | jitter (lin / ang) | physics ms |
+|---|---|---|---|---|---|---|
+| drop40 | 114 | 0 | 0 | 1.02 s | 0.00 / 0.00 | 2.8 |
+| stairs | 49 | 0 | 0 | 0.12 s | 0.00 / 0.00 | 1.5 |
+| launch | 108 | 0 | 0 | 0.11 s | 0.01 / 0.00 | 1.6 |
+| blast6 | 110 | 0 | 0 | 0.37 s | 0.02 / 0.01 | 1.5 |
+| pile20 | 175 | 0 | 0 | 0.47 s | 0.04 / 0.03 | 21 |
+| rest10 | 0 | 0 | 0 | - | 0.00 / 0.00 | 1.7 |
+
+**What changed:**
+- **Mass** (`PHYSICS.MASS`): the parts weigh what a real body's do, over the same total (6.4). The pelvis is now 0.96 and the head 0.55. The arms are light: upper arm 0.18, forearm 0.11, hand 0.04. Falls now read weighty and centred.
+- **Joint friction** (`PHYSICS.JOINT_FRICTION`): the neck x2 and the spine x1.5 on top of Roblox's own. The head no longer whips after a landing.
+- **Settle assist** (`PHYSICS.SETTLE_SPEED` 10, `SETTLE_DAMP` 3):
+  - A limp body on the ground that moves slower than 10 studs/s loses its energy like a soft body would.
+  - A 40-stud drop now settles in 1.0 s instead of 3.9 s.
+  - It never touches flying, held or fast bodies.
+- **The bench floor** is Grass, like the lab's real collision floor (the Baseplate).
+
+**Still open:**
+- The heap's server cost, 21 ms (P5: sleep and lower detail when far).
+- The rivals side by side (P6).
+- P3: muscles, balance and reflexes.
+- P4: impacts, including V9-0ac's flinch, not fall.
+
+**Checked:** T183, T23, T38, T45, T82, T109, T166, T50, T22 and T21 pass. T33 fails alone with the physics on and off alike: it depends on the order of the tests, and it passes in the full suite.

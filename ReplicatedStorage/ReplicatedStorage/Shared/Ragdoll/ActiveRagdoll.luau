@@ -234,6 +234,29 @@ local function torsoSpeed(rig: Rig): number
 	return math.max(rig.pelvis.AssemblyLinearVelocity.Magnitude, rig.chest.AssemblyLinearVelocity.Magnitude)
 end
 
+-- V9-P2: a limp body lying on the ground and only slowly moving loses its energy the way a soft
+-- body does (no long rolling and rocking after a big fall): every assembly's speed and spin ease
+-- off by SETTLE_DAMP per second below SETTLE_SPEED. Flying, held or fast bodies are never touched.
+local function settle(rig: Rig, dt: number)
+	local P = (GameConfig :: any).PHYSICS
+	if not ((GameConfig :: any).PHYSICS_V9 and P and P.SETTLE_DAMP) then
+		return
+	end
+	if torsoSpeed(rig) > P.SETTLE_SPEED then
+		return
+	end
+	local k = math.exp(-P.SETTLE_DAMP * dt)
+	local seen: { [BasePart]: boolean } = {}
+	for _, part in rig.parts do
+		local root = part.AssemblyRootPart
+		if root and not seen[root] and not root.Anchored then
+			seen[root] = true
+			root.AssemblyLinearVelocity *= k
+			root.AssemblyAngularVelocity *= k
+		end
+	end
+end
+
 local function brokenList(rig: Rig): { string }
 	local list = {}
 	for name in rig.broken do
@@ -1357,6 +1380,9 @@ local function update(dt: number)
 			elseif profile == "Airborne" then
 				applyPose(rig, Poses.flail(rig.stateTime))
 			end
+			if not flying and rig.held == 0 then
+				settle(rig, dt)
+			end
 			if not flying and torsoSpeed(rig) < CALM_SPEED and rig.held == 0 and not rig.stayDown then
 				rig.calmTime += dt
 			else
@@ -1439,7 +1465,13 @@ function ActiveRagdoll.prepareParts(model: Model): number
 				-- floor (plastic's 0.3 friction let a hit dummy slide 200 studs). Same density, so
 				-- the mass does not change.
 				local current = part.CurrentPhysicalProperties
-				part.CustomPhysicalProperties = PhysicalProperties.new(current.Density, BODY_FRICTION, 0.05, BODY_FRICTION_WEIGHT, 1)
+				local density = current.Density
+				-- (V9-P1: a dummy's mass spread like a real body's (Config.PHYSICS.MASS), the same total.)
+				local want = if GameConfig.PHYSICS_V9 and model:GetAttribute("IsDummy") == true then (GameConfig.PHYSICS :: any).MASS[part.Name] else nil
+				if want and part.Mass > 0 then
+					density = math.clamp(density * want / part.Mass, 0.01, 100)
+				end
+				part.CustomPhysicalProperties = PhysicalProperties.new(density, BODY_FRICTION, 0.05, BODY_FRICTION_WEIGHT, 1)
 				mass += part.Mass
 			end
 		end
@@ -1469,6 +1501,19 @@ function ActiveRagdoll.prepare(model: Model): (boolean, string?)
 		end
 	end
 	local mass = ActiveRagdoll.prepareParts(model)
+	-- (V9-P1: a dummy's neck and spine swing with more weight: Config.PHYSICS.JOINT_FRICTION, once.)
+	local P = (GameConfig :: any).PHYSICS
+	if (GameConfig :: any).PHYSICS_V9 and P and P.JOINT_FRICTION and model:GetAttribute("IsDummy") == true and not model:GetAttribute("JointsTuned") then
+		model:SetAttribute("JointsTuned", true)
+		for _, d in model:GetDescendants() do
+			if d:IsA("BallSocketConstraint") and d.Parent then
+				local k = P.JOINT_FRICTION[d.Parent.Name]
+				if k then
+					d.MaxFrictionTorque *= k
+				end
+			end
+		end
+	end
 	model:SetAttribute("Mass", mass)
 	model:SetAttribute("StandOffset", pelvis.Position.Y - lowestFoot)
 	model:SetAttribute("RagdollState", "Standing")

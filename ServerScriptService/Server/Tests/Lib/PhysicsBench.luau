@@ -4,7 +4,8 @@
 -- server-simulated dummies (no owner: the same ActiveRagdoll code as everywhere), each measured:
 --   * peak speed and spikes over the scene's cap (an "explosion");
 --   * interpenetration: frames with a body part's middle under the floor's top;
---   * time to settle: until every part stays under SETTLE_SPEED for SETTLE_HOLD s;
+--   * time to settle: from the hardest moment (the impact, the launch) until every part stays under
+--     SETTLE_SPEED for SETTLE_HOLD s;
 --   * jitter at rest: mean linear / angular speed over JITTER_TIME s once settled;
 --   * the server's physics step time (Stats) during the scene.
 -- T183_PhysicsBench runs it with targets; an owner can run it in Studio (ServerStorage attribute
@@ -35,6 +36,7 @@ export type Result = {
 	physicsMs: number, -- the server's mean physics step during the scene (0 when Stats has none)
 	bodies: number,
 	state: string, -- the first body's RagdollState and Vital at the end
+	trace: string, -- the fastest part every 0.25 s until settled (what keeps it moving)
 }
 
 local folder: Folder? = nil
@@ -60,7 +62,7 @@ function PhysicsBench.build()
 	f.Parent = Workspace
 	folder = f
 	local o = PhysicsBench.ORIGIN
-	part("BenchFloor", Vector3.new(200, 8, 200), CFrame.new(o - Vector3.new(0, 4, 0)), Color3.fromRGB(205, 198, 186))
+	part("BenchFloor", Vector3.new(200, 8, 200), CFrame.new(o - Vector3.new(0, 4, 0)), Color3.fromRGB(205, 198, 186), Enum.Material.Grass) -- (the lab's real collision floor: the Baseplate, Grass)
 	-- Stairs: 10 steps of 1.2 up and 2 deep, going down towards -Z from a landing at z -40.
 	for i = 0, 9 do
 		local h = (10 - i) * 1.2
@@ -100,7 +102,7 @@ end
 -- Watches `bodies` from now: the action has just happened. Returns the numbers.
 function PhysicsBench.watch(name: string, bodies: { Model }, cap: number): Result
 	local floorTop = PhysicsBench.ORIGIN.Y
-	local r: Result = { name = name, peak = 0, spikes = 0, cap = cap, sunk = 0, settle = nil, jitter = 0, spin = 0, physicsMs = 0, bodies = #bodies, state = "" }
+	local r: Result = { name = name, peak = 0, spikes = 0, cap = cap, sunk = 0, settle = nil, jitter = 0, spin = 0, physicsMs = 0, bodies = #bodies, state = "", trace = "" }
 	local parts: { BasePart } = {}
 	for _, m in bodies do
 		for _, d in m:GetChildren() do
@@ -111,6 +113,8 @@ function PhysicsBench.watch(name: string, bodies: { Model }, cap: number): Resul
 	end
 	local t0 = os.clock()
 	local stillSince: number? = nil
+	local lastTrace = 0
+	local peakAt = t0 -- (the hardest moment: the impact or the launch; settling counts from there)
 	local msSum, msN = 0, 0
 	while os.clock() - t0 < PhysicsBench.TIMEOUT do
 		RunService.Heartbeat:Wait()
@@ -122,16 +126,27 @@ function PhysicsBench.watch(name: string, bodies: { Model }, cap: number): Resul
 		end
 		local fast = 0
 		local under = false
+		local fastName = ""
 		for _, p in parts do
 			if p.Parent then
 				local v = p.AssemblyLinearVelocity.Magnitude
+				if v > fast then
+					fastName = p.Name
+				end
 				fast = math.max(fast, v)
 				if p.Position.Y < floorTop - 0.3 and math.abs(p.Position.X - PhysicsBench.ORIGIN.X) < 100 and math.abs(p.Position.Z - PhysicsBench.ORIGIN.Z) < 100 then
 					under = true
 				end
 			end
 		end
-		r.peak = math.max(r.peak, fast)
+		if fast > r.peak then
+			r.peak = fast
+			peakAt = os.clock()
+		end
+		if os.clock() - lastTrace >= 0.25 then
+			lastTrace = os.clock()
+			r.trace ..= string.format(" %.0f%s", fast, string.sub(fastName, 1, 6))
+		end
 		if fast > cap then
 			r.spikes += 1
 		end
@@ -144,7 +159,7 @@ function PhysicsBench.watch(name: string, bodies: { Model }, cap: number): Resul
 		if fast < PhysicsBench.SETTLE_SPEED and moved then
 			stillSince = stillSince or os.clock()
 			if os.clock() - (stillSince :: number) >= PhysicsBench.SETTLE_HOLD then
-				r.settle = (stillSince :: number) - t0
+				r.settle = math.max(0, (stillSince :: number) - peakAt)
 				break
 			end
 		else
@@ -158,8 +173,17 @@ function PhysicsBench.watch(name: string, bodies: { Model }, cap: number): Resul
 		local lin, ang, n = 0, 0, 0
 		while os.clock() - t1 < PhysicsBench.JITTER_TIME do
 			RunService.Heartbeat:Wait()
+			for _, m in bodies do
+				if m.Parent and m:GetAttribute("Vital") ~= "Unconscious" then
+					m:SetAttribute("Vital", "Unconscious")
+				end
+			end
+			-- (Only a body lying limp: one that got up anyway (VitalsService woke it) is standing, not
+			-- jittering.)
 			for _, p in parts do
-				if p.Parent then
+				local body = p.Parent
+				local s = body and body:GetAttribute("RagdollState")
+				if body and (s == "Ragdoll" or s == "Out") then
 					lin += p.AssemblyLinearVelocity.Magnitude
 					ang += p.AssemblyAngularVelocity.Magnitude
 					n += 1
@@ -263,7 +287,7 @@ PhysicsBench.SCENES = {
 }
 
 function PhysicsBench.format(r: Result): string
-	return string.format("%-7s peak %5.0f (cap %3.0f, %d spikes)  sunk %3d  settle %s  jitter %.2f / %.2f rad/s  physics %.2f ms  bodies %d  %s", r.name, r.peak, r.cap, r.spikes, r.sunk, if r.settle then string.format("%.2fs", r.settle) else "NEVER", r.jitter, r.spin, r.physicsMs, r.bodies, r.state)
+	return string.format("%-7s peak %5.0f (cap %3.0f, %d spikes)  sunk %3d  settle %s  jitter %.2f / %.2f rad/s  physics %.2f ms  bodies %d  %s  trace:%s", r.name, r.peak, r.cap, r.spikes, r.sunk, if r.settle then string.format("%.2fs", r.settle) else "NEVER", r.jitter, r.spin, r.physicsMs, r.bodies, r.state, r.trace)
 end
 
 -- Runs every scene (or the named ones), clearing between them. Returns the results.
