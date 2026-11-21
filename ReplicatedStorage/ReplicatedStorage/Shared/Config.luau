@@ -368,6 +368,10 @@ local Config = {
 	-- a moment that fits (DummySpawn.grantBeta: attribute GodBeta); the SHOP shows it FREE · BETA; who bought it
 	-- is a FOUNDER (gold tag and beam) and keeps it. false = the trial + BUY again (pass owners keep it).
 	GOD_FREE_BETA = true,
+	-- V9-0w (owner, 21 Nov 2026: "when you shoot for the first time, send them into first person so they
+	-- find out they can"): the first shot ever glides into first person once (Client/FirstShotFP; keyboard
+	-- and pad, where V / Select bring you back). Settings can turn it off.
+	FIRST_SHOT_FP = true,
 	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges
 	-- (V3Assets VergeBushRound/Leafy, VergeFlowers*; tools/ImportV9Foliage.luau). false = the old balls and blocks.

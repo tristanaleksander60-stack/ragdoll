@@ -311,6 +311,12 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 				rr.promptDone = math.min((rr.promptDone or 0) + 1, 500)
 			end
 		end
+	-- V9-0w: the first shot's glide into first person (s since the first frame), and the seconds a
+	-- player then stayed in first person.
+	elseif kind == "FpAuto" and (r :: any).fpAuto == nil then
+		(r :: any).fpAuto = since(player)
+	elseif kind == "FpStay" and (r :: any).fpAuto ~= nil and (r :: any).fpStay == nil then
+		(r :: any).fpStay = clean(data, 0, 36000)
 	elseif kind == "Screen" and type(data) == "string" then
 		if data == "play" or data == "window" or data == "chase" or data == "objective" then
 			r.screen = data

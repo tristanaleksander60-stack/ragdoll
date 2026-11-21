@@ -20,8 +20,18 @@ local function send(kind: string, data: any?)
 	end
 end
 
+local shotListeners: { () -> () } = {}
+
+-- V9-0w: called on every own gun shot (FirstShotFP listens).
+function SessionClient.onShot(fn: () -> ())
+	table.insert(shotListeners, fn)
+end
+
 -- The first shot this visit (PokeController calls it for every gun shot; only the first is sent).
 function SessionClient.shot()
+	for _, fn in shotListeners do
+		task.spawn(fn)
+	end
 	if shot then
 		return
 	end
@@ -31,6 +41,13 @@ end
 
 function SessionClient.hasShot(): boolean
 	return shot
+end
+
+-- V9-0w: a note for Session_v1 (FpAuto, FpStay).
+function SessionClient.note(kind: string, data: any?)
+	if kind == "FpAuto" or kind == "FpStay" then
+		send(kind, data)
+	end
 end
 
 function SessionClient.eggCard()

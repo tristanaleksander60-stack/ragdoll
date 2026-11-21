@@ -26,7 +26,7 @@ local Icons = require(UI:WaitForChild("LihFolkUIIcons"))
 local Settings = {}
 
 --   DEAD MONITOR   ON / OFF (round 4, M11): the small monitor over a dead body under the mouse (OFF unless chosen)
-export type Values = { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean, notices: number }
+export type Values = { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean, notices: number, fpShot: boolean, fpStart: boolean, fpTaught: boolean }
 
 -- The choices of each multi-way row, in the order a tap cycles them (index 1 is the default).
 Settings.SFX = { { name = "NORMAL", volume = 1 }, { name = "QUIET", volume = 0.4 }, { name = "OFF", volume = 0 } }
@@ -37,8 +37,9 @@ Settings.UI = { { name = "NORMAL", scale = 1 }, { name = "LARGE", scale = 1.15 }
 Settings.NOTICES = { { name = "AUTO" }, { name = "NORMAL" }, { name = "SMALL" }, { name = "MINIMAL" } }
 local SAVE_AFTER = 0.75 -- s after the last change (one write for a flurry of taps)
 
-local values: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1 }
+local values: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1, fpShot = true, fpStart = false, fpTaught = false }
 local touched = false -- (changed here before the kept choice arrived: this session's choice wins)
+local loaded = false -- (V9-0w: the kept choices have come from the server)
 local saveToken = 0
 local remote: RemoteEvent? = nil
 local redrawers: { () -> () } = {}
@@ -70,13 +71,18 @@ function Settings.deadMonitor(): boolean
 	return values.deadMon
 end
 
+-- V9-0w: whether the kept choices have come (a profile flag like fpTaught is only known then).
+function Settings.loaded(): boolean
+	return loaded
+end
+
 function Settings.get(): Values
 	return table.clone(values)
 end
 
 -- Checks a table from anywhere (the server's message, a test) into values; junk keeps the default.
 function Settings.clean(raw: unknown): Values
-	local v: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1 }
+	local v: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1, fpShot = true, fpStart = false, fpTaught = false }
 	if type(raw) ~= "table" then
 		return v
 	end
@@ -91,6 +97,9 @@ function Settings.clean(raw: unknown): Values
 	v.blood = t.blood ~= false
 	v.shake = t.shake ~= false
 	v.deadMon = t.deadMon == true -- (10 Nov 2026, the owner: off unless chosen; a new key, so an old saved 'monitor' is not read)
+	v.fpShot = t.fpShot ~= false -- (V9-0w: first person on the first shot, on unless turned off)
+	v.fpStart = t.fpStart == true -- (V9-0w: start in first person)
+	v.fpTaught = t.fpTaught == true -- (V9-0w: the first shot taught it already; once per profile)
 	return v
 end
 
@@ -205,9 +214,35 @@ local function build()
 			Settings.set("deadMon", on)
 		end,
 	})
+	-- (V9-0w: first person, where it is: a keyboard (V) or a pad (Select).)
+	local fpShot = C.SettingRow({
+		label = "First person on first shot",
+		description = "Your very first shot shows you first person",
+		icon = "eye",
+		value = values.fpShot,
+		layoutOrder = 7,
+		parent = body,
+		onChanged = function(on: boolean)
+			Settings.set("fpShot", on)
+		end,
+	})
+	local fpStart = C.SettingRow({
+		label = "Start in first person",
+		description = "Every visit starts in your own eyes",
+		icon = "eye",
+		value = values.fpStart,
+		layoutOrder = 8,
+		parent = body,
+		onChanged = function(on: boolean)
+			Settings.set("fpStart", on)
+		end,
+	})
 	local UserInputService = game:GetService("UserInputService")
 	local function mouseRow()
 		monitor.root.Visible = UserInputService.MouseEnabled
+		local fp = UserInputService.KeyboardEnabled or UserInputService.GamepadEnabled
+		fpShot.root.Visible = fp
+		fpStart.root.Visible = fp
 	end
 	mouseRow()
 	UserInputService:GetPropertyChangedSignal("MouseEnabled"):Connect(mouseRow)
@@ -215,6 +250,8 @@ local function build()
 		blood.toggle.set(values.blood, true)
 		shake.toggle.set(values.shake, true)
 		monitor.toggle.set(values.deadMon, true)
+		fpShot.toggle.set(values.fpShot, true)
+		fpStart.toggle.set(values.fpStart, true)
 	end)
 	choiceRow("Motion", "Auto follows your device. Less: menus just appear", "motion", "motion", Settings.MOTION, 4, body)
 	choiceRow("UI size", "Buttons and windows bigger or smaller", "scale", "ui", Settings.UI, 5, body)
@@ -240,6 +277,9 @@ function Settings.start()
 	r.OnClientEvent:Connect(function(kind: unknown, data: unknown)
 		-- The kept choice (asked for with the radio's "Prefs"; the first answer counts unless the
 		-- player already changed something here).
+		if kind == "Settings" then
+			loaded = true
+		end
 		if kind ~= "Settings" or touched then
 			return
 		end

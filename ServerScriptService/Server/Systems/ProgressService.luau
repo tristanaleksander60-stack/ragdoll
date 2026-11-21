@@ -186,6 +186,11 @@ function ProgressService.cleanSettings(raw: any): { sfx: number, blood: boolean,
 	out.blood = raw.blood ~= false
 	out.shake = raw.shake ~= false
 	out.deadMon = raw.deadMon == true -- (off unless chosen, 10 Nov 2026; the old 'monitor' key is dropped)
+	-- V9-0w: first person on the first shot (on unless turned off), starting in first person (off unless
+	-- chosen), and whether the first shot has taught it already (once per profile).
+	;(out :: any).fpShot = raw.fpShot ~= false
+	;(out :: any).fpStart = raw.fpStart == true
+	;(out :: any).fpTaught = raw.fpTaught == true
 	return out
 end
 

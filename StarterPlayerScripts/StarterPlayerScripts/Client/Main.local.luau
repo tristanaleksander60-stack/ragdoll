@@ -144,6 +144,7 @@ HudMenu.onSandbox = BuildController.toggle -- (MENU's SANDBOX on a phone)
 safe("HudMenu", function() HudMenu.start() end)
 safe("ProgressUI", function() ProgressUI.start() end)
 safe("FirstPerson", function() require(Client:WaitForChild("FirstPerson")).start() end) -- V: first person (round 5)
+safe("FirstShotFP", function() require(Client:WaitForChild("FirstShotFP")).start() end) -- V9-0w: the first shot ever shows first person
 safe("Viewmodel", function() require(Client:WaitForChild("Viewmodel")).start() end)
 safe("FeelV2", function() require(Client:WaitForChild("FeelV2")).start() end) -- World/Feel v2: trails, casings, recoil, combo beat, world lamps (Config.FEEL_V2)
 safe("ChaseHud", function() require(Client:WaitForChild("ChaseHud")).start() end)
