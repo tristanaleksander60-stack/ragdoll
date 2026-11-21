@@ -11,7 +11,7 @@ Do the rest **in this order**. Each phase builds on the one before: things are f
 **Phase A: quick wins, no layout needed** (players feel them at once)
 1. **V9-0o** grey matte dummies. Every later capture uses them.
 2. **V9-0w** first shot → first person.
-3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive.
+3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive, then **V9-0aa**: the vitals monitor, then **V9-0ab**: falling off any map takes you home.
 4. **V9-3b** wider unlock gaps (Config and tests only).
 5. **V9-2c** the Z time dial and bubble.
 6. **Publish** through `docs/RELEASE.md` (milestone 1).
@@ -847,6 +847,77 @@ They stay kid-safe and cartoon. Every car has its own top speed, mass and handli
   - It reacts to a shot nearby, falls, and revives like the others.
   - The caps hold.
 
+## V9-0aa A vitals monitor like the leader's (owner, 21 Nov; Phase A)
+> "Tilføj præcis den samme." (the leader's monitor: `art/store/look_target/vitals_leader.png` and `vitals_leader_wide.webp`)
+
+**What the leader shows:**
+- **The panel:** a dark, see-through panel in the bottom-right corner. It holds an **X-ray body diagram**:
+  - a see-through skin outline over orange muscle and white bones (skull, ribs, spine, pelvis, arm and leg bones), all drawn in one clean style;
+  - the injured parts marked on the body: white ✕ / crack marks on broken bones, and the broken limb tinted.
+- **Under the body:**
+  - a status word ("Dead" in orange);
+  - an ECG line with the heart rate ("0 bpm", a flat line);
+  - a **Blood** bar with a percent ("40%", "20%") and a purple drop icon;
+  - a breathing state ("No signs").
+- **The hit line:** a wide dark bar along the bottom lists every injured part: "…bones, head, right forearm bones, broken right arm", with a sub-line "bled out · 40% blood".
+- **When it shows:** for the dummy you just hit or are aiming at, and it updates live as you keep hitting.
+
+**What we build: the same layout and behaviour, with our own art.**
+- **Where:** `Client/HospitalCharts` is rebuilt as this panel (it already has the dead-monitor and outline logic). The `HitInfo` black card becomes the bottom hit line.
+- **Data:** it comes from the server's `Anatomy` / `VitalsService` (the parts, bones, broken limbs, the heart, the blood, the KO/dead state); nothing new is trusted from the client.
+- **The X-ray body:**
+  - a layered figure drawn for our dummy shape (skin outline, muscle, bones; ImageLabels or a ViewportFrame);
+  - each bone or part can light up, crack (✕) or tint when hurt;
+  - it updates with a small pulse on each new injury;
+  - a calm idle breathing motion while the dummy is alive.
+- **The lines:**
+  - **status:** Healthy, Hurt, Critical, KO / Dead;
+  - **ECG:** an animated line with bpm (fast when hurt, a flat line at KO);
+  - **blood/energy bar** with a percent;
+  - **breathing:** Breathing, Shallow or No signs.
+- **The hit line:**
+  - the injured parts in plain words ("head, right forearm bones, broken right arm") and the cause (fell, crushed, bled out / knocked out), plus the %;
+  - it fades 4 s after the last hit.
+- **Where it shows:**
+  - **PC:** bottom-right, about the size in the leader's capture;
+  - **phone:** a compact version that keeps out of the thumb zone and V9-0g's notice lane (LayoutCheck), and can be collapsed to just the status and the bar;
+  - **pad:** the same as PC.
+  - **Settings:** the "Vitals monitor" choice (On / Compact / Off). **Default On** (the old `deadMon` default was off).
+
+**Content switch (owner decision; tell the owner in the Danish report):**
+- **Exactly the same words** ("Dead", "Blood", "bled out", bone names, purple blood) fits `Config.BLOOD = "purple"` / `MILD_TEXT = false`. That is the leader's 16+ style, and it pushes the game's maturity rating up (V3 note: the all-ages label grew a rival's player count a lot).
+- **The mild mode** (the default while `MILD_TEXT` = true) keeps the exact same look and motion, with these swaps:
+  - "Dead" → "KO";
+  - "Blood" → "Energy";
+  - "bled out" → "out cold";
+  - bones stay (cartoon X-ray bones are fine for all ages), drawn without gore.
+- Both are built; one switch (`Config.VITALS_WORDS = "mild" | "full"`) picks them.
+
+**Tests:** T178_Vitals.
+- A hit to the right forearm marks that bone and lists it.
+- At KO the ECG is flat, the status is KO/Dead and the bar is right.
+- It shows the last-hit dummy, and hides 4 s after.
+- It fits on 16 LayoutCheck screens.
+- The mild mode uses only the mild words.
+
+**Capture:** the panel next to the leader's, on PC and phone.
+
+## V9-0ab Falling off any map takes you home to your lab (owner, 21 Nov; quick, Phase A)
+> "Hvis man ryger ud fra ens map så spawner man tilbage i ens lab."
+
+- **Out of bounds means:** falling below the map's floor (a kill height per place, about 40 studs under its lowest walkable ground), or leaving the place's bounds (past its edge, over the hedge, out at sea past the Island's limit, launched far away by a cannon, a rocket or a blast). Checked on the server, cheaply (every 0.5 s per player), and on the client for a quick fade.
+- **What happens:**
+  - a quick fade or whoosh, and the player appears at **their own lab's spawn** (not the map's arrival), standing, with a little puff;
+  - no death screen, no reset of tools or progress;
+  - a seated player leaves the seat first;
+  - a player in a party lab returns to that party lab.
+- **Never:** inside a wall or a machine (the spawn's clear circle, V9-0h), or during the first 1 s of a legal launch inside bounds (a cannon flight high over the lab is fine).
+- **Dummies and props** that leave the bounds are recycled back into the lab's pool (V9-0j), never left falling forever.
+- **Tests:** T179_OutOfBounds.
+  - A player dropped below the Island returns to their lab spawn within 2 s, with tools kept.
+  - Launched over the hedge: back in the lab.
+  - A legal cannon flight inside the lab does not trigger it.
+
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
 
@@ -1327,6 +1398,36 @@ These are the `map = true` OFFERS and the passes that put a thing in the world. 
 - **Bring every event model up to the same bar:** Gorilla, Bull, UFO, Train, Balloon, Giant Dummy, Tornado, Meteor, Bowling balls, Magnet, Rocket rain and so on.
 - **Each needs:** a real model, an entrance, an act on the ragdolls, an exit and sound.
 - **Match V8-2.9:** only the events that stay get the work. The rest stay hidden and are not sold.
+
+**Owner addition (21 Nov): every event much bigger, lots of KOs for Robux.**
+> "Gør alle events meget større, så når man bruger robux får man RIGTIG mange KOs, KÆMPE nuke fx."
+
+- **More victims:**
+  - Each event brings its own crowd of guest dummies: about 20-40, dropped, marching or raining in at the start; the GiantDummy event brings a giant plus a crowd.
+  - The lab's body cap is raised **for the event only**, per device tier (for example phone 2x, PC 3x), then cleaned up smoothly afterwards (V9-5b keeps the server and phones smooth).
+- **Lots of KOs:**
+  - every dummy knocked out during a paid event counts as a KO **for the buyer** (and for the party in a party lab), so one event gives a big jump: aim for about 25-60 KOs per event, depending on the event;
+  - a live counter on a small pill ("NUKE: 47 KOs!");
+  - an end card "+47 KOs" with the progress bar filling toward the next weapon.
+  - It is fair: the KOs are earned in the event, and it is shown before buying ("about 40 KOs").
+- **Huge nuke** (MegaBomb), the showpiece:
+  1. A siren and a 3-2-1 countdown on a giant warning sign.
+  2. A cartoon bomb drops from the sky.
+  3. A **giant** flash, then a mushroom cloud towering over the whole hub, with a ring-shaped shockwave rolling across the floor that throws every dummy, prop and parked car (V9-0x) outward.
+  4. A slow-mo beat, a big camera shake (reduced-motion setting respected) and a deep boom.
+  5. Dust settling, and a few dummies raining back down.
+
+  Kid-safe and cartoon: no scorched bodies, everyone pops back up later.
+- **Every other event scaled the same way:** the Gorilla is giant and swats rows, the bulls are a stampede, the tornado is huge, the meteor shower is heavy, the train is long, rocket rain, the magnet storm and so on. Each keeps its own look (V9-0r scale rules) and an end card with its KO count.
+- **Limits:**
+  - effects stay in the buyer's lab, or the shared plaza event rules as now;
+  - nobody's game freezes (stagger the spawns over about 1 s, LOD the far bodies, keep the particles within FX_CAPS);
+  - the BIG RED BUTTON's free events stay smaller than the paid ones.
+- **Tests:** T180_BigEvents.
+  - Each paid event spawns its crowd within the raised cap.
+  - The buyer gets the KOs counted (at least 20 for the nuke in a test lab).
+  - The cap and the bodies return to normal within 10 s after.
+  - The server heartbeat stays at least 50 during the nuke with 6 players.
 
 ## V9-5c Many more free things to play with on every map (owner, 21 Nov)
 > "Tilføj flere forskellige gratis ting man kan interagere med ved alle de andre maps."
