@@ -478,7 +478,7 @@ Tests from T109 up are all new; "T1xx extended" means a later step adds cases to
 
 #### V8-0.10 Ship 0.26 and measure
 - **What it covers:**
-  - **Builds:** 0.25.1 first (see "How V8-0 ships"), then 0.26. Each goes through RELEASE.md (gate, backup, publish, restart old servers, check), run by `/klar`, if the owner approved per-build publishing in Sitting 1; otherwise 0.26 carries 0.25.1's parts and publishes at the end of V8-0. Use Roblox's "Restart servers for updates" with auto-reconnect instead of a hard shutdown ([DevForum](https://devforum.roblox.com/t/automatically-reconnect-to-experiences-during-updates/2866485)).
+  - **Builds:** 0.25.1 first (see "How V8-0 ships"), then 0.26. Each goes through RELEASE.md (gate, backup, publish (never restart old servers: owner order 21 Nov), check), run by `/klar`, if the owner approved per-build publishing in Sitting 1; otherwise 0.26 carries 0.25.1's parts and publishes at the end of V8-0. Use Roblox's "Restart servers for updates" with auto-reconnect instead of a hard shutdown ([DevForum](https://devforum.roblox.com/t/automatically-reconnect-to-experiences-during-updates/2866485)).
   - **Owner:**
     - re-answers the questionnaire honestly (after V8-0.7);
     - does a 15-minute soak on his phone (and a cheap Android if he can get one);
@@ -1227,7 +1227,7 @@ Read everything from `tools/SessionReport.luau` (Studio Edit, read-only), per bu
 | Growth (clip SHARE) against reach (media sharing forces 16+) | SAVE only now; SHARE only behind PolicyService and a questionnaire answer that allows it |
 | Forcing landscape could lose upright players | Decide on round data and Session_v1 orientation (V8-1.8, or earlier from 0.25.1's data); the switch can be undone |
 | Script Sync is down, so changes are mirrored by hand | V8-6.2 sync check; V8-6.1 DEV place |
-| Publishing kicks players | "Restart servers for updates" with auto-reconnect; at most one restart a day |
+| Publishing kicks players | No server restarts at all (owner order 21 Nov): old servers keep their version until they close by themselves |
 | Genre moderation is volatile (the HRR takedown) | Stay mild, label honestly, put "no blood" on the page |
 | Credits spent on gold-plating | Rule 2; one blind review per phase; steps only from evidence; reviews advise, the gates decide |
 

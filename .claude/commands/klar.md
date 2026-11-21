@@ -11,7 +11,7 @@ Then work on the **newest plan with unfinished steps**. **First `docs/V9_PLAN.md
 - **When something only the owner can do blocks a step** (ids, a dashboard setting, saving the place): park it in State with one Danish line and continue with the next step.
 - **Publish by yourself through `docs/RELEASE.md`:**
   - at every milestone in V9's order (after Phase A, after Phase C, and at the end after V9-6);
-  - each time: gate, backup, publish, restart the old servers, check.
+  - each time: gate, backup, publish, check. **Never restart or shut down old servers** (owner order, 21 Nov).
   - If a gate fails, do not publish; fix it, or carry it to the next milestone.
 - **When V9 is done and published,** continue with `docs/V8_PLAN.md` (evidence in `docs/V8_EVIDENCE.md`). Follow its "Order" and "Rules for every step". Run its phases one after another; when a phase's gate needs live numbers or a playtest round that is not there yet, say so in one Danish line, mark it in State, and go on with the next work that does not need it.
 - **Publish V8 phases through `docs/RELEASE.md` too,** at the end of each phase.
