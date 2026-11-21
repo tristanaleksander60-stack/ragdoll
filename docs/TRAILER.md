@@ -29,3 +29,19 @@ Det er det rigtige spil, så videoen overholder Robloxs regel om ikke at vise no
 5. Run `tools/TrailerServer.luau` on the **server**. It takes about 30 s and ends with "[Trailer] done".
 6. If a shot fails (no car, no map, the event queue is full), fix the script or that part of the game, then run it again. Take a capture of each shot first to check the framing.
 7. If the owner wants text or music: Roblox store videos work best without text. Never put a claim in the video that is not in the game.
+
+## Update 21 Nov 2026 (owner: "make the video for the experience page, cheaply")
+- **Cost:** 0 credits and 0 kr. The footage is the real game, filmed by `tools/TrailerServer.luau` + `tools/TrailerCam.luau`, recorded with Win + Alt + R. No AI video.
+- **Before filming, update the shot list to the game as it is now.** Use only what is built and looks great:
+  - the open hub from the air;
+  - GOD MODE spawning a 10-dummy line where you aim;
+  - 3 pistol flinches, then the drop (V9-0ac, if done);
+  - the cannon into the bullseye;
+  - a car through a row of dummies;
+  - the time bubble (0.1x and 3x);
+  - the biggest paid event (the nuke) from a safe wide angle;
+  - one open-air map;
+  - an end on the hub with a crowd of dummies flying.
+- **The cut:** about 25-30 s, the best shot first (the first 3 seconds decide whether people keep watching), the bright V9-0b look, Christmas off before 1 Dec, the UI hidden (Director mode F8 or `TrailerCam`), 16:9 at 1920x1080. **Under 30 s; check the current limit on the Creator Hub upload page.**
+- **Fix the shots:** if a shot looks weak, fix the shot (camera path, timing, more dummies) and film again. Take a capture of each shot's first frame before filming.
+- **Optional free edit:** Clipchamp (built into Windows) can trim and join the takes. No music with unclear rights; the game's own sounds are best. No text claims.
