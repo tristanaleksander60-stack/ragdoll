@@ -125,8 +125,9 @@ local function body(player: Player, root: BasePart): string
 	HitService.applyToy(Toys.byId.Blaster, chest, chest.Position, dir)
 	assert(waitFor(function()
 		local s = g:GetAttribute("RagdollState")
-		return s == "Ragdoll" or s == "Out" or s == "Stumble"
-	end, 2), "the Blaster did not knock the greeter: " .. tostring(g:GetAttribute("RagdollState")))
+		-- (V9-0ac, Config.SHOT_FLINCH: a round flinches a living body; the damage drops it: T181.)
+		return s == "Ragdoll" or s == "Out" or s == "Stumble" or ((require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SHOT_FLINCH and s == "Flinch")
+	end, 2), "the Blaster did not reach the greeter: " .. tostring(g:GetAttribute("RagdollState")))
 	table.insert(results, string.format("first shot timed at %.1fs, greeter knocked %s", seconds, tostring(g:GetAttribute("RagdollState"))))
 	assert(waitFor(function()
 		return g.Parent == nil

@@ -84,6 +84,23 @@ function OutOfBounds.sendHome(player: Player): boolean
 		end
 	end
 	if sent then
+		-- (Home standing: a limp body is told to get up, again for a moment, as getting up is refused in
+		-- the first instant of a fall.)
+		task.spawn(function()
+			local ok, PlayerRagdoll = pcall(function()
+				return require(script.Parent:WaitForChild("PlayerRagdoll")) :: any
+			end)
+			if not ok then
+				return
+			end
+			for _ = 1, 8 do
+				if not player.Parent or player.Character ~= character or not PlayerRagdoll.isDown(player) then
+					return
+				end
+				PlayerRagdoll.getUp(player)
+				task.wait(0.5)
+			end
+		end)
 		pcall(function()
 			local root = character:FindFirstChild("HumanoidRootPart")
 			if root and root:IsA("BasePart") then

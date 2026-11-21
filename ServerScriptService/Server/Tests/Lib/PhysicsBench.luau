@@ -2,14 +2,16 @@
 -- V9-P0 (owner, 21 Nov 2026: "make the BEST physics on all of Roblox"): the physics test bench. A fixed
 -- set of repeatable scenes on a bench floor of its own, high over the map (nothing else near), with
 -- server-simulated dummies (no owner: the same ActiveRagdoll code as everywhere), each measured:
---   * peak speed and spikes over the scene's cap (an "explosion");
+--   * peak speed; spikes (an "explosion"): frames where the trunk (pelvis) goes faster than the scene's
+--     physical cap (what that fall or push can give it, plus 15%), or a limb goes faster than REL_MAX
+--     against its own pelvis;
 --   * interpenetration: frames with a body part's middle under the floor's top;
 --   * time to settle: from the hardest moment (the impact, the launch) until every part stays under
 --     SETTLE_SPEED for SETTLE_HOLD s;
 --   * jitter at rest: mean linear / angular speed over JITTER_TIME s once settled;
 --   * the server's physics step time (Stats) during the scene.
--- T183_PhysicsBench runs it with targets; an owner can run it in Studio (ServerStorage attribute
--- PhysicsBench = true) and read the numbers in the output. docs/PHYSICS.md keeps the baseline.
+-- T183_PhysicsBench runs it with targets and prints the numbers ([PhysicsBench] lines); docs/PHYSICS.md keeps
+-- them. The physics ms is the whole server's step (Stats), not one body's: compare it against rest10.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -23,10 +25,15 @@ PhysicsBench.SETTLE_HOLD = 0.5 -- s
 PhysicsBench.JITTER_TIME = 2 -- s
 PhysicsBench.TIMEOUT = 12 -- s a scene may take to settle
 PhysicsBench.MIN_WATCH = 1.2 -- s: a scene is never "settled" before its body has moved or this long has passed
+PhysicsBench.REL_MAX = 120 -- studs/s a limb may move against its pelvis (ActiveRagdoll guards 110)
+PhysicsBench.MS_WINDOW = 3 -- s from the action over which the server's physics time is averaged
 
 export type Result = {
 	name: string,
-	peak: number, -- studs/s
+	peak: number, -- studs/s, any part
+	trunk: number, -- studs/s, the fastest pelvis
+	rel: number, -- studs/s, the fastest limb against its own pelvis
+	down: number, -- frames a living body (not kept out cold) was down
 	spikes: number, -- frames over the scene's cap
 	cap: number,
 	sunk: number, -- frames with a part's middle under the floor
@@ -100,9 +107,9 @@ function PhysicsBench.body(at: Vector3, lift: number?): Model
 end
 
 -- Watches `bodies` from now: the action has just happened. Returns the numbers.
-function PhysicsBench.watch(name: string, bodies: { Model }, cap: number): Result
+function PhysicsBench.watch(name: string, bodies: { Model }, cap: number, alive: boolean?): Result
 	local floorTop = PhysicsBench.ORIGIN.Y
-	local r: Result = { name = name, peak = 0, spikes = 0, cap = cap, sunk = 0, settle = nil, jitter = 0, spin = 0, physicsMs = 0, bodies = #bodies, state = "", trace = "" }
+	local r: Result = { name = name, peak = 0, trunk = 0, rel = 0, down = 0, spikes = 0, cap = cap, sunk = 0, settle = nil, jitter = 0, spin = 0, physicsMs = 0, bodies = #bodies, state = "", trace = "" }
 	local parts: { BasePart } = {}
 	for _, m in bodies do
 		for _, d in m:GetChildren() do
@@ -118,15 +125,21 @@ function PhysicsBench.watch(name: string, bodies: { Model }, cap: number): Resul
 	local msSum, msN = 0, 0
 	while os.clock() - t0 < PhysicsBench.TIMEOUT do
 		RunService.Heartbeat:Wait()
-		-- (Kept out cold the whole scene: VitalsService may wake a body a blast hurt.)
+		-- (Kept out cold the whole scene: VitalsService may wake a body a blast hurt. A scene of living
+		-- bodies, alive = true, leaves them be and counts the frames they are down.)
 		for _, m in bodies do
-			if m.Parent and m:GetAttribute("Vital") ~= "Unconscious" then
+			if m.Parent and not alive and m:GetAttribute("Vital") ~= "Unconscious" then
 				m:SetAttribute("Vital", "Unconscious")
+			end
+			local s = m:GetAttribute("RagdollState")
+			if alive and m.Parent and (s == "Ragdoll" or s == "Out") then
+				r.down += 1
 			end
 		end
 		local fast = 0
 		local under = false
 		local fastName = ""
+		local trunk, rel = 0, 0
 		for _, p in parts do
 			if p.Parent then
 				local v = p.AssemblyLinearVelocity.Magnitude
@@ -134,6 +147,14 @@ function PhysicsBench.watch(name: string, bodies: { Model }, cap: number): Resul
 					fastName = p.Name
 				end
 				fast = math.max(fast, v)
+				local pelvis = (p.Parent :: Instance):FindFirstChild("LowerTorso")
+				if pelvis and pelvis:IsA("BasePart") then
+					if p == pelvis then
+						trunk = math.max(trunk, v)
+					else
+						rel = math.max(rel, (p.AssemblyLinearVelocity - pelvis.AssemblyLinearVelocity).Magnitude)
+					end
+				end
 				if p.Position.Y < floorTop - 0.3 and math.abs(p.Position.X - PhysicsBench.ORIGIN.X) < 100 and math.abs(p.Position.Z - PhysicsBench.ORIGIN.Z) < 100 then
 					under = true
 				end
@@ -143,27 +164,37 @@ function PhysicsBench.watch(name: string, bodies: { Model }, cap: number): Resul
 			r.peak = fast
 			peakAt = os.clock()
 		end
+		r.trunk = math.max(r.trunk, trunk)
+		r.rel = math.max(r.rel, rel)
 		if os.clock() - lastTrace >= 0.25 then
 			lastTrace = os.clock()
 			r.trace ..= string.format(" %.0f%s", fast, string.sub(fastName, 1, 6))
 		end
-		if fast > cap then
+		if trunk > cap or rel > PhysicsBench.REL_MAX then
 			r.spikes += 1
 		end
 		if under then
 			r.sunk += 1
 		end
-		msSum += physicsMs()
-		msN += 1
+		-- (Fix round 1: the server's physics time over a fixed MS_WINDOW from the action, so a scene that
+		-- settles sooner is not averaged over its hard landing only.)
+		if os.clock() - t0 < PhysicsBench.MS_WINDOW then
+			msSum += physicsMs()
+			msN += 1
+		end
 		local moved = r.peak > PhysicsBench.SETTLE_SPEED * 3 or os.clock() - t0 > PhysicsBench.MIN_WATCH
-		if fast < PhysicsBench.SETTLE_SPEED and moved then
-			stillSince = stillSince or os.clock()
-			if os.clock() - (stillSince :: number) >= PhysicsBench.SETTLE_HOLD then
-				r.settle = math.max(0, (stillSince :: number) - peakAt)
-				break
+		if r.settle == nil then
+			if fast < PhysicsBench.SETTLE_SPEED and moved then
+				stillSince = stillSince or os.clock()
+				if os.clock() - (stillSince :: number) >= PhysicsBench.SETTLE_HOLD then
+					r.settle = math.max(0, (stillSince :: number) - peakAt)
+				end
+			else
+				stillSince = nil
 			end
-		else
-			stillSince = nil
+		end
+		if r.settle ~= nil and os.clock() - t0 >= PhysicsBench.MS_WINDOW then
+			break
 		end
 	end
 	r.physicsMs = if msN > 0 then msSum / msN else 0
@@ -174,7 +205,7 @@ function PhysicsBench.watch(name: string, bodies: { Model }, cap: number): Resul
 		while os.clock() - t1 < PhysicsBench.JITTER_TIME do
 			RunService.Heartbeat:Wait()
 			for _, m in bodies do
-				if m.Parent and m:GetAttribute("Vital") ~= "Unconscious" then
+				if m.Parent and not alive and m:GetAttribute("Vital") ~= "Unconscious" then
 					m:SetAttribute("Vital", "Unconscious")
 				end
 			end
@@ -221,7 +252,7 @@ PhysicsBench.SCENES = {
 			local m = PhysicsBench.body(o, 40)
 			task.wait(0.1)
 			knock(m, Vector3.new(0, 0.1, 0)) -- (limp at the top: a drop, not a stand)
-			return PhysicsBench.watch("drop40", { m }, 1.5 * math.sqrt(2 * Workspace.Gravity * 42))
+			return PhysicsBench.watch("drop40", { m }, 1.15 * math.sqrt(2 * Workspace.Gravity * 42))
 		end,
 	},
 	{
@@ -231,7 +262,7 @@ PhysicsBench.SCENES = {
 			local m = PhysicsBench.body(o + Vector3.new(-40, 15, -45))
 			task.wait(0.4)
 			knock(m, Vector3.new(0, 4, 14))
-			return PhysicsBench.watch("stairs", { m }, 90)
+			return PhysicsBench.watch("stairs", { m }, 1.15 * math.sqrt(2 * Workspace.Gravity * 16) + 15)
 		end,
 	},
 	{
@@ -241,7 +272,7 @@ PhysicsBench.SCENES = {
 			local m = PhysicsBench.body(o + Vector3.new(30, 4, 30))
 			task.wait(0.4)
 			knock(m, Vector3.new(0, 70, -60)) -- (a cannon-sized launch)
-			return PhysicsBench.watch("launch", { m }, 1.5 * 110)
+			return PhysicsBench.watch("launch", { m }, 1.15 * Vector3.new(0, 70, -60).Magnitude)
 		end,
 	},
 	{
@@ -253,7 +284,7 @@ PhysicsBench.SCENES = {
 			local Blasts = require(script.Parent.Parent.Parent:WaitForChild("Systems"):WaitForChild("Blasts")) :: any
 			Blasts.explode((m:GetPivot().Position) + Vector3.new(6, -2, 0), nil, nil)
 			m:SetAttribute("Vital", "Unconscious") -- (stays down: the fall and the rest, not the getting up)
-			return PhysicsBench.watch("blast6", { m }, 250)
+			return PhysicsBench.watch("blast6", { m }, 1.1 * 180) -- (MAX_LINEAR_SPEED)
 		end,
 	},
 	{
@@ -269,7 +300,7 @@ PhysicsBench.SCENES = {
 			for _, m in bodies do
 				knock(m, Vector3.new(0, 0.1, 0))
 			end
-			return PhysicsBench.watch("pile20", bodies, 200)
+			return PhysicsBench.watch("pile20", bodies, 1.15 * math.sqrt(2 * Workspace.Gravity * 90))
 		end,
 	},
 	{
@@ -284,10 +315,33 @@ PhysicsBench.SCENES = {
 			return r
 		end,
 	},
+	{
+		-- (V9-P fix round 1: rounds on a living, standing body, the light parts too: the hands, a forearm,
+		-- a leg, the chest; through HitService as a shot arrives. Nothing may flick (REL_MAX) and it must
+		-- never go down: V9-0ac.)
+		name = "rounds",
+		run = function(): Result
+			local o = PhysicsBench.ORIGIN
+			local m = PhysicsBench.body(o + Vector3.new(40, 0, 60))
+			task.wait(0.8)
+			local HitService = require(script.Parent.Parent.Parent:WaitForChild("Systems"):WaitForChild("HitService")) :: any
+			local Toys = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Toys")) :: any
+			task.spawn(function()
+				for _, name in { "RightHand", "LeftHand", "RightLowerArm", "LeftUpperLeg", "UpperTorso", "RightHand" } do
+					local p = m:FindFirstChild(name)
+					if p and p:IsA("BasePart") and m.Parent then
+						HitService.applyToy(Toys.byId.Deagle, p, p.Position, -p.CFrame.LookVector)
+					end
+					task.wait(0.15)
+				end
+			end)
+			return PhysicsBench.watch("rounds", { m }, 30, true)
+		end,
+	},
 }
 
 function PhysicsBench.format(r: Result): string
-	return string.format("%-7s peak %5.0f (cap %3.0f, %d spikes)  sunk %3d  settle %s  jitter %.2f / %.2f rad/s  physics %.2f ms  bodies %d  %s  trace:%s", r.name, r.peak, r.cap, r.spikes, r.sunk, if r.settle then string.format("%.2fs", r.settle) else "NEVER", r.jitter, r.spin, r.physicsMs, r.bodies, r.state, r.trace)
+	return string.format("%-7s trunk %4.0f (cap %3.0f) limb-rel %4.0f, %d spikes  sunk %3d  settle %s  jitter %.2f / %.2f rad/s  server physics %.2f ms  bodies %d  down %d  %s  trace:%s", r.name, r.trunk, r.cap, r.rel, r.spikes, r.sunk, if r.settle then string.format("%.2fs", r.settle) else "NEVER", r.jitter, r.spin, r.physicsMs, r.bodies, r.down, r.state, r.trace)
 end
 
 -- Runs every scene (or the named ones), clearing between them. Returns the results.

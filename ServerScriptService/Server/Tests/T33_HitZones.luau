@@ -359,6 +359,17 @@ local function run(results: { string }, player: Player)
 		return c ~= nil and c:GetAttribute("RagdollState") == "Standing"
 	end, 10), "the lab's coward is not standing")
 	local coward = Lab.slotDummy(player, 2) :: Model
+	-- (V9-P fix round 1: a knocked dummy lies PHYSICS.MIN_DOWN s; the coward nearest the bang must be up
+	-- to run, so the lab's six get the time to stand.)
+	waitFor(function()
+		for i = 1, 6 do
+			local d = Lab.slotDummy(player, i)
+			if d and d:GetAttribute("RagdollState") ~= "Standing" and d:GetAttribute("RagdollState") ~= "Walking" then
+				return false
+			end
+		end
+		return true
+	end, 8)
 	for i = 1, 6 do
 		local d = Lab.slotDummy(player, i)
 		if d then
@@ -388,7 +399,15 @@ local function run(results: { string }, player: Player)
 			end
 		end
 		return false
-	end, 1), "no coward heard the shot")
+	end, 1), (function()
+		local seen = {}
+		for i = 1, 6 do
+			local d = Lab.slotDummy(player, i)
+			local pel = d and d:FindFirstChild("LowerTorso")
+			table.insert(seen, string.format("%d:%s %.0f", i, if d then tostring(d:GetAttribute("RagdollState")) else "none", if pel and pel:IsA("BasePart") then (pel.Position - ground).Magnitude else -1))
+		end
+		return "no coward heard the shot (" .. table.concat(seen, ", ") .. "; newcomer " .. tostring(player:GetAttribute("Newcomer")) .. ")"
+	end)())
 	HitService.onShot(player, ground, "Blaster")
 	assert(HitService.lastUseOf(player, "Blaster") == after, "a second shot at once was taken (the gun's pace)")
 	task.wait(0.2)

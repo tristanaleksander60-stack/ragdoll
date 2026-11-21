@@ -393,13 +393,13 @@ local Config = {
 	-- should not fall from being shot, they should fall when they die"): a round never knocks a living dummy
 	-- down (ActiveRagdoll.gunReaction: a flinch, a stagger, a limp), it drops when the damage kills it
 	-- (VitalsService: about 6 Popper rounds, 4 Deagle, 10 SMG, 1-2 shotgun; a headshot at once; a body round
-	-- of SHOT_ONE_KILL_POWER or more (Sniper, Railgun) at once). A newcomer's rounds do NEWCOMER_DAMAGE times
+	-- of SHOT_ONE_KILL_POWER or more (Sniper, Railgun, Golden Deagle) at once). A newcomer's rounds do NEWCOMER_DAMAGE times
 	-- the damage until FIRST_HITS takedowns (the first KO within 2-3 shots), instead of knocking flat.
 	-- Big forces (blasts, the cannon, cars, heavy blows, throws) still ragdoll at once.
 	-- V9-0ab (owner, 21 Nov 2026: "if you fall out of your map you spawn back in your lab"): Server/Systems/OutOfBounds.
 	OUT_OF_BOUNDS = true,
 	SHOT_FLINCH = true,
-	SHOT_ONE_KILL_POWER = 2.5,
+	SHOT_ONE_KILL_POWER = 2.4,
 	NEWCOMER_DAMAGE = 2.5,
 	PHYSICS_V9 = true,
 	PHYSICS = table.freeze({
@@ -414,10 +414,26 @@ local Config = {
 		SETTLE_DAMP = 3,
 		-- Joint friction (x Roblox's own), by the part the socket sits in: the neck and the spine swing with weight.
 		JOINT_FRICTION = table.freeze({ Head = 2, UpperTorso = 1.5 }),
-		-- A living body falling (faster than BRACE_FALL studs/s down) with the ground within BRACE_HEIGHT studs
-		-- braces: arms out to catch it, head tucked (Poses.brace); higher up it windmills.
-		BRACE_HEIGHT = 7,
+		-- A living body falling (faster than BRACE_FALL studs/s down) braces BRACE_TTI s before it lands (the
+		-- ground looked for BRACE_PROBE studs down): arms straight out, chin tucked (Poses.catch); the arms keep
+		-- their tone CATCH_TIME s into the landing. Higher up it windmills.
+		BRACE_TTI = 0.35,
+		BRACE_PROBE = 30,
 		BRACE_FALL = 8,
+		CATCH_TIME = 0.25,
+		-- The settle assist (fix round 1): only on a flat (normal Y >= SETTLE_FLAT), not bouncy floor found
+		-- SETTLE_PROBE studs under the pelvis, braked against that floor's speed; never under SETTLE_MIN_GRAVITY
+		-- (Zero-G), in a time bubble or just after a push.
+		SETTLE_FLAT = 0.9,
+		SETTLE_PROBE = 4,
+		SETTLE_MIN_GRAVITY = 150,
+		-- A part slower than SETTLE_REST (studs/s and rad/s) is left alone, so the body can fall asleep.
+		SETTLE_REST = 0.15,
+		-- Only while this machine simulates at most SETTLE_MAX_BODIES limp bodies: a bigger heap is left to the
+		-- solver (assisted, a 20-body heap cost a third more solver time; heaped bodies stop each other anyway).
+		SETTLE_MAX_BODIES = 8,
+		-- A knocked-down dummy lies at least MIN_DOWN s before it gets up (the assist calms it sooner).
+		MIN_DOWN = 3,
 	}),
 	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges

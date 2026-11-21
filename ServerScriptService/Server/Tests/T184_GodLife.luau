@@ -85,6 +85,17 @@ return {
 				end
 			end
 			assert(post, "the STAY PUT body is not marked")
+			-- (V9-P fix round 1: a kind's Mass is what it really weighs, so it is held up by the right force.)
+			local real = 0
+			for _, d in (post :: Model):GetChildren() do
+				if d:IsA("BasePart") and not d.Massless then
+					real += d.Mass
+				end
+			end
+			local said = (post :: Model):GetAttribute("Mass") :: number
+			assert(math.abs(said - real) < real * 0.03 and real > 20, string.format("a HEAVY body says it weighs %.1f, really %.1f", said, real))
+			assert((post :: Model):GetAttribute("RagdollState") == "Standing", "a HEAVY body is not standing: " .. tostring((post :: Model):GetAttribute("RagdollState")))
+			table.insert(results, string.format("HEAVY weighs %.0f and stands", real))
 			local stood = flat(partOf(post :: Model, "LowerTorso").Position)
 			task.wait(DummySpawn.HOLD_SHAPE + DummySpawn.WANDER_EVERY[2])
 			local drift = (flat(partOf(post :: Model, "LowerTorso").Position) - stood).Magnitude
@@ -94,26 +105,27 @@ return {
 			VitalsService.liveForTest(true)
 			local before = #DummySpawn.of(p)
 			local td0 = ProgressService.takedownsOf(p) or 0
-			local chest = partOf(walker, "UpperTorso")
+			local target = post :: Model -- (the STAY PUT one: it has not wandered into a hazard)
+			local chest = partOf(target, "UpperTorso")
 			HitService.applyToy(Toys.byId.Sniper, chest, chest.Position, (chest.Position - (character:GetPivot().Position)).Unit, p)
 			assert(TestLib.waitFor(function()
-				return walker:GetAttribute("Spent") == true
+				return target:GetAttribute("Spent") == true
 			end, 2), "a Sniper round did not KO the GOD MODE body")
 			local downAt = os.clock()
 			local stoodUp = false
 			local gone = TestLib.waitFor(function()
-				local s = walker:GetAttribute("RagdollState")
-				if walker.Parent and (s == "Standing" or s == "GettingUp") then
+				local s = target:GetAttribute("RagdollState")
+				if target.Parent and (s == "Standing" or s == "GettingUp") then
 					stoodUp = true
 				end
-				return walker.Parent == nil
+				return target.Parent == nil
 			end, 6)
 			VitalsService.liveForTest(false)
 			assert(not stoodUp, "a spent GOD MODE body got up again")
 			assert(gone, "a KO'd GOD MODE body was still there after 6 s")
 			local took = os.clock() - downAt
 			assert(took >= DummySpawn.ONE_USE_REST - 0.3, string.format("it went after %.1f s, before its fall could be enjoyed", took))
-			assert(#DummySpawn.of(p) == before - 1, "its slot was not freed")
+			assert(not table.find(DummySpawn.of(p), target) and #DummySpawn.of(p) < before, "its slot was not freed")
 			TestLib.waitFor(function()
 				return (ProgressService.takedownsOf(p) or 0) > td0
 			end, 2)

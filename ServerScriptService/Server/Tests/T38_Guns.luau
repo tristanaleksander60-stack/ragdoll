@@ -90,7 +90,7 @@ local function run(results: { string })
 	-- (V9-0ac, Config.SHOT_FLINCH: a round never knocks a living body down; that rule is T181's. These
 	-- checks of the round 5 rule run only with the switch off.)
 	if (Config :: any).SHOT_FLINCH then
-		assert(ActiveRagdoll.gunReaction({}, "arm", 1.6, os.clock()) == "Flinch" and ActiveRagdoll.gunReaction({}, "torso", 1.6, os.clock()) == "Stumble", "V9-0ac: an arm round flinches, a strong body round staggers")
+		assert(ActiveRagdoll.gunReaction({}, "arm", 1.6, os.clock()) == "Flinch" and ActiveRagdoll.gunReaction({}, "torso", 1.6, os.clock()) == "Flinch", "V9-0ac: an arm round or a strong body round does more than flinch")
 		table.insert(results, "the rule is V9-0ac's (flinch, not fall: T181)")
 	end
 	if not (Config :: any).SHOT_FLINCH then
@@ -174,6 +174,28 @@ local function run(results: { string })
 	table.insert(results, "a leg round is noted on the body: a new simulator takes it down with the other leg")
 
 	end -- (the round 5 rule, SHOT_FLINCH off)
+	if (Config :: any).SHOT_FLINCH then
+		-- 2b under V9-0ac: the part the round really meets decides where the wound goes (named the arm,
+		-- the line from the shooter's head meets the stomach: the wound is the body's). Now the more so:
+		-- only the head kills at once.
+		local shooter = game:GetService("Players"):GetPlayers()[1]
+		local character = shooter and shooter.Character
+		if character and character:FindFirstChild("Head") then
+			waitClear()
+			local mixed = body(Vector3.new(44, 0, -40))
+			local belly = part(mixed, "LowerTorso")
+			local front = belly.CFrame.LookVector
+			character:PivotTo(CFrame.lookAt(belly.Position + front * 7 + Vector3.new(0, 1, 0), belly.Position))
+			task.wait(0.3)
+			HitService.applyToy(Toys.byId.Blaster, part(mixed, "LeftUpperArm"), belly.Position, -front, shooter)
+			task.wait(0.4)
+			local wounds = tostring(mixed:GetAttribute("Wounds"))
+			assert(wounds ~= "nil" and not string.find(wounds, "Arm", 1, true) and not string.find(wounds, "Hand", 1, true), "the wound went on the arm named, not where the round met: " .. wounds)
+			assert(not down(mixed), "a round in the stomach knocked a living body down: " .. state(mixed))
+			character:PivotTo(CFrame.new(Lab.plazaOrigin() + Vector3.new(0, 3.5, 20)))
+			table.insert(results, "the arm named but the stomach met: wound " .. wounds .. ", still up")
+		end
+	end
 
 	-- 3. Every round lowers the pulse and costs blood; the head more.
 	local a, b = body(Vector3.new(4, 0, -40)), body(Vector3.new(12, 0, -40))

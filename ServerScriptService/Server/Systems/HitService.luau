@@ -234,6 +234,15 @@ function HitService.severFor(toy: Toys.Toy, requester: Player?, position: Vector
 	return sever
 end
 
+-- V9-0ac: the damage factor a hit by this player does (pure): NEWCOMER_DAMAGE for a newcomer until
+-- FIRST_HITS takedowns, else nil.
+function HitService.boostFor(newcomer: boolean, takedowns: number): number?
+	if (Config :: any).SHOT_FLINCH and newcomer and takedowns < ((Config :: any).FIRST_HITS or 3) then
+		return (Config :: any).NEWCOMER_DAMAGE
+	end
+	return nil
+end
+
 function HitService.applyToy(toy: Toys.Toy, part: BasePart, position: Vector3, direction: Vector3, requester: Player?, byHand: boolean?): string?
 	local model = dummyOf(part)
 	if not model then
@@ -288,10 +297,7 @@ function HitService.applyToy(toy: Toys.Toy, part: BasePart, position: Vector3, d
 			-- (Round 4, M10: a gun's round, the NailGun's too, kills at once in the head: VitalsService.)
 			-- (V9-0ac: a newcomer's first takedowns come in 2-3 shots: their hits do NEWCOMER_DAMAGE times the damage
 			-- until FIRST_HITS takedowns, instead of the old knock-flat rule.)
-			local boost: number? = nil
-			if (Config :: any).SHOT_FLINCH and requester and requester:GetAttribute("Newcomer") == true and (ProgressService.takedownsOf(requester) or 0) < ((Config :: any).FIRST_HITS or 3) then
-				boost = (Config :: any).NEWCOMER_DAMAGE
-			end
+			local boost = if requester then HitService.boostFor(requester:GetAttribute("Newcomer") == true, ProgressService.takedownsOf(requester) or 0) else nil
 			VitalsService.wound(model, woundPart, woundAt, requester, toy.wound, { sever = sever, blunt = blunt, guarded = guarded, round = toy.gun == true, boost = boost })
 		end
 		-- Round 5: each gun's own (pellets, a round through bodies, a flare, gold sparks). Never

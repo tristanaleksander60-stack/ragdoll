@@ -2159,3 +2159,38 @@ Write the baseline into `docs/PERF.md`.
     - T184_GodLife passes: a BOUNCY body walked off; a STAY PUT body stood (0.01 studs in 12 s); one KO: down, never up, gone after 3.2 s, slot free, takedown counted.
     - T167 passes. LayoutCheck 0 problems.
   - **Known:** GOD MODE kinds set one density on every part after spawning, so the P1 mass spread and the forces sized from `Mass` are stale for them. That is in the V9-P fix round.
+- 21 Nov 2026, V9-P + V9-0ac fix round 1 (PC). The blind review scored V9-P 5.0 and V9-0ac 6.0; both failed the pass bar of 8.5.
+  - **Run order:** V9-P is paused after this fix round with the list below left; Phase A continues (V9-0z and V9-0ab are done, V9-0aa is next). V9-P's P3-P6 resume after the milestone 1 publish. The plan's "V9-P first" is noted as broken here, as the reviewer asked.
+  - **Fixed:** the details are in docs/PHYSICS.md, "Fix round 1".
+    - Rounds are always a Flinch and never down a living body. That is now proven live through HitService, with 3 fast Popper rounds, an AK burst and both legs.
+    - A round on a body getting up or crawling no longer floors it.
+    - A leg round makes it limp on for 4 s.
+    - Light parts are not flicked (`GUN_LOCAL_MAX`).
+    - The killing round's push carries into the fall (`DEATH_PUSH`).
+    - Golden Deagle joins the one-round body kills.
+    - The gun texts no longer promise a throw.
+    - `HitService.boostFor` is tested.
+    - **Settle assist:** only on a flat floor that is not bouncy, braked against the floor's speed; never in a time bubble, in low gravity, or just after a push; it leaves still parts asleep; it is off in big moving heaps. `MIN_DOWN` is 3 s.
+    - **Brace:** on time to impact, with a straight-armed catch whose tone lasts through the landing; bracing arms never break; none in a fast bubble.
+    - **GOD MODE kinds:** they keep the real mass spread with correct `Mass` and `StandOffset`, so HEAVY stands.
+    - **Bench:**
+      - physical caps plus a limb-against-pelvis check;
+      - a "rounds" scene;
+      - a fixed 3 s window for physics time;
+      - `BenchRuns` medians;
+      - a fair before/after on the same bench;
+      - `SETTLE_MAX` 1.5.
+  - **Tests:**
+    - pass: T181 (rewritten: live HitService bursts, the 4th Popper round drops it and it falls 2 studs away from the shot), T183 (7 scenes), T184 (HEAVY weighs 60 and stands), T38 (§2b now runs under SHOT_FLINCH: the wound goes where the round meets), T45, T24, T82, T109, T23 (a Flinch counts), T18, T167, T17;
+    - T157 passes: its 2x case now accepts 0-1 sightings, since the fall there takes about 0.05 s and a bubble that did not speed it up still fails the span check;
+    - OutOfBounds now stands a limp player up at home (T18).
+    - T33 fails alone, on the code from before this round too: the known order dependency.
+  - **Measured honestly:** a heap now settles 3x faster (0.45-1 s against 0.9-4.7 s), but it costs about 40-60 % more server physics while it lands (26-29 ms against 16-22). Five attempts did not remove that, so it goes to P5.
+  - **Left for V9-P** (as in PHYSICS.md "Still open"):
+    - P2: the stepping compare, capsules, wake on hit;
+    - P1: the joint limits, friction by surface, buoyancy;
+    - P3: balance and stepping, damage-weakened muscles, the landing roll, the get-up blend, players;
+    - P4: impact sounds and dust, the shooter-side death latency;
+    - P5: the heap cost, far-body LOD, ownership checks;
+    - P6: the rivals, plus two blind video reviews;
+    - the car, grab and water bench scenes, and captures.

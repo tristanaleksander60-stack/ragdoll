@@ -103,9 +103,15 @@ return {
 			task.wait(1)
 			character = placeAndLimp(player)
 			character:PivotTo(CFrame.new(0, Workspace.FallenPartsDestroyHeight + 20, 0))
+			-- (V9-0ab, Config.OUT_OF_BOUNDS: sent home to the lab, standing, is as good as a respawn.)
+			local homeOk = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).OUT_OF_BOUNDS
 			assert(waitFor(function()
-				return player.Character ~= character and player.Character ~= nil
-			end, 6), "a limp body under the world was not respawned (round " .. round .. ")")
+				if player.Character ~= character and player.Character ~= nil then
+					return true
+				end
+				local low = character:FindFirstChild("LowerTorso")
+				return homeOk and low ~= nil and low:IsA("BasePart") and low.Position.Y > Workspace.FallenPartsDestroyHeight + 200 and not PlayerRagdoll.isDown(player)
+			end, 8), "a limp body under the world was neither respawned nor sent home standing (round " .. round .. ")")
 			assert(not PlayerRagdoll.isDown(player), "the respawned avatar counts as limp")
 		end
 

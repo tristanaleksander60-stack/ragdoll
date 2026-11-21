@@ -100,7 +100,20 @@ type Rig = {
 	steer: number, -- detour angle (radians) around something in the way
 	steerUntil: number, -- keeps to the detour until this time
 	arriveTime: number, -- s at home turning to face the lab
+	-- (V9-P fix round 1.)
+	limpUntil: number?, -- a leg round: it limps on until then (SHOT_FLINCH)
+	lastShotDir: Vector3?, -- the last round's push (flat), carried into the death fall
+	lastShotAt: number?,
+	bracing: boolean?, -- falling, about to land: arms out (Poses.catch)
+	catchUntil: number?, -- landed from a brace: the arms keep their tone until then
+	pushedAt: number?, -- the last ActiveRagdoll.push (a fan, a conveyor): no settle assist just after
 }
+
+-- V9-0ac fix round 1 (SHOT_FLINCH):
+local LEG_LIMP_TIME = 4 -- s a leg round makes it limp on
+local GUN_LOCAL_MAX = 28 -- studs/s a round's own jerk may give the struck part (a hand weighs 1/50 of the trunk)
+local DEATH_PUSH = 9 -- studs/s the killing round's push carries into the fall (it falls away from the shot)
+local DEATH_PUSH_WINDOW = 0.8 -- s after a round that a death still counts as that round's
 
 -- Hit thresholds as change in body speed (studs/s) that the impulse would give the whole body.
 local FLINCH_MAX = 10
@@ -237,22 +250,64 @@ end
 -- V9-P2: a limp body lying on the ground and only slowly moving loses its energy the way a soft
 -- body does (no long rolling and rocking after a big fall): every assembly's speed and spin ease
 -- off by SETTLE_DAMP per second below SETTLE_SPEED. Flying, held or fast bodies are never touched.
+local limpNow = 0 -- bodies this machine simulates limp (Ragdoll/Out) and still moving, counted every frame by update
 local function settle(rig: Rig, dt: number)
 	local P = (GameConfig :: any).PHYSICS
 	if not ((GameConfig :: any).PHYSICS_V9 and P and P.SETTLE_DAMP) then
 		return
 	end
-	if torsoSpeed(rig) > P.SETTLE_SPEED then
+	-- (Fix round 1: a big heap is left to the solver: assisted, a 20-body heap cost a third more solver
+	-- time, and bodies in a heap hook into each other and stop anyway.)
+	if limpNow > (P.SETTLE_MAX_BODIES or math.huge) then
+		return
+	end
+	if torsoSpeed(rig) > P.SETTLE_SPEED * 3 then
+		return -- (cheap early out: far too fast either way)
+	end
+	-- (Fix round 1: never where slow motion or a float is the point: a time bubble keeps its own clock,
+	-- Zero-G and the owner's low gravity float bodies on purpose; nor while something keeps pushing it:
+	-- a fan, a conveyor, a magnet, the gravity hole.)
+	local ts = rig.model:GetAttribute("TimeScale")
+	if (type(ts) == "number" and ts ~= 1) or Workspace.Gravity < (P.SETTLE_MIN_GRAVITY or 150) or os.clock() - (rig.pushedAt or 0) < 0.4 then
+		return
+	end
+	-- What it lies on: only a flat, not bouncy floor; braked against that floor's own speed, so a body
+	-- on a truck bed or a moving platform rides along instead of sliding off.
+	local hit = Workspace:Raycast(rig.pelvis.Position, Vector3.new(0, -(P.SETTLE_PROBE or 4), 0), rig.rayParams)
+	if not hit or hit.Normal.Y < (P.SETTLE_FLAT or 0.9) then
+		return
+	end
+	local support = hit.Instance
+	local base = Vector3.zero
+	if support:IsA("BasePart") then
+		local okProps, props = pcall(function()
+			return support.CurrentPhysicalProperties
+		end)
+		if okProps and props and props.Elasticity > 0.5 then
+			return -- (the Bouncy Floor: its bounces are the point)
+		end
+		if not support.Anchored then
+			base = support.AssemblyLinearVelocity
+		end
+	end
+	if (rig.pelvis.AssemblyLinearVelocity - base).Magnitude > P.SETTLE_SPEED then
 		return
 	end
 	local k = math.exp(-P.SETTLE_DAMP * dt)
 	local seen: { [BasePart]: boolean } = {}
+	local rest = P.SETTLE_REST or 0.15
 	for _, part in rig.parts do
 		local root = part.AssemblyRootPart
 		if root and not seen[root] and not root.Anchored then
 			seen[root] = true
-			root.AssemblyLinearVelocity *= k
-			root.AssemblyAngularVelocity *= k
+			-- (Fix round 1: a part already all but still is left alone: writing its speed every frame
+			-- kept the body from ever falling asleep, and a sleeping body costs the solver nothing.)
+			local v = root.AssemblyLinearVelocity - base
+			local w = root.AssemblyAngularVelocity
+			if v.Magnitude > rest or w.Magnitude > rest then
+				root.AssemblyLinearVelocity = base + v * k
+				root.AssemblyAngularVelocity = w * k
+			end
 		end
 	end
 end
@@ -1177,7 +1232,7 @@ local function updateMoving(rig: Rig, dt: number)
 			wantHeading = direction
 			local base = if state == "Crawling"
 				then (if fleeing then CRAWL_FLEE_SPEED else CRAWL_SPEED)
-				elseif legs == 1 then (if fleeing then LIMP_FLEE_SPEED else LIMP_SPEED)
+				elseif legs == 1 or now < (rig.limpUntil or 0) then (if fleeing then LIMP_FLEE_SPEED else LIMP_SPEED) -- (a broken leg, or a leg round a while ago: V9-0ac)
 				elseif fleeing then FLEE_SPEED
 				else WALK_SPEED
 			-- A game can hurry its runners along (Pace: a multiplier, MinigameService).
@@ -1253,6 +1308,8 @@ local function checkImpact(rig: Rig)
 	local trunkJolt = 0 -- the biggest change of the trunk's velocity (a landing at a slant loses
 	-- little speed but turns hard: the fall is stopped while the slide goes on)
 	local speeds = rig.impactSpeeds
+	-- (V9-P3 fix round 1: arms that brace a fall take the ground by design: they never break doing it.)
+	local catching = rig.bracing == true or (rig.catchUntil ~= nil and now < rig.catchUntil + 0.15)
 	for _, p in rig.parts do
 		if p ~= rig.root and (BREAKABLE[p.Name] or p == rig.pelvis or p.Name == "Head") then
 			local v = p.AssemblyLinearVelocity
@@ -1267,7 +1324,7 @@ local function checkImpact(rig: Rig)
 					pelvisLoss = loss
 				elseif p.Name == "Head" then
 					headLoss = loss
-				elseif loss > bestLoss then
+				elseif loss > bestLoss and not (catching and (string.find(p.Name, "Arm", 1, true) or string.find(p.Name, "Hand", 1, true))) then
 					bestLoss, bestLimb = loss, p
 				end
 			end
@@ -1331,6 +1388,14 @@ local function vitalDown(rig: Rig): boolean
 end
 
 local function update(dt: number)
+	-- (Limp bodies still moving: a heap coming down. Ones lying still, asleep, cost nothing and do not count.)
+	local limp = 0
+	for _, r in rigs do
+		if (r.state == "Ragdoll" or r.state == "Out") and r.pelvis.AssemblyLinearVelocity.Magnitude > CALM_SPEED then
+			limp += 1
+		end
+	end
+	limpNow = limp
 	for model, rig in rigs do
 		if not model.Parent or not rig.pelvis.Parent then
 			rigs[model] = nil
@@ -1343,6 +1408,17 @@ local function update(dt: number)
 		if state ~= "Ragdoll" and state ~= "Out" and state ~= "Frozen" and rig.held == 0 and vitalDown(rig) then
 			enter(rig, "Ragdoll")
 			state = rig.state
+			-- (V9-0ac fix round 1: a body killed by a round falls away from it, not in a heap where it stood.)
+			local dir = rig.lastShotDir
+			if dir and rig.lastShotAt and os.clock() - rig.lastShotAt < DEATH_PUSH_WINDOW then
+				local push = dir * DEATH_PUSH + Vector3.new(0, -2, 0)
+				for _, p in rig.parts do
+					if p ~= rig.root then
+						p:ApplyImpulse(push * p.Mass)
+					end
+				end
+			end
+			rig.lastShotDir = nil
 		end
 
 		if state == "Standing" then
@@ -1369,17 +1445,25 @@ local function update(dt: number)
 		elseif state == "Ragdoll" or state == "Out" then
 			checkImpact(rig)
 			local flying = isAirborne(rig)
+			local P = (GameConfig :: any).PHYSICS
 			if flying ~= rig.airborne then
 				if not flying and rig.held == 0 then
 					emit("Land", rig, rig.pelvis.Position, rig.pelvis.AssemblyLinearVelocity.Magnitude)
+					-- (V9-P3 fix round 1: braced as it came down: the arms keep their tone through the
+					-- first contact, so they really catch it.)
+					if rig.bracing and P and P.CATCH_TIME then
+						rig.catchUntil = os.clock() + P.CATCH_TIME
+					end
 				end
+				rig.bracing = false
 				rig.airborne = flying
 				rig.model:SetAttribute("Airborne", flying)
 			end
 			-- Held: dangle and kick. Flying free: windmill. Lying: limp.
 			-- Out cold or dead: limp even in the air or in a grab (round 4, M10: no kicking).
 			local down = vitalDown(rig)
-			local profile = if state == "Out" or down then "Ragdoll" elseif rig.held > 0 then "Held" elseif flying then "Airborne" else "Ragdoll"
+			local catching = not flying and rig.catchUntil ~= nil and os.clock() < rig.catchUntil and rig.held == 0
+			local profile = if state == "Out" or down then "Ragdoll" elseif rig.held > 0 then "Held" elseif flying or catching then "Airborne" else "Ragdoll"
 			if profile ~= rig.limpProfile then
 				rig.limpProfile = profile
 				applyProfile(rig, profile)
@@ -1391,13 +1475,24 @@ local function update(dt: number)
 				applyPose(rig, Poses.dangle(rig.stateTime))
 			elseif profile == "Airborne" then
 				-- (V9-P3: falling towards the ground it braces: the arms reach out to catch it, the head
-				-- tucks, the knees bend; high up it windmills.)
-				local P = (GameConfig :: any).PHYSICS
-				local bracing = false
-				if (GameConfig :: any).PHYSICS_V9 and P and P.BRACE_HEIGHT and rig.pelvis.AssemblyLinearVelocity.Y < -P.BRACE_FALL then
-					bracing = Workspace:Raycast(rig.pelvis.Position, Vector3.new(0, -P.BRACE_HEIGHT, 0), rig.rayParams) ~= nil
+				-- tucks, the knees bend; high up it windmills. Fix round 1: on the time to impact (about
+				-- a third of a second, at the body's own clock in a time bubble), not a fixed height.)
+				local bracing = catching
+				if not bracing and (GameConfig :: any).PHYSICS_V9 and P and P.BRACE_TTI then
+					local ts = timeScaleOf(rig)
+					local fall = -rig.pelvis.AssemblyLinearVelocity.Y / ts
+					-- (Not in a fast bubble: the fall is over in a blink there, and the pose fought the
+					-- bubble's own gravity forces (T157).)
+					if fall > P.BRACE_FALL and ts <= 1 then
+						local ground = Workspace:Raycast(rig.pelvis.Position, Vector3.new(0, -P.BRACE_PROBE, 0), rig.rayParams)
+						if ground then
+							local gap = math.max(0, rig.pelvis.Position.Y - ground.Position.Y - AIR_CLEARANCE)
+							bracing = gap / fall < P.BRACE_TTI
+						end
+					end
 				end
-				applyPose(rig, if bracing then Poses.brace(rig.stateTime) else Poses.flail(rig.stateTime))
+				rig.bracing = bracing
+				applyPose(rig, if bracing then Poses.catch(rig.stateTime) else Poses.flail(rig.stateTime))
 			end
 			if not flying and rig.held == 0 then
 				settle(rig, dt)
@@ -1408,7 +1503,10 @@ local function update(dt: number)
 				rig.calmTime = 0
 			end
 			local awake = (state ~= "Out" or os.clock() >= rig.koUntil) and not down
-			if rig.stateTime > MIN_RAGDOLL_TIME and rig.calmTime > CALM_TIME and awake then
+			-- (V9-P fix round 1: the settle assist calms a body sooner; a dummy still lies MIN_DOWN s, as long
+			-- as before, so the fall can be enjoyed. A player's own body gets up as before.)
+			local minDown = if (GameConfig :: any).PHYSICS_V9 and P and P.MIN_DOWN and rig.model:GetAttribute("IsDummy") == true then P.MIN_DOWN else MIN_RAGDOLL_TIME
+			if rig.stateTime > minDown and rig.calmTime > CALM_TIME and awake then
 				-- Both legs broken: no getting up, it crawls.
 				if homeOf(rig) and brokenLegs(rig) >= 2 then
 					enter(rig, "Crawling")
@@ -1804,10 +1902,10 @@ function ActiveRagdoll.gunReaction(rig: any, region: string, gun: number, now: n
 			local shot = rig.legShotAt or {}
 			rig.legShotAt = shot
 			shot[if side == 1 then "Right" else "Left"] = now
+			rig.limpUntil = now + LEG_LIMP_TIME -- (it limps on a while)
 		end
-		if region == "torso" or region == "body" then
-			return if gun >= GUN_FELLS then "Stumble" else "Flinch"
-		end
+		-- (Fix round 1: never a Stumble either; that state's weak legs and low balance tipped a body
+		-- under a fast Popper or an AK burst before the damage dropped it.)
 		return "Flinch"
 	end
 	-- Round 5, phase 00: rounds add up. A third one in the arms or legs within SHOT_MEMORY takes it
@@ -1919,6 +2017,10 @@ function ActiveRagdoll.hit(model: Model, part: BasePart, impulse: Vector3, posit
 		emit("FirstHit", rig, position, speed)
 	elseif current == "Out" then
 		enter(rig, "Out") -- still out cold, just moved
+	elseif gun and gun > 0 and (GameConfig :: any).SHOT_FLINCH and (current == "GettingUp" or current == "Crawling") and rig.held == 0 then
+		-- (V9-0ac fix round 1: a round on a body getting up or crawling does not floor it again; the
+		-- struck part jerks, it carries on.)
+		impulse *= LIMB_PUSH
 	elseif gun and gun > 0 and current ~= "Ragdoll" and current ~= "GettingUp" and current ~= "Crawling" and rig.held == 0 then
 		local reaction = ActiveRagdoll.gunReaction(rig, rig.hitRegion, gun, now, rig.hitLimbSide)
 		if reaction ~= "Ragdoll" and (rig.hitRegion == "arm" or rig.hitRegion == "leg") then
@@ -1966,6 +2068,19 @@ function ActiveRagdoll.hit(model: Model, part: BasePart, impulse: Vector3, posit
 	end
 	local localScale = if rig.state == "Flinch" then 0.35 else 1
 	local localImpulse = impulse * (1 - bodyShare) * localScale
+	if gun and gun > 0 and (GameConfig :: any).SHOT_FLINCH then
+		-- (Fix round 1: a light part is never flicked: the round's own jerk is capped by its real mass.)
+		local cap = part.AssemblyMass * GUN_LOCAL_MAX
+		if localImpulse.Magnitude > cap then
+			localImpulse = localImpulse.Unit * cap
+		end
+		-- (Remembered: a death from this round falls away from it.)
+		local flat = Vector3.new(impulse.X, 0, impulse.Z)
+		if flat.Magnitude > 1e-3 then
+			rig.lastShotDir = flat.Unit
+			rig.lastShotAt = now
+		end
+	end
 	local partMass = math.max(part.AssemblyMass, 0.5)
 	local breaks = not gun and localImpulse.Magnitude / partMass >= BREAK_LOCAL_SPEED -- (a round goes through: no break)
 	if grounded and localImpulse.Y / partMass < -GROUND_PUSH_MAX * 2 then
@@ -1991,6 +2106,7 @@ function ActiveRagdoll.push(model: Model, deltaVelocity: Vector3, maxSpeed: numb
 	if not rig or rig.state == "Frozen" then
 		return
 	end
+	rig.pushedAt = os.clock() -- (V9-P fix round 1: the settle assist leaves a pushed body alone)
 	if deltaVelocity.Magnitude >= PUSH_IMPULSE_MIN then
 		rig.lastImpulseAt = os.clock() -- a real shove changes speeds too: not an impact
 	end

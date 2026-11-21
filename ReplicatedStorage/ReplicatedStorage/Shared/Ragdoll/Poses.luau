@@ -121,6 +121,25 @@ function Poses.brace(t: number): Pose
 	return out
 end
 
+-- V9-P3 (fix round 1): about to land: both arms straight out ahead to take the ground (no wobble,
+-- elbows nearly locked), chin tucked, the trunk curled a little, hips and knees bent to soak it up. Held
+-- from about a third of a second before impact through the first contact (ActiveRagdoll catchUntil).
+local catchOut: Pose = {}
+function Poses.catch(_t: number): Pose
+	local out = catchOut
+	out.RightShoulder = ang(100, 0, 22)
+	out.LeftShoulder = ang(100, 0, -22)
+	out.RightElbow = ang(10, 0, 0)
+	out.LeftElbow = ang(10, 0, 0)
+	out.Neck = ang(-28, 0, 0)
+	out.Waist = ang(-12, 0, 0)
+	out.RightHip = ang(30, 0, 0)
+	out.LeftHip = ang(30, 0, 0)
+	out.RightKnee = ang(-45, 0, 0)
+	out.LeftKnee = ang(-45, 0, 0)
+	return out
+end
+
 -- In the air: cartoon windmill arms and bicycling legs.
 local flailOut: Pose = {}
 function Poses.flail(t: number): Pose

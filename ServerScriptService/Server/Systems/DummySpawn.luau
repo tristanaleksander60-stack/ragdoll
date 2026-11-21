@@ -152,15 +152,33 @@ local function dress(model: Model, spec: Spec)
 			model:ScaleTo(spec.scale)
 		end)
 	end
+	-- (V9-P fix round 1: the kind's weight is a factor on the body's own real spread (Config.PHYSICS.MASS,
+	-- set by ActiveRagdoll.prepare), not one density on every part; then the body's Mass and StandOffset
+	-- are written again, so the forces that hold it up and the hits are sized for what it really weighs.)
+	local factor = spec.density / 0.7
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") then
-			d.CustomPhysicalProperties = PhysicalProperties.new(spec.density, 0.4, spec.elasticity, 1, if spec.elasticity >= 0.9 then 100 else 1)
+			local cur = d.CurrentPhysicalProperties
+			d.CustomPhysicalProperties = PhysicalProperties.new(math.clamp(cur.Density * factor, 0.01, 100), cur.Friction, spec.elasticity, cur.FrictionWeight, if spec.elasticity >= 0.9 then 100 else 1)
 			-- (V9-0l: the whole body in its kind's colour, as the GOD MODE window shows it; the skins wear
 			-- the parts' colour (DummySkins) and the dead green gives it back (VitalsService.paintDead).)
 			if d.Parent == model and d.Name ~= "HumanoidRootPart" then
 				d.Color = d.Color:Lerp(spec.color, 0.8)
 			end
 		end
+	end
+	local mass = 0
+	for _, d in model:GetChildren() do
+		if d:IsA("BasePart") and not d.Massless then
+			mass += d.Mass
+		end
+	end
+	if mass > 0 then
+		model:SetAttribute("Mass", mass)
+	end
+	local offset = model:GetAttribute("StandOffset")
+	if type(offset) == "number" and spec.scale ~= 1 then
+		model:SetAttribute("StandOffset", offset * spec.scale)
 	end
 	model:SetAttribute("DummyType", spec.plate)
 	-- The chest plate: the type in big letters on the chest (a SurfaceGui, so the crowd-style

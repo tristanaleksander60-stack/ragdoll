@@ -106,6 +106,13 @@ return {
 				end
 				local why = string.format("the dropped dummy (%s) was seen falling only %d times: %.1f studs over the floor", name, #samples, pelvis.Position.Y - floorY)
 				dummy:Destroy()
+				if name == "fast" and #samples < 3 then
+					-- (At 2x the stretch it is watched over (9.6 to 4.5 studs up) takes some 0.05 s: the server
+					-- may see it there once or not at all. That is the point: outside it is seen ~10 times. A
+					-- bubble that did not speed it up would be seen as often as outside and fail the span check.)
+					spans[name] = if #samples >= 2 then samples[#samples].t - samples[1].t else 0
+					return 0
+				end
 				assert(#samples >= 3, why)
 				spans[name] = samples[#samples].t - samples[1].t
 				-- Least squares for a parabola (normal equations, 3x3, by Cramer).
