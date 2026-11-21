@@ -8,9 +8,17 @@
 
 Do the rest **in this order**. Each phase builds on the one before: things are first made at their final size, then placed, then labelled, then sold. Nothing is done twice.
 
-**Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it. **Then Phase M at once, then Phase V.**
+**Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it. **Then Phase T (terminals, priority 2), then Phase M (map place), then Phase V (car cockpit).**
 
-**Phase M: the map place, right after the physics** (owner, 21 Nov: priority). As soon as V9-P (and V9-0ac with it) is done, build **V9-0e**: the physical place by the spawn where you **see every map and teleport to it**. That means the Map Board with a tile per place (picture, name, players there now, GO), the beautiful Places portal, the matching board and portal home on every map, and the nicer Solo/Multi portals.
+**Phase T: the computer terminals, priority 2, right after the physics** (owner, 21 Nov). Build **V9-2b** now: a small computer terminal by **every thing in the lab you can put a ragdoll into or launch one with**. That covers every creature (spider, plant, frog, whale, chicken, washer, slingshot, mole, vacuum), the cannon, the lava, the trampoline, the launch stations and the wrecking ball, plus any other machine that takes a dummy today.
+- **The terminal:** a real model with a screen (the creature or machine picture, the hunger or ready bar, a big glowing FEED / FIRE / LAUNCH button). Click or tap it, or press E / ButtonX. Spam is allowed (about 4 presses a second, a queue of 6, a combo "x5!" on the screen). A spare dummy drops from a chute when no free one is left, within the body cap.
+- **It replaces** the floating "Feed / Fire / Toss / Bounce" ProximityPrompts of LabGuide.
+- **Things that come later** (the compressor V9-0m, the rocket pad V9-3c, the aquarium V9-1, the map things V9-5c) are built with the same terminal from the start.
+- **Placement:** it stands on the near side of each thing, facing the approach, and is never hidden (V9-0q). It sits on the physical sign style (V9-0v) when that lands.
+- **Tests:** T154.
+- **Publish** right after it passes (through `docs/RELEASE.md`).
+
+**Phase M: the map place, right after Phase T** (owner, 21 Nov: priority). As soon as Phase T is done, build **V9-0e**: the physical place by the spawn where you **see every map and teleport to it**. That means the Map Board with a tile per place (picture, name, players there now, GO), the beautiful Places portal, the matching board and portal home on every map, and the nicer Solo/Multi portals.
 - **Placement:** it stands 20-25 studs from the spawn in the hub (V9-0h), in the spawn view, facing the player. Its spot is held free for it in the later placement pass (V9-0n only fine-tunes it).
 - **Publish** right after it passes (through `docs/RELEASE.md`), so players get it at once.
 
@@ -35,7 +43,7 @@ If a current vehicle has no usable interior, swap it for a model that has one (o
 **Phase B: build every thing at its final size, before anything is placed**
 7. **V9-0r** hero scale **together with V9-3** lab machines (the same objects: size, animation and sound in one pass).
 8. **V9-3c** the rocket pad and **V9-0m** the compressor (new hero machines, at hero scale).
-9. **V9-1** the aquarium with whale and shark, then **V9-2** every creature (the juicy eating), then **V9-2b** the feed terminals.
+9. **V9-1** the aquarium with whale and shark (with its terminal), then **V9-2** every creature (the juicy eating; the terminals are already done in Phase T).
 10. **V9-0y + V9-0x** cars: more of them, fun to drive into dummies, and they react to shots and blasts (one cars pass; the cockpit is already done in Phase V, new cars get interiors too).
 
 **Phase C: place and label everything** (only now, when all sizes are final)
