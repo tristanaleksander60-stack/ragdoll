@@ -68,6 +68,14 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.31.0",
+		lines = {
+			"GOD MODE is FREE in the beta: drop 1 to 25 ragdolls right where you aim",
+			"TIME BUBBLE: press Z (or LAB) to slow time down or speed it up round you",
+			"A 3D shop, codes (RELEASE, BETA, RAGDOLL) and a brand new town square",
+		},
+	},
+	{
 		version = "0.30.0",
 		lines = {
 			"GOD MODE: create life! Tap GOD and a ragdoll comes down in a beam of light",

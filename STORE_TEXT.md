@@ -10,14 +10,14 @@ build is live. Written fresh; nothing is taken from another game's page.
 3. `[UPD] Ragdoll Havoc 💥` (use only in an update week)
 4. `Ragdoll Havoc: Launch the Dummies 💥`
 
-## Description v5 (English, release 0.30.0; recommended)
+## Description v6 (English, release 0.31.0; recommended)
 
 💥 Crash-test dummies, a lab full of toys, and 5 big maps to wreck. Make them fly!
 
-✨ NEW: GOD MODE
-• Create life! Tap GOD and a ragdoll comes down in a beam of light: tiny, heavy, bouncy or floppy
-• Try it free for 60 seconds every visit
-• Wide new paths all round your lab, a lava pit and monsters to feed
+✨ NEW
+• GOD MODE is FREE during the beta: drop 1 to 25 ragdolls in a line, circle, grid, tower or rain, right where you aim
+• TIME BUBBLE: slow time down or speed it up round you (Z, or LAB on a phone)
+• A 3D shop, a town square in the plaza, and grey ragdolls you can always see
 
 💥 YOUR LAB
 • 60+ toys: blasters, bats, grenades, rockets, freeze rays and more, each with its own sound
