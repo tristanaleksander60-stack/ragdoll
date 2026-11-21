@@ -116,6 +116,15 @@
     - Group it with the portals, the same facing and a shared path, still visible from the spawn.
     - Update PathPlan, LabGuide, the T159 / T163 positions and the "keep free" spot in V9-0n.
 
+21. **KOs count for every event the player starts, also from the BIG RED BUTTON** (owner, 21 Nov):
+    - Every dummy knocked out by an event counts as a KO for the player who started it (`ProgressService`, the same path as the paid events in the V9-5 addition). This covers events from the red button, the free events from the Events Pass, the admin/director starts in the owner's lab, and surprises.
+    - It counts toward unlocks, the KO counter, experiments and the 2x event.
+    - In a party lab, everyone in the party gets them.
+    - The live pill shows it ("GORILLA: 23 KOs!") and the end shows "+23 KOs".
+    - Free button events stay smaller than paid ones (fewer guests), so paying still gives more.
+    - Server only: the starter is stored on the event job, and each KO during the event is credited once.
+    - **Test selv:** press the red button and watch the KO count go up.
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
