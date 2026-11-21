@@ -2083,3 +2083,14 @@ Write the baseline into `docs/PERF.md`.
     - T40: present drops use the plaza floor the most spots share (the middle is the fountain since V9-0d); presents never fall back onto a seat. T40 passes.
     - The horde runs down the two clear lanes either side of the town square (`HordeService.LANE_X` 13; measured clear from z 120 to the lab). T28 passes; its plaza hit uses a start-bar tool (onboarding).
     - T35 waits for OfferService's first pass answer (`checkedForTest`) before clearing the passes.
+- 21 Nov 2026, V9-P **P0 DONE** (PC): the physics bench (`Server/Tests/Lib/PhysicsBench`, `T183_PhysicsBench`, baseline in `docs/PHYSICS.md`).
+  - **Scenes:** drop40, stairs, launch, blast6, pile20 and rest10, on a bench floor of its own with server-simulated dummies kept out cold (the numbers are the fall and the rest, not the getting up).
+  - **Numbers:** peak speed, spikes over a cap, frames sunk through the floor, time to settle, jitter at rest, and the server's physics step.
+  - **Baseline:**
+    - no explosions, nothing through the floor, no jitter at rest;
+    - settling 0.3-1 s for stairs, launch and blast, but 4-4.6 s for a long drop and a 20-body heap;
+    - a heap costs 13-30 ms of server physics;
+    - the mass sits high: the pelvis is 4.5 % of the body, each arm 15 %.
+  - **Next:** P1 (mass and joints), then the settling and the heap's cost.
+  - **Also this session:** the full suite after the Phase A fix round gave 118 pass, 5 fail. T19, T24, T25 and T32 are the known flaky ones; T108 passes alone.
+  - **Left open:** the Phase A re-review was started but stopped by the owner, so it is not done.
