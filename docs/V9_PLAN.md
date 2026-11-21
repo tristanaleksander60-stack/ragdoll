@@ -33,6 +33,13 @@
     - Phones: the compact version, the same rule.
     - Test: T178 updated (shows on a hit, switches on a hit to another, gone 3 s after the last hit).
 
+11. **The big target blocks topple when shot** (owner, 21 Nov; `art/store/look_target/target_blocks.png`: the row of big white blocks with the target and chevron marks near the lab sign):
+    - **Make them knockables** (the `Knockables` system: server-simulated, unanchored, with a solid mass): shots push them (`HitService` onShot), blasts throw them (`Blasts`), cars and bodies knock them over.
+    - **Feel:** a few hits make one wobble and topple with a heavy thud and dust; it slides and rolls, and can knock its neighbours like dominoes.
+    - **Reset:** they stand back up at their spot after about 10 s still (the existing Knockables reset) and on RESET, so the backdrop stays tidy.
+    - **Never in the way:** they never block the spawn circle, a terminal or a path for long, and they stay inside the lab bounds.
+    - **Test:** in T146 (or a small new check), 5 pistol hits topple one block, it resets in time, and it never leaves the lab.
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
