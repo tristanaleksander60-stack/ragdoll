@@ -120,6 +120,24 @@ function FeelTuning.burst(strength: number, cap: number): number
 	return math.min(cap, math.floor(4 + 14 * strength))
 end
 
+-- V9-P4: what a body lands on answers in its own way (by the material's name, pure):
+--   "soft"  grass, sand, earth, snow, cloth: a dull thud, earth-coloured dust;
+--   "metal" metal, plate, foil: the thud plus a clang;
+--   "water" water: no dust (the splash is the water's own);
+--   "hard"  everything else (concrete, tiles, plastic, wood): the thud plus a sharp slap.
+local SOFT = table.freeze({ Grass = true, LeafyGrass = true, Ground = true, Sand = true, Mud = true, Snow = true, Fabric = true, Salt = true, Pebble = true })
+local METAL = table.freeze({ Metal = true, DiamondPlate = true, CorrodedMetal = true, Foil = true })
+function FeelTuning.surface(material: string): "soft" | "metal" | "water" | "hard"
+	if SOFT[material] then
+		return "soft"
+	elseif METAL[material] then
+		return "metal"
+	elseif material == "Water" then
+		return "water"
+	end
+	return "hard"
+end
+
 -- The combo slow-mo beat (a camera and colour beat, never the physics): at COMBO_SLOWMO and every
 -- COMBO_SLOWMO after.
 FeelTuning.SLOWMO_TIME = 0.9

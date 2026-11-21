@@ -231,6 +231,38 @@ function FeelV2.impact(position: Vector3, speed: number, near: number, kind: str
 	return if near > 0.55 then FeelTuning.stop(strength) else 0
 end
 
+-- What lies under a landing (V9-P4): its kind (FeelTuning.surface) and its colour for the dust. Bodies
+-- and characters are left out of the ray.
+local groundParams = RaycastParams.new()
+groundParams.FilterType = Enum.RaycastFilterType.Exclude
+local function surfaceAt(position: Vector3): (string, Color3?)
+	local skip: { Instance } = {}
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if dummies then
+		table.insert(skip, dummies)
+	end
+	for _, plr in Players:GetPlayers() do
+		if plr.Character then
+			table.insert(skip, plr.Character)
+		end
+	end
+	groundParams.FilterDescendantsInstances = skip
+	local hit = Workspace:Raycast(position + Vector3.new(0, 1.5, 0), Vector3.new(0, -7, 0), groundParams)
+	if not hit then
+		return "hard", nil
+	end
+	local color: Color3? = nil
+	if hit.Instance:IsA("Terrain") then
+		local ok, c = pcall(function()
+			return (hit.Instance :: Terrain):GetMaterialColor(hit.Material)
+		end)
+		color = if ok then c else nil
+	elseif hit.Instance:IsA("BasePart") then
+		color = hit.Instance.Color
+	end
+	return FeelTuning.surface(hit.Material.Name), color
+end
+
 -- A body comes down: the flop layer by speed and a dust ring.
 local lastFlop = 0
 function FeelV2.flop(position: Vector3, speed: number, near: number)
@@ -243,13 +275,26 @@ function FeelV2.flop(position: Vector3, speed: number, near: number)
 		return -- (a pile landing at once is one flop, not a drum roll)
 	end
 	lastFlop = now
-	sound(f.bank, position, f.volume, f.pitch * rng:NextNumber(0.94, 1.06))
+	-- (V9-P4: what it lands on: a soft thud on grass, a slap on a hard floor, a clang on metal; the dust
+	-- takes the ground's colour, and water makes none.)
+	local kind, ground = surfaceAt(position)
+	local strength = FeelTuning.strength(speed)
+	local soft = kind == "soft"
+	sound(f.bank, position, f.volume * (if soft then 0.85 else 1), f.pitch * (if soft then 0.9 else 1) * rng:NextNumber(0.94, 1.06))
 	if f.layer == "slam" then
 		sound("slam", position, 0.35, 1.2)
 	elseif f.layer == "hit" then
 		sound("hit", position, 0.22, 0.8)
 	end
-	emit("Dust", position - Vector3.new(0, 1, 0), math.ceil(FeelTuning.burst(FeelTuning.strength(speed), FeelV2.caps.particles) * 0.5))
+	if kind == "metal" then
+		sound("clang", position, 0.12 + 0.25 * strength, rng:NextNumber(0.9, 1.1))
+	elseif kind == "hard" and f.layer ~= "hit" then
+		sound("hit", position, 0.08 + 0.14 * strength, 1.15)
+	end
+	if kind ~= "water" then
+		local colors = if ground then { ground, ground:Lerp(Color3.new(1, 1, 1), 0.35) } else nil
+		emit("Dust", position - Vector3.new(0, 1, 0), math.ceil(FeelTuning.burst(strength, FeelV2.caps.particles) * (if soft then 0.7 else 0.5)), colors)
+	end
 	FeelV2.addTrauma(FeelTuning.trauma(FeelTuning.strength(speed) * 0.8) * near)
 	FeelBus.fire("Land", { position = position, speed = speed })
 end

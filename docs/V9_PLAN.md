@@ -2198,7 +2198,7 @@ Write the baseline into `docs/PERF.md`.
     - T167 passes. LayoutCheck 0 problems.
   - **Known:** GOD MODE kinds set one density on every part after spawning, so the P1 mass spread and the forces sized from `Mass` are stale for them. That is in the V9-P fix round.
 - 21 Nov 2026, V9-P + V9-0ac fix round 1 (PC). The blind review scored V9-P 5.0 and V9-0ac 6.0; both failed the pass bar of 8.5.
-  - **Run order:** V9-P is paused after this fix round with the list below left; Phase A continues (V9-0z and V9-0ab are done, V9-0aa is next). V9-P's P3-P6 resume after the milestone 1 publish. The plan's "V9-P first" is noted as broken here, as the reviewer asked.
+  - **Run order:** V9-P continues after this fix round (the plan's Phase P comes first), with the list below left, then Phase M (V9-0e, published at once), then Phase V (the cockpit, published at once), then the rest of Phase A (V9-0aa, V9-0ad, V9-0ae) and the milestone 1 publish. V9-0z and V9-0ab are already done.
   - **Fixed:** the details are in docs/PHYSICS.md, "Fix round 1".
     - Rounds are always a Flinch and never down a living body. That is now proven live through HitService, with 3 fast Popper rounds, an AK burst and both legs.
     - A round on a body getting up or crawling no longer floors it.
@@ -2232,3 +2232,15 @@ Write the baseline into `docs/PERF.md`.
     - P5: the heap cost, far-body LOD, ownership checks;
     - P6: the rivals, plus two blind video reviews;
     - the car, grab and water bench scenes, and captures.
+- 21 Nov 2026, V9-P P3/P4/P5 more (PC):
+  - **P3, muscles that give:**
+    - a hurt dummy sways on its feet and walks slower, scaled by VitalsService's `Damage` (it wears off) and `Blood` (`ActiveRagdoll.hurtOf`, `swayUp`);
+    - each body sways in its own phase, up to about 12°, and stands straight again when patched up.
+  - **P4, the ground answers** (`FeelTuning.surface`, `FeelV2.flop`):
+    - grass, sand and earth: a duller thud and more dust in the ground's own colour;
+    - a hard floor: an extra slap;
+    - metal: a clang (the licensed PSE `clang` bank);
+    - water: no dust.
+  - **P5:** checked that a launched lab body keeps one network owner the whole flight.
+  - **Tests:** T185_PhysicsFeel passes: surfaces; hurt (damage 33) sways 6.8° while a whole body sways 0.0°; a launch 22 studs up kept one owner for all 178 frames. T181, T24 and T80 pass.
+  - **Still left:** the catch step on a push, the landing roll, the get-up blend by how it lies, the players' own ragdoll, the far-body LOD and the heap cost, the rivals side by side.

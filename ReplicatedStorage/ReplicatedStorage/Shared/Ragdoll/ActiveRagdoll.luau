@@ -107,6 +107,7 @@ type Rig = {
 	bracing: boolean?, -- falling, about to land: arms out (Poses.catch)
 	catchUntil: number?, -- landed from a brace: the arms keep their tone until then
 	pushedAt: number?, -- the last ActiveRagdoll.push (a fan, a conveyor): no settle assist just after
+	swaySeed: number?, -- a hurt body's own sway phase (swayUp)
 }
 
 -- V9-0ac fix round 1 (SHOT_FLINCH):
@@ -386,6 +387,46 @@ end
 local function timeScaleOf(rig: Rig): number
 	local ts = rig.model:GetAttribute("TimeScale")
 	return if type(ts) == "number" and ts > 0 then ts else 1
+end
+
+-- V9-P3: a hurt body's muscles give. 0 (whole) .. 1 (about to drop), from what VitalsService publishes:
+-- Damage (the hits so far, of BODY_HP 100, wearing off) and Blood (bleeding). It sways on its feet and
+-- walks slower (swayUp, updateMoving).
+local function hurtOf(rig: Rig): number
+	if not (GameConfig :: any).PHYSICS_V9 then
+		return 0
+	end
+	local damage = rig.model:GetAttribute("Damage")
+	local blood = rig.model:GetAttribute("Blood")
+	local fromDamage = if type(damage) == "number" then math.clamp((damage - 10) / 60, 0, 1) else 0
+	local fromBlood = if type(blood) == "number" then math.clamp((95 - blood) / 50, 0, 1) else 0
+	return math.max(fromDamage, fromBlood)
+end
+
+-- The "up" a hurt body balances towards: a slow wander of up to ~12 degrees, each body in its own phase.
+local function swayUp(rig: Rig, hurt: number, up: Vector3): Vector3
+	if hurt <= 0 then
+		return up
+	end
+	rig.swaySeed = rig.swaySeed or math.random() * 1000
+	local seed = rig.swaySeed :: number
+	local t = os.clock()
+	local amp = 0.05 + 0.17 * hurt
+	local side = rig.heading:Cross(up)
+	if side.Magnitude < 1e-3 then
+		return up
+	end
+	return (up + side.Unit * math.noise(t * 0.9, seed) * amp * 2 + rig.heading * math.noise(t * 0.7, seed + 50) * amp * 2).Unit
+end
+
+-- An orientation from an up and a heading, made square (the up may lean towards the heading).
+local function uprightFrame(up: Vector3, heading: Vector3): CFrame
+	local back = -heading
+	local y = back - up * back:Dot(up)
+	if y.Magnitude < 1e-3 then
+		return CFrame.fromMatrix(Vector3.zero, up, back)
+	end
+	return CFrame.fromMatrix(Vector3.zero, up, y.Unit)
 end
 
 local function applyProfile(rig: Rig, profile: string)
@@ -1240,6 +1281,7 @@ local function updateMoving(rig: Rig, dt: number)
 			if type(pace) == "number" and pace > 0 and pace <= 2 then
 				base *= pace
 			end
+			base *= 1 - 0.45 * hurtOf(rig) -- (V9-P3: hurt, it goes slower)
 			wantSpeed = if fleeing then base else math.min(base, distance * 1.8 + 0.6)
 		end
 	end
@@ -1280,12 +1322,12 @@ local function updateMoving(rig: Rig, dt: number)
 		local y = (up * math.cos(CRAWL_PITCH) - rig.heading * math.sin(CRAWL_PITCH)).Unit
 		rig.balance.CFrame = CFrame.fromMatrix(Vector3.zero, x, y)
 	else
-		local upright = up
+		local upright = swayUp(rig, hurtOf(rig), up)
 		if gait == "Wobble" and rig.speed > 0.5 then
 			local roll = math.sin(os.clock() * 5) * 0.18
-			upright = (up * math.cos(roll) + rig.heading:Cross(up).Unit * math.sin(roll)).Unit
+			upright = (upright * math.cos(roll) + rig.heading:Cross(up).Unit * math.sin(roll)).Unit
 		end
-		rig.balance.CFrame = CFrame.fromMatrix(Vector3.zero, upright, -rig.heading)
+		rig.balance.CFrame = uprightFrame(upright, rig.heading)
 	end
 end
 
@@ -1426,6 +1468,14 @@ local function update(dt: number)
 				enter(rig, "Ragdoll")
 			else
 				think(rig)
+				-- (V9-P3: hurt, it sways on its feet; whole, it stands still as before.)
+				local hurt = if rig.state == "Standing" and rig.held == 0 then hurtOf(rig) else 0
+				if hurt > 0 then
+					rig.balance.CFrame = uprightFrame(swayUp(rig, hurt, Vector3.yAxis), rig.heading)
+				elseif rig.swaySeed and rig.state == "Standing" then
+					rig.balance.CFrame = uprightFrame(Vector3.yAxis, rig.heading) -- (patched up: straight again)
+					rig.swaySeed = nil
+				end
 			end
 		elseif state == "Walking" or state == "Fleeing" or state == "Crawling" then
 			updateMoving(rig, dt)
