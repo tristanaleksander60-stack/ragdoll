@@ -3,10 +3,19 @@
 ## The owner's words (verbatim)
 > Lig en plan for at gøre alle modellerne man kan benytte ragdolls med bedre, altså hajen, edderkoppen osv, alle de ting som man kan købe med robux også. Fx. hvalen som skal være under vandet og fed animation når den spiser en ragdoll og bedre akvarium og sårn. Sammel alt i 1 plan så jeg bare kan skrive klar til claude code. Imens så opretter jeg alle produkterne
 
+## V9-NOW Urgent hotfix, before anything else (owner, 21 Nov: "SKAL fikses nu", money already lost)
+1. **Bullet holes show on every dummy again.** Find why they are gone (likely the grey matte skin, `DUMMY_TONE`, or the skin layer in `DummySkins` hiding or covering the hole decals). Every gun hit leaves a visible hole or mark on the dummy's skin at the hit point, on PC and phone. Mild style if `BLOOD` is off.
+2. **The reaction depends on where you hit.** A right-arm hit jerks the right arm back and the body turns to that side; a left-arm hit does the same on the left. Legs make the dummy limp on that leg, the head snaps back, and the torso pushes the body back. This is the per-part flinch of V9-0ac; do that part now if it is not live.
+3. **Remove one of the two map places by the spawn:** remove the ring portal "MAPS 5/17" and keep the **Map Board** (the tiles with GO). The board is the one place to pick a map. Nothing is lost: the board covers every map.
+4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
+5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
+
 ## How it runs (reordered 21 Nov, owner: "the correct order, fastest and best")
 **Already done:** V9-0, 0a, 0b, 0c, 0d, 0f, 0g, 0h, 0i, 0j, 0k (finish its blind review first), 0s, 0t, 0u.
 
 Do the rest **in this order**. Each phase builds on the one before: things are first made at their final size, then placed, then labelled, then sold. Nothing is done twice.
+
+**FIRST: V9-NOW** (hotfix, publish at once).
 
 **Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it. **Then Phase T (terminals, priority 2), then Phase M (map place, priority 3), then Phase S (compressor and much bigger things, priority 4), then Phase V (car cockpit, priority 5).**
 
