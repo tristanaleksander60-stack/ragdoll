@@ -28,6 +28,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local ShopArt = require(Shared:WaitForChild("ShopArt")) :: any
 local Shop = require(Shared:WaitForChild("Shop")) :: any
+local Config = require(Shared:WaitForChild("Config")) :: any
 
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local Theme = require(UI:WaitForChild("LihFolkUITheme"))
@@ -153,7 +154,13 @@ local function refreshCard(card: Card)
 	end
 	local mine = owned(item)
 	local untilT = tryingUntil(item)
-	if mine and item.key == "God" then
+	if item.key == "God" and Config.GOD_FREE_BETA and not mine then
+		-- (V9-0l: free for everyone in the beta: never sold now, it opens.)
+		button.setRole("go")
+		button.setText("FREE \u{00B7} BETA")
+		button.setEnabled(true)
+		button.setIcon("god") -- (no Robux mark: nothing to pay)
+	elseif mine and item.key == "God" then
 		button.setRole("go")
 		button.setText("OPEN")
 		button.setEnabled(true)
@@ -183,6 +190,13 @@ local function refreshAll()
 	end
 	if detail and detail.Visible and detailItem and detailBuy then
 		local mine = owned(detailItem)
+		if detailItem.key == "God" and Config.GOD_FREE_BETA and not mine then
+			detailBuy.setRole("go")
+			detailBuy.setText("FREE \u{00B7} BETA")
+			detailBuy.setEnabled(true)
+			detailBuy.setIcon("god")
+			return
+		end
 		detailBuy.setRole(if mine and detailItem.key == "God" then "go" elseif mine then "done" else "premium")
 		detailBuy.setText(if mine and detailItem.key == "God" then "OPEN" elseif mine then "OWNED" else (byKey[detailItem.key] and byKey[detailItem.key][1] and priceText(byKey[detailItem.key][1].robux) or "BUY"))
 		detailBuy.setEnabled(not mine or detailItem.key == "God")
@@ -193,6 +207,10 @@ end
 -- Buying and the celebration
 
 local function buy(item: any)
+	if item.key == "God" and Config.GOD_FREE_BETA and not owned(item) then
+		api.tryGod() -- (V9-0l: free in the beta: claimed and opened, never sold)
+		return
+	end
 	if item.key == "God" and owned(item) then
 		Controller.open("God")
 		return
@@ -451,7 +469,7 @@ local function openDetail(item: any)
 	end
 	-- TRY where it exists: GOD MODE's 60 s, a map item's 60 s.
 	detailTry = nil
-	local canTry = (item.key == "God" or isMapItem(item.key)) and not owned(item)
+	local canTry = ((item.key == "God" and not Config.GOD_FREE_BETA) or isMapItem(item.key)) and not owned(item) -- (V9-0l: no GOD MODE trial while it is free)
 	if canTry then
 		detailTry = C.Button({
 			name = "Try",
@@ -483,8 +501,8 @@ local function openDetail(item: any)
 		end,
 	})
 	detailBuy.setIcon("robux")
-	refreshAll()
 	d.Visible = true
+	refreshAll() -- (after Visible: it only touches a shown detail)
 	pcall(KitStyle.pop, d)
 	if ShopV9.pad() then
 		GuiService.SelectedObject = detailBuy.hit -- (a pad's focus; a mouse or a finger never sees the ring)

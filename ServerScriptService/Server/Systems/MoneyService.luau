@@ -94,8 +94,40 @@ local function apply(player: Player)
 	local vip = MoneyService.owns(player, "VIP")
 	player:SetAttribute("VIP", vip)
 	player:SetAttribute("God", MoneyService.owns(player, "God")) -- (21 Nov 2026: GOD MODE, DummySpawn reads it)
+	-- (V9-0l: while GOD MODE is free in the beta, who bought it is a FOUNDER: a gold tag, the gold beam,
+	-- and it stays theirs for good after the beta.)
+	local founder = (Config :: any).GOD_FREE_BETA == true and MoneyService.owns(player, "God")
+	player:SetAttribute("Founder", if founder then true else nil)
 	local character = player.Character
 	local head = character and character:FindFirstChild("Head")
+	local founderTag = head and head:FindFirstChild("FounderTag")
+	if founder and head and not founderTag then
+		local gui = Instance.new("BillboardGui")
+		gui.Name = "FounderTag"
+		gui.Size = UDim2.fromOffset(104, 26)
+		gui.StudsOffsetWorldSpace = Vector3.new(0, 3.9, 0) -- (over the VIP tag when both)
+		gui.MaxDistance = 80
+		gui.LightInfluence = 0
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.fromScale(1, 1)
+		label.BackgroundColor3 = Color3.fromRGB(255, 196, 46)
+		label.TextColor3 = Color3.fromRGB(40, 22, 0)
+		label.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
+		label.TextScaled = true
+		label.Text = "\u{2728} FOUNDER"
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0.5, 0)
+		corner.Parent = label
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = Color3.fromRGB(255, 240, 170)
+		stroke.Thickness = 2
+		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		stroke.Parent = label
+		label.Parent = gui
+		gui.Parent = head
+	elseif not founder and founderTag then
+		founderTag:Destroy()
+	end
 	local tag = head and head:FindFirstChild("VipTag")
 	if vip and head and not tag then
 		local gui = Instance.new("BillboardGui")
@@ -136,6 +168,12 @@ MoneyService.askOwns = function(userId: number, passId: number): boolean
 		return false
 	end
 	return MarketplaceService:UserOwnsGamePassAsync(userId, passId)
+end
+
+-- Tests: whether Roblox's first word on a player's passes is in (after it, apply() no longer resets
+-- the pass attributes a test set by hand).
+function MoneyService.passesCheckedForTest(player: Player): boolean
+	return firstCheckDone[player] == true
 end
 
 -- Asks Roblox which passes a player owns. A pass Roblox could not answer for is asked again every

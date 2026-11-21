@@ -11,6 +11,7 @@
 local Shop = require(script.Parent:WaitForChild("Shop")) :: any
 local Events = require(script.Parent:WaitForChild("Events")) :: any
 local Offers = require(script.Parent:WaitForChild("Offers")) :: any
+local Config = require(script.Parent:WaitForChild("Config")) :: any
 
 local ShopArt = {}
 
@@ -114,7 +115,7 @@ function ShopArt.items(): { Item }
 			product = false,
 			id = pass.id,
 			name = pass.name,
-			line = pass.blurb,
+			line = if pass.key == "God" and Config.GOD_FREE_BETA then "FREE during beta! Create life." else pass.blurb, -- (V9-0l)
 			bullets = table.clone(pass.perks),
 			picture = ShopArt.pictureOf("pass", pass.key),
 			tab = "PASSES",

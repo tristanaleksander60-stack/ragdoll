@@ -20,7 +20,7 @@ local TestLib = require(script.Parent:WaitForChild("Lib"):WaitForChild("TestLib"
 
 return {
 	name = "T148_GodMode",
-	timeout = 40,
+	timeout = 60,
 	run = function(): string?
 		local pass = Shop.byKey.God
 		assert(pass and string.find(pass.name, "GOD") and #pass.perks == 3, "no GOD MODE pass in Shop.PASSES")
@@ -40,8 +40,9 @@ return {
 		assert(DummySpawn.godGated(), "creating life is not the pass's in Studio")
 		TestLib.waitFor(function()
 			local p = Players:GetPlayers()[1]
-			return p ~= nil and p.Character ~= nil and Lab.plotIndex(p) ~= nil
-		end, 20)
+			-- (and Roblox's first word on the passes: its apply() would set God back mid-test)
+			return p ~= nil and p.Character ~= nil and Lab.plotIndex(p) ~= nil and (require(Systems:WaitForChild("MoneyService")) :: any).passesCheckedForTest(p)
+		end, 30)
 		local p = Players:GetPlayers()[1]
 		if not p or not p.Character then
 			return "pass listed; skipped (no player with a lab)"
@@ -59,26 +60,43 @@ return {
 		local ok, err = pcall(function()
 			p:SetAttribute("God", false)
 			DummySpawn.resetTrialForTest(p)
+			DummySpawn.resetBetaForTest(p)
 			assert(not DummySpawn.mayCreate(p), "creates life without the pass or a trial")
-			-- (V9-0f: the SHOP card's TRY starts the trial once; an owner has nothing to try.)
-			assert(DummySpawn.tryFor(p) and type(p:GetAttribute("GodTrialUntil")) == "number", "TRY 60 s did not start the trial")
-			assert(not DummySpawn.tryFor(p), "TRY started a second trial")
+			-- (V9-0f: the SHOP card's TRY starts the trial once; an owner has nothing to try. V9-0l: while
+			-- GOD MODE is free in the beta there is no trial to try: the card claims it instead.)
+			if Config.GOD_FREE_BETA then
+				assert(not DummySpawn.tryFor(p), "a trial started while GOD MODE is free in the beta")
+			else
+				assert(DummySpawn.tryFor(p) and type(p:GetAttribute("GodTrialUntil")) == "number", "TRY 60 s did not start the trial")
+				assert(not DummySpawn.tryFor(p), "TRY started a second trial")
+			end
 			DummySpawn.resetTrialForTest(p)
 			p:SetAttribute("God", true)
 			assert(not DummySpawn.tryFor(p), "an owner of the pass got a trial")
 			p:SetAttribute("God", false)
-			-- The first creation starts the free trial.
-			task.wait(DummySpawn.GAP + 0.05)
-			local m, why = DummySpawn.spawnFor(p, "MINI", here)
-			assert(m, "the trial's first creation was refused: " .. tostring(why))
-			local untilAt = p:GetAttribute("GodTrialUntil")
-			assert(type(untilAt) == "number" and math.abs(untilAt - (Workspace:GetServerTimeNow() + DummySpawn.TRIAL)) < 3, "no trial clock")
-			assert(Workspace:FindFirstChild("CreationBeam"), "no beam of light")
-			-- The trial is over: refused with "god", and no second trial.
-			p:SetAttribute("GodTrialUntil", Workspace:GetServerTimeNow() - 1)
-			task.wait(DummySpawn.GAP + 0.05)
-			local none, refused = DummySpawn.spawnFor(p, "HEAVY", here)
-			assert(none == nil and refused == "god", "after the trial a creation was not refused with god: " .. tostring(refused))
+			if Config.GOD_FREE_BETA then
+				-- (V9-0l: in the beta the first creation gives GOD MODE for free, no trial.)
+				DummySpawn.resetBetaForTest(p)
+				task.wait(DummySpawn.GAP + 0.05)
+				local m, why = DummySpawn.spawnFor(p, "MINI", here)
+				assert(m, "the first creation in the beta was refused: " .. tostring(why))
+				assert(p:GetAttribute("GodBeta") == true and p:GetAttribute("GodTrialUntil") == nil, "the first creation in the beta did not give GOD MODE (or started a trial)")
+				assert(Workspace:FindFirstChild("CreationBeam"), "no beam of light")
+				DummySpawn.resetBetaForTest(p)
+			else
+				-- The first creation starts the free trial.
+				task.wait(DummySpawn.GAP + 0.05)
+				local m, why = DummySpawn.spawnFor(p, "MINI", here)
+				assert(m, "the trial's first creation was refused: " .. tostring(why))
+				local untilAt = p:GetAttribute("GodTrialUntil")
+				assert(type(untilAt) == "number" and math.abs(untilAt - (Workspace:GetServerTimeNow() + DummySpawn.TRIAL)) < 3, "no trial clock")
+				assert(Workspace:FindFirstChild("CreationBeam"), "no beam of light")
+				-- The trial is over: refused with "god", and no second trial.
+				p:SetAttribute("GodTrialUntil", Workspace:GetServerTimeNow() - 1)
+				task.wait(DummySpawn.GAP + 0.05)
+				local none, refused = DummySpawn.spawnFor(p, "HEAVY", here)
+				assert(none == nil and refused == "god", "after the trial a creation was not refused with god: " .. tostring(refused))
+			end
 			-- With the pass: always, twice the cap.
 			p:SetAttribute("God", true)
 			for _ = 1, 9 do
@@ -92,6 +110,6 @@ return {
 		DummySpawn.resetTrialForTest(p)
 		p:SetAttribute("God", hadGod)
 		assert(ok, err)
-		return "GOD MODE listed with its banner; launcher only for owners and the trial (V9-0f), TRY starts the trial once; no pass = no life; the first creation starts the 60 s trial with a beam; after it refused with god; with the pass always and twice the cap"
+		return "GOD MODE listed with its banner; launcher only for owners and the trial (V9-0f); no pass = no life; " .. (if Config.GOD_FREE_BETA then "in the beta no trial: the first creation gives GOD MODE free with a beam" else "TRY starts the trial once; the first creation starts the 60 s trial with a beam; after it refused with god") .. "; with the pass always and twice the cap"
 	end,
 }

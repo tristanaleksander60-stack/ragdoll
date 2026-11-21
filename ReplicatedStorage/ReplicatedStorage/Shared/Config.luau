@@ -353,6 +353,10 @@ local Config = {
 	-- wears a PBR MaterialVariant of soft padded pads (MaterialService "HubPads", place file; 2 x 2 pads a
 	-- 28-stud tile = 14-stud pads), still one flat floor part. nil = the V9-0h tile texture.
 	HUB_FLOOR_PADS = table.freeze({ variant = "HubPads", material = Enum.Material.Rubber, color = Color3.fromRGB(216, 206, 190) }), -- (a light warm grey: the white dummies still read brighter)
+	-- V9-0l (owner, 21 Nov 2026: "give everyone GOD MODE free because we are still in beta"): everyone gets GOD MODE at
+	-- a moment that fits (DummySpawn.grantBeta: attribute GodBeta); the SHOP shows it FREE · BETA; who bought it
+	-- is a FOUNDER (gold tag and beam) and keeps it. false = the trial + BUY again (pass owners keep it).
+	GOD_FREE_BETA = true,
 	LAYOUT_V3_FLOOR = table.freeze({ texture = "rbxassetid://91579008413917", tile = 14, color = Color3.fromRGB(222, 222, 216) }),
 	-- V9-0 F1 (owner, 21 Nov 2026: "boxy, boring bushes"): real bushes and mesh flowers on the path verges
 	-- (V3Assets VergeBushRound/Leafy, VergeFlowers*; tools/ImportV9Foliage.luau). false = the old balls and blocks.
