@@ -64,6 +64,27 @@
     - Put the number in Config (`WHATS_NEW_AUTO_CLOSE = 3`).
     - It still shows only once per version.
 
+15. **The hospital/vitals monitor stays fixed in the bottom-right corner on PC** (owner, 21 Nov: "it works much better when I test it"):
+    - It no longer follows the mouse (`HospitalCharts`: remove the mouse-follow placement on PC).
+    - It always sits in the bottom-right corner, clear of the hotbar and the notice lane, the same as on phones.
+    - The 3 s show / switch rule (item 10) is unchanged.
+16. **Cars, done properly now: sit right, first person with interior, and sounds** (owner, 21 Nov; pulls Phase V into this hotfix):
+    - **Sitting:** the player sits properly in the driver's seat.
+      - The right seat height and position, the hands on the wheel, the legs inside the car (no body through the doors or roof).
+      - No floating above the seat or sinking through it.
+      - Entering and leaving is smooth.
+      - Fix the seat weld/offset per vehicle.
+    - **First person with an interior** (V9-0y cockpit):
+      - the driver's-seat camera at eye height, V / Select / the eye button for the chase cam;
+      - a real interior per vehicle (swap a vehicle without one for a model that has it): dash, a wheel that turns with the steering, the speedometer on the dash, lights;
+      - nothing of the player's own body blocks the view.
+    - **Sounds:**
+      - engine idle and a rev that rises with speed;
+      - a start sound on entering, the horn, tyre screech in hard turns and brakes;
+      - a crash thud on impact, and wind at speed.
+      - They are heard inside the car (louder, muffled outside sounds a little) and outside (falls off with distance), through SoundMix.
+    - **Test selv list:** what to try in each vehicle.
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
