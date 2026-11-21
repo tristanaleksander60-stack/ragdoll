@@ -202,7 +202,8 @@ local function setPrompt(p: ProximityPrompt, allowed: boolean)
 	-- (Not clickable with a mouse; on touch a short hold, so a quick tap meant as a hit never talks.)
 	local clickable, hold = TalkRules.promptStyle(ViewMode.isTouch())
 	p.ClickablePrompt = clickable
-	p.HoldDuration = hold
+	-- (V9-NOW 24, Config.NO_HOLD_E: never a hold, Talk is one press; the 2 s rest after a shot keeps a hit from opening it.)
+	p.HoldDuration = if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).NO_HOLD_E then 0 else hold
 end
 
 function NpcTalk.start()
