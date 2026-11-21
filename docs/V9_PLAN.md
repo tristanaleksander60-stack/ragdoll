@@ -40,6 +40,18 @@
     - **Never in the way:** they never block the spawn circle, a terminal or a path for long, and they stay inside the lab bounds.
     - **Test:** in T146 (or a small new check), 5 pistol hits topple one block, it resets in time, and it never leaves the lab.
 
+12. **A 2x event for 48 hours** (owner, 21 Nov):
+    - **What doubles:** every KO counts double toward weapon unlocks, and BOLTS are doubled from everything (experiments, daily bonus, gifts, codes excluded). It stacks with the 2x BOLTS pass (4x bolts for pass owners).
+    - **When:** `Config.DOUBLE_EVENT = { from = <UTC time of this publish>, to = from + 48 h }`. The server decides by `os.time()`, so every server starts and ends together, and nothing is doubled outside the window.
+    - **Shown:**
+      - a small gold "2X KO + BOLTS" chip with a live countdown ("2X · 47:12:05") in the top bar on every device (V9-0g sizes on phones);
+      - one calm reveal on join while it runs;
+      - "+2" on KO pops;
+      - the What's New line.
+    - **Server side only:** `ProgressService` (KO count), `EconomyService` (bolts). Saved progress is real; nothing is taken back after.
+    - **Test:** T185_DoubleEvent: inside the window a KO counts 2 and bolts double; outside, normal; the chip shows the right time left.
+    - **Owner:** add a line to the description and the promotional text while it runs: `⚡ 2X KOs + Bolts for 48h!`
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
