@@ -8,6 +8,8 @@
 
 Do the rest **in this order**. Each phase builds on the one before: things are first made at their final size, then placed, then labelled, then sold. Nothing is done twice.
 
+**Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it.
+
 **Phase A: quick wins, no layout needed** (players feel them at once)
 1. **V9-0o** grey matte dummies. Every later capture uses them.
 2. **V9-0w** first shot → first person.
@@ -43,6 +45,119 @@ Do the rest **in this order**. Each phase builds on the one before: things are f
   - reuse the patterns already built (terminals, LabGuide, Ui3D, Notify, NoticeRules);
   - run only the affected tests while working, and the full suite at each milestone.
 - **Ids:** if ids arrive in chat, paste them in and carry on.
+
+## V9-P The best ragdoll physics on Roblox (owner, 21 Nov: "the most important thing"; runs next, before everything else left)
+> "Lav de BEDSTE physics på hele Roblox. Det er det allervigtigste."
+
+**Goal:** our ragdolls look and feel better than every rival: Hyper Realistic Ragdoll, Ragdoll Engine, Bloody Ragdoll Physics and Fling Things and People.
+- They are heavy, weighty and believable.
+- They never jitter, explode, stretch or sink through things.
+- They react to every hit in a way you can read.
+- They stay smooth on a phone and on a busy server.
+
+### P0 Measure first: a physics test bench
+- **The bench:** build `tools/PhysicsBench` (Studio, owner only): a fixed set of repeatable scenes, each recorded as a short capture (frames or a video) plus numbers.
+- **The scenes:**
+  1. a drop from the tower (40 studs) onto the floor;
+  2. a tumble down stairs;
+  3. a cannon launch and landing;
+  4. a car hit at speed;
+  5. a grenade at 6 studs;
+  6. 3 pistol flinches, then the death drop (V9-0ac);
+  7. a grab and throw;
+  8. a pile of 20 dummies;
+  9. a body lying at rest for 10 s;
+  10. a body in water (V9-1);
+  11. the compressor and the creatures (V9-0m / V9-2);
+  12. a ragdoll on a moving platform or vehicle.
+- **Numbers per scene:**
+  - **jitter at rest:** the angular and linear speed noise after it settles;
+  - **interpenetration:** limbs through the floor or each other;
+  - **explosions:** speed spikes over a cap;
+  - **time to settle and sleep;**
+  - **server physics ms;**
+  - **network KB/s per body;**
+  - **frame time** on the low-tier phone emulator.
+- **Rivals:** record the same kinds of moments in the rivals' games (the owner's captures and public videos; the PC session may play them) for a side-by-side.
+- Write everything into `docs/PHYSICS.md` as the baseline.
+
+### P1 The body: joints, mass and collision
+- **Joint limits** (BallSocketConstraints, `LimitsEnabled`, `TwistLimitsEnabled`), set per joint from real human ranges:
+  - the neck about ±40° tilt / ±60° twist;
+  - shoulders wide cones;
+  - elbows and knees as hinges (HingeConstraint, about 0-145°, no backward bend);
+  - wrists and ankles small;
+  - hips and the waist moderate.
+
+  Then no unnatural twists and no "noodle" limbs.
+- **Joint friction and damping:** `MaxFrictionTorque` on each socket, so the limbs swing with weight instead of flopping forever. A little more on the neck and the spine.
+- **Mass:** realistic mass per part (`CustomPhysicalProperties` density). The torso and pelvis are heavy, the limbs lighter, the head medium. The centre of mass sits at the pelvis, so falls look weighty.
+- **Collision:**
+  - capsule-like collision shapes per limb (Box or Hull fidelity, slightly rounded), so they roll and slide naturally;
+  - no snagging;
+  - `NoCollisionConstraint` only between directly joined parts (stops the jitter of a part touching its own neighbour);
+  - limbs still collide with the rest of the body (no arms through the chest).
+- **Friction and bounce per surface:** floor pads, grass, metal, water, trampoline. Bodies slide a little on smooth floors, grip on grass and bounce only on the trampoline.
+
+### P2 The solver: stable and sharp
+- **Workspace settings:** check `PhysicsSteppingMethod` (Adaptive vs Fixed), and pick what gives the fewest explosions at the best cost, measured on the bench.
+- **Speed caps:** the existing `guardLimbs` limits (LIMB_REL_MAX / LIMB_SPIN_MAX) are tuned with the bench. The total body speed is capped per source, so nothing tunnels through thin walls or flies to infinity.
+- **Fast bodies:** thicker floor and wall collision in the lab (the visual floor stays thin, V9-0k) so they never fall through.
+- **Sleep:** a body at rest settles within about 1.5 s and sleeps (no micro-jitter). It wakes at once when hit.
+- **No springs from bad starts:** a body is spawned or reset in a valid pose (no overlaps), so it does not "pop".
+
+### P3 Active ragdoll: muscles, balance and reflexes ("euphoria-style")
+- **Standing dummies are physics bodies held up by muscles:** AlignOrientation / motors pulling each limb toward the animated pose. The strength drops with damage and fatigue, so they wobble, stagger and limp (V9-0ac flinches come from here).
+- **Balance:**
+  - a hit or a push makes them step to catch themselves;
+  - a strong push makes them stumble and windmill their arms before falling;
+  - the balance is lost when the support leaves the base.
+- **Protective reflexes while falling:**
+  - the arms reach out to brace;
+  - the head tucks;
+  - on landing they roll or slump;
+  - after a big fall, a short writhe or groan, kid-safe.
+- **Getting up:**
+  - a revived or recovering dummy blends from the ragdoll pose to a get-up animation that matches how it lies (front, back or side), with no snapping;
+  - then the muscles take over again.
+- **Players** get the same quality when they ragdoll (PlayerRagdoll): reflexes, a believable fall and a clean get-up.
+
+### P4 Impacts you can feel
+- **Impulses:**
+  - every hit applies its impulse at the exact hit point, with the right direction and size, scaled by the weapon or machine (V9-0ac table);
+  - momentum carries (a car hit sends them along the car's path);
+  - explosions push by distance with lift.
+- **Impact feedback:**
+  - the sound by impact speed and surface (soft thud on grass, slap on the floor, clang on metal), through SoundMix with limits;
+  - dust and puffs scaled by the speed;
+  - a small camera punch only for your own big hits (FEEL_V2 / FeelBus).
+- **Chains:** a body hitting another body or a knockable passes energy on (bowling, V9-0y).
+
+### P5 Smooth for everyone
+- **Network:**
+  - one network owner for life per lab body (as now);
+  - smooth interpolation on other clients;
+  - check that ownership never flips mid-flight (the cause of teleport-snaps);
+  - the cosmetic jiggle is client-only.
+- **Budgets per device tier** (FX_CAPS ragdolls): far bodies at lower physics detail (simpler collision, anchored when asleep and far away). The bench's 20-dummy pile must stay smooth on the low tier.
+
+### P6 Prove it is the best
+- **Side by side:** rerun the bench; put captures next to the rivals' in `docs/PHYSICS.md`.
+- **Targets against the baseline:**
+  - jitter at rest about 0;
+  - no limbs through floors in any scene;
+  - no explosions;
+  - settles in under 1.5 s;
+  - server physics within budget at 6 players;
+  - the low tier holds its frame time.
+- **Blind reviewers:** 2 independent reviewers judge the bench videos against the rivals: "most realistic, weighty and satisfying".
+- **Fix rounds** until both score ≥ 9.
+- **Tests:**
+  - T183_PhysicsBench: the numbers within targets on the automated scenes;
+  - T82 (limb guard) and the hit tests updated.
+- **Switch:** `Config.PHYSICS_V9`. All the tuning numbers live in Config (`PHYSICS.*`), so they can be tuned without code changes.
+
+**Order inside V9:** this step runs **now**, before the rest of Phase A. V9-0ac (flinch, not fall) is part of P3 and P4; do them together. Everything after (hero scale, creatures, cars, events) is built on the new physics.
 
 ## Rules for every step
 - **The look:**
