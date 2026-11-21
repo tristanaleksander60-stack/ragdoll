@@ -70,9 +70,9 @@ Shop.WHATS_NEW = table.freeze({
 	{
 		version = "0.33.0",
 		lines = {
+			"A BOW on your bar: hold to draw, let go to shoot",
 			"Every event you start counts its KOs for you, the BIG RED BUTTON too",
-			"A calmer lab: real materials instead of glowing neon",
-			"The MAPS board and both portals now stand together by the spawn",
+			"A calmer lab without neon glow; the MAPS board and portals moved to the edge",
 		},
 	},
 	{

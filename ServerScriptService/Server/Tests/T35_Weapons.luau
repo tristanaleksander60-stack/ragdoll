@@ -86,7 +86,9 @@ local function ladder(results: { string })
 		-- to hit with, Grab and the Grenade besides; the Rocket among the hardest.)
 		assert(#weapons == 5, string.format("a new player has %d weapons (want 5)", #weapons))
 		assert(Toys.SLOTS == 6 and #Toys.defaultLoadout == 6, "the bar is not 6 slots, all full, at the start (v9)")
-		assert(Toys.byId.Launch.unlockAt == 0 and Toys.byId.Rocket.unlockAt >= 400, "Launch is not a starter or the Rocket not among the hard ones")
+		-- (V9-NOW 23, Config.BOW: the Bow takes Launch's slot; Launch is the first present at 3.)
+		local launchAt = if (require(game:GetService("ReplicatedStorage").Shared.Config) :: any).BOW then 3 else 0
+		assert(Toys.byId.Launch.unlockAt == launchAt and Toys.byId.Rocket.unlockAt >= 400, "Launch is not where it belongs or the Rocket not among the hard ones")
 	elseif v8 then
 		-- (V8-0.3: Popper, Bat, Launch and Punch to hit with, Grab and the Grenade besides; the
 		-- Rocket at 3.)

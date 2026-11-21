@@ -163,6 +163,7 @@ safe("PortalUI", function() require(Client:WaitForChild("PortalUI")).start() end
 safe("HudPlus", function() require(Client:WaitForChild("HudPlus")).start() end) -- big WEAPONS, LEVEL, today's deal, sandbox column (round 5)
 safe("VehicleClient", function() require(Client:WaitForChild("VehicleClient")).start() end) -- v3 Phase C: drive the lab cars
 safe("Cockpit", function() require(Client:WaitForChild("Cockpit")).start() end) -- V9-NOW 16: the driver's seat view, wheel, speedometer, car sounds
+safe("BowClient", function() require(Client:WaitForChild("BowClient")).start() end) -- V9-NOW 23: hold to draw, let go to shoot
 safe("Speedometer", function() require(Client:WaitForChild("Speedometer")).start() end) -- V9-0c: the round gauge while you drive
 safe("PlazaClient", function() require(Client:WaitForChild("PlazaClient")).start() end) -- V9-0d: the town square (stage dance, photo spot, its sounds)
 safe("HudV3", function() require(Client:WaitForChild("HudV3")).start() end) -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)

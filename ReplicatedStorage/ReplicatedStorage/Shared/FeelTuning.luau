@@ -169,6 +169,7 @@ FeelTuning.GUN_FX = table.freeze({
 	LaserRifle = { kick = 0.15, flash = 0.9, color = Color3.fromRGB(255, 60, 70) },
 	Railgun = { kick = 3.5, flash = 2.6, color = Color3.fromRGB(110, 215, 255) },
 	Crossbow = { kick = 0.8, flash = 0 },
+	Bow = { kick = 0.35, flash = 0 }, -- (V9-NOW 23)
 	NailGun = { kick = 0.15, flash = 0 },
 } :: { [string]: GunFx })
 FeelTuning.FLASH_COLOR = WARM

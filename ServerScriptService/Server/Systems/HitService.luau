@@ -30,6 +30,8 @@ local SessionStats = require(script.Parent.SessionStats)
 local Ammo = require(Shared.Ammo)
 local Config = require(Shared.Config)
 local WeaponMechanics = require(script.Parent.WeaponMechanics)
+local BowMath = require(Shared.BowMath) -- (V9-NOW 23)
+local drawNow: number? = nil -- (V9-NOW 23: the draw of the Bow round being applied now: applyToy reads it)
 -- (An extra round of a gun's own mechanics never starts more: per player, so one player's rounds
 -- never switch off another's: review fix.)
 local inMechanicsOf: { [Player]: boolean } = {}
@@ -253,6 +255,10 @@ function HitService.applyToy(toy: Toys.Toy, part: BasePart, position: Vector3, d
 		return nil
 	end
 	local impulse = HitMath.toyImpulse(toy, direction, mass)
+	local draw = if toy.id == "Bow" then drawNow or (if requester then BowMath.MIN_DRAW else 1) else nil -- (V9-NOW 23; no player: a full draw)
+	if draw then
+		impulse *= BowMath.pushScale(draw) -- (a full draw pins a light dummy back a little)
+	end
 	-- Where it really lands decides both what the body does and the wound (never two parts).
 	local frozen = model:GetAttribute("Frozen") == true
 	local woundPart, woundAt, guarded = part, position, false
@@ -301,7 +307,11 @@ function HitService.applyToy(toy: Toys.Toy, part: BasePart, position: Vector3, d
 			-- (V9-0ac: a newcomer's first takedowns come in 2-3 shots: their hits do NEWCOMER_DAMAGE times the damage
 			-- until FIRST_HITS takedowns, instead of the old knock-flat rule.)
 			local boost = if requester then HitService.boostFor(requester:GetAttribute("Newcomer") == true, ProgressService.takedownsOf(requester) or 0) else nil
-			VitalsService.wound(model, woundPart, woundAt, requester, toy.wound, { sever = sever, blunt = blunt, guarded = guarded, round = toy.gun == true, boost = boost })
+			-- (V9-NOW 23: an arrow wounds by its draw; only a near-full draw counts as a round, so only it drops a body
+			-- with a headshot.)
+			local power = if draw then toy.wound * BowMath.woundScale(draw) else toy.wound
+			local round = toy.gun == true and (draw == nil or draw >= 0.9)
+			VitalsService.wound(model, woundPart, woundAt, requester, power, { sever = sever, blunt = blunt, guarded = guarded, round = round, boost = boost })
 		end
 		-- Round 5: each gun's own (pellets, a round through bodies, a flare, gold sparks). Never
 		-- from inside one of its own extra rounds.
@@ -348,7 +358,25 @@ end
 -- byHand (optional): the client's word that its avatar did it by hand. Only the looks follow it (the
 -- others draw the avatar's blow instead of the tool), so it is just type-checked.
 -- lihfolk-ignore: remote-unvalidated-args (byHand is only ever read as `byHand == true`)
-local function onRequest(player: Player, part: unknown, position: unknown, direction: unknown, toyId: unknown, byHand: unknown)
+-- V9-NOW 23: the Bow's draw. The client says when the string goes back (Ammo "Draw") and how far it was on the shot;
+-- the server allows no more than the time it was held gives (BowMath.serverCap), so a draw is never faked.
+local drawStart: { [Player]: number } = {}
+local function bowDraw(player: Player, claimed: unknown): number
+	local started = drawStart[player]
+	drawStart[player] = nil
+	local held = if started and os.clock() - started < 12 then os.clock() - started else nil
+	local cap = BowMath.serverCap(held)
+	local want = if type(claimed) == "number" and claimed == claimed then claimed else BowMath.MIN_DRAW
+	return math.clamp(want, BowMath.MIN_DRAW, cap)
+end
+function HitService.drawStartForTest(player: Player, secondsAgo: number)
+	drawStart[player] = os.clock() - secondsAgo
+end
+function HitService.bowDrawForTest(player: Player, claimed: number): number
+	return bowDraw(player, claimed)
+end
+
+local function onRequest(player: Player, part: unknown, position: unknown, direction: unknown, toyId: unknown, byHand: unknown, draw: unknown)
 	if typeof(part) ~= "Instance" or not (part :: Instance):IsA("BasePart") then
 		return
 	end
@@ -441,7 +469,9 @@ local function onRequest(player: Player, part: unknown, position: unknown, direc
 	end
 	local used, reason = false, nil :: string?
 	if toy.kind == "hit" then
+		drawNow = if toy.id == "Bow" then bowDraw(player, draw) else nil
 		used = HitService.applyToy(toy, p, pos, dir, player, byHand == true and toy.byHand) ~= nil
+		drawNow = nil
 	elseif toy.kind == "dummy" then
 		used, reason = ToyService.onDummy(player, toy.id, p, pos)
 	elseif toy.kind == "place" then
@@ -508,7 +538,7 @@ end
 -- A gun fired at nothing (round 2, N2): the ground, a wall, the air. Checked like a hit (the gun, its
 -- lock, its pace, the reach), then everyone else sees the shot and the bodies near it hear it. The
 -- point is where the client's aim met the world (or a point along the aim in the air).
-local function onShot(player: Player, position: unknown, toyId: unknown)
+local function onShot(player: Player, position: unknown, toyId: unknown, draw: unknown)
 	if typeof(position) ~= "Vector3" or type(toyId) ~= "string" then
 		return
 	end
@@ -534,6 +564,9 @@ local function onShot(player: Player, position: unknown, toyId: unknown)
 	local ok = rateOk(player, toy)
 	if not ok or not HitService.takeRound(player, toy.id) then
 		return
+	end
+	if toy.id == "Bow" then
+		bowDraw(player, draw) -- (a miss uses the draw up too)
 	end
 	commit(player, toy)
 	SessionStats.shot(player)
@@ -603,6 +636,8 @@ function HitService.start()
 	Net.event(Net.Names.Ammo).OnServerEvent:Connect(function(player: Player, kind: unknown, toyId: unknown)
 		if type(kind) == "string" and kind == "Reload" and type(toyId) == "string" and #toyId <= 40 then
 			HitService.reloadRound(player, toyId)
+		elseif kind == "Draw" then
+			drawStart[player] = os.clock() -- (V9-NOW 23: the Bow's string goes back now)
 		elseif kind == "Detonate" then
 			-- Round 5: the C4's second press sets off the player's own charges (nothing else).
 			ToyService.detonate(player)
@@ -617,6 +652,7 @@ function HitService.start()
 		HitService.lastRefusal[player] = nil
 		books[player] = nil
 		bookChar[player] = nil
+		drawStart[player] = nil
 	end)
 	log.info("ready")
 end

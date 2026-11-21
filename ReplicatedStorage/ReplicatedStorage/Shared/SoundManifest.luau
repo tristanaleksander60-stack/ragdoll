@@ -318,6 +318,10 @@ local GUNS: { [string]: Gun } = {
 		fire = "crossbow", volume = 0.5, pitch = 1, cut = 0.6, maxDistance = 200,
 		fallback = { bank = "zip", volume = 0.4, pitch = 1.3 },
 	},
+	Bow = { -- (V9-NOW 23: the string let go; the archer's own screen plays its twang in BowClient)
+		fire = "crossbow", volume = 0.35, pitch = 1.2, cut = 0.5, maxDistance = 160,
+		fallback = { bank = "zip", volume = 0.35, pitch = 1.4 },
+	},
 	NailGun = {
 		fire = "nail", volume = 0.55, pitch = 1, cut = 0.3, maxDistance = 200,
 		fallback = { bank = "pop", volume = 0.3, pitch = 1.9 }, reload = "reloadRifle",

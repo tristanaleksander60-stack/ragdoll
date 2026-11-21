@@ -138,7 +138,8 @@ end
 -- V8-0.3 (Config.V8_START_BAR): rungs moved for the full start bar: its tools open from the start,
 -- the Rocket is the first unlock; Poke, Slap and Shove leave the early rungs and Heal comes later.
 local V8_RUNGS: { [string]: number } = if Config.START_BAR_V9
-	then { Bat = 0, Grenade = 0, Launch = 0, SMG = 0, Poke = 18, Shove = 22, Slap = 24, Heal = 60 }
+	then (if Config.BOW then { Bat = 0, Grenade = 0, Bow = 0, Launch = 3, SMG = 0, Poke = 18, Shove = 22, Slap = 24, Heal = 60 } -- (V9-NOW 23: the Bow on the bar, Launch the first present at 3)
+		else { Bat = 0, Grenade = 0, Launch = 0, SMG = 0, Poke = 18, Shove = 22, Slap = 24, Heal = 60 })
 	else { Bat = 0, Grenade = 0, Launch = 0, Rocket = 3, Poke = 18, Shove = 22, Slap = 24, Heal = 60 }
 -- Start bar v9 (Config.START_BAR_V9): rungs set as they finally stand (after the squeeze): the Rocket is
 -- one of the hardest to get, between the Portal (437) and the Plasma Blade (491).
@@ -262,6 +263,9 @@ add("Fan", { label = "Fan", kind = "place", category = "Specials", blurb = "A gi
 add("Bowling", { label = "Bowling", kind = "place", category = "Specials", blurb = "Strike! Bowls dummies like pins", glyph = "🎳", color = rgb(150, 90, 220), cooldown = 0.6, power = 0.45, chaos = 0.5, fx = "Prop", big = true, unlockAt = 260})
 
 -- Earned with kills (phase H; round 2 moved them up the ladder). -------------------------------
+-- V9-NOW 23 (owner, 21 Nov 2026: "a bow on the start bar"): hold to draw, let go to shoot (Client/BowClient); a real arc with
+-- gravity, the draw sets the strength (Shared/BowMath), the server caps the draw by the time it was held (HitService).
+add("Bow", { label = "Bow", short = "Bow", kind = "hit", category = "Guns", blurb = "Hold to draw, let go: a long draw flies far and hits hard", glyph = "\u{1FAB6}", color = rgb(150, 105, 60), cooldown = 0.35, speed = 60, lift = 0.25, chaos = 0.45, fx = "Dart", held = true, move = "Aim", gun = true, wound = 1.4 })
 add("Crossbow", { label = "Crossbow", short = "X-Bow", kind = "hit", category = "Guns", blurb = "A heavy bolt that sticks in", glyph = "🏹", color = rgb(150, 100, 60), cooldown = 0.6, speed = 70, lift = 0.25, chaos = 0.4, fx = "Dart", big = true, held = true, move = "Aim", gun = true, wound = 1.4, unlockAt = 35})
 add("NailGun", { label = "Nail Gun", short = "Nails", kind = "hit", category = "Guns", blurb = "Rat-a-tat. Nails everywhere", glyph = "🔩", color = rgb(150, 160, 175), cooldown = 0.085, speed = 16, lift = 0.05, chaos = 0.35, fx = "Dart", held = true, move = "Aim", gun = true, auto = true, wound = 0.5, unlockAt = 70})
 add("Slime", { label = "Slime Cannon", short = "Slime", kind = "place", category = "Specials", blurb = "Lobs a glob of slime. Nobody stays up", glyph = "🐌", color = rgb(110, 230, 80), cooldown = 0.7, power = 0.25, chaos = 0.5, fx = "Prop", held = true, move = "Aim", unlockAt = 330})
@@ -319,7 +323,7 @@ local CATEGORIES: { Category } = { "Melee", "Guns", "Explosives", "Specials" }
 -- Start bar v9 (Config.START_BAR_V9, research 21 Nov 2026: the biggest ragdoll game now, 125K players,
 -- 19 min sessions, starts every player with a full kit with 3 guns): all 6 slots full: two guns (the
 -- Popper and the Buzz Blaster), Grab, Bat, the Grenade and Launch. The Rocket stays among the hardest.
-local DEFAULT_LOADOUT = if Config.START_BAR_V9 then { "Blaster", "SMG", "Grab", "Bat", "Grenade", "Launch" }
+local DEFAULT_LOADOUT = if Config.START_BAR_V9 then (if Config.BOW then { "Blaster", "SMG", "Grab", "Bat", "Grenade", "Bow" } else { "Blaster", "SMG", "Grab", "Bat", "Grenade", "Launch" })
 	elseif Config.V8_START_BAR then { "Blaster", "Grab", "Bat", "Grenade", "Launch" }
 	else { "Blaster", "Grab", "Punch" }
 -- How many slots the bar has (a fixed number, not the starting bar's length: round 5).

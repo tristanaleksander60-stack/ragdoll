@@ -1718,11 +1718,27 @@ function PokeController.openCatalog()
 end
 
 -- Pointer routing lives in LabCamera, which calls these.
+-- V9-NOW 23: the Bow is drawn while held and shot on let-go (Client/BowClient), from any input that presses it.
+local function bowPress(viewportPosition: Vector2): boolean?
+	if (Config :: any).BOW and selected == "Bow" and enabled and not doctorHold then
+		return (require(script.Parent:WaitForChild("BowClient")) :: any).begin(viewportPosition)
+	end
+	return nil
+end
+
 function PokeController.pressAt(viewportPosition: Vector2): boolean
+	local bow = bowPress(viewportPosition)
+	if bow ~= nil then
+		return bow
+	end
 	return tryUse(viewportPosition, "press")
 end
 
 function PokeController.tapAt(viewportPosition: Vector2): boolean
+	local bow = bowPress(viewportPosition)
+	if bow ~= nil then
+		return bow
+	end
 	return tryUse(viewportPosition, "tap")
 end
 

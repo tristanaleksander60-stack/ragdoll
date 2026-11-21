@@ -209,6 +209,10 @@ local function onJoin(player: Player)
 		if (Config :: any).V8_START_BAR and ok then
 			list = LoadoutStore.migrateOnce(player.UserId, list)
 		end
+		-- (V9-NOW 23: the Bow joins a saved bar that has a free slot; nothing is taken off.)
+		if (Config :: any).BOW and list and #list < Toys.SLOTS and not table.find(list, "Bow") then
+			table.insert(list, "Bow")
+		end
 		-- (Blind review: the move yields on the store; a bar set meanwhile is newer and wins.)
 		if current[player] then
 			scheduleSave(player)

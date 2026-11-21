@@ -108,7 +108,7 @@ return {
 				kept += 1
 			end
 		end
-		assert(profile.ladder == 6, "the profile did not move to ladder 6")
+		assert(profile.ladder >= 6, "the profile did not move to ladder 6 or later") -- (V9-NOW 23: 7 with the Bow)
 		return string.format("first rungs kept (<= %d); %d rungs on a growing curve, order kept; top %d (old %d, cap %d); Rocket between Portal and Plasma Blade; every Robux tier and the Bolts price as before; 100 takedowns keep %d stretched weapons", keep, #rungs, newTop, oldTop, Config.LADDER_V9_TOP, kept)
 	end,
 }

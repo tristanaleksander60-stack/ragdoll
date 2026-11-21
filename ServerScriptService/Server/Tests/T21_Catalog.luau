@@ -89,7 +89,9 @@ local function hitCheck(toy: Toys.Toy): string
 	local chest = model:FindFirstChild("UpperTorso") :: BasePart
 	local result = HitService.applyToy(toy, chest, chest.Position, Vector3.xAxis)
 	assert(result ~= nil, toy.id .. " was refused")
-	local strong = toy.speed >= 40
+	-- (V9-0ac, Config.SHOT_FLINCH: a round of any gun only flinches a living body (the damage drops it, T181); an
+	-- arrow pins it back. Those are checked to move it.)
+	local strong = toy.speed >= 40 and not (toy.gun and (require(game:GetService("ReplicatedStorage").Shared.Config) :: any).SHOT_FLINCH)
 	assert(waitFor(function()
 		return if strong then down(model) else state(model) ~= "Standing"
 	end, 2), string.format("%s did not %s (state %s)", toy.id, if strong then "knock it down" else "move it", state(model)))

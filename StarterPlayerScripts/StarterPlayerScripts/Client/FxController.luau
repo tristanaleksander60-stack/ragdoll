@@ -579,6 +579,7 @@ dartParams.FilterType = Enum.RaycastFilterType.Include
 local DART_LOOKS: { [string]: { size: Vector3, color: Color3, tip: Color3, tipSize: number, material: Enum.Material } } = {
 	Blaster = { size = Vector3.new(0.9, 0.28, 0.28), color = Color3.fromRGB(255, 150, 40), tip = Color3.fromRGB(70, 200, 255), tipSize = 0.36, material = Enum.Material.SmoothPlastic },
 	Crossbow = { size = Vector3.new(1.9, 0.16, 0.16), color = Color3.fromRGB(120, 80, 40), tip = Color3.fromRGB(230, 60, 60), tipSize = 0.3, material = Enum.Material.Wood },
+	Bow = { size = Vector3.new(2.4, 0.1, 0.1), color = Color3.fromRGB(120, 80, 40), tip = Color3.fromRGB(230, 60, 60), tipSize = 0.3, material = Enum.Material.Wood },
 	NailGun = { size = Vector3.new(0.7, 0.1, 0.1), color = Color3.fromRGB(170, 175, 185), tip = Color3.fromRGB(120, 125, 135), tipSize = 0.22, material = Enum.Material.Metal },
 }
 
@@ -673,6 +674,7 @@ local WEAPON_HITS: { [string]: { bank: string, volume: number, pitch: number, cu
 	Chainsaw = { bank = "saw", volume = 0.55, pitch = 1, cut = 0.25, from = 1.2 },
 	Crowbar = { bank = "clang", volume = 0.45, pitch = 1.35, cut = 0.6 },
 	Crossbow = { bank = "arrow", volume = 0.6, pitch = 1, cut = 0.6 },
+	Bow = { bank = "arrow", volume = 0.55, pitch = 1.05, cut = 0.6 }, -- (V9-NOW 23)
 }
 FxController.WEAPON_HITS = WEAPON_HITS
 -- Metal surfaces ring (a round striking them ricochets).

@@ -434,6 +434,9 @@ local Config = {
 	-- V9-NOW 20 (owner, 21 Nov 2026: "the Map Board next to the portals"): SINGLEPLAYER and MULTIPLAYER stand either side of
 	-- the MAPS board in the spawn's view (MapBoard.travelSpot); the west walk to their old spot is not laid (PathPlan).
 	TRAVEL_CORNER = true,
+	-- V9-NOW 23 (owner, 21 Nov 2026: "a bow on the start bar"): the Bow takes Launch's slot (Launch: the first present at 3);
+	-- hold to draw, let go to shoot, a real arc (Shared/BowMath, Client/BowClient, HitService caps the draw).
+	BOW = true,
 	-- V9-NOW 12 (owner, 21 Nov 2026): 2X KOs (toward unlocks) and 2X BOLTS (not codes or bought bolts; stacks with the
 	-- 2x BOLTS pass) from `from` to `to`, UTC seconds (Shared/DoubleEvent). Starts with this publish, 48 hours.
 	DOUBLE_EVENT = { from = 1795270200, to = 1795270200 + 48 * 3600 }, -- (21 Nov 2026 14:10 UTC to 23 Nov 14:10 UTC)
@@ -461,6 +464,7 @@ local Config = {
 		LaserRifle = { up = 0.3, side = 0.15, shake = 0 },
 		Railgun = { up = 5.0, side = 0.8, shake = 0.16 },
 		Crossbow = { up = 1.2, side = 0.3, shake = 0 },
+		Bow = { up = 0.5, side = 0.15, shake = 0 }, -- (V9-NOW 23: a soft kick on let-go)
 		NailGun = { up = 0.3, side = 0.2, shake = 0 },
 	},
 	-- V9-2b / Phase T (owner, 21 Nov 2026: "a little computer terminal you walk up to and press FEED, spam allowed"): a
