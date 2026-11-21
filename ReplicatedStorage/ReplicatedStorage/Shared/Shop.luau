@@ -68,6 +68,13 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.33.3",
+		lines = {
+			"Run dummies over with a car: every one is a KO!",
+			"Weapons sit right in your hand, whatever avatar you wear",
+		},
+	},
+	{
 		version = "0.33.2",
 		lines = {
 			"No more holding E: click or tap the screen or the thing itself",

@@ -20,6 +20,8 @@ local MODEL_NAME = "HeldTool"
 local HOLDS_PER_SECOND = 10
 
 local HeldService = {}
+HeldService.SCALE_MIN = 0.7 -- (the weapon sized to the avatar: tiny bodies)
+HeldService.SCALE_MAX = 1.5 -- (and giants)
 
 local holding: { [Player]: string? } = {}
 local window: { [Player]: { start: number, count: number } } = {}
@@ -393,7 +395,9 @@ local function attach(character: Model, toyId: string)
 			tilt = if spec then spec.tilt elseif move == "Shoot" or move == "Aim" or move == "Cast" then GUN_TILT else BLADE_TILT,
 		}
 	end
-	local hand = character:FindFirstChild("RightHand")
+	-- (Owner, 21 Nov 2026: "every weapon right in the hand, whatever Roblox skin you wear". An R6 body has no RightHand:
+	-- its "Right Arm" holds it, the fist at the arm's lower end.)
+	local hand = character:FindFirstChild("RightHand") or character:FindFirstChild("Right Arm")
 	local root = character:FindFirstChild("HumanoidRootPart")
 	if not spec or not hand or not hand:IsA("BasePart") or not root or not root:IsA("BasePart") then
 		return
@@ -401,6 +405,14 @@ local function attach(character: Model, toyId: string)
 	local model = spec.build()
 	model.Name = MODEL_NAME
 	local grip = model.PrimaryPart :: BasePart
+	-- (Any skin: a tall or a tiny avatar holds a weapon sized to it. The root part grows with the body's height
+	-- scale (2 studs tall at 1), so the weapon follows it, within sane bounds.)
+	local k = math.clamp(root.Size.Y / 2, HeldService.SCALE_MIN, HeldService.SCALE_MAX)
+	if math.abs(k - 1) > 0.04 then
+		pcall(function()
+			model:ScaleTo(model:GetScale() * k)
+		end)
+	end
 	local bodyFound = model:FindFirstChild("Body")
 	local body = if bodyFound and bodyFound:IsA("BasePart") then bodyFound else grip
 	-- A fixed grip in the hand's own frame (the hand of a standing R15 avatar faces the way the
@@ -411,7 +423,15 @@ local function attach(character: Model, toyId: string)
 	-- it fits every body and scale; a model's 'Palm' attachment on its grip marks where the fist
 	-- closes on the handle and is what lands there.
 	local gripAt = hand:FindFirstChild("RightGripAttachment")
-	local palm = if gripAt and gripAt:IsA("Attachment") then CFrame.new(gripAt.Position) else CFrame.new(0, -hand.Size.Y / 2, 0)
+	local palmAt = if gripAt and gripAt:IsA("Attachment") then gripAt.Position else Vector3.new(0, -hand.Size.Y / 2, 0)
+	-- (A package with an odd grip point: the fist stays inside the hand's own box, never off in the air.)
+	local half = hand.Size / 2
+	palmAt = Vector3.new(math.clamp(palmAt.X, -half.X, half.X), math.clamp(palmAt.Y, -half.Y, half.Y), math.clamp(palmAt.Z, -half.Z, half.Z))
+	-- (A package whose hand mesh is turned in its part: the wrist joint's C1 says how; the grip follows the body's
+	-- frame, not the mesh's, so every skin holds it the same way.)
+	local wrist = hand:FindFirstChild("RightWrist")
+	local turn = if wrist and wrist:IsA("Motor6D") then wrist.C1.Rotation else CFrame.identity
+	local palm = CFrame.new(palmAt) * turn
 	local palmOnGrip = grip:FindFirstChild("Palm")
 	local weld = Instance.new("Weld")
 	weld.Part0 = hand
@@ -424,6 +444,47 @@ local function attach(character: Model, toyId: string)
 	model:SetAttribute("Tool", toyId)
 	model:SetAttribute("Worn", true) -- not part of the body when it goes limp (ActiveRagdoll)
 	model.Parent = character
+end
+
+-- (Any skin: when the avatar's look loads after the weapon (its package hands swap in, its scale lands), the old
+-- hand is gone and the weapon would hang in the air: it is put in the new hand.)
+local function watchBody(player: Player, character: Model)
+	local pending = false
+	local function again()
+		if pending then
+			return
+		end
+		pending = true
+		task.delay(0.2, function()
+			pending = false
+			local id = holding[player]
+			if id and character.Parent and player.Character == character then
+				attach(character, id)
+			end
+		end)
+	end
+	character.ChildAdded:Connect(function(c)
+		if c.Name == "RightHand" or c.Name == "Right Arm" or c.Name == "HumanoidRootPart" then
+			again()
+		end
+	end)
+	local humanoid = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid", 5)
+	if humanoid then
+		for _, n in { "BodyHeightScale", "BodyWidthScale", "BodyDepthScale", "BodyTypeScale", "BodyProportionScale" } do
+			local v = humanoid:FindFirstChild(n)
+			if v and v:IsA("NumberValue") then
+				v.Changed:Connect(again)
+			end
+		end
+	end
+	local loaded = player.CharacterAppearanceLoaded:Connect(function(c)
+		if c == character then
+			again()
+		end
+	end)
+	character.Destroying:Once(function()
+		loaded:Disconnect()
+	end)
 end
 
 local onHold: (Player, unknown) -> ()
@@ -502,9 +563,10 @@ function HeldService.start()
 	Net.event(Net.Names.Hold).OnServerEvent:Connect(onHold)
 	local function onJoin(player: Player)
 		player.CharacterAdded:Connect(function(character)
+			task.spawn(watchBody, player, character)
 			local id = holding[player]
 			if id then
-				character:WaitForChild("RightHand", 5)
+				local _ = character:WaitForChild("RightHand", 5) or character:FindFirstChild("Right Arm")
 				character:WaitForChild("HumanoidRootPart", 5)
 				if character.Parent and holding[player] == id then
 					attach(character, id)

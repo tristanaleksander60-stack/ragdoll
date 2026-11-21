@@ -35,6 +35,9 @@ VehicleService.SPECS = {
 }
 
 VehicleService.HORN_GAP = 0.8 -- s between two honks
+VehicleService.RUN_OVER_SPEED = 14 -- studs/s: a car this fast that meets a dummy is the driver's hit (a KO when it falls)
+VehicleService.RUN_OVER_STEP = 0.1 -- s between two looks
+VehicleService.RUN_OVER_PAD = Vector3.new(3, 4, 3) -- studs round the driving box
 VehicleService.SEAT_SINK = 0.15 -- studs the hips sink into the cushion (V9-NOW 16: never floating over it)
 
 local DARK = Color3.fromRGB(26, 26, 30)
@@ -404,6 +407,45 @@ function VehicleService.start()
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		lastHorn[player] = nil
+	end)
+	-- (Owner, 21 Nov 2026: "running people over counts as KOs". The driver's screen knocks the dummy (PropContacts),
+	-- but a takedown needs a hit the server itself saw: a car driven at RUN_OVER_SPEED+ that meets a dummy stamps
+	-- the driver's hit on it, so its fall is the driver's KO, as a shot's is.)
+	local Dummies = require(ReplicatedStorage.Shared.Dummies) :: any
+	local DummyControl = require(script.Parent.DummyControl) :: any
+	local overlap = OverlapParams.new()
+	overlap.FilterType = Enum.RaycastFilterType.Include
+	local runAcc = 0
+	RunService.Heartbeat:Connect(function(dt)
+		runAcc += dt
+		if runAcc < VehicleService.RUN_OVER_STEP then
+			return
+		end
+		runAcc = 0
+		local dummies = workspace:FindFirstChild("Dummies")
+		if not dummies then
+			return
+		end
+		overlap.FilterDescendantsInstances = { dummies }
+		for _, car in cars do
+			local occupant = car.seat.Occupant
+			local driver = occupant and Players:GetPlayerFromCharacter(occupant.Parent)
+			local body = car.body
+			if driver and body.Parent and body.AssemblyLinearVelocity.Magnitude >= VehicleService.RUN_OVER_SPEED then
+				local seen: { [Instance]: boolean } = {}
+				for _, part in workspace:GetPartBoundsInBox(body.CFrame, body.Size + VehicleService.RUN_OVER_PAD, overlap) do
+					local node: Instance = part
+					while node.Parent and node.Parent ~= dummies do
+						node = node.Parent :: Instance
+					end
+					if node.Parent == dummies and node:IsA("Model") and not seen[node] and not Players:GetPlayerFromCharacter(node) then
+						seen[node] = true
+						Dummies.setBlame(node, driver.UserId)
+						DummyControl.stampServerHit(node, driver.UserId)
+					end
+				end
+			end
+		end
 	end)
 	local acc = 0
 	RunService.Heartbeat:Connect(function(dt)
