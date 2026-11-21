@@ -402,6 +402,9 @@ local Config = {
 	-- and the gold PLACES ring portal in every lab's spawn view, a copy at every map's arrival, Solo/Multi in
 	-- the same ring family (Server/Systems/MapBoard, Client/MapBoardClient).
 	MAP_BOARD = true,
+	-- V9-P fix round 2: the plaster strips on a broken limb are not drawn (on the sculpted skins they read as
+	-- stray geometry); they still mark the break (DummyLife's limp), and the vitals monitor shows it.
+	PLASTER_VISIBLE = false,
 	SHOT_FLINCH = true,
 	SHOT_ONE_KILL_POWER = 2.4,
 	NEWCOMER_DAMAGE = 2.5,
@@ -414,8 +417,8 @@ local Config = {
 		}),
 		-- A limp body on the ground slower than SETTLE_SPEED studs/s loses SETTLE_DAMP of its speed per second
 		-- (a soft body: no long rolling after a big fall). ActiveRagdoll.settle.
-		SETTLE_SPEED = 10,
-		SETTLE_DAMP = 3,
+		SETTLE_SPEED = 6, -- (fix round 2: was 10: a landing rolls and skids out before the assist takes over; reviewer: "velcro")
+		SETTLE_DAMP = 2.2,
 		-- Joint friction (x Roblox's own), by the part the socket sits in: the neck and the spine swing with weight.
 		JOINT_FRICTION = table.freeze({ Head = 2, UpperTorso = 1.5 }),
 		-- A living body falling (faster than BRACE_FALL studs/s down) braces BRACE_TTI s before it lands (the
@@ -436,6 +439,7 @@ local Config = {
 		-- Only while this machine simulates at most SETTLE_MAX_BODIES limp bodies: a bigger heap is left to the
 		-- solver (assisted, a 20-body heap cost a third more solver time; heaped bodies stop each other anyway).
 		SETTLE_MAX_BODIES = 8,
+		SETTLE_HEAP_RADIUS = 12, -- (fix round 2: the heap is the moving limp bodies within this many studs)
 		-- A knocked-down dummy lies at least MIN_DOWN s before it gets up (the assist calms it sooner).
 		MIN_DOWN = 3,
 	}),

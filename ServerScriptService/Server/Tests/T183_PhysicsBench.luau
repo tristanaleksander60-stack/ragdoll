@@ -73,6 +73,10 @@ return {
 			if not r.settle or r.settle > SETTLE_MAX then
 				table.insert(problems, r.name .. ": settled " .. (if r.settle then string.format("in %.1f s", r.settle) else "never"))
 			end
+			-- (Fix round 2: a flinch is a jolt with weight: its limbs stay near ActiveRagdoll.FLINCH_REL_MAX.)
+			if r.name == "rounds" and r.rel > 75 then
+				table.insert(problems, string.format("rounds: a limb flicked at %.0f studs/s against the pelvis", r.rel))
+			end
 			if r.down > 0 then
 				table.insert(problems, r.name .. ": a living body was down in " .. r.down .. " frames")
 			end

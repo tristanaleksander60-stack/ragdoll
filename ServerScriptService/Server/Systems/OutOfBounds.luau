@@ -27,6 +27,7 @@ OutOfBounds.GROUND_TOP = 700
 OutOfBounds.MAP_MARGIN = 60
 OutOfBounds.MAP_DROP = 40
 OutOfBounds.MAP_TOP = 400
+OutOfBounds.HOLD = 0.25 -- s the root is held still at home (the fall's speed gone on every screen)
 
 local busy: { [Player]: boolean } = {}
 
@@ -76,13 +77,29 @@ function OutOfBounds.sendHome(player: Player): boolean
 	else
 		sent = Lab.sendHome(player)
 	end
-	-- (Its fall is over: no speed carried home.)
+	-- (Its fall is over: no speed carried home. The player's own client simulates the body, so a speed set
+	-- here would be overwritten: the root is held anchored a moment, which stops it on every screen.)
 	for _, part in character:GetDescendants() do
 		if part:IsA("BasePart") then
 			part.AssemblyLinearVelocity = Vector3.zero
 			part.AssemblyAngularVelocity = Vector3.zero
 		end
 	end
+	-- (The whole body, not the root alone: a limp body's loose limbs would fall away from a held root.)
+	local held: { BasePart } = {}
+	for _, part in character:GetDescendants() do
+		if part:IsA("BasePart") and not part.Anchored then
+			part.Anchored = true
+			table.insert(held, part)
+		end
+	end
+	task.delay(OutOfBounds.HOLD, function()
+		for _, part in held do
+			if part.Parent then
+				part.Anchored = false
+			end
+		end
+	end)
 	if sent then
 		-- (Home standing: a limp body is told to get up, again for a moment, as getting up is refused in
 		-- the first instant of a fall.)

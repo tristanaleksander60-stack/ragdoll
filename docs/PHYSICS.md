@@ -159,3 +159,49 @@ Side-by-side captures of Hyper Realistic Ragdoll, Ragdoll Engine, Bloody Ragdoll
 - **P6:** the rivals side by side, and the two blind video reviews.
 - **Bench scenes not built:** car, grab/throw, water.
 - **Measuring:** the bench bodies are server-owned, while live lab bodies are client-owned. There are no captures, no network KB/s and no low-tier frame time.
+
+## Fix round 2 (21 Nov 2026, after the re-reviews: V9-P 6.0 code / 6.0 look, V9-0ac 7.0)
+
+### V9-0ac
+- **Rounds from behind:** a round never knocks a living body out by its zone under SHOT_FLINCH. One round from behind used to hit the Spine zone (`knockout`) and floor the body. Only a blow, or a round of `SHOT_ONE_KILL_POWER`, still knocks out by zone (`VitalsService.wound`).
+- **The leg limp shows on every screen:** the server's `LegShotLeft` / `LegShotRight` note (server time) drives:
+  - ActiveRagdoll's limp speed, whoever simulates the body;
+  - DummyLife's limp gait (`ActiveRagdoll.legShotSide`).
+- **Flinch speed:** a flinch, and the swing back after it, keeps every limb under `FLINCH_REL_MAX` 55 studs/s against the pelvis. The bench's "rounds" scene must stay at 75 or below.
+- **T181 now covers:** rounds from behind and the side, an AutoShotgun burst, a full 8-round AK magazine, and a body the player's own client simulates.
+
+### V9-P
+- **Brace:**
+  - it is tested live (T185): a living body knocked off 30 studs braces, lands, the brace ends, and no arm breaks;
+  - the `Bracing` attribute is set on a change only;
+  - a stale brace flag no longer keeps arms unbreakable;
+  - no brace when the chest faces the sky (falling backwards).
+- **Settle assist:**
+  - the rules are one pure function, `ActiveRagdoll.settleAllowed`, which `settle` itself uses. T185 checks each rule: bubble, Zero-G, push, BOUNCY, heap, slope, bouncy floor;
+  - it brakes against the floor's speed at the contact point (`GetVelocityAtPosition`), anchored conveyor belts included, and against the floor's spin;
+  - the heap bound is per heap: moving limp bodies within `SETTLE_HEAP_RADIUS` 12 studs;
+  - a body at rest costs nothing: no ray, no table;
+  - landings roll out: `SETTLE_SPEED` 10 → 6, `SETTLE_DAMP` 3 → 2.2.
+- **Damage wears off on the attribute** (VitalsService publish), so hurt sway fades.
+- **The landing surface is the floor you see:** the lab's painted hub floor (tag `VisibleFloor`, which no ray reaches) answers instead of the Baseplate's grass below.
+- **Explosions are counted before the guard hides them:** `ActiveRagdoll.explosions` counts limbs caught at 1.5x the guard's cap, and the bench adds them to spikes.
+- **GOD MODE:** a rig the server set up before the kind's weight was known takes the new weight (`ActiveRagdoll.refreshMass`).
+- **Plasters:** the strips on broken limbs are no longer drawn (`PLASTER_VISIBLE` false). They still mark the break for the limp gait, and the monitor shows it.
+- **OutOfBounds:** holds the whole body still for 0.25 s at home, so a client-owned fall's speed is gone on every screen.
+- **T157:** the 2x case must also have landed, sooner than outside.
+
+### Tests
+T181, T183, T185, T157, T24, T38, T184, T179, T18 pass.
+
+### Still open after round 2
+- **P1:** joint limits against human ranges; capsules; friction per surface; buoyancy (before V9-1).
+- **P2:** the stepping compare; wake on hit; spawn pose.
+- **P3:**
+  - a catch step and stumble on a push;
+  - a landing roll or slump;
+  - a get-up blend for the side (front and back exist);
+  - a hand on the wound;
+  - players' own ragdolls (the brace and the assist do run on them).
+- **P4:** momentum chains (bowling, cars).
+- **P5:** why an assisted heap costs more; a low-tier client measured with 8 bodies; KB/s.
+- **P6:** the rivals side by side; motion captures and videos.

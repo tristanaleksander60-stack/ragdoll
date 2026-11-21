@@ -56,6 +56,7 @@ Net.Names = table.freeze({
 	Offers = "Offers", -- client -> server: Buy (an offer key); server -> client: Refused (release 0.20.0, OfferService)
 	Economy = "Economy", -- both ways: client Hello / BuyNext / Redeem; server State (phase 2: bolts, journal, daily, codes)
 	Admin = "Admin", -- both ways, the owner only: client Theme (and M8's tricks); server Theme / Refused
+	Terminal = "Terminal", -- client -> server: Press (the terminal's screen part); checked in LabGuide (owner or party, within reach, 4 a second, a queue of 6) (V9-2b)
 })
 
 local function folder(): Folder

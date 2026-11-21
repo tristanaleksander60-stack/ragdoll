@@ -118,6 +118,65 @@ return {
 			task.wait(0.8)
 			assert(not burst(c, { "RightUpperLeg", "LeftUpperLeg" }, "Blaster", 2, 0.3, 1.2), "rounds in both legs knocked a living body down")
 			table.insert(results, "an AK burst and both legs: still up")
+			-- (Fix round 2) From behind (the spine: it used to knock a body out at once) and from the side;
+			-- an AutoShotgun burst; a full AK magazine (it drops by its damage, never down while alive).
+			local function shotFrom(m: Model, partName: string, toyId: string, side: Vector3)
+				local p = part(m, partName)
+				local dir = p.CFrame:VectorToWorldSpace(side)
+				HitService.applyToy(Toys.byId[toyId], p, p.Position, -dir)
+			end
+			local function watchAlive(m: Model, fire: () -> (), seconds: number): boolean
+				local downAlive = false
+				task.spawn(fire)
+				local t2 = os.clock()
+				while os.clock() - t2 < seconds do
+					RunService.Heartbeat:Wait()
+					if isDown(m) and m:GetAttribute("Vital") == "Alive" then
+						downAlive = true
+					end
+				end
+				return downAlive
+			end
+			local back = fresh()
+			task.wait(0.8)
+			assert(not watchAlive(back, function()
+				shotFrom(back, "UpperTorso", "Blaster", Vector3.new(0, 0, 1)) -- (from behind)
+				task.wait(0.3)
+				shotFrom(back, "LowerTorso", "Blaster", Vector3.new(1, 0, 0)) -- (from the side)
+			end, 1.6), "a round from behind or the side knocked a living body down")
+			assert(back:GetAttribute("Vital") == "Alive", "two Popper rounds (back, side) took it out: " .. tostring(back:GetAttribute("Vital")))
+			local pellets = fresh()
+			task.wait(0.8)
+			assert(not watchAlive(pellets, function()
+				shotFrom(pellets, "UpperTorso", "AutoShotgun", Vector3.new(0, 0, -1))
+			end, 1.2) or pellets:GetAttribute("Vital") ~= "Alive", "an AutoShotgun round knocked a living body down")
+			local mag = fresh()
+			task.wait(0.8)
+			local magDownAlive = watchAlive(mag, function()
+				for _ = 1, 8 do
+					shotFrom(mag, "UpperTorso", "AK", Vector3.new(0, 0, -1))
+					task.wait(0.11)
+				end
+			end, 2.2)
+			assert(not magDownAlive, "a full AK magazine knocked it down while it was still alive")
+			table.insert(results, string.format("from behind and the side: up; AutoShotgun: up or dropped by damage; 8 AK rounds: never down alive (ended %s)", tostring(mag:GetAttribute("Vital"))))
+			-- (Fix round 2) A body the player's own client simulates (the real lab case).
+			local Players = game:GetService("Players")
+			local owner = Players:GetPlayers()[1]
+			if owner and owner.Character then
+				local DummyFactory = require(Systems:WaitForChild("DummyFactory")) :: any
+				local at = owner.Character:GetPivot().Position + owner.Character:GetPivot().LookVector * 12
+				local own = DummyFactory.spawn(at, owner.Character:GetPivot().Position, owner)
+				local t3 = os.clock()
+				while own:GetAttribute("SimulatedBy") ~= owner.UserId and os.clock() - t3 < 4 do
+					task.wait(0.1)
+				end
+				task.wait(0.8)
+				local downOwn = burst(own, { "UpperTorso" }, "Blaster", 3, 0.12, 1.2)
+				own:Destroy()
+				assert(not downOwn, "3 Popper rounds knocked down a body the player's client simulates")
+				table.insert(results, "a client-simulated body: 3 rounds, still up")
+			end
 			-- The damage alone.
 			local d = fresh()
 			task.wait(0.3)

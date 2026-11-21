@@ -180,6 +180,10 @@ local function dress(model: Model, spec: Spec)
 	if type(offset) == "number" and spec.scale ~= 1 then
 		model:SetAttribute("StandOffset", offset * spec.scale)
 	end
+	-- (Fix round 2: a rig the server already set up (a body it simulates itself) takes the new weight too.)
+	pcall(function()
+		(require(game:GetService("ReplicatedStorage").Shared.Ragdoll.ActiveRagdoll) :: any).refreshMass(model)
+	end)
 	model:SetAttribute("DummyType", spec.plate)
 	-- The chest plate: the type in big letters on the chest (a SurfaceGui, so the crowd-style
 	-- strip of marks leaves it).

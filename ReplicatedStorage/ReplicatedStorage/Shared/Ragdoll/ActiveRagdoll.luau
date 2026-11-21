@@ -251,63 +251,93 @@ end
 -- V9-P2: a limp body lying on the ground and only slowly moving loses its energy the way a soft
 -- body does (no long rolling and rocking after a big fall): every assembly's speed and spin ease
 -- off by SETTLE_DAMP per second below SETTLE_SPEED. Flying, held or fast bodies are never touched.
-local limpNow = 0 -- bodies this machine simulates limp (Ragdoll/Out) and still moving, counted every frame by update
+-- Limp bodies this machine simulates that are still moving (Ragdoll/Out): their pelvis positions, gathered
+-- every frame by update (fix round 2: the heap bound is per heap, not per machine).
+local limpMoving: { Vector3 } = {}
+local function heapAround(at: Vector3, radius: number): number
+	local n = 0
+	local r2 = radius * radius
+	for _, p in limpMoving do
+		local d = p - at
+		if d:Dot(d) < r2 then
+			n += 1
+		end
+	end
+	return n
+end
+-- Whether the settle assist may act (pure; T185 checks every rule): not in a time bubble, not in low
+-- gravity, not just after a push, not on a body that bounces by its kind, not in a big moving heap, only on
+-- a flat floor that is not bouncy.
+function ActiveRagdoll.settleAllowed(timeScale: number, gravity: number, sincePush: number, ownBounce: number, heap: number, floorNormalY: number, floorBounce: number): boolean
+	local P = (GameConfig :: any).PHYSICS
+	if not ((GameConfig :: any).PHYSICS_V9 and P and P.SETTLE_DAMP) then
+		return false
+	end
+	return timeScale == 1 and gravity >= (P.SETTLE_MIN_GRAVITY or 150) and sincePush >= 0.4 and ownBounce <= 0.5
+		and heap <= (P.SETTLE_MAX_BODIES or math.huge) and floorNormalY >= (P.SETTLE_FLAT or 0.9) and floorBounce <= 0.5
+end
+
 local function settle(rig: Rig, dt: number)
 	local P = (GameConfig :: any).PHYSICS
 	if not ((GameConfig :: any).PHYSICS_V9 and P and P.SETTLE_DAMP) then
 		return
 	end
-	-- (Fix round 1: a big heap is left to the solver: assisted, a 20-body heap cost a third more solver
-	-- time, and bodies in a heap hook into each other and stop anyway.)
-	if limpNow > (P.SETTLE_MAX_BODIES or math.huge) then
+	local pelvisV = rig.pelvis.AssemblyLinearVelocity
+	local pelvisW = rig.pelvis.AssemblyAngularVelocity
+	local rest = P.SETTLE_REST or 0.15
+	-- (Fix round 2: a body already at rest, asleep or nearly, costs nothing here: no ray, no table.)
+	if pelvisV.Magnitude < rest and pelvisW.Magnitude < rest then
 		return
 	end
-	if torsoSpeed(rig) > P.SETTLE_SPEED * 3 then
+	if pelvisV.Magnitude > P.SETTLE_SPEED * 3 then
 		return -- (cheap early out: far too fast either way)
 	end
 	-- (Fix round 1: never where slow motion or a float is the point: a time bubble keeps its own clock,
 	-- Zero-G and the owner's low gravity float bodies on purpose; nor while something keeps pushing it:
-	-- a fan, a conveyor, a magnet, the gravity hole.)
-	local ts = rig.model:GetAttribute("TimeScale")
-	if (type(ts) == "number" and ts ~= 1) or Workspace.Gravity < (P.SETTLE_MIN_GRAVITY or 150) or os.clock() - (rig.pushedAt or 0) < 0.4 then
+	-- a fan, a conveyor, a magnet, the gravity hole. Fix round 2: nor a body that bounces by its kind,
+	-- GOD MODE's BOUNCY.)
+	-- (A big heap is left to the solver, bodies in it stop each other: fix round 1 measured an assisted
+	-- 20-body heap at a third more solver time. Fix round 2: counted round this body, not machine-wide.)
+	local tsAttr = rig.model:GetAttribute("TimeScale")
+	local ts = if type(tsAttr) == "number" then tsAttr else 1
+	local sincePush = os.clock() - (rig.pushedAt or 0)
+	local ownBounce = rig.pelvis.CurrentPhysicalProperties.Elasticity
+	local heap = heapAround(rig.pelvis.Position, P.SETTLE_HEAP_RADIUS or 12)
+	if not ActiveRagdoll.settleAllowed(ts, Workspace.Gravity, sincePush, ownBounce, heap, 1, 0) then
 		return
 	end
-	-- What it lies on: only a flat, not bouncy floor; braked against that floor's own speed, so a body
-	-- on a truck bed or a moving platform rides along instead of sliding off.
+	-- What it lies on: only a flat, not bouncy floor; braked against the floor's own motion at the
+	-- contact (a truck bed, a turning platform, an anchored conveyor belt with its set speed), so a body
+	-- riding it rides along instead of sliding off.
 	local hit = Workspace:Raycast(rig.pelvis.Position, Vector3.new(0, -(P.SETTLE_PROBE or 4), 0), rig.rayParams)
-	if not hit or hit.Normal.Y < (P.SETTLE_FLAT or 0.9) then
+	if not hit then
 		return
 	end
 	local support = hit.Instance
 	local base = Vector3.zero
+	local baseW = Vector3.zero
+	local floorBounce = 0
 	if support:IsA("BasePart") then
-		local okProps, props = pcall(function()
-			return support.CurrentPhysicalProperties
-		end)
-		if okProps and props and props.Elasticity > 0.5 then
-			return -- (the Bouncy Floor: its bounces are the point)
-		end
-		if not support.Anchored then
-			base = support.AssemblyLinearVelocity
-		end
+		floorBounce = support.CurrentPhysicalProperties.Elasticity -- (the Bouncy Floor: its bounces are the point)
+		base = support:GetVelocityAtPosition(hit.Position)
+		baseW = support.AssemblyAngularVelocity
 	end
-	if (rig.pelvis.AssemblyLinearVelocity - base).Magnitude > P.SETTLE_SPEED then
+	if not ActiveRagdoll.settleAllowed(ts, Workspace.Gravity, sincePush, ownBounce, heap, hit.Normal.Y, floorBounce) then
+		return
+	end
+	if (pelvisV - base).Magnitude > P.SETTLE_SPEED then
 		return
 	end
 	local k = math.exp(-P.SETTLE_DAMP * dt)
-	local seen: { [BasePart]: boolean } = {}
-	local rest = P.SETTLE_REST or 0.15
 	for _, part in rig.parts do
 		local root = part.AssemblyRootPart
-		if root and not seen[root] and not root.Anchored then
-			seen[root] = true
-			-- (Fix round 1: a part already all but still is left alone: writing its speed every frame
-			-- kept the body from ever falling asleep, and a sleeping body costs the solver nothing.)
+		if root == part and not root.Anchored then
+			-- (Fix round 1: a part already all but still is left alone, so the body can fall asleep.)
 			local v = root.AssemblyLinearVelocity - base
-			local w = root.AssemblyAngularVelocity
+			local w = root.AssemblyAngularVelocity - baseW
 			if v.Magnitude > rest or w.Magnitude > rest then
 				root.AssemblyLinearVelocity = base + v * k
-				root.AssemblyAngularVelocity = w * k
+				root.AssemblyAngularVelocity = baseW + w * k
 			end
 		end
 	end
@@ -419,6 +449,23 @@ local function swayUp(rig: Rig, hurt: number, up: Vector3): Vector3
 	return (up + side.Unit * math.noise(t * 0.9, seed) * amp * 2 + rig.heading * math.noise(t * 0.7, seed + 50) * amp * 2).Unit
 end
 
+-- V9-0ac fix round 2: a leg round a while ago, as the server noted it on the body (LegShotLeft /
+-- LegShotRight, server time; every screen sees it, whoever simulates the body): +1 right, -1 left, 0 none.
+function ActiveRagdoll.legShotSide(model: Model): number
+	local now = Workspace:GetServerTimeNow()
+	local right = model:GetAttribute("LegShotRight")
+	local left = model:GetAttribute("LegShotLeft")
+	local r = type(right) == "number" and now - right < LEG_LIMP_TIME
+	local l = type(left) == "number" and now - left < LEG_LIMP_TIME
+	return if r and not l then 1 elseif l and not r then -1 elseif r and l then 1 else 0
+end
+local function legShotRecent(model: Model): number
+	if not (GameConfig :: any).SHOT_FLINCH then
+		return 0
+	end
+	return ActiveRagdoll.legShotSide(model)
+end
+
 -- An orientation from an up and a heading, made square (the up may lean towards the heading).
 local function uprightFrame(up: Vector3, heading: Vector3): CFrame
 	local back = -heading
@@ -505,6 +552,10 @@ local LIMB_GUARD = GameConfig.FEEL_V2 == true
 local LIMB_REL_MAX = 110
 local LIMB_SPIN_MAX = 32
 ActiveRagdoll.LIMB_REL_MAX = LIMB_REL_MAX
+local FLINCH_REL_MAX = 55 -- (V9-0ac fix round 2: a flinching limb's top speed against the pelvis)
+local EXPLOSION_FACTOR = 1.5 -- a limb this far over LIMB_REL_MAX is a solver explosion, not a swing
+ActiveRagdoll.FLINCH_REL_MAX = FLINCH_REL_MAX
+ActiveRagdoll.explosions = 0 -- (counted by guardLimbs on this machine; the bench reads it)
 ActiveRagdoll.LIMB_SPIN_MAX = LIMB_SPIN_MAX
 local function guardLimbs(rig: Rig)
 	if not LIMB_GUARD or rig.held > 0 or rig.state == "Frozen" then
@@ -519,12 +570,19 @@ local function guardLimbs(rig: Rig)
 	if base.Magnitude ~= base.Magnitude then
 		return
 	end
+	-- (V9-0ac fix round 2: a standing body's flinch is a jolt with weight, never a puppet's snap: its limbs
+	-- stay under FLINCH_REL_MAX against the pelvis.)
+	local cap = if rig.state == "Flinch" or rig.state == "Recovering" then FLINCH_REL_MAX else LIMB_REL_MAX -- (and the swing back after it)
 	for _, part in rig.parts do
 		if part ~= rig.pelvis and part ~= rig.root and not part.Anchored then
 			local rel = part.AssemblyLinearVelocity - base
 			local speed = rel.Magnitude
-			if speed > LIMB_REL_MAX and speed == speed then
-				part.AssemblyLinearVelocity = base + rel.Unit * LIMB_REL_MAX
+			if speed > cap and speed == speed then
+				-- (The bench counts the real explosions the guard catches: far over the cap, not a fast swing.)
+				if speed > LIMB_REL_MAX * EXPLOSION_FACTOR then
+					ActiveRagdoll.explosions += 1
+				end
+				part.AssemblyLinearVelocity = base + rel.Unit * cap
 			end
 			local w = part.AssemblyAngularVelocity
 			local spin = w.Magnitude
@@ -721,6 +779,13 @@ function ActiveRagdoll.addPlaster(part: BasePart)
 		p.CanQuery = false
 		p.CanTouch = false
 		p.Massless = true
+		-- (V9-P fix round 2: on the sculpted skins the box-sized strips read as stray geometry: with
+		-- Config.PLASTER_VISIBLE off they stay as the break's marker (DummyLife limps by them; the vitals
+		-- monitor shows the break) but are not drawn.)
+		if (GameConfig :: any).PLASTER_VISIBLE == false then
+			p.Transparency = 1
+			p.CastShadow = false
+		end
 		p.CFrame = part.CFrame * CFrame.Angles(0, 0, angle)
 		local weld = Instance.new("WeldConstraint")
 		weld.Part0 = part
@@ -1273,7 +1338,7 @@ local function updateMoving(rig: Rig, dt: number)
 			wantHeading = direction
 			local base = if state == "Crawling"
 				then (if fleeing then CRAWL_FLEE_SPEED else CRAWL_SPEED)
-				elseif legs == 1 or now < (rig.limpUntil or 0) then (if fleeing then LIMP_FLEE_SPEED else LIMP_SPEED) -- (a broken leg, or a leg round a while ago: V9-0ac)
+				elseif legs == 1 or now < (rig.limpUntil or 0) or legShotRecent(rig.model) ~= 0 then (if fleeing then LIMP_FLEE_SPEED else LIMP_SPEED) -- (a broken leg, or a leg round a while ago: V9-0ac)
 				elseif fleeing then FLEE_SPEED
 				else WALK_SPEED
 			-- A game can hurry its runners along (Pace: a multiplier, MinigameService).
@@ -1431,13 +1496,12 @@ end
 
 local function update(dt: number)
 	-- (Limp bodies still moving: a heap coming down. Ones lying still, asleep, cost nothing and do not count.)
-	local limp = 0
+	table.clear(limpMoving)
 	for _, r in rigs do
-		if (r.state == "Ragdoll" or r.state == "Out") and r.pelvis.AssemblyLinearVelocity.Magnitude > CALM_SPEED then
-			limp += 1
+		if (r.state == "Ragdoll" or r.state == "Out") and r.pelvis.Parent and r.pelvis.AssemblyLinearVelocity.Magnitude > CALM_SPEED then
+			table.insert(limpMoving, r.pelvis.Position)
 		end
 	end
-	limpNow = limp
 	for model, rig in rigs do
 		if not model.Parent or not rig.pelvis.Parent then
 			rigs[model] = nil
@@ -1533,7 +1597,9 @@ local function update(dt: number)
 					local fall = -rig.pelvis.AssemblyLinearVelocity.Y / ts
 					-- (Not in a fast bubble: the fall is over in a blink there, and the pose fought the
 					-- bubble's own gravity forces (T157).)
-					if fall > P.BRACE_FALL and ts <= 1 then
+					-- (Fix round 2: arms out ahead catch a fall only when the chest faces down or ahead; on its
+					-- back the "ahead" is the sky, so a body falling backwards does not reach up.)
+					if fall > P.BRACE_FALL and ts <= 1 and rig.chest.CFrame.LookVector.Y < 0.35 then
 						local ground = Workspace:Raycast(rig.pelvis.Position, Vector3.new(0, -P.BRACE_PROBE, 0), rig.rayParams)
 						if ground then
 							local gap = math.max(0, rig.pelvis.Position.Y - ground.Position.Y - AIR_CLEARANCE)
@@ -1541,8 +1607,17 @@ local function update(dt: number)
 						end
 					end
 				end
+				if bracing ~= (rig.bracing == true) then
+					rig.model:SetAttribute("Bracing", bracing or nil) -- (on a change only: the bench and the looks read it)
+				end
 				rig.bracing = bracing
 				applyPose(rig, if bracing then Poses.catch(rig.stateTime) else Poses.flail(rig.stateTime))
+			end
+			-- (Fix round 2: out of the air and the catch, the brace is over: a stale flag kept arms unbreakable
+			-- on later knock-downs.)
+			if profile ~= "Airborne" and rig.bracing then
+				rig.bracing = false
+				rig.model:SetAttribute("Bracing", nil)
 			end
 			if not flying and rig.held == 0 then
 				settle(rig, dt)
@@ -2330,6 +2405,24 @@ function ActiveRagdoll.setState(model: Model, state: State)
 	else
 		enter(rig, state)
 	end
+end
+
+-- V9-P fix round 2: a body whose weight changed after its rig was set up (GOD MODE's kinds: DummySpawn
+-- writes Mass and StandOffset after spawning) gets the forces that hold it up sized again.
+function ActiveRagdoll.refreshMass(model: Model)
+	local rig = rigs[model]
+	if not rig then
+		return
+	end
+	local mass = model:GetAttribute("Mass")
+	local offset = model:GetAttribute("StandOffset")
+	if type(mass) == "number" and mass > 0 then
+		rig.mass = mass
+	end
+	if type(offset) == "number" and offset > 0 then
+		rig.standOffset = offset
+	end
+	enter(rig, rig.state) -- (the state's forces again, at the new weight)
 end
 
 return ActiveRagdoll

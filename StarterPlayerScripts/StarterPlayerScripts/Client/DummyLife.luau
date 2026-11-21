@@ -300,6 +300,16 @@ local function readBroken(life: Life, now: number)
 			arms = if arms ~= 0 and arms ~= side(name) then 2 else (if arms == 2 then 2 else side(name))
 		end
 	end
+	-- (V9-0ac fix round 2: a leg round a while ago limps it on too, on every screen: the server notes it
+	-- on the body, LegShotLeft / LegShotRight.)
+	if legs == 0 then
+		local ok, shot = pcall(function()
+			return (require(game:GetService("ReplicatedStorage").Shared.Ragdoll.ActiveRagdoll) :: any).legShotSide(life.model)
+		end)
+		if ok and type(shot) == "number" and shot ~= 0 then
+			legs = shot
+		end
+	end
 	life.brokenLeg = legs
 	life.brokenArm = arms
 	table.clear(life.loose)

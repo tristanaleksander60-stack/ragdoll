@@ -126,6 +126,15 @@ end
 
 
 local function publish(model: Model, v: Vitals, bleeding: boolean?)
+	-- (V9-P fix round 2: the Damage a body shows wears off as it heals (DAMAGE_DECAY), so a hurt body's
+	-- sway fades too (ActiveRagdoll.hurtOf); it was written only when a wound landed.)
+	if v.damage and v.damage > 0 and v.damageAt then
+		local worn = math.max(0, v.damage - (os.clock() - v.damageAt) * Config.DAMAGE_DECAY)
+		local shown = math.floor(worn)
+		if model:GetAttribute("Damage") ~= shown then
+			model:SetAttribute("Damage", shown)
+		end
+	end
 	model:SetAttribute("Blood", math.clamp(math.floor(v.blood + 0.5), 0, 100))
 	model:SetAttribute("Pulse", math.floor(v.pulse + 0.5))
 	model:SetAttribute("Vital", v.state)
@@ -513,7 +522,11 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 				setState(model, v, "Dead", "Wounds")
 			end
 		end
-		if zone.knockout and power >= (if blunt then BLUNT_KNOCKOUT else 0.6) then
+		-- (V9-0ac fix round 2: under SHOT_FLINCH a round never knocks a living body out by its zone (a
+		-- round in the spine from behind floored it): only a blow does, or a round strong enough to kill
+		-- at once. A round drops it by its damage.)
+		local roundKO = not blunt and not ((Config :: any).SHOT_FLINCH and power < ((Config :: any).SHOT_ONE_KILL_POWER or math.huge))
+		if zone.knockout and power >= (if blunt then BLUNT_KNOCKOUT else 0.6) and (blunt or roundKO) then
 			v.knockUntil = math.max(v.knockUntil, now + KNOCK_HOLD)
 		end
 	end

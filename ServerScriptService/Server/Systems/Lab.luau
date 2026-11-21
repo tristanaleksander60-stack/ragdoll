@@ -755,6 +755,8 @@ local function dressPlot(plot: Plot)
 	local folder = plot.folder
 	-- The floor (the whole plot, within its markings): tiled lab concrete (Finish).
 	local floor = paint(folder, "LabFloor", Vector3.new(Lab.CORE_HALF * 2 - 12, 0.04, 165), Vector3.new(o.X, ground + 0.02, o.Z - 11.5), Color3.fromRGB(176, 180, 188), Enum.Material.Concrete)
+	-- (V9-P fix round 2: the floor you see answers a landing (FeelV2.surfaceAt), not the hidden ground under it.)
+	game:GetService("CollectionService"):AddTag(floor, "VisibleFloor")
 	local look3 = (Config :: any).LAYOUT_V3 and (Config :: any).LAYOUT_V3_FLOOR
 	if look3 then
 		-- (V9-0h: the leader's hub floor: big light tiles with thin joints, drawn by a texture on the

@@ -40,6 +40,7 @@ return {
 		end
 		local airtimes: { [string]: number } = {}
 		local spans: { [string]: number } = {} -- (seen falling until near the floor, s)
+		local lands: { [string]: number } = {} -- (s from the drop until it is near the floor)
 		local ok, err = pcall(function()
 			SandboxService.resetForTest(p)
 			-- Bad requests.
@@ -98,6 +99,7 @@ return {
 					if not falling and #samples == 0 then
 						maxY = math.max(maxY, y)
 					elseif y <= floorY + 4.5 then
+						lands[name] = now -- (fix round 2: when it came down to the floor, from the drop)
 						break
 					elseif y ~= lastY then
 						table.insert(samples, { t = now, y = y })
@@ -111,6 +113,10 @@ return {
 					-- may see it there once or not at all. That is the point: outside it is seen ~10 times. A
 					-- bubble that did not speed it up would be seen as often as outside and fail the span check.)
 					spans[name] = if #samples >= 2 then samples[#samples].t - samples[1].t else 0
+					-- (Fix round 2: and it must really have come down, sooner than outside: a body frozen in the
+					-- air or never dropped is never seen falling either.)
+					local landed, outside = lands[name], lands.normal
+					assert(landed and outside and landed < outside * 0.85, string.format("at 2x it came down in %s s against %s s outside", tostring(landed), tostring(outside)))
 					return 0
 				end
 				assert(#samples >= 3, why)

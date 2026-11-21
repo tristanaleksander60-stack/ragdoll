@@ -123,6 +123,8 @@ function PhysicsBench.watch(name: string, bodies: { Model }, cap: number, alive:
 	local lastTrace = 0
 	local peakAt = t0 -- (the hardest moment: the impact or the launch; settling counts from there)
 	local msSum, msN = 0, 0
+	local AR = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Ragdoll"):WaitForChild("ActiveRagdoll")) :: any
+	local explosions0 = AR.explosions
 	while os.clock() - t0 < PhysicsBench.TIMEOUT do
 		RunService.Heartbeat:Wait()
 		-- (Kept out cold the whole scene: VitalsService may wake a body a blast hurt. A scene of living
@@ -198,6 +200,11 @@ function PhysicsBench.watch(name: string, bodies: { Model }, cap: number, alive:
 		end
 	end
 	r.physicsMs = if msN > 0 then msSum / msN else 0
+	-- (Fix round 2: the explosions ActiveRagdoll's limb guard caught during the scene: far over its cap, so
+	-- clamped before any frame here could see them. Each one counts as a spike.)
+	local caught = AR.explosions - explosions0
+	r.spikes += caught
+	r.trace ..= if caught > 0 then string.format(" (%d explosions caught)", caught) else ""
 	-- Jitter at rest.
 	if r.settle then
 		local t1 = os.clock()

@@ -2281,3 +2281,20 @@ Write the baseline into `docs/PERF.md`.
     - a calm portal hum (no licensed calm hum among the sounds yet);
     - the "Visit 2 places" experiment card;
     - pads cannot pick a tile on the board itself (E/X opens the MAPS window instead).
+- 21 Nov 2026, V9-P + V9-0ac fix round 2 (PC). The re-reviews scored V9-P 6.0 (code) and 6.0 (look), V9-0ac 7.0.
+  - **Fixed:** the details are in docs/PHYSICS.md, "Fix round 2".
+    - A round from behind no longer knocks a body out by its spine zone.
+    - The leg limp is replicated (speed and gait on every screen).
+    - The flinch is capped at 55 studs/s.
+    - The brace is tested live, its stale flag fixed, and there is no brace on its back.
+    - The settle rules are one tested function; the assist brakes against the floor at the contact point, the heap bound is per heap, there is no work at rest, and landings roll out (6 / 2.2).
+    - Damage wears off on the attribute.
+    - The surface is the visible floor.
+    - Explosions are counted before the guard.
+    - GOD MODE's `refreshMass`.
+    - Plasters are not drawn.
+    - OutOfBounds holds the whole body.
+    - T157's fast case must land.
+  - **Tests:** T181 (from behind, the side, AutoShotgun, a full AK magazine, a client-simulated body), T183, T185 (the settle rules, the brace live, the leg limp), T157, T24, T38, T184, T179 and T18 pass.
+  - **Left:** PHYSICS.md, "Still open after round 2".
+  - **Next:** one more re-review (the last fix round allowed), while Phase T is built.

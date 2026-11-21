@@ -20,6 +20,7 @@
 --              physics run on as ever). Motion LESS: the colour only.
 --   lamps      WorldLights lights the nearest world lamps within the device's cap.
 
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -248,6 +249,20 @@ local function surfaceAt(position: Vector3): (string, Color3?)
 	end
 	groundParams.FilterDescendantsInstances = skip
 	local hit = Workspace:Raycast(position + Vector3.new(0, 1.5, 0), Vector3.new(0, -7, 0), groundParams)
+	-- (Fix round 2: on the hidden ground (the Baseplate, the terrain) a painted floor you see answers for
+	-- it, as no ray reaches a painted floor (CanQuery off): the lab's tiled hub floor is concrete, not the
+	-- Baseplate's grass. A real thing hit first (a pad, a ramp) answers for itself.)
+	if not hit or hit.Instance:IsA("Terrain") or hit.Instance.Name == "Baseplate" then
+		for _, f in CollectionService:GetTagged("VisibleFloor") do
+			if f:IsA("BasePart") then
+				local localAt = f.CFrame:PointToObjectSpace(position)
+				local half = f.Size / 2
+				if math.abs(localAt.X) <= half.X and math.abs(localAt.Z) <= half.Z and localAt.Y > -2 and localAt.Y < 8 then
+					return FeelTuning.surface(f.Material.Name), f.Color
+				end
+			end
+		end
+	end
 	if not hit then
 		return "hard", nil
 	end
