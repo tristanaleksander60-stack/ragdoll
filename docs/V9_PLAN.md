@@ -13,7 +13,7 @@ Do the rest **in this order**. Each phase builds on the one before: things are f
 **Phase A: quick wins, no layout needed** (players feel them at once)
 1. **V9-0o** grey matte dummies. Every later capture uses them.
 2. **V9-0w** first shot → first person.
-3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive, then **V9-0aa**: the vitals monitor, then **V9-0ab**: falling off any map takes you home, then **V9-0ac**: shots flinch, death drops, then **V9-0ad**: weapons visible in first person on phones.
+3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive, then **V9-0aa**: the vitals monitor, then **V9-0ab**: falling off any map takes you home, then **V9-0ac**: shots flinch, death drops, then **V9-0ad**: weapons visible in first person on phones, then **V9-0ae**: the bullseye removed.
 4. **V9-3b** wider unlock gaps (Config and tests only).
 5. **V9-2c** the Z time dial and bubble.
 6. **Publish** through `docs/RELEASE.md` (milestone 1).
@@ -1155,6 +1155,30 @@ So you rarely get a second or third shot in.
 **Tests:** T182_ViewmodelTouch. With `DevTouch` on (Studio), in first person, a Popper, a shotgun, a bat and a grenade each show a viewmodel inside the screen bounds on 3 phone sizes (portrait and landscape), and a shot triggers the kick.
 
 **Capture:** phone first person with the Popper, in landscape and portrait.
+
+## V9-0ae The bullseye is removed (owner, 21 Nov; quick, Phase A)
+> "Fjern bullseye."
+
+Remove the bullseye target from play, behind a switch (`Config.BULLSEYE = false`; the code stays so it can come back):
+- **World:** the bullseye part and its score rings, its sign/icon badge, its LabGuide ring and its PathPlan route end are not built.
+  - Lab / Playground: `cannonLanding`, the hub layout, the test row behind it.
+  - Also LabZones' `MACHINES` "today's machine" list, MachineNames, WorldDress and OutdoorMaps (the Island catapult target, if it uses one).
+- **The cannon** stays and lands on the open floor (V9-0n landing zone). Its flight is unchanged.
+- **Scoring and texts that need the bullseye** are removed or switched to cannon-only versions. Nothing must ask for the bullseye any more:
+  - StuntScore / StuntMath / StuntHud (the bullseye scoring);
+  - the BULLSEYE! banner (BannerRules, Toast);
+  - experiment cards and journal pages (Experiments, ExperimentService);
+  - the onboarding / FirstVisit steps (OnboardingController);
+  - the LikePrompt "wow" trigger (use another wow, such as a cannon launch over N studs or a combo);
+  - PlayerGrab's toss-combo trap list;
+  - Economy texts;
+  - What's New / STORE_TEXT / TRAILER shot lists.
+- **Badge "Bullseye"** (live id 3887603893235173): it can no longer be earned. Leave the badge on Roblox; owners keep it. Optional: re-point it to a cannon feat ("Launch a dummy 100 studs").
+- **The rest of the V9 plan:** wherever it says "bullseye" (the spawn view, landing zones, the rocket and cannon landings, the trailer), read **"the open landing floor in view of the spawn"**.
+- **Tests:**
+  - every test that builds or scores the bullseye skips while the switch is off;
+  - a new check makes sure no part, sign, banner, card or route named Bullseye is reachable live;
+  - T112 (spawn view) and T163 (hub layout) updated.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."

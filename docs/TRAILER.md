@@ -36,7 +36,7 @@ Det er det rigtige spil, så videoen overholder Robloxs regel om ikke at vise no
   - the open hub from the air;
   - GOD MODE spawning a 10-dummy line where you aim;
   - 3 pistol flinches, then the drop (V9-0ac, if done);
-  - the cannon into the bullseye;
+  - the cannon launching a dummy across the hub;
   - a car through a row of dummies;
   - the time bubble (0.1x and 3x);
   - the biggest paid event (the nuke) from a safe wide angle;
