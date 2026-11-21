@@ -11,7 +11,7 @@ Do the rest **in this order**. Each phase builds on the one before: things are f
 **Phase A: quick wins, no layout needed** (players feel them at once)
 1. **V9-0o** grey matte dummies. Every later capture uses them.
 2. **V9-0w** first shot → first person.
-3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning.
+3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive.
 4. **V9-3b** wider unlock gaps (Config and tests only).
 5. **V9-2c** the Z time dial and bubble.
 6. **Publish** through `docs/RELEASE.md` (milestone 1).
@@ -829,6 +829,23 @@ They stay kid-safe and cartoon. Every car has its own top speed, mass and handli
 - Player hits only in labs.
 
 **Capture:** the garage row from the spawn, a bowling strike sequence and a ramp jump, PC and phone.
+
+## V9-0z GOD MODE dummies come alive (owner, 21 Nov; quick, Phase A)
+> "Fiks så at de ragdolls man spawner i godmode ikke bare bliver stående."
+
+**Problem:** dummies created with GOD MODE (`DummySpawn`, the V9-0l patterns) just stand frozen where they land, while the lab's own dummies and walkers move, look around and react.
+
+**Fix:** a spawned dummy gets the **same life as the lab's other dummies**.
+- **Join the brain:** on creation it is registered with the same systems as a lab dummy: `DummyLife` (idle animations, looking round, lines), the wander and route logic of the walkers (V9-0j pool), the coward/flee reactions (V8 rules), the revive after a KO, and the greeter-style wave now and then.
+- **Its own owner:** it is owned by the lab's player for physics, like the others (one owner for life).
+- **Landing:** it lands from its gold beam with a little stumble or bounce, looks around, then starts to wander. Patterns like Line, Circle and Grid hold their shape for about 2-3 s (so the pattern reads and can be filmed), then break up and walk about. An option in the God window, **"Stay in place"** (a toggle), keeps them standing for set-ups, like bowling pins or a dummy wall, and that state is clear.
+- **Types:** the dummy types (TINY, HEAVY, BOUNCY, FLOPPY) move in their own way: tiny ones quick, heavy ones slow, bouncy ones hop, floppy ones wobble.
+- **Caps:** they count toward the lab's body cap and the walker pool (V9-0j), so the totals stay within the device tier; the oldest spawned ones recycle first.
+- **Tests:** T167 extended.
+  - A spawned dummy moves more than 3 studs within 8 s (when Stay in place is off).
+  - With Stay in place on, it moves less than 0.5 stud.
+  - It reacts to a shot nearby, falls, and revives like the others.
+  - The caps hold.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
