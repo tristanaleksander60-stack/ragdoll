@@ -24,6 +24,15 @@
    - a Settings slider can lower it, and the reduced-motion setting softens it;
    - all numbers live in Config per gun.
 
+10. **The vitals monitor shows only for the dummy you shoot, for 3 s** (`HospitalCharts`, V9-0aa; owner, 21 Nov):
+    - it appears the moment you hit a dummy, showing that dummy's live vitals (the X-ray body, status, bpm, blood, awake);
+    - each new hit on the same dummy restarts the 3 s;
+    - hitting another dummy switches the panel to that one at once;
+    - 3 s after your last hit it fades out;
+    - it no longer shows just by hovering or aiming, and nothing stays on screen when you are not shooting.
+    - Phones: the compact version, the same rule.
+    - Test: T178 updated (shows on a hit, switches on a hit to another, gone 3 s after the last hit).
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
