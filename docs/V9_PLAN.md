@@ -11,7 +11,7 @@ Do the rest **in this order**. Each phase builds on the one before: things are f
 **Phase A: quick wins, no layout needed** (players feel them at once)
 1. **V9-0o** grey matte dummies. Every later capture uses them.
 2. **V9-0w** first shot → first person.
-3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive, then **V9-0aa**: the vitals monitor, then **V9-0ab**: falling off any map takes you home.
+3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive, then **V9-0aa**: the vitals monitor, then **V9-0ab**: falling off any map takes you home, then **V9-0ac**: shots flinch, death drops.
 4. **V9-3b** wider unlock gaps (Config and tests only).
 5. **V9-2c** the Z time dial and bubble.
 6. **Publish** through `docs/RELEASE.md` (milestone 1).
@@ -917,6 +917,50 @@ They stay kid-safe and cartoon. Every car has its own top speed, mass and handli
   - A player dropped below the Island returns to their lab spawn within 2 s, with tools kept.
   - Launched over the hedge: back in the lab.
   - A legal cannon flight inside the lab does not trigger it.
+
+## V9-0ac Shots make dummies flinch, not fall: they go down when they die (owner, 21 Nov; Phase A)
+> "Fiks så at ragdolls ikke falder så hurtigt så man har en chance for at hulle dem flere gange, de skal ikke falde af at man skyder dem, de skal falde af at de dør ved pistol fx."
+
+**Now:** a gun round often ragdolls (knocks down) a standing dummy at once:
+- the hit force (HitService / ActiveRagdoll);
+- `LIMB_SHOTS_TO_FELL` (3 arm/leg rounds within 8 s fell a body);
+- V8-0.2's `firstHitsLeft` (a newcomer's first 3 hits knock flat at 20+ studs/s).
+
+So you rarely get a second or third shot in.
+
+**New rule for guns** (`Config.SHOT_FLINCH`):
+- **A bullet does not knock a living dummy down.** It makes a visible, satisfying **flinch**:
+  - the hit part jerks back (a short Motor6D / IK offset on the hit limb, about 0.15-0.25 s);
+  - the body staggers a step back or sideways, scaled by the gun (Popper small, shotgun and DMR big);
+  - the head snaps on a head hit;
+  - a hand goes to the wound spot;
+  - the dummy keeps its feet and may limp after a leg hit, or hold its arm after an arm hit (the Anatomy state).
+- **It falls when it dies:** when the vitals reach 0 (the KO or death in `VitalsService`), it collapses into a full ragdoll with a nice fall: knees buckle, then it drops. Headshots still kill at once (Anatomy.HEADSHOT), so they drop at once.
+- **Shots to drop it** (Config, per gun, so you get several hits in):
+  - the Popper or a pistol about 4-6 body shots;
+  - the SMG and AK more rounds but fast;
+  - the shotgun 1-2 at close range;
+  - the sniper and railgun 1;
+  - a headshot 1.
+- **Big forces still ragdoll at once:** explosions, the cannon, cars (V9-0y), melee heavy hits (Bat, Hammer, kick), grab-throws, creatures and machines. Only bullets and light hits flinch.
+- **Remove or replace:**
+  - `LIMB_SHOTS_TO_FELL` (limb shots now limp the dummy instead);
+  - the newcomer "first 3 hits knock flat" rule: instead, a newcomer's first-minute dummies have **lower vitals**, so the first KO still comes within 2-3 shots and the first minute stays rewarding (V8 retention).
+- **Feel:**
+  - every hit still gives the hit mark, the KO stamp at death, sound and puffs (BLOOD off);
+  - the vitals monitor (V9-0aa) shows the damage building up;
+  - the X-ray/HitInfo line lists each hit.
+- **Server:** the server decides the vitals and the drop. The flinch is drawn on every client from the hit event, so everyone sees it in sync. Ownership is unchanged.
+
+**Tests:** T181_FlinchNotFall. Then update T109 (first hits), T23/T24/T32/T33 (hit tests) and T45 (first minute).
+- 3 pistol body shots: the dummy is still standing (flinched each time).
+- The 5th or 6th body shot drops it.
+- A headshot drops it at once.
+- A grenade and a car drop it at once.
+- A newcomer's first dummy drops within 3 shots.
+- Leg hits make it limp.
+
+**Capture:** a 4-frame sequence of 3 flinches and then the fall.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
