@@ -52,6 +52,11 @@
     - **Test:** T185_DoubleEvent: inside the window a KO counts 2 and bolts double; outside, normal; the chip shows the right time left.
     - **Owner:** add a line to the description and the promotional text while it runs: `⚡ 2X KOs + Bolts for 48h!`
 
+13. **Bullet holes sit on the skin, not floating off it** (owner, 21 Nov, the capture shows a hole mark hanging outside the dummy):
+    - place each hole exactly on the hit surface: the raycast point on the visible skin mesh (`DummySkins`), oriented to its normal, as a Decal or a SurfaceGui on the skin part or a tiny flat part welded to the hit limb;
+    - it follows the limb when the body moves or ragdolls;
+    - no offset from the old body part under the skin, and no holes in the air when the skin is scaled (grey tone, dummy types).
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
@@ -119,6 +124,11 @@ If a current vehicle has no usable interior, swap it for a model that has one (o
 **Phase E: polish and ship**
 16. **V9-5b** the performance pass. It is measured last, on the finished content.
 17. **V9-6** the final check, then **publish** (milestone 3). Then back to V8 at its State line.
+
+**Testing (owner order, 21 Nov: "don't test everything, it takes too long; just tell me what to test"):**
+- No full self-test suites, no blind reviewer subagents, no long play sessions.
+- After each change: one quick Play in Studio to see that it loads with no errors in the output, and at most the one small test that covers the change.
+- Then end the report with a short **"Test selv"** list in Danish: 2-5 concrete things the owner should try, and where.
 
 **Rules for the run:**
 - Between steps, report in Danish and go straight on. Do not wait for the owner.

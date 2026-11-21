@@ -13,6 +13,14 @@ Når du skriver `/klar`, kører den hele planen igennem. Når alt er færdigt og
 - At most once per `/klar` run. Never in the middle of a plan.
 
 ## 1. Gate: every check must pass, or nothing is published
+
+**Owner order (21 Nov 2026):** the gate is quick now. Do NOT run the full suite, LayoutCheck on every screen, 10-minute sessions or blind reviews. Do this instead:
+- one Play in Studio: the game loads, the lab builds, and the output shows no errors;
+- the Studio-only flags are off;
+- the version is bumped.
+
+Then publish, and give the owner a short Danish "Test selv" list. The longer checks below are only for when the owner asks for them.
+
 - **Code:**
   - The full self-test suite passes; only the known flaky tests (CLAUDE.md) may fail, and each one passes when rerun alone.
   - LayoutCheck shows 0 problems on every screen, consoles included.

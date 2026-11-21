@@ -7,6 +7,7 @@ Read `docs/MASTER_PROMPT.md` and follow its section "The prompt" exactly, as the
 Then work on the **newest plan with unfinished steps**. **First `docs/V9_PLAN.md`** (it includes `docs/FIX_PATHS_SHOP.md` as V9-0). Follow its "How it runs" order exactly: the phases P, A, B, C, D, E.
 
 **Run everything automatically, start to finish** (owner order, 21 Nov 2026):
+- **Do not run long tests** (owner order, 21 Nov): no full suites, no blind reviews, no long play sessions. One quick Play to check for errors, then a short Danish "Test selv" list of what the owner should try.
 - **Never stop to ask, never wait for the owner between steps.** After each step, write a short Danish report (Lavet / Test selv / Brug for fra dig) and go straight on to the next.
 - **When something only the owner can do blocks a step** (ids, a dashboard setting, saving the place): park it in State with one Danish line and continue with the next step.
 - **Publish by yourself through `docs/RELEASE.md`:**
