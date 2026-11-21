@@ -8,6 +8,8 @@
 
 Do the rest **in this order**. Each phase builds on the one before: things are first made at their final size, then placed, then labelled, then sold. Nothing is done twice.
 
+**FIRST: V9-HOT** (the pull bug, fix and publish at once).
+
 **Phase P: the physics first** (owner: "the most important thing"). Run **V9-P** now, before anything else that is left, with **V9-0ac** done as part of it.
 
 **Phase A: quick wins, no layout needed** (players feel them at once)
@@ -45,6 +47,40 @@ Do the rest **in this order**. Each phase builds on the one before: things are f
   - reuse the patterns already built (terminals, LabGuide, Ui3D, Notify, NoticeRules);
   - run only the affected tests while working, and the full suite at each milestone.
 - **Ids:** if ids arrive in chat, paste them in and carry on.
+
+## V9-HOT Ragdolls are pulled toward the player: FIX NOW, before anything else (owner, 21 Nov)
+> "Fiks omgående så ragdolls ikke bliver trukket mod en!!"
+
+**The bug:** dummies (ragdolls) move or slide toward the player by themselves, as if pulled by a magnet. This stops everything else: fix it, test it, and publish a hotfix (through `RELEASE.md`) as soon as it passes, even mid-phase.
+
+**1. Reproduce** in Studio, in your own lab:
+- stand still, walk past dummies, ragdoll a dummy and walk away;
+- try both with GOD MODE dummies and with lab dummies;
+- try with the time dial off and on;
+- try in first person and third person, and on PC and in the phone emulator.
+
+Log every dummy's velocity and its distance to the player each frame. The bug is confirmed when its velocity points at the player with no hit.
+
+**2. Bisect with the switches** (one at a time, off, then reproduce). These are the newest systems that move bodies:
+- `Config.TIME_DIAL` / the time bubble (SandboxService `setTime`, Client/SlowMotion: the per-part VectorForce, the speed changes into and out of the bubble, the bubble that **follows the player**);
+- the V9-0j walkers (`LAB_MIN_TARGETS`, VisitorService "2 within NEAR of the player": the route target may be the player's position);
+- V9-0l / V9-0z GOD dummies (`DummySpawn.spawnMany`, walk-to points, "come alive");
+- the V9-P physics work (the bench, any muscle / AlignPosition / AlignOrientation targets: a target left at the player or the camera);
+- V8 aim help (`PokeController.ASSIST`), `GrabController` (an AlignPosition left active after a grab), PropContacts, LabCamera;
+- the vacuum robot (LabCreatures suck, it must be range-limited), the magnet event and GravityGun leftovers.
+- Also check that no `AlignPosition` / `LinearVelocity` / `VectorForce` / `BodyPosition` remains on a dummy after its job (search the bodies live for constraints that are left over).
+- **Network ownership:** the lab player owns the bodies (DummyControl). Any client code that steers the bodies the player owns toward its own character position would show exactly this.
+
+**3. Fix the root cause.** Nothing in the game may pull a dummy toward a player unless the player is using a tool or machine for that (Grab, GravityGun, the magnet event, the vacuum's own range), and then only while it is in use.
+
+**4. Guard:** a cheap server check in the dummies' brain flags any dummy moving toward its lab owner at more than about 6 studs/s for more than 1 s with no hit, grab or event. In Studio it logs the cause (the constraint or force found); live it removes the stray constraint.
+
+**5. Test:** T184_NoPull.
+- Stand 15 studs from 6 dummies for 20 s, then walk in a circle.
+- No dummy's distance to the player shrinks by more than 3 studs without a hit.
+- Check with the time bubble on and off, and with GOD dummies.
+
+**6. Ship:** run the affected tests, then **publish the hotfix** through `RELEASE.md`, and report in Danish what the cause was.
 
 ## V9-P The best ragdoll physics on Roblox (owner, 21 Nov: "the most important thing"; runs next, before everything else left)
 > "Lav de BEDSTE physics på hele Roblox. Det er det allervigtigste."
