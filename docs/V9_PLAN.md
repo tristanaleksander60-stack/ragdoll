@@ -90,6 +90,25 @@
     - The cannon lands on the open floor.
     - Nothing named Bullseye is left in the game.
 
+18. **Remove all the neon glow in the lab and on the maps** (owner, 21 Nov: "it looks like AI slop"; `art/store/look_target/neon_now.webp`):
+    - **Find it:** search every place for `Enum.Material.Neon`, glowing Highlights, SurfaceLights or PointLights used as decoration, and glowing UI frames on world boards. Examples in the capture:
+      - the glowing yellow strips under the Map Board;
+      - the board's light bar;
+      - the cyan glow on the terminals' posts and buttons;
+      - the yellow edge lines round the test mat;
+      - the glowing rings and pads;
+      - the purple glow under the dummies;
+      - lamp heads.
+    - **Replace each:** with a real, matte material (painted metal, rubber, plastic, wood, concrete) in calm colours:
+      - the strips become painted lines or nothing;
+      - the screens become normal lit screens (no bloom halo);
+      - lamps get a plain bulb part with a soft PointLight only where a real lamp would be (within FX_CAPS);
+      - the indicator lights are small, not glowing bars.
+    - **Bloom:** keep it low (V9-0b), so nothing halos.
+    - **Kept glowing only:** short-lived effects (muzzle flash, explosions, lava's own heat) and tiny status LEDs under about 0.5 stud.
+    - **Test:** a scan in a new check: no Neon part bigger than 0.5 stud in the lab or maps (except the listed effects).
+    - **Capture:** the owner's angle, before and after.
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
