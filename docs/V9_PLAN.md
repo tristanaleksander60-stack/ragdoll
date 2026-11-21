@@ -132,6 +132,26 @@
     - Update the `MapBoard` / `PortalService` positions, PathPlan, LabGuide and T159/T163.
     - **Test selv:** spawn and look straight ahead; only dummies and machines in front, the portals off to the side.
 
+23. **A bow on the start bar** (owner, 21 Nov):
+    - **Model:** a real bow from the Creator Store (wood or a modern compound bow, malware pass, normalised like the other weapons with tools/NormalizeWeapon: Grip, Tip), plus an arrow model. Icon in DrawnIcons (`tool_Bow`) and a shop picture.
+    - **On the start bar** for new players: it takes **Launch's slot** (Launch becomes the first present at 3 instead). The bar stays Popper, Buzz Blaster, Grab, Bat, Grenade, Bow. Old profiles get the Bow added when there is room; nothing is taken away.
+    - **Draw to aim the strength:**
+      - **PC:** hold the mouse button to draw the string back.
+      - **Phones:** hold SHOOT.
+      - **Pad:** hold RT.
+      - **Release** to shoot.
+      - A short draw is a soft, short, high arc. A full draw (about 1.2 s) is a hard, fast, long, flat shot. A small draw meter by the crosshair fills while you hold, and the string, the arm and the bow bend visibly (third person, and first person through the Viewmodel).
+      - Holding at full draw has a slight wobble after about 3 s; releasing a too-short tap lets the arrow drop at your feet.
+    - **The arrow:**
+      - a real physical projectile with gravity, so the arc matters;
+      - a whoosh in flight and a thunk on the hit;
+      - it sticks into the dummy where it hits (cartoon, a mild purple drip only if `BLOOD` is on), uses the same flinch and vitals rules as the guns (V9-0ac), and a full-draw headshot drops it;
+      - a full draw can pin a light dummy back a little;
+      - arrows in walls or the floor stay a few seconds, then fade (a cap per player).
+    - **Sounds:** string creak while drawing, twang on release, whoosh, thunk (Pro Sound Effects, SoundManifest TOOLS).
+    - **Server checks:** the draw time and power are capped on the server, and the hit is checked like a gun round. It uses the Ammo/HitService path (arrows: unlimited, no reload).
+    - **Test selv:** a short tap vs a full draw on a dummy 30 studs away; a headshot at full draw.
+
 4. **Test quickly:** a pistol on the right arm, then the left arm, then a leg (see the different reaction and the holes); one board left by the spawn and travel works.
 5. **Publish at once** through `docs/RELEASE.md`. Then continue the plan.
 
