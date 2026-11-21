@@ -11,7 +11,7 @@ Do the rest **in this order**. Each phase builds on the one before: things are f
 **Phase A: quick wins, no layout needed** (players feel them at once)
 1. **V9-0o** grey matte dummies. Every later capture uses them.
 2. **V9-0w** first shot → first person.
-3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive.
+3. **V9-0l** GOD MODE free in the beta, 3D window, aimed spawning, then **V9-0z**: the spawned dummies come alive, then **V9-0aa**: the vitals monitor.
 4. **V9-3b** wider unlock gaps (Config and tests only).
 5. **V9-2c** the Z time dial and bubble.
 6. **Publish** through `docs/RELEASE.md` (milestone 1).
@@ -846,6 +846,61 @@ They stay kid-safe and cartoon. Every car has its own top speed, mass and handli
   - With Stay in place on, it moves less than 0.5 stud.
   - It reacts to a shot nearby, falls, and revives like the others.
   - The caps hold.
+
+## V9-0aa A vitals monitor like the leader's (owner, 21 Nov; Phase A)
+> "Tilføj præcis den samme." (the leader's monitor: `art/store/look_target/vitals_leader.png` and `vitals_leader_wide.webp`)
+
+**What the leader shows:**
+- **The panel:** a dark, see-through panel in the bottom-right corner. It holds an **X-ray body diagram**:
+  - a see-through skin outline over orange muscle and white bones (skull, ribs, spine, pelvis, arm and leg bones), all drawn in one clean style;
+  - the injured parts marked on the body: white ✕ / crack marks on broken bones, and the broken limb tinted.
+- **Under the body:**
+  - a status word ("Dead" in orange);
+  - an ECG line with the heart rate ("0 bpm", a flat line);
+  - a **Blood** bar with a percent ("40%", "20%") and a purple drop icon;
+  - a breathing state ("No signs").
+- **The hit line:** a wide dark bar along the bottom lists every injured part: "…bones, head, right forearm bones, broken right arm", with a sub-line "bled out · 40% blood".
+- **When it shows:** for the dummy you just hit or are aiming at, and it updates live as you keep hitting.
+
+**What we build: the same layout and behaviour, with our own art.**
+- **Where:** `Client/HospitalCharts` is rebuilt as this panel (it already has the dead-monitor and outline logic). The `HitInfo` black card becomes the bottom hit line.
+- **Data:** it comes from the server's `Anatomy` / `VitalsService` (the parts, bones, broken limbs, the heart, the blood, the KO/dead state); nothing new is trusted from the client.
+- **The X-ray body:**
+  - a layered figure drawn for our dummy shape (skin outline, muscle, bones; ImageLabels or a ViewportFrame);
+  - each bone or part can light up, crack (✕) or tint when hurt;
+  - it updates with a small pulse on each new injury;
+  - a calm idle breathing motion while the dummy is alive.
+- **The lines:**
+  - **status:** Healthy, Hurt, Critical, KO / Dead;
+  - **ECG:** an animated line with bpm (fast when hurt, a flat line at KO);
+  - **blood/energy bar** with a percent;
+  - **breathing:** Breathing, Shallow or No signs.
+- **The hit line:**
+  - the injured parts in plain words ("head, right forearm bones, broken right arm") and the cause (fell, crushed, bled out / knocked out), plus the %;
+  - it fades 4 s after the last hit.
+- **Where it shows:**
+  - **PC:** bottom-right, about the size in the leader's capture;
+  - **phone:** a compact version that keeps out of the thumb zone and V9-0g's notice lane (LayoutCheck), and can be collapsed to just the status and the bar;
+  - **pad:** the same as PC.
+  - **Settings:** the "Vitals monitor" choice (On / Compact / Off). **Default On** (the old `deadMon` default was off).
+
+**Content switch (owner decision; tell the owner in the Danish report):**
+- **Exactly the same words** ("Dead", "Blood", "bled out", bone names, purple blood) fits `Config.BLOOD = "purple"` / `MILD_TEXT = false`. That is the leader's 16+ style, and it pushes the game's maturity rating up (V3 note: the all-ages label grew a rival's player count a lot).
+- **The mild mode** (the default while `MILD_TEXT` = true) keeps the exact same look and motion, with these swaps:
+  - "Dead" → "KO";
+  - "Blood" → "Energy";
+  - "bled out" → "out cold";
+  - bones stay (cartoon X-ray bones are fine for all ages), drawn without gore.
+- Both are built; one switch (`Config.VITALS_WORDS = "mild" | "full"`) picks them.
+
+**Tests:** T178_Vitals.
+- A hit to the right forearm marks that bone and lists it.
+- At KO the ECG is flat, the status is KO/Dead and the bar is right.
+- It shows the last-hit dummy, and hides 4 s after.
+- It fits on 16 LayoutCheck screens.
+- The mild mode uses only the mild words.
+
+**Capture:** the panel next to the leader's, on PC and phone.
 
 ## V9-0b The thumbnail look: bright, sunny, alive (owner, 21 Nov)
 > "Lig en plan for at få spillet til at føle som thumbnailsne ... lige nu ser det mørkt ud og himlen ser død ud i forhold til thumbnailsne."
