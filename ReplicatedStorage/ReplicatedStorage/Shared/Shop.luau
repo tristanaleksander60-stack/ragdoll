@@ -70,7 +70,7 @@ Shop.WHATS_NEW = table.freeze({
 	{
 		version = "0.33.6",
 		lines = {
-			"The camera turns freely next to terminals and the MAPS board",
+			"Terminals and the MAPS board: press them up close, turn the camera freely",
 			"Skip a mission (-) or hide the card (=); E uses what you stand at",
 		},
 	},

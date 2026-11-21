@@ -318,12 +318,8 @@ local function buildBoard(screen: BasePart)
 		boards[screen] = nil
 	end)
 	-- (The click: where the pointer meets the screen, in the screen's pixels, picks the tile there.)
-	local click = Instance.new("ClickDetector")
-	click.Name = "BoardClick"
-	click.MaxActivationDistance = 60
-	click.Parent = screen
-	click.MouseClick:Connect(function()
-		local hit = player:GetMouse().Hit.Position
+	local gate = require(script.Parent:WaitForChild("PromptGate")) :: any
+	gate.register(screen, function(hit: Vector3)
 		local rel = screen.CFrame:PointToObjectSpace(hit)
 		local px = (screen.Size.X / 2 - rel.X) * gui.PixelsPerStud
 		local py = (screen.Size.Y / 2 - rel.Y) * gui.PixelsPerStud
@@ -336,7 +332,7 @@ local function buildBoard(screen: BasePart)
 				end
 			end
 		end
-	end)
+	end, 60)
 	gui.Parent = player:WaitForChild("PlayerGui")
 	boards[screen] = { gui = gui, redraw = redraw }
 end

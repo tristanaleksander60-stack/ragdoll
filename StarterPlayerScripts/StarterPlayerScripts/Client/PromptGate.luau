@@ -72,6 +72,74 @@ local function press(p: ProximityPrompt)
 	end)
 end
 
+-- (Owner, 21 Nov 2026: "close up you cannot press anything, and not with both mouse buttons". Roblox's ClickDetector
+-- missed close up (your own avatar stood between the camera and the screen) and took either button. PromptGate's
+-- own click: the LEFT button or a tap, the ray from the pointer (the screen's middle in first person or shift lock)
+-- tested against the registered things themselves, so nothing in front of them, your avatar included, blocks it.)
+type Clickable = { fn: (Vector3) -> (), reach: number }
+local clickables: { [BasePart]: Clickable } = {}
+
+-- A thing this screen's left click or tap presses: fn gets the point clicked; only within reach of your body.
+function PromptGate.register(part: BasePart, fn: (Vector3) -> (), reach: number)
+	clickables[part] = { fn = fn, reach = reach }
+	part.Destroying:Once(function()
+		clickables[part] = nil
+	end)
+end
+
+-- Where a ray meets a part's box (studs along the ray), or nil.
+local function hitBox(part: BasePart, origin: Vector3, dir: Vector3): number?
+	local o = part.CFrame:PointToObjectSpace(origin)
+	local d = part.CFrame:VectorToObjectSpace(dir)
+	local half = part.Size / 2
+	local tMin, tMax = -math.huge, math.huge
+	for _, axis in { "X", "Y", "Z" } do
+		local oa, da, h = (o :: any)[axis], (d :: any)[axis], (half :: any)[axis]
+		if math.abs(da) < 1e-6 then
+			if oa < -h or oa > h then
+				return nil
+			end
+		else
+			local t1, t2 = (-h - oa) / da, (h - oa) / da
+			tMin = math.max(tMin, math.min(t1, t2))
+			tMax = math.min(tMax, math.max(t1, t2))
+		end
+	end
+	if tMax < math.max(tMin, 0) then
+		return nil
+	end
+	return math.max(tMin, 0)
+end
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	local t = input.UserInputType
+	if processed or (t ~= Enum.UserInputType.MouseButton1 and t ~= Enum.UserInputType.Touch) then
+		return
+	end
+	local camera = Workspace.CurrentCamera
+	local character = Players.LocalPlayer.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not (camera and root and root:IsA("BasePart")) then
+		return
+	end
+	local ray = if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
+		then camera:ViewportPointToRay(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+		else camera:ScreenPointToRay(input.Position.X, input.Position.Y)
+	local best: Clickable? = nil
+	local bestT = math.huge
+	for part, c in clickables do
+		if part.Parent and (root.Position - part.Position).Magnitude <= c.reach then
+			local at = hitBox(part, ray.Origin, ray.Direction)
+			if at and at < bestT then
+				best, bestT = c, at
+			end
+		end
+	end
+	if best then
+		best.fn(ray.Origin + ray.Direction * bestT)
+	end
+end)
+
 local function add(p: ProximityPrompt)
 	if entries[p] then
 		return
@@ -85,7 +153,7 @@ local function add(p: ProximityPrompt)
 		return -- (nothing to click: it stays shown as a single press)
 	end
 	local existing = part:FindFirstChildOfClass("ClickDetector")
-	if existing and existing.Name == "PromptGateClick" then
+	if clickables[part] and not existing then
 		return -- (a second prompt on the same thing, a booth's Buy beside its Try: the click is the first one's;
 		-- this one stays shown as a single press, never a hold)
 	end
@@ -93,16 +161,11 @@ local function add(p: ProximityPrompt)
 	entries[p] = e
 	if existing or PromptGate.NO_CLICK[p.Name] then
 		-- (The thing is clickable already, a terminal's button: its own click does the job; nothing doubled.)
-	elseif part then
-		-- (A local detector: this screen's clicks and taps on the thing.)
-		local c = Instance.new("ClickDetector")
-		c.Name = "PromptGateClick"
-		c.MaxActivationDistance = p.MaxActivationDistance + PromptGate.EXTRA_REACH
-		c.Parent = part
-		e.click = c
-		c.MouseClick:Connect(function()
+	else
+		-- (This screen's left clicks and taps on the thing: PromptGate's own click, below.)
+		PromptGate.register(part, function()
 			press(p)
-		end)
+		end, p.MaxActivationDistance + PromptGate.EXTRA_REACH)
 	end
 	apply(e)
 	p.Destroying:Once(function()

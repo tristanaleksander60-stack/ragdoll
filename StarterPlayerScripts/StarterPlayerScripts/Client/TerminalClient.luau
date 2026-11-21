@@ -130,11 +130,9 @@ local function build(screen: BasePart)
 	end
 	built[screen] = gui
 	sayOf[screen] = say
-	local click = Instance.new("ClickDetector")
-	click.Name = "TerminalClick"
-	click.MaxActivationDistance = TerminalClient.REACH + 4
-	click.Parent = screen
-	click.MouseClick:Connect(function()
+	-- (A left click or a tap on the screen: PromptGate's own click, which works close up too.)
+	local gate = require(script.Parent:WaitForChild("PromptGate")) :: any
+	gate.register(screen, function()
 		scale.Scale = 0.9
 		TweenService:Create(scale, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 		-- (Fix round 1: too far is said at once, here; the server checks it again.)
@@ -155,7 +153,7 @@ local function build(screen: BasePart)
 			TweenService:Create(b, TweenInfo.new(0.18), { Color = TerminalClient.ACCENT }):Play()
 		end
 		Net.event(Net.Names.Terminal):FireServer("Press", screen)
-	end)
+	end, TerminalClient.REACH + 4)
 	-- The combo and the queue.
 	local combo = Instance.new("TextLabel")
 	combo.BackgroundTransparency = 1
