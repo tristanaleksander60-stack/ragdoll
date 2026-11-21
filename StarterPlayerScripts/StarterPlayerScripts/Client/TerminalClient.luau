@@ -82,9 +82,11 @@ local function build(screen: BasePart)
 	title.Text = if string.find(string.upper(object), string.upper(verb), 1, true) then string.upper(object) else string.upper(verb .. " " .. object)
 	title.Parent = canvas
 	-- The big button.
-	local button = Instance.new("TextButton")
+	-- (Owner, 21 Nov 2026: "you cannot turn the view close to a computer": a GUI button on the screen ate the mouse, so
+	-- the camera never turned while the screen filled the view. The screen is a picture now; a ClickDetector on the
+	-- screen part presses it, and a ClickDetector never holds the camera.)
+	local button = Instance.new("TextLabel")
 	button.Name = "Press"
-	button.AutoButtonColor = false
 	button.Size = UDim2.fromScale(0.62, 0.42)
 	button.Position = UDim2.fromScale(0.05, 0.44)
 	button.BackgroundColor3 = TerminalClient.ACCENT
@@ -128,7 +130,11 @@ local function build(screen: BasePart)
 	end
 	built[screen] = gui
 	sayOf[screen] = say
-	button.Activated:Connect(function()
+	local click = Instance.new("ClickDetector")
+	click.Name = "TerminalClick"
+	click.MaxActivationDistance = TerminalClient.REACH + 4
+	click.Parent = screen
+	click.MouseClick:Connect(function()
 		scale.Scale = 0.9
 		TweenService:Create(scale, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 		-- (Fix round 1: too far is said at once, here; the server checks it again.)
