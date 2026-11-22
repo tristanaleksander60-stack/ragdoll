@@ -60,14 +60,11 @@ LabDress.SPOTS = {
 	{ role = "Crate", x = -36, z = -23, yaw = 65, height = 3.5 },
 	{ role = "Hedge", x = -84, z = -44, yaw = 90, height = 6 },
 	{ role = "Bench", x = -40, z = -84, yaw = 0, size = 7 },
-	-- The spawn plaza: lamps on its rim and two benches facing in.
-	{ role = "StreetLamp", x = 22, z = -16, yaw = -45, height = 14 },
-	{ role = "StreetLamp", x = -22, z = -16, yaw = 45, height = 14 },
-	{ role = "StreetLamp", x = 22, z = 16, yaw = -135, height = 14 },
-	{ role = "StreetLamp", x = -22, z = 16, yaw = 135, height = 14 },
-	{ role = "Bench", x = 8, z = 26, yaw = 180, size = 7 }, -- (off the walk to the yard at x 0)
-	{ role = "FlowerBed", x = 14, z = 24, yaw = 0, height = 2 },
-	{ role = "FlowerBed", x = -14, z = 24, yaw = 0, height = 2 },
+	-- The spawn plaza: three lamps on its rim, between the walks (0.37.5, owner: "benches and flower beds in
+	-- the middle of the path": the plaza bench and beds are gone, the lamps stand where no walk runs).
+	{ role = "StreetLamp", x = 27, z = 0, yaw = -90, height = 14 },
+	{ role = "StreetLamp", x = -27, z = 0, yaw = 90, height = 14 },
+	{ role = "StreetLamp", x = 0, z = -27, yaw = 0, height = 14 },
 } :: { Spot }
 
 -- v3 phase C: the throw tower (north-west corner): a stone watch tower, a lift pad at its foot

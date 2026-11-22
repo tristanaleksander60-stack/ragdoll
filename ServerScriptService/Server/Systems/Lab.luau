@@ -970,6 +970,7 @@ local function dressPlot(plot: Plot)
 		rim.CFrame = CFrame.new(rim.Position) * CFrame.Angles(0, 0, math.rad(90))
 		local PathPlanM = require(Shared:WaitForChild("PathPlan")) :: any
 		local Sp = (Config :: any).LAB_SPREAD or 1
+		local areaRects: { { at: Vector2, min: Vector2, max: Vector2 } } = {}
 		-- 0.37.1 (owner, the reviewer: "build real areas with their own theme"): each quarter round the plaza
 		-- gets its own ground, so you see four places, not one lawn with machines on it. Launch (east, in
 		-- front: cannon, ramp, stations) on red rubber; cars and crashes (east, behind) on asphalt; danger
@@ -981,6 +982,7 @@ local function dressPlot(plot: Plot)
 			{ name = "HeightArea", at = Vector2.new(-58, -40), size = Vector2.new(48, 80), color = Color3.fromRGB(168, 170, 174), material = Enum.Material.Concrete },
 		} do
 			local mid = a.at * Sp
+			table.insert(areaRects, { at = mid, min = mid - a.size * Sp / 2, max = mid + a.size * Sp / 2 })
 			local area = paint(folder, a.name, Vector3.new(a.size.X * Sp, 0.04, a.size.Y * Sp), Vector3.new(o.X + mid.X, ground + 0.05, o.Z + mid.Y), a.color, a.material)
 			-- (a darker edge round it, a hair lower: the area reads as a place with a border)
 			paint(folder, a.name .. "Edge", Vector3.new(a.size.X * Sp + 2, 0.03, a.size.Y * Sp + 2), Vector3.new(o.X + mid.X, ground + 0.045, o.Z + mid.Y), a.color:Lerp(Color3.new(0, 0, 0), 0.35), a.material)
@@ -1000,34 +1002,38 @@ local function dressPlot(plot: Plot)
 		-- -6, 54, 21 x 18), with room to walk round it.
 		paint(folder, "RingFloor", Vector3.new(29, 0.05, 26), Vector3.new(o.X - 6, ground + 0.075, o.Z + 54), stoneColor, Enum.Material.Slate)
 		paint(folder, "RingFloorEdge", Vector3.new(30.2, 0.04, 27.2), Vector3.new(o.X - 6, ground + 0.069, o.Z + 54), Color3.fromRGB(120, 116, 108), Enum.Material.Slate)
-		local goals: { Vector2 } = {
-			Vector2.new(48, 6) * Sp, -- the cannon
-			Vector2.new(-52, -8) * Sp, -- the tower's stairs
-			Vector2.new(40, -38) * Sp, -- the wrecking ball
-			Vector2.new(32, 46) * Sp, -- the launch stations (0.37.1: in the launch area by the cannon)
-			Vector2.new(-41, 50) * Sp, -- the mace
-			Vector2.new(-20, 35) * Sp, -- the compressor
-			Vector2.new(0, PathPlanM.ROW_Z + 10), -- the test row
-			PathPlanM.RAMP_AT,
-			PathPlanM.BUTTON_AT,
-			Vector2.new(26, PathPlanM.FLOOR_BACK_Z or 110), -- out to the creature yard (0.37.1: past the boxing ring's east side)
-		}
+		-- 0.37.5 (owner: "the walks to every thing are ugly: one walk from the spawn to each area's platform, not
+		-- three or four per area"): one straight walk from the plaza's rim to where each area's ground starts
+		-- (an area the plaza already touches needs none), and one out to the creature yard. No caps: a walk runs
+		-- on into its area's ground.
+		local goals: { { at: Vector2, min: Vector2?, max: Vector2? } } = {}
+		for _, r in areaRects do
+			table.insert(goals, r)
+		end
+		table.insert(goals, { at = Vector2.new(26, PathPlanM.FLOOR_BACK_Z or 110) })
 		for i, g in goals do
-			local dir = if g.Magnitude > 1 then g.Unit else Vector2.new(0, 1)
+			local dir = if g.at.Magnitude > 1 then g.at.Unit else Vector2.new(0, 1)
 			local from = dir * (PLAZA_R - 1)
-			local to = g - dir * 7 -- (stops at the machine's foot)
+			local reach = g.at.Magnitude
+			if g.min and g.max then
+				-- (where the ray from the spawn enters the area's box)
+				local enter = 0
+				for _, axis in { "X", "Y" } do
+					local d = (dir :: any)[axis] :: number
+					if math.abs(d) > 1e-3 then
+						local t1, t2 = ((g.min :: any)[axis] :: number) / d, ((g.max :: any)[axis] :: number) / d
+						enter = math.max(enter, math.min(t1, t2))
+					end
+				end
+				reach = enter + 1.5
+			end
+			local to = dir * reach
 			local len = (to - from).Magnitude
-			if len > 4 then
+			if reach > PLAZA_R + 2 then
 				local mid = (from + to) / 2
-				local y = ground + 0.07 + i * 0.002 -- (each walk a hair apart: no flicker where two cross)
-				-- (0.37.3, owner: "the paths look AI and just stop wide"): a narrower walk, no kerb lines, and a
-				-- round end at the machine, so it ends in a small landing instead of a cut-off slab.
-				local W = 7
-				local walk = paint(folder, "Walk", Vector3.new(W, 0.05, len), Vector3.new(o.X + mid.X, y, o.Z + mid.Y), stoneColor, Enum.Material.Slate)
+				local y = ground + 0.07 + i * 0.002 -- (each walk a hair apart: no flicker)
+				local walk = paint(folder, "Walk", Vector3.new(8, 0.05, len), Vector3.new(o.X + mid.X, y, o.Z + mid.Y), stoneColor, Enum.Material.Slate)
 				walk.CFrame = CFrame.lookAt(walk.Position, walk.Position + Vector3.new(dir.X, 0, dir.Y))
-				local cap = paint(folder, "WalkEnd", Vector3.new(0.05, W + 3, W + 3), Vector3.new(o.X + to.X, y, o.Z + to.Y), stoneColor, Enum.Material.Slate)
-				cap.Shape = Enum.PartType.Cylinder
-				cap.CFrame = CFrame.new(cap.Position) * CFrame.Angles(0, 0, math.rad(90))
 			end
 		end
 	end
