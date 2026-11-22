@@ -507,7 +507,13 @@ function Compressor.build(folder: Instance, origin: Vector3, at: Vector3?)
 	for _, sx in { -1, 1 } do
 		for _, sz in { -1, 1 } do
 			local x, z = sx * (S / 2 + 0.9), sz * (S / 2 + 0.9)
-			part(m, "Pillar", Vector3.new(1.2, H, 1.2), face * CFrame.new(x, 1.6 + H / 2, z), steel, Enum.Material.Metal, true)
+			-- (0.37.17, owner: "the four posts must hang together with the rest of the machine": they stood on air, a stud
+			-- over the footing; now from the footing's top all the way up into the top beam, on a foot plate, with a brace.)
+			part(m, "Pillar", Vector3.new(1.2, H + 2, 1.2), face * CFrame.new(x, 0.6 + (H + 2) / 2, z), steel, Enum.Material.Metal, true)
+			part(m, "PillarFoot", Vector3.new(2.2, 0.4, 2.2), face * CFrame.new(x, 0.8, z), dark, Enum.Material.Metal, false)
+			if sz < 0 then
+				part(m, "PillarBrace", Vector3.new(0.5, 0.5, S + 1.8), face * CFrame.new(x, 1.6 + H * 0.45, 0), steel, Enum.Material.Metal, false)
+			end -- (one brace per side, not two on top of each other)
 			part(m, "Sleeve", Vector3.new(1.7, 3, 1.7), face * CFrame.new(x, 1.6 + H - 2.2, z), yellow, Enum.Material.Metal, false)
 		end
 	end
@@ -517,7 +523,7 @@ function Compressor.build(folder: Instance, origin: Vector3, at: Vector3?)
 	topBeam.CanQuery = false
 	topBeam.CanCollide = false -- (22 Nov 2026: a carried ragdoll passes in under or through the roof; the bed stays solid)
 	for _, d in m:GetChildren() do
-		if d:IsA("BasePart") and (d.Name == "Pillar" or d.Name == "Sleeve") then
+		if d:IsA("BasePart") and (d.Name == "Pillar" or d.Name == "Sleeve" or d.Name == "PillarBrace" or d.Name == "PillarFoot") then
 			d.CanQuery = false
 			d.CanCollide = false
 		end
