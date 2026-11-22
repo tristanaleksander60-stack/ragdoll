@@ -75,6 +75,11 @@ function Compressor.onBed(machine: Model): { Model }
 	end
 	local out: { Model } = {}
 	local function check(model: Model, p: Instance?)
+		-- (22 Nov 2026, owner: a ragdoll carried in with GRAB flew to the top): a body still held is not
+		-- on the bed yet; it is pressed once it is let go.
+		if model:GetAttribute("Held") == true then
+			return
+		end
 		if p and p:IsA("BasePart") then
 			local rel = bed.CFrame:PointToObjectSpace(p.Position)
 			local half = bed.Size / 2
@@ -114,7 +119,7 @@ local function nearBed(machine: Model, radius: number, exclude: { Model }): { { 
 	local centre = bed.Position
 	local out: { { model: Model, part: BasePart } } = {}
 	local function consider(model: Model, p: Instance?)
-		if skip[model] or not (p and p:IsA("BasePart")) then
+		if skip[model] or not (p and p:IsA("BasePart")) or model:GetAttribute("Held") == true then
 			return
 		end
 		local d = (p.Position - centre)
