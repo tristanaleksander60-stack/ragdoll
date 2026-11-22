@@ -1093,6 +1093,13 @@ end
 
 local lastHitLine = -math.huge
 local function updateLine(life: Life, now: number)
+	-- (22 Nov 2026, owner: "no ragdoll talks when it is dead"): a dead body says nothing, and a line it had goes.
+	if life.model:GetAttribute("Vital") == "Dead" then
+		if life.lineKind then
+			hideLine(life)
+		end
+		return
+	end
 	-- 0.36.7: a new wound = a line for where it landed (one hit line on this screen per HIT_GAP; a dead
 	-- body says nothing).
 	local raw = life.model:GetAttribute("Wounds")
