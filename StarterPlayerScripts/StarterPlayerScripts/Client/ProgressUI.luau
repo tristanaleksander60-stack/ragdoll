@@ -420,7 +420,20 @@ local function buildOffer()
 			openEgg()
 		end,
 	})
-	-- (No LATER button: the window's own X closes it, and a short phone keeps OPEN IT! in view.)
+	-- (22 Nov 2026, owner: "close the free egg quickly with the X": a big X button right under OPEN IT!, as easy
+	-- to hit as it, besides the window's small corner X.)
+	C.Button({
+		text = "\u{2715}  CLOSE",
+		role = "neutral",
+		size = UDim2.new(1, 0, 0, Theme.Size.buttonH),
+		layoutOrder = 4,
+		parent = window.body,
+		onActivated = function()
+			if Controller.isOpen("EggReady") then
+				Controller.toggle("EggReady")
+			end
+		end,
+	})
 	window.defaultSelection = open.hit
 	Controller.register(window)
 end
@@ -701,7 +714,7 @@ function ProgressUI.start()
 				-- newcomer's comes NOTIFY_BIG_AFTER_REVEAL s after the HUD is in.)
 				Notify.waitBig("AutoEgg", 240)
 				if Controller.isOpen("EggReady") then
-					Controller.close("EggReady")
+					Controller.toggle("EggReady") -- (there is no Controller.close: toggling an open one closes it)
 				end
 				local started = os.clock()
 				while (opening or state.eggs <= 0) and os.clock() - started < 6 do
