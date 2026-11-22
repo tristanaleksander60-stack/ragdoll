@@ -287,7 +287,7 @@ local function enter(seat: VehicleSeat)
 	if b then
 		b.Visible = true
 	end
-	setCockpit(V.cockpit ~= false)
+	setCockpit(false) -- (22 Nov 2026, owner: no first person when you get in; V still swaps to the cockpit)
 end
 
 local function step(dt: number)

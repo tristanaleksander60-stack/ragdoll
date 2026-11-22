@@ -46,7 +46,7 @@ local log = Log.new("Lab")
 
 -- (session v850, owner: "tilføj 4 mere"): ten dummies on the test row (was six). They wander the
 -- whole lab on their own after they first stand (ROAM_* below).
-local DUMMY_COUNT = 10
+local DUMMY_COUNT = 18 -- (22 Nov 2026, owner: 18 dummies walking round the lab; nothing else spawns: Config.ONLY_LAB_DUMMIES)
 local RADIUS = 22
 local RESPAWN_DELAY = 3
 local AWAY_DISTANCE = 6 -- studs from the slot: on its way home

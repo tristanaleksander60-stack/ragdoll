@@ -130,7 +130,7 @@ safe("AdminService", function() AdminService.start() end) -- the owner's own con
 safe("ScheduleService", function() require(Systems:WaitForChild("ScheduleService")).start() end) -- the weekly ADMIN SHOW and the free weekend (round 3, M9)
 safe("MinigameService", function() MinigameService.boot(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- the arena games
 safe("FriendsService", function() FriendsService.start() end) -- nukes and pranks between friends, PvP switch, friend boost, joining friends
-safe("HordeService", function() HordeService.boot(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- the co-op horde every 10 minutes
+if not (Config :: any).ONLY_LAB_DUMMIES then safe("HordeService", function() HordeService.boot(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) end -- the co-op horde every 10 minutes
 -- (Purchases started first, at the top: V8-0.9.)
 safe("EventService", function() EventService.start() end) -- registers its products and claims orders owed from other servers
 safe("WeaponShop", function() WeaponShop.start() end) -- weapons for Robux: one product per price tier (round 2, N4)
@@ -138,8 +138,8 @@ safe("MoneyService", function() MoneyService.start() end) -- passes, free ULTRA 
 safe("LaunchGift", function() require(Systems:WaitForChild("LaunchGift")).start() end) -- one free weapon egg for everyone while we launch
 safe("PlaytimeGifts", function() require(Systems:WaitForChild("PlaytimeGifts")).start() end) -- a weapon egg at 2, 5, 10 and 15 min of play a day
 safe("PortalService", function() require(Systems:WaitForChild("PortalService")).start() end) -- portals + the server list (round 5, phase 4)
-safe("VisitorService", function() require(Systems:WaitForChild("VisitorService")).start() end) -- a living lab: visitor ragdolls try the things (round 5, phase 3)
-safe("ChaseService", function() require(Systems:WaitForChild("ChaseService")).start_() end) -- NPC Chase: a pack runs at a newer player, with a health bar (round 5)
+if not (Config :: any).ONLY_LAB_DUMMIES then safe("VisitorService", function() require(Systems:WaitForChild("VisitorService")).start() end) end -- a living lab: visitor ragdolls try the things (round 5, phase 3)
+if not (Config :: any).ONLY_LAB_DUMMIES then safe("ChaseService", function() require(Systems:WaitForChild("ChaseService")).start_() end) end -- NPC Chase: a pack runs at a newer player, with a health bar (round 5)
 safe("TrialService", function() require(Systems:WaitForChild("TrialService")).start() end) -- TRY FREE: a locked weapon for 2 min, once a day each (round 5)
 safe("SandboxService", function() require(Systems:WaitForChild("SandboxService")).start() end) -- SLOW-MO / REVIVE ALL / RESET in your own lab (round 5)
 safe("RewardsService", function() require(Systems:WaitForChild("RewardsService")).start() end) -- REWARDS: the group gift and trophies (round 5)
