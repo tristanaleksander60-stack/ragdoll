@@ -76,6 +76,19 @@ end
 ------------------------------------------------------------------------------------------------
 -- The camera: trauma shake and gun recoil (FxController applies cameraStep after the camera moved)
 
+-- (22 Nov 2026) Whether the camera is in first person now (FirstPerson, looked up late: no require loop).
+local fpModule: any = nil
+local function firstPerson(): boolean
+	if not fpModule then
+		local m = script.Parent:FindFirstChild("FirstPerson")
+		if not m then
+			return false
+		end
+		fpModule = require(m) :: any
+	end
+	return fpModule.isOn()
+end
+
 local trauma = 0
 local kick = 0
 local noiseTime = 0
@@ -128,7 +141,28 @@ function FeelV2.cameraStep(dt: number): CFrame
 	local pitch = deg * math.clamp(math.noise(noiseTime, 1.3) * 2, -1, 1)
 	local yaw = deg * math.clamp(math.noise(noiseTime, 7.7) * 2, -1, 1)
 	local roll = FeelTuning.SHAKE_ROLL_DEG * shake * math.clamp(math.noise(noiseTime, 13.1) * 2, -1, 1)
+	-- (22 Nov 2026, owner: recoil in first person too): there the kick turns the real camera instead
+	-- (FeelV2.firstPersonKick), so only the shake rides on top here.
+	if firstPerson() then
+		return CFrame.Angles(math.rad(pitch), math.rad(yaw), math.rad(roll))
+	end
 	return CFrame.Angles(math.rad(pitch + kick), math.rad(yaw + kickYaw), math.rad(roll))
+end
+
+-- First person: the kick's change since the last frame, put on the camera for good each frame, so
+-- the view climbs with every shot and comes back down as the kick eases (FxController).
+local appliedKick, appliedYaw = 0, 0
+function FeelV2.firstPersonKick(): CFrame
+	if not firstPerson() then
+		appliedKick, appliedYaw = kick, kickYaw
+		return CFrame.identity
+	end
+	local dk, dy = kick - appliedKick, kickYaw - appliedYaw
+	appliedKick, appliedYaw = kick, kickYaw
+	if math.abs(dk) < 1e-4 and math.abs(dy) < 1e-4 then
+		return CFrame.identity
+	end
+	return CFrame.Angles(math.rad(dk), math.rad(dy), 0)
 end
 
 ------------------------------------------------------------------------------------------------
@@ -671,6 +705,9 @@ local started = false
 -- the side. The crosshair (Crosshair, TouchShoot) is drawn there and the shot (PokeController,
 -- TouchShoot.fire) goes there, so the crosshair climbs with the recoil and eases back with it.
 function FeelV2.recoilPixelOffset(camera: Camera): Vector2
+	if firstPerson() then
+		return Vector2.zero -- (the camera itself turned: the centre is where the round goes)
+	end
 	if kick < 0.01 and math.abs(kickYaw) < 0.01 then
 		return Vector2.zero
 	end

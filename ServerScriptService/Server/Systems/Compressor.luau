@@ -184,6 +184,46 @@ local function radialBoom(machine: Model, psi: number, onBed: { Model }, owner: 
 	end
 end
 
+-- (22 Nov 2026, owner: "ragdolls go FLAT as pancakes in there"): the body hides on every screen
+-- (MachineHidden, DummySkins) and a flat copy of it lies on the bed: each limb squashed to a thin
+-- slab where it lay, a little wider, in its own colour. The plate lifts off it; then the body pops back.
+Compressor.PANCAKE_TIME = 4.5 -- s the pancake lies there (the plate is down FLAT_TIME of it)
+local function pancake(machine: Model, body: Model)
+	local bed = machine:FindFirstChild("Bed")
+	if not (bed and bed:IsA("BasePart")) or body:GetAttribute("MachineHidden") == true then
+		return
+	end
+	local top = bed.Position.Y + bed.Size.Y / 2
+	local half = bed.Size.X / 2 - 0.2
+	local flat = Instance.new("Model")
+	flat.Name = "Pancake"
+	for _, p in body:GetDescendants() do
+		if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" and p.Transparency < 1 then
+			local r, s = p.CFrame, p.Size
+			local ex = math.abs(r.XVector.X) * s.X + math.abs(r.YVector.X) * s.Y + math.abs(r.ZVector.X) * s.Z
+			local ez = math.abs(r.XVector.Z) * s.X + math.abs(r.YVector.Z) * s.Y + math.abs(r.ZVector.Z) * s.Z
+			local rel = bed.CFrame:PointToObjectSpace(p.Position)
+			local x, z = math.clamp(rel.X, -half, half), math.clamp(rel.Z, -half, half)
+			local slab = Instance.new("Part")
+			slab.Name = "Flat" .. p.Name
+			slab.Anchored, slab.CanCollide, slab.CanQuery, slab.CanTouch, slab.CastShadow = true, false, false, false, false
+			slab.Size = Vector3.new(math.max(0.3, ex * 1.35), 0.16, math.max(0.3, ez * 1.35))
+			slab.CFrame = CFrame.new(bed.CFrame:PointToWorldSpace(Vector3.new(x, 0, z)).X, top + 0.08, bed.CFrame:PointToWorldSpace(Vector3.new(x, 0, z)).Z)
+			slab.Color = p.Color
+			slab.Material = Enum.Material.SmoothPlastic
+			slab.Parent = flat
+		end
+	end
+	flat.Parent = machine
+	body:SetAttribute("MachineHidden", true)
+	task.delay(Compressor.PANCAKE_TIME, function()
+		flat:Destroy()
+		if body.Parent then
+			body:SetAttribute("MachineHidden", nil)
+		end
+	end)
+end
+
 -- One press: a dummy onto the bed, the slam, the pancakes, the lift.
 function Compressor.press(machine: Model, presser: Player?, owner: Player?)
 	local bed = machine:WaitForChild("Bed") :: BasePart
@@ -212,10 +252,33 @@ function Compressor.press(machine: Model, presser: Player?, owner: Player?)
 			local function at(y: number): CFrame
 				return plate.CFrame - Vector3.new(0, plate.Position.Y - y, 0)
 			end
-			TweenService:Create(plate, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { CFrame = at(down) }):Play()
+			-- (22 Nov 2026, owner: "the press must hang together with the thing that presses"): the ram
+			-- stretches from the top beam down to the plate all the way, so plate and machine stay one.
+			local ram = machine:FindFirstChild("Ram")
+			local beam = machine:FindFirstChild("TopBeam")
+			local function ramFor(y: number): { [string]: any }?
+				if not (ram and ram:IsA("BasePart") and beam and beam:IsA("BasePart")) then
+					return nil
+				end
+				local top = beam.Position.Y - beam.Size.Y / 2
+				local bottom = y + plate.Size.Y / 2
+				local len = math.max(0.5, top - bottom)
+				return { Size = Vector3.new(ram.Size.X, len, ram.Size.Z), CFrame = ram.CFrame - Vector3.new(0, ram.Position.Y - (bottom + len / 2), 0) }
+			end
+			local downInfo = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+			TweenService:Create(plate, downInfo, { CFrame = at(down) }):Play()
+			local ramDown = ramFor(down)
+			if ramDown then
+				TweenService:Create(ram :: BasePart, downInfo, ramDown):Play()
+			end
 			task.delay(Compressor.FLAT_TIME, function()
 				if plate.Parent then
-					TweenService:Create(plate, TweenInfo.new(0.8, Enum.EasingStyle.Sine), { CFrame = at(up) }):Play()
+					local upInfo = TweenInfo.new(0.8, Enum.EasingStyle.Sine)
+					TweenService:Create(plate, upInfo, { CFrame = at(up) }):Play()
+					local ramUp = ramFor(up)
+					if ramUp then
+						TweenService:Create(ram :: BasePart, upInfo, ramUp):Play()
+					end
 				end
 			end)
 			-- (session v850, owner: "compressoren GRISKRIG, gør den helt lydløs"): the press's metal-slam
@@ -239,6 +302,7 @@ function Compressor.press(machine: Model, presser: Player?, owner: Player?)
 				local mass = (m:GetAttribute("Mass") :: number?) or 6.4
 				pcall(DummyControl.hit, m, pelvis, Vector3.new(0, -40, 0) * mass, pelvis.Position, 40, owner)
 			end
+			task.delay(0.12, pancake, machine, m) -- (as the plate lands: flat as a pancake)
 		end
 		task.delay(Compressor.FLAT_TIME, function()
 			if m.Parent and m:GetAttribute("Flat") == flatUntil then

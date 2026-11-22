@@ -1370,6 +1370,11 @@ local function onRender(dt: number)
 			FeelV2.addTrauma(shakeAmount * 0.45)
 			shakeAmount = 0
 		end
+		-- (22 Nov 2026: in first person the recoil turns the camera itself, before the shake.)
+		local fpKick = FeelV2.firstPersonKick()
+		if fpKick ~= CFrame.identity then
+			camera.CFrame = camera.CFrame * fpKick
+		end
 		local offset = FeelV2.cameraStep(dt)
 		if offset ~= CFrame.identity then
 			camera.CFrame = camera.CFrame * offset
