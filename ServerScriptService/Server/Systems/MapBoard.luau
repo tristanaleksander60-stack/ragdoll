@@ -289,11 +289,11 @@ end
 -- out where the BIG RED BUTTON stood (the button took the board's old spot, PathPlan.BUTTON_AT): the MAPS board in the
 -- middle, SINGLEPLAYER and MULTIPLAYER either side along the rim, all turned to the hub's middle.
 MapBoard.TRAVEL_SPOTS = table.freeze({
-	-- (0.37.13, owner: "the portals just between the red and the sand platforms, where the ring stood"): a line
-	-- along z in the gap between the launch area and the danger area (lab studs, not spread).
-	Board = Vector2.new(-2, 50),
-	PortalSolo = Vector2.new(-2, 64),
-	PortalMulti = Vector2.new(-2, 36),
+	-- (0.37.14, owner: "the portals and the map where the 3 white blocks stand behind the spider, one portal each
+	-- side of the map board"): in a row across the back of the lab, the board in the middle (lab studs, not spread).
+	Board = Vector2.new(0, -90),
+	PortalSolo = Vector2.new(-15, -90),
+	PortalMulti = Vector2.new(15, -90),
 }) :: { [string]: Vector2 }
 -- Where a piece of the travel corner stands (lab space -> world, on the floor) and the point it faces.
 function MapBoard.travelSpot(origin: Vector3, name: string): (Vector3, Vector3)

@@ -988,16 +988,7 @@ local function dressPlot(plot: Plot)
 			paint(folder, a.name .. "Edge", Vector3.new(a.size.X * Sp + 2, 0.03, a.size.Y * Sp + 2), Vector3.new(o.X + mid.X, ground + 0.045, o.Z + mid.Y), a.color:Lerp(Color3.new(0, 0, 0), 0.35), a.material)
 			area:SetAttribute("Area", a.name)
 		end
-		-- (0.37.1, owner: "the portals stand half in the grass"): one stone platform under the travel corner
-		-- (MapBoard.TRAVEL_SPOTS: the MAPS board between SINGLEPLAYER and MULTIPLAYER), along its line.
-		do
-			local solo, multi = Vector2.new(-2, 64), Vector2.new(-2, 36) -- (0.37.13: MapBoard.TRAVEL_SPOTS, between the launch and the danger areas)
-			local mid, along = (solo + multi) / 2, (solo - multi)
-			local pad = paint(folder, "TravelPad", Vector3.new(16, 0.05, along.Magnitude + 16), Vector3.new(o.X + mid.X, ground + 0.075, o.Z + mid.Y), stoneColor, Enum.Material.Slate)
-			pad.CFrame = CFrame.lookAt(pad.Position, pad.Position + Vector3.new(along.X, 0, along.Y))
-			local edge = paint(folder, "TravelPadEdge", Vector3.new(17.2, 0.04, along.Magnitude + 17.2), Vector3.zero, Color3.fromRGB(120, 116, 108), Enum.Material.Slate)
-			edge.CFrame = pad.CFrame * CFrame.new(0, -0.006, 0)
-		end
+		-- (0.37.14, owner: "remove the path at the portals": no stone platform under the travel corner any more.)
 		-- (0.37.3, owner: "the boxing ring overlaps the grass"): a stone floor under the ring (Playground: the pit at
 		-- -6, 54, 21 x 18), with room to walk round it.
 		paint(folder, "RingFloor", Vector3.new(29, 0.05, 26), Vector3.new(o.X - 111, ground + 0.075, o.Z - 28), stoneColor, Enum.Material.Slate)
@@ -1057,12 +1048,14 @@ local function dressPlot(plot: Plot)
 	end
 	end
 	-- The crash wall behind the row, a workbench either side of it.
-	if (Config :: any).TARGET_BLOCKS then
+	if (Config :: any).LAB_GRASS then
+		-- (0.37.14, owner: "replace the 3 white blocks behind the spider with the portals": MapBoard.TRAVEL_SPOTS.)
+	elseif (Config :: any).TARGET_BLOCKS then
 		targetBlocks(folder, Vector3.new(o.X, ground, o.Z - 74 * S), ground)
 	else
 		prop(folder, "CrashWall", Vector3.new(o.X, ground, o.Z - 74 * S), Vector3.new(0, 0, 1), 28)
 	end
-	for _, x in { -22, 22 } do
+	for _, x in if (Config :: any).LAB_GRASS then {} else { -22, 22 } do -- (0.37.14: the portals stand there)
 		prop(folder, "LabBench", Vector3.new(o.X + x, ground, o.Z - 76 * S), Vector3.new(0, 0, 1), 9)
 	end
 	-- Barriers and cones down each side edge.

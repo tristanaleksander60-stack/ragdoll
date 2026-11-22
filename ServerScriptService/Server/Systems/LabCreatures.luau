@@ -868,7 +868,7 @@ end
 -- plant and the chicken in the east garden (between the lab floor and the garden walk, facing the
 -- walk), the other five spread across the whole yard in front.
 LabCreatures.LAYOUT = table.freeze({
-	{ id = "Spider", label = "the SPIDER", x = 0, z = -60 * S, yaw = 180 }, -- (0.37.3, owner: "the spider where the black mat was, right in front of the spawn: the first thing you see")
+	{ id = "Spider", label = "the SPIDER", x = 0, z = -42 * S, yaw = 180 }, -- (0.37.14: further forward, clear of the portals behind it) -- (0.37.3, owner: "the spider where the black mat was, right in front of the spawn: the first thing you see")
 	{ id = "Frog", label = "the FROG", x = (if (Config :: any).LAYOUT_V3 then -81 else -89) * S, z = -5 * S, yaw = -90 }, -- (V9-0d: its pond off the west garden walk)
 	{ id = "Plant", label = "the GIANT PLANT", x = 90 * S, z = -70 * S, yaw = 90 },
 	{ id = "Chicken", label = "the CHICKEN", x = 90 * S, z = -8 * S, yaw = 90 },
