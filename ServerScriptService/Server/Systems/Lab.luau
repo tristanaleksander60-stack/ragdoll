@@ -1075,7 +1075,8 @@ local function signText(owner: Player?): string
 end
 
 -- Which way an avatar faces at the lab's spawn (V8-0.4: 50 degrees right of -Z, towards the cannon; T112 measured the cannon at 42 degrees and the middle dummies at -37..-19 in the follow camera, inside 1920x1080 (49) and a landscape phone (55)).
-Lab.SPAWN_FACING = if Config.V8_ONE_VOICE then Vector3.new(math.sin(math.rad(45)), 0, -math.cos(math.rad(45))) -- (0.37.3: the spider ahead-left, the wrecking ball ahead, the cannon to the right) else -Vector3.zAxis
+-- (0.37.3: 45 degrees: the spider ahead-left, the wrecking ball ahead, the cannon to the right.)
+Lab.SPAWN_FACING = if Config.V8_ONE_VOICE then Vector3.new(math.sin(math.rad(45)), 0, -math.cos(math.rad(45))) else -Vector3.zAxis
 
 local function placeOnPlot(player: Player, plot: Plot)
 	local character = player.Character
