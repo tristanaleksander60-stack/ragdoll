@@ -252,6 +252,14 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?): BasePart?
 	-- matte skin from a few studs off; the ring is welded to the hole and goes with it.)
 	-- (0.36.6, owner: holes still stood out from the dummy. On a skin the hole is a small ball sunk into the
 	-- limb, so only a round dark spot shows where it breaks the real mesh, wherever that surface really is.)
+	-- (V10, owner: "the flat holes lie on top of the ragdoll when you shoot its edge": a hole whose surface faces
+	-- away from the camera, a graze on the outline, would stand off the silhouette; none is drawn there.)
+	do
+		local cam = workspace.CurrentCamera
+		if skin and cam and worldNormal:Dot((cam.CFrame.Position - worldAt).Unit) < 0.45 then
+			return part
+		end
+	end
 	-- (V10 phase 2, owner: "the bullet holes and blood still sit out on the ragdoll like bubbles": the sunk balls
 	-- showed as domes. Now every hole is a flat disc lying on the surface, thin as paint; on a skin it lies on the
 	-- ellipse a little inside the box, where the sculpted mesh is.)

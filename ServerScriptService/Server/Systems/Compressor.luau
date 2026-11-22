@@ -259,6 +259,14 @@ local function pancake(machine: Model, body: Model)
 					copy.Enabled = true
 					copy.Parent = holder
 				end
+				-- (V10 phase 3: a player's head carries a decal face, not our SurfaceGui.)
+				local decalFace = p:FindFirstChildOfClass("Decal")
+				if decalFace then
+					local copy = decalFace:Clone()
+					copy.Face = Enum.NormalId.Top
+					copy.Transparency = 0
+					copy.Parent = holder
+				end
 			else
 				-- A limb or the trunk: flat along its long side as it lay, a little wider than it was.
 				local long = Vector3.new(p.CFrame.YVector.X, 0, p.CFrame.YVector.Z)
@@ -289,6 +297,39 @@ local function pancake(machine: Model, body: Model)
 		flat:Destroy()
 		if body.Parent then
 			body:SetAttribute("MachineHidden", nil)
+		end
+	end)
+end
+
+-- V10 phase 3 (owner: "you can press yourself and go completely flat"): a player on the bed goes flat like a
+-- ragdoll: the same flat copy (pancake), the real body invisible and held still under the plate, then back
+-- up with a hop when the pancake goes.
+local function flattenPlayer(machine: Model, character: Model)
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not (humanoid and root and root:IsA("BasePart")) or character:GetAttribute("MachineHidden") == true then
+		return
+	end
+	pancake(machine, character)
+	local saved: { [Instance]: number } = {}
+	for _, d in character:GetDescendants() do
+		if d:IsA("BasePart") or d:IsA("Decal") then
+			saved[d] = d.Transparency
+			d.Transparency = 1
+		end
+	end
+	humanoid.PlatformStand = true
+	root.Anchored = true
+	task.delay(Compressor.PANCAKE_TIME, function()
+		for d, t in saved do
+			if d.Parent then
+				(d :: any).Transparency = t
+			end
+		end
+		if root.Parent then
+			root.Anchored = false
+			humanoid.PlatformStand = false
+			root.AssemblyLinearVelocity = Vector3.new(0, 45, 0)
 		end
 	end)
 end
@@ -463,6 +504,9 @@ function Compressor.press(machine: Model, presser: Player?, owner: Player?)
 				pcall(DummyControl.hit, m, pelvis, Vector3.new(0, -40, 0) * mass, pelvis.Position, 40, owner)
 			end
 			task.delay(0.12, pancake, machine, m) -- (as the plate lands: flat as a pancake)
+		end
+		if Players:GetPlayerFromCharacter(m) then
+			task.delay(0.12, flattenPlayer, machine, m) -- (V10 phase 3: players go flat too)
 		end
 		task.delay(Compressor.FLAT_TIME, function()
 			if m.Parent and m:GetAttribute("Flat") == flatUntil then

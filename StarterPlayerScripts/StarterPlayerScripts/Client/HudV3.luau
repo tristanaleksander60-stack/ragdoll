@@ -741,7 +741,7 @@ function HudV3.start()
 				chip.Font = Enum.Font.GothamBlack
 				chip.TextSize = 13
 				chip.ZIndex = 5
-				local ok, text = pcall(Keybinds.shortLabel, keyId)
+				local ok, text = pcall(Keybinds.badgeOf, keyId) -- (the key, not the action's name)
 				chip.Text = if ok and type(text) == "string" then text else ""
 				local r = Instance.new("UICorner")
 				r.CornerRadius = UDim.new(0, 6)

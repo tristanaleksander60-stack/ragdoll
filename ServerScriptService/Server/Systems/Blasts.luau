@@ -180,6 +180,9 @@ function Blasts.blast(center: Vector3, kind: Blast, exclude: Instance?, source: 
 	end
 	-- (UI audit 21 Nov 2026: the lab's barrels, crates and cones fly too.)
 	Knockables.blast(center, radius)
+	pcall(function()
+		(require(script.Parent:WaitForChild("VehicleService")) :: any).damageAt(center, 20, radius) -- (V10 phase 3: a bomb wrecks a car in reach)
+	end)
 	-- Props in reach fly too, and other TNT goes off a beat later: chain reactions.
 	for _, near in Props.near(center, radius, exclude) do
 		local prop = near.prop

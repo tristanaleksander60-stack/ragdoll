@@ -573,6 +573,9 @@ local function onShot(player: Player, position: unknown, toyId: unknown, draw: u
 	OnboardingService.onToyUsed(player, toy.id)
 	FxService.shot(player, pos, toy.id)
 	Knockables.shot(pos, root.Position) -- (UI audit 21 Nov 2026: a shot knocks a barrel, crate or cone it hit)
+	pcall(function()
+		(require(script.Parent:WaitForChild("VehicleService")) :: any).damageAt(pos, 1) -- (V10 phase 3: cars take hits)
+	end)
 	if not inMechanicsOf[player] then
 		inMechanicsOf[player] = true
 		pcall(WeaponMechanics.afterShot, player, toy, pos)

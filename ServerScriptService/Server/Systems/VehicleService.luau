@@ -13,6 +13,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 
@@ -436,6 +437,83 @@ local function home(car: Car)
 	car.idleSince = os.clock()
 	car.badSince = 0
 	setOwner(car)
+end
+
+-- V10 phase 3 (owner: "cars can be destroyed by shooting them enough or with a bomb: they explode and come back
+-- on their pad"): each car has HP; a shot near its body takes 1, a blast in reach takes BLAST_DAMAGE. At 0 it
+-- explodes (the driver is thrown out), vanishes, and after RESPAWN s stands on its pad again, whole.
+VehicleService.HP = 20
+VehicleService.BLAST_DAMAGE = 20
+VehicleService.RESPAWN = 5
+local function nearestCar(point: Vector3, reach: number): Car?
+	local best: Car? = nil
+	local bestD = math.huge
+	for _, car in cars do
+		if car.body.Parent and not (car :: any).wrecked then
+			local d = (car.body.Position - point).Magnitude - car.body.Size.Magnitude / 2
+			if d < reach and d < bestD then
+				best, bestD = car, d
+			end
+		end
+	end
+	return best
+end
+local function wreck(car: Car)
+	local c = car :: any
+	c.wrecked = true
+	local at = car.body.Position
+	local boom = Instance.new("Explosion")
+	boom.BlastPressure = 0
+	boom.DestroyJointRadiusPercent = 0
+	boom.BlastRadius = 12
+	boom.Position = at
+	boom.Parent = Workspace
+	pcall(function()
+		(require(script.Parent:WaitForChild("FxService")) :: any).hit(at, 200, "CannonPad")
+	end)
+	local sw = car.seat:FindFirstChild("SeatWeld")
+	if sw then
+		sw:Destroy()
+	end
+	local saved: { [BasePart]: number } = {}
+	local collided: { [BasePart]: boolean } = {}
+	for _, d in car.model:GetDescendants() do
+		if d:IsA("BasePart") then
+			saved[d] = d.Transparency
+			collided[d] = d.CanCollide
+			d.Transparency = 1
+			d.CanCollide = false
+		end
+	end
+	local prompt = car.body:FindFirstChild("Drive")
+	if prompt and prompt:IsA("ProximityPrompt") then
+		prompt.Enabled = false
+	end
+	task.delay(VehicleService.RESPAWN, function()
+		for d, t in saved do
+			if d.Parent then
+				d.Transparency = t
+				d.CanCollide = collided[d] == true
+			end
+		end
+		if prompt and prompt:IsA("ProximityPrompt") then
+			prompt.Enabled = car.seat.Occupant == nil
+		end
+		home(car)
+		c.hp = VehicleService.HP
+		c.wrecked = false
+	end)
+end
+function VehicleService.damageAt(point: Vector3, amount: number, reach: number?)
+	local car = nearestCar(point, reach or 2)
+	if not car then
+		return
+	end
+	local c = car :: any
+	c.hp = (c.hp or VehicleService.HP) - amount
+	if c.hp <= 0 then
+		wreck(car)
+	end
 end
 
 -- The cars of one lab (Playground.build calls this for every lab, never the plaza).

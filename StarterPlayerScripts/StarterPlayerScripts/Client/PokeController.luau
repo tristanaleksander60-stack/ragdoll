@@ -824,7 +824,9 @@ drawTools = function(picking: boolean)
 		return
 	end
 	if toolsIconOnly then
-		tools.button.setText("")
+		-- (V10, owner: "WEAPONS must always show its key": the key beside the picture on a keyboard.)
+		local key = if not picking and UserInputService.KeyboardEnabled and not (UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled) then Keybinds.labelOf("Catalog") else ""
+		tools.button.setText(if key ~= "" then "[" .. key .. "]" else "")
 		tools.button.setIcon(if picking then "close" else "toolbox")
 	else
 		tools.button.setIcon(nil)
@@ -1990,6 +1992,20 @@ end
 
 -- From the catalog (or tests): start putting a tool in the bar.
 function PokeController.equip(id: string)
+	-- (V10 phase 3, owner: "equipping a weapon in first person swaps it for the one in your hand, no number key"):
+	-- in first person the new one takes the picked slot at once and is picked.
+	local fp = Players.LocalPlayer.CameraMode == Enum.CameraMode.LockFirstPerson
+	local at = if fp and selected then table.find(loadout, selected) else nil
+	if at and not table.find(loadout, id) then
+		loadout[at] = id
+		Net.event(Net.Names.Loadout):FireServer("Set", loadout)
+		layout()
+		select(id)
+		return
+	elseif fp and table.find(loadout, id) then
+		select(id)
+		return
+	end
 	beginEquip(id)
 end
 
@@ -2127,7 +2143,7 @@ function PokeController.start()
 		has = function(id: string): boolean
 			return table.find(shown(), id) ~= nil
 		end,
-		equip = beginEquip,
+		equip = PokeController.equip, -- (V10 phase 3: first person swaps the held weapon at once)
 		unequip = unequip,
 		canUnequip = function(): boolean
 			return allowed == nil and #loadout > 1

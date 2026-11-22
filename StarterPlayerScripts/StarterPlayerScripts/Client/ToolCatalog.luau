@@ -799,6 +799,15 @@ local function build()
 					end
 					return
 				end
+				-- (V10 phase 3: in first person EQUIP always puts it in your hand, even one already on the bar.)
+				if Players.LocalPlayer.CameraMode == Enum.CameraMode.LockFirstPerson then
+					b.equip(id)
+					refreshEquip()
+					if Controller.isOpen(WINDOW) then
+						Controller.toggle(WINDOW)
+					end
+					return
+				end
 				if b.has(id) and b.unequip and b.canUnequip and (b.canUnequip :: () -> boolean)() then
 					if (b.unequip :: (string) -> boolean)(id) then
 						Toast.show(toy.label .. " is off your bar. EQUIP another one!")
