@@ -14,6 +14,11 @@ local MAX_WAIT = 12 -- s
 local MIN_DUMMIES = 6 -- dressed ragdolls of this lab before it lifts (fewer if the lab has fewer)
 
 local player = Players.LocalPlayer
+-- (V10, owner 22 Nov 2026: phones play in landscape, like the big ragdoll games; every phone in the data was held
+-- upright, with a narrow view. StarterGui.ScreenOrientation is LandscapeSensor too; this covers a cached place.)
+pcall(function()
+	(player:WaitForChild("PlayerGui") :: PlayerGui).ScreenOrientation = Enum.ScreenOrientation.LandscapeSensor
+end)
 local gui = Instance.new("ScreenGui")
 gui.Name = "LoadCover"
 gui.IgnoreGuiInset = true
