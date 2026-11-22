@@ -73,12 +73,17 @@ end
 -- first person, so you never have to leave it"): the mouse is locked in first person, so a window
 -- there cannot be clicked shut. One that stays open AUTO_CLOSE s closes itself.
 FirstPerson.AUTO_CLOSE = 4
+FirstPerson.KEEP_OPEN = { Tools = true, Shop = true, Menu = true } :: { [string]: boolean } -- (0.37.20: never closed by themselves)
 local function autoClose()
 	local Controller = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIController")) :: any
 	local openSince: number? = nil
 	while true do
 		task.wait(0.5)
 		local current = if on then Controller.getCurrent() else nil
+		-- (0.37.20, owner: "the weapons menu must work in first person": the menus you open yourself stay open.)
+		if current and FirstPerson.KEEP_OPEN[current] then
+			current = nil
+		end
 		if current then
 			openSince = openSince or os.clock()
 			if os.clock() - (openSince :: number) >= FirstPerson.AUTO_CLOSE then
@@ -93,6 +98,26 @@ end
 
 function FirstPerson.start()
 	task.spawn(autoClose)
+	-- (0.37.20: while any window is open in first person, the mouse is free to click it: a Modal button, the
+	-- engine's own way to unlock a locked mouse; it locks again when the window closes.)
+	task.spawn(function()
+		local Controller = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIController")) :: any
+		local gui = Instance.new("ScreenGui")
+		gui.Name = "FirstPersonFreeMouse"
+		gui.ResetOnSpawn = false
+		gui.Enabled = false
+		local free = Instance.new("TextButton")
+		free.Name = "FreeMouse"
+		free.Modal = true
+		free.Text = ""
+		free.BackgroundTransparency = 1
+		free.Size = UDim2.fromOffset(0, 0)
+		free.Parent = gui
+		gui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+		game:GetService("RunService").Heartbeat:Connect(function()
+			gui.Enabled = on and Controller.getCurrent() ~= nil
+		end)
+	end)
 	ViewMode.onChanged(function()
 		if ViewMode.isLab() and on then
 			FirstPerson.set(false)
