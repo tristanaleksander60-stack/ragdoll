@@ -639,32 +639,41 @@ function VitalsService.step(model: Model, v: Vitals, dt: number)
 end
 
 local REVIVE_AFTER = 10 -- s a dead body lies green before it comes round
-local LAB_REVIVE_AFTER = 6
+local LAB_REVIVE_AFTER = 8 -- (22 Nov 2026: 4 s rotting in, a little while green, then the rot fades: ROT_IN, ROT_OUT)
 local WAKE_SLOW = 3 -- s it lies out cold after that, eyes dizzy, before it gets up
 VitalsService.REVIVE_AFTER = REVIVE_AFTER
 local DEAD_GREEN = Color3.fromRGB(96, 196, 84)
 local trueColors: { [Model]: { [BasePart]: Color3 } } = setmetatable({}, { __mode = "k" }) :: any
 
--- Dead: every limb green (its own colours kept to give back); alive again: the colours back.
+-- (22 Nov 2026, owner: "they rot slowly, then the rot fades and they come alive"): the green creeps
+-- in over ROT_IN s after death and fades back to the body's own colours over ROT_OUT s before it wakes.
+local TweenService = game:GetService("TweenService")
+local ROT_IN = 4
+local ROT_OUT = 1.5
+VitalsService.ROT_OUT = ROT_OUT
+
+-- Dead: every limb slowly green (its own colours kept to give back); alive again: the colours back.
 local function paintDead(model: Model, dead: boolean)
 	local kept = trueColors[model]
 	if dead then
 		if kept then
-			return -- (already green)
+			return -- (already rotting)
 		end
 		kept = {}
 		trueColors[model] = kept
+		local info = TweenInfo.new(ROT_IN, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 		for _, d in model:GetChildren() do
 			if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then
 				(kept :: any)[d] = d.Color
-				d.Color = DEAD_GREEN
+				TweenService:Create(d, info, { Color = DEAD_GREEN }):Play()
 			end
 		end
 	elseif kept then
 		trueColors[model] = nil
+		local info = TweenInfo.new(ROT_OUT, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 		for part, color in kept do
 			if part.Parent then
-				part.Color = color
+				TweenService:Create(part, info, { Color = color }):Play()
 			end
 		end
 	end

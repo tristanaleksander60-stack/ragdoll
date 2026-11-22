@@ -169,8 +169,7 @@ function HitWords.onHit(model: Model, region: string, state: string?, speed: num
 	if state == "Out" then
 		HitWords.show(model, "Knocked out", Color3.fromRGB(255, 120, 90))
 	elseif region == "head" then
-		HitWords.stars(model)
-		HitWords.show(model, "Dizzy", Color3.fromRGB(255, 220, 70))
+		HitWords.stars(model) -- (22 Nov 2026, owner: no "Dizzy" text by the ragdolls; the stars stay)
 	elseif region == "leg" then
 		HitWords.show(model, "Wobbly", Color3.fromRGB(150, 220, 255))
 	end
