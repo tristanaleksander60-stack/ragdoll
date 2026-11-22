@@ -43,6 +43,7 @@ local Client = script.Parent
 local Toast = require(Client:WaitForChild("Toast"))
 local Settings = require(Client:WaitForChild("Settings"))
 local PokeController = require(Client:WaitForChild("PokeController"))
+local BodyCard = require(Client:WaitForChild("BodyCard"))
 local ViewMode = require(Client:WaitForChild("ViewMode"))
 local ReplayController = require(Client:WaitForChild("ReplayController"))
 
@@ -1038,11 +1039,14 @@ local function setAuto(body: Model?)
 				TweenService:Create(popScale(), TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = autoFit() }):Play()
 			end
 		end
-		u.gui.Enabled = true
+		-- (0.36.6: the small one is BodyCard now, only Blood and Awake; the big monitor stays for doctor mode.)
+		u.gui.Enabled = false
+		BodyCard.show(body)
 		watch(body)
 	elseif auto then
 		auto = false
 		u.gui.Enabled = false
+		BodyCard.show(nil)
 		u.panel.Active = true
 		u.panel.AnchorPoint = Vector2.new(0.5, 1)
 		u.panel.Position = UDim2.new(0.5, 0, 1, -(if plan then plan.bottom else HospitalCharts.BOTTOM))
@@ -1346,6 +1350,7 @@ function HospitalCharts.start()
 			u.panel.AnchorPoint = Vector2.new(1, 1)
 			u.panel.Position = UDim2.new(1, -c, 1, -(PokeController.height() + c))
 		end
+		BodyCard.place(u.panel.AnchorPoint, u.panel.Position, autoFit())
 		if t >= refreshAt then
 			refreshAt = t + 1
 			redraw()
@@ -1383,6 +1388,8 @@ function HospitalCharts.start()
 		end
 		if auto then
 			followMouse(at)
+			local pu = ui :: Ui
+			BodyCard.place(pu.panel.AnchorPoint, pu.panel.Position, autoFit())
 			if t >= refreshAt then
 				refreshAt = t + 1
 				redraw()

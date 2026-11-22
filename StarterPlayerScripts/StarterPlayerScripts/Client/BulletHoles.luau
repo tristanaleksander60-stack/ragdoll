@@ -21,7 +21,8 @@ BulletHoles.MAX_WORLD = 60 -- holes in the world on this screen
 BulletHoles.WORLD_HOLD = 25 -- s a hole in the world stays
 BulletHoles.MAX_PER_BODY = 8
 BulletHoles.BLEEDS_FOR = 60 -- s a hole on a body is a place it bleeds from
-BulletHoles.SKIN_FIT = 0.96 -- (V9-NOW 13: the ellipse a hole sits on, as a share of the skin box; a touch inside its edge)
+BulletHoles.SKIN_FIT = 0.8 -- (0.36.6: the ellipse a hole sits on, as a share of the skin box; well inside, since the sculpted mesh is thinner than its box)
+BulletHoles.SKIN_SINK = 0.06 -- studs a hole ball sits under that ellipse
 
 local HOLE = Color3.fromRGB(26, 24, 30)
 local SCORCH = Color3.fromRGB(92, 88, 84)
@@ -64,6 +65,7 @@ local function disc(diameter: number, color: Color3, cframe: CFrame, transparenc
 		p.Massless = true
 	end
 	local part = p :: Part
+	part.Shape = Enum.PartType.Cylinder
 	part.Name = "Hole"
 	part.Size = Vector3.new(0.03, diameter, diameter)
 	part.Color = color
@@ -248,7 +250,15 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?): BasePart?
 	end
 	-- (V9-NOW: mild = BLOOD off: a dark hole in a grey scorch ring, a little bigger so it reads on the grey
 	-- matte skin from a few studs off; the ring is welded to the hole and goes with it.)
-	local hole = disc(if mild then 0.3 else 0.24, if mild then HOLE else BODY_HOLE, flatOn(worldAt, worldNormal, 0.03))
+	-- (0.36.6, owner: holes still stood out from the dummy. On a skin the hole is a small ball sunk into the
+	-- limb, so only a round dark spot shows where it breaks the real mesh, wherever that surface really is.)
+	local hole = if skin
+		then disc(if mild then 0.34 else 0.3, if mild then HOLE else BODY_HOLE, CFrame.new(worldAt - worldNormal * BulletHoles.SKIN_SINK))
+		else disc(if mild then 0.3 else 0.24, if mild then HOLE else BODY_HOLE, flatOn(worldAt, worldNormal, 0.03))
+	if skin then
+		hole.Shape = Enum.PartType.Ball
+		hole.Size = Vector3.one * (if mild then 0.34 else 0.3)
+	end
 	hole.Name = "BulletHole"
 	hole.Anchored = false
 	local weld = Instance.new("WeldConstraint")
@@ -256,7 +266,7 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?): BasePart?
 	weld.Part1 = hole
 	weld.Parent = hole
 	hole.Parent = part
-	if mild then
+	if mild and not skin then
 		local ring = disc(0.56, SCORCH, flatOn(worldAt, worldNormal, 0.02), 0.35)
 		ring.Name = "BulletScorch"
 		ring.Anchored = false
