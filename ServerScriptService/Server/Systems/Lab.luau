@@ -1011,6 +1011,9 @@ local function dressPlot(plot: Plot)
 			table.insert(goals, r)
 		end
 		-- (0.37.7, owner: the walk out across the launch area is gone; the garden roads lead to the yard.)
+		if (Config :: any).LAB_NO_PATHS then
+			table.clear(goals) -- (0.37.8, owner: just the platforms)
+		end
 		for i, g in goals do
 			local dir = if g.at.Magnitude > 1 then g.at.Unit else Vector2.new(0, 1)
 			local from = dir * (PLAZA_R - 1)

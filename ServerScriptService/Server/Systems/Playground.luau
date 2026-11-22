@@ -1339,7 +1339,9 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	end
 	buildWreckingBall() -- after parenting: the swinging parts need to be in the world to be owned
 	if lab then
-		buildMace() -- (moving too: after parenting)
+		if (Config :: any).MACE ~= false then
+			buildMace() -- (moving too: after parenting)
+		end
 		-- v3: the lab's dressing from the Creator Store models the place has (LabDress).
 		pcall(function()
 			require(script.Parent.LabDress).dress(folder, origin)
@@ -1365,7 +1367,7 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	if (Config :: any).LAB_V6 and lab then
 		local ok, err = pcall(function()
 			require(script.Parent.LabGarden).build(folder, origin)
-			if (Config :: any).PATHS then
+			if (Config :: any).PATHS and not (Config :: any).LAB_NO_PATHS then
 				-- (V9-0 review: a failure in the paths never costs the creatures and the guide; the
 				-- garden's kerbs, which the paths would have laid with theirs, are laid on their own.)
 				local okPaths, errPaths = pcall(function()

@@ -699,7 +699,7 @@ LabCreatures.LAYOUT = table.freeze({
 	-- (session v849, owner: "ryk rundt på tingene så de står psykologisk bedst"): the shark tank is new,
 	-- premium content; it moved from the far west yard corner (-95, 92) up and in to (-55, 70) so a
 	-- player standing at the west side of the lab core SEES it, a clear wow hook on the way back.
-	{ id = "Whale", label = "the SHARK TANK", x = -55 * S, z = 70 * S, yaw = 0 }, -- (session v847: shark swap, id kept for saved progress; session v849: moved forward)
+	{ id = "Whale", label = "the SHARK TANK", x = -41 * S, z = 50 * S, yaw = 0 }, -- (0.37.8, owner: on the spinning mace's old spot) -- (session v847: shark swap, id kept for saved progress; session v849: moved forward)
 	{ id = "Washer", label = "the WASHING MACHINE", x = -47 * S, z = 94 * S, yaw = 180 },
 	{ id = "Vacuum", label = "the ROBOT VACUUM", x = 0 * S, z = 88 * S, yaw = 0 },
 	{ id = "Mole", label = "the MOLE", x = 47 * S, z = 94 * S, yaw = 0 },
