@@ -125,6 +125,14 @@ local function step()
 		if flat.Magnitude <= Zombies.REACH and model:GetAttribute("RagdollState") == "Standing" and now >= (nextHit[model] or 0) then
 			nextHit[model] = now + Zombies.HIT_GAP
 			humanoid:TakeDamage(Zombies.HIT_DAMAGE)
+			-- (22 Nov 2026, owner: "the WASTED screen when a zombie kills you": Client/Wasted, the same as an animal.)
+			if humanoid.Health <= 0 and target then
+				local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+				local wasted = remotes and remotes:FindFirstChild("Wasted")
+				if wasted and wasted:IsA("RemoteEvent") then
+					wasted:FireClient(target, 2.6, "a ZOMBIE")
+				end
+			end
 			local dir = if flat.Magnitude > 0.01 then flat.Unit else Vector3.zAxis
 			root.AssemblyLinearVelocity += dir * Zombies.SHOVE + Vector3.new(0, 12, 0)
 			pcall(function()
