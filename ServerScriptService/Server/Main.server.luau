@@ -147,3 +147,4 @@ safe("OfferService", function() require(Systems:WaitForChild("OfferService")).st
 require(Systems:WaitForChild("BadgeAwards")).start() -- badges (ids in Shared/Badges; 0 = not made yet)
 safe("Metrics", function() Metrics.start() end) -- counts for the Creator Dashboard (phase Å)
 safe("StreamerService", function() StreamerService.start() end) -- Streamer Mode: gift keys set off fun things (private servers, no lasting value)
+safe("Perf", function() require(Systems:WaitForChild("Perf")).start() end) -- 22 Nov 2026: small dressing casts no shadows (lag)
