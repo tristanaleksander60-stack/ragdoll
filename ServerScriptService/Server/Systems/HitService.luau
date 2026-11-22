@@ -576,6 +576,9 @@ local function onShot(player: Player, position: unknown, toyId: unknown, draw: u
 	pcall(function()
 		(require(script.Parent:WaitForChild("VehicleService")) :: any).damageAt(pos, 1) -- (V10 phase 3: cars take hits)
 	end)
+	pcall(function()
+		(require(script.Parent:WaitForChild("LabCreatures")) :: any).shotAt(player, pos) -- (V10 phase 3: shoot an animal and it comes for you)
+	end)
 	if not inMechanicsOf[player] then
 		inMechanicsOf[player] = true
 		pcall(WeaponMechanics.afterShot, player, toy, pos)

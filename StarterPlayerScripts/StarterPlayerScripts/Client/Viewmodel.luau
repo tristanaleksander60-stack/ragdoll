@@ -49,6 +49,8 @@ local copy: Model? = nil
 local arm: BasePart? = nil
 local tip: BasePart? = nil
 local kick = 0
+local swingAt = -math.huge -- (V10 phase 3: when the last melee swing started)
+Viewmodel.SWING_TIME = 0.32
 local sway = Vector2.zero
 local lastLook: Vector3? = nil
 local flash: PointLight? = nil
@@ -173,8 +175,14 @@ local function frame(dt: number)
 	local reload = Ammo.reloading(AmmoClient.bookForTest(), toolId, os.clock())
 	local dip = if reload then math.sin(reload * math.pi) else 0
 	local bob = math.sin(os.clock() * 2) * 0.015
+	-- (V10 phase 3, owner: "melee in first person: you see the blow land, not a hammer pointing ahead"): a swing
+	-- arcs the weapon down and across into the middle of the view and back.
+	local st = (os.clock() - swingAt) / Viewmodel.SWING_TIME
+	local swing = if st >= 0 and st < 1 then math.sin(st * math.pi) else 0
 	local at = camera.CFrame
 		* Viewmodel.OFFSET
+		* CFrame.new(-swing * 0.7, -swing * 0.15, -swing * 0.9)
+		* CFrame.Angles(-swing * 1.3, swing * 0.5, swing * 0.7)
 		* CFrame.new(sway.X * Viewmodel.SWAY, sway.Y * Viewmodel.SWAY - dip * 0.45 + bob, kick)
 		* CFrame.Angles(kick * Viewmodel.TILT + dip * -0.5, 0, dip * 0.6)
 	c:PivotTo(at)
@@ -204,6 +212,19 @@ function Viewmodel.start()
 	FirstPerson.onChanged(function(on: boolean)
 		if not on then
 			clear()
+		end
+	end)
+	-- (V10 phase 3: a click with a melee weapon in first person swings it.)
+	game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
+		if processed or not FirstPerson.isOn() then
+			return
+		end
+		if input.UserInputType ~= Enum.UserInputType.MouseButton1 and input.KeyCode ~= Enum.KeyCode.ButtonR2 and input.UserInputType ~= Enum.UserInputType.Touch then
+			return
+		end
+		local toy = Toys.byId[toolId or ""]
+		if toy and not toy.gun and os.clock() - swingAt > Viewmodel.SWING_TIME then
+			swingAt = os.clock()
 		end
 	end)
 end

@@ -165,13 +165,15 @@ local function dress(model: Model)
 		end
 		local head = model:FindFirstChild("Head")
 		if head and head:IsA("BasePart") then
-			local hx = head.Size.X / 2 + 0.03
+			-- (V10, owner: "the yellow-black logo hangs a little off the body, shots do not show through it": on the
+			-- round head, inside its box, and just behind the bullet holes, BulletHoles.SKIN_FIT 0.86.)
+			local hx = head.Size.X / 2 * 0.8
 			mark("Head", CFrame.new(-hx, 0.05, 0) * CFrame.Angles(0, math.rad(90), 0), math.min(head.Size.Y, head.Size.Z) * 0.62)
 			mark("Head", CFrame.new(hx, 0.05, 0) * CFrame.Angles(0, math.rad(-90), 0), math.min(head.Size.Y, head.Size.Z) * 0.62)
 		end
 		local chest = model:FindFirstChild("UpperTorso")
 		if chest and chest:IsA("BasePart") then
-			mark("UpperTorso", CFrame.new(chest.Size.X * 0.22, chest.Size.Y * 0.12, -(chest.Size.Z / 2 + 0.06)), chest.Size.Y * 0.32)
+			mark("UpperTorso", CFrame.new(chest.Size.X * 0.22, chest.Size.Y * 0.12, -(chest.Size.Z / 2 * 0.8)), chest.Size.Y * 0.32) -- (V10: on the chest, behind the holes)
 		end
 	end
 	folder.Parent = model

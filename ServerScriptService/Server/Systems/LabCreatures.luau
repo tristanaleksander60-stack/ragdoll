@@ -189,6 +189,19 @@ local function swallow(m: Machine, model: Model, inside: (Model) -> Vector3)
 	task.spawn(function()
 		local ok, err = pcall(function()
 			local out = inside(model)
+			-- (V10 phase 3, owner: "every animal at least as violent as the shark"): what comes out of any creature
+			-- but the spider and the shark (they have their own) is a piece or two short and bleeding.
+			if m.id ~= "Spider" and m.id ~= "Whale" then
+				local V = lazy("VitalsService")
+				local pieces = { "LeftArm", "RightArm", "LeftLeg", "RightLeg", "LeftHand", "RightHand", "LeftFoot", "RightFoot" }
+				for _ = 1, math.random(1, 2) do
+					pcall(V.sever, model, pieces[math.random(#pieces)], nil)
+				end
+				local head = model:FindFirstChild("Head")
+				if head and head:IsA("BasePart") then
+					pcall(V.wound, model, head, head.Position, m.owner(), 2, { zone = Anatomy.zones.Neck })
+				end
+			end
 			-- (Let go first, so no hold step pulls it back after the push.)
 			model:SetAttribute("InMachine", nil)
 			hideBody(model, false)
@@ -895,7 +908,125 @@ LabCreatures.LAYOUT = table.freeze({
 })
 
 -- Builds the yard into a lab's Playground folder; a loop per lab checks every trigger.
+-- V10 phase 3 (owner: "shoot or hit an animal and it comes for you and eats you, WASTED on the screen, and you
+-- respawn in your lab"): HitService tells shotAt where a round landed. If that is on a creature, it drops what
+-- it does, lunges at the shooter, swallows them (the body hidden, a burst of blood), the shooter's screen shows
+-- WASTED (Client/Wasted), the creature goes home, and the player comes back in their lab.
+LabCreatures.REVENGE_GAP = 6 -- s before the same creature comes for someone again
+LabCreatures.WASTED_HOLD = 2.6 -- s on the WASTED screen before the respawn
+local creatures: { { machine: Machine, model: Model } } = {}
+local lastRevenge: { [Model]: number } = {}
+local wastedRemote: RemoteEvent? = nil
+local function wasted(): RemoteEvent
+	local r = wastedRemote
+	if r and r.Parent then
+		return r
+	end
+	local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+	local made = (remotes and remotes:FindFirstChild("Wasted")) :: RemoteEvent?
+	if not made then
+		made = Instance.new("RemoteEvent")
+		;(made :: RemoteEvent).Name = "Wasted"
+		;(made :: RemoteEvent).Parent = remotes or game:GetService("ReplicatedStorage")
+	end
+	wastedRemote = made
+	return made :: RemoteEvent
+end
+
+local function revenge(entry: { machine: Machine, model: Model }, player: Player)
+	local m, model = entry.machine, entry.model
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not (root and root:IsA("BasePart") and humanoid) or humanoid.Health <= 0 then
+		return
+	end
+	m.busy = true
+	m.folder:SetAttribute("Busy", true)
+	local home = model:GetPivot()
+	local ok, err = pcall(function()
+		-- The lunge: straight at them, fast, turned to face them.
+		local from = home.Position
+		play(0.7, function(t)
+			local to = root.Position
+			local pos = from:Lerp(Vector3.new(to.X, from.Y + math.sin(t * math.pi) * 6, to.Z), t * t)
+			model:PivotTo(CFrame.lookAt(pos, Vector3.new(to.X, pos.Y, to.Z)))
+		end)
+		-- Swallowed: the body gone, a burst of blood, the screen goes WASTED.
+		local at = root.Position
+		local saved: { [Instance]: number } = {}
+		for _, d in (character :: Model):GetDescendants() do
+			if d:IsA("BasePart") or d:IsA("Decal") then
+				saved[d] = d.Transparency
+				d.Transparency = 1
+			end
+		end
+		root.Anchored = true
+		local burst = Instance.new("Part")
+		burst.Anchored, burst.CanCollide, burst.CanQuery, burst.CanTouch, burst.Transparency = true, false, false, false, 1
+		burst.Position = at
+		burst.Parent = m.folder
+		local e = Instance.new("ParticleEmitter")
+		e.Color = ColorSequence.new(Anatomy.BLOOD)
+		e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0.2) })
+		e.Speed = NumberRange.new(10, 22)
+		e.SpreadAngle = Vector2.new(180, 180)
+		e.Lifetime = NumberRange.new(0.5, 1)
+		e.Acceleration = Vector3.new(0, -40, 0)
+		e.Rate = 0
+		e.Parent = burst
+		e:Emit(60)
+		game:GetService("Debris"):AddItem(burst, 3)
+		wasted():FireClient(player, LabCreatures.WASTED_HOLD, m.label)
+		-- Chewing, then home.
+		local here = model:GetPivot()
+		play(0.6, function(t)
+			model:PivotTo(here * CFrame.new(0, math.abs(math.sin(t * 20)) * 0.8, 0))
+		end)
+		play(0.8, function(t)
+			model:PivotTo(here:Lerp(home, t))
+		end)
+		model:PivotTo(home)
+		task.wait(math.max(0, LabCreatures.WASTED_HOLD - 1.4))
+		for d, tr in saved do
+			if d.Parent then
+				(d :: any).Transparency = tr
+			end
+		end
+		if player.Parent then
+			player:LoadCharacter() -- (back in their lab: Lab places a new character on its plot)
+		end
+	end)
+	if not ok then
+		warn("[LabCreatures] revenge " .. tostring(err))
+		model:PivotTo(home)
+	end
+	m.busy = false
+	m.folder:SetAttribute("Busy", nil)
+end
+
+-- A round from `player` landed at `point`: a creature there comes for them.
+function LabCreatures.shotAt(player: Player, point: Vector3)
+	for _, entry in creatures do
+		local model = entry.model
+		if model.Parent and not entry.machine.busy then
+			local cf, size = model:GetBoundingBox()
+			local rel = cf:PointToObjectSpace(point)
+			local half = size / 2 + Vector3.new(1, 1, 1)
+			if math.abs(rel.X) <= half.X and math.abs(rel.Y) <= half.Y and math.abs(rel.Z) <= half.Z then
+				local now = os.clock()
+				if now - (lastRevenge[model] or -math.huge) >= LabCreatures.REVENGE_GAP then
+					lastRevenge[model] = now
+					task.spawn(revenge, entry, player)
+				end
+				return
+			end
+		end
+	end
+end
+
 function LabCreatures.build(into: Instance, origin: Vector3)
+	pcall(wasted) -- (V10 phase 3: the WASTED remote exists before anyone gets eaten; Client/Wasted listens)
 	local folder = Instance.new("Folder")
 	folder.Name = "CreatureYard"
 	folder.Parent = into
@@ -932,6 +1063,7 @@ function LabCreatures.build(into: Instance, origin: Vector3)
 		for _, c in sub:GetChildren() do
 			if c:IsA("Model") and string.sub(c.Name, 1, 1) == "M" and c.Name ~= "MVacuum" then
 				c:SetAttribute("Creature", spot.id)
+				table.insert(creatures, { machine = machine, model = c }) -- (V10 phase 3: it fights back, shotAt)
 				c:SetAttribute("LifeHome", c:GetPivot())
 				CollectionService:AddTag(c, "CreatureLife")
 			end
