@@ -22,8 +22,8 @@ local Compressor = {}
 -- 0.37.15 (owner, 22 Nov 2026: "make the compressor 10x bigger, so it is huge"): built as before, then scaled
 -- SCALE times round its footing. At that size it does not fit in the lab: it stands behind it, past the portals and the
 -- back edge of the floor (z -113), its open side to the spawn; Landscape keeps the ground flat out to it (BACK_ROOM).
-Compressor.SCALE = 10
-Compressor.AT = if Compressor.SCALE > 3 then Vector2.new(0, -185) else Vector2.new(-20, 35) * (Config.LAB_SPREAD or 1) -- lab x, z (on the hub's rim; V9-0n fine-tunes it)
+Compressor.SCALE = 3 -- (0.37.16, owner: "10x is FAR too big, it fills the whole map")
+Compressor.AT = if Compressor.SCALE > 2 then Vector2.new(0, -136) else Vector2.new(-20, 35) * (Config.LAB_SPREAD or 1) -- lab x, z (on the hub's rim; V9-0n fine-tunes it)
 Compressor.PLATE = 8 -- studs across the press bed
 Compressor.HEIGHT = 13 -- studs from the bed to the top beam
 Compressor.COOLDOWN = 2.5 -- s between two presses
@@ -41,8 +41,8 @@ Compressor.AGAIN = 8 -- s before the same body may be pressed again (no KO farm)
 -- moment. If the bed stays empty long enough for PSI to top out, the valve releases: an empty
 -- press fires anyway (safety-valve), which is funny and keeps the recharge loop from stalling.
 Compressor.RECHARGE_TIME = 10 -- s from empty bed to full pressure
-Compressor.BOOM_RADIUS = if Compressor.SCALE > 3 then 50 else 14 -- studs around the bed centre that feels the boom
-Compressor.BACK_ROOM = if Compressor.SCALE > 3 then -(185 + Compressor.PLATE * Compressor.SCALE / 2 + 30) else nil :: number? -- (lab z the flat ground must reach behind the lab)
+Compressor.BOOM_RADIUS = if Compressor.SCALE > 2 then 24 else 14 -- studs around the bed centre that feels the boom
+Compressor.BACK_ROOM = if Compressor.SCALE > 2 then -(136 + Compressor.PLATE * Compressor.SCALE / 2 + 30) else nil :: number? -- (lab z the flat ground must reach behind the lab)
 Compressor.BOOM_MAX_VELOCITY = 120 -- studs/s outward kick at PSI = 100 (0 at PSI = 0, linear)
 Compressor.BOOM_MAX_UP = 55 -- studs/s upward kick at PSI = 100 (adds a little lift so bodies tumble)
 
