@@ -166,6 +166,8 @@ end
 local lastFired: { [Player]: number } = {}
 
 Playground.BULLSEYE_RADIUS = 8
+Playground.CANNON_LOAD = 0.8 -- s a ragdoll sits in the barrel before it is fired (22 Nov 2026)
+Playground.CANNON_DUMMY_BOOST = 1.15 -- its shot out of the muzzle, times the pad's old throw
 -- Where the human cannon's shot comes down (no air drag on a body in Roblox: a plain throw), from
 -- the pad at (x, z) with the root 3 studs over the pad, down to lying height.
 -- V8-1.1 (Config.STUNT_SCORE): the player's own cannon shot, a longer and higher arc of
@@ -269,6 +271,45 @@ local function buildCannon()
 		stand.Transparency = 1
 		stand.CanCollide = false
 	end
+
+	-- (22 Nov 2026, owner: "the ragdoll goes down INTO the cannon and is shot out of it, not off the pad"):
+	-- a ragdoll let go on the pad vanishes into the barrel, a beat later it flies out of the muzzle.
+	-- The pad no longer throws dummies itself (no LaunchVelocity: PropContacts leaves them alone).
+	padPart:SetAttribute("LaunchVelocity", nil)
+	local muzzle = barrelCf * CFrame.new(0, 0, -6)
+	local loading: { [Model]: number } = {}
+	task.spawn(function()
+		local DummyControl = require(script.Parent.DummyControl) :: any
+		while padPart.Parent do
+			task.wait(0.2)
+			local dummies = Workspace:FindFirstChild("Dummies")
+			for _, m in if dummies then dummies:GetChildren() else {} do
+				local pelvis = m:FindFirstChild("LowerTorso")
+				if m:IsA("Model") and pelvis and pelvis:IsA("BasePart") and not loading[m] and m:GetAttribute("Held") ~= true
+					and m:GetAttribute("Vital") ~= "Dead" and m:GetAttribute("MachineHidden") ~= true then
+					local rel = padPart.CFrame:PointToObjectSpace(pelvis.Position)
+					if math.abs(rel.X) < 4.5 and math.abs(rel.Z) < 4.5 and rel.Y > -1 and rel.Y < 6 then
+						loading[m] = os.clock()
+						task.spawn(function()
+							m:SetAttribute("MachineHidden", true) -- (gone into the barrel, on every screen)
+							FxService.hit(padPart.Position + Vector3.new(0, 2, 0), 40, "CannonPad")
+							DummyControl.move(m, barrelCf)
+							task.wait(Playground.CANNON_LOAD)
+							if m.Parent then
+								DummyControl.move(m, CFrame.lookAt(muzzle.Position, muzzle.Position + CANNON_DIRECTION))
+								task.wait(0.1)
+								m:SetAttribute("MachineHidden", nil)
+								DummyControl.push(m, CANNON_DIRECTION * CANNON_SPEED * Playground.CANNON_DUMMY_BOOST)
+								FxService.hit(muzzle.Position, 140, "CannonPad")
+							end
+							task.wait(2.5)
+							loading[m] = nil
+						end)
+					end
+				end
+			end
+		end
+	end)
 
 	padPart.Touched:Connect(function(other)
 		local character = other:FindFirstAncestorOfClass("Model")
