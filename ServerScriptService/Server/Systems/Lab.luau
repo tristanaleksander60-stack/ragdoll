@@ -991,7 +991,7 @@ local function dressPlot(plot: Plot)
 		-- (0.37.1, owner: "the portals stand half in the grass"): one stone platform under the travel corner
 		-- (MapBoard.TRAVEL_SPOTS: the MAPS board between SINGLEPLAYER and MULTIPLAYER), along its line.
 		do
-			local solo, multi = Vector2.new(-26.5, 34.6) * Sp, Vector2.new(-41.5, 13.4) * Sp
+			local solo, multi = Vector2.new(-2, 64), Vector2.new(-2, 36) -- (0.37.13: MapBoard.TRAVEL_SPOTS, between the launch and the danger areas)
 			local mid, along = (solo + multi) / 2, (solo - multi)
 			local pad = paint(folder, "TravelPad", Vector3.new(16, 0.05, along.Magnitude + 16), Vector3.new(o.X + mid.X, ground + 0.075, o.Z + mid.Y), stoneColor, Enum.Material.Slate)
 			pad.CFrame = CFrame.lookAt(pad.Position, pad.Position + Vector3.new(along.X, 0, along.Y))
@@ -1000,8 +1000,8 @@ local function dressPlot(plot: Plot)
 		end
 		-- (0.37.3, owner: "the boxing ring overlaps the grass"): a stone floor under the ring (Playground: the pit at
 		-- -6, 54, 21 x 18), with room to walk round it.
-		paint(folder, "RingFloor", Vector3.new(29, 0.05, 26), Vector3.new(o.X - 6, ground + 0.075, o.Z + 54), stoneColor, Enum.Material.Slate)
-		paint(folder, "RingFloorEdge", Vector3.new(30.2, 0.04, 27.2), Vector3.new(o.X - 6, ground + 0.069, o.Z + 54), Color3.fromRGB(120, 116, 108), Enum.Material.Slate)
+		paint(folder, "RingFloor", Vector3.new(29, 0.05, 26), Vector3.new(o.X - 111, ground + 0.075, o.Z - 28), stoneColor, Enum.Material.Slate)
+		paint(folder, "RingFloorEdge", Vector3.new(30.2, 0.04, 27.2), Vector3.new(o.X - 111, ground + 0.069, o.Z - 28), Color3.fromRGB(120, 116, 108), Enum.Material.Slate)
 		-- 0.37.5 (owner: "the walks to every thing are ugly: one walk from the spawn to each area's platform, not
 		-- three or four per area"): one straight walk from the plaza's rim to where each area's ground starts
 		-- (an area the plaza already touches needs none), and one out to the creature yard. No caps: a walk runs

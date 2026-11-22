@@ -794,7 +794,8 @@ local function buildLava()
 	-- were updated to match (Shared/PathPlan: "Lava" obstacle now (-11, -41) to (11, -23)).
 	-- (0.37.1, owner: "the ring is the first thing you see but not our best, it must not be the hook"): behind the
 	-- spawn now, between the plaza and the launch stations; the cannon is what the spawn faces.
-	local x, z, w, d = -6, 54, 21, 18
+	-- (0.37.13, owner: "the ring to the garden by the frog": west garden, south of the frog's pond.)
+	local x, z, w, d = -111, -28, 21, 18
 	local pool = part("LavaPool", Vector3.new(w, 0.4, d), at(x, 0.2, z), LAVA, Enum.Material.CrackedLava)
 	-- (session v850, owner: "lavaen skal ikke være under bokseringen, det skal være en helt normal bokse-
 	-- ring, man skal bare kunne hoppe en anelse højere"): the hazard launch is off under the ring —

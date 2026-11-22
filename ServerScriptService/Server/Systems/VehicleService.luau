@@ -28,6 +28,7 @@ type Spec = {
 	lift: number, -- body bottom over the floor
 	pad: Vector2, -- where it stands (lab space, x and z)
 	look: string?, -- (V9-NOW 26) the V3Assets model drawn over it
+	flip: boolean?, -- (0.37.13) the model faces backwards from its import: turned round
 }
 
 VehicleService.SPECS = {
@@ -42,11 +43,11 @@ VehicleService.SPECS = {
 	-- 0.37.12 (owner, 22 Nov 2026: "remove the cars completely, put in these, they must cost Robux"): three Creator Store
 	-- models (ServerStorage.V3Assets Silvia, FordTruck, Panzer; every script, sound and light stripped), on the kinds the
 	-- drive tuning already has (Config.VEHICLES Car, Truck, MuscleCar). Each needs its game pass (PASSES) to drive.
-	Car = { label = "Silvia Drift Car", body = Vector3.new(6.4, 1.4, 14), color = Color3.fromRGB(230, 230, 235), wheel = 2.6, lift = 0.6, pad = Vector2.new(62, -8), look = "Silvia" } :: Spec,
+	Car = { label = "Silvia Drift Car", body = Vector3.new(6.4, 1.4, 14), color = Color3.fromRGB(230, 230, 235), wheel = 2.6, lift = 0.6, pad = Vector2.new(62, -8), look = "Silvia", flip = true } :: Spec,
 	-- (session v850, owner: "fjern Jeepen"): the Jeep slot was dropped — four vehicles left (Supercar,
 	-- Kart, Truck, MuscleCar). All lookups of "Jeep" in Shop, Progression, VehicleFeel, Assets etc. are
 	-- safe since SPECS[kind] returns nil and those systems iterate or key-check.
-	Truck = { label = "Ford Truck", body = Vector3.new(8.4, 2.2, 19), color = Color3.fromRGB(60, 70, 90), wheel = 3.4, lift = 1.2, pad = Vector2.new(68, -32), look = "FordTruck" } :: Spec,
+	Truck = { label = "Ford Truck", body = Vector3.new(8.4, 2.2, 19), color = Color3.fromRGB(60, 70, 90), wheel = 3.4, lift = 1.2, pad = Vector2.new(68, -32), look = "FordTruck", flip = true } :: Spec,
 	-- (session v842: 5th slot — 70s muscle car. Look model Phoenix Slayer (8x5x20), script-stripped, chassis-compatible wheel names FL/FR/RL/RR.)
 	MuscleCar = { label = "Panzer Tank", body = Vector3.new(11, 2.6, 23), color = Color3.fromRGB(90, 96, 80), wheel = 3, lift = 0.9, pad = Vector2.new(66, -60), look = "Panzer" } :: Spec,
 }
@@ -270,6 +271,9 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	local V3Assets = require(script.Parent.V3Assets)
 	local role = spec.look or (if kind == "Truck" then "MonsterTruck" else "Car")
 	local bottom = home * CFrame.new(0, -b.Y / 2 - spec.lift, 0)
+	if spec.flip then
+		bottom *= CFrame.Angles(0, math.pi, 0) -- (0.37.13, owner: "you drive the Ford and the Silvia backwards")
+	end
 	local look = V3Assets.place(role, model, bottom, { size = b.Z + 1.5, collide = false, anchored = false, name = "Look" })
 	if look then
 		-- (22 Nov 2026, owner: "sit the right way in the go-kart"): the model's own seats never take a
