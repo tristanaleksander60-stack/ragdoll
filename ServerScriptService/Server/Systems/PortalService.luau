@@ -248,6 +248,11 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 		remote:FireClient(player, "Refused", { text = "That server is full or gone. Pick another!" })
 	elseif kind == "Own" then
 		go(player, "Own", nil)
+	elseif kind == "JoinShared" then
+		-- (23 Nov 2026: the start menu's MULTIPLAYER: the shared lab on this server, Lab.joinShared.)
+		pcall(function()
+			(require(script.Parent:WaitForChild("Lab")) :: any).joinShared(player)
+		end)
 	elseif kind == "Shared" then
 		goShared(player)
 	elseif kind == "Friend" and type(arg) == "string" and #arg <= 64 and string.match(arg, "^[%x%-]+$") then

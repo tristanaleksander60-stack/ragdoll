@@ -292,8 +292,10 @@ MapBoard.TRAVEL_SPOTS = table.freeze({
 	-- (0.37.14, owner: "the portals and the map where the 3 white blocks stand behind the spider, one portal each
 	-- side of the map board"): in a row across the back of the lab, the board in the middle (lab studs, not spread).
 	Board = Vector2.new(30, -24), -- (V10 phase 4, owner: "the maps up beside the event button": PathPlan.BUTTON_AT (16, -19) x LAB_SPREAD)
-	PortalSolo = Vector2.new(-15, -90),
-	PortalMulti = Vector2.new(15, -90),
+	-- (23 Nov 2026, owner: "the 2 portals up here, smooth against the edge of the circle you spawn in"): just outside
+	-- the spawn plaza's rim (radius 30) towards the Heights decks, turned to the middle.
+	PortalSolo = Vector2.new(-31, -14),
+	PortalMulti = Vector2.new(-23.5, -25),
 }) :: { [string]: Vector2 }
 -- Where a piece of the travel corner stands (lab space -> world, on the floor) and the point it faces.
 function MapBoard.travelSpot(origin: Vector3, name: string): (Vector3, Vector3)

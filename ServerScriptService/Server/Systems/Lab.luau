@@ -1207,7 +1207,7 @@ end
 -- build moves into it).
 local function handOn(leaving: Player?)
 	for _, other in Players:GetPlayers() do
-		if other ~= leaving and other.Parent and not plotOf[other] then
+		if other ~= leaving and other.Parent and not plotOf[other] and not guestOf[other] then -- (a shared lab's guest stays one)
 			claim(other)
 			local plot = plotOf[other]
 			if plot then
@@ -1249,26 +1249,43 @@ local function release(player: Player)
 	plotOf[player] = nil
 	if plot then
 		freePlot(plot)
-		if Workspace:GetAttribute("SharedLab") == true then
-			-- (V11 C10: the host left: the next player takes a lab, the rest become its guests there.)
-			task.defer(function()
-				local heir: Player? = nil
-				for _, other in Players:GetPlayers() do
-					if other ~= player and other.Parent then
-						heir = other
-						break
-					end
+		local orphans = false
+		for _, g in guestOf do
+			if g == plot then
+				orphans = true
+				break
+			end
+		end
+		if Workspace:GetAttribute("SharedLab") == true or orphans then
+			-- (V11 C10: the host left: the next of its guests takes a lab, the rest become its guests there. The same for
+			-- a shared lab on an ordinary server: Lab.joinShared.)
+			local guests: { Player } = {}
+			for other, g in guestOf do
+				if g == plot and other ~= player and other.Parent then
+					table.insert(guests, other)
 				end
+			end
+			local wasHost = player:GetAttribute("SharedHost") == true
+			task.defer(function()
+				local heir: Player? = guests[1]
 				if not heir then
 					return
 				end
+				if not heir.Parent then
+					return
+				end
 				guestOf[heir] = nil
+				heir:SetAttribute("SharedGuest", nil)
 				claim(heir)
 				local hostPlot = plotOf[heir]
 				if hostPlot then
+					if wasHost then
+						heir:SetAttribute("SharedHost", true)
+					end
 					placeOnPlot(heir, hostPlot)
-					for _, other in Players:GetPlayers() do
-						if other ~= player and other ~= heir and not plotOf[other] then
+					for i = 2, #guests do
+						local other = guests[i]
+						if other.Parent and not plotOf[other] then
 							joinAsGuest(other, hostPlot)
 						end
 					end
@@ -1278,6 +1295,39 @@ local function release(player: Player)
 		end
 		task.defer(handOn, player)
 	end
+end
+
+-- (23 Nov 2026, owner: "everyone who picks multiplayer spawns in the same lab"): on this server, without a teleport.
+-- The first to pick MULTIPLAYER keeps their lab and hosts it (player attribute SharedHost); everyone after gives
+-- their own lab back and becomes the host's guest (the same rights as an invited friend), placed there at once.
+-- When the host leaves, the next guest takes a lab and hosts the rest (release).
+function Lab.joinShared(player: Player): boolean
+	if guestOf[player] then
+		return true
+	end
+	local hostPlot: Plot? = nil
+	for _, other in Players:GetPlayers() do
+		if other ~= player and other:GetAttribute("SharedHost") == true and plotOf[other] then
+			hostPlot = plotOf[other]
+			break
+		end
+	end
+	if not hostPlot then
+		if plotOf[player] then
+			player:SetAttribute("SharedHost", true)
+			return true
+		end
+		return false
+	end
+	local own = plotOf[player]
+	if own then
+		plotOf[player] = nil
+		freePlot(own)
+		task.defer(handOn, player)
+	end
+	player:SetAttribute("SharedHost", nil)
+	joinAsGuest(player, hostPlot :: Plot)
+	return true
 end
 
 ------------------------------------------------------------------------------------------------

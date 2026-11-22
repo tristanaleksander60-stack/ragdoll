@@ -8,8 +8,8 @@
 -- back with a slow sway; a pair reaches out when a set tears ("Reach"); and when a piece comes off ("Torn") strands
 -- of flesh stretch from the stump to the falling piece, thin out and snap.
 -- Your own: Q (pad L1, touch TEAR) on a ragdoll's arm, leg, head or body: two arms shoot out and the claws take hold
--- of it (the server holds the body still). Then CLICK (or Q again, or TEAR): each click wrenches it, blood spurts and
--- the wound opens wider; after a few the piece rips off. Your gun rests while you hold (player attribute MechGrab).
+-- of it (the server holds the body still). Keep holding and PULL the mouse away: the strain bar fills, blood spurts
+-- and the wound opens wider, and when it is full the piece rips off. Your gun rests while you hold (player attribute MechGrab).
 -- Your own arms stay drawn in first person.
 
 local Players = game:GetService("Players")
@@ -29,7 +29,6 @@ end
 local REACH = 16
 local REACH_TIME = 0.55
 local HOLD_MAX = 10
-local CLICKS = { LeftArm = 3, RightArm = 3, LeftLeg = 3, RightLeg = 3, Head = 3, Waist = 4 } :: { [string]: number }
 local BLOOD = Color3.fromRGB(140, 14, 24)
 local FLESH = Color3.fromRGB(160, 40, 52)
 
@@ -264,7 +263,7 @@ local function rootPos(): Vector3?
 	return if root and root:IsA("BasePart") then root.Position else nil
 end
 
--- The HUD: a hint and, while you hold, the clicks left.
+-- The HUD: a hint, and the strain bar while you pull.
 local gui = Instance.new("ScreenGui")
 gui.Name = "MechArmsHud"
 gui.ResetOnSpawn = false
@@ -296,11 +295,10 @@ gui.Parent = player:WaitForChild("PlayerGui")
 local function drawHint()
 	local g = grab
 	if g then
-		local left = (CLICKS[g.piece] or 3) - g.clicks
-		hint.Text = if touch then "RIP " .. left else string.format("CLICK to rip! (%d)", left)
+		hint.Text = if touch then "PULL!" else "PULL the mouse away!"
 		stroke.Color = Color3.fromRGB(220, 40, 40)
 	else
-		hint.Text = if touch then "GRAB" else "[Q] Grab a limb"
+		hint.Text = if touch then "HOLD: RIP" else "Hold [Q] on a limb"
 		stroke.Color = Color3.fromRGB(235, 120, 30)
 	end
 end
@@ -406,79 +404,127 @@ local function startGrab(useTouch: boolean)
 	drawHint()
 end
 
-local function tearStep()
-	local g = grab
-	if not g then
-		return
-	end
-	g.clicks += 1
-	g.kick = os.clock() + 0.18
-	local at = jointPoint(g.model, g.piece) or g.part.Position
-	burst(at, 10 + g.clicks * 8)
-	-- The wound opens wider with each wrench.
-	local gash = g.gash
-	if not gash then
-		local made = Instance.new("Part")
-		made.Name = "MechGash"
-		made.Shape = Enum.PartType.Ball
-		made.Anchored, made.CanCollide, made.CanQuery, made.CanTouch, made.CastShadow = true, false, false, false, false
-		made.Color = FLESH
-		made.Material = Enum.Material.SmoothPlastic
-		made.Position = at
-		made.Size = Vector3.one * 0.2
-		made.Parent = Workspace
-		g.gash = made
-		gash = made
-	end
-	local need = CLICKS[g.piece] or 3
-	TweenService:Create(gash :: Part, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Size = Vector3.one * (0.25 + 0.18 * g.clicks), Color = if g.clicks >= need - 1 then BLOOD else FLESH }):Play()
-	-- A little jolt of the view.
+-- (23 Nov 2026, owner: "remove the clicking, you must rip it off again"): HOLD Q on a limb, then PULL: drag the mouse
+-- away from it (on touch: keep holding TEAR). The body stands still; the strain builds with how far you pull, the
+-- wound at the joint opens, blood spurts harder, and when the bar is full the piece rips off. Let go of Q to stop.
+local STRAIN_START = 1.2 -- studs of pull before it counts
+local STRAIN_RATE = 0.5 -- bar a second per stud past that
+local TOUCH_RATE = 0.7
+local bar = Instance.new("Frame")
+bar.Name = "Strain"
+bar.AnchorPoint = Vector2.new(0.5, 0)
+bar.Size = UDim2.fromOffset(120, 14)
+bar.BackgroundColor3 = Color3.fromRGB(30, 30, 34)
+bar.BackgroundTransparency = 0.2
+bar.Visible = false
+bar.Parent = gui
+local barCorner = Instance.new("UICorner")
+barCorner.CornerRadius = UDim.new(1, 0)
+barCorner.Parent = bar
+local fill = Instance.new("Frame")
+fill.Size = UDim2.fromScale(0, 1)
+fill.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+fill.Parent = bar
+local fillCorner = Instance.new("UICorner")
+fillCorner.CornerRadius = UDim.new(1, 0)
+fillCorner.Parent = fill
+local depth = 0
+local nextSpurt = 0
+local touchGrab = false
+
+local function clawPoint(g: Grab): Vector3
 	local camera = Workspace.CurrentCamera
-	if camera then
-		camera.CFrame *= CFrame.Angles(math.rad(0.6), math.rad((math.random() - 0.5) * 1.2), 0)
+	if touchGrab or not camera then
+		return g.part.Position + Vector3.new(0, 3, 0)
 	end
-	if g.clicks >= need then
-		remote:FireServer("Tear", g.model, g.piece)
-		release(false)
-	else
-		drawHint()
-	end
+	local m = UserInputService:GetMouseLocation()
+	local ray = camera:ViewportPointToRay(m.X, m.Y)
+	return ray.Origin + ray.Direction * depth
 end
 
-RunService.Heartbeat:Connect(function()
+RunService.Heartbeat:Connect(function(dt)
 	local g = grab
 	if not g then
+		bar.Visible = false
 		return
 	end
 	local here = rootPos()
 	if not g.model.Parent or not g.part.Parent or severed(g.model, g.piece) or not here or not wearing()
 		or (g.part.Position - here).Magnitude > REACH + 6 or os.clock() - g.t0 > HOLD_MAX then
 		release(true)
+		return
+	end
+	local claw = clawPoint(g)
+	local stretch = (claw - g.part.Position).Magnitude
+	local rate = if touchGrab then TOUCH_RATE else math.max(0, stretch - STRAIN_START) * STRAIN_RATE
+	g.clicks = math.min(1, g.clicks + rate * dt) -- (the strain, 0..1)
+	local strain = g.clicks
+	bar.Visible = true
+	fill.Size = UDim2.fromScale(strain, 1)
+	local mouse = UserInputService:GetMouseLocation()
+	bar.Position = if touchGrab then UDim2.new(0.5, 0, 0.6, 0) else UDim2.fromOffset(mouse.X, mouse.Y + 22)
+	if rate > 0 then
+		g.kick = os.clock() + 0.05 -- (the claws tug)
+		local at = jointPoint(g.model, g.piece) or g.part.Position
+		if os.clock() >= nextSpurt then
+			nextSpurt = os.clock() + 0.3 - strain * 0.18
+			burst(at, 4 + math.floor(strain * 14))
+		end
+		local gash = g.gash
+		if not gash then
+			local made = Instance.new("Part")
+			made.Name = "MechGash"
+			made.Shape = Enum.PartType.Ball
+			made.Anchored, made.CanCollide, made.CanQuery, made.CanTouch, made.CastShadow = true, false, false, false, false
+			made.Color = FLESH
+			made.Material = Enum.Material.SmoothPlastic
+			made.Position = at
+			made.Size = Vector3.one * 0.2
+			made.Parent = Workspace
+			g.gash = made
+			gash = made
+		end
+		local gp = gash :: Part
+		gp.Size = Vector3.one * (0.2 + strain * 0.65)
+		gp.Color = FLESH:Lerp(BLOOD, strain)
+		local camera = Workspace.CurrentCamera
+		if camera then
+			camera.CFrame *= CFrame.Angles(0, 0, math.rad((math.random() - 0.5) * 0.5 * strain))
+		end
+	end
+	if strain >= 1 and os.clock() - g.t0 > 0.4 then
+		remote:FireServer("Tear", g.model, g.piece)
+		release(false)
 	end
 end)
 
 UserInputService.InputBegan:Connect(function(input, processed)
-	-- (A click while holding always wrenches, even if the gun's controls saw it first.)
-	if processed and not (grab and input.UserInputType == Enum.UserInputType.MouseButton1) then
+	if processed then
 		return
 	end
-	local q = input.KeyCode == Enum.KeyCode.Q or input.KeyCode == Enum.KeyCode.ButtonL1
-	if q then
-		if grab then
-			tearStep()
-		else
-			startGrab(false)
+	if input.KeyCode == Enum.KeyCode.Q or input.KeyCode == Enum.KeyCode.ButtonL1 then
+		touchGrab = false
+		startGrab(false)
+		local g = grab
+		local camera = Workspace.CurrentCamera
+		if g and camera then
+			depth = (g.part.Position - camera.CFrame.Position).Magnitude
 		end
-	elseif grab and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.KeyCode == Enum.KeyCode.ButtonR2) then
-		tearStep()
+	end
+end)
+UserInputService.InputEnded:Connect(function(input)
+	if (input.KeyCode == Enum.KeyCode.Q or input.KeyCode == Enum.KeyCode.ButtonL1) and grab and not touchGrab then
+		release(true)
 	end
 end)
 if touch then
-	hint.Activated:Connect(function()
-		if grab then
-			tearStep()
-		else
-			startGrab(true)
+	hint.MouseButton1Down:Connect(function()
+		touchGrab = true
+		startGrab(true)
+	end)
+	hint.MouseButton1Up:Connect(function()
+		if grab and touchGrab then
+			release(true)
 		end
 	end)
 end

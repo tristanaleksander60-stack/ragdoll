@@ -233,7 +233,7 @@ function MechArms.buildStand(folder: Instance, origin: Vector3)
 	post.CFrame = CFrame.new(ground + Vector3.new(0, 2.8, 0))
 	post.Parent = m
 	local set = MechArms.build(true)
-	local look = -Vector3.new(dir.X, 0, dir.Z) -- (its back to the spawn's side, arms spread towards the player)
+	local look = Vector3.new(dir.X, 0, dir.Z) -- (23 Nov 2026: it faces away from the spawn, so its arms spread towards you as you walk up)
 	set:PivotTo(CFrame.lookAt(ground + Vector3.new(0, 5.4, 0), ground + Vector3.new(0, 5.4, 0) + look))
 	set.Name = "Display"
 	set.Parent = m

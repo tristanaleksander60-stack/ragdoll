@@ -211,6 +211,12 @@ local function labReady(): boolean
 	if not player.Character or typeof(player:GetAttribute("LabOrigin")) ~= "Vector3" then
 		return false
 	end
+	-- (23 Nov 2026, owner: "5 s standing on Roblox's default plate"): the character must stand in its lab already.
+	local root = player.Character:FindFirstChild("HumanoidRootPart")
+	local origin = player:GetAttribute("LabOrigin") :: Vector3
+	if not (root and root:IsA("BasePart")) or Vector2.new(root.Position.X - origin.X, root.Position.Z - origin.Z).Magnitude > 90 then
+		return false
+	end
 	local plot = player:GetAttribute("LabPlot")
 	if plot == nil then
 		return true -- (a guest on a shared server: the host's lab)
@@ -285,12 +291,13 @@ local function pickMulti()
 	end
 	picked = true
 	squish(multi)
-	-- (23 Nov 2026, owner: "multiplayer shows the servers, joining your friends, making your own"): the menu lifts
-	-- once the world is in and the multiplayer hub opens (PortalUI.openHub).
-	note.Text = "Opening multiplayer..."
-	liftWhenReady(function()
-		(require(script.Parent:WaitForChild("PortalUI")) :: any).openHub()
-	end)
+	-- (23 Nov 2026, owner: "everyone who picks multiplayer spawns in the same lab"): this server's shared lab
+	-- (PortalService "JoinShared", Lab.joinShared); the MULTIPLAYER portal in the lab opens the server hub.
+	note.Text = "Joining the shared lab..."
+	local Net = require(Shared:WaitForChild("Net")) :: any
+	Net.event(Net.Names.Portal):FireServer("JoinShared")
+	task.wait(0.6)
+	liftWhenReady(nil)
 end
 single.Activated:Connect(pickSingle)
 multi.Activated:Connect(pickMulti)
