@@ -308,6 +308,21 @@ local function buildTop(onRewards: () -> ())
 	pill.AnchorPoint = Vector2.new(0.5, 0.5)
 	pill.Position = UDim2.new(0.5, 0, 0.5, 12)
 	pill.Parent = g
+	-- (22 Nov 2026, owner: "in line with the hotbar"): the top bar's layer starts right of Roblox's own buttons,
+	-- so its middle is right of the screen's; the pill and the gift move by the difference (the hotbar is
+	-- centred on the screen). DoubleEventChip does the same for the 2X.
+	local function recentre()
+		local camera = workspace.CurrentCamera
+		if not camera or g.AbsoluteSize.X <= 0 then
+			return
+		end
+		local shift = math.floor(camera.ViewportSize.X / 2 - (g.AbsolutePosition.X + g.AbsoluteSize.X / 2))
+		pill.Position = UDim2.new(0.5, shift, 0.5, 12)
+		gift.Position = UDim2.new(0.5, 134 + shift, 0.5, 12)
+	end
+	g:GetPropertyChangedSignal("AbsoluteSize"):Connect(recentre)
+	g:GetPropertyChangedSignal("AbsolutePosition"):Connect(recentre)
+	task.defer(recentre)
 	-- (V8-0.3: tapping the next goal opens WEAPONS, where it waits.)
 	local tap = Instance.new("TextButton")
 	tap.Name = "Tap"

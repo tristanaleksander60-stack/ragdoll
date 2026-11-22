@@ -72,6 +72,18 @@ function DoubleEventChip.start()
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = chip
 	chip.Parent = gui
+	-- (22 Nov 2026: centred on the screen like the hotbar, not on the top bar layer: HudV3 recentre.)
+	local function recentre()
+		local camera = workspace.CurrentCamera
+		if not camera or gui.AbsoluteSize.X <= 0 then
+			return
+		end
+		local shift = math.floor(camera.ViewportSize.X / 2 - (gui.AbsolutePosition.X + gui.AbsoluteSize.X / 2))
+		chip.Position = UDim2.new(0.5, -134 + shift, 0.5, 12)
+	end
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(recentre)
+	gui:GetPropertyChangedSignal("AbsolutePosition"):Connect(recentre)
+	task.defer(recentre)
 	label = chip
 	gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 	local revealed = false
