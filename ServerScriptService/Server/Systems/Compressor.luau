@@ -356,7 +356,15 @@ function Compressor.build(folder: Instance, origin: Vector3, at: Vector3?)
 			part(m, "Sleeve", Vector3.new(1.7, 3, 1.7), face * CFrame.new(x, 1.6 + H - 2.2, z), yellow, Enum.Material.Metal, false)
 		end
 	end
-	part(m, "TopBeam", Vector3.new(S + 3.4, 2, S + 3.4), face * CFrame.new(0, 1.6 + H + 1, 0), dark, Enum.Material.Metal, true)
+	local topBeam = 	part(m, "TopBeam", Vector3.new(S + 3.4, 2, S + 3.4), face * CFrame.new(0, 1.6 + H + 1, 0), dark, Enum.Material.Metal, true)
+	-- (22 Nov 2026, owner: a ragdoll carried in with GRAB jumped onto the roof): the grab aims by a ray,
+	-- and it stopped on the beam. The beam and pillars stay solid but let that ray through to the bed.
+	topBeam.CanQuery = false
+	for _, d in m:GetChildren() do
+		if d:IsA("BasePart") and (d.Name == "Pillar" or d.Name == "Sleeve") then
+			d.CanQuery = false
+		end
+	end
 	-- The main ram and the press plate (up; the clients drop it on PressAt).
 	part(m, "Ram", Vector3.new(2.2, 4, 2.2), face * CFrame.new(0, 1.6 + H - 2, 0), Color3.fromRGB(200, 205, 215), Enum.Material.Metal, false)
 	local plate = part(m, "Plate", Vector3.new(S - 0.4, 1.4, S - 0.4), face * CFrame.new(0, 1.6 + H - 4.7, 0), steel, Enum.Material.DiamondPlate, false)

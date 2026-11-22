@@ -391,12 +391,7 @@ local function begin(screen: Vector2, input: InputObject?, center: boolean): boo
 		end
 		return Enum.ContextActionResult.Sink
 	end, false, Enum.ContextActionPriority.High.Value, Enum.UserInputType.MouseWheel)
-	ContextActionService:BindActionAtPriority("RagdollLabGrabThrow", function(_, state)
-		if state == Enum.UserInputState.Begin then
-			throwForward()
-		end
-		return Enum.ContextActionResult.Sink
-	end, false, Enum.ContextActionPriority.High.Value, Enum.UserInputType.MouseButton2)
+	-- (22 Nov 2026, owner: right click while holding no longer launches the ragdoll; it turns the camera.)
 	refreshPad()
 	return true
 end

@@ -291,7 +291,11 @@ local function buildTop(onRewards: () -> ())
 	pill.BackgroundColor3 = HudV3.GLASS
 	pill.BackgroundTransparency = 0.1
 	corner(pill, 22)
-	pill.Parent = row
+	-- (22 Nov 2026, owner: "move it where you actually see it"): the middle of the top bar, not its
+	-- right corner; small, so it never gets in the way.
+	pill.AnchorPoint = Vector2.new(0.5, 0.5)
+	pill.Position = UDim2.fromScale(0.5, 0.5)
+	pill.Parent = g
 	-- (V8-0.3: tapping the next goal opens WEAPONS, where it waits.)
 	local tap = Instance.new("TextButton")
 	tap.Name = "Tap"
