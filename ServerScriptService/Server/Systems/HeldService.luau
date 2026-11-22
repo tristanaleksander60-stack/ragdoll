@@ -154,6 +154,67 @@ local function smacker(handleLength: number, handleColor: Color3, headSize: Vect
 	return model
 end
 
+-- (22 Nov 2026, owner: "make the Talk wand much nicer"): a dark wood shaft that tapers, gold bands, a
+-- leather grip, a gold cap holding a violet crystal star (three crossed points round a gem), a soft
+-- violet light and a few slow sparkles. No neon (owner, 21 Nov): the glow is a light, not a material.
+local function talkWand(): Model
+	local model = Instance.new("Model")
+	model.Name = MODEL_NAME
+	local wood = Color3.fromRGB(58, 36, 26)
+	local gold = Color3.fromRGB(232, 186, 72)
+	local violet = Color3.fromRGB(176, 110, 255)
+	local grip = part("Grip", Vector3.new(0.34, 0.34, 0.8), Color3.fromRGB(70, 44, 34), Enum.Material.Fabric)
+	grip.Shape = Enum.PartType.Cylinder
+	grip.CFrame = CFrame.Angles(0, math.rad(90), 0)
+	grip.Parent = model
+	local pieces: { BasePart } = {}
+	local function piece(name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?, shape: Enum.PartType?)
+		local p = part(name, size, color, material)
+		if shape then
+			p.Shape = shape
+		end
+		p.CFrame = cf
+		p.Parent = model
+		table.insert(pieces, p)
+		return p
+	end
+	local along = CFrame.Angles(0, math.rad(90), 0) -- (a cylinder's axis is its X: turned to lie along -Z)
+	piece("Pommel", Vector3.new(0.3, 0.3, 0.3), CFrame.new(0, 0, 0.5), gold, Enum.Material.Metal, Enum.PartType.Ball)
+	piece("Shaft", Vector3.new(1.3, 0.24, 0.24), CFrame.new(0, 0, -1.05) * along, wood, Enum.Material.Wood, Enum.PartType.Cylinder)
+	piece("ShaftTip", Vector3.new(0.5, 0.18, 0.18), CFrame.new(0, 0, -1.95) * along, wood, Enum.Material.Wood, Enum.PartType.Cylinder)
+	for _, z in { -0.42, -1.7 } do
+		piece("Band", Vector3.new(0.08, 0.3, 0.3), CFrame.new(0, 0, z) * along, gold, Enum.Material.Metal, Enum.PartType.Cylinder)
+	end
+	piece("Cap", Vector3.new(0.22, 0.32, 0.32), CFrame.new(0, 0, -2.25) * along, gold, Enum.Material.Metal, Enum.PartType.Cylinder)
+	local gem = piece("Gem", Vector3.new(0.34, 0.34, 0.34), CFrame.new(0, 0, -2.55), violet, Enum.Material.Glass, Enum.PartType.Ball)
+	gem.Transparency = 0.15
+	for i = 0, 2 do
+		local spike = piece("StarPoint", Vector3.new(0.09, 0.9, 0.09), CFrame.new(0, 0, -2.55) * CFrame.Angles(0, 0, math.rad(i * 60)), Color3.fromRGB(255, 236, 140), Enum.Material.Glass)
+		spike.Transparency = 0.1
+	end
+	local light = Instance.new("PointLight")
+	light.Color = violet
+	light.Brightness = 1.2
+	light.Range = 6
+	light.Shadows = false
+	light.Parent = gem
+	local sparkle = Instance.new("ParticleEmitter")
+	sparkle.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	sparkle.Color = ColorSequence.new(Color3.fromRGB(255, 240, 160), violet)
+	sparkle.LightEmission = 0.6
+	sparkle.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.25), NumberSequenceKeypoint.new(1, 0) })
+	sparkle.Lifetime = NumberRange.new(0.5, 0.9)
+	sparkle.Rate = 5
+	sparkle.Speed = NumberRange.new(0.5, 1.5)
+	sparkle.SpreadAngle = Vector2.new(180, 180)
+	sparkle.Parent = gem
+	for _, p in pieces do
+		fix(grip, p)
+	end
+	model.PrimaryPart = grip
+	return model
+end
+
 local function bat(): Model
 	-- A bat is one long tapering piece: a thick head on a thin handle.
 	return smacker(2.2, Color3.fromRGB(200, 150, 90), Vector3.new(0.6, 0.6, 1.8), Color3.fromRGB(210, 160, 100), Enum.PartType.Block, Enum.Material.Wood)
@@ -327,9 +388,7 @@ local BUILDERS: { [string]: { build: () -> Model, tilt: CFrame } } = {
 	Blaster = { build = blaster, tilt = CFrame.Angles(0, math.rad(-14), 0) },
 	Bat = { build = bat, tilt = CFrame.Angles(math.rad(55), math.rad(-10), 0) },
 	-- (22 Nov 2026: the Magic Wand: a dark stick with a glowing purple star ball at its tip.)
-	Wand = { build = function(): Model
-		return smacker(1.5, Color3.fromRGB(60, 40, 30), Vector3.new(0.5, 0.5, 0.5), Color3.fromRGB(200, 120, 255), Enum.PartType.Ball, Enum.Material.SmoothPlastic) -- (no neon: owner, 21 Nov)
-	end, tilt = CFrame.Angles(math.rad(40), 0, 0) },
+	Wand = { build = talkWand, tilt = CFrame.Angles(math.rad(40), 0, 0) },
 	Pan = { build = pan, tilt = CFrame.Angles(math.rad(50), math.rad(-10), 0) },
 	Hammer = { build = hammer, tilt = CFrame.Angles(math.rad(55), math.rad(-10), 0) },
 	Golf = { build = golf, tilt = CFrame.Angles(math.rad(-60), 0, 0) },
