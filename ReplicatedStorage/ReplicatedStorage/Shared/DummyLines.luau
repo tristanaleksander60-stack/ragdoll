@@ -177,4 +177,15 @@ function DummyLines.pick(list: { string }, seed: number, turn: number): string
 	return list[((math.floor(seed * 7) + turn) % n) + 1]
 end
 
+
+-- (V11 item 13, owner: "they mourn their mates, kneel and say oh noo, try CPR"): what a mourner says as its
+-- Mood changes (Server/Mourning). Saved: the CPR worked. Gone: it gave up.
+DummyLines.MOURN = {
+	Shock = { "Oh no!", "NOOO!", "What happened?!", "Is he... dead?!" },
+	Mourn = { "Oh noo...", "Not you, buddy!", "Wake up! Please!", "Why him?!", "Noooo..." },
+	CPR = { "Come on! Breathe!", "Stay with me!", "1, 2, 3... breathe!", "Don't you die on me!" },
+	Saved = { "It worked!", "You're back!", "YES! Alive!" },
+	Gone = { "I tried...", "Rest easy, pal...", "He's gone..." },
+} :: { [string]: { string } }
+
 return table.freeze(DummyLines)

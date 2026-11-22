@@ -290,7 +290,18 @@ end
 
 -- An explosion from its own bank (boomPop, boomMid, boomBig, cannonShot, slam: SoundManifest),
 -- the old small "boom" in its place if that bank's sounds all failed to load.
+-- (V11 item 14: every blast lights its surroundings, the bigger the boom the bigger the light.)
+local BLAST_LIGHT = {
+	boomPop = { range = 20, bright = 3, time = 0.35, color = Color3.fromRGB(255, 170, 80) },
+	boomMid = { range = 34, bright = 4, time = 0.55, color = Color3.fromRGB(255, 150, 60) },
+	boomBig = { range = 60, bright = 5, time = 1.1, color = Color3.fromRGB(255, 140, 50) },
+	cannonShot = { range = 22, bright = 3, time = 0.3, color = Color3.fromRGB(255, 190, 110) },
+} :: { [string]: any }
 local function blast(bank: string, position: Vector3, volume: number, speed: number, cut: number?)
+	local glow = BLAST_LIGHT[bank]
+	if glow and FeelV2.light then
+		pcall(FeelV2.light, position + Vector3.new(0, 2, 0), glow, true)
+	end
 	if hasBank(bank) then
 		play(bank, position, volume, speed, { cut = cut, fade = if cut then 0.8 else nil, reach = 260, vary = 0.06 })
 		if bank == "boomBig" or bank == "boomMid" or bank == "cannonShot" then

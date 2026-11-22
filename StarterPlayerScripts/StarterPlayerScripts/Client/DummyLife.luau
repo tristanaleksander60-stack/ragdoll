@@ -1100,6 +1100,19 @@ local function updateLine(life: Life, now: number)
 		end
 		return
 	end
+	-- (V11 item 13: a mourner says what fits its Mood the moment it changes.)
+	do
+		local moodLife: any = life
+		local mood = life.model:GetAttribute("Mood") or life.model:GetAttribute("MoodSay")
+		if mood ~= moodLife.moodSaid then
+			moodLife.moodSaid = mood
+			local lines = if type(mood) == "string" then (DummyLines :: any).MOURN[mood] else nil
+			if lines then
+				showLine(life, "Mood", now, lines)
+				return
+			end
+		end
+	end
 	-- 0.36.7: a new wound = a line for where it landed (one hit line on this screen per HIT_GAP; a dead
 	-- body says nothing).
 	local raw = life.model:GetAttribute("Wounds")

@@ -216,4 +216,55 @@ function Poses.sitUp(t: number): Pose
 	return out
 end
 
+
+-- (V11 item 13, owner: "ragdolls get scared of the dead, mourn their mates, kneel and say oh noo, try CPR"):
+-- poses held in the Standing state while the body's Mood attribute says so (Server/Mourning sets it).
+-- Shock: hands up to the head, leaning back. Mourn: on its knees, head bowed, shoulders shaking. CPR: on its
+-- knees, leaning over, straight arms pumping down.
+local shockOut: Pose = {}
+function Poses.shock(t: number): Pose
+	local shake = sin(t * 20) * 4
+	local out = shockOut
+	out.RightShoulder = ang(150 + shake, 0, 35)
+	out.LeftShoulder = ang(150 - shake, 0, -35)
+	out.RightElbow = ang(80, 0, 0)
+	out.LeftElbow = ang(80, 0, 0)
+	out.Waist = ang(10, 0, 0)
+	out.Neck = ang(12, 0, 0)
+	return out
+end
+local mournOut: Pose = {}
+function Poses.mourn(t: number): Pose
+	local sob = sin(t * 7) * 4
+	local out = mournOut
+	out.RightHip = ang(10, 0, 0)
+	out.LeftHip = ang(10, 0, 0)
+	out.RightKnee = ang(-95, 0, 0)
+	out.LeftKnee = ang(-95, 0, 0)
+	out.Waist = ang(-18 + sob * 0.5, 0, 0)
+	out.Neck = ang(-28, 0, 0)
+	out.RightShoulder = ang(30 + sob, 0, 10)
+	out.LeftShoulder = ang(30 - sob, 0, -10)
+	out.RightElbow = ang(35, 0, 0)
+	out.LeftElbow = ang(35, 0, 0)
+	return out
+end
+local cprOut: Pose = {}
+function Poses.cpr(t: number): Pose
+	local pump = sin(t * 11)
+	local out = cprOut
+	out.RightHip = ang(20, 0, 0)
+	out.LeftHip = ang(20, 0, 0)
+	out.RightKnee = ang(-95, 0, 0)
+	out.LeftKnee = ang(-95, 0, 0)
+	out.Waist = ang(-38 - pump * 6, 0, 0)
+	out.Neck = ang(-12, 0, 0)
+	out.RightShoulder = ang(75 + pump * 6, 0, 8)
+	out.LeftShoulder = ang(75 + pump * 6, 0, -8)
+	out.RightElbow = ang(0, 0, 0)
+	out.LeftElbow = ang(0, 0, 0)
+	return out
+end
+Poses.MOODS = { Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr } :: { [string]: (number) -> Pose }
+
 return Poses

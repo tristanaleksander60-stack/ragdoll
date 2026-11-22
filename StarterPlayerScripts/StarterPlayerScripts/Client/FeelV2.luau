@@ -555,7 +555,7 @@ local function flash(at: CFrame, size: number, color: Color3, own: boolean)
 		table.insert(pieces, p)
 	end
 	local light: PointLight? = nil
-	if (own or liveFlashes == 0) and liveFlashes < FeelV2.caps.flashes then
+	if false and (own or liveFlashes == 0) and liveFlashes < FeelV2.caps.flashes then -- (V11 item 14: the light is FeelV2.light now, by weapon)
 		liveFlashes += 1
 		local l = Instance.new("PointLight")
 		l.Color = color
@@ -633,8 +633,70 @@ local function stepCasings(dt: number)
 	end
 end
 
+-- (V11 item 14, owner 22 Nov 2026: "a light flash when you shoot, by what you shoot with"): a short real light
+-- at the muzzle (and at a blast) that lights the floor and the ragdolls round it, then fades. Each kind its own
+-- size, colour and time; at most caps.flashes at once (own shots first), none on the lowest phones with
+-- Motion LESS. No neon: only the light.
+type LightSpec = { range: number, bright: number, time: number, color: Color3 }
+FeelV2.LIGHTS = {
+	small = { range = 10, bright = 2.2, time = 0.06, color = Color3.fromRGB(255, 214, 140) },
+	big = { range = 18, bright = 3.4, time = 0.09, color = Color3.fromRGB(255, 168, 80) },
+	rifle = { range = 12, bright = 2.6, time = 0.045, color = Color3.fromRGB(255, 228, 175) },
+	sniper = { range = 24, bright = 4, time = 0.1, color = Color3.fromRGB(255, 246, 228) },
+	laser = { range = 12, bright = 3, time = 0.14, color = Color3.fromRGB(255, 60, 60) },
+	rail = { range = 20, bright = 4, time = 0.35, color = Color3.fromRGB(150, 200, 255) },
+	flare = { range = 16, bright = 3, time = 0.7, color = Color3.fromRGB(255, 70, 50) },
+	gold = { range = 16, bright = 3.4, time = 0.09, color = Color3.fromRGB(255, 200, 80) },
+} :: { [string]: LightSpec }
+FeelV2.GUN_LIGHT = {
+	Blaster = "small", Revolver = "big", Deagle = "big", GoldenDeagle = "gold", Shotgun = "big", DoubleBarrel = "big",
+	AutoShotgun = "big", SMG = "rifle", TommyGun = "rifle", AK = "rifle", M4 = "rifle", LMG = "rifle", Minigun = "rifle",
+	Sniper = "sniper", DMR = "sniper", LaserRifle = "laser", Railgun = "rail", FlareGun = "flare", NailGun = "small",
+} :: { [string]: string }
+local liveLights = 0
+function FeelV2.light(at: Vector3, spec: LightSpec, own: boolean)
+	local tierLow = (FeelV2.caps.flashes or 0) <= 1
+	if tierLow and reducedMotion() then
+		return
+	end
+	if liveLights >= math.max(1, FeelV2.caps.flashes or 2) and not own then
+		return
+	end
+	liveLights += 1
+	local p = Instance.new("Part")
+	p.Name = "ShotLight"
+	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.CastShadow = true, false, false, false, false
+	p.Transparency = 1
+	p.Size = Vector3.new(0.2, 0.2, 0.2)
+	p.Position = at
+	local l = Instance.new("PointLight")
+	l.Color = spec.color
+	l.Range = spec.range
+	l.Brightness = spec.bright
+	l.Shadows = false
+	l.Parent = p
+	p.Parent = folder()
+	local hold = spec.time * 0.4
+	task.delay(hold, function()
+		TweenService:Create(l, TweenInfo.new(math.max(0.02, spec.time - hold)), { Brightness = 0 }):Play()
+	end)
+	task.delay(spec.time + 0.05, function()
+		liveLights -= 1
+		p:Destroy()
+	end)
+end
+
 -- A gun fired from `from` (its Tip, or the hand) towards `toward`. own: this player's shot.
 function FeelV2.muzzle(toyId: string, from: BasePart, toward: Vector3, own: boolean)
+	local kind = FeelV2.GUN_LIGHT[toyId]
+	local lightSpec = kind and FeelV2.LIGHTS[kind]
+	if lightSpec then
+		local camera0 = Workspace.CurrentCamera
+		if not camera0 or (camera0.CFrame.Position - from.Position).Magnitude < 200 then
+			local dir = toward - from.Position
+			FeelV2.light(from.Position + (if dir.Magnitude > 0.01 then dir.Unit * 0.8 else Vector3.zero), lightSpec, own)
+		end
+	end
 	local spec = FeelTuning.GUN_FX[toyId]
 	if not spec then
 		return

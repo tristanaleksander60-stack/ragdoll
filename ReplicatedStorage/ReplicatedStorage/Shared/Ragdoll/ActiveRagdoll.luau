@@ -1064,7 +1064,7 @@ end
 -- Standing still: decide whether to set off (run from someone, crawl, or walk home).
 local function think(rig: Rig)
 	-- (Checked a few times a second, not every step.)
-	if rig.held == 0 and rig.model:GetAttribute("IsDummy") == true and (rig.stateTime - rig.sinkCheckAt >= 0.5 or rig.stateTime < rig.sinkCheckAt) then
+	if rig.held == 0 and rig.model:GetAttribute("IsDummy") == true and rig.model:GetAttribute("Mood") == nil and (rig.stateTime - rig.sinkCheckAt >= 0.5 or rig.stateTime < rig.sinkCheckAt) then
 		rig.sinkCheckAt = rig.stateTime
 		if unsink(rig) then
 			emit("Unsink", rig, rig.pelvis.Position, 0)
@@ -1532,6 +1532,19 @@ local function update(dt: number)
 				enter(rig, "Ragdoll")
 			else
 				think(rig)
+				-- (V11 item 13: a Mood from Server/Mourning holds its pose: shock, kneeling in grief, CPR.)
+				local mood = rig.model:GetAttribute("Mood")
+				local moodRig: any = rig
+				local moodPose = if rig.state == "Standing" and type(mood) == "string" then Poses.MOODS[mood] else nil
+				if moodPose then
+					applyPose(rig, moodPose(rig.stateTime))
+					moodRig.moodPosed = true
+				elseif moodRig.moodPosed then
+					moodRig.moodPosed = nil
+					if rig.state == "Standing" then
+						applyPose(rig, Poses.REST)
+					end
+				end
 				-- (V9-P3: hurt, it sways on its feet; whole, it stands still as before.)
 				local hurt = if rig.state == "Standing" and rig.held == 0 then hurtOf(rig) else 0
 				if hurt > 0 then
