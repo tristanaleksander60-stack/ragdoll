@@ -117,7 +117,7 @@ local function onPadTouched(pad: BasePart, other: BasePart)
 					end
 				end
 				local v = other.AssemblyLinearVelocity
-				other.AssemblyLinearVelocity = Vector3.new(v.X * 0.6, HitMath.TRAMPOLINE_SPEED * 0.8, v.Z * 0.6)
+				other.AssemblyLinearVelocity = Vector3.new(v.X * 0.6, HitMath.TRAMPOLINE_SPEED * 0.8 * ((pad:GetAttribute("Bounce") :: number?) or 1), v.Z * 0.6)
 				report("Trampoline", pad.Position, 30)
 			end
 		end
@@ -128,7 +128,7 @@ local function onPadTouched(pad: BasePart, other: BasePart)
 	end
 	local mass = (model:GetAttribute("Mass") :: number?) or 10
 	local v = other.AssemblyLinearVelocity
-	local push = Vector3.new(v.X * 0.3, HitMath.TRAMPOLINE_SPEED, v.Z * 0.3)
+	local push = Vector3.new(v.X * 0.3, HitMath.TRAMPOLINE_SPEED * ((pad:GetAttribute("Bounce") :: number?) or 1), v.Z * 0.3) -- (0.37.10: a pad's Bounce, the giant one higher)
 	apply(model, pad, other, push * mass)
 	report("Trampoline", pad.Position, 40)
 end

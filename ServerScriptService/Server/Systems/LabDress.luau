@@ -56,8 +56,8 @@ LabDress.SPOTS = {
 	{ role = "Cone", x = -10, z = 28, yaw = 0, height = 2.2 },
 	{ role = "Cone", x = -10, z = 44, yaw = 0, height = 2.2 },
 	-- Height area (west, behind): crates at the stairs' foot, a hedge and a bench.
-	{ role = "Crate", x = -30, z = -40, yaw = 20, height = 4.5 }, -- (0.37.9: off the jump steps)
-	{ role = "Crate", x = -28, z = -45, yaw = 65, height = 3.5 },
+	{ role = "Crate", x = -24, z = -38, yaw = 20, height = 4.5 }, -- (0.37.9: off the jump steps; 0.37.10: off the giant trampoline)
+	{ role = "Crate", x = -22, z = -43, yaw = 65, height = 3.5 },
 	{ role = "Hedge", x = -84, z = -44, yaw = 90, height = 6 },
 	{ role = "Bench", x = -40, z = -84, yaw = 0, size = 7 },
 	-- The spawn plaza: three lamps on its rim, between the walks (0.37.5, owner: "benches and flower beds in
@@ -152,7 +152,9 @@ function LabDress.dress(into: Instance, origin: Vector3)
 			x += LabDress.FENCE_STEP
 		end
 	end
-	LabDress.throwTower(folder, origin)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).THROW_TOWER == true then -- (0.37.10: off unless switched on; the owner removed the castle)
+		LabDress.throwTower(folder, origin)
+	end
 	if #folder:GetChildren() == 0 then
 		folder:Destroy()
 	end

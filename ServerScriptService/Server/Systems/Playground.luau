@@ -149,7 +149,7 @@ local function buildTower()
 	Finish.apply(tower, "Wall")
 	-- A yellow and black band round the top, and a blue stripe down its face (the lab's colours).
 	for k = 0, 6 do
-		local band = part("TowerBand", Vector3.new(2, 1.2, 12.1), at(x - 6 + k * 2, top - 0.6, platformZ), if k % 2 == 0 then YELLOW else BLACK)
+		local band = part("TowerBand", Vector3.new(2, 1.2, 12.1), at(x - 6 + k * 2, top - 0.66, platformZ) -- (0.37.10: its top just under the roof, so the two never flicker), if k % 2 == 0 then YELLOW else BLACK)
 		band.CanCollide = false
 		band.CanQuery = false
 	end
@@ -158,8 +158,10 @@ local function buildTower()
 	stripe.CanQuery = false
 	-- The diving plank out of the east side, and the trampoline under its end.
 	part("Plank", Vector3.new(14, 1, 4), at(x + 14, top + 0.5, platformZ), Color3.fromRGB(205, 160, 105), Enum.Material.WoodPlanks)
-	local base = part("TrampolineBase", Vector3.new(12, 1, 12), at(x + 18, 0.5, platformZ), DARK)
-	local pad = part("TrampolinePad", Vector3.new(11, 0.4, 11), at(x + 18, 1.2, platformZ), BLUE, Enum.Material.Fabric)
+	-- (0.37.10, owner: "a giant trampoline under the tower": twice as wide, and it throws higher: Bounce.)
+	local base = part("TrampolineBase", Vector3.new(24, 1, 24), at(x + 20, 0.5, platformZ), DARK)
+	local pad = part("TrampolinePad", Vector3.new(23, 0.4, 23), at(x + 20, 1.2, platformZ), BLUE, Enum.Material.Fabric)
+	pad:SetAttribute("Bounce", 1.7)
 	pad:SetAttribute("Playground", true)
 	base:SetAttribute("Playground", true)
 end

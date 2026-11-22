@@ -1,8 +1,8 @@
 --!strict
 -- Heights (0.37.9, owner 22 Nov 2026: "build bridges and platforms"; the reviewer: "more verticality:
 -- towers, bridges, ramps, stairs and platforms"). In the height area (west, behind the spawn):
---   * a SKY BRIDGE from the top of the stair tower across to the top of the throw tower;
---   * a SLIDE from the middle of that bridge down to the grass, towards the plaza;
+--   * (0.37.10: the sky bridge went with the castle) a SLIDE TOP platform off the stair tower's roof;
+--   * a SLIDE from that platform down to the grass, towards the plaza;
 --   * a SKY DECK beside the stair tower, joined to its diving plank by a short bridge;
 --   * six JUMP STEPS climbing from the grass up to the sky deck.
 -- All anchored, solid parts in the lab's folder; nothing here moves or runs. Positions follow the stair
@@ -42,7 +42,7 @@ end
 
 -- A walkable span from a to b (both on the deck's top): planks, two rails on posts, and a steel pillar
 -- under its middle when it is long.
-local function bridge(into: Instance, name: string, a: Vector3, b: Vector3, ground: number)
+local function bridge(into: Instance, name: string, a: Vector3, b: Vector3, ground: number, pillar: boolean?)
 	local d = b - a
 	local len = d.Magnitude
 	if len < 1 then
@@ -63,23 +63,10 @@ local function bridge(into: Instance, name: string, a: Vector3, b: Vector3, grou
 			post.CastShadow = false
 		end
 	end
-	if len > 14 then
+	if len > 14 and pillar ~= false then
 		local h = mid.Y - ground
 		part(into, name .. "Pillar", Vector3.new(1.6, h, 1.6), CFrame.new(mid.X, ground + h / 2 - 0.8, mid.Z), STEEL, Enum.Material.Metal)
 	end
-end
-
--- The throw tower's top at its middle (a ray down onto the model), or nil.
-local function throwTowerTop(folder: Instance, at: Vector3): Vector3?
-	local tower = folder:FindFirstChild("ThrowTower", true)
-	if not tower then
-		return nil
-	end
-	local only = RaycastParams.new()
-	only.FilterType = Enum.RaycastFilterType.Include
-	only.FilterDescendantsInstances = { tower }
-	local hit = Workspace:Raycast(Vector3.new(at.X, at.Y + 120, at.Z), Vector3.new(0, -160, 0), only)
-	return if hit then hit.Position else nil
 end
 
 function Heights.build(folder: Instance, origin: Vector3)
@@ -95,34 +82,33 @@ function Heights.build(folder: Instance, origin: Vector3)
 	local towerX = -52 * S
 	local towerZ = -8 * S - 20 * 2.5 - 6
 	local tower = origin + Vector3.new(towerX, Heights.TOP, towerZ)
-	-- SKY BRIDGE: from the stair tower's west edge to just short of the throw tower's top.
-	local throwXZ = origin + Vector3.new(-70 * S, 0, -28 * S)
-	local throwTop = throwTowerTop(folder, throwXZ + Vector3.new(0, 40, 0))
-	local bridgeMid: Vector3? = nil
-	if throwTop then
-		local from = tower + Vector3.new(-7, 0, 0)
-		local flatDir = Vector3.new(throwTop.X - from.X, 0, throwTop.Z - from.Z)
-		local to = Vector3.new(throwTop.X, throwTop.Y, throwTop.Z) - flatDir.Unit * 5 -- (stops at the tower's rim)
-		bridge(into, "SkyBridge", from, to, ground)
-		bridgeMid = (from + to) / 2
+	-- SLIDE TOP: (0.37.10, owner: "remove the castle", "remove the railing so you can slide down") an open
+	-- platform off the stair tower's west side, level with its roof, railed only to the south and west; the
+	-- slide starts at its open north edge and runs down to the grass towards the plaza.
+	local padCenter = tower + Vector3.new(-7 - 5, 0, 0)
+	part(into, "SlideTop", Vector3.new(10, 1, 12), CFrame.new(padCenter - Vector3.new(0, 0.5, 0)), CONCRETE, Enum.Material.Concrete)
+	part(into, "SlideTopPillar", Vector3.new(2, Heights.TOP - 1, 2), CFrame.new(padCenter.X, ground + (Heights.TOP - 1) / 2, padCenter.Z), STEEL, Enum.Material.Metal)
+	for _, r in { { Vector3.new(0, 1.6, -6), Vector3.new(10, 0.3, 0.3) }, { Vector3.new(-5, 1.6, 0), Vector3.new(0.3, 0.3, 12) } } do
+		local rail = part(into, "SlideTopRail", r[2] + Vector3.new(0, 0, 0), CFrame.new(padCenter + r[1] + Vector3.new(0, 1.6, 0)), STEEL, Enum.Material.Metal)
+		rail.CastShadow = false
+		local posts = part(into, "SlideTopRailBase", Vector3.new(math.max(r[2].X, 0.3), 3.2, math.max(r[2].Z, 0.3)) * Vector3.new(1, 1, 1), CFrame.new(padCenter + r[1]), STEEL, Enum.Material.Metal)
+		posts.Transparency = 0.6 -- (a see-through guard under the rail)
+		posts.CastShadow = false
 	end
-	-- SLIDE: from the bridge's middle down to the grass, towards the plaza (north, a little east).
-	if bridgeMid then
-		local m = bridgeMid :: Vector3
-		local start = m + Vector3.new(0, -0.1, 3.2)
-		local finish = Vector3.new(m.X + 5, ground + 0.6, m.Z + 48)
+	do
+		local start = padCenter + Vector3.new(0, -0.15, 6)
+		local finish = Vector3.new(padCenter.X + 2, ground + 0.6, padCenter.Z + 56)
 		local d = finish - start
 		local cf = CFrame.lookAt((start + finish) / 2, finish)
-		local slide = part(into, "Slide", Vector3.new(5, 0.6, d.Magnitude), cf, SLIDE, Enum.Material.SmoothPlastic)
+		local slide = part(into, "Slide", Vector3.new(6, 0.6, d.Magnitude), cf, SLIDE, Enum.Material.SmoothPlastic)
 		slide.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0, 0.1, 100, 1) -- (no grip: bodies slide down)
 		slide:SetAttribute("Slide", true)
 		for _, side in { -1, 1 } do
-			part(into, "SlideWall", Vector3.new(0.5, 1.6, d.Magnitude), cf * CFrame.new(side * 2.75, 0.8, 0), SLIDE:Lerp(Color3.new(1, 1, 1), 0.25))
+			part(into, "SlideWall", Vector3.new(0.5, 1.6, d.Magnitude - 2), cf * CFrame.new(side * 3.25, 0.8, 1), SLIDE:Lerp(Color3.new(1, 1, 1), 0.25))
 		end
 		-- (a landing pad of soft blue at the bottom)
-		part(into, "SlideLanding", Vector3.new(8, 0.4, 8), CFrame.new(finish.X, ground + 0.2, finish.Z + 5), Color3.fromRGB(70, 150, 230), Enum.Material.Fabric)
-		-- (a support under its upper half)
-		local upper = start + d * 0.3
+		part(into, "SlideLanding", Vector3.new(9, 0.4, 9), CFrame.new(finish.X, ground + 0.2, finish.Z + 5), Color3.fromRGB(70, 150, 230), Enum.Material.Fabric)
+		local upper = start + d * 0.35
 		local h = upper.Y - ground
 		part(into, "SlidePillar", Vector3.new(1.2, h, 1.2), CFrame.new(upper.X, ground + h / 2 - 0.6, upper.Z), STEEL, Enum.Material.Metal)
 	end
@@ -133,7 +119,7 @@ function Heights.build(folder: Instance, origin: Vector3)
 	part(into, "SkyDeckPillar", Vector3.new(2, Heights.TOP - 1, 2), CFrame.new(deckCenter.X, ground + (Heights.TOP - 1) / 2, deckCenter.Z), STEEL, Enum.Material.Metal)
 	-- (the plank runs east from the tower, 14 long, its far end at towerX + 21)
 	local plankEnd = Vector3.new(origin.X + towerX + 18, top + 1, origin.Z + towerZ + 2)
-	bridge(into, "DeckBridge", plankEnd, Vector3.new(deckCenter.X, top, deckCenter.Z - 5), ground)
+	bridge(into, "DeckBridge", plankEnd, Vector3.new(deckCenter.X, top, deckCenter.Z - 5), ground, false) -- (no pillar: the giant trampoline is under it)
 	-- JUMP STEPS: six blocks up from the grass to the sky deck's north edge, zigzagging.
 	for i = 0, 5 do
 		local h = Heights.STEP_RISE * (i + 1)

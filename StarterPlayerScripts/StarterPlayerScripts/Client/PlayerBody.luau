@@ -550,7 +550,7 @@ local function bounce(pad: BasePart)
 		return
 	end
 	local v = root.AssemblyLinearVelocity
-	local up = Vector3.new(v.X * 0.6, HitMath.TRAMPOLINE_SPEED * TRAMPOLINE_SHARE, v.Z * 0.6)
+	local up = Vector3.new(v.X * 0.6, HitMath.TRAMPOLINE_SPEED * TRAMPOLINE_SHARE * ((pad:GetAttribute("Bounce") :: number?) or 1), v.Z * 0.6)
 	local model = limpModel
 	if down and model then
 		-- Limp: the whole body gets the bounce (minus how fast it was falling into the pad).
