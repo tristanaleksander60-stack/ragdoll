@@ -1267,9 +1267,7 @@ function HospitalCharts.pointTheWay()
 		return -- (during a replay it waits for the next line)
 	end
 	pointed = true
-	Toast.show(if ViewMode.isTouch()
-		then "See their pulse and bumps: DOCTOR MODE in WEAPONS"
-		else "See their pulse and bumps: Doctor mode (" .. Keybinds.labelOf("Doctor") .. ")")
+	-- (23 Nov 2026, owner: "remove the See their pulse notice when you shoot a ragdoll"): nothing is said.
 end
 
 function HospitalCharts.start()

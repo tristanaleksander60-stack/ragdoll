@@ -113,6 +113,9 @@ Anatomy.CUTS = table.freeze({
 	-- (22 Nov 2026, owner: "shoot them at the hips 2-3 times and the ragdoll comes apart, blood from both ends, bones
 	-- showing"): the upper body comes off the pelvis at the waist.
 	Waist = { joint = "Waist", parts = { "UpperTorso", "Head", "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand" }, label = "Cut in half", parent = "LowerTorso" },
+	-- (23 Nov 2026, owner: "2 shots in the head and the head falls off, the bone sticking up, blood spurting"): the
+	-- first round in the head kills (HEADSHOT), the second takes the head off at the neck.
+	Head = { joint = "Neck", parts = { "Head" }, label = "Head off", parent = "UpperTorso" },
 })
 
 -- A whole limb (LIMBS) or a smaller piece (CUTS) by name.
@@ -121,8 +124,11 @@ function Anatomy.cutOf(name: string): { joint: string, parts: { string }, label:
 end
 
 -- What a round in a zone cuts off once enough rounds land there, and how many it takes.
-Anatomy.SHOTS_TO_CUT = table.freeze({ Arm = 4, Forearm = 3, Hand = 2, Leg = 5, Shin = 3, Foot = 2, Waist = 3 })
+Anatomy.SHOTS_TO_CUT = table.freeze({ Arm = 4, Forearm = 3, Hand = 2, Leg = 5, Shin = 3, Foot = 2, Waist = 3, Head = 2 })
 function Anatomy.cutForZone(zoneId: string): (string?, number)
+	if zoneId == "Brain" or zoneId == "Skull" or zoneId == "Jaw" or zoneId == "Neck" then
+		return "Head", Anatomy.SHOTS_TO_CUT.Head
+	end
 	if zoneId == "Pelvis" or zoneId == "Intestines" then
 		return "Waist", Anatomy.SHOTS_TO_CUT.Waist -- (the hips: the waist gives way)
 	end

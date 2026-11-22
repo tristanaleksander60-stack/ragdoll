@@ -913,6 +913,7 @@ LabCreatures.LAYOUT = table.freeze({
 -- it does, lunges at the shooter, swallows them (the body hidden, a burst of blood), the shooter's screen shows
 -- WASTED (Client/Wasted), the creature goes home, and the player comes back in their lab.
 LabCreatures.REVENGE_GAP = 6 -- s before the same creature comes for someone again
+LabCreatures.REVENGE_REACH = 22 -- studs from the creature's edge: nearer than that, a shot makes it come for you
 LabCreatures.WASTED_HOLD = 2.6 -- s on the WASTED screen before the respawn
 local creatures: { { machine: Machine, model: Model } } = {}
 local lastRevenge: { [Model]: number } = {}
@@ -1014,6 +1015,13 @@ function LabCreatures.shotAt(player: Player, point: Vector3)
 			local rel = cf:PointToObjectSpace(point)
 			local half = size / 2 + Vector3.new(1, 1, 1)
 			if math.abs(rel.X) <= half.X and math.abs(rel.Y) <= half.Y and math.abs(rel.Z) <= half.Z then
+				-- (23 Nov 2026, owner: "only when you are fairly close, not when you stand shooting from the spawn")
+				local character = player.Character
+				local root = character and character:FindFirstChild("HumanoidRootPart")
+				local reach = LabCreatures.REVENGE_REACH + math.max(size.X, size.Z) / 2
+				if not (root and root:IsA("BasePart")) or (Vector3.new(root.Position.X - cf.Position.X, 0, root.Position.Z - cf.Position.Z)).Magnitude > reach then
+					return
+				end
 				local now = os.clock()
 				if now - (lastRevenge[model] or -math.huge) >= LabCreatures.REVENGE_GAP then
 					lastRevenge[model] = now

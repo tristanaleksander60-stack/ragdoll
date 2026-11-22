@@ -584,7 +584,54 @@ local function flash(at: CFrame, size: number, color: Color3, own: boolean)
 	end)
 end
 
-local function casing(from: BasePart, kind: "brass" | "shell")
+-- (23 Nov 2026, owner: "see the casings fall out of your gun when you shoot and hear them land; not too loud,
+-- not too quiet"): a casing flies out to the right, falls, bounces once on the floor with a soft metal clink
+-- (Pro Sound Effects "Bullet Drops 7", pitch by kind, quieter for other players' shots), lies there a moment
+-- and fades.
+FeelV2.CLINK_ID = "rbxassetid://9113631210"
+FeelV2.CLINK_VOLUME = 0.22 -- own shots; other players' at 60 %
+FeelV2.CASING_LIFE = 3
+local clinkPool: { Sound } = {}
+local clinkTurn = 0
+local function clink(at: Vector3, kind: string, own: boolean)
+	local camera = Workspace.CurrentCamera
+	if camera and (camera.CFrame.Position - at).Magnitude > 60 then
+		return
+	end
+	clinkTurn = clinkTurn % 4 + 1
+	local s = clinkPool[clinkTurn]
+	if not s then
+		local holder = Instance.new("Part")
+		holder.Name = "Clink"
+		holder.Anchored, holder.CanCollide, holder.CanQuery, holder.CanTouch = true, false, false, false
+		holder.Transparency = 1
+		holder.Size = Vector3.one * 0.1
+		holder.Parent = folder()
+		local made = Instance.new("Sound")
+		made.SoundId = FeelV2.CLINK_ID
+		made.RollOffMinDistance = 4
+		made.RollOffMaxDistance = 45
+		made.Parent = holder
+		clinkPool[clinkTurn] = made
+		s = made
+	end
+	local snd = s :: Sound
+	local holder = snd.Parent :: BasePart
+	if not holder.Parent then
+		holder.Parent = folder()
+	end
+	holder.Position = at
+	snd.Volume = FeelV2.CLINK_VOLUME * (if own then 1 else 0.6) * rng:NextNumber(0.8, 1.1)
+	snd.PlaybackSpeed = (if kind == "shell" then 0.72 else 1.05) * rng:NextNumber(0.92, 1.1)
+	snd.TimePosition = 0
+	snd:Play()
+end
+
+local castParams = RaycastParams.new()
+castParams.FilterType = Enum.RaycastFilterType.Exclude
+castParams.RespectCanCollide = true
+
+local function casing(from: BasePart, kind: "brass" | "shell", own: boolean?)
 	if #casings >= FeelV2.caps.casings then
 		local old = table.remove(casings, 1)
 		if old then
@@ -611,23 +658,56 @@ local function casing(from: BasePart, kind: "brass" | "shell")
 	p.CFrame = cf * CFrame.new(0.25, 0.1, 0.4)
 	p.Parent = folder()
 	local out = cf.RightVector * rng:NextNumber(7, 10) + cf.UpVector * rng:NextNumber(5, 8) + cf.LookVector * rng:NextNumber(-1.5, 0.5)
-	table.insert(casings, { part = p, velocity = out, spin = Vector3.new(rng:NextNumber(-20, 20), rng:NextNumber(-20, 20), rng:NextNumber(-20, 20)), born = os.clock() })
+	local c: any = { part = p, velocity = out, spin = Vector3.new(rng:NextNumber(-20, 20), rng:NextNumber(-20, 20), rng:NextNumber(-20, 20)), born = os.clock() }
+	c.kind = kind
+	c.own = own == true
+	c.bounces = 0
+	table.insert(casings, c)
 end
 
 local function stepCasings(dt: number)
 	local now = os.clock()
-	local g = Workspace.Gravity * 0.35 -- (studs/s^2: a casing reads better a little floaty)
+	local g = Workspace.Gravity * 0.6
+	local skip: { Instance } = { folder() }
+	local character = player.Character
+	if character then
+		table.insert(skip, character)
+	end
+	local camera = Workspace.CurrentCamera
+	if camera then
+		table.insert(skip, camera)
+	end
+	castParams.FilterDescendantsInstances = skip
 	for i = #casings, 1, -1 do
-		local c = casings[i]
+		local c: any = casings[i]
 		local age = now - c.born
-		if age > 0.9 or not c.part.Parent then
+		if age > FeelV2.CASING_LIFE or not c.part.Parent then
 			c.part:Destroy()
 			table.remove(casings, i)
+		elseif c.resting then
+			if age > FeelV2.CASING_LIFE - 0.5 then
+				c.part.Transparency = (age - (FeelV2.CASING_LIFE - 0.5)) / 0.5
+			end
 		else
 			c.velocity -= Vector3.new(0, g * dt, 0)
-			c.part.CFrame = (c.part.CFrame + c.velocity * dt) * CFrame.Angles(c.spin.X * dt, c.spin.Y * dt, c.spin.Z * dt)
-			if age > 0.6 then
-				c.part.Transparency = (age - 0.6) / 0.3
+			local here = c.part.Position
+			local move = c.velocity * dt
+			local hit = Workspace:Raycast(here, move + move.Unit * 0.1, castParams)
+			if hit then
+				c.bounces += 1
+				if c.bounces == 1 then
+					clink(hit.Position, c.kind, c.own)
+				end
+				if c.bounces >= 2 or c.velocity.Magnitude < 6 then
+					c.resting = true
+					c.part.CFrame = CFrame.new(hit.Position + hit.Normal * 0.06) * CFrame.Angles(0, rng:NextNumber(0, 6.28), math.rad(90))
+				else
+					local v = c.velocity
+					c.velocity = (v - 2 * v:Dot(hit.Normal) * hit.Normal) * 0.35
+					c.part.CFrame = CFrame.new(hit.Position + hit.Normal * 0.08) * c.part.CFrame.Rotation
+				end
+			else
+				c.part.CFrame = (c.part.CFrame + move) * CFrame.Angles(c.spin.X * dt, c.spin.Y * dt, c.spin.Z * dt)
 			end
 		end
 	end
@@ -709,7 +789,7 @@ function FeelV2.muzzle(toyId: string, from: BasePart, toward: Vector3, own: bool
 		flash(CFrame.lookAt(from.Position, toward), spec.flash, spec.color or FeelTuning.FLASH_COLOR, own)
 	end
 	if spec.casing then
-		casing(from, spec.casing)
+		casing(from, spec.casing, own)
 	end
 	FeelBus.fire("Shot", { toyId = toyId, own = own })
 end

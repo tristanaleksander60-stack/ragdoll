@@ -719,7 +719,11 @@ local function layout()
 		tools.button.root.Size = UDim2.fromOffset(w, tall)
 		tools.button.root.Position = UDim2.fromOffset(EDGE, EDGE)
 		local iconOnly = KitStyle.V2 and (PokeController.wordWidth("WEAPONS") > w - 8 or PokeController.wordWidth("CANCEL") > w - 8)
-		if iconOnly ~= toolsIconOnly then
+		-- (23 Nov 2026, owner: "WEAPONS still has no key you can see"): it was only drawn when the word/icon choice
+		-- changed, never the first time; now once at the start too.
+		local anyTools: any = tools
+		if iconOnly ~= toolsIconOnly or not anyTools.drawnOnce then
+			anyTools.drawnOnce = true
 			toolsIconOnly = iconOnly
 			drawTools(toolsPicking)
 		end

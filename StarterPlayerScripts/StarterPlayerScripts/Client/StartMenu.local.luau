@@ -44,66 +44,21 @@ grad.Rotation = 90
 grad.Color = ColorSequence.new(Color3.fromRGB(60, 74, 96), Color3.fromRGB(14, 16, 22))
 grad.Parent = back
 
-local view = Instance.new("ViewportFrame")
+-- (23 Nov 2026, owner: "the start menu looks like trash: just our thumbnail in the background, a little darker"):
+-- the game's first thumbnail, cropped to fill, under a dark veil.
+local view = Instance.new("ImageLabel")
 view.Size = UDim2.fromScale(1, 1)
 view.BackgroundTransparency = 1
-view.Ambient = Color3.fromRGB(150, 150, 160)
-view.LightColor = Color3.fromRGB(255, 250, 240)
-view.LightDirection = Vector3.new(-0.4, -1, -0.3)
+view.Image = "rbxassetid://130041076140252"
+view.ScaleType = Enum.ScaleType.Crop
+view.ImageColor3 = Color3.fromRGB(150, 150, 150)
 view.Parent = back
-local world = Instance.new("WorldModel")
-world.Parent = view
-local camera = Instance.new("Camera")
-camera.FieldOfView = 45
-camera.Parent = view
-view.CurrentCamera = camera
-
-local function block(size: Vector3, color: Color3, shape: Enum.PartType?): Part
-	local p = Instance.new("Part")
-	p.Anchored = true
-	p.Size = size
-	p.Color = color
-	p.Material = Enum.Material.SmoothPlastic
-	if shape then
-		p.Shape = shape
-	end
-	p.Parent = world
-	return p
-end
-
-local floor = block(Vector3.new(1, 26, 26), Color3.fromRGB(96, 150, 84), Enum.PartType.Cylinder)
-floor.CFrame = CFrame.new(0, -0.5, 0) * CFrame.Angles(0, 0, math.rad(90))
-local rim = block(Vector3.new(0.9, 27, 27), Color3.fromRGB(150, 140, 120), Enum.PartType.Cylinder)
-rim.CFrame = CFrame.new(0, -0.6, 0) * CFrame.Angles(0, 0, math.rad(90))
-
--- A block ragdoll: parts placed each frame from a root frame and joint angles.
-type Doll = { parts: { [string]: Part } }
-local SKIN = Color3.fromRGB(226, 226, 222)
-local function doll(tint: Color3): Doll
-	local d: Doll = { parts = {} }
-	d.parts.Torso = block(Vector3.new(2, 2, 1), tint)
-	d.parts.Head = block(Vector3.new(1.2, 1.2, 1.2), SKIN, Enum.PartType.Ball)
-	d.parts.LA = block(Vector3.new(0.8, 2, 0.8), SKIN)
-	d.parts.RA = block(Vector3.new(0.8, 2, 0.8), SKIN)
-	d.parts.LL = block(Vector3.new(0.9, 2, 0.9), Color3.fromRGB(70, 74, 86))
-	d.parts.RL = block(Vector3.new(0.9, 2, 0.9), Color3.fromRGB(70, 74, 86))
-	return d
-end
--- root: the torso's frame; a: shoulder swing (left, right), l: hip swing (left, right), radians.
-local function pose(d: Doll, root: CFrame, la: number, ra: number, ll: number, rl: number)
-	local p = d.parts
-	p.Torso.CFrame = root
-	p.Head.CFrame = root * CFrame.new(0, 1.65, 0)
-	p.LA.CFrame = root * CFrame.new(-1.4, 0.9, 0) * CFrame.Angles(la, 0, 0) * CFrame.new(0, -0.9, 0)
-	p.RA.CFrame = root * CFrame.new(1.4, 0.9, 0) * CFrame.Angles(ra, 0, 0) * CFrame.new(0, -0.9, 0)
-	p.LL.CFrame = root * CFrame.new(-0.5, -1, 0) * CFrame.Angles(ll, 0, 0) * CFrame.new(0, -1, 0)
-	p.RL.CFrame = root * CFrame.new(0.5, -1, 0) * CFrame.Angles(rl, 0, 0) * CFrame.new(0, -1, 0)
-end
-local flyer = doll(Color3.fromRGB(230, 120, 60))
-local wobbler = doll(Color3.fromRGB(80, 150, 230))
-local flopper = doll(Color3.fromRGB(120, 200, 90))
-local cannon = block(Vector3.new(4, 1.6, 1.6), Color3.fromRGB(60, 62, 70), Enum.PartType.Cylinder)
-cannon.CFrame = CFrame.new(-9, 1, 4) * CFrame.Angles(0, 0, math.rad(35))
+local veil = Instance.new("Frame")
+veil.Size = UDim2.fromScale(1, 1)
+veil.BackgroundColor3 = Color3.new(0, 0, 0)
+veil.BackgroundTransparency = 0.55
+veil.BorderSizePixel = 0
+veil.Parent = back
 
 local title = Instance.new("TextLabel")
 title.BackgroundTransparency = 1
@@ -188,21 +143,7 @@ pcall(function()
 	GuiService.SelectedObject = single
 end)
 
-local t0 = os.clock()
-local live = RunService.RenderStepped:Connect(function()
-	local t = os.clock() - t0
-	camera.CFrame = CFrame.lookAt(Vector3.new(math.sin(t * 0.15) * 22, 9, math.cos(t * 0.15) * 22), Vector3.new(0, 2, 0))
-	-- The flyer: shot from the cannon every 2.6 s, tumbling along an arc, then again.
-	local k = (t % 2.6) / 2.6
-	local x = -9 + k * 18
-	local y = 1.5 + math.sin(k * math.pi) * 9
-	pose(flyer, CFrame.new(x, y, 4 - k * 6) * CFrame.Angles(k * 9, k * 4, k * 2), math.sin(t * 14), -math.sin(t * 14), math.cos(t * 12), -math.cos(t * 12))
-	-- The wobbler: on its feet, swaying, arms out.
-	local sway = math.sin(t * 2.4) * 0.25
-	pose(wobbler, CFrame.new(3, 3, -3) * CFrame.Angles(0, t * 0.4, sway) * CFrame.new(0, 0, 0), -1.4 + sway, -1.4 - sway, sway * 0.6, -sway * 0.6)
-	-- The flopper: on its back, kicking.
-	pose(flopper, CFrame.new(-2, 0.6, -5) * CFrame.Angles(math.rad(-90), 0.6, 0), math.sin(t * 6) * 1.2, math.cos(t * 5) * 1.2, math.sin(t * 7) * 0.8, math.cos(t * 6) * 0.8)
-end)
+local live = RunService.RenderStepped:Connect(function() end) -- (no scene to move any more)
 
 local done = false
 local function lift()
@@ -219,6 +160,8 @@ local function lift()
 	for _, d in back:GetDescendants() do
 		if d:IsA("TextLabel") then
 			TweenService:Create(d, out, { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+		elseif d:IsA("Frame") then
+			TweenService:Create(d, out, { BackgroundTransparency = 1 }):Play()
 		elseif d:IsA("TextButton") then
 			TweenService:Create(d, out, { BackgroundTransparency = 1 }):Play()
 		elseif d:IsA("UIStroke") then

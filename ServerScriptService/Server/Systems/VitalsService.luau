@@ -412,6 +412,11 @@ function VitalsService.sever(model: Model, limb: string, position: Vector3?): bo
 				-- The bone end: off-white, sticking out of the middle.
 				piece(Enum.PartType.Cylinder, Vector3.new(0.34, thick * 0.26, thick * 0.26), Color3.fromRGB(236, 228, 208), base * CFrame.new(-0.12, thick * 0.04, 0))
 				piece(Enum.PartType.Ball, Vector3.one * thick * 0.3, Color3.fromRGB(236, 228, 208), base * CFrame.new(-0.29, thick * 0.04, 0))
+				if limb == "Head" then
+					-- (23 Nov 2026, owner: "the bone sticking up"): the spine out of the neck, longer.
+					piece(Enum.PartType.Cylinder, Vector3.new(0.7, thick * 0.22, thick * 0.22), Color3.fromRGB(236, 228, 208), base * CFrame.new(-0.45, 0, 0))
+					piece(Enum.PartType.Ball, Vector3.one * thick * 0.28, Color3.fromRGB(236, 228, 208), base * CFrame.new(-0.8, 0, 0))
+				end
 				-- Ragged drops round the edge.
 				for i = 1, 4 do
 					local a = i * math.pi / 2 + rng:NextNumber(-0.5, 0.5)
@@ -428,14 +433,14 @@ function VitalsService.sever(model: Model, limb: string, position: Vector3?): bo
 					local e = Instance.new("ParticleEmitter")
 					e.Color = ColorSequence.new(Anatomy.BLOOD)
 					e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 0.12) })
-					e.Speed = NumberRange.new(5, 11)
+					e.Speed = if limb == "Head" then NumberRange.new(9, 17) else NumberRange.new(5, 11)
 					e.SpreadAngle = Vector2.new(25, 25)
 					e.Lifetime = NumberRange.new(0.4, 0.8)
 					e.Acceleration = Vector3.new(0, -50, 0)
 					e.EmissionDirection = Enum.NormalId.Front
-					e.Rate = if limb == "Waist" then 70 else 35
+					e.Rate = if limb == "Waist" or limb == "Head" then 70 else 35
 					e.Parent = sp
-					task.delay(if limb == "Waist" then 6 else 3.5, function()
+					task.delay(if limb == "Waist" or limb == "Head" then 6 else 3.5, function()
 						e.Enabled = false
 						game:GetService("Debris"):AddItem(sp, 1.5)
 					end)
@@ -453,7 +458,7 @@ function VitalsService.sever(model: Model, limb: string, position: Vector3?): bo
 	-- A stump: the big artery there (a leg's femoral; an arm's axillary, at the shoulder).
 	local side = if string.find(limb, "Left") then "Left" else "Right"
 	local piece = string.sub(limb, #side + 1)
-	local zone = if limb == "Waist" then Anatomy.zones.Aorta -- (cut in half: the big artery)
+	local zone = if limb == "Waist" or limb == "Head" then (Anatomy.zones.Neck or Anatomy.zones.Aorta) -- (cut in half or the head off: the big arteries)
 		elseif piece == "Arm" or piece == "Leg" then Anatomy.zones[side .. (if piece == "Leg" then "Femoral" else "ArmStump")]
 		else Anatomy.zones[side .. piece] or Anatomy.zones[side .. "Forearm"]
 	table.insert(v.wounds, { zone = zone, at = Workspace:GetServerTimeNow(), opened = os.clock(), power = 1 })
