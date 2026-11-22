@@ -1086,8 +1086,8 @@ local function buildBigButton()
 	local lit = Color3.fromRGB(220, 30, 30)
 	local dim = Color3.fromRGB(90, 40, 40)
 	-- The sign: a board on two posts, beside the stand, readable from both sides.
-	part("ButtonSignPost", Vector3.new(0.3, 5.2, 0.3), local_(3.4, 2.6, 0.6), steel, Enum.Material.Metal)
-	part("ButtonSignPost", Vector3.new(0.3, 5.2, 0.3), local_(6.2, 2.6, 0.6), steel, Enum.Material.Metal)
+	part("ButtonSignPost", Vector3.new(0.3, 3.2, 0.3), local_(3.4, 1.6, 0.6), steel, Enum.Material.Metal) -- (22 Nov 2026: up to the board, not through its words)
+	part("ButtonSignPost", Vector3.new(0.3, 3.2, 0.3), local_(6.2, 1.6, 0.6), steel, Enum.Material.Metal)
 	local board = part("ButtonSign", Vector3.new(3.6, 2.4, 0.2), local_(4.8, 4.4, 0.6), Color3.fromRGB(28, 30, 38), Enum.Material.SmoothPlastic)
 	local countdowns: { TextLabel } = {}
 	for _, faceId in { Enum.NormalId.Back, Enum.NormalId.Front } do
@@ -1112,7 +1112,7 @@ local function buildBigButton()
 		clock.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
 		clock.TextScaled = true
 		clock.TextColor3 = Color3.fromRGB(120, 230, 120)
-		clock.Text = "READY! (every 5 min)"
+		clock.Text = "READY!"
 		clock.Parent = gui
 		table.insert(countdowns, clock)
 		gui.Parent = board
@@ -1134,7 +1134,7 @@ local function buildBigButton()
 				c.Text = string.format("NEXT IN %d:%02d", left // 60, left % 60)
 				c.TextColor3 = Color3.fromRGB(240, 240, 236)
 			else
-				c.Text = "READY! (every 5 min)"
+				c.Text = "READY!"
 				c.TextColor3 = Color3.fromRGB(120, 230, 120)
 			end
 		end

@@ -225,7 +225,7 @@ add("Grab", { label = "Grab", kind = "grab", category = "Specials", blurb = "Pic
 -- (22 Nov 2026, owner: "Talk is a weapon, a magic wand, one you start with"): point it at a ragdoll and
 -- click: its talk card opens (follow, stay, attack who and with what). Client PokeController.wandPress,
 -- server NpcCommand "Talk". Never hits.
-add("Wand", { label = "Magic Wand", kind = "dummy", category = "Specials", blurb = "Point at a ragdoll to talk: follow, stay or attack", glyph = "{1FA84}", color = rgb(190, 120, 255), cooldown = 0.3, power = 0, chaos = 0, fx = "Heal" })
+add("Wand", { label = "Magic Wand", kind = "dummy", category = "Specials", blurb = "Point at a ragdoll to talk: follow, stay or attack", glyph = "\u{1FA84}", color = rgb(190, 120, 255), cooldown = 0.3, power = 0, chaos = 0, fx = "Heal", held = true })
 add("Poke", { label = "Poke", kind = "hit", category = "Melee", blurb = "A tiny prod. They flinch", glyph = "👉", color = rgb(255, 205, 60), cooldown = 0.12, speed = 7, chaos = 0.05, fx = "Light", move = "Jab", byHand = true, unlockAt = 3})
 add("Slap", { label = "Slap", kind = "hit", category = "Melee", blurb = "A quick open hand. Wobbly", glyph = "👋", color = rgb(255, 180, 150), cooldown = 0.15, speed = 15, lift = 0.05, chaos = 0.1, fx = "Smack", move = "Slap", byHand = true, unlockAt = 7})
 add("Shove", { label = "Shove", kind = "hit", category = "Melee", blurb = "A good push. Down they go", glyph = "🤚", color = rgb(255, 160, 50), cooldown = 0.2, speed = 22, lift = 0.1, chaos = 0.2, fx = "Smack", move = "Push", byHand = true, unlockAt = 6 })

@@ -31,6 +31,8 @@ local ViewMode = require(Client:WaitForChild("ViewMode"))
 local NpcTalk = {}
 
 NpcTalk.TALK_REACH = 16 -- studs: further from the NPC the panel shuts
+NpcTalk.WAND_REACH = 64 -- studs: the same, when the Magic Wand opened it (server NpcCommand.WAND_REACH 60)
+local openedByWand = false
 NpcTalk.CLOSE_ACTION = "NpcTalkClose"
 NpcTalk.attacked = function() end :: () -> () -- (V9-0a: set in start; hides the Talk prompts after an attack)
 
@@ -168,6 +170,7 @@ local function open(data: any)
 	if not data.wand and not TalkRules.mayOpen(os.clock(), lastAttack) then -- (the Magic Wand's click is meant to open it)
 		return
 	end
+	openedByWand = data.wand == true
 	current = data.npc :: Model
 	gui.Enabled = true
 	pageMain(data)
@@ -362,7 +365,9 @@ function NpcTalk.start()
 			local character = player.Character
 			local root = character and character:FindFirstChild("HumanoidRootPart")
 			local pelvis = npc and npc.Parent and npc:FindFirstChild("LowerTorso")
-			if not (root and root:IsA("BasePart") and pelvis and pelvis:IsA("BasePart")) or (root.Position - pelvis.Position).Magnitude > NpcTalk.TALK_REACH then
+			-- (22 Nov 2026: opened with the Magic Wand from afar, it stays open out to the wand's reach.)
+			local reach = if openedByWand then NpcTalk.WAND_REACH else NpcTalk.TALK_REACH
+			if not (root and root:IsA("BasePart") and pelvis and pelvis:IsA("BasePart")) or (root.Position - pelvis.Position).Magnitude > reach then
 				close()
 			end
 		end

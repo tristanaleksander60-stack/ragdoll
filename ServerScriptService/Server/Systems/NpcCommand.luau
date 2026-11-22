@@ -223,7 +223,7 @@ function NpcCommand.refusal(player: Player, action: unknown, npcInst: unknown, t
 	if o and o.owner ~= player then
 		return "Someone else is talking to them"
 	end
-	if not o and (pelvis.Position - root.Position).Magnitude > NpcCommand.TALK_REACH then
+	if not o and (pelvis.Position - root.Position).Magnitude > NpcCommand.WAND_REACH then -- (22 Nov 2026: the Magic Wand commands from afar)
 		return "Walk up to them first"
 	end
 	if not o and action ~= "Bye" and countOf(player) >= NpcCommand.MAX_FOLLOWERS then
