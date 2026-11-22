@@ -39,15 +39,53 @@ VehicleService.SPECS = {
 	--   * Zone B (near spawn): Kart and Supercar — fast dopamine, flashy, to the sides of the spawn's
 	--     front view.
 	--   * Zone C (far): Jeep, MuscleCar, Truck — the row on the east stays as a vehicle garage.
-	Car = { label = "Supercar", body = Vector3.new(6.6, 1.4, 12.5), color = Color3.fromRGB(150, 220, 40), wheel = 2.6, lift = 0.6, pad = Vector2.new(62, -8), look = "SportsCar" } :: Spec, -- (session v849: moved from (66,20) to (45,30), spawn's right-front)
+	-- 0.37.12 (owner, 22 Nov 2026: "remove the cars completely, put in these, they must cost Robux"): three Creator Store
+	-- models (ServerStorage.V3Assets Silvia, FordTruck, Panzer; every script, sound and light stripped), on the kinds the
+	-- drive tuning already has (Config.VEHICLES Car, Truck, MuscleCar). Each needs its game pass (PASSES) to drive.
+	Car = { label = "Silvia Drift Car", body = Vector3.new(6.4, 1.4, 14), color = Color3.fromRGB(230, 230, 235), wheel = 2.6, lift = 0.6, pad = Vector2.new(62, -8), look = "Silvia" } :: Spec,
 	-- (session v850, owner: "fjern Jeepen"): the Jeep slot was dropped — four vehicles left (Supercar,
 	-- Kart, Truck, MuscleCar). All lookups of "Jeep" in Shop, Progression, VehicleFeel, Assets etc. are
 	-- safe since SPECS[kind] returns nil and those systems iterate or key-check.
-	Kart = { label = "Go-Kart", body = Vector3.new(4.6, 0.8, 7.5), color = Color3.fromRGB(60, 90, 220), wheel = 1.8, lift = 0.35, pad = Vector2.new(52, -64), look = "GoKart" } :: Spec, -- (session v849: moved from (66,-6) to (-45,-8), spawn's left-front — first vehicle a new player sees)
-	Truck = { label = "Monster Truck", body = Vector3.new(7.5, 2.2, 12), color = Color3.fromRGB(46, 112, 64), wheel = 6, lift = 3.6, pad = Vector2.new(68, -32) } :: Spec,
+	Truck = { label = "Ford Truck", body = Vector3.new(8.4, 2.2, 19), color = Color3.fromRGB(60, 70, 90), wheel = 3.4, lift = 1.2, pad = Vector2.new(68, -32), look = "FordTruck" } :: Spec,
 	-- (session v842: 5th slot — 70s muscle car. Look model Phoenix Slayer (8x5x20), script-stripped, chassis-compatible wheel names FL/FR/RL/RR.)
-	MuscleCar = { label = "Muscle Car", body = Vector3.new(5.8, 1.4, 13), color = Color3.fromRGB(200, 40, 40), wheel = 2.6, lift = 0.6, pad = Vector2.new(66, -58), look = "MuscleCar" } :: Spec,
+	MuscleCar = { label = "Panzer Tank", body = Vector3.new(11, 2.6, 23), color = Color3.fromRGB(90, 96, 80), wheel = 3, lift = 0.9, pad = Vector2.new(66, -60), look = "Panzer" } :: Spec,
 }
+
+-- 0.37.12: the game pass that unlocks each vehicle (the owner creates them on the dashboard and sends the ids).
+-- 0 = no pass yet: free to drive until the id is filled in.
+VehicleService.PASSES = { Car = 0, Truck = 0, MuscleCar = 0 } :: { [string]: number }
+local MarketplaceService = game:GetService("MarketplaceService")
+local owned: { [Player]: { [number]: boolean } } = {}
+game:GetService("Players").PlayerRemoving:Connect(function(p)
+	owned[p] = nil
+end)
+-- Whether `player` may drive `kind` (asks Roblox once per pass, then remembers; a failed ask says no this time).
+function VehicleService.mayDrive(player: Player, kind: string): boolean
+	local id = VehicleService.PASSES[kind] or 0
+	if id <= 0 then
+		return true
+	end
+	local mine = owned[player] or {}
+	owned[player] = mine
+	if mine[id] then
+		return true
+	end
+	local ok, has = pcall(function()
+		return MarketplaceService:UserOwnsGamePassAsync(player.UserId, id)
+	end)
+	if ok and has then
+		mine[id] = true
+		return true
+	end
+	return false
+end
+MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, id, bought)
+	if bought then
+		local mine = owned[player] or {}
+		owned[player] = mine
+		mine[id] = true
+	end
+end)
 
 VehicleService.HORN_GAP = 0.8 -- s between two honks
 VehicleService.RUN_OVER_SPEED = 14 -- studs/s: a car this fast that meets a dummy is the driver's hit (a KO when it falls)
@@ -203,12 +241,28 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	prompt.Triggered:Connect(function(player: Player)
 		local character = player.Character
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		-- (0.37.12: locked behind its game pass: Roblox's own buy window instead of the seat.)
+		if not VehicleService.mayDrive(player, kind) then
+			MarketplaceService:PromptGamePassPurchase(player, VehicleService.PASSES[kind])
+			return
+		end
 		if humanoid and humanoid.Health > 0 and not seat.Occupant and humanoid.SeatPart == nil then
 			seat:Sit(humanoid)
 		end
 	end)
 	seat:GetPropertyChangedSignal("Occupant"):Connect(function()
 		prompt.Enabled = seat.Occupant == nil
+		-- (0.37.12: whoever got in without the pass, by jumping on the seat, is put out again.)
+		local h = seat.Occupant
+		local p = h and game:GetService("Players"):GetPlayerFromCharacter(h.Parent)
+		if h and p and not VehicleService.mayDrive(p, kind) then
+			local sw = seat:FindFirstChild("SeatWeld")
+			if sw then
+				sw:Destroy()
+			end
+			h.Sit = false
+			MarketplaceService:PromptGamePassPurchase(p, VehicleService.PASSES[kind])
+		end
 	end)
 	-- v3: a real car model over the driving box when the place has one (V3Assets "Car" /
 	-- "MonsterTruck"): welded on, weightless and without collisions; the code-built shell goes

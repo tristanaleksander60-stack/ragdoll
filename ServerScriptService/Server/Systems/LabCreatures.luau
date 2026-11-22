@@ -322,17 +322,46 @@ BUILD.Spider = function(f, at, m)
 			return
 		end
 		swallow(m, body, function(model)
-			-- 0.37.11 (owner: "make the spider's kill more realistic"): it comes down its web to the catch, bites
-			-- the neck (blood sprays, the bite bleeds the body to death: VitalsService neck wounds), wraps it in
-			-- silk that thickens round it, sucks it dry (the cocoon shrinks and goes brown), climbs back up, and
-			-- lets the drained cocoon drop to the ground, where the dead body is left lying.
+			-- 0.37.11 / 0.37.12 (owner: "a more realistic kill", then "the ragdoll must not fly up and down, buggy, in
+			-- the web; you must see the spider wind round the ragdoll"): the real body is hidden at once and laid on
+			-- the ground under the web, and a still copy of it (its pose as it was caught, its face) hangs in the web,
+			-- so nothing fights the physics. The spider comes down, bites the neck (blood sprays; the bite bleeds the
+			-- real body to death: VitalsService neck wounds), then circles the catch twice, a silk thread from it to
+			-- the body, laying band after band of silk from the feet to the head; the bands close into a cocoon, it
+			-- is sucked dry (shrinks, goes brown), the spider climbs back, and the cocoon drops where the body lies.
 			local stuck = web.CFrame * CFrame.new(0, -1, -1.5)
-			task.spawn(hold, model, function()
-				return stuck
-			end, 4.9)
+			local groundY = at.Position.Y + 1.2
+			local floorCf = CFrame.new(stuck.Position.X, groundY, stuck.Position.Z) * CFrame.Angles(0, 0, math.rad(90))
+			hideBody(model, true)
+			pcall(lazy("DummyControl").move, model, floorCf)
+			-- The still copy in the web.
+			local catch = Instance.new("Model")
+			catch.Name = "SpiderCatch"
+			local pelvis = model:FindFirstChild("LowerTorso")
+			for _, p in model:GetChildren() do
+				if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" and p.Transparency < 1 and pelvis and pelvis:IsA("BasePart") then
+					local c = Instance.new("Part")
+					c.Name = p.Name
+					c.Anchored, c.CanCollide, c.CanQuery, c.CanTouch = true, false, false, false
+					c.Size = p.Size
+					c.Color = p.Color
+					c.Material = Enum.Material.SmoothPlastic
+					c.CFrame = stuck * pelvis.CFrame:ToObjectSpace(p.CFrame)
+					c.Parent = catch
+					local face = p:FindFirstChild("Face")
+					if face and face:IsA("SurfaceGui") then
+						local f2 = face:Clone()
+						f2.Enabled = true
+						f2.Parent = c
+					end
+				end
+			end
+			catch.Parent = f
+			table.insert(m.temp, catch)
+			local low = home * CFrame.new(0, 0, -5.5)
 			if spider then
 				play(1.0, function(t)
-					spider:PivotTo(home:Lerp(home * CFrame.new(0, 0, -5.5), t))
+					spider:PivotTo(home:Lerp(low, t))
 				end)
 			end
 			-- The bite.
@@ -357,47 +386,72 @@ BUILD.Spider = function(f, at, m)
 			end
 			play(0.8, function(t)
 				if spider then
-					spider:PivotTo(home * CFrame.new(0, 0, -5.5) * CFrame.new(0, math.abs(math.sin(t * 22)) * 0.9, -math.abs(math.sin(t * 22)) * 0.6))
+					spider:PivotTo(low * CFrame.new(0, math.abs(math.sin(t * 22)) * 0.9, -math.abs(math.sin(t * 22)) * 0.6))
 				end
 				if math.floor(t * 10) % 3 == 0 then
 					spray:Emit(6)
 				end
 			end)
-			-- The silk: a cocoon that winds up round it.
-			local cocoon = part(f, "Cocoon", Vector3.new(1, 1, 1), stuck, Color3.fromRGB(245, 245, 240), Enum.Material.Fabric, Enum.PartType.Ball)
-			table.insert(m.temp, cocoon)
-			play(1.3, function(t)
-				cocoon.Size = Vector3.new(4.2, 7.2, 4.2) * (0.25 + 0.75 * t)
-				cocoon.CFrame = stuck * CFrame.Angles(0, t * 14, math.sin(t * 30) * 0.1)
-				if t > 0.65 then
-					hideBody(model, true)
+			-- The wrap: twice round the catch, a band of silk laid each step, feet to head.
+			local silk = Color3.fromRGB(245, 245, 240)
+			local thread = part(f, "SilkThread", Vector3.new(0.12, 0.12, 1), stuck, silk, Enum.Material.SmoothPlastic)
+			table.insert(m.temp, thread)
+			local bands: { BasePart } = {}
+			local BANDS = 9
+			local center = stuck.Position
+			play(2.4, function(t)
+				local a = t * math.pi * 4
+				local y = -3 + 6 * t
+				local pos = center + Vector3.new(math.cos(a) * 6.5, y * 0.6, math.sin(a) * 6.5)
+				if spider then
+					spider:PivotTo(CFrame.lookAt(pos, center + Vector3.new(0, y * 0.6, 0)))
+				end
+				local tip = center + Vector3.new(0, y * 0.5, 0)
+				thread.Size = Vector3.new(0.12, 0.12, (pos - tip).Magnitude)
+				thread.CFrame = CFrame.lookAt((pos + tip) / 2, tip)
+				while #bands < math.floor(t * BANDS) do
+					local k = #bands
+					local band = part(f, "SilkBand", Vector3.new(0.6, 3.6, 3.6), stuck * CFrame.new(0, -2.8 + k * 0.7, 0) * CFrame.Angles(0, k * 0.7, math.rad(90)), silk, Enum.Material.Fabric, Enum.PartType.Cylinder)
+					band.Transparency = 0.05
+					table.insert(bands, band)
+					table.insert(m.temp, band)
 				end
 			end)
-			hideBody(model, true)
-			-- Sucked dry: the spider bobs, the cocoon shrinks and goes brown.
+			thread:Destroy()
+			-- The bands close into a cocoon.
+			local cocoon = part(f, "Cocoon", Vector3.new(3.8, 6.6, 3.8), stuck, silk, Enum.Material.Fabric, Enum.PartType.Ball)
+			table.insert(m.temp, cocoon)
+			play(0.5, function(t)
+				cocoon.Size = Vector3.new(3.8, 6.6, 3.8) * (0.85 + 0.15 * t) + Vector3.new(0.4, 0.8, 0.4) * t
+			end)
+			for _, b in bands do
+				b:Destroy()
+			end
+			catch:Destroy()
+			-- Sucked dry: the spider on top, bobbing; the cocoon shrinks and goes brown.
 			local brown = Color3.fromRGB(150, 128, 96)
+			local full = cocoon.Size
+			if spider then
+				spider:PivotTo(low)
+			end
 			play(1.4, function(t)
-				cocoon.Size = Vector3.new(4.2, 7.2, 4.2) * (1 - 0.2 * t)
-				cocoon.Color = Color3.fromRGB(245, 245, 240):Lerp(brown, t)
-				cocoon.CFrame = stuck * CFrame.Angles(0, 0, math.sin(t * 8) * 0.05)
+				cocoon.Size = full * (1 - 0.2 * t)
+				cocoon.Color = silk:Lerp(brown, t)
 				if spider then
-					spider:PivotTo(home * CFrame.new(0, 0, -5.5) * CFrame.new(0, math.abs(math.sin(t * 9)) * 0.5, 0))
+					spider:PivotTo(low * CFrame.new(0, math.abs(math.sin(t * 9)) * 0.5, 0))
 				end
 			end)
 			if spider then
 				task.spawn(play, 0.9, function(t)
-					spider:PivotTo((home * CFrame.new(0, 0, -5.5)):Lerp(home, t))
+					spider:PivotTo(low:Lerp(home, t))
 				end)
 			end
-			-- The cocoon drops; the dead body is left where it lands.
-			local ground = (rootOf(model) and (at.Position.Y + 1.2)) or at.Position.Y + 1.2
-			local floorCf = CFrame.new(stuck.Position.X, ground, stuck.Position.Z) * CFrame.Angles(0, 0, math.rad(90))
+			-- The cocoon drops onto the body on the ground.
+			local dropTo = CFrame.new(stuck.Position.X, groundY, stuck.Position.Z) * CFrame.Angles(0, 0, math.rad(90))
 			play(0.45, function(t)
-				cocoon.CFrame = stuck:Lerp(floorCf, t * t)
+				cocoon.CFrame = stuck:Lerp(dropTo, t * t)
 			end)
-			hold(model, function()
-				return floorCf
-			end, 0.6)
+			pcall(lazy("DummyControl").move, model, floorCf)
 			hideBody(model, false)
 			task.delay(2.5, function()
 				if cocoon.Parent then
