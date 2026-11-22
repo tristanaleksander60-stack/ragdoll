@@ -17,7 +17,8 @@ HudV3Layout.TOAST_GAP = 12 -- px between the top-left row and the toast lane
 HudV3Layout.ROW_MIN = 0.75 -- the top-left row shrinks to fit left of the toasts, never under this
 -- The left squares (UI audit 21 Nov 2026: WEAPONS lives only on the bar, next to the weapons; the
 -- square was the same button twice).
-HudV3Layout.LEFT = { "Shop", "God", "Lab" } -- (21 Nov 2026: GOD MODE between them: GodMode)
+HudV3Layout.LEFT = { "Shop", "Menu", "Lab" } -- (22 Nov 2026, owner: More in God's place; no God, no Maps)
+HudV3Layout.RIGHT = {} :: { string } -- (was Maps, Menu)
 
 export type Rect = { x: number, y: number, w: number, h: number, name: string }
 
@@ -62,7 +63,7 @@ function HudV3Layout.touchRects(screen: Vector2, ragdollBottom: number?, toastLe
 	end
 	local top = HudV3Layout.rightTop(screen, ragdollBottom)
 	local x0 = screen.X - m - (2 * cw + gap)
-	for i, name in { "Maps", "Menu" } do
+	for i, name in HudV3Layout.RIGHT do
 		table.insert(rects, { x = x0 + (i - 1) * (cw + gap), y = top, w = cw, h = ch, name = "V3" .. name })
 	end
 	return rects

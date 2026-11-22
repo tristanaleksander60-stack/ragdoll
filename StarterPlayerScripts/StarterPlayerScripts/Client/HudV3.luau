@@ -659,8 +659,13 @@ function HudV3.start()
 	card("Shop", "Shop", "shop", left, function()
 		Controller.toggle("Events")
 	end).LayoutOrder = 1
+	-- (22 Nov 2026, owner: "remove MAPS, put More where God was, remove God"): More is the left column's
+	-- middle square now; no God square and no Maps square (the Map Board in the world still travels).
+	card("Menu", if Config.V8_FIRST_HIT then "More" else "Menu", "settings", left, function()
+		Controller.toggle("Menu")
+	end).LayoutOrder = 2
 	-- (21 Nov 2026: GOD MODE, create life: GodMode's window.)
-	if Config.GOD_PASS and Config.DUMMY_TYPES then
+	if false and Config.GOD_PASS and Config.DUMMY_TYPES then
 		local godCard = card("God", "God", "god", left, function()
 			Controller.toggle("God")
 		end)
@@ -698,13 +703,7 @@ function HudV3.start()
 	rl.Padding = UDim.new(0, HudV3.GAP)
 	rl.SortOrder = Enum.SortOrder.LayoutOrder
 	rl.Parent = right
-	card("Maps", "Maps", "map", right, function()
-		Controller.toggle("Maps")
-	end).LayoutOrder = 1
-	-- (V8-0.2: "More", not "Menu": a pad player read it as Roblox's own menu, whose button is Leave.)
-	card("Menu", if Config.V8_FIRST_HIT then "More" else "Menu", "settings", right, function()
-		Controller.toggle("Menu")
-	end).LayoutOrder = 2
+	-- (22 Nov 2026: Maps and More left this column: More is on the left, Maps is gone.)
 	local c = Instance.new("Frame")
 	c.Name = "Chips"
 	c.AnchorPoint = Vector2.new(0, 1)
