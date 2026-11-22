@@ -110,6 +110,9 @@ Anatomy.CUTS = table.freeze({
 	RightShin = { joint = "RightKnee", parts = { "RightLowerLeg", "RightFoot" }, label = "Right shin", parent = "RightUpperLeg" },
 	LeftFoot = { joint = "LeftAnkle", parts = { "LeftFoot" }, label = "Left foot", parent = "LeftLowerLeg" },
 	RightFoot = { joint = "RightAnkle", parts = { "RightFoot" }, label = "Right foot", parent = "RightLowerLeg" },
+	-- (22 Nov 2026, owner: "shoot them at the hips 2-3 times and the ragdoll comes apart, blood from both ends, bones
+	-- showing"): the upper body comes off the pelvis at the waist.
+	Waist = { joint = "Waist", parts = { "UpperTorso", "Head", "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand" }, label = "Cut in half", parent = "LowerTorso" },
 })
 
 -- A whole limb (LIMBS) or a smaller piece (CUTS) by name.
@@ -118,8 +121,11 @@ function Anatomy.cutOf(name: string): { joint: string, parts: { string }, label:
 end
 
 -- What a round in a zone cuts off once enough rounds land there, and how many it takes.
-Anatomy.SHOTS_TO_CUT = table.freeze({ Arm = 4, Forearm = 3, Hand = 2, Leg = 5, Shin = 3, Foot = 2 })
+Anatomy.SHOTS_TO_CUT = table.freeze({ Arm = 4, Forearm = 3, Hand = 2, Leg = 5, Shin = 3, Foot = 2, Waist = 3 })
 function Anatomy.cutForZone(zoneId: string): (string?, number)
+	if zoneId == "Pelvis" or zoneId == "Intestines" then
+		return "Waist", Anatomy.SHOTS_TO_CUT.Waist -- (the hips: the waist gives way)
+	end
 	local side = string.match(zoneId, "^(Left)") or string.match(zoneId, "^(Right)")
 	if not side then
 		return nil, 0

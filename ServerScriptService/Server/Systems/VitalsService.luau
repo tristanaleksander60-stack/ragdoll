@@ -419,6 +419,27 @@ function VitalsService.sever(model: Model, limb: string, position: Vector3?): bo
 					piece(Enum.PartType.Ball, Vector3.one * thick * rng:NextNumber(0.16, 0.24), if i % 2 == 0 then Anatomy.BLOOD else flesh,
 						base * CFrame.new(-0.02, math.cos(a) * r, math.sin(a) * r))
 				end
+				-- (22 Nov 2026, owner: "blood from both ends"): a spurt out of the cut for a few seconds, both sides.
+				if Config.BLOOD ~= "off" then
+					local sp = Instance.new("Attachment")
+					sp.Name = "StumpSpurt"
+					sp.WorldCFrame = base * CFrame.Angles(0, math.rad(90), 0) -- (its front: out of the cut, -X)
+					sp.Parent = holder
+					local e = Instance.new("ParticleEmitter")
+					e.Color = ColorSequence.new(Anatomy.BLOOD)
+					e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 0.12) })
+					e.Speed = NumberRange.new(5, 11)
+					e.SpreadAngle = Vector2.new(25, 25)
+					e.Lifetime = NumberRange.new(0.4, 0.8)
+					e.Acceleration = Vector3.new(0, -50, 0)
+					e.EmissionDirection = Enum.NormalId.Front
+					e.Rate = if limb == "Waist" then 70 else 35
+					e.Parent = sp
+					task.delay(if limb == "Waist" then 6 else 3.5, function()
+						e.Enabled = false
+						game:GetService("Debris"):AddItem(sp, 1.5)
+					end)
+				end
 			end
 		end
 	end
@@ -432,13 +453,18 @@ function VitalsService.sever(model: Model, limb: string, position: Vector3?): bo
 	-- A stump: the big artery there (a leg's femoral; an arm's axillary, at the shoulder).
 	local side = if string.find(limb, "Left") then "Left" else "Right"
 	local piece = string.sub(limb, #side + 1)
-	local zone = if piece == "Arm" or piece == "Leg" then Anatomy.zones[side .. (if piece == "Leg" then "Femoral" else "ArmStump")]
+	local zone = if limb == "Waist" then Anatomy.zones.Aorta -- (cut in half: the big artery)
+		elseif piece == "Arm" or piece == "Leg" then Anatomy.zones[side .. (if piece == "Leg" then "Femoral" else "ArmStump")]
 		else Anatomy.zones[side .. piece] or Anatomy.zones[side .. "Forearm"]
 	table.insert(v.wounds, { zone = zone, at = Workspace:GetServerTimeNow(), opened = os.clock(), power = 1 })
 	v.blood -= 8
 	shareWounds(model, v, os.clock())
 	-- A leg off: it cannot stand. An arm off (round 3, M3 rule from the owner: an arm never puts a
 	-- body down on its own): it stays up, bleeding hard, until the blood decides.
+	-- (Cut in half: no one lives through that.)
+	if limb == "Waist" then
+		v.lethalAt = os.clock()
+	end
 	if v.state == "Alive" and string.find(limb, "Leg") then
 		setState(model, v, "Unconscious")
 	end
