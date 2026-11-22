@@ -975,7 +975,7 @@ local function dressPlot(plot: Plot)
 		-- front: cannon, ramp, stations) on red rubber; cars and crashes (east, behind) on asphalt; danger
 		-- (west, in front: mace, press) on sand; height (west, behind: tower, fan, throw tower) on concrete.
 		for _, a in {
-			{ name = "LaunchArea", at = Vector2.new(46, 30), size = Vector2.new(60, 62), color = Color3.fromRGB(150, 70, 60), material = Enum.Material.Concrete },
+			{ name = "LaunchArea", at = Vector2.new(42, 30), size = Vector2.new(68, 62), color = Color3.fromRGB(150, 70, 60), material = Enum.Material.Concrete },
 			{ name = "CarArea", at = Vector2.new(58, -42), size = Vector2.new(46, 72), color = Color3.fromRGB(70, 72, 78), material = Enum.Material.Asphalt },
 			{ name = "DangerArea", at = Vector2.new(-40, 42), size = Vector2.new(58, 56), color = Color3.fromRGB(214, 190, 140), material = Enum.Material.Sand },
 			{ name = "HeightArea", at = Vector2.new(-58, -40), size = Vector2.new(48, 80), color = Color3.fromRGB(168, 170, 174), material = Enum.Material.Concrete },
@@ -985,6 +985,16 @@ local function dressPlot(plot: Plot)
 			-- (a darker edge round it, a hair lower: the area reads as a place with a border)
 			paint(folder, a.name .. "Edge", Vector3.new(a.size.X * Sp + 2, 0.03, a.size.Y * Sp + 2), Vector3.new(o.X + mid.X, ground + 0.045, o.Z + mid.Y), a.color:Lerp(Color3.new(0, 0, 0), 0.35), a.material)
 			area:SetAttribute("Area", a.name)
+		end
+		-- (0.37.1, owner: "the portals stand half in the grass"): one stone platform under the travel corner
+		-- (MapBoard.TRAVEL_SPOTS: the MAPS board between SINGLEPLAYER and MULTIPLAYER), along its line.
+		do
+			local solo, multi = Vector2.new(-26.5, 34.6) * Sp, Vector2.new(-41.5, 13.4) * Sp
+			local mid, along = (solo + multi) / 2, (solo - multi)
+			local pad = paint(folder, "TravelPad", Vector3.new(16, 0.05, along.Magnitude + 16), Vector3.new(o.X + mid.X, ground + 0.075, o.Z + mid.Y), stoneColor, Enum.Material.Slate)
+			pad.CFrame = CFrame.lookAt(pad.Position, pad.Position + Vector3.new(along.X, 0, along.Y))
+			local edge = paint(folder, "TravelPadEdge", Vector3.new(17.2, 0.04, along.Magnitude + 17.2), Vector3.zero, Color3.fromRGB(120, 116, 108), Enum.Material.Slate)
+			edge.CFrame = pad.CFrame * CFrame.new(0, -0.006, 0)
 		end
 		local goals: { Vector2 } = {
 			Vector2.new(48, 6) * Sp, -- the cannon
@@ -996,7 +1006,7 @@ local function dressPlot(plot: Plot)
 			Vector2.new(0, PathPlanM.ROW_Z + 10), -- the test row
 			PathPlanM.RAMP_AT,
 			PathPlanM.BUTTON_AT,
-			Vector2.new(0, PathPlanM.FLOOR_BACK_Z or 110), -- out to the creature yard
+			Vector2.new(26, PathPlanM.FLOOR_BACK_Z or 110), -- out to the creature yard (0.37.1: past the boxing ring's east side)
 		}
 		for i, g in goals do
 			local dir = if g.Magnitude > 1 then g.Unit else Vector2.new(0, 1)
@@ -1056,7 +1066,7 @@ local function signText(owner: Player?): string
 end
 
 -- Which way an avatar faces at the lab's spawn (V8-0.4: 50 degrees right of -Z, towards the cannon; T112 measured the cannon at 42 degrees and the middle dummies at -37..-19 in the follow camera, inside 1920x1080 (49) and a landscape phone (55)).
-Lab.SPAWN_FACING = if Config.V8_ONE_VOICE then Vector3.new(math.sin(math.rad(50)), 0, -math.cos(math.rad(50))) else -Vector3.zAxis
+Lab.SPAWN_FACING = if Config.V8_ONE_VOICE then Vector3.new(math.sin(math.rad(72)), 0, -math.cos(math.rad(72))) else -Vector3.zAxis
 
 local function placeOnPlot(player: Player, plot: Plot)
 	local character = player.Character
