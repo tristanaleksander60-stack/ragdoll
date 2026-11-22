@@ -60,6 +60,13 @@ comment inside an expression.
     HomeLook / CommandedBy -2 plus an attribute "Mood" = Mourn / CPR; ActiveRagdoll reads Mood in the
     Standing state for the pose. Never zombies, the greeter, or ones in a machine; it stops at once on a
     hit, a bang or when the body is gone. A cheap check every 0.5 s.
+14. **A light flash on every shot, by weapon** (owner, 22 Nov): a short PointLight at the muzzle (pooled, one
+    per gun, client only, FX_CAPS lights per device) lights the ground and nearby ragdolls for a frame or two.
+    Per weapon in FeelTuning.GUN_FX: pistols small warm yellow (range ~10, 0.05 s); Deagle / Revolver /
+    shotguns big orange (range ~18, 0.08 s); rifles / SMG / minigun quick white-yellow flicker on each round;
+    sniper / DMR one big white flash; laser rifle red, railgun blue-white with a short glow, flare gun red
+    that lingers; RPG / grenade / C4 / nuke a big orange blast light that fades (bigger the bigger the boom).
+    No neon glow; off with Settings Motion LESS on low phones.
 
 ## What the owner tests after each phase
 - A: no pop-ups at all in 5 minutes except events; counters on icons; the gift "!"; slot key twice; rocket.
