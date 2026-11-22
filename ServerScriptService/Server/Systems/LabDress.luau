@@ -142,6 +142,15 @@ function LabDress.dress(into: Instance, origin: Vector3)
 			if placed and Knockables.ROLES[s.role] then
 				Knockables.make(placed, s.role)
 			end
+			-- (0.37.18, owner: "press E at the big rocket to strap a ragdoll on and watch it fly": RocketRide.)
+			if placed and s.role == "Rocket" then
+				local okR, errR = pcall(function()
+					require(script.Parent:WaitForChild("RocketRide")).wire(placed, origin)
+				end)
+				if not okR then
+					warn("[LabDress] rocket ride: " .. tostring(errR))
+				end
+			end
 		end
 	end
 	if V3Assets.has("Fence") then
