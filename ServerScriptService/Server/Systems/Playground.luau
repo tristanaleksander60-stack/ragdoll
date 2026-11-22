@@ -1070,20 +1070,75 @@ Playground.BUTTON_EVENTS = BUTTON_EVENTS -- (tests: what the button can start)
 local function buildBigButton()
 	local spot = (require(Shared:WaitForChild("PathPlan")) :: any).BUTTON_AT -- (V9-0h: on the rim under LAYOUT_V3)
 	local x, z = spot.X, spot.Y
-	local base = part("BigButtonBase", Vector3.new(1.6, 6, 6), at(x, 0.8, z) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 200, 205), Enum.Material.Metal, Enum.PartType.Cylinder)
-	local button = part("BigButton", Vector3.new(1, 4.4, 4.4), at(x, 2, z) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(220, 30, 30), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
+	-- (22 Nov 2026, owner: "a small stand with a button on it, and a real sign: a random free event every
+	-- 5 minutes if you press"): a waist-high pedestal with a small red button on top, and a sign board
+	-- beside it whose second line counts down to the next free event.
+	local face = CFrame.lookAt(origin + Vector3.new(x, 0, z), Vector3.new(origin.X, origin.Y, origin.Z)) -- (its front to the spawn)
+	local function local_(dx: number, dy: number, dz: number): CFrame
+		return face * CFrame.new(dx, dy, dz)
+	end
+	local steel = Color3.fromRGB(60, 64, 74)
+	local base = part("BigButtonBase", Vector3.new(2.6, 0.4, 2.6), local_(0, 0.2, 0), steel, Enum.Material.Metal)
+	part("BigButtonStand", Vector3.new(1.8, 3, 1.8), local_(0, 1.9, 0), Color3.fromRGB(235, 235, 232), Enum.Material.SmoothPlastic)
+	part("BigButtonTop", Vector3.new(2.3, 0.3, 2.3), local_(0, 3.55, 0), steel, Enum.Material.Metal)
+	part("BigButtonRing", Vector3.new(0.25, 1.7, 1.7), local_(0, 3.8, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 196, 40), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
+	local button = part("BigButton", Vector3.new(0.5, 1.3, 1.3), local_(0, 4.05, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(220, 30, 30), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
 	local lit = Color3.fromRGB(220, 30, 30)
 	local dim = Color3.fromRGB(90, 40, 40)
+	-- The sign: a board on two posts, beside the stand, readable from both sides.
+	part("ButtonSignPost", Vector3.new(0.3, 5.2, 0.3), local_(3.4, 2.6, 0.6), steel, Enum.Material.Metal)
+	part("ButtonSignPost", Vector3.new(0.3, 5.2, 0.3), local_(6.2, 2.6, 0.6), steel, Enum.Material.Metal)
+	local board = part("ButtonSign", Vector3.new(3.6, 2.4, 0.2), local_(4.8, 4.4, 0.6), Color3.fromRGB(28, 30, 38), Enum.Material.SmoothPlastic)
+	local countdowns: { TextLabel } = {}
+	for _, faceId in { Enum.NormalId.Back, Enum.NormalId.Front } do
+		local gui = Instance.new("SurfaceGui")
+		gui.Face = faceId
+		gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		gui.PixelsPerStud = 60
+		gui.LightInfluence = 0
+		local title = Instance.new("TextLabel")
+		title.BackgroundTransparency = 1
+		title.Size = UDim2.fromScale(1, 0.62)
+		title.Position = UDim2.fromScale(0, 0.04)
+		title.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
+		title.TextScaled = true
+		title.TextColor3 = Color3.fromRGB(255, 220, 70)
+		title.Text = "PRESS FOR A FREE\nRANDOM EVENT!"
+		title.Parent = gui
+		local clock = Instance.new("TextLabel")
+		clock.BackgroundTransparency = 1
+		clock.Size = UDim2.fromScale(1, 0.3)
+		clock.Position = UDim2.fromScale(0, 0.66)
+		clock.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
+		clock.TextScaled = true
+		clock.TextColor3 = Color3.fromRGB(120, 230, 120)
+		clock.Text = "READY! (every 5 min)"
+		clock.Parent = gui
+		table.insert(countdowns, clock)
+		gui.Parent = board
+	end
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "Press"
 	prompt.ActionText = "Press"
-	prompt.ObjectText = "Big Red Button"
+	prompt.ObjectText = "Free event"
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.MaxActivationDistance = 10
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = button
 	local labOrigin = origin
 	local readyAt = 0
+	local function showClock()
+		local left = math.ceil(readyAt - os.clock())
+		for _, c in countdowns do
+			if left > 0 then
+				c.Text = string.format("NEXT IN %d:%02d", left // 60, left % 60)
+				c.TextColor3 = Color3.fromRGB(240, 240, 236)
+			else
+				c.Text = "READY! (every 5 min)"
+				c.TextColor3 = Color3.fromRGB(120, 230, 120)
+			end
+		end
+	end
 	prompt.Triggered:Connect(function(player: Player)
 		local now = os.clock()
 		if now < readyAt then
@@ -1098,8 +1153,7 @@ local function buildBigButton()
 		end
 		local EventService = require(script.Parent.EventService)
 		-- (Only events that stay in this lab, and only while nothing waits: the server's one queue
-		-- stays free for bought events.)
-		-- (No train without its engine model: Creatures.train would run empty.)
+		-- stays free for bought events. No train without its engine model.)
 		local pool = {}
 		for _, id in BUTTON_EVENTS do
 			if id ~= "TrainRun" or require(script.Parent.V3Assets).has("Train") then
@@ -1107,39 +1161,34 @@ local function buildBigButton()
 			end
 		end
 		local pick = pool[math.random(1, #pool)]
-		-- (Only when nothing runs or waits: a free lab event never holds the server's one queue, and it
-		-- starts now, while the presser is in this lab. Blind review 19 Nov.)
 		local started = EventService.current() == nil and EventService.queued() == 0 and not EventService.miniRunning() and EventService.trigger(pick, player.DisplayName, "Free", false, nil, owner.UserId)
 		if not started then
 			prompt.ActionText = "Busy, try again soon"
 			task.delay(2.5, function()
 				prompt.ActionText = "Press"
 			end)
+			return
 		end
-		if started then
-			-- (The Lab Controls pass: its owner, in their own lab, waits LAB_CONTROLS_GAP instead.)
-			local gap = if player == owner and player:GetAttribute("LabControls") == true then Config.LAB_CONTROLS_GAP else Config.BIG_BUTTON_GAP
-			readyAt = now + gap
-			button.Color = dim
-			prompt.Enabled = false
-			button.CFrame = button.CFrame * CFrame.new(-0.3, 0, 0)
-			task.delay(gap, function()
+		-- (The Lab Controls pass: its owner, in their own lab, waits LAB_CONTROLS_GAP instead.)
+		local gap = if player == owner and player:GetAttribute("LabControls") == true then Config.LAB_CONTROLS_GAP else Config.BIG_BUTTON_GAP
+		readyAt = now + gap
+		button.Color = dim
+		prompt.Enabled = false
+		button.CFrame = button.CFrame * CFrame.new(-0.2, 0, 0)
+		task.spawn(function()
+			while os.clock() < readyAt and board.Parent do
+				showClock()
+				task.wait(1)
+			end
+			showClock()
+			if button.Parent then
 				button.Color = lit
 				prompt.Enabled = true
-				button.CFrame = button.CFrame * CFrame.new(0.3, 0, 0)
-			end)
-		end
+				button.CFrame = button.CFrame * CFrame.new(0.2, 0, 0)
+			end
+		end)
 	end)
-	sign("BIG RED BUTTON", base, 4.5, WHITE)
-	-- v3: the Creator Store button when the place has it (the code-built one stays, see-through,
-	-- holding the prompt).
-	local look = require(script.Parent.V3Assets).place("BigButton", folder, at(x, 0, z), { size = 6.5, collide = true, name = "BigButtonLook" })
-	if look then
-		base.Transparency = 1
-		base.CanCollide = false
-		button.Transparency = 1
-		lit = Color3.fromRGB(220, 30, 30)
-	end
+	local _ = base
 end
 
 function Playground.build(labOrigin: Vector3, name: string?)
