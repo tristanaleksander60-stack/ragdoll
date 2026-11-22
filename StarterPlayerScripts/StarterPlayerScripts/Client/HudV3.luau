@@ -728,6 +728,23 @@ function HudV3.start()
 	-- now each square shows its key in a small chip in its corner (not on touch screens).
 	if not ViewMode.isTouch() then
 		local Keybinds = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Keybinds")) :: any
+		-- (V10, owner: "the keys for Shop, More, Lab open nothing"): each square answers its own key here, the same
+		-- as a click on it (a text box being typed in keeps its keys).
+		local UIS = game:GetService("UserInputService")
+		UIS.InputBegan:Connect(function(input)
+			if input.UserInputType ~= Enum.UserInputType.Keyboard or UIS:GetFocusedTextBox() or Keybinds.capturing then
+				return
+			end
+			for cardName, keyId in { Shop = "Shop", Menu = "MenuWindow", Lab = "LabWindow" } do
+				local okK, code = pcall(Keybinds.key, keyId)
+				local c = left:FindFirstChild(cardName)
+				if okK and code == input.KeyCode and c and tapActions[c :: GuiObject] then
+					tapActions[c :: GuiObject]()
+					return
+				end
+			end
+		end)
+		local Keybinds = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Keybinds")) :: any
 		for cardName, keyId in { Shop = "Shop", Menu = "MenuWindow", Lab = "LabWindow" } do
 			local c = left:FindFirstChild(cardName)
 			if c then

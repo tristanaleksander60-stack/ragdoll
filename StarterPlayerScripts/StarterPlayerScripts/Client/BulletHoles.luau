@@ -247,6 +247,27 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?): BasePart?
 		local n = Vector3.new(px / (a * a), 0, pz / (b * b)).Unit
 		worldAt = skin.CFrame:PointToWorldSpace(Vector3.new(px, py, pz))
 		worldNormal = skin.CFrame:VectorToWorldSpace(n)
+		-- (V10, owner: "the holes still sit as flat circles 2 cm off the ragdoll, and some do not show"): the skins now
+		-- carry their real shape for rays (the DummySkin template's CollisionFidelity, set in the place), so a ray from
+		-- outside in, through the hit point towards the limb's axis, finds the true surface and its normal there.
+		do
+			local axis = skin.CFrame:PointToWorldSpace(Vector3.new(0, py, 0))
+			local out = worldAt - axis
+			if out.Magnitude > 0.01 then
+				local origin = axis + out.Unit * (skin.Size.Magnitude + 1)
+				local params = RaycastParams.new()
+				params.FilterType = Enum.RaycastFilterType.Include
+				params.FilterDescendantsInstances = { skin }
+				local was = skin.CanQuery
+				skin.CanQuery = true
+				local hit = workspace:Raycast(origin, axis - origin, params)
+				skin.CanQuery = was
+				if hit then
+					worldAt = hit.Position
+					worldNormal = hit.Normal
+				end
+			end
+		end
 	end
 	-- (V9-NOW: mild = BLOOD off: a dark hole in a grey scorch ring, a little bigger so it reads on the grey
 	-- matte skin from a few studs off; the ring is welded to the hole and goes with it.)
@@ -256,14 +277,14 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?): BasePart?
 	-- away from the camera, a graze on the outline, would stand off the silhouette; none is drawn there.)
 	do
 		local cam = workspace.CurrentCamera
-		if skin and cam and worldNormal:Dot((cam.CFrame.Position - worldAt).Unit) < 0.45 then
+		if skin and cam and worldNormal:Dot((cam.CFrame.Position - worldAt).Unit) < 0.1 then
 			return part
 		end
 	end
 	-- (V10 phase 2, owner: "the bullet holes and blood still sit out on the ragdoll like bubbles": the sunk balls
 	-- showed as domes. Now every hole is a flat disc lying on the surface, thin as paint; on a skin it lies on the
 	-- ellipse a little inside the box, where the sculpted mesh is.)
-	local hole = disc(if mild then 0.3 else 0.26, if mild then HOLE else BODY_HOLE, flatOn(worldAt, worldNormal, if skin then 0 else 0.03))
+	local hole = disc(if mild then 0.3 else 0.26, if mild then HOLE else BODY_HOLE, flatOn(worldAt, worldNormal, if skin then 0.012 else 0.03))
 	if skin then
 		hole.Size = Vector3.new(0.02, hole.Size.Y, hole.Size.Z)
 	end

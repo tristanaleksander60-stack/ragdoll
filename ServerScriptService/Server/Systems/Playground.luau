@@ -1293,11 +1293,11 @@ local function buildLikePost()
 	local dark = Color3.fromRGB(96, 64, 38)
 	local x, z = -24 * S, 18 * S
 	local face = CFrame.lookAt((at(x, 0, z)).Position, (at(0, 0, 0)).Position)
-	for _, sx in { -2.6, 2.6 } do
+	for _, sx in { -3.65, 3.65 } do -- (V10: beside the board, not through its text)
 		part("LikePost", Vector3.new(0.6, 7, 0.6), face * CFrame.new(sx, 3.5, 0), dark, Enum.Material.Wood)
 	end
 	local board = part("LikeSign", Vector3.new(6.6, 3.2, 0.4), face * CFrame.new(0, 5.4, 0), wood, Enum.Material.WoodPlanks)
-	part("LikeSignTop", Vector3.new(7.2, 0.4, 0.7), face * CFrame.new(0, 7.1, 0), dark, Enum.Material.Wood)
+	part("LikeSignTop", Vector3.new(8, 0.4, 0.7), face * CFrame.new(0, 7.1, 0), dark, Enum.Material.Wood)
 	for _, side in { Enum.NormalId.Front, Enum.NormalId.Back } do
 		local gui = Instance.new("SurfaceGui")
 		gui.Face = side
@@ -1312,7 +1312,7 @@ local function buildLikePost()
 			local t = Instance.new("TextLabel")
 			t.LayoutOrder = i
 			t.BackgroundTransparency = 1
-			t.Size = UDim2.fromScale(0.92, line[2] :: number)
+			t.Size = UDim2.fromScale(0.86, line[2] :: number)
 			t.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
 			t.TextScaled = true
 			t.TextColor3 = line[3] :: Color3

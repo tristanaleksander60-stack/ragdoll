@@ -251,14 +251,9 @@ function ControlsUI.start()
 			Controller.toggle("Controls")
 		elseif Keybinds.is("Eggs", input.KeyCode) then
 			Controller.toggle("Eggs")
-		elseif Keybinds.is("Shop", input.KeyCode) then
-			Controller.toggle("Events")
+		-- (V10: Shop, Lab and More answer their keys in HudV3 now: one toggle, not two that cancel out.)
 		elseif Keybinds.is("GodWindow", input.KeyCode) then -- (owner, 21 Nov 2026: keys for every window)
 			Controller.toggle("God")
-		elseif Keybinds.is("LabWindow", input.KeyCode) then
-			Controller.toggle("Lab")
-		elseif Keybinds.is("MenuWindow", input.KeyCode) then
-			Controller.toggle("Menu")
 		end
 	end)
 end

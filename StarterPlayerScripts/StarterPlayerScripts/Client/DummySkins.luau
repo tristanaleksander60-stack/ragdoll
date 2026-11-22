@@ -20,7 +20,7 @@ DummySkins.OVERLAP = 1.12 -- each skin this much longer than its limb: the joint
 DummySkins.DETAILS = true -- V7-4: crash-test joint rings, belt and test targets on the mannequins
 DummySkins.TARGET = "rbxassetid://91578612138787" -- the yellow and black crash-test target (art/dummy/target.png)
 -- V9-0o (Config.DUMMY_TONE): matte skins, no shine in the bright sun.
-DummySkins.MATERIAL = Enum.Material.Fabric -- (V10 phase 2, owner: "the ragdolls must not shine in the sun, a matte look, so the wounds read": fabric has next to no shine)
+DummySkins.MATERIAL = if TONE then TONE.material else Enum.Material.SmoothPlastic -- (V10, owner: "exactly the same as their head", not fabric: the head's material, DUMMY_TONE)
 DummySkins.REFLECTANCE = if TONE then 0 else 0.04
 
 local template: Instance? = nil
@@ -143,6 +143,9 @@ local function dress(model: Model)
 		-- (No belt: the waist block is wider than the sculpted waist, so any belt stuck out like a tray.)
 		-- The test targets: thin plates with the target picture.
 		local function mark(limbName: string, offset: CFrame, size: number)
+			if true then
+				return -- (V10, owner: "remove the yellow and black logo on the ragdolls")
+			end
 			local limb = model:FindFirstChild(limbName)
 			if not limb or not limb:IsA("BasePart") then
 				return
