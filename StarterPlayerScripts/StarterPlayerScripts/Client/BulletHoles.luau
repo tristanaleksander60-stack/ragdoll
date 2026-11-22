@@ -21,7 +21,7 @@ BulletHoles.MAX_WORLD = 60 -- holes in the world on this screen
 BulletHoles.WORLD_HOLD = 25 -- s a hole in the world stays
 BulletHoles.MAX_PER_BODY = 8
 BulletHoles.BLEEDS_FOR = 60 -- s a hole on a body is a place it bleeds from
-BulletHoles.SKIN_FIT = 0.8 -- (0.36.6: the ellipse a hole sits on, as a share of the skin box; well inside, since the sculpted mesh is thinner than its box)
+BulletHoles.SKIN_FIT = 0.86 -- (0.36.6: the ellipse a hole sits on, as a share of the skin box; well inside, since the sculpted mesh is thinner than its box)
 BulletHoles.SKIN_SINK = 0.06 -- studs a hole ball sits under that ellipse
 
 local HOLE = Color3.fromRGB(26, 24, 30)
@@ -252,12 +252,12 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?): BasePart?
 	-- matte skin from a few studs off; the ring is welded to the hole and goes with it.)
 	-- (0.36.6, owner: holes still stood out from the dummy. On a skin the hole is a small ball sunk into the
 	-- limb, so only a round dark spot shows where it breaks the real mesh, wherever that surface really is.)
-	local hole = if skin
-		then disc(if mild then 0.34 else 0.3, if mild then HOLE else BODY_HOLE, CFrame.new(worldAt - worldNormal * BulletHoles.SKIN_SINK))
-		else disc(if mild then 0.3 else 0.24, if mild then HOLE else BODY_HOLE, flatOn(worldAt, worldNormal, 0.03))
+	-- (V10 phase 2, owner: "the bullet holes and blood still sit out on the ragdoll like bubbles": the sunk balls
+	-- showed as domes. Now every hole is a flat disc lying on the surface, thin as paint; on a skin it lies on the
+	-- ellipse a little inside the box, where the sculpted mesh is.)
+	local hole = disc(if mild then 0.3 else 0.26, if mild then HOLE else BODY_HOLE, flatOn(worldAt, worldNormal, if skin then 0 else 0.03))
 	if skin then
-		hole.Shape = Enum.PartType.Ball
-		hole.Size = Vector3.one * (if mild then 0.34 else 0.3)
+		hole.Size = Vector3.new(0.02, hole.Size.Y, hole.Size.Z)
 	end
 	hole.Name = "BulletHole"
 	hole.Anchored = false

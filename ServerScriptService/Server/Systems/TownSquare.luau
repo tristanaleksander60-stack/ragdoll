@@ -176,7 +176,7 @@ local function photoSpot(kit: Kit, into: Instance, middle: Vector3)
 		kit.part(m, "FramePost", Vector3.new(0.8, 8.4, 0.8), face * CFrame.new(sx * 5.1, 1 + 4.2, 0.6), gold, Enum.Material.Metal, { CanCollide = true })
 	end
 	kit.part(m, "FrameTop", Vector3.new(11, 0.8, 0.8), face * CFrame.new(0, 9.4, 0.6), gold, Enum.Material.Metal, { CanCollide = false })
-	kit.sign(m, "UNTITLED RAGDOLL", face * CFrame.new(0, 11.1, 0.6), Vector3.new(12, 2.4, 0.4), Color3.fromRGB(24, 28, 44), Color3.fromRGB(255, 140, 40))
+	kit.sign(m, "HYPER RAGDOLL PHYSICS", face * CFrame.new(0, 11.1, 0.6), Vector3.new(12, 2.4, 0.4), Color3.fromRGB(24, 28, 44), Color3.fromRGB(255, 140, 40))
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "PlazaPhoto"
 	prompt.ActionText = "Take a photo"

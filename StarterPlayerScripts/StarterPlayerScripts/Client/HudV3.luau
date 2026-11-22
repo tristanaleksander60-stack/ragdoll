@@ -290,6 +290,20 @@ local function buildTop(onRewards: () -> ())
 	giftScale.Scale = 1.2
 	giftScale.Parent = gift
 	gift.Parent = g
+	-- (V10 phase 2, owner: "the gift wiggles back and forth now and then to catch the eye"): every 6-9 s its icon
+	-- shakes for a moment (a rotation on the icon only, so its place in the bar never moves).
+	task.spawn(function()
+		while gift.Parent do
+			task.wait(6 + math.random() * 3)
+			if gp.Parent and gift.Visible then
+				for i = 1, 8 do
+					gp.Rotation = (if i % 2 == 0 then -1 else 1) * (16 - i * 1.8)
+					task.wait(0.05)
+				end
+				gp.Rotation = 0
+			end
+		end
+	end)
 	local pill = Instance.new("Frame")
 	pill.Name = "Next"
 	pill.LayoutOrder = 2
@@ -710,6 +724,32 @@ function HudV3.start()
 	card("Lab", "Lab", "sandbox", left, function()
 		Controller.toggle("Lab")
 	end).LayoutOrder = 3
+	-- (V10 phase 2, owner: "keybinds for Shop, More, Lab"): they had keys (Keybinds Shop, MenuWindow, LabWindow);
+	-- now each square shows its key in a small chip in its corner (not on touch screens).
+	if not ViewMode.isTouch() then
+		local Keybinds = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Keybinds")) :: any
+		for cardName, keyId in { Shop = "Shop", Menu = "MenuWindow", Lab = "LabWindow" } do
+			local c = left:FindFirstChild(cardName)
+			if c then
+				local chip = Instance.new("TextLabel")
+				chip.Name = "KeyChip"
+				chip.Size = UDim2.fromOffset(24, 22)
+				chip.Position = UDim2.fromOffset(4, 4)
+				chip.BackgroundColor3 = Color3.fromRGB(20, 22, 28)
+				chip.BackgroundTransparency = 0.15
+				chip.TextColor3 = Color3.new(1, 1, 1)
+				chip.Font = Enum.Font.GothamBlack
+				chip.TextSize = 13
+				chip.ZIndex = 5
+				local ok, text = pcall(Keybinds.shortLabel, keyId)
+				chip.Text = if ok and type(text) == "string" then text else ""
+				local r = Instance.new("UICorner")
+				r.CornerRadius = UDim.new(0, 6)
+				r.Parent = chip
+				chip.Parent = c
+			end
+		end
+	end
 	local right = Instance.new("Frame")
 	right.Name = "Right"
 	right.BackgroundTransparency = 1

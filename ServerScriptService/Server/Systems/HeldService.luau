@@ -388,7 +388,7 @@ local BUILDERS: { [string]: { build: () -> Model, tilt: CFrame } } = {
 	Blaster = { build = blaster, tilt = CFrame.Angles(0, math.rad(-14), 0) },
 	Bat = { build = bat, tilt = CFrame.Angles(math.rad(55), math.rad(-10), 0) },
 	-- (22 Nov 2026: the Magic Wand: a dark stick with a glowing purple star ball at its tip.)
-	Wand = { build = talkWand, tilt = CFrame.Angles(math.rad(40), 0, 0) },
+	Wand = { build = talkWand, tilt = CFrame.Angles(0, math.rad(-14), 0) }, -- (V10 phase 2, owner: "the talk wand the right way": pointing ahead like the spell wands, not tipped up 40 degrees)
 	Pan = { build = pan, tilt = CFrame.Angles(math.rad(50), math.rad(-10), 0) },
 	Hammer = { build = hammer, tilt = CFrame.Angles(math.rad(55), math.rad(-10), 0) },
 	Golf = { build = golf, tilt = CFrame.Angles(math.rad(-60), 0, 0) },

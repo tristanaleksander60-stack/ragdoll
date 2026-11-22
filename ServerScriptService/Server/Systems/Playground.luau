@@ -114,7 +114,8 @@ local function realPad(pad: BasePart, color: Color3, icon: string?)
 		deco("PadBolt", Vector3.new(0.12, 0.38, 0.38), top * CFrame.new(c.X * (w / 2 - 0.35), 0.05, c.Y * (d / 2 - 0.35)) * CFrame.Angles(0, 0, math.rad(90)), PAD_BOLT, Enum.Material.Metal, Enum.PartType.Cylinder)
 	end
 	local DrawnIcons = require(Shared:WaitForChild("DrawnIcons")) :: any
-	local id = icon and DrawnIcons.ASSETS[icon]
+	local id = nil :: string? -- (V10 phase 2, owner: no pictograms; was icon and DrawnIcons.ASSETS[icon])
+	local _ = icon
 	if id then
 		local mark = deco("PadMark", Vector3.new(r * 1.25, 0.02, r * 1.25), top * CFrame.new(0, 0.1, 0), PAD_RUBBER, Enum.Material.SmoothPlastic)
 		mark.Transparency = 1
@@ -677,6 +678,9 @@ Playground.SIGN_ICONS = {
 	["LAVA!"] = "sign_lava",
 } :: { [string]: string }
 local function iconBadge(icon: string, onto: BasePart, height: number, color: Color3)
+	if true then
+		return -- (V10 phase 2, owner: "remove all pictograms")
+	end
 	local DrawnIcons = require(Shared:WaitForChild("DrawnIcons")) :: any
 	local id = DrawnIcons.ASSETS[icon]
 	if not id then

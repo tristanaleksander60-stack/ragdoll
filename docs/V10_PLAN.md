@@ -6,7 +6,7 @@ Rule for every step: as few credits as possible. The owner tests in Studio; Clau
 compile-checks every changed script in Studio before saying "ready", and never puts a comment inside an
 expression (twice that emptied the lab).
 
-**State:** phase 1 built (0.38.0, not play-tested); data read 22 Nov: phones 2/3 of new players, fps p5 ~11, all held upright.
+**State:** phases 1-2 built (0.38.2, not play-tested); phase 1 (0.38.0); data read 22 Nov: phones 2/3 of new players, fps p5 ~11, all held upright.
 
 ## Phase 1: why new players leave (do first)
 1. **Read the data.** `tools/SessionReport.luau` over Session_v1 (device, seconds played, funnel step, first

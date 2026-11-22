@@ -46,7 +46,7 @@ local function favorite()
 end
 
 local function build()
-	local window = C.Window({ name = "Like", title = "Favorite Untitled Ragdoll?", theme = "rebirth", icon = "star", size = LikePrompt.WINDOW })
+	local window = C.Window({ name = "Like", title = "Favorite Hyper Ragdoll Physics?", theme = "rebirth", icon = "star", size = LikePrompt.WINDOW })
 	C.Text("title", "\u{2B50} Having fun?", { scaled = true, size = UDim2.new(1, 0, 0, 34), layoutOrder = 1, parent = window.body })
 	C.Text("body", "Favorite the game to find it fast and hear about new weapons, places and events first. One tap, right here.", { autoY = true, wrap = true, layoutOrder = 2, parent = window.body })
 	local fav = C.Button({

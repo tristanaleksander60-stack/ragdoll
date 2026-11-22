@@ -171,6 +171,10 @@ type Machine = {
 local function credit(m: Machine)
 	local p = m.owner()
 	if p then
+		-- (V10 phase 2, owner: "takedowns when ragdolls are pressed, fed to the shark and so on": one each.)
+		pcall(function()
+			lazy("ProgressService").addTakedowns(p, 1)
+		end)
 		pcall(function()
 			lazy("ExperimentService").event(p, m.id, 1, m.label)
 		end)
@@ -559,6 +563,14 @@ BUILD.Whale = function(f, at, m)
 	part(f, "TankRim", Vector3.new(32, 1.2, 22), at * CFrame.new(0, 0.1, 0), Color3.fromRGB(140, 134, 125), Enum.Material.Cobblestone)
 	-- The shark itself: big, placed in the middle of the tank, facing along X so its length sweeps the pool.
 	local shark = place(f, "MShark", (at * CFrame.new(0, 0.6, 0)).Position, 90, 24)
+	-- (V10 phase 2, owner: "you must not walk through the shark": solid for players and bodies.)
+	if shark then
+		for _, d in shark:GetDescendants() do
+			if d:IsA("BasePart") then
+				d.CanCollide = true
+			end
+		end
+	end
 	local basePivot = shark and shark:GetPivot()
 	-- A red mist burst when the tank eats (replaces the whale's clean white spout).
 	local burst = Instance.new("ParticleEmitter")

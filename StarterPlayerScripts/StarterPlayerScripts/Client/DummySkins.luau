@@ -20,7 +20,7 @@ DummySkins.OVERLAP = 1.12 -- each skin this much longer than its limb: the joint
 DummySkins.DETAILS = true -- V7-4: crash-test joint rings, belt and test targets on the mannequins
 DummySkins.TARGET = "rbxassetid://91578612138787" -- the yellow and black crash-test target (art/dummy/target.png)
 -- V9-0o (Config.DUMMY_TONE): matte skins, no shine in the bright sun.
-DummySkins.MATERIAL = if TONE then TONE.material else Enum.Material.SmoothPlastic
+DummySkins.MATERIAL = Enum.Material.Fabric -- (V10 phase 2, owner: "the ragdolls must not shine in the sun, a matte look, so the wounds read": fabric has next to no shine)
 DummySkins.REFLECTANCE = if TONE then 0 else 0.04
 
 local template: Instance? = nil
@@ -72,6 +72,11 @@ local function dress(model: Model)
 				skin.TextureID = ""
 				skin.Material = DummySkins.MATERIAL
 				skin.Reflectance = DummySkins.REFLECTANCE
+				for _, sa in skin:GetChildren() do
+					if sa:IsA("SurfaceAppearance") then
+						sa:Destroy() -- (V10: a surface appearance would bring its own shine back)
+					end
+				end
 				skin.Color = d.Color
 				skin.Size = Vector3.new(d.Size.X, d.Size.Y * DummySkins.OVERLAP, d.Size.Z)
 				skin.CFrame = d.CFrame

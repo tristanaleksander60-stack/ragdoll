@@ -470,6 +470,18 @@ function Compressor.press(machine: Model, presser: Player?, owner: Player?)
 			end
 		end)
 	end
+	-- (V10 phase 2, owner: a takedown for every ragdoll pressed.)
+	local pressedDummies = 0
+	for _, pm in onBedNow do
+		if pm:GetAttribute("IsDummy") == true then
+			pressedDummies += 1
+		end
+	end
+	if owner and pressedDummies > 0 then
+		pcall(function()
+			lazy("ProgressService").addTakedowns(owner, pressedDummies)
+		end)
+	end
 	presses += 1
 	local tally = (machine:GetAttribute("Pancakes") :: number?) or 0
 	machine:SetAttribute("Pancakes", tally + 1)

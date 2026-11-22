@@ -119,12 +119,13 @@ local function sign(point: BasePart, words: string, height: number)
 	pic.Position = UDim2.fromScale(0.02, 0.5)
 	pic.ScaleType = Enum.ScaleType.Fit
 	pic.Image = DrawnIcons.ASSETS.guide_feed or ""
+	pic.Visible = false -- (V10 phase 2, owner: "remove all pictograms": the words alone, centred)
 	pic.Parent = card
 	local text = Instance.new("TextLabel")
 	text.BackgroundTransparency = 1
-	text.AnchorPoint = Vector2.new(1, 0.5)
-	text.Position = UDim2.fromScale(0.96, 0.5)
-	text.Size = UDim2.fromScale(0.6, 0.78)
+	text.AnchorPoint = Vector2.new(0.5, 0.5)
+	text.Position = UDim2.fromScale(0.5, 0.5)
+	text.Size = UDim2.fromScale(0.9, 0.78)
 	text.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
 	text.TextScaled = true
 	text.TextColor3 = Color3.fromRGB(24, 26, 40)

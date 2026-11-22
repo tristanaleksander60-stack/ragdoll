@@ -371,7 +371,7 @@ function FriendsService.join(player: Player, userId: unknown): (boolean, string?
 		return TeleportService:GetPlayerPlaceInstanceAsync(userId)
 	end)
 	if not ok or placeId ~= game.PlaceId or type(jobId) ~= "string" or jobId == "" then
-		return false, "They are not in Untitled Ragdoll right now"
+		return false, "They are not in Hyper Ragdoll Physics right now"
 	end
 	if jobId == game.JobId then
 		return false, "They are already here!"
