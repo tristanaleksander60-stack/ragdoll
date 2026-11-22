@@ -142,6 +142,66 @@ local function go(player: Player, how: string, target: Entry?)
 	end
 end
 
+-- (V11 C10, owner: "multiplayer = a server where everyone shares one lab, and a way back"): shared-lab servers
+-- are reserved servers listed in the MemoryStore map SHARED_MAP (access code -> players), each beating its count
+-- every BEAT s. MULTIPLAYER goes to the fullest one with room, or reserves a new one; the arrivals carry
+-- TeleportData { from = "Shared", code } and Lab makes that server's first lab everyone's. SINGLEPLAYER from
+-- there goes back to an ordinary public server (your own lab).
+PortalService.SHARED_MAP = "SharedLabs_v1"
+local sharedMap: MemoryStoreSortedMap? = nil
+local sharedCode: string? = nil
+
+local function sharedTarget(): string?
+	local m = sharedMap
+	if not m then
+		return nil
+	end
+	local ok, items = pcall(function()
+		return (m :: MemoryStoreSortedMap):GetRangeAsync(Enum.SortDirection.Ascending, 50)
+	end)
+	if not ok or type(items) ~= "table" then
+		return nil
+	end
+	local best, bestN = nil :: string?, -1
+	for _, it in items :: any do
+		local v = it.value
+		local n = if type(v) == "table" and type(v.n) == "number" then v.n else 99
+		if n < Players.MaxPlayers and n > bestN and it.key ~= sharedCode then
+			best, bestN = it.key, n
+		end
+	end
+	return best
+end
+
+local function goShared(player: Player)
+	if RunService:IsStudio() then
+		remote:FireClient(player, "Refused", { text = "Teleports work in the live game (not in Studio)" })
+		return
+	end
+	remote:FireClient(player, "Going", { kind = "Shared" })
+	local ok, err = pcall(function()
+		local code = sharedTarget() or TeleportService:ReserveServer(game.PlaceId)
+		local options = Instance.new("TeleportOptions")
+		options.ReservedServerAccessCode = code
+		options:SetTeleportData({ from = "Shared", code = code })
+		TeleportService:TeleportAsync(game.PlaceId, { player }, options)
+	end)
+	if not ok then
+		log.warn("shared teleport failed: " .. tostring(err))
+		remote:FireClient(player, "Refused", { text = "Could not get there. Try again!" })
+	end
+end
+
+local function sharedBeat()
+	local m, code = sharedMap, sharedCode
+	if m and code then
+		pcall(function()
+			-- lihfolk-ignore: datastore-setasync-player (a MemoryStore server count that expires, not player data)
+			(m :: MemoryStoreSortedMap):SetAsync(code, { n = #Players:GetPlayers() }, PortalService.EXPIRE)
+		end)
+	end
+end
+
 local function onRequest(player: Player, kind: unknown, arg: unknown)
 	if type(kind) ~= "string" then
 		return
@@ -188,7 +248,13 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 		remote:FireClient(player, "Refused", { text = "That server is full or gone. Pick another!" })
 	elseif kind == "Own" then
 		go(player, "Own", nil)
+	elseif kind == "Shared" then
+		goShared(player)
 	elseif kind == "Solo" then
+		if Workspace:GetAttribute("SharedLab") == true then
+			go(player, "Back", nil) -- (V11 C10: back from the shared lab to an ordinary server: your own lab)
+			return
+		end
 		go(player, "Solo", nil)
 	end
 end
@@ -367,8 +433,20 @@ function PortalService.start()
 	if not RunService:IsStudio() then
 		local ok, m = pcall(MemoryStoreService.GetSortedMap, MemoryStoreService, PortalService.MAP)
 		map = if ok then m else nil
+		local ok2, m2 = pcall(MemoryStoreService.GetSortedMap, MemoryStoreService, PortalService.SHARED_MAP)
+		sharedMap = if ok2 then m2 else nil
 	end
 	Players.PlayerAdded:Connect(function(player)
+		if not sharedCode then
+			local okJ, join = pcall(function()
+				return player:GetJoinData()
+			end)
+			local data = if okJ and type(join) == "table" then (join :: any).TeleportData else nil
+			if type(data) == "table" and data.from == "Shared" and type(data.code) == "string" and #data.code < 200 then
+				sharedCode = data.code
+				task.spawn(sharedBeat)
+			end
+		end
 		if region == "?" then
 			local ok, code = pcall(LocalizationService.GetCountryRegionForPlayerAsync, LocalizationService, player)
 			if ok and type(code) == "string" then
@@ -387,10 +465,17 @@ function PortalService.start()
 	task.spawn(function()
 		while true do
 			beat()
+			sharedBeat()
 			task.wait(PortalService.BEAT)
 		end
 	end)
 	game:BindToClose(function()
+		local sm, sc = sharedMap, sharedCode
+		if sm and sc then
+			pcall(function()
+				(sm :: MemoryStoreSortedMap):RemoveAsync(sc)
+			end)
+		end
 		local m = map
 		if m and isPublic() then
 			pcall(function()

@@ -54,7 +54,7 @@ end
 
 local black: ScreenGui? = nil
 local function going(kind: string)
-	local text = if kind == "Solo" then "GOING BACK TO SOLO" elseif kind == "Own" then "GOING TO YOUR OWN SERVER" else "GOING TO MULTIPLAYER"
+	local text = if kind == "Solo" then "GOING BACK TO SOLO" elseif kind == "Back" then "BACK TO SINGLEPLAYER" elseif kind == "Own" then "GOING TO YOUR OWN SERVER" else "GOING TO MULTIPLAYER"
 	if black then
 		black:Destroy() -- (one black screen at a time)
 	end
@@ -128,12 +128,22 @@ local function build()
 
 	local solo = C.Window({ name = "Solo", title = "Singleplayer", theme = "daily", icon = "map", size = Vector2.new(440, 300) })
 	C.Text("title", "Play on your own?", { scaled = true, size = UDim2.new(1, 0, 0, 32), layoutOrder = 1, parent = solo.body })
-	C.Text("body", "A server just for you: your lab, your weapons, nobody else. Come back any time through MULTIPLAYER.", { wrap = true, autoY = true, layoutOrder = 2, parent = solo.body })
-	local goSolo = C.Button({ text = "GO SOLO", role = "go", size = UDim2.new(1, 0, 0, Theme.Size.buttonH), layoutOrder = 3, parent = solo.body, onActivated = function()
+	C.Text("body", "Your own lab, your weapons, nobody else in it. Come back any time through MULTIPLAYER.", { wrap = true, autoY = true, layoutOrder = 2, parent = solo.body })
+	local goSolo = C.Button({ text = "SINGLEPLAYER", role = "go", size = UDim2.new(1, 0, 0, Theme.Size.buttonH), layoutOrder = 3, parent = solo.body, onActivated = function()
 		remote:FireServer("Solo")
 	end })
 	solo.defaultSelection = goSolo.hit
 	Controller.register(solo)
+
+	-- (V11 C10, owner: "multiplayer = everyone in one lab"): MULTIPLAYER's window: one button to the shared lab.
+	local shared = C.Window({ name = "Shared", title = "Multiplayer", theme = "rebirth", icon = "friends", size = Vector2.new(440, 300) })
+	C.Text("title", "Play together?", { scaled = true, size = UDim2.new(1, 0, 0, 32), layoutOrder = 1, parent = shared.body })
+	C.Text("body", "A server where everyone shares ONE lab: the same ragdolls, the same machines. Come back any time through SINGLEPLAYER.", { wrap = true, autoY = true, layoutOrder = 2, parent = shared.body })
+	local goShared = C.Button({ text = "PLAY TOGETHER", role = "go", size = UDim2.new(1, 0, 0, Theme.Size.buttonH), layoutOrder = 3, parent = shared.body, onActivated = function()
+		remote:FireServer("Shared")
+	end })
+	shared.defaultSelection = goShared.hit
+	Controller.register(shared)
 end
 
 function PortalUI.start()
@@ -147,8 +157,11 @@ function PortalUI.start()
 			elseif d.portal == "PortalSolo" then
 				Controller.open("Solo")
 			else
-				Controller.open("Servers")
-				remote:FireServer("List")
+				if game:GetService("Workspace"):GetAttribute("SharedLab") == true then
+					Controller.open("Solo") -- (V11 C10: on the shared server MULTIPLAYER is where you are)
+				else
+					Controller.open("Shared")
+				end
 			end
 		elseif kind == "List" then
 			local here = d.here

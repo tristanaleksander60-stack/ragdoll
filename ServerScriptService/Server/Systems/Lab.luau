@@ -1107,10 +1107,50 @@ local function placeOnPlot(player: Player, plot: Plot)
 	end
 end
 
+-- (V11 C10, owner: "multiplayer = a server where everyone shares one lab"): on a shared server (Workspace
+-- SharedLab, set when a player arrives through the MULTIPLAYER portal) the first player's lab is everyone's:
+-- the others are its guests (the owner's LabGuests, the same rights as an invited friend), live and spawn
+-- there, and get no lab of their own. When the host leaves, the next player takes a lab and hosts the rest.
+local guestOf: { [Player]: Plot } = {}
+local function sharedHost(): Plot?
+	if Workspace:GetAttribute("SharedLab") ~= true then
+		return nil
+	end
+	for _, plot in plots do
+		if plot.owner then
+			return plot
+		end
+	end
+	return nil
+end
+local function joinAsGuest(player: Player, plot: Plot)
+	local owner = plot.owner :: Player
+	guestOf[player] = plot
+	local list = owner:GetAttribute("LabGuests")
+	local text = if type(list) == "string" and list ~= "" then list else ","
+	if not string.find(text, "," .. tostring(player.UserId) .. ",", 1, true) then
+		owner:SetAttribute("LabGuests", text .. tostring(player.UserId) .. ",")
+	end
+	player:SetAttribute("LabPlot", nil)
+	player:SetAttribute("LabOrigin", plot.origin)
+	player:SetAttribute("LabFocus", focusOf(plot.origin))
+	player:SetAttribute("SharedGuest", owner.UserId)
+	if player.Character then
+		placeOnPlot(player, plot)
+	end
+end
+
 local function claim(player: Player)
 	if plotOf[player] then
 		return
 	end
+	local host = sharedHost()
+	if host and host.owner ~= player then
+		joinAsGuest(player, host)
+		return
+	end
+	guestOf[player] = nil
+	player:SetAttribute("SharedGuest", nil)
 	for _, plot in plots do
 		if plot.owner == nil then
 			plot.owner = player
@@ -1204,10 +1244,38 @@ local function freePlot(plot: Plot)
 end
 
 local function release(player: Player)
+	guestOf[player] = nil
 	local plot = plotOf[player]
 	plotOf[player] = nil
 	if plot then
 		freePlot(plot)
+		if Workspace:GetAttribute("SharedLab") == true then
+			-- (V11 C10: the host left: the next player takes a lab, the rest become its guests there.)
+			task.defer(function()
+				local heir: Player? = nil
+				for _, other in Players:GetPlayers() do
+					if other ~= player and other.Parent then
+						heir = other
+						break
+					end
+				end
+				if not heir then
+					return
+				end
+				guestOf[heir] = nil
+				claim(heir)
+				local hostPlot = plotOf[heir]
+				if hostPlot then
+					placeOnPlot(heir, hostPlot)
+					for _, other in Players:GetPlayers() do
+						if other ~= player and other ~= heir and not plotOf[other] then
+							joinAsGuest(other, hostPlot)
+						end
+					end
+				end
+			end)
+			return
+		end
 		task.defer(handOn, player)
 	end
 end
@@ -1305,7 +1373,7 @@ end
 
 -- Sends a player's avatar to their own lab (the Maps window's "My Lab", and every spawn).
 function Lab.sendHome(player: Player): boolean
-	local plot = plotOf[player]
+	local plot = plotOf[player] or guestOf[player] -- (V11 C10: a shared server guest goes to the host lab)
 	if not plot then
 		return false
 	end
@@ -1390,13 +1458,21 @@ function Lab.build()
 	log.info(string.format("%d labs of %d dummies laid out", Lab.PLOT_COUNT, DUMMY_COUNT))
 
 	local function onJoin(player: Player)
+		-- (V11 C10: a player sent by the MULTIPLAYER portal makes this a shared-lab server.)
+		local okJoin, join = pcall(function()
+			return player:GetJoinData()
+		end)
+		local data = if okJoin and type(join) == "table" then (join :: any).TeleportData else nil
+		if type(data) == "table" and data.from == "Shared" then
+			Workspace:SetAttribute("SharedLab", true)
+		end
 		claim(player)
-		-- Every avatar starts in its own lab (the plaza when there is none).
+		-- Every avatar starts in its own lab (the plaza when there is none; a shared server's guests in the host's).
 		player.CharacterAdded:Connect(function(character)
-			local plot = plotOf[player]
+			local plot = plotOf[player] or guestOf[player]
 			if plot then
 				task.defer(function()
-					if player.Character == character and plotOf[player] == plot then
+					if player.Character == character and (plotOf[player] or guestOf[player]) == plot then
 						placeOnPlot(player, plot)
 					end
 				end)
