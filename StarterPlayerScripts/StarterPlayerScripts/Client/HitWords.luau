@@ -85,7 +85,7 @@ end
 -- Three stars circling the head for a moment.
 function HitWords.stars(model: Model)
 	local head = model:FindFirstChild("Head")
-	if not head or not head:IsA("BasePart") then
+	if not head or not head:IsA("BasePart") or model:GetAttribute("MachineHidden") == true then
 		return
 	end
 	local b = Instance.new("BillboardGui")
@@ -112,7 +112,7 @@ function HitWords.stars(model: Model)
 	local conn: RBXScriptConnection? = nil
 	conn = RunService.RenderStepped:Connect(function()
 		local t = os.clock() - t0
-		if t > 1.5 or not head.Parent then
+		if t > 1.5 or not head.Parent or model:GetAttribute("MachineHidden") == true then -- (0.37.7: gone when it goes into the press)
 			if conn then
 				conn:Disconnect()
 			end
@@ -170,8 +170,6 @@ function HitWords.onHit(model: Model, region: string, state: string?, speed: num
 		HitWords.show(model, "Knocked out", Color3.fromRGB(255, 120, 90))
 	elseif region == "head" then
 		HitWords.stars(model) -- (22 Nov 2026, owner: no "Dizzy" text by the ragdolls; the stars stay)
-	elseif region == "leg" then
-		HitWords.show(model, "Wobbly", Color3.fromRGB(150, 220, 255))
 	end
 	if not gun and (speed >= HitWords.BIG or state == "Out") and not reducedMotion() then
 		HitWords.hitStop(model, HitWords.HIT_STOP)

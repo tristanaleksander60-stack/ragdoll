@@ -1010,7 +1010,7 @@ local function dressPlot(plot: Plot)
 		for _, r in areaRects do
 			table.insert(goals, r)
 		end
-		table.insert(goals, { at = Vector2.new(26, PathPlanM.FLOOR_BACK_Z or 110) })
+		-- (0.37.7, owner: the walk out across the launch area is gone; the garden roads lead to the yard.)
 		for i, g in goals do
 			local dir = if g.at.Magnitude > 1 then g.at.Unit else Vector2.new(0, 1)
 			local from = dir * (PLAZA_R - 1)

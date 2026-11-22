@@ -168,7 +168,24 @@ local lastFired: { [Player]: number } = {}
 
 Playground.BULLSEYE_RADIUS = 8
 Playground.CANNON_LOAD = 0.8 -- s a ragdoll sits in the barrel before it is fired (22 Nov 2026)
-Playground.CANNON_DUMMY_BOOST = 1.15 -- its shot out of the muzzle, times the pad's old throw
+Playground.CANNON_DUMMY_BOOST = 1.5 -- its shot out of the muzzle, times the pad's old throw (0.37.7: was 1.15, owner: "much more violent")
+-- 0.37.7 (owner: "the cannon and the swinging ball much more violent, so body parts sometimes fall off"):
+-- a shot or a hit can tear one or two pieces off (VitalsService.sever: whole limbs, forearms, hands, shins, feet).
+Playground.TEAR_CANNON = 0.45 -- the chance a cannon shot tears something off
+Playground.TEAR_BALL = 0.4 -- the chance a hit by the wrecking ball does
+local TEAR_PIECES = { "LeftArm", "RightArm", "LeftForearm", "RightForearm", "LeftHand", "RightHand", "LeftLeg", "RightLeg", "LeftShin", "RightShin", "LeftFoot", "RightFoot" }
+local function tearOff(m: Model, chance: number, at: Vector3?)
+	if not (Config :: any).SEVERING or math.random() > chance then
+		return
+	end
+	local ok, Vitals = pcall(require, script.Parent:WaitForChild("VitalsService"))
+	if not ok then
+		return
+	end
+	for _ = 1, math.random(1, 2) do
+		pcall((Vitals :: any).sever, m, TEAR_PIECES[math.random(#TEAR_PIECES)], at)
+	end
+end
 -- Where the human cannon's shot comes down (no air drag on a body in Roblox: a plain throw), from
 -- the pad at (x, z) with the root 3 studs over the pad, down to lying height.
 -- V8-1.1 (Config.STUNT_SCORE): the player's own cannon shot, a longer and higher arc of
@@ -302,6 +319,7 @@ local function buildCannon()
 								m:SetAttribute("MachineHidden", nil)
 								DummyControl.push(m, CANNON_DIRECTION * CANNON_SPEED * Playground.CANNON_DUMMY_BOOST)
 								FxService.hit(muzzle.Position, 140, "CannonPad")
+								tearOff(m, Playground.TEAR_CANNON, muzzle.Position)
 							end
 							task.wait(2.5)
 							loading[m] = nil
@@ -418,6 +436,28 @@ local function buildWreckingBall()
 		return push * 95 + Vector3.new(0, 55, 0)
 	end)
 	ball.CustomPhysicalProperties = PhysicalProperties.new(3, 0.3, 0.3)
+	-- 0.37.7: a ragdoll it meets is smashed away hard the way it swings, and may lose a piece (tearOff).
+	local smashed: { [Model]: number } = {}
+	ball.Touched:Connect(function(other)
+		local m = other:FindFirstAncestorOfClass("Model")
+		if not m or m:GetAttribute("IsDummy") ~= true or m:GetAttribute("Held") == true or m:GetAttribute("MachineHidden") == true then
+			return
+		end
+		local now = os.clock()
+		if smashed[m] and now - smashed[m] < 1.5 then
+			return
+		end
+		smashed[m] = now
+		local v = ball.AssemblyLinearVelocity
+		local flat = Vector3.new(v.X, 0, v.Z)
+		local away = if flat.Magnitude > 2 then flat.Unit else Vector3.new(other.Position.X - ball.Position.X, 0, other.Position.Z - ball.Position.Z).Unit
+		pcall((require(script.Parent.DummyControl) :: any).push, m, away * 120 + Vector3.new(0, 65, 0))
+		FxService.hit(other.Position, 120, "CannonPad")
+		tearOff(m, Playground.TEAR_BALL, other.Position)
+		m.Destroying:Once(function()
+			smashed[m] = nil
+		end)
+	end)
 	local weld = Instance.new("WeldConstraint")
 	weld.Part0 = arm
 	weld.Part1 = ball

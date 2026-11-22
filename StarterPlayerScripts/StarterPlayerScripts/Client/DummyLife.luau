@@ -497,7 +497,7 @@ local function makeStars(life: Life): BillboardGui
 end
 
 local function updateStars(life: Life, now: number)
-	local visible = now < life.starsUntil
+	local visible = now < life.starsUntil and life.model:GetAttribute("MachineHidden") ~= true -- (0.37.7: not over the pancake in the press)
 	local gui = life.stars
 	if not visible then
 		if gui then
