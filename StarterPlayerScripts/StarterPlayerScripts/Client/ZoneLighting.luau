@@ -13,6 +13,30 @@ local Places = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Pl
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local THUMB = (Config :: any).LOOK_THUMB == true and (Config :: any).LOOK_THUMB_LIGHT ~= nil -- (V9-0b: the thumbnail look)
 local V3 = if THUMB then (Config :: any).LOOK_THUMB_LIGHT else Config.LOOK_V3_LIGHT
+-- (V10, owner 22 Nov 2026: "remove the sun's harsh light, the exact vibe of the biggest ragdoll game"): a soft, bright,
+-- overcast day: high flat ambient, a weak sun, very soft shadows, little shine, a pale haze, colours a touch calmer.
+local SOFT = true
+if SOFT and not THUMB then
+	local soft = table.clone(V3 :: any)
+	soft.ClockTime = 13
+	soft.Brightness = 1.4
+	soft.Ambient = Color3.fromRGB(122, 126, 134)
+	soft.OutdoorAmbient = Color3.fromRGB(168, 172, 180)
+	soft.ExposureCompensation = 0.15
+	soft.EnvironmentDiffuseScale = 1
+	soft.EnvironmentSpecularScale = 0.35
+	soft.ShadowSoftness = 1
+	soft.bloom = 0.04
+	soft.contrast = -0.03
+	soft.saturation = -0.06
+	soft.airDensity = 0.3
+	soft.airOffset = 0.2
+	soft.airHaze = 1.4
+	soft.airGlare = 0
+	soft.airColor = Color3.fromRGB(205, 210, 220)
+	soft.airDecay = Color3.fromRGB(160, 170, 185)
+	V3 = soft
+end
 
 local ZoneLighting = {}
 ZoneLighting.reapply = function() end -- (set by start)
@@ -270,6 +294,11 @@ end
 -- LOOK_V3's finish: soft shadows, almost no bloom, no sun rays or far blur, a low haze.
 local function finishV3()
 	Lighting.ShadowSoftness = V3.ShadowSoftness
+	if SOFT then
+		pcall(function()
+			(Lighting :: any).LightingStyle = Enum.LightingStyle.Soft -- (V10: the flatter, softer look)
+		end)
+	end
 	Lighting.GlobalShadows = true
 	for _, d in Lighting:GetChildren() do
 		if d:IsA("SunRaysEffect") or d:IsA("DepthOfFieldEffect") then

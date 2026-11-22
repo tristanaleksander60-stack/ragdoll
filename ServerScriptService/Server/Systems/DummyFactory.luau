@@ -39,7 +39,7 @@ if TONE then
 	DummyFactory.JOINT = TONE.ends
 end
 DummyFactory.MATERIAL = if TONE then TONE.material else Enum.Material.SmoothPlastic
-DummyFactory.REFLECTANCE = if TONE then 0 else 0.04
+DummyFactory.REFLECTANCE = if TONE then (TONE.reflectance or 0) else 0.04 -- (V10: glossy, head and body alike)
 DummyFactory.HEAD = 0.86 -- the head's size after the build (a real body's head is smaller than Roblox's)
 -- (Slender human proportions: Roblox's own scales at their thin end, the body type towards Rthro's
 -- longer limbs and smaller head.)

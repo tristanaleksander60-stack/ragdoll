@@ -22,7 +22,7 @@ DummySkins.DETAILS = true -- V7-4: crash-test joint rings, belt and test targets
 DummySkins.TARGET = "rbxassetid://91578612138787" -- the yellow and black crash-test target (art/dummy/target.png)
 -- V9-0o (Config.DUMMY_TONE): matte skins, no shine in the bright sun.
 DummySkins.MATERIAL = if TONE then TONE.material else Enum.Material.SmoothPlastic -- (V10, owner: "exactly the same as their head", not fabric: the head's material, DUMMY_TONE)
-DummySkins.REFLECTANCE = if TONE then 0 else 0.04
+DummySkins.REFLECTANCE = if TONE then (TONE.reflectance or 0) else 0.04 -- (V10: glossy)
 
 local template: Instance? = nil
 local skins: { [BasePart]: MeshPart } = {}
