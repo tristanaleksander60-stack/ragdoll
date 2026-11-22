@@ -291,11 +291,29 @@ local function buildTop(onRewards: () -> ())
 	pill.BackgroundColor3 = HudV3.GLASS
 	pill.BackgroundTransparency = 0.1
 	corner(pill, 22)
-	-- (22 Nov 2026, owner: "move it where you actually see it"): the middle of the top bar, not its
-	-- right corner; small, so it never gets in the way.
-	pill.AnchorPoint = Vector2.new(0.5, 0.5)
-	pill.Position = UDim2.fromScale(0.5, 0.5)
-	pill.Parent = g
+	-- (22 Nov 2026, owner: "bigger and better placed"): its own layer, centred just under the top bar,
+	-- 1.4 times the size, so the next weapon is in view without covering the middle of the screen.
+	-- It shows and hides with the top bar.
+	local nextGui = Instance.new("ScreenGui")
+	nextGui.Name = "HudV3Next"
+	nextGui.ResetOnSpawn = false
+	nextGui.DisplayOrder = 6
+	nextGui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
+	local scale = Instance.new("UIScale")
+	scale.Scale = 1.4
+	scale.Parent = pill
+	pill.AnchorPoint = Vector2.new(0.5, 0)
+	pill.Position = UDim2.new(0.5, 0, 0, 10)
+	pill.Parent = nextGui
+	local function follow()
+		nextGui.Enabled = g.Enabled
+	end
+	g:GetPropertyChangedSignal("Enabled"):Connect(follow)
+	follow()
+	g:GetPropertyChangedSignal("Parent"):Connect(function()
+		nextGui.Parent = g.Parent
+	end)
+	nextGui.Parent = g.Parent
 	-- (V8-0.3: tapping the next goal opens WEAPONS, where it waits.)
 	local tap = Instance.new("TextButton")
 	tap.Name = "Tap"
