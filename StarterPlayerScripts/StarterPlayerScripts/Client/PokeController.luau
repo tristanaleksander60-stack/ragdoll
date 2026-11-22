@@ -1748,7 +1748,38 @@ local function bowPress(viewportPosition: Vector2): boolean?
 	return nil
 end
 
+-- (22 Nov 2026, owner: "Talk is a magic wand you start with"): with the Wand picked, a click on a
+-- ragdoll asks the server to open its talk card (NpcCommand "Talk"); a click on nothing does nothing.
+-- Returns nil when the Wand is not picked.
+local wandParams = RaycastParams.new()
+wandParams.FilterType = Enum.RaycastFilterType.Exclude
+local function wandPress(viewportPosition: Vector2): boolean?
+	if PokeController.getSelected() ~= "Wand" then
+		return nil
+	end
+	local camera = Workspace.CurrentCamera
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if not camera or not dummies then
+		return true
+	end
+	wandParams.FilterDescendantsInstances = { player.Character :: Instance }
+	local ray = camera:ViewportPointToRay(viewportPosition.X, viewportPosition.Y)
+	local hit = Workspace:Raycast(ray.Origin, ray.Direction * 300, wandParams)
+	local model = hit and hit.Instance:FindFirstAncestorOfClass("Model")
+	while model and model.Parent ~= dummies do
+		model = model:FindFirstAncestorOfClass("Model")
+	end
+	if model then
+		Net.event(Net.Names.NpcCommand):FireServer("Talk", model)
+	end
+	return true
+end
+
 function PokeController.pressAt(viewportPosition: Vector2): boolean
+	local wand = wandPress(viewportPosition)
+	if wand ~= nil then
+		return wand
+	end
 	local bow = bowPress(viewportPosition)
 	if bow ~= nil then
 		return bow
@@ -1757,6 +1788,10 @@ function PokeController.pressAt(viewportPosition: Vector2): boolean
 end
 
 function PokeController.tapAt(viewportPosition: Vector2): boolean
+	local wand = wandPress(viewportPosition)
+	if wand ~= nil then
+		return wand
+	end
 	local bow = bowPress(viewportPosition)
 	if bow ~= nil then
 		return bow

@@ -360,9 +360,11 @@ function Compressor.build(folder: Instance, origin: Vector3, at: Vector3?)
 	-- (22 Nov 2026, owner: a ragdoll carried in with GRAB jumped onto the roof): the grab aims by a ray,
 	-- and it stopped on the beam. The beam and pillars stay solid but let that ray through to the bed.
 	topBeam.CanQuery = false
+	topBeam.CanCollide = false -- (22 Nov 2026: a carried ragdoll passes in under or through the roof; the bed stays solid)
 	for _, d in m:GetChildren() do
 		if d:IsA("BasePart") and (d.Name == "Pillar" or d.Name == "Sleeve") then
 			d.CanQuery = false
+			d.CanCollide = false
 		end
 	end
 	-- The main ram and the press plate (up; the clients drop it on PressAt).

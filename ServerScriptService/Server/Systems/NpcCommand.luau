@@ -325,6 +325,8 @@ local function step(now: number)
 	end
 end
 
+NpcCommand.WAND_REACH = 60 -- studs: how far the Magic Wand reaches (22 Nov 2026)
+local talkOpen: { [Model]: (Player, boolean?) -> () } = {} -- the talk opener of each NPC (its prompt's and the wand's)
 function NpcCommand.start()
 	if not Config.NPC_COMMANDS then
 		return
@@ -337,6 +339,16 @@ function NpcCommand.start()
 		end
 		lastRequest[player] = now
 		if type(action) ~= "string" then
+			return
+		end
+		-- (22 Nov 2026: the Magic Wand: point and click opens the talk card from further away.)
+		if action == "Talk" then
+			local open = if typeof(npcInst) == "Instance" and npcInst:IsA("Model") then talkOpen[npcInst] else nil
+			local root = rootOf(player)
+			local pelvis = if open then pelvisOf(npcInst :: Model) else nil
+			if open and root and pelvis and (pelvis.Position - root.Position).Magnitude <= NpcCommand.WAND_REACH then
+				open(player, true)
+			end
 			return
 		end
 		local ok, why = NpcCommand.command(player, action, npcInst, targetInst, toyId)
@@ -383,7 +395,7 @@ function NpcCommand.start()
 				refresh()
 			end
 		end)
-		prompt.Triggered:Connect(function(player: Player)
+		local function openFor(player: Player, wand: boolean?)
 			local body = bodyOf(m)
 			local root = rootOf(player)
 			local pelvis = body and pelvisOf(body)
@@ -410,7 +422,14 @@ function NpcCommand.start()
 			for i = 1, math.min(5, #near) do
 				table.insert(targets, { model = near[i].model, name = near[i].name })
 			end
-			remote:FireClient(player, "Open", { npc = body, name = prompt.ObjectText, targets = targets, weapons = NpcCommand.weaponsOf(player), mode = if body:GetAttribute("CommandedBy") == player.UserId then body:GetAttribute("Command") else nil })
+			remote:FireClient(player, "Open", { npc = body, wand = wand == true, name = tostring(m:GetAttribute("PersonName") or prompt.ObjectText), targets = targets, weapons = NpcCommand.weaponsOf(player), mode = if body:GetAttribute("CommandedBy") == player.UserId then body:GetAttribute("Command") else nil })
+		end
+		prompt.Triggered:Connect(function(player: Player)
+			openFor(player)
+		end)
+		talkOpen[m] = openFor
+		m.Destroying:Once(function()
+			talkOpen[m] = nil
 		end)
 	end
 	task.spawn(function()

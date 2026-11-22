@@ -42,6 +42,24 @@ local readFailed: { [Player]: boolean } = {}
 
 -- One to SLOTS different tools that exist, or nil (a longer list, saved when the bar had six, keeps
 -- its first SLOTS).
+-- (22 Nov 2026: the Magic Wand is a start tool; a bar saved before it gets it in the Bat's place, or the last
+-- free slot, or the last slot.)
+function LoadoutStore.withWand(list: { string }?): { string }?
+	if not list or table.find(list, "Wand") or not Toys.byId["Wand"] then
+		return list
+	end
+	local out = table.clone(list)
+	local i = table.find(out, "Bat")
+	if i then
+		out[i] = "Wand"
+	elseif #out < Toys.SLOTS then
+		table.insert(out, "Wand")
+	else
+		out[#out] = "Wand"
+	end
+	return out
+end
+
 function LoadoutStore.validate(list: unknown): { string }?
 	if type(list) ~= "table" then
 		return nil
@@ -83,12 +101,12 @@ end
 local function load(userId: number): (boolean, { string }?)
 	local ds = store
 	if not ds then
-		return true, memory[userId]
+		return true, LoadoutStore.withWand(memory[userId])
 	end
 	local ok, value = retry(function()
 		return ds:GetAsync(tostring(userId))
 	end)
-	return ok, if ok then LoadoutStore.validate(value) else nil
+	return ok, if ok then LoadoutStore.withWand(LoadoutStore.validate(value)) else nil
 end
 
 local saving = 0 -- saves in flight (BindToClose waits for them)

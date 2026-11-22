@@ -165,7 +165,7 @@ local function open(data: any)
 		return
 	end
 	-- (V9-0a: a prompt that fired in the middle of a fight is ignored.)
-	if not TalkRules.mayOpen(os.clock(), lastAttack) then
+	if not data.wand and not TalkRules.mayOpen(os.clock(), lastAttack) then -- (the Magic Wand's click is meant to open it)
 		return
 	end
 	current = data.npc :: Model

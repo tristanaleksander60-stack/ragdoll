@@ -57,6 +57,7 @@ local HEAL_AFTER = 12 -- s resting at home with a broken limb before it is patch
 local LOST_DISTANCE = 600 -- this far from the slot in any state: bring it home now
 local FELL_BELOW = -25 -- fell off the world
 -- Their ways, by slot (see the top). Ten entries now (session v850).
+local NAMES = { "Wobbly Steve", "Sir Flops", "Noodle", "Big Greg", "Captain Crash", "Tiny Tim", "Floppy Joe", "Professor Pancake", "Mr. Bonk", "Lil Dave", "Sergeant Squish", "Gary", "Biscuit", "Uncle Ragnar", "Jelly Jen", "Bouncy Bob", "Dizzy Dora", "Karl the Klutz" } -- (22 Nov 2026: one name per slot, the talk menu)
 local PERSONALITY = { "Coward", "Friendly", "Brave", "Chatty", "Coward", "Friendly", "Coward", "Chatty", "Friendly", "Coward", "Brave", "Chatty", "Coward", "Friendly", "Coward", "Chatty", "Friendly", "Coward" } -- (22 Nov 2026, owner: they must fear guns: 18 ways, only 2 Brave; slots past the list were all Brave)
 local CHAT_PAIR = { 4, 5 }
 -- (session v850, owner: "dem der står på den sorte plade står stille, så begår at gå rundt i hele ens map"):
@@ -214,6 +215,8 @@ local function fill(plot: Plot, slot: Slot, generation: number)
 	model:SetAttribute("Plot", plot.index)
 	model:SetAttribute("LabOwner", owner.UserId)
 	model:SetAttribute("Personality", PERSONALITY[slot.index] or "Brave")
+	-- (22 Nov 2026, owner: funny names in the talk menu, so "Wobbly Steve, attack Sir Flops" reads well.)
+	model:SetAttribute("PersonName", NAMES[slot.index] or ("Dummy " .. slot.index))
 	slot.target = nil
 	slot.socialKind = nil
 	slot.socialUntil = 0

@@ -1056,6 +1056,7 @@ end
 
 -- V9-NOW 10: the small monitor shrinks away (FADE s), then goes; a hit meanwhile keeps it (shotStep).
 HospitalCharts.HOLD = 3 -- s after your last hit
+HospitalCharts.HOVER_NEAR = 18 -- studs: a body under the mouse this close shows on the monitor (22 Nov 2026)
 HospitalCharts.FADE = 0.18
 HospitalCharts.TOUCH_TOP = 94 -- px under the safe area's top (under the top row and the 2X chip)
 HospitalCharts.CORNER = 12 -- px from the right edge and above the tool bar (V9-NOW 15)
@@ -1301,6 +1302,19 @@ function HospitalCharts.start()
 	-- to it, and HOLD s after the last hit it shrinks away. No hover, nothing left up while you do not shoot.
 	local function shotStep(dt: number)
 		local t = os.clock()
+		-- (22 Nov 2026, owner: "the hospital menu when you hold the mouse over a ragdoll close by"):
+		-- a body under the mouse within HOVER_NEAR studs counts as just hit, while the mouse stays on it.
+		if t >= lastLook and UserInputService.MouseEnabled and UserInputService:GetLastInputType() ~= Enum.UserInputType.Touch then
+			lastLook = t + HOVER_RATE
+			local at = UserInputService:GetMouseLocation()
+			local body = if overUi(at) then nil else bodyAt(at, false)
+			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			local pelvis = body and body:FindFirstChild("LowerTorso")
+			if body and root and root:IsA("BasePart") and pelvis and pelvis:IsA("BasePart")
+				and (pelvis.Position - root.Position).Magnitude <= HospitalCharts.HOVER_NEAR then
+				shotBody, shotAt = body, t
+			end
+		end
 		local b = shotBody
 		local live = b ~= nil and b.Parent ~= nil and t - shotAt < HospitalCharts.HOLD
 			and not ReplayController.isPlaying() and player:GetAttribute("Building") ~= true

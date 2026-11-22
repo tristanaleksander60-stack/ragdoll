@@ -326,6 +326,10 @@ end
 local BUILDERS: { [string]: { build: () -> Model, tilt: CFrame } } = {
 	Blaster = { build = blaster, tilt = CFrame.Angles(0, math.rad(-14), 0) },
 	Bat = { build = bat, tilt = CFrame.Angles(math.rad(55), math.rad(-10), 0) },
+	-- (22 Nov 2026: the Magic Wand: a dark stick with a glowing purple star ball at its tip.)
+	Wand = { build = function(): Model
+		return smacker(1.5, Color3.fromRGB(60, 40, 30), Vector3.new(0.5, 0.5, 0.5), Color3.fromRGB(200, 120, 255), Enum.PartType.Ball, Enum.Material.SmoothPlastic) -- (no neon: owner, 21 Nov)
+	end, tilt = CFrame.Angles(math.rad(40), 0, 0) },
 	Pan = { build = pan, tilt = CFrame.Angles(math.rad(50), math.rad(-10), 0) },
 	Hammer = { build = hammer, tilt = CFrame.Angles(math.rad(55), math.rad(-10), 0) },
 	Golf = { build = golf, tilt = CFrame.Angles(math.rad(-60), 0, 0) },

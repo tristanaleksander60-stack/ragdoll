@@ -222,6 +222,10 @@ local rgb = Color3.fromRGB
 -- id stays "Blaster" (saved bars and loadouts keep it).
 add("Blaster", { label = "G17", short = "G17", kind = "hit", category = "Guns", blurb = "A real handgun. Quick, clean shots", glyph = "🔫", color = rgb(120, 130, 150), cooldown = 0.1, speed = 36, lift = 0.2, chaos = 0.3, fx = "Dart", held = true, move = "Shoot", gun = true, wound = 1 })
 add("Grab", { label = "Grab", kind = "grab", category = "Specials", blurb = "Pick a dummy up, swing it, throw it", glyph = "✋️", color = rgb(120, 230, 140), cooldown = 0.2, power = 0.3, chaos = 0.4, fx = "Grab" })
+-- (22 Nov 2026, owner: "Talk is a weapon, a magic wand, one you start with"): point it at a ragdoll and
+-- click: its talk card opens (follow, stay, attack who and with what). Client PokeController.wandPress,
+-- server NpcCommand "Talk". Never hits.
+add("Wand", { label = "Magic Wand", kind = "dummy", category = "Specials", blurb = "Point at a ragdoll to talk: follow, stay or attack", glyph = "{1FA84}", color = rgb(190, 120, 255), cooldown = 0.3, power = 0, chaos = 0, fx = "Heal" })
 add("Poke", { label = "Poke", kind = "hit", category = "Melee", blurb = "A tiny prod. They flinch", glyph = "👉", color = rgb(255, 205, 60), cooldown = 0.12, speed = 7, chaos = 0.05, fx = "Light", move = "Jab", byHand = true, unlockAt = 3})
 add("Slap", { label = "Slap", kind = "hit", category = "Melee", blurb = "A quick open hand. Wobbly", glyph = "👋", color = rgb(255, 180, 150), cooldown = 0.15, speed = 15, lift = 0.05, chaos = 0.1, fx = "Smack", move = "Slap", byHand = true, unlockAt = 7})
 add("Shove", { label = "Shove", kind = "hit", category = "Melee", blurb = "A good push. Down they go", glyph = "🤚", color = rgb(255, 160, 50), cooldown = 0.2, speed = 22, lift = 0.1, chaos = 0.2, fx = "Smack", move = "Push", byHand = true, unlockAt = 6 })
@@ -323,7 +327,7 @@ local CATEGORIES: { Category } = { "Melee", "Guns", "Explosives", "Specials" }
 -- Start bar v9 (Config.START_BAR_V9, research 21 Nov 2026: the biggest ragdoll game now, 125K players,
 -- 19 min sessions, starts every player with a full kit with 3 guns): all 6 slots full: two guns (the
 -- Popper and the Buzz Blaster), Grab, Bat, the Grenade and Launch. The Rocket stays among the hardest.
-local DEFAULT_LOADOUT = if Config.START_BAR_V9 then (if Config.BOW then { "Blaster", "SMG", "Grab", "Bat", "Grenade", "Bow" } else { "Blaster", "SMG", "Grab", "Bat", "Grenade", "Launch" })
+local DEFAULT_LOADOUT = if Config.START_BAR_V9 then (if Config.BOW then { "Blaster", "SMG", "Grab", "Wand", "Grenade", "Bow" } else { "Blaster", "SMG", "Grab", "Wand", "Grenade", "Launch" })
 	elseif Config.V8_START_BAR then { "Blaster", "Grab", "Bat", "Grenade", "Launch" }
 	else { "Blaster", "Grab", "Punch" }
 -- How many slots the bar has (a fixed number, not the starting bar's length: round 5).
