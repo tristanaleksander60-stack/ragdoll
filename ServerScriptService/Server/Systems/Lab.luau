@@ -63,10 +63,11 @@ local CHAT_PAIR = { 4, 5 }
 -- every slot picks a new wandering Home every ROAM_EVERY s (or when it reaches the last one). The
 -- first roam waits ROAM_FIRST s after the slot first stands — so a new visitor sees the row standing
 -- still before they drift off.
-local ROAM_FIRST = 6 -- s on the row before a slot first starts wandering
+local ROAM_FIRST = 0 -- (22 Nov 2026, owner: no row standing still) s before a slot first starts wandering
 local ROAM_EVERY_MIN, ROAM_EVERY_MAX = 10, 22 -- s before it picks the next spot (random in range)
 local ROAM_REACH = 8 -- studs from its current roam Home where it counts as arrived
-local ROAM_RANGE = 70 -- studs from the plot's spawn: the farthest a roam Home may be
+local ROAM_RANGE = 55 -- studs from the plot's spawn: the farthest a roam Home may be (22 Nov: inside the lab core)
+local ROAM_YARD_Z = 40 -- (22 Nov 2026: never past this z, the creature yard, where a walker was swallowed and vanished)
 local ROAM_NEAR_MIN = 18 -- studs: closest a roam Home may be (never right on top of the player)
 local GREET_RANGE = 40 -- studs from its home: a player this close may get a hello
 local GREET_STOP = 4.5 -- studs in front of the player where it stops
@@ -200,12 +201,15 @@ local function poof(at: Vector3)
 	end)
 end
 
+local pickRoamSpot: (plot: Plot, slot: Slot) -> Vector3
+
 local function fill(plot: Plot, slot: Slot, generation: number)
 	local owner = plot.owner
 	if plot.generation ~= generation or not owner or owner.Parent == nil then
 		return
 	end
-	local model = DummyFactory.spawn(slot.position, plot.origin, owner)
+	-- (22 Nov 2026, owner: "not in one place"): each one appears at its own spot round the lab.
+	local model = DummyFactory.spawn(pickRoamSpot(plot, slot), plot.origin, owner)
 	model:SetAttribute("Slot", slot.index)
 	model:SetAttribute("Plot", plot.index)
 	model:SetAttribute("LabOwner", owner.UserId)
@@ -617,7 +621,7 @@ end
 -- core, never on top of a machine or inside the lava. We keep it simple: random polar offset from
 -- the plot's spawn, between ROAM_NEAR_MIN and ROAM_RANGE. If the roll lands on a machine (PathPlan
 -- obstacle) we try again a few times, else we fall back to the row spot.)
-local function pickRoamSpot(plot: Plot, slot: Slot): Vector3
+pickRoamSpot = function(plot: Plot, slot: Slot): Vector3
 	local PathPlan = require(ReplicatedStorage.Shared:WaitForChild("PathPlan")) :: any
 	local origin = plot.origin
 	for _ = 1, 12 do
@@ -635,8 +639,11 @@ local function pickRoamSpot(plot: Plot, slot: Slot): Vector3
 				break
 			end
 		end
+		if z > ROAM_YARD_Z then
+			blocked = true
+		end
 		if not blocked then
-			return Vector3.new(origin.X + x, slot.homeY, origin.Z + z)
+			return Vector3.new(origin.X + x, if slot.homeY ~= 0 then slot.homeY else slot.position.Y, origin.Z + z)
 		end
 	end
 	return slot.homeAttr or slot.position

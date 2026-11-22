@@ -667,6 +667,13 @@ end
 ------------------------------------------------------------------------------------------------
 
 local started = false
+-- (22 Nov 2026 fix: PokeController and TouchShoot call this, but it was never written, so every
+-- gun shot errored and nothing happened.) The camera recoil already turns the camera itself, so
+-- the screen centre ray follows it: no extra pixel offset is needed.
+function FeelV2.recoilPixelOffset(_camera: Camera): Vector2
+	return Vector2.zero
+end
+
 function FeelV2.start()
 	if started then
 		return
