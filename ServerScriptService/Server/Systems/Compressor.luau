@@ -26,7 +26,7 @@ Compressor.COOLDOWN = 2.5 -- s between two presses
 Compressor.QUEUE = 3
 Compressor.LAND_WAIT = 1.0 -- s for the tossed dummy to land on the bed
 Compressor.SLAM_AFTER = 0.45 -- s from the lamp to the slam (the clients time the plate by it)
-Compressor.FLAT_TIME = 2 -- s a body stays a pancake
+Compressor.FLAT_TIME = 3.4 -- s a body stays a pancake (0.37.6: was 2; the plate squeezes on SQUEEZE_TIME s of it)
 Compressor.THUD = 9114397505 -- (a heavy metal slam)
 Compressor.AGAIN = 8 -- s before the same body may be pressed again (no KO farm)
 -- V9-overhaul (Tier 1, lab-overhaul, 21 Jan 2027): the press is an industrial machine that
@@ -190,33 +190,92 @@ local function radialBoom(machine: Model, psi: number, onBed: { Model }, owner: 
 end
 
 -- (22 Nov 2026, owner: "ragdolls go FLAT as pancakes in there"): the body hides on every screen
--- (MachineHidden, DummySkins) and a flat copy of it lies on the bed: each limb squashed to a thin
--- slab where it lay, a little wider, in its own colour. The plate lifts off it; then the body pops back.
-Compressor.PANCAKE_TIME = 4.5 -- s the pancake lies there (the plate is down FLAT_TIME of it)
+-- (MachineHidden, DummySkins: its skins and its face) and a flat copy of it lies on the bed.
+-- 0.37.6 (owner: "you must still see it is a ragdoll, hear the blood splat, see it squeeze more with blood
+-- dripping from the edges before the press opens"): the copy keeps the ragdoll's shape: every limb a flat
+-- piece along the way it lay, the head a round flat disc with its face looking up, purple splotches on top.
+-- At the touch a wet SPLAT plays, and blood drips off all four edges of the bed while the plate squeezes on.
+Compressor.PANCAKE_TIME = 5.5 -- s the pancake lies there (the plate is down FLAT_TIME of it)
+Compressor.SQUEEZE_GAP = 0.9 -- studs over its lowest point where the plate first touches
+Compressor.SQUEEZE_TIME = 1.3 -- s it then squeezes on down to the bed
+Compressor.SPLAT = 9120572784 -- Pro Sound Effects "Watermelon Splat 1" (Roblox-licensed)
+local Anatomy = require(Shared:WaitForChild("Anatomy"))
+local function bleeds(): boolean
+	return Config.BLOOD ~= "off"
+end
 local function pancake(machine: Model, body: Model)
 	local bed = machine:FindFirstChild("Bed")
 	if not (bed and bed:IsA("BasePart")) or body:GetAttribute("MachineHidden") == true then
 		return
 	end
 	local top = bed.Position.Y + bed.Size.Y / 2
-	local half = bed.Size.X / 2 - 0.2
+	local half = bed.Size.X / 2 - 0.4
 	local flat = Instance.new("Model")
 	flat.Name = "Pancake"
-	for _, p in body:GetDescendants() do
+	local function onBed(p: Vector3): Vector3
+		local rel = bed.CFrame:PointToObjectSpace(p)
+		local w = bed.CFrame:PointToWorldSpace(Vector3.new(math.clamp(rel.X, -half, half), 0, math.clamp(rel.Z, -half, half)))
+		return Vector3.new(w.X, top, w.Z)
+	end
+	local function slab(name: string, size: Vector3, cf: CFrame, color: Color3, shape: Enum.PartType?): Part
+		local s = Instance.new("Part")
+		s.Name = name
+		s.Anchored, s.CanCollide, s.CanQuery, s.CanTouch, s.CastShadow = true, false, false, false, false
+		if shape then
+			s.Shape = shape
+		end
+		s.Size = size
+		s.CFrame = cf
+		s.Color = color
+		s.Material = Enum.Material.SmoothPlastic
+		s.Parent = flat
+		return s
+	end
+	local torso = body:FindFirstChild("UpperTorso")
+	for _, p in body:GetChildren() do
 		if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" and p.Transparency < 1 then
-			local r, s = p.CFrame, p.Size
-			local ex = math.abs(r.XVector.X) * s.X + math.abs(r.YVector.X) * s.Y + math.abs(r.ZVector.X) * s.Z
-			local ez = math.abs(r.XVector.Z) * s.X + math.abs(r.YVector.Z) * s.Y + math.abs(r.ZVector.Z) * s.Z
-			local rel = bed.CFrame:PointToObjectSpace(p.Position)
-			local x, z = math.clamp(rel.X, -half, half), math.clamp(rel.Z, -half, half)
-			local slab = Instance.new("Part")
-			slab.Name = "Flat" .. p.Name
-			slab.Anchored, slab.CanCollide, slab.CanQuery, slab.CanTouch, slab.CastShadow = true, false, false, false, false
-			slab.Size = Vector3.new(math.max(0.3, ex * 1.35), 0.16, math.max(0.3, ez * 1.35))
-			slab.CFrame = CFrame.new(bed.CFrame:PointToWorldSpace(Vector3.new(x, 0, z)).X, top + 0.08, bed.CFrame:PointToWorldSpace(Vector3.new(x, 0, z)).Z)
-			slab.Color = p.Color
-			slab.Material = Enum.Material.SmoothPlastic
-			slab.Parent = flat
+			local at = onBed(p.Position)
+			local s = p.Size
+			if p.Name == "Head" then
+				-- A round flat head, bigger than it was, its face drawn on top and turned away from the chest.
+				local d = math.max(s.X, s.Z) * 1.6
+				slab("FlatHead", Vector3.new(0.14, d, d), CFrame.new(at + Vector3.new(0, 0.1, 0)) * CFrame.Angles(0, 0, math.rad(90)), p.Color, Enum.PartType.Cylinder)
+				local away = if torso and torso:IsA("BasePart") then (at - onBed(torso.Position)) else Vector3.zAxis
+				away = Vector3.new(away.X, 0, away.Z)
+				if away.Magnitude < 0.05 then
+					away = Vector3.zAxis
+				end
+				local holder = slab("FlatFace", Vector3.new(d * 0.8, 0.05, d * 0.8), CFrame.lookAt(at + Vector3.new(0, 0.19, 0), at + Vector3.new(0, 0.19, 0) - away.Unit), p.Color)
+				holder.Transparency = 1
+				local face = p:FindFirstChild("Face")
+				if face and face:IsA("SurfaceGui") then
+					local copy = face:Clone()
+					copy.Face = Enum.NormalId.Top
+					copy.Enabled = true
+					copy.Parent = holder
+				end
+			else
+				-- A limb or the trunk: flat along its long side as it lay, a little wider than it was.
+				local long = Vector3.new(p.CFrame.YVector.X, 0, p.CFrame.YVector.Z)
+				if long.Magnitude < 0.25 then
+					long = Vector3.new(p.CFrame.XVector.X, 0, p.CFrame.XVector.Z)
+				end
+				if long.Magnitude < 0.05 then
+					long = Vector3.xAxis
+				end
+				local width = math.max(s.X, s.Z) * 1.45
+				local length = s.Y * 1.15
+				slab("Flat" .. p.Name, Vector3.new(width, 0.12, length), CFrame.lookAt(at + Vector3.new(0, 0.07, 0), at + Vector3.new(0, 0.07, 0) + long.Unit), p.Color)
+			end
+		end
+	end
+	if bleeds() then
+		-- Purple splotches on the pancake.
+		for i = 1, 5 do
+			local a = i * 1.26 + math.random()
+			local r = math.random() * half * 0.7
+			local d = 0.8 + math.random() * 1.3
+			slab("Splotch", Vector3.new(0.03, d, d * (0.6 + math.random() * 0.4)), CFrame.new(bed.Position.X + math.cos(a) * r, top + 0.16 + i * 0.004, bed.Position.Z + math.sin(a) * r) * CFrame.Angles(0, a, math.rad(90)), Anatomy.BLOOD, Enum.PartType.Cylinder)
 		end
 	end
 	flat.Parent = machine
@@ -225,6 +284,84 @@ local function pancake(machine: Model, body: Model)
 		flat:Destroy()
 		if body.Parent then
 			body:SetAttribute("MachineHidden", nil)
+		end
+	end)
+end
+
+-- The squeeze: a wet splat at the touch, and blood dripping off all four edges of the bed while the plate
+-- goes on down, pooling on the floor beside it; all of it gone after the pancake.
+local function squeezeFx(machine: Model)
+	local bed = machine:FindFirstChild("Bed")
+	if not (bed and bed:IsA("BasePart")) then
+		return
+	end
+	local splat = Instance.new("Sound")
+	splat.SoundId = "rbxassetid://" .. Compressor.SPLAT
+	splat.Volume = 1.2
+	splat.PlaybackSpeed = 0.85
+	splat.RollOffMaxDistance = 120
+	splat.Parent = bed
+	splat:Play()
+	game:GetService("Debris"):AddItem(splat, 4)
+	if not bleeds() then
+		return
+	end
+	local TweenService = game:GetService("TweenService")
+	local top = bed.Size.Y / 2
+	local floorY = bed.Position.Y - bed.Size.Y / 2 + 0.05
+	local fx: { Instance } = {}
+	for _, side in { Vector3.new(1, 0, 0), Vector3.new(-1, 0, 0), Vector3.new(0, 0, 1), Vector3.new(0, 0, -1) } do
+		local edge = Vector3.new(side.X * bed.Size.X / 2, top, side.Z * bed.Size.Z / 2)
+		local a = Instance.new("Attachment")
+		a.Name = "Drip"
+		a.Position = edge
+		a.Parent = bed
+		local e = Instance.new("ParticleEmitter")
+		e.Color = ColorSequence.new(Anatomy.BLOOD)
+		e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.28), NumberSequenceKeypoint.new(1, 0.16) })
+		e.Transparency = NumberSequence.new(0.05)
+		e.Lifetime = NumberRange.new(0.5, 0.9)
+		e.Speed = NumberRange.new(1, 3)
+		e.SpreadAngle = Vector2.new(20, 20)
+		e.EmissionDirection = Enum.NormalId.Top
+		e.Acceleration = Vector3.new(side.X * 4, -45, side.Z * 4)
+		e.Rate = 30
+		e.LightInfluence = 1
+		e.Parent = a
+		table.insert(fx, a)
+		-- A pool growing on the floor under that edge.
+		local pool = Instance.new("Part")
+		pool.Name = "PressPool"
+		pool.Shape = Enum.PartType.Cylinder
+		pool.Anchored, pool.CanCollide, pool.CanQuery, pool.CanTouch, pool.CastShadow = true, false, false, false, false
+		pool.Material = Enum.Material.SmoothPlastic
+		pool.Color = Anatomy.BLOOD
+		pool.Size = Vector3.new(0.04, 0.4, 0.4)
+		local w = bed.CFrame:PointToWorldSpace(edge + side * 1.2)
+		pool.CFrame = CFrame.new(w.X, floorY, w.Z) * CFrame.Angles(0, 0, math.rad(90))
+		pool.Parent = machine
+		TweenService:Create(pool, TweenInfo.new(Compressor.SQUEEZE_TIME + 1, Enum.EasingStyle.Quad), { Size = Vector3.new(0.04, 3.4, 3.4) }):Play()
+		table.insert(fx, pool)
+	end
+	task.delay(Compressor.SQUEEZE_TIME + 1.2, function()
+		for _, f in fx do
+			local e = f:FindFirstChildOfClass("ParticleEmitter")
+			if e then
+				e.Enabled = false
+			end
+		end
+	end)
+	task.delay(Compressor.PANCAKE_TIME, function()
+		for _, f in fx do
+			if f:IsA("BasePart") then
+				local t = TweenService:Create(f, TweenInfo.new(0.8), { Transparency = 1 })
+				t.Completed:Once(function()
+					f:Destroy()
+				end)
+				t:Play()
+			else
+				f:Destroy()
+			end
 		end
 	end)
 end
@@ -270,12 +407,22 @@ function Compressor.press(machine: Model, presser: Player?, owner: Player?)
 				local len = math.max(0.5, top - bottom)
 				return { Size = Vector3.new(ram.Size.X, len, ram.Size.Z), CFrame = ram.CFrame - Vector3.new(0, ram.Position.Y - (bottom + len / 2), 0) }
 			end
+			-- (0.37.6: a slam to the touch, then a slow squeeze on down to the bed.)
+			local touch = down + Compressor.SQUEEZE_GAP
 			local downInfo = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-			TweenService:Create(plate, downInfo, { CFrame = at(down) }):Play()
-			local ramDown = ramFor(down)
-			if ramDown then
-				TweenService:Create(ram :: BasePart, downInfo, ramDown):Play()
+			TweenService:Create(plate, downInfo, { CFrame = at(touch) }):Play()
+			local ramTouch = ramFor(touch)
+			if ramTouch then
+				TweenService:Create(ram :: BasePart, downInfo, ramTouch):Play()
 			end
+			task.delay(0.12, function()
+				local squeezeInfo = TweenInfo.new(Compressor.SQUEEZE_TIME, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+				TweenService:Create(plate, squeezeInfo, { CFrame = at(down) }):Play()
+				local ramDown = ramFor(down)
+				if ramDown then
+					TweenService:Create(ram :: BasePart, squeezeInfo, ramDown):Play()
+				end
+			end)
 			task.delay(Compressor.FLAT_TIME, function()
 				if plate.Parent then
 					local upInfo = TweenInfo.new(0.8, Enum.EasingStyle.Sine)
@@ -297,6 +444,9 @@ function Compressor.press(machine: Model, presser: Player?, owner: Player?)
 	-- V9-overhaul: shockwave to the bystanders right as the plate lands (bodies on the bed are
 	-- excluded so the squish stays authoritative over the kick).
 	radialBoom(machine, psiAtPress, onBedNow, owner)
+	if #onBedNow > 0 then
+		task.delay(0.12, squeezeFx, machine) -- (0.37.6: the splat and the drips as the plate touches)
+	end
 	for _, m in onBedNow do
 		m:SetAttribute("Flat", flatUntil)
 		m:SetAttribute("PressedAt", Workspace:GetServerTimeNow()) -- (a body left on the bed is not pressed again for AGAIN s)

@@ -183,6 +183,11 @@ local function dress(model: Model)
 			if d:IsA("BasePart") and not skins[d] and not d:IsDescendantOf(folder) and d.Name ~= "HumanoidRootPart" then
 				d.LocalTransparencyModifier = if hidden then 1 else 0
 			end
+			-- (0.37.6, owner: "the face goes up before the ragdoll": the face is a SurfaceGui, which the modifier
+			-- does not hide; it goes with the body.)
+			if d:IsA("SurfaceGui") then
+				d.Enabled = not hidden
+			end
 		end
 	end
 	model:GetAttributeChangedSignal("MachineHidden"):Connect(machineHide)
