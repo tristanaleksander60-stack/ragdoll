@@ -181,7 +181,9 @@ local function frame()
 	local toy = Toys.byId[id]
 	local text = if toy and toy.gun then AmmoClient.text(id) else nil
 	-- (UI audit 21 Nov 2026: not over an open window; the count belongs to aiming.)
-	c.Visible = text ~= nil and Controller.getCurrent() == nil
+	-- (0.37.3, owner: "the shots left by the crosshair take room for nothing": only the empty-magazine word
+	-- shows there now; the reload ring still fills while it reloads, and the slab keeps the count.)
+	c.Visible = text == "RELOAD" and Controller.getCurrent() == nil
 	local now = os.clock()
 	-- (A reload that ran out: the magazine is full again, said once.)
 	for gunId in wasReloading do

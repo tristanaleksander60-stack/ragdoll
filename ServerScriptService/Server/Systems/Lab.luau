@@ -996,6 +996,10 @@ local function dressPlot(plot: Plot)
 			local edge = paint(folder, "TravelPadEdge", Vector3.new(17.2, 0.04, along.Magnitude + 17.2), Vector3.zero, Color3.fromRGB(120, 116, 108), Enum.Material.Slate)
 			edge.CFrame = pad.CFrame * CFrame.new(0, -0.006, 0)
 		end
+		-- (0.37.3, owner: "the boxing ring overlaps the grass"): a stone floor under the ring (Playground: the pit at
+		-- -6, 54, 21 x 18), with room to walk round it.
+		paint(folder, "RingFloor", Vector3.new(29, 0.05, 26), Vector3.new(o.X - 6, ground + 0.075, o.Z + 54), stoneColor, Enum.Material.Slate)
+		paint(folder, "RingFloorEdge", Vector3.new(30.2, 0.04, 27.2), Vector3.new(o.X - 6, ground + 0.069, o.Z + 54), Color3.fromRGB(120, 116, 108), Enum.Material.Slate)
 		local goals: { Vector2 } = {
 			Vector2.new(48, 6) * Sp, -- the cannon
 			Vector2.new(-52, -8) * Sp, -- the tower's stairs
@@ -1016,17 +1020,21 @@ local function dressPlot(plot: Plot)
 			if len > 4 then
 				local mid = (from + to) / 2
 				local y = ground + 0.07 + i * 0.002 -- (each walk a hair apart: no flicker where two cross)
-				local walk = paint(folder, "Walk", Vector3.new(9, 0.05, len), Vector3.new(o.X + mid.X, y, o.Z + mid.Y), stoneColor, Enum.Material.Slate)
+				-- (0.37.3, owner: "the paths look AI and just stop wide"): a narrower walk, no kerb lines, and a
+				-- round end at the machine, so it ends in a small landing instead of a cut-off slab.
+				local W = 7
+				local walk = paint(folder, "Walk", Vector3.new(W, 0.05, len), Vector3.new(o.X + mid.X, y, o.Z + mid.Y), stoneColor, Enum.Material.Slate)
 				walk.CFrame = CFrame.lookAt(walk.Position, walk.Position + Vector3.new(dir.X, 0, dir.Y))
-				for _, sx in { -1, 1 } do
-					local kerb = paint(folder, "WalkKerb", Vector3.new(0.6, 0.05, len), Vector3.new(0, 0, 0), Color3.fromRGB(120, 116, 108), Enum.Material.Slate)
-					kerb.CFrame = walk.CFrame * CFrame.new(sx * 4.8, -0.004, 0)
-				end
+				local cap = paint(folder, "WalkEnd", Vector3.new(0.05, W + 3, W + 3), Vector3.new(o.X + to.X, y, o.Z + to.Y), stoneColor, Enum.Material.Slate)
+				cap.Shape = Enum.PartType.Cylinder
+				cap.CFrame = CFrame.new(cap.Position) * CFrame.Angles(0, 0, math.rad(90))
 			end
 		end
 	end
-	-- The test zone under the row: a black rubber safety mat.
+	-- The test zone under the row: a black rubber safety mat. (0.37.3: not on the lawn layout; the spider
+	-- stands there now, LabCreatures.)
 	local rowZ = o.Z + (require(Shared:WaitForChild("PathPlan")) :: any).ROW_Z -- (V9-0h: behind the bullseye under LAYOUT_V3)
+	if not (Config :: any).LAB_GRASS then
 	local mat = paint(folder, "TestZone", Vector3.new(42, 0.05, 16), Vector3.new(o.X, ground + 0.12, rowZ) -- (V9-0d: 0.1 over the floor, no flicker)
 		, Color3.fromRGB(52, 54, 60), Enum.Material.Concrete)
 	Finish.apply(mat, "Rubber")
@@ -1037,6 +1045,7 @@ local function dressPlot(plot: Plot)
 	paint(folder, "ZoneEdge", Vector3.new(0.6, 0.06, 16), Vector3.new(o.X + 21, ground + 0.22, rowZ), yellow)
 	for i = 0, 13 do -- hazard stripes along its front edge
 		paint(folder, "Hazard", Vector3.new(1.5, 0.06, 1.6), Vector3.new(o.X - 19.5 + i * 3, ground + 0.22, rowZ + 8), if i % 2 == 0 then yellow else Color3.fromRGB(24, 24, 28))
+	end
 	end
 	-- The crash wall behind the row, a workbench either side of it.
 	if (Config :: any).TARGET_BLOCKS then
@@ -1066,7 +1075,7 @@ local function signText(owner: Player?): string
 end
 
 -- Which way an avatar faces at the lab's spawn (V8-0.4: 50 degrees right of -Z, towards the cannon; T112 measured the cannon at 42 degrees and the middle dummies at -37..-19 in the follow camera, inside 1920x1080 (49) and a landscape phone (55)).
-Lab.SPAWN_FACING = if Config.V8_ONE_VOICE then Vector3.new(math.sin(math.rad(72)), 0, -math.cos(math.rad(72))) else -Vector3.zAxis
+Lab.SPAWN_FACING = if Config.V8_ONE_VOICE then Vector3.new(math.sin(math.rad(45)), 0, -math.cos(math.rad(45))) -- (0.37.3: the spider ahead-left, the wrecking ball ahead, the cannon to the right) else -Vector3.zAxis
 
 local function placeOnPlot(player: Player, plot: Plot)
 	local character = player.Character
