@@ -101,6 +101,7 @@ type Vitals = {
 }
 
 local vitals: { [Model]: Vitals } = {}
+local cutHits: { [Model]: { [string]: number } } = setmetatable({}, { __mode = "k" }) :: any -- (0.36.8: rounds per piece that can come off)
 local infoRemote: RemoteEvent? = nil
 local lastInfo: { [Player]: number } = {}
 -- The last line each player was sent (tests read it; the client only gets the remote).
@@ -264,9 +265,9 @@ end
 local function reattach(model: Model, v: Vitals)
 	local back: { string } = {}
 	for limb in v.severed do
-		local spec = Anatomy.LIMBS[limb]
+		local spec = Anatomy.cutOf(limb) :: any
 		local first = model:FindFirstChild(spec.parts[1])
-		local body = model:FindFirstChild(if string.find(limb, "Leg") then "LowerTorso" else "UpperTorso")
+		local body = model:FindFirstChild(spec.parent or (if string.find(limb, "Leg") then "LowerTorso" else "UpperTorso"))
 		if first and first:IsA("BasePart") and body and body:IsA("BasePart") then
 			local mine = first:FindFirstChild(spec.joint .. "RigAttachment")
 			local theirs = body:FindFirstChild(spec.joint .. "RigAttachment")
@@ -308,6 +309,7 @@ local function reattach(model: Model, v: Vitals)
 	end
 	table.sort(left)
 	model:SetAttribute("Severed", if #left > 0 then table.concat(left, ",") else nil)
+	cutHits[model] = nil
 end
 
 -- The Heal tool: every wound closed, the blood back, cut-off limbs put back, and awake. Returns
@@ -347,7 +349,7 @@ function VitalsService.sever(model: Model, limb: string, position: Vector3?): bo
 	if not Config.SEVERING or quiet() or model:GetAttribute("Frozen") == true then
 		return false
 	end
-	local spec = Anatomy.LIMBS[limb]
+	local spec = Anatomy.cutOf(limb)
 	local v = vitalsOf(model)
 	if not spec or v.severed[limb] then
 		return false
@@ -369,7 +371,7 @@ function VitalsService.sever(model: Model, limb: string, position: Vector3?): bo
 	-- Purple caps on both sides of the cut (welded on, weightless, never in the way).
 	local socket = first:FindFirstChild(spec.joint .. "RigAttachment")
 	if socket and socket:IsA("Attachment") then
-		local body = model:FindFirstChild(if string.find(limb, "Leg") then "LowerTorso" else "UpperTorso")
+		local body = model:FindFirstChild((spec :: any).parent or (if string.find(limb, "Leg") then "LowerTorso" else "UpperTorso"))
 		for _, holder in { first, body } do
 			if holder and holder:IsA("BasePart") then
 				local cap = Instance.new("Part")
@@ -402,7 +404,9 @@ function VitalsService.sever(model: Model, limb: string, position: Vector3?): bo
 	model:SetAttribute("Severed", table.concat(list, ","))
 	-- A stump: the big artery there (a leg's femoral; an arm's axillary, at the shoulder).
 	local side = if string.find(limb, "Left") then "Left" else "Right"
-	local zone = Anatomy.zones[side .. (if string.find(limb, "Leg") then "Femoral" else "ArmStump")]
+	local piece = string.sub(limb, #side + 1)
+	local zone = if piece == "Arm" or piece == "Leg" then Anatomy.zones[side .. (if piece == "Leg" then "Femoral" else "ArmStump")]
+		else Anatomy.zones[side .. piece] or Anatomy.zones[side .. "Forearm"]
 	table.insert(v.wounds, { zone = zone, at = Workspace:GetServerTimeNow(), opened = os.clock(), power = 1 })
 	v.blood -= 8
 	shareWounds(model, v, os.clock())
@@ -539,8 +543,22 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 			severed = zone.limb
 		end
 	end
+	-- 0.36.8 (owner): enough rounds on one spot take that piece off (Anatomy.cutForZone: the shoulder the arm,
+	-- the wrist the hand, and so on). Counted per body until it is healed or revived.
+	if not severed and not blunt and Config.SEVERING then
+		local cut, need = Anatomy.cutForZone(zone.id)
+		if cut and need > 0 then
+			local counts = cutHits[model] or {}
+			cutHits[model] = counts
+			counts[cut] = (counts[cut] or 0) + 1
+			if counts[cut] >= need and VitalsService.sever(model, cut, position) then
+				counts[cut] = nil
+				severed = cut
+			end
+		end
+	end
 	VitalsService.step(model, v, 0)
-	local label = if severed then (Anatomy.LIMBS[severed :: string].label .. " severed")
+	local label = if severed then (((Anatomy.cutOf(severed :: string) :: any).label) .. " severed")
 		elseif Config.MILD_TEXT then Anatomy.mildLabel(zone.id) -- (phase 0: a body region, no organs)
 		else zone.label
 	local line = string.format("%s \u{00B7} %d%% blood \u{00B7} %s", label, math.floor(v.blood + 0.5), if v.state == "Dead" then "no pulse" else "pulse " .. math.floor(v.pulse + 0.5))

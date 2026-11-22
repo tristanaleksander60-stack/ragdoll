@@ -97,6 +97,42 @@ Anatomy.LIMBS = table.freeze({
 	RightLeg = { joint = "RightHip", parts = { "RightUpperLeg", "RightLowerLeg", "RightFoot" }, label = "Right leg" },
 })
 
+-- 0.36.8 (owner, 22 Nov 2026: "shoot the shoulder enough and the arm falls off, the wrist and the hand
+-- falls off"): smaller pieces that can come off at their own joint (Config.SEVERING). `parent` is the part
+-- the piece hangs on (the stump caps go on it, a heal puts the piece back on it). Not in LIMBS, so
+-- limbOfPart still names the whole arm or leg.
+Anatomy.CUTS = table.freeze({
+	LeftForearm = { joint = "LeftElbow", parts = { "LeftLowerArm", "LeftHand" }, label = "Left forearm", parent = "LeftUpperArm" },
+	RightForearm = { joint = "RightElbow", parts = { "RightLowerArm", "RightHand" }, label = "Right forearm", parent = "RightUpperArm" },
+	LeftHand = { joint = "LeftWrist", parts = { "LeftHand" }, label = "Left hand", parent = "LeftLowerArm" },
+	RightHand = { joint = "RightWrist", parts = { "RightHand" }, label = "Right hand", parent = "RightLowerArm" },
+	LeftShin = { joint = "LeftKnee", parts = { "LeftLowerLeg", "LeftFoot" }, label = "Left shin", parent = "LeftUpperLeg" },
+	RightShin = { joint = "RightKnee", parts = { "RightLowerLeg", "RightFoot" }, label = "Right shin", parent = "RightUpperLeg" },
+	LeftFoot = { joint = "LeftAnkle", parts = { "LeftFoot" }, label = "Left foot", parent = "LeftLowerLeg" },
+	RightFoot = { joint = "RightAnkle", parts = { "RightFoot" }, label = "Right foot", parent = "RightLowerLeg" },
+})
+
+-- A whole limb (LIMBS) or a smaller piece (CUTS) by name.
+function Anatomy.cutOf(name: string): { joint: string, parts: { string }, label: string, parent: string? }?
+	return (Anatomy.LIMBS :: any)[name] or (Anatomy.CUTS :: any)[name]
+end
+
+-- What a round in a zone cuts off once enough rounds land there, and how many it takes.
+Anatomy.SHOTS_TO_CUT = table.freeze({ Arm = 4, Forearm = 3, Hand = 2, Leg = 5, Shin = 3, Foot = 2 })
+function Anatomy.cutForZone(zoneId: string): (string?, number)
+	local side = string.match(zoneId, "^(Left)") or string.match(zoneId, "^(Right)")
+	if not side then
+		return nil, 0
+	end
+	local rest = string.sub(zoneId, #side + 1)
+	local piece = if rest == "UpperArm" then "Arm" elseif rest == "Forearm" then "Forearm" elseif rest == "Hand" then "Hand"
+		elseif rest == "Thigh" or rest == "Femoral" then "Leg" elseif rest == "Shin" then "Shin" elseif rest == "Foot" then "Foot" else nil
+	if not piece then
+		return nil, 0
+	end
+	return side .. piece, Anatomy.SHOTS_TO_CUT[piece]
+end
+
 -- Which limb a part belongs to (nil: head or torso).
 function Anatomy.limbOfPart(partName: string): string?
 	for name, limb in Anatomy.LIMBS do

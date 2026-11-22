@@ -141,7 +141,7 @@ function HospitalCharts.injuryText(wounds: { Anatomy.SharedWound }, severed: unk
 	local parts: { string } = {}
 	if type(severed) == "string" and severed ~= "" then
 		for _, limb in string.split(severed, ",") do
-			local spec = Anatomy.LIMBS[limb]
+			local spec = Anatomy.cutOf(limb)
 			if spec then
 				table.insert(parts, spec.label .. " severed")
 			end

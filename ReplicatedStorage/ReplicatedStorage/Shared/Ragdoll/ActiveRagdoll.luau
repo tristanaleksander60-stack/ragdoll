@@ -2076,7 +2076,7 @@ local function severedParts(model: Model): { [string]: boolean }?
 	end
 	local out = {}
 	for limb in string.gmatch(raw, "[^,]+") do
-		local spec = Anatomy.LIMBS[limb]
+		local spec = Anatomy.cutOf(limb)
 		if spec then
 			for _, name in spec.parts do
 				out[name] = true
