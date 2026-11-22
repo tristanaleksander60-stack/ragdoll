@@ -270,7 +270,13 @@ local function enter(seat: VehicleSeat)
 	end
 	local r: Ride = { seat = seat, body = body, extras = {}, lastAlong = 0 }
 	ride = r
+	-- (22 Nov 2026, owner: remove the steering wheel that showed over every car you got into.)
 	pcall(buildExtras, r)
+	for _, p in r.extras do
+		if string.find(p.Name, "CockpitWheel", 1, true) then
+			p.Transparency = 1
+		end
+	end
 	r.start = sound(V.startSound, body, false, 0.9)
 	r.screech = sound(V.screechSound, body, true, 0)
 	r.wind = sound(V.windSound, body, true, 0)

@@ -218,6 +218,14 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	local bottom = home * CFrame.new(0, -b.Y / 2 - spec.lift, 0)
 	local look = V3Assets.place(role, model, bottom, { size = b.Z + 1.5, collide = false, anchored = false, name = "Look" })
 	if look then
+		-- (22 Nov 2026, owner: "sit the right way in the go-kart"): the model's own seats never take a
+		-- rider (the kart's faced backwards); only our Seat does, and it faces where the car drives.
+		for _, d in look:GetDescendants() do
+			if d:IsA("Seat") or d:IsA("VehicleSeat") then
+				d.Disabled = true
+				d.CanTouch = false
+			end
+		end
 		-- v4 C2: the wheels hang on Welds (each screen turns and steers them: Client/VehicleFeel) and
 		-- the rest of the shell on one invisible root whose Weld the screens tilt a little (body roll
 		-- and dive). Pictures only; the code-built box does the physics.

@@ -61,9 +61,13 @@ local function moving(): boolean
 	return humanoid ~= nil and humanoid.MoveDirection.Magnitude > 0.1
 end
 
+GunFeel.EXACT = true -- (22 Nov 2026: rounds go exactly through the crosshair; false = the old climb and spread)
+
 -- Where a gun's round goes from where you aimed (screen px).
 function GunFeel.aim(toy: Toys.Toy, at: Vector2): Vector2
-	if not toy.gun then
+	-- (22 Nov 2026, owner: "the crosshair always shows where the shots go, recoil too"): no hidden
+	-- climb or spread any more; the recoil is the camera kick, and the crosshair rides it (FeelV2).
+	if not toy.gun or GunFeel.EXACT then
 		return at
 	end
 	local now = os.clock()
