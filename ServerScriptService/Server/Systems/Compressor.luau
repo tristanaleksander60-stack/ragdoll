@@ -19,7 +19,7 @@ local Config = require(Shared:WaitForChild("Config")) :: any
 
 local Compressor = {}
 
-Compressor.AT = Vector2.new(-20, 35) -- lab x, z (on the hub's rim; V9-0n fine-tunes it)
+Compressor.AT = Vector2.new(-20, 35) * (Config.LAB_SPREAD or 1) -- lab x, z (on the hub's rim; V9-0n fine-tunes it)
 Compressor.PLATE = 8 -- studs across the press bed
 Compressor.HEIGHT = 13 -- studs from the bed to the top beam
 Compressor.COOLDOWN = 2.5 -- s between two presses

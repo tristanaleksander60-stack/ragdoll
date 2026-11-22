@@ -46,7 +46,8 @@ function LabDress.throwTower(folder: Instance, origin: Vector3)
 		return
 	end
 	local spec = LabDress.TOWER
-	local base = origin + Vector3.new(spec.x, 0, spec.z)
+	local sp = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_SPREAD or 1
+	local base = origin + Vector3.new(spec.x * sp, 0, spec.z * sp) -- (0.37.0: the bigger lab)
 	local tower = V3Assets.place("CastleTower", folder, CFrame.new(base), { height = spec.height, collide = true, name = "ThrowTower" })
 	if not tower then
 		return
@@ -85,6 +86,8 @@ end
 -- The fence along the back edge (z -94), a piece every FENCE_STEP studs.
 LabDress.FENCE_STEP = 12
 
+local SPREAD = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_SPREAD or 1 -- (0.37.0: the bigger lab)
+
 function LabDress.dress(into: Instance, origin: Vector3)
 	local folder = Instance.new("Folder")
 	folder.Name = "Dress"
@@ -102,7 +105,7 @@ function LabDress.dress(into: Instance, origin: Vector3)
 			s = c
 		end
 		if V3Assets.has(s.role) then
-			local at = CFrame.new(origin + Vector3.new(s.x, 0, s.z)) * CFrame.Angles(0, math.rad(s.yaw), 0)
+			local at = CFrame.new(origin + Vector3.new(s.x * SPREAD, 0, s.z * SPREAD)) * CFrame.Angles(0, math.rad(s.yaw), 0)
 			local placed = V3Assets.place(s.role, folder, at, { size = s.size, height = s.height, collide = s.collide == true })
 			-- (UI audit 21 Nov 2026: barrels, crates and cones are things you can knock over, not scenery.)
 			if placed and Knockables.ROLES[s.role] then
@@ -111,9 +114,9 @@ function LabDress.dress(into: Instance, origin: Vector3)
 		end
 	end
 	if V3Assets.has("Fence") then
-		local x = -78
-		while x <= 78 do
-			local at = CFrame.new(origin + Vector3.new(x, 0, -94))
+		local x = -78 * SPREAD
+		while x <= 78 * SPREAD do
+			local at = CFrame.new(origin + Vector3.new(x, 0, -94 * SPREAD))
 			V3Assets.place("Fence", folder, at, { size = LabDress.FENCE_STEP, collide = true })
 			x += LabDress.FENCE_STEP
 		end

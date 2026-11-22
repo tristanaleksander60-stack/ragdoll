@@ -29,7 +29,8 @@ local Systems = script.Parent
 
 local LabCreatures = {}
 
-LabCreatures.YARD_Z = 92 -- the yard's middle line, in front of the lab (z from the lab's origin)
+local S = Config.LAB_SPREAD or 1 -- (0.37.0: the bigger lab)
+LabCreatures.YARD_Z = 92 * S -- the yard's middle line, in front of the lab (z from the lab's origin)
 LabCreatures.CHECK = 0.3 -- s between looks for dummies in the triggers
 LabCreatures.SPIDER_FULL = 100
 LabCreatures.SPIDER_MEAL = 34 -- hunger filled per dummy (3 meals = full)
@@ -691,18 +692,18 @@ end
 -- plant and the chicken in the east garden (between the lab floor and the garden walk, facing the
 -- walk), the other five spread across the whole yard in front.
 LabCreatures.LAYOUT = table.freeze({
-	{ id = "Spider", label = "the SPIDER", x = -90, z = -70, yaw = -90 },
-	{ id = "Frog", label = "the FROG", x = if (Config :: any).LAYOUT_V3 then -81 else -89, z = -5, yaw = -90 }, -- (V9-0d: its pond off the west garden walk)
-	{ id = "Plant", label = "the GIANT PLANT", x = 90, z = -70, yaw = 90 },
-	{ id = "Chicken", label = "the CHICKEN", x = 90, z = -8, yaw = 90 },
+	{ id = "Spider", label = "the SPIDER", x = -90 * S, z = -70 * S, yaw = -90 },
+	{ id = "Frog", label = "the FROG", x = (if (Config :: any).LAYOUT_V3 then -81 else -89) * S, z = -5 * S, yaw = -90 }, -- (V9-0d: its pond off the west garden walk)
+	{ id = "Plant", label = "the GIANT PLANT", x = 90 * S, z = -70 * S, yaw = 90 },
+	{ id = "Chicken", label = "the CHICKEN", x = 90 * S, z = -8 * S, yaw = 90 },
 	-- (session v849, owner: "ryk rundt på tingene så de står psykologisk bedst"): the shark tank is new,
 	-- premium content; it moved from the far west yard corner (-95, 92) up and in to (-55, 70) so a
 	-- player standing at the west side of the lab core SEES it, a clear wow hook on the way back.
-	{ id = "Whale", label = "the SHARK TANK", x = -55, z = 70, yaw = 0 }, -- (session v847: shark swap, id kept for saved progress; session v849: moved forward)
-	{ id = "Washer", label = "the WASHING MACHINE", x = -47, z = 94, yaw = 180 },
-	{ id = "Vacuum", label = "the ROBOT VACUUM", x = 0, z = 88, yaw = 0 },
-	{ id = "Mole", label = "the MOLE", x = 47, z = 94, yaw = 0 },
-	{ id = "Slingshot", label = "the SLINGSHOT TREE", x = 95, z = 98, yaw = 0 },
+	{ id = "Whale", label = "the SHARK TANK", x = -55 * S, z = 70 * S, yaw = 0 }, -- (session v847: shark swap, id kept for saved progress; session v849: moved forward)
+	{ id = "Washer", label = "the WASHING MACHINE", x = -47 * S, z = 94 * S, yaw = 180 },
+	{ id = "Vacuum", label = "the ROBOT VACUUM", x = 0 * S, z = 88 * S, yaw = 0 },
+	{ id = "Mole", label = "the MOLE", x = 47 * S, z = 94 * S, yaw = 0 },
+	{ id = "Slingshot", label = "the SLINGSHOT TREE", x = 95 * S, z = 98 * S, yaw = 0 },
 })
 
 -- Builds the yard into a lab's Playground folder; a loop per lab checks every trigger.
@@ -715,7 +716,7 @@ function LabCreatures.build(into: Instance, origin: Vector3)
 		return Lab.ownerAt(origin + Vector3.new(0, 1, 0))
 	end
 	-- The yard's ground: soft grass under it all.
-	local ground = part(folder, "YardGrass", Vector3.new(250, 0.2, 38), CFrame.new(origin + Vector3.new(0, 0.1, LabCreatures.YARD_Z)), Color3.fromRGB(86, 124, 64), Enum.Material.Grass)
+	local ground = part(folder, "YardGrass", Vector3.new(250 * S, 0.2, 38), CFrame.new(origin + Vector3.new(0, 0.1, LabCreatures.YARD_Z)), Color3.fromRGB(86, 124, 64), Enum.Material.Grass)
 	ground.CanCollide = false
 	local ticks: { () -> () } = {}
 	for _, spot in LabCreatures.LAYOUT do

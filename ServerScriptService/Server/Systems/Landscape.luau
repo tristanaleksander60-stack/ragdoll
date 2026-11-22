@@ -73,7 +73,8 @@ function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: num
 	-- z -95 to +72). Land starts outside it.
 	local reach = (math.ceil(plotCount / 2) + 0.5) * plotSpacing
 	-- (V6-5: the creature yard in front of the labs keeps the land flat out to z 112.)
-	local front, back = if (Config :: any).LAB_CREATURES then 112 else 75, -98
+	local sp = (Config :: any).LAB_SPREAD or 1 -- (0.37.0: the bigger lab)
+	local front, back = (if (Config :: any).LAB_CREATURES then 112 else 75) * sp, -98 * sp
 	task.spawn(function()
 		task.wait(3)
 		local step = Landscape.STEP

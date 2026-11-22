@@ -295,7 +295,7 @@ MapBoard.TRAVEL_SPOTS = table.freeze({
 }) :: { [string]: Vector2 }
 -- Where a piece of the travel corner stands (lab space -> world, on the floor) and the point it faces.
 function MapBoard.travelSpot(origin: Vector3, name: string): (Vector3, Vector3)
-	local s = MapBoard.TRAVEL_SPOTS[name] or Vector2.zero
+	local s = (MapBoard.TRAVEL_SPOTS[name] or Vector2.zero) * ((Config :: any).LAB_SPREAD or 1) -- (0.37.0: the bigger lab)
 	return floorUnder(origin + Vector3.new(s.X, 0, s.Y)), origin -- (turned to the hub's middle)
 end
 

@@ -15,9 +15,10 @@ local Zones = require(Shared:WaitForChild("Zones"))
 
 local LabGarden = {}
 
-LabGarden.CORE_HALF = 80 -- where the garden starts: just past the concrete floor (Lab.CORE_HALF 85 less the 6-stud floor margin)
-LabGarden.Z_BACK = -92
-LabGarden.Z_FRONT = 70
+local S = (require(Shared:WaitForChild("Config")) :: any).LAB_SPREAD or 1 -- (0.37.0: the bigger lab)
+LabGarden.CORE_HALF = 80 * S -- where the garden starts: just past the concrete floor (Lab.CORE_HALF 85 less the 6-stud floor margin)
+LabGarden.Z_BACK = -92 * S
+LabGarden.Z_FRONT = 70 * S
 LabGarden.HEDGE_HEIGHT = 14
 LabGarden.LAMP_COLOR = Color3.fromRGB(255, 196, 130)
 

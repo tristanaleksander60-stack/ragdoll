@@ -14,7 +14,8 @@ local Zones = {}
 
 -- (V6-4, Config.LAB_V6: wider plots, 250 = about +50 % area, the new strips are the garden.)
 local LAB_V6 = (require(script.Parent:WaitForChild("Config")) :: any).LAB_V6 == true
-Zones.PLOT_SPACING = if LAB_V6 then 250 else 170 -- studs between the middles of two neighbouring labs (and the plaza)
+Zones.SPREAD = (require(script.Parent:WaitForChild("Config")) :: any).LAB_SPREAD or 1 -- (0.37.0: the bigger lab)
+Zones.PLOT_SPACING = math.round((if LAB_V6 then 250 else 170) * Zones.SPREAD) -- studs between the middles of two neighbouring labs (and the plaza)
 Zones.PLOT_HALF = Zones.PLOT_SPACING / 2 -- half a plot's width
 Zones.GROUND_TOP = 600 -- higher than this above the floor: up in the rooms
 Zones.PLOT_COUNT = 10

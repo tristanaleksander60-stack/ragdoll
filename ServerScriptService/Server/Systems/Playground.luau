@@ -23,6 +23,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local Log = require(Shared.Log)
 local Config = require(Shared.Config)
+local S = (Config :: any).LAB_SPREAD or 1 -- (0.37.0: the bigger lab: machine spots this many times further out)
 
 local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
 local FxService = require(script.Parent.FxService)
@@ -130,7 +131,7 @@ Playground.realPad = realPad
 
 local function buildTower()
 	-- 20 stairs climbing towards -Z on the west side, then the platform.
-	local x, z0 = -52, -8
+	local x, z0 = -52 * S, -8 * S
 	local steps, rise, run, width = 20, 1.5, 2.5, 8
 	-- (Concrete steps with a yellow safety edge on each, a panelled tower: a test rig, not a toy.)
 	for i = 0, steps - 1 do
@@ -220,7 +221,7 @@ end
 
 local function buildCannon()
 	local mine = folder
-	local x, z = 48, 6
+	local x, z = 48 * S, 6 * S
 	local padPart = part("CannonPad", Vector3.new(8, 1, 8), at(x, 0.5, z), ORANGE, Enum.Material.Neon)
 	-- Clients launch the dummies they simulate with the same velocity.
 	padPart:SetAttribute("LaunchVelocity", CANNON_DIRECTION * CANNON_SPEED)
@@ -396,7 +397,7 @@ local function throwOnTouch(p: BasePart, cooldown: number, fxSpeed: number, fxId
 end
 
 local function buildWreckingBall()
-	local x, z = 40, -38
+	local x, z = 40 * S, -38 * S
 	local height = 24
 	local postA = part("Post", Vector3.new(2, height, 2), at(x - 8, height / 2, z), DARK, Enum.Material.Metal)
 	local postB = part("Post", Vector3.new(2, height, 2), at(x + 8, height / 2, z), DARK, Enum.Material.Metal)
@@ -810,7 +811,7 @@ end
 
 local function buildBullseye()
 	-- Where the human cannon's shot comes down (the pad: buildCannon, at 48, 6).
-	local land = Playground.cannonLanding(origin + Vector3.new(48, 1, 6)) - origin
+	local land = Playground.cannonLanding(origin + Vector3.new(48 * S, 1, 6 * S)) - origin
 	local r = Playground.BULLSEYE_RADIUS
 	local base = part("Bullseye", Vector3.new(0.8, r * 2, r * 2), CFrame.new(origin + Vector3.new(land.X, 0.4, land.Z)) * CFrame.Angles(0, 0, math.rad(90)), WHITE, Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
 	base.CanTouch = false
@@ -854,9 +855,9 @@ end
 
 local function buildMace()
 	-- Behind the spawn, on the left: a post with an arm going round, a spiked ball at its end.
-	local x, z = -30, 32
+	local x, z = -30 * S, 32 * S
 	if (Config :: any).LAYOUT_V2 then
-		x, z = Playground.MACE_V2_AT.X, Playground.MACE_V2_AT.Y -- (21 Nov 2026: back a little, clear of the moved lava and the new paths)
+		x, z = Playground.MACE_V2_AT.X * S, Playground.MACE_V2_AT.Y * S -- (21 Nov 2026: back a little, clear of the moved lava and the new paths)
 	end
 	local post = part("MacePost", Vector3.new(3, 5, 3), at(x, 2.5, z), DARK, Enum.Material.Metal)
 	-- (V7-1: the big painted box round the mace goes with the other floor boxes: ZONE_FLOOR.)
@@ -953,9 +954,9 @@ end
 --   ROCKET WALL  shot flat along a rail into a concrete wall
 -- Each with a bang, a yellow-black rim and the "PUT RAGDOLL HERE" sign.
 local STATIONS = {
-	{ name = "SKY LAUNCH", x = -8, z = 52, velocity = Vector3.new(0, 210, 0), color = Color3.fromRGB(80, 170, 255) },
-	{ name = "FLING PAD", x = 10, z = 52, velocity = Vector3.new(-62, 95, -30), color = Color3.fromRGB(190, 90, 255) },
-	{ name = "ROCKET WALL", x = 28, z = 52, velocity = Vector3.new(150, 18, 0), color = Color3.fromRGB(255, 70, 50) },
+	{ name = "SKY LAUNCH", x = -8 * S, z = 52 * S, velocity = Vector3.new(0, 210, 0), color = Color3.fromRGB(80, 170, 255) },
+	{ name = "FLING PAD", x = 10 * S, z = 52 * S, velocity = Vector3.new(-62, 95, -30), color = Color3.fromRGB(190, 90, 255) },
+	{ name = "ROCKET WALL", x = 28 * S, z = 52 * S, velocity = Vector3.new(150, 18, 0), color = Color3.fromRGB(255, 70, 50) },
 }
 Playground.STATIONS = STATIONS
 
@@ -1024,6 +1025,9 @@ end
 if (Config :: any).LAYOUT_V3 then
 	-- (V9-0h review: the dummies' test row moved behind the bullseye, onto the sleigh's old spot.)
 	Playground.CHRISTMAS_SPOTS = { Chimney = Vector2.new(45, 66), Present = Vector2.new(-58, 64), Sleigh = Vector2.new(62, -62) }
+end
+for k, v in Playground.CHRISTMAS_SPOTS do
+	Playground.CHRISTMAS_SPOTS[k] = v * S -- (0.37.0: the bigger lab)
 end
 local BRICK = Color3.fromRGB(150, 50, 40)
 local XMAS_GREEN = Color3.fromRGB(40, 150, 70)
@@ -1260,7 +1264,7 @@ function Playground.build(labOrigin: Vector3, name: string?)
 		buildStations() -- (round 5: PUT RAGDOLL HERE)
 		buildBigButton() -- (v3 Phase C)
 		-- Round 5, phase 3: round pedestals under the things to try.
-		pedestal(48, 6, 7.5) -- the human cannon
+		pedestal(48 * S, 6 * S, 7.5) -- the human cannon
 		-- Round 5, phase 4: SINGLEPLAYER and MULTIPLAYER behind the spawn.
 		require(script.Parent.PortalService).buildPortals(folder, origin)
 		-- V9-0e: the Map Board and the gold PLACES portal in the spawn's view (a failure never costs the lab).
@@ -1371,8 +1375,8 @@ function Playground.build(labOrigin: Vector3, name: string?)
 		local ok, err = pcall(function()
 			local plan = if lab
 				then {
-					cannonPad = Vector3.new(48, 1, 6),
-					landing = Playground.cannonLanding(origin + Vector3.new(48, 1, 6)) - origin,
+					cannonPad = Vector3.new(48 * S, 1, 6 * S),
+					landing = Playground.cannonLanding(origin + Vector3.new(48 * S, 1, 6 * S)) - origin,
 					velocity = CANNON_DIRECTION * CANNON_SPEED,
 					gravity = Workspace.Gravity,
 					stations = STATIONS,

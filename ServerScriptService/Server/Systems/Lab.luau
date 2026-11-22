@@ -67,8 +67,8 @@ local CHAT_PAIR = { 4, 5 }
 local ROAM_FIRST = 0 -- (22 Nov 2026, owner: no row standing still) s before a slot first starts wandering
 local ROAM_EVERY_MIN, ROAM_EVERY_MAX = 10, 22 -- s before it picks the next spot (random in range)
 local ROAM_REACH = 8 -- studs from its current roam Home where it counts as arrived
-local ROAM_RANGE = 55 -- studs from the plot's spawn: the farthest a roam Home may be (22 Nov: inside the lab core)
-local ROAM_YARD_Z = 40 -- (22 Nov 2026: never past this z, the creature yard, where a walker was swallowed and vanished)
+local ROAM_RANGE = 55 * ((Config :: any).LAB_SPREAD or 1) -- studs from the plot's spawn: the farthest a roam Home may be (22 Nov: inside the lab core)
+local ROAM_YARD_Z = 40 * ((Config :: any).LAB_SPREAD or 1) -- (22 Nov 2026: never past this z, the creature yard, where a walker was swallowed and vanished)
 local ROAM_NEAR_MIN = 18 -- studs: closest a roam Home may be (never right on top of the player)
 local GREET_RANGE = 40 -- studs from its home: a player this close may get a hello
 local GREET_STOP = 4.5 -- studs in front of the player where it stops
@@ -93,7 +93,8 @@ Lab.DUMMY_COUNT = DUMMY_COUNT -- (World/Feel v2: T80 adds it to a device's ragdo
 Lab.PLOT_COUNT = 10 -- labs on one server (the place's server size should be 10)
 Lab.PLOT_SPACING = Zones.PLOT_SPACING -- studs between the middles of two neighbouring labs (and the plaza; V6-4 wider)
 Lab.PLOT_HALF = Zones.PLOT_HALF -- half a plot's width: closer than this to its middle line, you are in it
-Lab.CORE_HALF = 85 -- the concrete lab inside it (markings and floor; the rest is the V6-4 garden)
+local S = (Config :: any).LAB_SPREAD or 1 -- (0.37.0: the bigger lab)
+Lab.CORE_HALF = 85 * S -- the concrete lab inside it (markings and floor; the rest is the V6-4 garden)
 Lab.GROUND_TOP = 600 -- studs above the floor: higher than this you are in the rooms, not on the ground
 
 type Slot = {
@@ -744,8 +745,8 @@ local function markPlot(plot: Plot)
 	local o = plot.origin
 	local w = Lab.CORE_HALF * 2 - 10
 	-- The lab runs from 72 behind the spawn (the Workshop's reach, 70, inside it) to 95 in front.
-	local depth = 167
-	local zMid = o.Z - 11.5
+	local depth = 167 * S
+	local zMid = o.Z - 11.5 * S
 	local color = Color3.fromRGB(124, 200, 255)
 	edge(plot.folder, Vector3.new(w, 0.06, 0.6), Vector3.new(o.X, 0.03, zMid - depth / 2), color)
 	edge(plot.folder, Vector3.new(w, 0.06, 0.6), Vector3.new(o.X, 0.03, zMid + depth / 2), color)
@@ -917,7 +918,7 @@ local function dressPlot(plot: Plot)
 	local ground = o.Y - 0.5
 	local folder = plot.folder
 	-- The floor (the whole plot, within its markings): tiled lab concrete (Finish).
-	local floor = paint(folder, "LabFloor", Vector3.new(Lab.CORE_HALF * 2 - 12, 0.04, 165), Vector3.new(o.X, ground + 0.02, o.Z - 11.5), Color3.fromRGB(176, 180, 188), Enum.Material.Concrete)
+	local floor = paint(folder, "LabFloor", Vector3.new(Lab.CORE_HALF * 2 - 12, 0.04, 165 * S), Vector3.new(o.X, ground + 0.02, o.Z - 11.5 * S), Color3.fromRGB(176, 180, 188), Enum.Material.Concrete)
 	-- (V9-P fix round 2: the floor you see answers a landing (FeelV2.surfaceAt), not the hidden ground under it.)
 	game:GetService("CollectionService"):AddTag(floor, "VisibleFloor")
 	local look3 = (Config :: any).LAYOUT_V3 and (Config :: any).LAYOUT_V3_FLOOR
@@ -946,6 +947,58 @@ local function dressPlot(plot: Plot)
 	else
 		Finish.apply(floor, "Floor")
 	end
+	-- 0.37.0 (owner, 22 Nov 2026: the biggest game's map: grass with paved walks and a round plaza at the
+	-- spawn): the floor turns to lawn, a stone plaza lies round the spawn and a straight paved walk runs
+	-- from its rim out to every machine, so each one has a clear line to walk along. Pictures only (thin,
+	-- not colliding, not queried): the floor under them stays the one floor the physics and rays use.
+	if (Config :: any).LAB_GRASS then
+		for _, t in floor:GetChildren() do
+			if t:IsA("Texture") then
+				t:Destroy()
+			end
+		end
+		floor.MaterialVariant = ""
+		floor.Material = Enum.Material.Grass
+		floor.Color = Color3.fromRGB(92, 148, 66)
+		local stoneColor = Color3.fromRGB(196, 190, 176)
+		local PLAZA_R = 30
+		local plaza = paint(folder, "Plaza", Vector3.new(0.06, PLAZA_R * 2, PLAZA_R * 2), Vector3.new(o.X, ground + 0.08, o.Z), stoneColor, Enum.Material.Slate)
+		plaza.Shape = Enum.PartType.Cylinder
+		plaza.CFrame = CFrame.new(plaza.Position) * CFrame.Angles(0, 0, math.rad(90))
+		local rim = paint(folder, "PlazaRim", Vector3.new(0.05, PLAZA_R * 2 + 2.4, PLAZA_R * 2 + 2.4), Vector3.new(o.X, ground + 0.06, o.Z), Color3.fromRGB(120, 116, 108), Enum.Material.Slate)
+		rim.Shape = Enum.PartType.Cylinder
+		rim.CFrame = CFrame.new(rim.Position) * CFrame.Angles(0, 0, math.rad(90))
+		local PathPlanM = require(Shared:WaitForChild("PathPlan")) :: any
+		local Sp = (Config :: any).LAB_SPREAD or 1
+		local goals: { Vector2 } = {
+			Vector2.new(48, 6) * Sp, -- the cannon
+			Vector2.new(-52, -8) * Sp, -- the tower's stairs
+			Vector2.new(40, -38) * Sp, -- the wrecking ball
+			Vector2.new(10, 46) * Sp, -- the launch stations
+			Vector2.new(-41, 50) * Sp, -- the mace
+			Vector2.new(-20, 35) * Sp, -- the compressor
+			Vector2.new(0, PathPlanM.ROW_Z + 10), -- the test row
+			PathPlanM.RAMP_AT,
+			PathPlanM.BUTTON_AT,
+			Vector2.new(0, PathPlanM.FLOOR_BACK_Z or 110), -- out to the creature yard
+		}
+		for i, g in goals do
+			local dir = if g.Magnitude > 1 then g.Unit else Vector2.new(0, 1)
+			local from = dir * (PLAZA_R - 1)
+			local to = g - dir * 7 -- (stops at the machine's foot)
+			local len = (to - from).Magnitude
+			if len > 4 then
+				local mid = (from + to) / 2
+				local y = ground + 0.07 + i * 0.002 -- (each walk a hair apart: no flicker where two cross)
+				local walk = paint(folder, "Walk", Vector3.new(9, 0.05, len), Vector3.new(o.X + mid.X, y, o.Z + mid.Y), stoneColor, Enum.Material.Slate)
+				walk.CFrame = CFrame.lookAt(walk.Position, walk.Position + Vector3.new(dir.X, 0, dir.Y))
+				for _, sx in { -1, 1 } do
+					local kerb = paint(folder, "WalkKerb", Vector3.new(0.6, 0.05, len), Vector3.new(0, 0, 0), Color3.fromRGB(120, 116, 108), Enum.Material.Slate)
+					kerb.CFrame = walk.CFrame * CFrame.new(sx * 4.8, -0.004, 0)
+				end
+			end
+		end
+	end
 	-- The test zone under the row: a black rubber safety mat.
 	local rowZ = o.Z + (require(Shared:WaitForChild("PathPlan")) :: any).ROW_Z -- (V9-0h: behind the bullseye under LAYOUT_V3)
 	local mat = paint(folder, "TestZone", Vector3.new(42, 0.05, 16), Vector3.new(o.X, ground + 0.12, rowZ) -- (V9-0d: 0.1 over the floor, no flicker)
@@ -961,18 +1014,18 @@ local function dressPlot(plot: Plot)
 	end
 	-- The crash wall behind the row, a workbench either side of it.
 	if (Config :: any).TARGET_BLOCKS then
-		targetBlocks(folder, Vector3.new(o.X, ground, o.Z - 74), ground)
+		targetBlocks(folder, Vector3.new(o.X, ground, o.Z - 74 * S), ground)
 	else
-		prop(folder, "CrashWall", Vector3.new(o.X, ground, o.Z - 74), Vector3.new(0, 0, 1), 28)
+		prop(folder, "CrashWall", Vector3.new(o.X, ground, o.Z - 74 * S), Vector3.new(0, 0, 1), 28)
 	end
 	for _, x in { -22, 22 } do
-		prop(folder, "LabBench", Vector3.new(o.X + x, ground, o.Z - 76), Vector3.new(0, 0, 1), 9)
+		prop(folder, "LabBench", Vector3.new(o.X + x, ground, o.Z - 76 * S), Vector3.new(0, 0, 1), 9)
 	end
 	-- Barriers and cones down each side edge.
 	for _, side in { -1, 1 } do
-		local x = o.X + side * 76
+		local x = o.X + side * 76 * S
 		for i = 0, 3 do
-			local z = o.Z - 60 + i * 34
+			local z = o.Z + (-60 + i * 34) * S
 			prop(folder, "Barrier", Vector3.new(x, ground, z), Vector3.new(-side, 0, 0), 7)
 			prop(folder, "Cone", Vector3.new(x - side * 2, ground, z + 9), Vector3.new(-side, 0, 0), 2.6)
 		end

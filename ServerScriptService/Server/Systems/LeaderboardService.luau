@@ -544,7 +544,7 @@ function LeaderboardService.buildLabBoards()
 			end
 			local side = if i == 1 then -1 else 1
 			local ground = origin.Y - 0.5
-			local center = Vector3.new(origin.X + side * 34, ground + 4 + LAB_BOARD.Y / 2, origin.Z - 86)
+			local center = Vector3.new(origin.X + side * 34, ground + 4 + LAB_BOARD.Y / 2, origin.Z - 86 * ((require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_SPREAD or 1)) -- (0.37.0: at the bigger lab's far end)
 			-- (Turned a little inwards, towards the spawn.)
 			local cf = CFrame.lookAt(center, Vector3.new(origin.X, center.Y, origin.Z + 10))
 			local model = buildBoard(board, cf, folder, LAB_BOARD)

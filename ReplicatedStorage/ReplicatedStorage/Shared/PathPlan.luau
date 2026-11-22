@@ -347,6 +347,66 @@ if LAYOUT_V3 then
 	PathPlan.OBSTACLES = table.freeze(list)
 end
 
+-- 0.37.0 (owner, 22 Nov 2026: "a much bigger lab, things placed so people walk to them"): every lab spot
+-- above moves Config.LAB_SPREAD times further from the spawn. Footprints keep their size (a machine is as
+-- big as before, only further out); the spawn's clear circle stays as it is.
+local SPREAD = (require(script.Parent:WaitForChild("Config")) :: any).LAB_SPREAD or 1
+PathPlan.SPREAD = SPREAD
+if SPREAD ~= 1 then
+	PathPlan.BUTTON_AT *= SPREAD
+	PathPlan.RAMP_AT *= SPREAD
+	PathPlan.ROW_Z *= SPREAD
+	PathPlan.HUB_CLEAR *= SPREAD
+	if PathPlan.FLOOR_BACK_Z then
+		PathPlan.FLOOR_BACK_Z *= SPREAD
+	end
+	PathPlan.GARDEN_WALK_X *= SPREAD
+	PathPlan.GARDEN_WALK_NORTH *= SPREAD
+	PathPlan.GARDEN_WALK_SOUTH *= SPREAD
+	local points = {}
+	for name, p in PathPlan.LAB_POINTS do
+		points[name] = p * SPREAD
+	end
+	PathPlan.LAB_POINTS = table.freeze(points) :: any
+	local routes = {}
+	for _, r in PathPlan.LAB_ROUTES do
+		local copy = table.clone(r :: any)
+		if typeof(copy.to) == "Vector2" then
+			copy.to *= SPREAD
+		end
+		table.insert(routes, copy)
+	end
+	PathPlan.LAB_ROUTES = table.freeze(routes) :: any
+	local list: { Obstacle } = {}
+	for _, o in PathPlan.OBSTACLES do
+		if o.at then
+			table.insert(list, { name = o.name, at = (o.at :: Vector2) * SPREAD, radius = o.radius })
+		else
+			local mn, mx = o.min :: Vector2, o.max :: Vector2
+			local mid, half = (mn + mx) / 2, (mx - mn) / 2
+			table.insert(list, { name = o.name, min = mid * SPREAD - half, max = mid * SPREAD + half })
+		end
+	end
+	PathPlan.OBSTACLES = table.freeze(list)
+	if PathPlan.LABELS then
+		local labels = {}
+		for k, l in PathPlan.LABELS :: any do
+			local copy = if type(l) == "table" then table.clone(l) else l
+			if type(copy) == "table" then
+				for key, val in copy do
+					if typeof(val) == "Vector2" then
+						copy[key] = val * SPREAD
+					end
+				end
+			elseif typeof(copy) == "Vector2" then
+				copy *= SPREAD
+			end
+			labels[k] = copy
+		end
+		PathPlan.LABELS = table.freeze(labels) :: any
+	end
+end
+
 -- Terrain material per open-air place (what the grass under a path turns into).
 PathPlan.TERRAIN = table.freeze({
 	Plaza = "Cobblestone",
@@ -434,7 +494,7 @@ end
 
 -- V9-0l: the creature yard in front of the lab (LabCreatures.YARD_Z 92, 38 deep): no body is dropped
 -- or walks in there (its creatures' triggers are boxes nobody can see from above). Lab-local x, z.
-PathPlan.YARD = table.freeze({ zMin = 92 - 19 - 2, zMax = 92 + 19 + 2 })
+PathPlan.YARD = table.freeze({ zMin = 92 * SPREAD - 19 - 2, zMax = 92 * SPREAD + 19 + 2 }) -- (0.37.0: LabCreatures.YARD_Z moves with the spread)
 function PathPlan.inYard(p: Vector2): boolean
 	return p.Y > PathPlan.YARD.zMin and p.Y < PathPlan.YARD.zMax
 end

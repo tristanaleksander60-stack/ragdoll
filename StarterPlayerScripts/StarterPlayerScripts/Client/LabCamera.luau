@@ -46,10 +46,10 @@ local Theme = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("
 local player = Players.LocalPlayer
 
 -- View limits
-local MIN_DISTANCE, MAX_DISTANCE = 10, 95
+local MIN_DISTANCE, MAX_DISTANCE = 10, 150 -- (0.37.0: the bigger lab: room to see all of it)
 local MIN_PITCH, MAX_PITCH = -78, -6 -- degrees; never under the floor, never straight down
 local HOME_YAW, HOME_PITCH, HOME_DISTANCE = 0, -24, 28
-local BOUND_RADIUS = 160 -- how far the focus may wander from the lab
+local BOUND_RADIUS = 260 -- (0.37.0: the bigger lab) how far the focus may wander from the lab
 
 -- Feel
 local TAP_SLOP = 12 -- px a finger may move and still count as a tap
