@@ -85,7 +85,9 @@ end
 -- One shot at the crosshair: at a body if one is there (or near it), otherwise into the world.
 -- The pixel used here is the same pixel the visual crosshair sits on, so the raycast through
 -- camera:ViewportPointToRay inside PokeController lines up exactly with the icon the player sees.
+local centreUntil = 0
 function TouchShoot.fire(): boolean
+	centreUntil = os.clock() + 0.45
 	local at = centre()
 	return PokeController.pressAt(at) or PokeController.tapAt(at)
 end
@@ -338,7 +340,10 @@ function TouchShoot.start()
 		if cg then
 			-- lihfolk-ignore: findfirstchild-chain (the result is nil-checked on the next line)
 			local cross = cg:FindFirstChild("Cross") :: GuiObject?
-			local crossOn = want or TouchShoot.padCross()
+			-- (V10 phase 1, owner: "the phone crosshair not in the middle of the screen, only where you shoot": on a
+			-- touch screen it shows a moment after SHOOT fires there, and all the time only in first person.)
+			local centred = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
+			local crossOn = (want and (os.clock() < centreUntil or centred)) or TouchShoot.padCross()
 			if cross and cross.Visible ~= crossOn then
 				cross.Visible = crossOn
 			end

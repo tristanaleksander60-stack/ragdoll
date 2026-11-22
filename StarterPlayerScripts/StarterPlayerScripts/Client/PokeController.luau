@@ -613,7 +613,11 @@ function PokeController.plan(screen: Vector2, touch: boolean, lab: boolean, with
 	if phone and touch then
 		-- (PC play test 19 Nov: with 6 slots, the next cards made the bar two rows on a landscape
 		-- phone, over JUMP/SHOOT/GRAB. The WEAPONS button already names the next weapon there.)
-		up = 0
+		-- (V10 phase 1, owner: "the next 3 weapons from the first join": the data shows every phone held upright,
+		-- where there is room for their own row under the slots; only a landscape phone still goes without.)
+		if screen.X > screen.Y then
+			up = 0
+		end
 	end
 	if not touch and up > 0 then
 		side = math.max(side, PokeController.NEXT_SIDE)

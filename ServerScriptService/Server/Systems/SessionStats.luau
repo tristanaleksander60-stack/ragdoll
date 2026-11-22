@@ -270,6 +270,11 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 		end
 	elseif kind == "EggCard" then
 		r.eggCard = true
+	elseif kind == "Loaded" and (r :: any).loadedAt == nil then
+		-- (V10 phase 1: the load cover lifted: the funnel's "loaded" step, and whether it gave up waiting.)
+		local rr = r :: any
+		rr.loadedAt = since(player)
+		rr.loadTimedOut = if type(data) == "table" and (data :: any).timedOut == true then true else nil
 	elseif kind == "FirstShot" and r.clientShot == nil then
 		r.clientShot = clean(data, 0, 36000)
 	-- V8-0.8: the first frame, the orientation after load, the client's health and what is on screen.

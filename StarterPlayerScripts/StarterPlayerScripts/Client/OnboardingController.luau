@@ -206,6 +206,10 @@ local function playReplay(at: number, first: boolean)
 end
 
 local function offerReplay(at: number)
+	-- (V10 phase 1, owner: "remove the replay button on phones completely".)
+	if ViewMode.isTouch() then
+		return
+	end
 	-- (Audit area 1: not in a newcomer's first 90 s: one objective, nothing else to press.)
 	if not HudSlots.shownNow("Replay", HudSlots.context(ViewMode.isTouch(), ViewMode.isLab()), time(), Config.QUIET_START) then
 		return

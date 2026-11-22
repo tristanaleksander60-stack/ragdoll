@@ -89,6 +89,8 @@ local SOURCE_RANGE = 120 -- studs: a bang's maker this close is who it runs from
 
 local Lab = {}
 Lab.DUMMY_COUNT = DUMMY_COUNT -- (World/Feel v2: T80 adds it to a device's ragdoll budget)
+Lab.PHONE_DUMMIES = 9 -- (V10 phase 1: a phone simulates its own lab's bodies; fewer keep it smooth)
+Lab.TABLET_DUMMIES = 13
 
 Lab.PLOT_COUNT = 10 -- labs on one server (the place's server size should be 10)
 Lab.PLOT_SPACING = Zones.PLOT_SPACING -- studs between the middles of two neighbouring labs (and the plaza; V6-4 wider)
@@ -210,6 +212,16 @@ local function fill(plot: Plot, slot: Slot, generation: number)
 	if plot.generation ~= generation or not owner or owner.Parent == nil then
 		return
 	end
+	-- (V10 phase 1, 22 Nov 2026: the data: phones run at about 11 fps at worst with 18 ragdolls, which their own
+	-- device simulates. A phone gets PHONE_DUMMIES, a tablet TABLET_DUMMIES; the rest of the slots stay empty.)
+	local okS, record = pcall(function()
+		return (require(script.Parent:WaitForChild("SessionStats")) :: any).recordFor(owner)
+	end)
+	local plat = if okS and record then record.plat else nil
+	local cap = if plat == "phone" then Lab.PHONE_DUMMIES elseif plat == "tablet" then Lab.TABLET_DUMMIES else DUMMY_COUNT
+	if slot.index > cap then
+		return
+	end
 	-- (22 Nov 2026, owner: "not in one place"): each one appears at its own spot round the lab.
 	local model = DummyFactory.spawn(pickRoamSpot(plot, slot), plot.origin, owner)
 	model:SetAttribute("Slot", slot.index)
@@ -254,7 +266,7 @@ local function fill(plot: Plot, slot: Slot, generation: number)
 			if parent == nil and model.Parent then
 				model:Destroy()
 			end
-		end)
+	end)
 	end
 end
 
@@ -1125,9 +1137,21 @@ local function claim(player: Player)
 			player:SetAttribute("LabOrigin", plot.origin)
 			player:SetAttribute("LabFocus", focusOf(plot.origin))
 			local generation = plot.generation
-			for _, slot in plot.slots do
-				fill(plot, slot, generation)
-			end
+			-- (V10 phase 1: the bodies come once the device is known, at most 4 s: a phone gets fewer, fill.)
+			task.spawn(function()
+				local okS, SS = pcall(require, script.Parent:WaitForChild("SessionStats"))
+				local t0 = os.clock()
+				while okS and os.clock() - t0 < 4 and player.Parent do
+					local r = (SS :: any).recordFor(player)
+					if r and r.plat and r.plat ~= "?" then
+						break
+					end
+					task.wait(0.2)
+				end
+				for _, slot in plot.slots do
+					fill(plot, slot, generation)
+				end
+			end)
 			log.info(string.format("%s has lab %d", player.Name, plot.index))
 			return
 		end
@@ -1377,7 +1401,7 @@ function Lab.build()
 					end
 				end)
 			end
-		end)
+	end)
 		if player.Character and plotOf[player] then
 			placeOnPlot(player, plotOf[player])
 		end
