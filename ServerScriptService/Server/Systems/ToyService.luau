@@ -1060,13 +1060,68 @@ local function portal(player: Player?, at: Vector3, facing: Vector3)
 		look = Vector3.zAxis
 	end
 	local centre = at + Vector3.new(0, 4, 0)
-	local ring = makePart(if isB then "PortalB" else "PortalA", Vector3.new(0.4, 7, 7), if isB then Color3.fromRGB(50, 225, 235) else Color3.fromRGB(255, 70, 190), Enum.Material.Neon)
+	-- (V11 B6, owner: "much nicer portals", inspired by the green swirl look, our own art): a green field with
+	-- a pale swirling core and a darker rim, swirl and spark particles, a green light, and it opens from a
+	-- point with a whoosh. A is a little more lime than B, so you can tell them apart. No neon.
+	local green = if isB then Color3.fromRGB(70, 205, 70) else Color3.fromRGB(120, 225, 50)
+	local cf = CFrame.lookAt(centre, centre + look) * CFrame.Angles(0, math.rad(90), 0) -- (a cylinder faces along X)
+	local ring = makePart(if isB then "PortalB" else "PortalA", Vector3.new(0.3, 7.4, 7.4), green, Enum.Material.SmoothPlastic)
 	ring.Shape = Enum.PartType.Cylinder
 	ring.Anchored = true
 	ring.CanCollide = false
-	ring.Transparency = 0.25
-	-- A cylinder's face is across its X axis: turned so the face looks along `look`.
-	ring.CFrame = CFrame.lookAt(centre, centre + look) * CFrame.Angles(0, math.rad(90), 0)
+	ring.CastShadow = false
+	ring.CFrame = cf
+	local layers: { { part: BasePart, size: Vector3 } } = { { part = ring, size = ring.Size } }
+	for _, spec in { { "Rim", 0.22, 8.2, Color3.fromRGB(35, 120, 40) }, { "Core", 0.38, 5.2, Color3.fromRGB(200, 255, 140) }, { "Eye", 0.44, 2.6, Color3.fromRGB(235, 255, 200) } } do
+		local p = makePart("Portal" .. spec[1], Vector3.new(spec[2], spec[3], spec[3]), spec[4], Enum.Material.SmoothPlastic)
+		p.Shape = Enum.PartType.Cylinder
+		p.Anchored = true
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.CastShadow = false
+		p.CFrame = cf
+		p.Parent = ring
+		table.insert(layers, { part = p, size = p.Size })
+	end
+	local swirl = Instance.new("ParticleEmitter")
+	swirl.Name = "Swirl"
+	swirl.Color = ColorSequence.new(Color3.fromRGB(170, 255, 110), Color3.fromRGB(40, 150, 40))
+	swirl.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2.2), NumberSequenceKeypoint.new(1, 0.4) })
+	swirl.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 1) })
+	swirl.Rotation = NumberRange.new(0, 360)
+	swirl.RotSpeed = NumberRange.new(160, 260)
+	swirl.Speed = NumberRange.new(0.2, 0.8)
+	swirl.Lifetime = NumberRange.new(0.5, 0.9)
+	swirl.Rate = 45
+	swirl.LightEmission = 0.4
+	swirl.Shape = Enum.ParticleEmitterShape.Disc
+	swirl.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
+	swirl.Parent = ring
+	local sparks = Instance.new("ParticleEmitter")
+	sparks.Name = "Sparks"
+	sparks.Color = ColorSequence.new(Color3.fromRGB(220, 255, 150))
+	sparks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.18), NumberSequenceKeypoint.new(1, 0) })
+	sparks.Speed = NumberRange.new(6, 13)
+	sparks.SpreadAngle = Vector2.new(180, 180)
+	sparks.Drag = 3
+	sparks.Acceleration = Vector3.new(0, -12, 0)
+	sparks.Lifetime = NumberRange.new(0.35, 0.8)
+	sparks.Rate = 22
+	sparks.LightEmission = 1
+	sparks.Parent = ring
+	local light = Instance.new("PointLight")
+	light.Color = green
+	light.Range = 14
+	light.Brightness = 1.6
+	light.Parent = ring
+	-- Opens from a point.
+	for _, l in layers do
+		local full = l.size
+		l.part.Size = Vector3.new(full.X, 0.2, 0.2)
+		TweenService:Create(l.part, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = full }):Play()
+	end
+	sparks:Emit(40)
 	own(player, ring, PORTAL_TIME)
 	if isB then
 		pair.b = ring
@@ -1114,6 +1169,23 @@ local function portalTick()
 									DummyControl.hit(dummy, p, (out + Vector3.new(0, 0.25, 0)).Unit * speed * massOf(dummy), p.Position, nil, by)
 								end
 							end)
+							FxService.hit(to.Position, 20, "Zap")
+						end
+					end
+				end
+				-- (V11 B6: players walk through too, keeping their speed out of the other one.)
+				for _, pl in Players:GetPlayers() do
+					local ch = pl.Character
+					local root = ch and ch:FindFirstChild("HumanoidRootPart")
+					if root and root:IsA("BasePart") and (root.Position - from.Position).Magnitude <= PORTAL_REACH + 0.8 then
+						local now = os.clock()
+						if not portalCooldown[ch :: Model] or now - portalCooldown[ch :: Model] > 1.2 then
+							portalCooldown[ch :: Model] = now
+							local out = to.CFrame.RightVector
+							local exit = to.Position + out * 3.5
+							local speed = math.max(root.AssemblyLinearVelocity.Magnitude, 16)
+							;(ch :: Model):PivotTo(CFrame.lookAt(exit, exit + Vector3.new(out.X, 0, out.Z)))
+							root.AssemblyLinearVelocity = out * speed
 							FxService.hit(to.Position, 20, "Zap")
 						end
 					end

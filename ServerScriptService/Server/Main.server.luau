@@ -57,6 +57,7 @@ local safe = require(Shared:WaitForChild("SafeStart")).new(function(failedList: 
 	workspace:SetAttribute("BootFailed", failedList)
 end)
 safe("Purchases", function() Purchases.start() end) -- the one ProcessReceipt; finds out whether orders live in a DataStore
+safe("PurchaseChat", function() require(Systems:WaitForChild("PurchaseChat")).start() end) -- (V11 B7) Robux purchases in chat on every server
 -- V8-1.7 (phone diet): with the birds off, their models leave ReplicatedStorage (every client loaded
 -- them for nothing); Config.BIRDS on brings them back at the next server start.
 safe("BirdModels", function()

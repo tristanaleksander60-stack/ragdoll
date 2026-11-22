@@ -285,12 +285,51 @@ local function wand(color: Color3): () -> Model
 	end
 end
 local function portalGun(): Model
-	return gunLike(Vector3.new(0.8, 0.8, 1.9), Color3.fromRGB(70, 40, 120), Color3.fromRGB(255, 70, 190), function(model, body)
-		local ring = part("Ring", Vector3.new(0.3, 1.0, 1.0), Color3.fromRGB(50, 225, 235), Enum.Material.Neon)
-		ring.Shape = Enum.PartType.Cylinder
-		ring.CFrame = CFrame.new(0, 0.6, -1.3) * CFrame.Angles(0, math.rad(90), 0)
-		ring.Parent = model
-		fix(body, ring)
+	-- (V11 B6, owner: "a much nicer portal gun"): our own look, a white handheld with a green glass core on
+	-- top, a dark emitter barrel with a green lens and two prongs, a grey dial on the side.
+	return gunLike(Vector3.new(0.7, 0.62, 1.8), Color3.fromRGB(228, 230, 234), Color3.fromRGB(120, 235, 80), function(model, body)
+		body.Material = Enum.Material.SmoothPlastic
+		local grip = model:FindFirstChild("Grip")
+		if grip and grip:IsA("BasePart") then
+			grip.Color = Color3.fromRGB(70, 74, 82)
+		end
+		local tip = model:FindFirstChild("Tip")
+		if tip and tip:IsA("BasePart") then
+			tip.Material = Enum.Material.Glass
+			tip.Transparency = 0.1
+		end
+		local glass = part("Core", Vector3.new(0.78, 0.78, 0.78), Color3.fromRGB(110, 230, 70), Enum.Material.Glass)
+		glass.Shape = Enum.PartType.Ball
+		glass.Transparency = 0.35
+		glass.CFrame = CFrame.new(0, 1.02, -0.2)
+		glass.Parent = model
+		fix(body, glass)
+		local goo = part("Goo", Vector3.new(0.5, 0.5, 0.5), Color3.fromRGB(150, 255, 90), Enum.Material.SmoothPlastic)
+		goo.Shape = Enum.PartType.Ball
+		goo.CFrame = CFrame.new(0, 1.0, -0.2)
+		goo.Parent = model
+		fix(body, goo)
+		local collar = part("Collar", Vector3.new(0.14, 0.6, 0.6), Color3.fromRGB(70, 74, 82))
+		collar.Shape = Enum.PartType.Cylinder
+		collar.CFrame = CFrame.new(0, 0.72, -0.2) * CFrame.Angles(0, 0, math.rad(90))
+		collar.Parent = model
+		fix(body, collar)
+		local barrel = part("Barrel", Vector3.new(0.5, 0.5, 0.5), Color3.fromRGB(60, 64, 72))
+		barrel.Shape = Enum.PartType.Cylinder
+		barrel.CFrame = CFrame.new(0, 0.6, -1.25) * CFrame.Angles(0, math.rad(90), 0)
+		barrel.Parent = model
+		fix(body, barrel)
+		for _, side in { -1, 1 } do
+			local prong = part("Prong", Vector3.new(0.1, 0.1, 0.55), Color3.fromRGB(160, 165, 175), Enum.Material.Metal)
+			prong.CFrame = CFrame.new(side * 0.2, 0.82, -1.55)
+			prong.Parent = model
+			fix(body, prong)
+		end
+		local dial = part("Dial", Vector3.new(0.08, 0.34, 0.34), Color3.fromRGB(200, 60, 50))
+		dial.Shape = Enum.PartType.Cylinder
+		dial.CFrame = CFrame.new(0.38, 0.55, -0.6)
+		dial.Parent = model
+		fix(body, dial)
 	end)
 end
 

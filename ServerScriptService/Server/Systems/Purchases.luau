@@ -294,6 +294,9 @@ local function processReceipt(receipt: { [string]: any }): Enum.ProductPurchaseD
 		local buyer = Players:GetPlayerByUserId(receipt.PlayerId)
 		if buyer and type(receipt.CurrencySpent) == "number" then
 			pcall(function()
+				(require(script.Parent:WaitForChild("PurchaseChat")) :: any).bought(buyer, receipt.ProductId, Enum.InfoType.Product, receipt.CurrencySpent) -- (V11 B7: in chat on every server)
+			end)
+			pcall(function()
 				(require(script.Parent:WaitForChild("SessionStats")) :: any).count(buyer, "robux", receipt.CurrencySpent)
 			end)
 		end

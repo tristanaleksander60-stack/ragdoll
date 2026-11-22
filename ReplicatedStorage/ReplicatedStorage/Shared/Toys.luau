@@ -143,7 +143,7 @@ local V8_RUNGS: { [string]: number } = if Config.START_BAR_V9
 	else { Bat = 0, Grenade = 0, Launch = 0, Rocket = 3, Poke = 18, Shove = 22, Slap = 24, Heal = 60 }
 -- Start bar v9 (Config.START_BAR_V9): rungs set as they finally stand (after the squeeze): the Rocket is
 -- one of the hardest to get, between the Portal (437) and the Plasma Blade (491).
-local HARD_RUNGS: { [string]: number } = if Config.START_BAR_V9 then { Rocket = 470 } else {}
+local HARD_RUNGS: { [string]: number } = if Config.START_BAR_V9 then { Rocket = 470, Portal = 4 } else { Portal = 4 } -- (V11 B6, owner: "the portal gun unlocks early")
 
 local function add(id: string, spec: Spec)
 	assert(byId[id] == nil, "tool " .. id .. " listed twice")
