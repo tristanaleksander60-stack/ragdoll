@@ -28,9 +28,9 @@ local Theme = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("
 local HitInfo = {}
 
 HitInfo.ABOVE_BAR = 12 -- px between the lines' box and the top of the tool bar
-HitInfo.TEXT = 18 -- px (16 on a phone): the bottom line; the top one is LEAD_UP bigger
-HitInfo.TEXT_PHONE = 16
-HitInfo.LEAD_UP = 4
+HitInfo.TEXT = 14 -- (22 Nov 2026, owner: smaller; was 18) -- px (16 on a phone): the bottom line; the top one is LEAD_UP bigger
+HitInfo.TEXT_PHONE = 13
+HitInfo.LEAD_UP = 2
 HitInfo.MAX_W = 420 -- px, at most (less on a narrow screen: 24 px from each side)
 HitInfo.MAX_W_PHONE = 280 -- (a phone: clear of GRAB and THROW on the right)
 -- Its width on `screen`: on a landscape phone also clear of GRAB/SHOOT on both sides (196 px from
@@ -45,9 +45,9 @@ function HitInfo.widthOn(screen: Vector2): number
 	end
 	return math.min(HitInfo.MAX_W_PHONE, screen.X - 24)
 end
-HitInfo.HEIGHT = 48 -- px: the two lines (26 + 22)
+HitInfo.HEIGHT = 40 -- px: the two lines (22 Nov 2026: smaller; was 48)
 if Config.LOOK_V3 then
-	HitInfo.HEIGHT = 64 -- (LOOK_V3: the black card's two lines, 30 + 26, and its padding)
+	HitInfo.HEIGHT = 44 -- (LOOK_V3: the black card's two lines, 20 + 17, and its padding; 22 Nov 2026: smaller, was 64)
 end
 HitInfo.HOLD = 6 -- s fully shown after the last hit on the body
 HitInfo.FADE = 0.6
@@ -233,25 +233,25 @@ local function build()
 		corner.CornerRadius = UDim.new(0, 4)
 		corner.Parent = f
 		local pad = Instance.new("UIPadding")
-		pad.PaddingLeft = UDim.new(0, 16)
-		pad.PaddingRight = UDim.new(0, 14)
+		pad.PaddingLeft = UDim.new(0, 10)
+		pad.PaddingRight = UDim.new(0, 9)
 		pad.Parent = f
 		-- (The bar hangs from the top line, not from the list's frame: the list would stack it.)
 		local bar = Instance.new("Frame")
 		bar.Name = "Bar"
 		bar.Position = UDim2.new(0, -10, 0, 2)
-		bar.Size = UDim2.fromOffset(4, 52)
+		bar.Size = UDim2.fromOffset(3, 36)
 		bar.BackgroundColor3 = Color3.fromRGB(255, 205, 64)
 		bar.BackgroundTransparency = 1
 		bar.BorderSizePixel = 0
 		bar.Parent = t
 		hitBar = bar
 		for i, l in { t, st } do
-			l.Size = UDim2.fromOffset(0, if i == 1 then 30 else 26)
+			l.Size = UDim2.fromOffset(0, if i == 1 then 20 else 17) -- (22 Nov 2026: a smaller card)
 			l.AutomaticSize = Enum.AutomaticSize.X
 			l.TextXAlignment = Enum.TextXAlignment.Left
 			l.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
-			l.TextSize = if i == 1 then 26 else 22
+			l.TextSize = if i == 1 then 17 else 14
 			l.TextColor3 = if i == 1 then Color3.fromRGB(255, 205, 64) else Color3.fromRGB(240, 240, 240)
 			local stroke = l:FindFirstChildOfClass("UIStroke")
 			if stroke then

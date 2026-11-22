@@ -28,16 +28,18 @@ local NpcCommand = {}
 
 NpcCommand.MAX_FOLLOWERS = 3
 NpcCommand.TALK_REACH = 14 -- studs from you to the NPC you command
-NpcCommand.TARGET_REACH = 60 -- studs from the NPC to its target
+NpcCommand.TARGET_REACH = 150 -- studs from the NPC to its target (22 Nov 2026: the whole lab; was 60)
 NpcCommand.REQUEST_GAP = 0.3 -- s
 NpcCommand.FOLLOW_BACK = 5 -- studs behind you a follower walks
 NpcCommand.STRIKE_REACH = 6 -- studs: close enough to hit
 NpcCommand.GUN_REACH = 30 -- studs: a gun fires from this far (22 Nov 2026)
+NpcCommand.APPROACH_TIME = 2.5 -- s an attacker turns and walks at its target before the first strike (22 Nov 2026)
+NpcCommand.TARGETS_LISTED = 8 -- ragdolls offered in ATTACK WHO? (22 Nov 2026: was 5, and the card showed 4)
 NpcCommand.STRIKE_GAP_MIN = 0.7 -- s between an NPC's hits (a fast gun is slowed to this)
 NpcCommand.ATTACK_WOUND = 2.2 -- times a weapon's power an NPC's hit wounds with (about 3 hits kill; 22 Nov 2026)
 NpcCommand.TICK = 0.25
 
-type Order = { owner: Player, mode: string, target: Model?, toy: Toys.Toy?, nextHit: number, place: unknown, held: Model?, home: unknown, homeLook: unknown }
+type Order = { owner: Player, mode: string, target: Model?, toy: Toys.Toy?, nextHit: number, place: unknown, held: Model?, home: unknown, homeLook: unknown, walkUntil: number? }
 local orders: { [Model]: Order } = {}
 local lastRequest: { [Player]: number } = {}
 local remote: RemoteEvent
@@ -280,6 +282,7 @@ function NpcCommand.command(player: Player, action: string, npcInst: unknown, ta
 		order.target = targetOf(player, targetInst, m)
 		order.toy = Toys.byId[toyId :: string]
 		order.held = hold(m, toyId :: string)
+		order.walkUntil = os.clock() + NpcCommand.APPROACH_TIME -- (turns, walks a few steps, then strikes)
 	end
 	return true, nil
 end
@@ -314,12 +317,17 @@ local function step(now: number)
 			-- (22 Nov 2026, owner: a gunman walked right up before it fired once): a gun fires from GUN_REACH,
 			-- standing still and facing the target; it only walks when the target gets further away.
 			local reach = if toy and toy.gun then NpcCommand.GUN_REACH else NpcCommand.STRIKE_REACH
-			if flat.Magnitude > reach - 1 then
+			-- (22 Nov 2026, owner: first it turns to the target and walks a few steps at it, 2-3 s, then strikes.)
+			local walking = now < (o.walkUntil or 0)
+			if walking then
+				local toward = if flat.Magnitude > 0.01 then flat.Unit else Vector3.zAxis
+				goTo(m, pelvis.Position + toward * math.min(8, math.max(flat.Magnitude - NpcCommand.STRIKE_REACH, 0)), tp.Position)
+			elseif flat.Magnitude > reach - 1 then
 				goTo(m, tp.Position - (if flat.Magnitude > 0.01 then flat.Unit else Vector3.zAxis) * (reach - 2), tp.Position)
 			elseif toy and toy.gun then
 				goTo(m, pelvis.Position, tp.Position) -- (stops where it is and turns to it)
 			end
-			if toy and flat.Magnitude <= reach and now >= o.nextHit then
+			if toy and not walking and flat.Magnitude <= reach and now >= o.nextHit then
 				o.nextHit = now + math.max(toy.cooldown, NpcCommand.STRIKE_GAP_MIN)
 				local dir = if gap.Magnitude > 0.01 then gap.Unit else Vector3.zAxis
 				local chest = target:FindFirstChild("UpperTorso")
@@ -429,7 +437,7 @@ function NpcCommand.start()
 				return a.d < b.d
 			end)
 			local targets = {}
-			for i = 1, math.min(5, #near) do
+			for i = 1, math.min(NpcCommand.TARGETS_LISTED, #near) do
 				table.insert(targets, { model = near[i].model, name = near[i].name })
 			end
 			remote:FireClient(player, "Open", { npc = body, wand = wand == true, name = tostring(m:GetAttribute("PersonName") or prompt.ObjectText), targets = targets, weapons = NpcCommand.weaponsOf(player), mode = if body:GetAttribute("CommandedBy") == player.UserId then body:GetAttribute("Command") else nil })

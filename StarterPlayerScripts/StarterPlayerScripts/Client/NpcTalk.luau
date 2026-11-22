@@ -151,7 +151,7 @@ local function pageTargets(data: any)
 	clear()
 	title.Text = "ATTACK WHO?"
 	for i, t in if type(data.targets) == "table" then data.targets else {} do
-		if i > 4 then
+		if i > 8 then
 			break
 		end
 		local hit = button(string.upper(tostring(t.name)), "neutral", i, function()
@@ -165,9 +165,8 @@ local function pageTargets(data: any)
 		hit.SelectionGained:Connect(function()
 			mark("target", model)
 		end)
-		hit.MouseLeave:Connect(function()
-			mark("target", nil)
-		end)
+		-- (No clearing on MouseLeave: it flickered between two names. The last one pointed at stays
+		-- marked until another is, or the page changes.)
 	end
 	button("BACK", "neutral", 9, function()
 		pageMain(data)
