@@ -970,11 +970,27 @@ local function dressPlot(plot: Plot)
 		rim.CFrame = CFrame.new(rim.Position) * CFrame.Angles(0, 0, math.rad(90))
 		local PathPlanM = require(Shared:WaitForChild("PathPlan")) :: any
 		local Sp = (Config :: any).LAB_SPREAD or 1
+		-- 0.37.1 (owner, the reviewer: "build real areas with their own theme"): each quarter round the plaza
+		-- gets its own ground, so you see four places, not one lawn with machines on it. Launch (east, in
+		-- front: cannon, ramp, stations) on red rubber; cars and crashes (east, behind) on asphalt; danger
+		-- (west, in front: mace, press) on sand; height (west, behind: tower, fan, throw tower) on concrete.
+		for _, a in {
+			{ name = "LaunchArea", at = Vector2.new(46, 30), size = Vector2.new(60, 62), color = Color3.fromRGB(150, 70, 60), material = Enum.Material.Concrete },
+			{ name = "CarArea", at = Vector2.new(58, -42), size = Vector2.new(46, 72), color = Color3.fromRGB(70, 72, 78), material = Enum.Material.Asphalt },
+			{ name = "DangerArea", at = Vector2.new(-40, 42), size = Vector2.new(58, 56), color = Color3.fromRGB(214, 190, 140), material = Enum.Material.Sand },
+			{ name = "HeightArea", at = Vector2.new(-58, -40), size = Vector2.new(48, 80), color = Color3.fromRGB(168, 170, 174), material = Enum.Material.Concrete },
+		} do
+			local mid = a.at * Sp
+			local area = paint(folder, a.name, Vector3.new(a.size.X * Sp, 0.04, a.size.Y * Sp), Vector3.new(o.X + mid.X, ground + 0.05, o.Z + mid.Y), a.color, a.material)
+			-- (a darker edge round it, a hair lower: the area reads as a place with a border)
+			paint(folder, a.name .. "Edge", Vector3.new(a.size.X * Sp + 2, 0.03, a.size.Y * Sp + 2), Vector3.new(o.X + mid.X, ground + 0.045, o.Z + mid.Y), a.color:Lerp(Color3.new(0, 0, 0), 0.35), a.material)
+			area:SetAttribute("Area", a.name)
+		end
 		local goals: { Vector2 } = {
 			Vector2.new(48, 6) * Sp, -- the cannon
 			Vector2.new(-52, -8) * Sp, -- the tower's stairs
 			Vector2.new(40, -38) * Sp, -- the wrecking ball
-			Vector2.new(10, 46) * Sp, -- the launch stations
+			Vector2.new(32, 46) * Sp, -- the launch stations (0.37.1: in the launch area by the cannon)
 			Vector2.new(-41, 50) * Sp, -- the mace
 			Vector2.new(-20, 35) * Sp, -- the compressor
 			Vector2.new(0, PathPlanM.ROW_Z + 10), -- the test row

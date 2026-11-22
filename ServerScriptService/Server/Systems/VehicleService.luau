@@ -39,11 +39,11 @@ VehicleService.SPECS = {
 	--   * Zone B (near spawn): Kart and Supercar — fast dopamine, flashy, to the sides of the spawn's
 	--     front view.
 	--   * Zone C (far): Jeep, MuscleCar, Truck — the row on the east stays as a vehicle garage.
-	Car = { label = "Supercar", body = Vector3.new(6.6, 1.4, 12.5), color = Color3.fromRGB(150, 220, 40), wheel = 2.6, lift = 0.6, pad = Vector2.new(45, 30), look = "SportsCar" } :: Spec, -- (session v849: moved from (66,20) to (45,30), spawn's right-front)
+	Car = { label = "Supercar", body = Vector3.new(6.6, 1.4, 12.5), color = Color3.fromRGB(150, 220, 40), wheel = 2.6, lift = 0.6, pad = Vector2.new(62, -8), look = "SportsCar" } :: Spec, -- (session v849: moved from (66,20) to (45,30), spawn's right-front)
 	-- (session v850, owner: "fjern Jeepen"): the Jeep slot was dropped — four vehicles left (Supercar,
 	-- Kart, Truck, MuscleCar). All lookups of "Jeep" in Shop, Progression, VehicleFeel, Assets etc. are
 	-- safe since SPECS[kind] returns nil and those systems iterate or key-check.
-	Kart = { label = "Go-Kart", body = Vector3.new(4.6, 0.8, 7.5), color = Color3.fromRGB(60, 90, 220), wheel = 1.8, lift = 0.35, pad = Vector2.new(-45, -8), look = "GoKart" } :: Spec, -- (session v849: moved from (66,-6) to (-45,-8), spawn's left-front — first vehicle a new player sees)
+	Kart = { label = "Go-Kart", body = Vector3.new(4.6, 0.8, 7.5), color = Color3.fromRGB(60, 90, 220), wheel = 1.8, lift = 0.35, pad = Vector2.new(52, -64), look = "GoKart" } :: Spec, -- (session v849: moved from (66,-6) to (-45,-8), spawn's left-front — first vehicle a new player sees)
 	Truck = { label = "Monster Truck", body = Vector3.new(7.5, 2.2, 12), color = Color3.fromRGB(46, 112, 64), wheel = 6, lift = 3.6, pad = Vector2.new(68, -32) } :: Spec,
 	-- (session v842: 5th slot — 70s muscle car. Look model Phoenix Slayer (8x5x20), script-stripped, chassis-compatible wheel names FL/FR/RL/RR.)
 	MuscleCar = { label = "Muscle Car", body = Vector3.new(5.8, 1.4, 13), color = Color3.fromRGB(200, 40, 40), wheel = 2.6, lift = 0.6, pad = Vector2.new(66, -58), look = "MuscleCar" } :: Spec,
@@ -396,7 +396,7 @@ function VehicleService.build(into: Folder, origin: Vector3)
 	end
 	for _, kind in kinds do
 		local spec = VehicleService.SPECS[kind]
-		local cf = CFrame.new(origin + Vector3.new(spec.pad.X, spec.lift + spec.body.Y / 2 + 0.1, spec.pad.Y))
+		local cf = CFrame.new(origin + Vector3.new(spec.pad.X * ((Config :: any).LAB_SPREAD or 1), spec.lift + spec.body.Y / 2 + 0.1, spec.pad.Y * ((Config :: any).LAB_SPREAD or 1)))
 		local model, body, seat = make(kind, cf)
 		model.Parent = holder
 		local car: Car = { model = model, body = body, seat = seat, home = cf, origin = origin, kind = kind, idleSince = os.clock(), badSince = 0, ejecting = false }

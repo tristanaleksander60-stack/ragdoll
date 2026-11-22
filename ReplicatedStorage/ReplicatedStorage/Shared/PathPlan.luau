@@ -301,7 +301,7 @@ if LAYOUT_V3 then
 	if (require(script.Parent:WaitForChild("Config")) :: any).TRAVEL_CORNER == true then
 		PathPlan.BUTTON_AT = Vector2.new(16, -19)
 	end
-	PathPlan.RAMP_AT = Vector2.new(36, 38) -- (its nearest corner 42 studs out)
+	PathPlan.RAMP_AT = Vector2.new(68, 28) -- (0.37.1: in the launch area, east of the cannon, clear of the stations)
 	PathPlan.ROW_Z = -60
 	PathPlan.HUB_CLEAR = 40
 	PathPlan.FLOOR_BACK_Z = 71 -- (the open floor's back edge: Lab's LabFloor, 165 deep round z -11.5)

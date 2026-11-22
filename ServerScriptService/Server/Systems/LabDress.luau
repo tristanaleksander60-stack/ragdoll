@@ -34,6 +34,40 @@ LabDress.SPOTS = {
 	{ role = "Cone", x = 58, z = 10, yaw = 0, height = 2.2 },
 	{ role = "Cone", x = 60, z = -24, yaw = 0, height = 2.2 },
 	{ role = "Cone", x = 60, z = -40, yaw = 0, height = 2.2 },
+	-- 0.37.1 (owner: "fill the empty spots"): props round each area, so the lab reads as one place, not a
+	-- test range with machines far apart. Launch area (east, in front): crates and barrels by the cannon.
+	{ role = "Crate", x = 24, z = 22, yaw = 10, height = 4 },
+	{ role = "Crate", x = 27, z = 18, yaw = 40, height = 3.5 },
+	{ role = "Barrel", x = 72, z = 8, yaw = 0, height = 4 },
+	{ role = "Barrel", x = 75, z = 11, yaw = 30, height = 4 },
+	{ role = "Barrel", x = 71, z = 13, yaw = 60, height = 4 },
+	{ role = "Cone", x = 62, z = 42, yaw = 0, height = 2.2 },
+	{ role = "Cone", x = 74, z = 42, yaw = 0, height = 2.2 },
+	-- Car area (east, behind): cones along the edge, barrels in the corner.
+	{ role = "Cone", x = 78, z = -20, yaw = 0, height = 2.2 },
+	{ role = "Cone", x = 78, z = -46, yaw = 0, height = 2.2 },
+	{ role = "Barrel", x = 76, z = -72, yaw = 0, height = 4 },
+	{ role = "Barrel", x = 73, z = -74, yaw = 45, height = 4 },
+	-- Danger area (west, in front): rocks and barrels round the mace and the press.
+	{ role = "Rock", x = -62, z = 62, yaw = 0, height = 5 },
+	{ role = "Rock", x = -24, z = 64, yaw = 70, height = 4 },
+	{ role = "Barrel", x = -64, z = 36, yaw = 0, height = 4 },
+	{ role = "Barrel", x = -66, z = 40, yaw = 50, height = 4 },
+	{ role = "Cone", x = -10, z = 28, yaw = 0, height = 2.2 },
+	{ role = "Cone", x = -10, z = 44, yaw = 0, height = 2.2 },
+	-- Height area (west, behind): crates at the stairs' foot, a hedge and a bench.
+	{ role = "Crate", x = -38, z = -18, yaw = 20, height = 4.5 },
+	{ role = "Crate", x = -36, z = -23, yaw = 65, height = 3.5 },
+	{ role = "Hedge", x = -84, z = -44, yaw = 90, height = 6 },
+	{ role = "Bench", x = -40, z = -84, yaw = 0, size = 7 },
+	-- The spawn plaza: lamps on its rim and two benches facing in.
+	{ role = "StreetLamp", x = 22, z = -16, yaw = -45, height = 14 },
+	{ role = "StreetLamp", x = -22, z = -16, yaw = 45, height = 14 },
+	{ role = "StreetLamp", x = 22, z = 16, yaw = -135, height = 14 },
+	{ role = "StreetLamp", x = -22, z = 16, yaw = 135, height = 14 },
+	{ role = "Bench", x = 8, z = 26, yaw = 180, size = 7 }, -- (off the walk to the yard at x 0)
+	{ role = "FlowerBed", x = 14, z = 24, yaw = 0, height = 2 },
+	{ role = "FlowerBed", x = -14, z = 24, yaw = 0, height = 2 },
 } :: { Spot }
 
 -- v3 phase C: the throw tower (north-west corner): a stone watch tower, a lift pad at its foot

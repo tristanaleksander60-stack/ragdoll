@@ -954,9 +954,9 @@ end
 --   ROCKET WALL  shot flat along a rail into a concrete wall
 -- Each with a bang, a yellow-black rim and the "PUT RAGDOLL HERE" sign.
 local STATIONS = {
-	{ name = "SKY LAUNCH", x = -8 * S, z = 52 * S, velocity = Vector3.new(0, 210, 0), color = Color3.fromRGB(80, 170, 255) },
-	{ name = "FLING PAD", x = 10 * S, z = 52 * S, velocity = Vector3.new(-62, 95, -30), color = Color3.fromRGB(190, 90, 255) },
-	{ name = "ROCKET WALL", x = 28 * S, z = 52 * S, velocity = Vector3.new(150, 18, 0), color = Color3.fromRGB(255, 70, 50) },
+	{ name = "SKY LAUNCH", x = 14 * S, z = 52 * S, velocity = Vector3.new(0, 210, 0), color = Color3.fromRGB(80, 170, 255) },
+	{ name = "FLING PAD", x = 32 * S, z = 52 * S, velocity = Vector3.new(-62, 95, -30), color = Color3.fromRGB(190, 90, 255) },
+	{ name = "ROCKET WALL", x = 50 * S, z = 52 * S, velocity = Vector3.new(150, 18, 0), color = Color3.fromRGB(255, 70, 50) },
 }
 Playground.STATIONS = STATIONS
 
