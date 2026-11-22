@@ -46,20 +46,20 @@ function DoubleEventChip.start()
 	local chip = Instance.new("TextLabel")
 	chip.Name = "Chip"
 	chip.AnchorPoint = Vector2.new(1, 0.5)
-	chip.Position = UDim2.new(0.5, -128, 0.5, 0)
-	chip.AutomaticSize = Enum.AutomaticSize.X
-	chip.Size = UDim2.fromOffset(0, 26)
+	chip.Position = UDim2.new(0.5, -128, 0.5, 12)
+	-- (22 Nov 2026, owner: "2X just an icon like the gift, symmetric, a bit lower"): a 44 px round badge.
+	chip.Size = UDim2.fromOffset(44, 44)
 	chip.BackgroundColor3 = Color3.fromRGB(255, 200, 60)
 	chip.TextColor3 = Color3.fromRGB(40, 28, 6)
 	chip.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Heavy)
-	chip.TextSize = 15
+	chip.TextSize = 20
 	chip.Text = ""
 	local pad = Instance.new("UIPadding")
-	pad.PaddingLeft = UDim.new(0, 10)
-	pad.PaddingRight = UDim.new(0, 10)
+	pad.PaddingLeft = UDim.new(0, 0)
+	pad.PaddingRight = UDim.new(0, 0)
 	pad.Parent = chip
 	local round = Instance.new("UICorner")
-	round.CornerRadius = UDim.new(0, 13)
+	round.CornerRadius = UDim.new(0, 22)
 	round.Parent = chip
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Color3.fromRGB(120, 80, 10)
@@ -76,7 +76,7 @@ function DoubleEventChip.start()
 			local left = DoubleEvent.left(cfg, now())
 			gui.Enabled = left > 0
 			if left > 0 then
-				chip.Text = DoubleEvent.label(left) .. "  KO + BOLTS"
+				chip.Text = "2X"
 				if not revealed and time() - joined >= DoubleEventChip.REVEAL_AFTER then
 					revealed = true
 					pcall(function()

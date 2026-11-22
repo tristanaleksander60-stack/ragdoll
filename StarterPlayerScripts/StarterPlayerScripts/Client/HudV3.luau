@@ -285,7 +285,7 @@ local function buildTop(onRewards: () -> ())
 	tapWindows[gift] = "Rewards"
 	-- (22 Nov 2026, owner: the gift next to the Next pill, on the same line): just right of the centred pill.
 	gift.AnchorPoint = Vector2.new(0, 0.5)
-	gift.Position = UDim2.new(0.5, 128, 0.5, 0)
+	gift.Position = UDim2.new(0.5, 128, 0.5, 12) -- (a little under the top bar line, with the pill and 2X)
 	gift.Parent = g
 	local pill = Instance.new("Frame")
 	pill.Name = "Next"
@@ -303,7 +303,7 @@ local function buildTop(onRewards: () -> ())
 	scale.Scale = 1.2
 	scale.Parent = pill
 	pill.AnchorPoint = Vector2.new(0.5, 0.5)
-	pill.Position = UDim2.new(0.5, 0, 0.5, 0)
+	pill.Position = UDim2.new(0.5, 0, 0.5, 12)
 	pill.Parent = g
 	-- (V8-0.3: tapping the next goal opens WEAPONS, where it waits.)
 	local tap = Instance.new("TextButton")
