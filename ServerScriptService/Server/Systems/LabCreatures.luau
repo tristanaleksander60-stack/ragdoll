@@ -24,6 +24,7 @@ local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local Anatomy = require(Shared:WaitForChild("Anatomy")) -- (0.37.11: the spider's bite)
 local Config = require(Shared:WaitForChild("Config")) :: any
 local Systems = script.Parent
 
@@ -321,44 +322,89 @@ BUILD.Spider = function(f, at, m)
 			return
 		end
 		swallow(m, body, function(model)
-			-- Wrapped in silk where it hit, a wiggle, the spider comes down for it.
-			local r = rootOf(model)
+			-- 0.37.11 (owner: "make the spider's kill more realistic"): it comes down its web to the catch, bites
+			-- the neck (blood sprays, the bite bleeds the body to death: VitalsService neck wounds), wraps it in
+			-- silk that thickens round it, sucks it dry (the cocoon shrinks and goes brown), climbs back up, and
+			-- lets the drained cocoon drop to the ground, where the dead body is left lying.
 			local stuck = web.CFrame * CFrame.new(0, -1, -1.5)
-			local cocoon = part(f, "Cocoon", Vector3.new(4, 7, 4), stuck, Color3.fromRGB(245, 245, 240), Enum.Material.Fabric, Enum.PartType.Ball)
-			table.insert(m.temp, cocoon)
 			task.spawn(hold, model, function()
 				return stuck
-			end, 2.4)
-			play(1.2, function(t)
-				cocoon.Size = Vector3.new(4, 7, 4) * (0.3 + 0.7 * t)
-				cocoon.CFrame = stuck * CFrame.Angles(0, 0, math.sin(t * 30) * 0.15)
+			end, 4.9)
+			if spider then
+				play(1.0, function(t)
+					spider:PivotTo(home:Lerp(home * CFrame.new(0, 0, -5.5), t))
+				end)
+			end
+			-- The bite.
+			local spray = Instance.new("ParticleEmitter")
+			spray.Color = ColorSequence.new(Anatomy.BLOOD)
+			spray.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 0.15) })
+			spray.Speed = NumberRange.new(6, 14)
+			spray.SpreadAngle = Vector2.new(50, 50)
+			spray.Lifetime = NumberRange.new(0.4, 0.8)
+			spray.Acceleration = Vector3.new(0, -40, 0)
+			spray.Rate = 0
+			local sprayAt = Instance.new("Attachment")
+			sprayAt.WorldPosition = (stuck * CFrame.new(0, 2.2, 0)).Position
+			sprayAt.Parent = web
+			spray.Parent = sprayAt
+			table.insert(m.temp, sprayAt)
+			local head = model:FindFirstChild("Head")
+			if head and head:IsA("BasePart") then
+				for _ = 1, 2 do
+					pcall(lazy("VitalsService").wound, model, head, head.Position, m.owner(), 2.5, { zone = Anatomy.zones.Neck })
+				end
+			end
+			play(0.8, function(t)
 				if spider then
-					spider:PivotTo(home:Lerp(home * CFrame.new(0, 0, -5.5), t)) -- (down the web to its catch)
+					spider:PivotTo(home * CFrame.new(0, 0, -5.5) * CFrame.new(0, math.abs(math.sin(t * 22)) * 0.9, -math.abs(math.sin(t * 22)) * 0.6))
+				end
+				if math.floor(t * 10) % 3 == 0 then
+					spray:Emit(6)
 				end
 			end)
-			-- Munch munch (the spider bobs), then the burrito flies.
-			play(1.0, function(t)
-				cocoon.CFrame = stuck * CFrame.Angles(0, 0, math.sin(t * 40) * 0.25)
-				if spider then
-					spider:PivotTo(home * CFrame.new(0, 0, -5.5) * CFrame.new(0, math.abs(math.sin(t * 18)) * 1.2, 0))
+			-- The silk: a cocoon that winds up round it.
+			local cocoon = part(f, "Cocoon", Vector3.new(1, 1, 1), stuck, Color3.fromRGB(245, 245, 240), Enum.Material.Fabric, Enum.PartType.Ball)
+			table.insert(m.temp, cocoon)
+			play(1.3, function(t)
+				cocoon.Size = Vector3.new(4.2, 7.2, 4.2) * (0.25 + 0.75 * t)
+				cocoon.CFrame = stuck * CFrame.Angles(0, t * 14, math.sin(t * 30) * 0.1)
+				if t > 0.65 then
+					hideBody(model, true)
 				end
 			end)
-			hideBody(model, false)
-			local carry = cocoon
-			task.spawn(function()
-				-- (The cocoon rides along for a moment, then pops.)
-				local t0 = os.clock()
-				while os.clock() - t0 < 1.6 and r and r.Parent do
-					carry.CFrame = r.CFrame
-					RunService.Heartbeat:Wait()
+			hideBody(model, true)
+			-- Sucked dry: the spider bobs, the cocoon shrinks and goes brown.
+			local brown = Color3.fromRGB(150, 128, 96)
+			play(1.4, function(t)
+				cocoon.Size = Vector3.new(4.2, 7.2, 4.2) * (1 - 0.2 * t)
+				cocoon.Color = Color3.fromRGB(245, 245, 240):Lerp(brown, t)
+				cocoon.CFrame = stuck * CFrame.Angles(0, 0, math.sin(t * 8) * 0.05)
+				if spider then
+					spider:PivotTo(home * CFrame.new(0, 0, -5.5) * CFrame.new(0, math.abs(math.sin(t * 9)) * 0.5, 0))
 				end
-				carry:Destroy()
 			end)
 			if spider then
-				task.spawn(play, 0.8, function(t)
+				task.spawn(play, 0.9, function(t)
 					spider:PivotTo((home * CFrame.new(0, 0, -5.5)):Lerp(home, t))
 				end)
 			end
+			-- The cocoon drops; the dead body is left where it lands.
+			local ground = (rootOf(model) and (at.Position.Y + 1.2)) or at.Position.Y + 1.2
+			local floorCf = CFrame.new(stuck.Position.X, ground, stuck.Position.Z) * CFrame.Angles(0, 0, math.rad(90))
+			play(0.45, function(t)
+				cocoon.CFrame = stuck:Lerp(floorCf, t * t)
+			end)
+			hold(model, function()
+				return floorCf
+			end, 0.6)
+			hideBody(model, false)
+			task.delay(2.5, function()
+				if cocoon.Parent then
+					cocoon:Destroy()
+				end
+			end)
+			sprayAt:Destroy()
 			hunger += LabCreatures.SPIDER_MEAL
 			if hunger >= LabCreatures.SPIDER_FULL then
 				napUntil = os.clock() + LabCreatures.SPIDER_NAP
@@ -371,7 +417,8 @@ BUILD.Spider = function(f, at, m)
 			-- (21 Nov: towards the middle of the lab. Away from the web's face it spat into the west
 			-- garden's hedge after the move; the body stuck 12 studs off, slid back and was caught again.)
 			local away = m.toLab
-			return (Vector3.new(away.X, 0, away.Z).Unit * 70 + Vector3.new(0, 75, 0)) * (if deluxe then 1.5 else 1)
+			local _ = deluxe and away -- (0.37.11: no throw any more; the dead body stays where the cocoon dropped)
+			return Vector3.new(0, 4, 0)
 		end)
 	end
 end
@@ -479,20 +526,95 @@ BUILD.Whale = function(f, at, m)
 			return
 		end
 		swallow(m, body, function(model)
-			-- Hold the dummy just above the water for a beat (the chomp wind-up).
+			-- 0.37.11 (owner: "the shark takes the ragdoll under the water, the water goes red, then it spits out
+			-- bones with meat on"): a beat over the water, the lunge, the body pulled under (hidden), the shark
+			-- thrashes while the water turns red, then it spits bones with meat on them out of the tank, and the
+			-- body comes up last, missing a piece or two. The water clears again after a while.
 			task.spawn(hold, model, function()
 				return at * CFrame.new(0, 2.5, 0)
-			end, 0.6)
-			-- The shark lunges: rolls, snaps, settles back.
+			end, 0.5)
+			task.wait(0.5)
+			task.spawn(hold, model, function()
+				return at * CFrame.new(0, 0.3, 0)
+			end, 2.6)
+			hideBody(model, true)
+			burst:Emit(30)
+			local TweenService = game:GetService("TweenService")
+			local blue = pool.Color
+			local red = Color3.fromRGB(150, 18, 24)
+			TweenService:Create(pool, TweenInfo.new(0.9), { Color = red, Transparency = 0.15 }):Play()
 			if shark and basePivot then
-				play(0.7, function(t)
-					local roll = math.sin(t * math.pi) * 0.35
-					local lift = math.sin(t * math.pi) * 0.8
-					shark:PivotTo(basePivot * CFrame.new(0, lift, 0) * CFrame.Angles(0, 0, roll))
+				play(1.8, function(t)
+					local roll = math.sin(t * math.pi * 6) * 0.45
+					local lift = math.abs(math.sin(t * math.pi * 3)) * 0.9
+					shark:PivotTo(basePivot * CFrame.new(math.sin(t * 9) * 1.5, lift, 0) * CFrame.Angles(0, math.sin(t * 7) * 0.4, roll))
 				end)
+				shark:PivotTo(basePivot)
+			else
+				task.wait(1.8)
 			end
-			burst:Emit(40)
-			return Vector3.new(0, 140, 0) + m.toLab * 30 -- (spit out beside the tank, not back in it)
+			burst:Emit(30)
+			-- The spit: bones with meat on, out of the tank and onto the floor round it.
+			local mouth = (at * CFrame.new(0, 2, 0)).Position
+			for i = 1, 7 do
+				local chunk = Instance.new("Model")
+				chunk.Name = "SharkScraps"
+				local len = 1.6 + math.random() * 1.4
+				local bone = Instance.new("Part")
+				bone.Name = "Bone"
+				bone.Shape = Enum.PartType.Cylinder
+				bone.Size = Vector3.new(len, 0.35, 0.35)
+				bone.Color = Color3.fromRGB(236, 228, 208)
+				bone.Material = Enum.Material.SmoothPlastic
+				bone.CFrame = CFrame.new(mouth) * CFrame.Angles(math.random() * 6, math.random() * 6, 0)
+				bone.CanTouch = false
+				bone.Parent = chunk
+				for _, endX in { -len / 2, len / 2 } do
+					local knob = Instance.new("Part")
+					knob.Shape = Enum.PartType.Ball
+					knob.Size = Vector3.one * 0.6
+					knob.Color = bone.Color
+					knob.Material = Enum.Material.SmoothPlastic
+					knob.CanCollide = false
+					knob.CanTouch = false
+					knob.Massless = true
+					knob.CFrame = bone.CFrame * CFrame.new(endX, 0, 0)
+					local w = Instance.new("WeldConstraint")
+					w.Part0, w.Part1 = bone, knob
+					w.Parent = knob
+					knob.Parent = chunk
+				end
+				local meat = Instance.new("Part")
+				meat.Name = "Meat"
+				meat.Shape = Enum.PartType.Ball
+				meat.Size = Vector3.new(1.1, 1.1, 1.1) * (0.8 + math.random() * 0.5)
+				meat.Color = Color3.fromRGB(150 + math.random(0, 30), 30, 40)
+				meat.Material = Enum.Material.SmoothPlastic
+				meat.CanCollide = false
+				meat.CanTouch = false
+				meat.Massless = true
+				meat.CFrame = bone.CFrame * CFrame.new((math.random() - 0.5) * len * 0.6, 0.15, 0)
+				local w = Instance.new("WeldConstraint")
+				w.Part0, w.Part1 = bone, meat
+				w.Parent = meat
+				meat.Parent = chunk
+				chunk.PrimaryPart = bone
+				chunk.Parent = f
+				local a = math.random() * math.pi * 2
+				bone.AssemblyLinearVelocity = Vector3.new(math.cos(a) * (18 + math.random() * 14), 45 + math.random() * 20, math.sin(a) * (18 + math.random() * 14))
+				bone.AssemblyAngularVelocity = Vector3.new(math.random() * 10, math.random() * 10, math.random() * 10)
+				game:GetService("Debris"):AddItem(chunk, 12)
+				task.wait(0.08)
+			end
+			-- The body comes up last, a piece or two short.
+			for _ = 1, math.random(1, 2) do
+				local pieces = { "LeftArm", "RightArm", "LeftLeg", "RightLeg", "LeftHand", "RightHand", "LeftFoot", "RightFoot" }
+				pcall(lazy("VitalsService").sever, model, pieces[math.random(#pieces)], mouth)
+			end
+			task.delay(4, function()
+				TweenService:Create(pool, TweenInfo.new(3), { Color = blue, Transparency = 0.3 }):Play()
+			end)
+			return Vector3.new(0, 120, 0) + m.toLab * 30 -- (spat out beside the tank, not back in it)
 		end)
 	end
 end

@@ -670,7 +670,8 @@ function LabCamera.start()
 		if processed then
 			if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
 			local at = UserInputService:GetMouseLocation()
-			for _, object in GuiService:GetGuiObjectsAtPosition(at.X, at.Y) do
+			local inset = GuiService:GetGuiInset() -- (0.37.11: GetGuiObjectsAtPosition lives on PlayerGui, in its own space under the top bar)
+			for _, object in (player:WaitForChild("PlayerGui") :: PlayerGui):GetGuiObjectsAtPosition(at.X, at.Y - inset.Y) do
 				if object:IsA("GuiButton") or object:IsA("TextBox") then return end
 			end
 		end

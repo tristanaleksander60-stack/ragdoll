@@ -149,7 +149,8 @@ local function buildTower()
 	Finish.apply(tower, "Wall")
 	-- A yellow and black band round the top, and a blue stripe down its face (the lab's colours).
 	for k = 0, 6 do
-		local band = part("TowerBand", Vector3.new(2, 1.2, 12.1), at(x - 6 + k * 2, top - 0.66, platformZ) -- (0.37.10: its top just under the roof, so the two never flicker), if k % 2 == 0 then YELLOW else BLACK)
+		-- (0.37.10: the band's top just under the roof, so the two never flicker)
+		local band = part("TowerBand", Vector3.new(2, 1.2, 12.1), at(x - 6 + k * 2, top - 0.66, platformZ), if k % 2 == 0 then YELLOW else BLACK)
 		band.CanCollide = false
 		band.CanQuery = false
 	end
