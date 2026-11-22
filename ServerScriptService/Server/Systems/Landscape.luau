@@ -75,6 +75,11 @@ function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: num
 	-- (V6-5: the creature yard in front of the labs keeps the land flat out to z 112.)
 	local sp = (Config :: any).LAB_SPREAD or 1 -- (0.37.0: the bigger lab)
 	local front, back = (if (Config :: any).LAB_CREATURES then 112 else 75) * sp, -98 * sp
+	-- (0.37.15: the giant compressor stands behind the lab: flat ground out to it.)
+	local okC, Compressor = pcall(require, script.Parent:WaitForChild("Compressor"))
+	if okC and (Compressor :: any).BACK_ROOM then
+		back = math.min(back, (Compressor :: any).BACK_ROOM)
+	end
 	task.spawn(function()
 		task.wait(3)
 		local step = Landscape.STEP
