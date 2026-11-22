@@ -83,7 +83,7 @@ local function throwTowerTop(folder: Instance, at: Vector3): Vector3?
 end
 
 function Heights.build(folder: Instance, origin: Vector3)
-	if not Config.HEIGHTS then
+	if Config.HEIGHTS == false then -- (on unless switched off)
 		return
 	end
 	local S = Config.LAB_SPREAD or 1
