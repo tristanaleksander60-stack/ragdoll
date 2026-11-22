@@ -50,6 +50,16 @@ comment inside an expression.
     - **Compressor, cannon, wrecking ball, rocket:** hydraulic hiss and steam, cannon smoke and recoil, a
       chain that swings with real weight, rocket exhaust and a real launch tower.
     Each: one owner test before the next.
+13. **Ragdolls mourn their dead** (owner, 22 Nov): a living lab ragdoll that sees a dead one (green, Vital
+    "Dead") within ~25 studs gets scared (a jump back, hands to the head), then walks over to it. Sometimes it
+    kneels by the body (a new Poses.mournKneel, lift lowered in Standing) and says a short line ("Oh noo!",
+    "Nooo!", "Wake up!", "Not Bob!" ... in Shared/DummyLines, small bubble). Sometimes it tries CPR: kneels
+    at the chest and pumps (Poses.cpr, a rhythmic arm push, a small push on the corpse's chest), "Come on!
+    Breathe!". Now and then the CPR works: the dead one comes back early (VitalsService.reviveNow), "It
+    worked!". Built as a server system (Mourning) that picks at most 2 mourners per corpse and sets Home /
+    HomeLook / CommandedBy -2 plus an attribute "Mood" = Mourn / CPR; ActiveRagdoll reads Mood in the
+    Standing state for the pose. Never zombies, the greeter, or ones in a machine; it stops at once on a
+    hit, a bang or when the body is gone. A cheap check every 0.5 s.
 
 ## What the owner tests after each phase
 - A: no pop-ups at all in 5 minutes except events; counters on icons; the gift "!"; slot key twice; rocket.
