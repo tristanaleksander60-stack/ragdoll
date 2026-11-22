@@ -17,6 +17,7 @@ local TONE = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Con
 local DummySkins = {}
 
 DummySkins.OVERLAP = 1.0 -- (V10, owner: "the body must not overlap in several places": each skin its limb's own length; was 1.12)
+DummySkins.LEG_REACH = 0.22 -- (V10: the thighs this much longer, upward into the hips)
 DummySkins.DETAILS = true -- V7-4: crash-test joint rings, belt and test targets on the mannequins
 DummySkins.TARGET = "rbxassetid://91578612138787" -- the yellow and black crash-test target (art/dummy/target.png)
 -- V9-0o (Config.DUMMY_TONE): matte skins, no shine in the bright sun.
@@ -78,8 +79,11 @@ local function dress(model: Model)
 					end
 				end
 				skin.Color = d.Color
-				skin.Size = Vector3.new(d.Size.X, d.Size.Y * DummySkins.OVERLAP, d.Size.Z)
-				skin.CFrame = d.CFrame
+				-- (V10, owner: "legs and hips must hang together"): the thighs reach up into the hips (LEG_REACH of their
+				-- length, upward only, so the knees stay where they are).
+				local up = if d.Name == "LeftUpperLeg" or d.Name == "RightUpperLeg" then DummySkins.LEG_REACH else 0
+				skin.Size = Vector3.new(d.Size.X, d.Size.Y * (DummySkins.OVERLAP + up), d.Size.Z)
+				skin.CFrame = d.CFrame * CFrame.new(0, d.Size.Y * up / 2, 0)
 				local weld = Instance.new("WeldConstraint")
 				weld.Part0 = d
 				weld.Part1 = skin
