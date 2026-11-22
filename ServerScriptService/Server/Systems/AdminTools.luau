@@ -31,7 +31,7 @@ AdminTools.ANNOUNCE = table.freeze({
 	Hello = "The owner says hi! Have fun smashing dummies",
 	Event = "An event is coming in a moment: get ready!",
 	Party = "Owner party! Everyone come to the plaza",
-	Thanks = "Thanks for playing Ragdoll Havoc! Favorite the game to see updates",
+	Thanks = "Thanks for playing Untitled Ragdoll! Favorite the game to see updates",
 	Restart = "This server restarts soon for an update. Rejoin in a minute!",
 })
 AdminTools.KICK = table.freeze({

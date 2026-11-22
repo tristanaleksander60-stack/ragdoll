@@ -133,7 +133,7 @@ local function offerCapture(capture: any)
 			if share then
 				pcall(function()
 					CaptureService:PromptShareCapture(capture, "clip", function()
-						Toast.show("Shared! Your friends get an invite to Ragdoll Havoc")
+						Toast.show("Shared! Your friends get an invite to Untitled Ragdoll")
 					end, function() end)
 				end)
 			end

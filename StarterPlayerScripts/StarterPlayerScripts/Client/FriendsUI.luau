@@ -195,7 +195,7 @@ local function refreshElsewhere()
 			end
 		end
 		if count == 0 then
-			C.Text("caption", "No friends in other Ragdoll Havoc servers right now.", { color = P.textLow, wrap = true, size = UDim2.new(1, 0, 0, 36), parent = list })
+			C.Text("caption", "No friends in other Untitled Ragdoll servers right now.", { color = P.textLow, wrap = true, size = UDim2.new(1, 0, 0, 36), parent = list })
 		end
 	end)
 end

@@ -8,7 +8,7 @@ export type Badge = { key: string, id: number, name: string, description: string
 local Badges = {}
 
 Badges.LIST = table.freeze({
-	{ key = "Welcome", id = 2511026255505077, name = "Welcome", description = "You joined Ragdoll Havoc. Let the havoc begin!" },
+	{ key = "Welcome", id = 2511026255505077, name = "Welcome", description = "You joined Untitled Ragdoll. Let the havoc begin!" },
 	{ key = "FirstTakedown", id = 3373445548782736, name = "First Takedown", description = "Knock out your first dummy." },
 	{ key = "FirstEgg", id = 3474625754262331, name = "First Egg", description = "Open your first weapon egg." },
 	{ key = "FiveMinutes", id = 260717568329975, name = "Five Minutes", description = "Play for 5 minutes in one visit." },

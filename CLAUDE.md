@@ -1,6 +1,6 @@
-# Ragdoll Havoc (Roblox ragdoll game)
+# Untitled Ragdoll (Roblox ragdoll game; was Ragdoll Havoc)
 
-Studio place: "[💥] Ragdoll Havoc", placeId 126037745825106. Game name: **Ragdoll Havoc** (owner changed it back on 10 Nov 2026; 'Santa's Sandbox' is dropped).
+Studio place: "[💥] Ragdoll Havoc", placeId 126037745825106. Game name: **Untitled Ragdoll** (owner renamed it on Roblox on 22 Nov 2026; before that Ragdoll Havoc). Player texts use Config.GameName.
 Talk to the owner in Danish, short and plain.
 
 ## How every session runs (owner order, 19 Nov 2026)
