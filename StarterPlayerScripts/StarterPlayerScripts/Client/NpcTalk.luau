@@ -324,6 +324,15 @@ function NpcTalk.start()
 		Workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
 	end
 	card.Parent = gui
+	-- (22 Nov 2026, owner: "Talk must work in first person"): first person locks the mouse in the middle, so
+	-- the card's buttons could not be clicked. A Modal button frees the mouse while the card is up.
+	local free = Instance.new("TextButton")
+	free.Name = "FreeMouse"
+	free.Modal = true
+	free.Text = ""
+	free.BackgroundTransparency = 1
+	free.Size = UDim2.fromOffset(0, 0)
+	free.Parent = gui
 	gui.Parent = player:WaitForChild("PlayerGui")
 	remote.OnClientEvent:Connect(function(kind: string, data: any)
 		if kind == "Open" then
