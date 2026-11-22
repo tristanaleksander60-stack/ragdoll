@@ -100,7 +100,9 @@ return {
 			-- A held body is never taken.
 			local b = mine[2]
 			b:SetAttribute("Held", true)
-			local pool = (y:FindFirstChild("Whale") :: Instance):FindFirstChild("WhalePool") :: BasePart
+			-- (session v847: the whale pool is now a SHARK TANK; the slot id and card kind stay "Whale" so
+			-- saved progress is kept, but the water part is renamed. T103 still exercises the swallow logic.)
+			local pool = (y:FindFirstChild("Whale") :: Instance):FindFirstChild("SharkTankWater") :: BasePart
 			b:PivotTo(CFrame.new(pool.Position + Vector3.new(0, 3, 0)))
 			task.wait(1)
 			assert(b:GetAttribute("InMachine") == nil, "a held body was taken")
@@ -119,6 +121,6 @@ return {
 		if not ok then
 			error(err, 0)
 		end
-		return string.format("%d creatures; spider ate and spat, whale geyser, held body left alone, events counted", #LabCreatures.LAYOUT)
+		return string.format("%d creatures; spider ate and spat, shark chomped, held body left alone, events counted", #LabCreatures.LAYOUT)
 	end,
 }

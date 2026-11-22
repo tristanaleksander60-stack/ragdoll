@@ -44,17 +44,30 @@ local GunThreat = require(ReplicatedStorage.Shared.GunThreat)
 
 local log = Log.new("Lab")
 
-local DUMMY_COUNT = 6
+-- (session v850, owner: "tilføj 4 mere"): ten dummies on the test row (was six). They wander the
+-- whole lab on their own after they first stand (ROAM_* below).
+local DUMMY_COUNT = 10
 local RADIUS = 22
 local RESPAWN_DELAY = 3
 local AWAY_DISTANCE = 6 -- studs from the slot: on its way home
 local STUCK_AFTER = 12 -- s on its way home without getting closer: pop it back
 local HEAL_AFTER = 12 -- s resting at home with a broken limb before it is patched up
-local LOST_DISTANCE = 300 -- this far from the slot in any state: bring it home now
+-- (session v850: they roam all over the lab now; a far-away body is no longer "lost". Doubled
+-- from 300 so a wanderer on the far side of the garden walks is kept alive.)
+local LOST_DISTANCE = 600 -- this far from the slot in any state: bring it home now
 local FELL_BELOW = -25 -- fell off the world
--- Their ways, by slot (see the top).
-local PERSONALITY = { "Brave", "Coward", "Friendly", "Chatty", "Chatty", "Coward" }
+-- Their ways, by slot (see the top). Ten entries now (session v850).
+local PERSONALITY = { "Brave", "Coward", "Friendly", "Chatty", "Chatty", "Coward", "Brave", "Friendly", "Chatty", "Brave" }
 local CHAT_PAIR = { 4, 5 }
+-- (session v850, owner: "dem der står på den sorte plade står stille, så begår at gå rundt i hele ens map"):
+-- every slot picks a new wandering Home every ROAM_EVERY s (or when it reaches the last one). The
+-- first roam waits ROAM_FIRST s after the slot first stands — so a new visitor sees the row standing
+-- still before they drift off.
+local ROAM_FIRST = 6 -- s on the row before a slot first starts wandering
+local ROAM_EVERY_MIN, ROAM_EVERY_MAX = 10, 22 -- s before it picks the next spot (random in range)
+local ROAM_REACH = 8 -- studs from its current roam Home where it counts as arrived
+local ROAM_RANGE = 70 -- studs from the plot's spawn: the farthest a roam Home may be
+local ROAM_NEAR_MIN = 18 -- studs: closest a roam Home may be (never right on top of the player)
 local GREET_RANGE = 40 -- studs from its home: a player this close may get a hello
 local GREET_STOP = 4.5 -- studs in front of the player where it stops
 local GREET_TIME = 3.2 -- s of waving
@@ -84,6 +97,7 @@ Lab.GROUND_TOP = 600 -- studs above the floor: higher than this you are in the r
 type Slot = {
 	index: number,
 	position: Vector3,
+	lastPosition: Vector3,
 	model: Model?,
 	awayTime: number, -- s on its way home without getting closer
 	bestDistance: number,
@@ -99,6 +113,9 @@ type Slot = {
 	socialKind: string?,
 	nextSocialAt: number,
 	scaredAt: number,
+	-- (session v850: wandering the lab on its own)
+	roamHome: Vector3?, -- the current wander spot, or nil (on the row)
+	nextRoamAt: number, -- os.clock to pick the next roam spot
 }
 
 type Plot = {
@@ -113,7 +130,6 @@ type Plot = {
 }
 
 local FLEE_GRACE = 6 -- s of fleeing that do not count as "no progress" (it is meant to go away)
-local DOWN_GRACE = 20 -- s lying down, out cold or getting up that do not count either
 local DOWN = { Ragdoll = true, Out = true, GettingUp = true, Flinch = true, Stumble = true, Recovering = true }
 local EXCUSE_LIMIT = 40 -- s of excused pauses one trip home may have in all (no endless fall-and-get-up)
 local MAX_SPEED = require(ReplicatedStorage.Shared.Ragdoll.Config).MAX_LINEAR_SPEED + 40 -- studs/s: no toy gets near it
@@ -209,8 +225,16 @@ local function fill(plot: Plot, slot: Slot, generation: number)
 	slot.homeLook = Vector3.new(plot.origin.X, slot.position.Y, plot.origin.Z)
 	model:SetAttribute("Home", slot.homeAttr)
 	model:SetAttribute("HomeLook", slot.homeLook)
+	-- (session v850: pick the first roam spot after the welcome time, so a visitor first sees the row
+	-- standing still before any of them drifts off.)
+	slot.roamHome = nil
+	slot.nextRoamAt = os.clock() + ROAM_FIRST + math.random() * 2
 	model.Destroying:Once(function()
 		if slot.model == model then
+			local last = slot.lastPosition
+			if last then
+				slot.position = last + Vector3.new(0, 3, 0)
+			end
 			slot.model = nil
 			task.delay(RESPAWN_DELAY, fill, plot, slot, generation)
 		end
@@ -245,21 +269,8 @@ local function endSocial(slot: Slot)
 end
 
 local function returnHome(plot: Plot, slot: Slot, model: Model)
-	if slot.target then
-		endSocial(slot)
-	end
-	local pelvis = model:FindFirstChild("LowerTorso") :: BasePart?
-	if pelvis then
-		poof(pelvis.Position)
-	end
-	-- (Round 4, M10: a dead one lost off the world is never stood up at home; a new one comes.)
-	if model:GetAttribute("Vital") == "Dead" then
-		model:Destroy()
-		return
-	end
-	local home = Vector3.new(slot.position.X, slot.homeY, slot.position.Z)
-	DummyControl.reset(model, CFrame.lookAt(home, Vector3.new(plot.origin.X, home.Y, plot.origin.Z)))
-	poof(home)
+	-- Do not reset, destroy, or teleport a lab dummy because it moved away or was flung.
+	return
 end
 
 local function watchSlot(plot: Plot, slot: Slot, dt: number)
@@ -270,6 +281,9 @@ local function watchSlot(plot: Plot, slot: Slot, dt: number)
 	local pelvis = model:FindFirstChild("LowerTorso") :: BasePart?
 	if not pelvis then
 		return
+	end
+	if pelvis.Position.Y >= plot.origin.Y - 5 and pelvis.Position.Y < plot.origin.Y + Lab.GROUND_TOP then
+		slot.lastPosition = pelvis.Position
 	end
 	-- v4 B4: a body a player commands (NpcCommand) is not "lost": it is not walked or sent home.
 	-- (V6-5: nor one inside a lab creature: the creature lets it go in a moment.)
@@ -302,21 +316,21 @@ local function watchSlot(plot: Plot, slot: Slot, dt: number)
 		return
 	end
 	-- Away from home it should keep getting closer, whatever its client says it is doing. A
-	-- short flee, lying down or being out cold, frozen or held in a grab only pause the clock
-	-- (up to EXCUSE_LIMIT s per trip).
+	-- short flee pauses the clock for a limited time. A ragdoll/out-cold body pauses it until it
+	-- actually gets up: a deliberately limp body must never be reset just for lying still.
 	slot.fleeTime = if state == "Fleeing" then slot.fleeTime + dt else 0
 	slot.downTime = if DOWN[state] then slot.downTime + dt else 0
-	-- Frozen or carried in a grab it cannot move at all: always excused. Fleeing and lying
-	-- down are pauses, capped per trip (no endless fall-and-get-up loop).
+	-- Frozen or carried in a grab it cannot move at all. Lying down is also excused without a
+	-- timer: a player may leave a dummy ragdolled indefinitely. Fleeing remains capped per trip.
 	local stopped = model:GetAttribute("Frozen") == true or model:GetAttribute("Held") == true
-	local paused = (state == "Fleeing" and slot.fleeTime < FLEE_GRACE) or (DOWN[state] and slot.downTime < DOWN_GRACE)
+	local paused = state == "Fleeing" and slot.fleeTime < FLEE_GRACE
 	if distance <= AWAY_DISTANCE then
 		-- Home: the next trip starts measuring from wherever it is knocked to.
 		slot.awayTime = 0
 		slot.excusedTime = 0
 		slot.bestDistance = math.huge
-	elseif stopped or (paused and slot.excusedTime < EXCUSE_LIMIT) then
-		if not stopped then
+	elseif stopped or DOWN[state] or (paused and slot.excusedTime < EXCUSE_LIMIT) then
+		if paused and not stopped then
 			slot.excusedTime += dt
 		end
 		-- Knocked further off or running away: the trip home is measured from there.
@@ -599,12 +613,80 @@ local function keepOut()
 	end
 end
 
+-- (session v850: picks a new wander spot for a slot — a point on free floor somewhere in the lab
+-- core, never on top of a machine or inside the lava. We keep it simple: random polar offset from
+-- the plot's spawn, between ROAM_NEAR_MIN and ROAM_RANGE. If the roll lands on a machine (PathPlan
+-- obstacle) we try again a few times, else we fall back to the row spot.)
+local function pickRoamSpot(plot: Plot, slot: Slot): Vector3
+	local PathPlan = require(ReplicatedStorage.Shared:WaitForChild("PathPlan")) :: any
+	local origin = plot.origin
+	for _ = 1, 12 do
+		local r = ROAM_NEAR_MIN + math.random() * (ROAM_RANGE - ROAM_NEAR_MIN)
+		local a = math.random() * math.pi * 2
+		local x, z = math.cos(a) * r, math.sin(a) * r
+		local local2 = Vector2.new(x, z)
+		local blocked = false
+		for _, o in PathPlan.OBSTACLES do
+			if o.at and o.radius and (local2 - o.at).Magnitude < o.radius + 2 then
+				blocked = true
+				break
+			elseif o.min and o.max and local2.X > o.min.X - 2 and local2.X < o.max.X + 2 and local2.Y > o.min.Y - 2 and local2.Y < o.max.Y + 2 then
+				blocked = true
+				break
+			end
+		end
+		if not blocked then
+			return Vector3.new(origin.X + x, slot.homeY, origin.Z + z)
+		end
+	end
+	return slot.homeAttr or slot.position
+end
+
+-- (session v850: a slot that has no social trip, is not commanded, is not in a machine and is up
+-- picks a new wander Home every ROAM_EVERY s. We only overwrite Home, not homeAttr — endSocial
+-- and returnHome still reset to the row's slot.)
+local function roam(plot: Plot, slot: Slot, now: number)
+	local model = slot.model
+	if not model or not model.Parent then
+		return
+	end
+	if slot.target or slot.socialKind then
+		return -- (a hello or a chat is running)
+	end
+	if model:GetAttribute("CommandedBy") ~= nil or model:GetAttribute("InMachine") ~= nil then
+		return
+	end
+	if model:GetAttribute("Vital") == "Dead" then
+		return
+	end
+	local state = model:GetAttribute("RagdollState")
+	if state and state ~= "Standing" and state ~= "Walking" and state ~= "Fleeing" then
+		return -- (down, getting up, in the air: no wandering)
+	end
+	if now < slot.nextRoamAt then
+		-- Mid-walk: if it reached its current roam Home, pick another sooner.
+		if slot.roamHome then
+			local pelvis = model:FindFirstChild("LowerTorso")
+			if pelvis and pelvis:IsA("BasePart") and (pelvis.Position - slot.roamHome).Magnitude < ROAM_REACH then
+				slot.nextRoamAt = now + math.random(2, 5) -- (a short pause here, then on)
+			end
+		end
+		return
+	end
+	local spot = pickRoamSpot(plot, slot)
+	slot.roamHome = spot
+	slot.nextRoamAt = now + math.random(ROAM_EVERY_MIN, ROAM_EVERY_MAX)
+	model:SetAttribute("Home", spot)
+	model:SetAttribute("HomeLook", spot + Vector3.new(math.random(-1, 1) * 5, 0, math.random(-1, 1) * 5))
+end
+
 local function watch(dt: number)
 	keepOut()
 	local now = os.clock()
 	for _, plot in plots do
 		for _, slot in plot.slots do
 			watchSlot(plot, slot, dt)
+			roam(plot, slot, now) -- (session v850: wanders the whole lab on its own)
 		end
 		social(plot, now)
 	end
@@ -919,6 +1001,7 @@ local function claim(player: Player)
 	for _, plot in plots do
 		if plot.owner == nil then
 			plot.owner = player
+			plot.roamStarted = true -- all 18 begin walking as soon as the player enters
 			if player:GetAttribute("V8JoinedAt") == nil then
 				player:SetAttribute("V8JoinedAt", Workspace:GetServerTimeNow()) -- (V8-0.2: the calm first minute counts from here)
 			end
@@ -1165,7 +1248,7 @@ function Lab.build()
 		local plot: Plot = { index = i, origin = Lab.plotCenter(i), owner = nil, slots = {}, folder = folder, sign = nil, built = false, generation = 0 }
 		folder:SetAttribute("Origin", plot.origin)
 		for s = 1, DUMMY_COUNT do
-			table.insert(plot.slots, { index = s, position = slotPosition(plot.origin, s), model = nil, awayTime = 0, bestDistance = 0, restTime = 0, fleeTime = 0, downTime = 0, excusedTime = 0, homeY = 0, homeAttr = nil, homeLook = nil, target = nil, socialUntil = 0, socialKind = nil, nextSocialAt = 0, scaredAt = -math.huge })
+			table.insert(plot.slots, { index = s, position = slotPosition(plot.origin, s), lastPosition = slotPosition(plot.origin, s), model = nil, awayTime = 0, bestDistance = 0, restTime = 0, fleeTime = 0, downTime = 0, excusedTime = 0, homeY = 0, homeAttr = nil, homeLook = nil, target = nil, socialUntil = 0, socialKind = nil, nextSocialAt = 0, scaredAt = -math.huge, roamHome = nil, nextRoamAt = 0 })
 		end
 		markPlot(plot)
 		dressPlot(plot)

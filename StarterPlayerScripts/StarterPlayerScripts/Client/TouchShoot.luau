@@ -29,6 +29,10 @@ local ViewMode = require(Client:WaitForChild("ViewMode"))
 local HudSlots = require(Client:WaitForChild("HudSlots"))
 local KitStyle = require(Client:WaitForChild("KitStyle"))
 local SessionClient = require(Client:WaitForChild("SessionClient"))
+-- V9-NOW crosshair-sync: FeelV2 owns the recoil angles; we read them so the on-screen
+-- crosshair tracks exactly where the pitched/yawed camera's centre ray points, keeping
+-- the icon pixel-perfect against the raycast across every screen size and aspect ratio.
+local FeelV2 = require(Client:WaitForChild("FeelV2"))
 
 local TouchShoot = {}
 
@@ -64,15 +68,32 @@ function TouchShoot.padCross(): boolean
 		and gunPicked() ~= nil
 end
 
+-- V9-NOW crosshair-sync: the aim pixel is the viewport centre plus the current recoil offset
+-- (FeelV2.recoilPixelOffset, shared with PokeController's mouse path and Crosshair so all three
+-- always agree). Visual crosshair and the raycast both read this, so the icon on the screen and
+-- the bullet direction cannot drift apart (even mid-recoil, on a phone with a notch, or on a
+-- landscape/portrait swap: camera.ViewportSize already respects the renderable area).
+local function aimPixel(camera: Camera): Vector2
+	return camera.ViewportSize / 2 + FeelV2.recoilPixelOffset(camera)
+end
+
 local function centre(): Vector2
 	local camera = Workspace.CurrentCamera
-	return if camera then camera.ViewportSize / 2 else Vector2.zero
+	return if camera then aimPixel(camera) else Vector2.zero
 end
 
 -- One shot at the crosshair: at a body if one is there (or near it), otherwise into the world.
+-- The pixel used here is the same pixel the visual crosshair sits on, so the raycast through
+-- camera:ViewportPointToRay inside PokeController lines up exactly with the icon the player sees.
 function TouchShoot.fire(): boolean
 	local at = centre()
 	return PokeController.pressAt(at) or PokeController.tapAt(at)
+end
+
+-- Tests / external callers: where the touch/pad crosshair is right now, in viewport pixels.
+function TouchShoot.aimPixel(): Vector2
+	local camera = Workspace.CurrentCamera
+	return if camera then aimPixel(camera) else Vector2.zero
 end
 
 local function holdFire()
@@ -192,16 +213,22 @@ local function build()
 	end)
 
 	-- The crosshair in the middle (its own layer, which ignores the insets: the camera's centre ray).
+	-- V9-NOW crosshair-sync: ScreenInsets = None and IgnoreGuiInset = true together guarantee the
+	-- ScreenGui's AbsoluteSize equals camera.ViewportSize, so a pixel offset here maps 1:1 to a
+	-- viewport pixel (no safe-area shrink on a notched phone, no top-bar bite). The holder's
+	-- Position is written every frame from aimPixel() so the icon sits exactly where the raycast
+	-- begins, including through recoil, camera rotation, jumps and aspect ratio changes.
 	local c = Instance.new("ScreenGui")
 	c.Name = "TouchCrosshair"
 	c.ResetOnSpawn = false
 	c.IgnoreGuiInset = true
+	c.ScreenInsets = Enum.ScreenInsets.None
 	c.DisplayOrder = 6
 	c.Enabled = false
 	local holder = Instance.new("Frame")
 	holder.Name = "Cross"
 	holder.AnchorPoint = Vector2.new(0.5, 0.5)
-	holder.Position = UDim2.fromScale(0.5, 0.5)
+	holder.Position = UDim2.fromScale(0.5, 0.5) -- (overwritten every frame: aimPixel())
 	holder.Size = UDim2.fromOffset(44, 44)
 	holder.BackgroundTransparency = 1
 	holder.Parent = c
@@ -314,6 +341,13 @@ function TouchShoot.start()
 			local crossOn = want or TouchShoot.padCross()
 			if cross and cross.Visible ~= crossOn then
 				cross.Visible = crossOn
+			end
+			-- V9-NOW crosshair-sync: pin the icon to the viewport pixel the raycast uses, every
+			-- frame. Recoil pitch/yaw flow through FeelV2.recoilAngles -> aimPixel; TouchShoot.fire
+			-- also reads aimPixel so the shot ray and the icon never drift.
+			if cross and crossOn and camera then
+				local pxl = aimPixel(camera)
+				cross.Position = UDim2.fromOffset(pxl.X, pxl.Y)
 			end
 			local on = crossOn or handShown -- (the hand lives in the crosshair's layer)
 			if cg.Enabled ~= on then

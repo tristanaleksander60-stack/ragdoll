@@ -19,7 +19,10 @@ local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared
 
 local VisitorService = {}
 
-VisitorService.VISITORS = 3
+-- (session v850, owner: "der skal ikke spawne random ragdolls rundt om en"): the base visitor
+-- fill is off — the player's lab is its ten row dummies (Lab.DUMMY_COUNT) wandering about on their
+-- own; no more pop-in ragdolls round the player. VIP LAB still gets Config.VIP_LAB_VISITORS extras.
+VisitorService.VISITORS = 0
 VisitorService.ROOM_KEEP = 8 -- bodies always left free under the cap for events and the horde
 VisitorService.TRY_EVERY = 14 -- s a visitor stays with one thing before it picks another
 VisitorService.SPOTS = { "CannonPad", "StationPad", "TrampolinePad", "LavaPool" }
@@ -82,6 +85,10 @@ local function clear(player: Player)
 end
 
 local function fill(player: Player)
+	if Lab.plotIndex(player) then
+		clear(player)
+		return -- the lab's 18 roaming dummies replace visitor spawns
+	end
 	local list = visitors[player] or {}
 	visitors[player] = list
 	for i = #list, 1, -1 do
@@ -402,6 +409,10 @@ end
 -- Keeps at least the minimum standing in the player's own lab (nothing while they are elsewhere).
 -- Returns how many walked in.
 function VisitorService.keepTargets(player: Player): number
+	if Lab.plotIndex(player) then
+		clear(player)
+		return 0
+	end
 	if not inOwnLab(player) or not (Config :: any).LAB_MIN_TARGETS then
 		return 0
 	end

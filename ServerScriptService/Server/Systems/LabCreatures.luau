@@ -445,24 +445,30 @@ BUILD.Frog = function(f, at, m)
 	end
 end
 
--- WHALE: a pool with a whale in it; a dummy in the water goes up the geyser.
+-- SHARK TANK (session v847, owner: "udskift experimenter i ens lab"): the old whale pool was a quiet blue
+-- rectangle with a smoke geyser; the ragdoll gameplay is ragdoll CHAOS, so the station is now a shark tank.
+-- The id "Whale" is kept so saved progress on the Whale card is not lost — a player who had it part-done gets
+-- credit when a dummy goes in the tank. The text on the card and the label in the lab guide read "SHARK TANK".
 BUILD.Whale = function(f, at, m)
-	local pool = part(f, "WhalePool", Vector3.new(30, 1, 20), at * CFrame.new(0, 0.3, 0), Color3.fromRGB(50, 120, 170), Enum.Material.Glass)
-	pool.Transparency = 0.25
-	part(f, "PoolRim", Vector3.new(32, 1.2, 22), at * CFrame.new(0, 0.1, 0), Color3.fromRGB(150, 146, 138), Enum.Material.Cobblestone)
-	local whale = place(f, "MWhale", (at * CFrame.new(-4, 0.4, 0)).Position, 90, 26)
-	local spout = at * CFrame.new(6, 1, 0)
-	local emitter = Instance.new("ParticleEmitter")
-	emitter.Texture = "rbxasset://textures/particles/smoke_main.dds"
-	emitter.Color = ColorSequence.new(Color3.fromRGB(220, 240, 255))
-	emitter.Size = NumberSequence.new(2, 4)
-	emitter.Speed = NumberRange.new(60, 80)
-	emitter.SpreadAngle = Vector2.new(8, 8)
-	emitter.Lifetime = NumberRange.new(0.8, 1.1)
-	emitter.Acceleration = Vector3.new(0, -60, 0)
-	emitter.EmissionDirection = Enum.NormalId.Top
-	emitter.Rate = 0
-	emitter.Parent = pool
+	-- The tank: a deeper, darker glass pool with a pale sand floor so the dark shark reads against it.
+	part(f, "SharkTankFloor", Vector3.new(30, 0.4, 20), at * CFrame.new(0, 0.05, 0), Color3.fromRGB(220, 200, 150), Enum.Material.Sand)
+	local pool = part(f, "SharkTankWater", Vector3.new(30, 1, 20), at * CFrame.new(0, 0.5, 0), Color3.fromRGB(30, 90, 140), Enum.Material.Glass)
+	pool.Transparency = 0.3
+	part(f, "TankRim", Vector3.new(32, 1.2, 22), at * CFrame.new(0, 0.1, 0), Color3.fromRGB(140, 134, 125), Enum.Material.Cobblestone)
+	-- The shark itself: big, placed in the middle of the tank, facing along X so its length sweeps the pool.
+	local shark = place(f, "MShark", (at * CFrame.new(0, 0.6, 0)).Position, 90, 24)
+	local basePivot = shark and shark:GetPivot()
+	-- A red mist burst when the tank eats (replaces the whale's clean white spout).
+	local burst = Instance.new("ParticleEmitter")
+	burst.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	burst.Color = ColorSequence.new(Color3.fromRGB(200, 40, 40))
+	burst.Size = NumberSequence.new(1.5, 3)
+	burst.Speed = NumberRange.new(12, 20)
+	burst.SpreadAngle = Vector2.new(60, 60)
+	burst.Lifetime = NumberRange.new(0.5, 0.9)
+	burst.EmissionDirection = Enum.NormalId.Top
+	burst.Rate = 0
+	burst.Parent = pool
 	return function()
 		if m.busy then
 			return
@@ -472,17 +478,20 @@ BUILD.Whale = function(f, at, m)
 			return
 		end
 		swallow(m, body, function(model)
+			-- Hold the dummy just above the water for a beat (the chomp wind-up).
 			task.spawn(hold, model, function()
-				return spout * CFrame.new(0, 2, 0)
-			end, 0.8)
-			if whale then
-				local base = whale:GetPivot()
-				play(0.6, function(t)
-					whale:PivotTo(base * CFrame.Angles(0, 0, math.sin(t * math.pi) * 0.12))
+				return at * CFrame.new(0, 2.5, 0)
+			end, 0.6)
+			-- The shark lunges: rolls, snaps, settles back.
+			if shark and basePivot then
+				play(0.7, function(t)
+					local roll = math.sin(t * math.pi) * 0.35
+					local lift = math.sin(t * math.pi) * 0.8
+					shark:PivotTo(basePivot * CFrame.new(0, lift, 0) * CFrame.Angles(0, 0, roll))
 				end)
 			end
-			emitter:Emit(60)
-			return Vector3.new(0, 150, 0) + m.toLab * 25 -- (lands beside the pool, not back in it)
+			burst:Emit(40)
+			return Vector3.new(0, 140, 0) + m.toLab * 30 -- (spit out beside the tank, not back in it)
 		end)
 	end
 end
@@ -686,7 +695,10 @@ LabCreatures.LAYOUT = table.freeze({
 	{ id = "Frog", label = "the FROG", x = if (Config :: any).LAYOUT_V3 then -81 else -89, z = -5, yaw = -90 }, -- (V9-0d: its pond off the west garden walk)
 	{ id = "Plant", label = "the GIANT PLANT", x = 90, z = -70, yaw = 90 },
 	{ id = "Chicken", label = "the CHICKEN", x = 90, z = -8, yaw = 90 },
-	{ id = "Whale", label = "the WHALE", x = -95, z = 92, yaw = 0 },
+	-- (session v849, owner: "ryk rundt på tingene så de står psykologisk bedst"): the shark tank is new,
+	-- premium content; it moved from the far west yard corner (-95, 92) up and in to (-55, 70) so a
+	-- player standing at the west side of the lab core SEES it, a clear wow hook on the way back.
+	{ id = "Whale", label = "the SHARK TANK", x = -55, z = 70, yaw = 0 }, -- (session v847: shark swap, id kept for saved progress; session v849: moved forward)
 	{ id = "Washer", label = "the WASHING MACHINE", x = -47, z = 94, yaw = 180 },
 	{ id = "Vacuum", label = "the ROBOT VACUUM", x = 0, z = 88, yaw = 0 },
 	{ id = "Mole", label = "the MOLE", x = 47, z = 94, yaw = 0 },
@@ -707,6 +719,16 @@ function LabCreatures.build(into: Instance, origin: Vector3)
 	ground.CanCollide = false
 	local ticks: { () -> () } = {}
 	for _, spot in LabCreatures.LAYOUT do
+		-- (Owner, 21 Nov 2026: "a COMPRESSOR instead of the robot vacuum": the press stands on the vacuum's spot.)
+		if spot.id == "Vacuum" and (Config :: any).COMPRESSOR then
+			local okC, errC = pcall(function()
+				lazy("Compressor").build(folder, origin, origin + Vector3.new(spot.x, 0, spot.z))
+			end)
+			if not okC then
+				warn("[LabCreatures] Compressor failed: " .. tostring(errC))
+			end
+			continue
+		end
 		local sub = Instance.new("Folder")
 		sub.Name = spot.id
 		sub.Parent = folder

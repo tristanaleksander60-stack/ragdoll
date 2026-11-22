@@ -27,11 +27,26 @@ type Spec = {
 	wheel: number, -- wheel diameter
 	lift: number, -- body bottom over the floor
 	pad: Vector2, -- where it stands (lab space, x and z)
+	look: string?, -- (V9-NOW 26) the V3Assets model drawn over it
 }
 
 VehicleService.SPECS = {
-	Car = { label = "Family Car", body = Vector3.new(6, 1.6, 11), color = Color3.fromRGB(52, 98, 168), wheel = 3, lift = 1.2, pad = Vector2.new(66, 20) } :: Spec,
+	-- (V9-NOW 26, owner 21 Nov 2026: "new cars that people think are cool": the "Car" is now an open-top off-road jeep and a
+	-- go-kart joins; Creator Store models (cleaned: no scripts), driven by our own drive, cockpit and rules.)
+	-- (Owner, 21 Nov 2026: "cars with the brands kids love": the Car is a lime supercar, the jeep has its own pad.)
+	-- (session v849, owner: "ryk rundt på tingene så de står psykologisk bedst"): vehicles split into two
+	-- zones so the player sees MORE vehicles the further they explore (progression hook):
+	--   * Zone B (near spawn): Kart and Supercar — fast dopamine, flashy, to the sides of the spawn's
+	--     front view.
+	--   * Zone C (far): Jeep, MuscleCar, Truck — the row on the east stays as a vehicle garage.
+	Car = { label = "Supercar", body = Vector3.new(6.6, 1.4, 12.5), color = Color3.fromRGB(150, 220, 40), wheel = 2.6, lift = 0.6, pad = Vector2.new(45, 30), look = "SportsCar" } :: Spec, -- (session v849: moved from (66,20) to (45,30), spawn's right-front)
+	-- (session v850, owner: "fjern Jeepen"): the Jeep slot was dropped — four vehicles left (Supercar,
+	-- Kart, Truck, MuscleCar). All lookups of "Jeep" in Shop, Progression, VehicleFeel, Assets etc. are
+	-- safe since SPECS[kind] returns nil and those systems iterate or key-check.
+	Kart = { label = "Go-Kart", body = Vector3.new(4.6, 0.8, 7.5), color = Color3.fromRGB(60, 90, 220), wheel = 1.8, lift = 0.35, pad = Vector2.new(-45, -8), look = "GoKart" } :: Spec, -- (session v849: moved from (66,-6) to (-45,-8), spawn's left-front — first vehicle a new player sees)
 	Truck = { label = "Monster Truck", body = Vector3.new(7.5, 2.2, 12), color = Color3.fromRGB(46, 112, 64), wheel = 6, lift = 3.6, pad = Vector2.new(68, -32) } :: Spec,
+	-- (session v842: 5th slot — 70s muscle car. Look model Phoenix Slayer (8x5x20), script-stripped, chassis-compatible wheel names FL/FR/RL/RR.)
+	MuscleCar = { label = "Muscle Car", body = Vector3.new(5.8, 1.4, 13), color = Color3.fromRGB(200, 40, 40), wheel = 2.6, lift = 0.6, pad = Vector2.new(66, -58), look = "MuscleCar" } :: Spec,
 }
 
 VehicleService.HORN_GAP = 0.8 -- s between two honks
@@ -199,7 +214,7 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	-- "MonsterTruck"): welded on, weightless and without collisions; the code-built shell goes
 	-- see-through but keeps doing the physics.
 	local V3Assets = require(script.Parent.V3Assets)
-	local role = if kind == "Truck" then "MonsterTruck" else "Car"
+	local role = spec.look or (if kind == "Truck" then "MonsterTruck" else "Car")
 	local bottom = home * CFrame.new(0, -b.Y / 2 - spec.lift, 0)
 	local look = V3Assets.place(role, model, bottom, { size = b.Z + 1.5, collide = false, anchored = false, name = "Look" })
 	if look then
@@ -269,7 +284,13 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 				+ math.abs(driverSpot.CFrame.LookVector:Dot(up)) * half.Z
 			local top = driverSpot.Position + up * rise
 			local at = body.CFrame:PointToObjectSpace(top)
-			seat.CFrame = body.CFrame * CFrame.new(at - Vector3.new(0, seat.Size.Y / 2 + VehicleService.SEAT_SINK, 0))
+			-- (session v850, owner: "fiks så man vender den rigtige vej i bilen"): the look model's own driver
+			-- seat could point to the rear (its DriverSeat/SeatFL inherited whichever way the import pivoted).
+			-- The humanoid sits facing the seat's +LookVector; the car drives along its body's +LookVector
+			-- (its wheels push it that way). We force the seat to look the same way, so the driver always
+			-- faces where the car goes.
+			local pos = body.CFrame:PointToWorldSpace(at - Vector3.new(0, seat.Size.Y / 2 + VehicleService.SEAT_SINK, 0))
+			seat.CFrame = CFrame.lookAt(pos, pos + body.CFrame.LookVector, body.CFrame.UpVector)
 			weld(body, seat)
 		end
 		-- Each wheel's axle (body space) and radius, for the screens.
@@ -360,6 +381,11 @@ function VehicleService.build(into: Folder, origin: Vector3)
 	holder.Name = "Vehicles"
 	holder.Parent = into
 	local kinds: { Kind } = { "Car", "Truck" }
+	for _, extra in { "Kart", "Jeep", "MuscleCar" } do
+		if (Config.VEHICLES :: any)[extra] and VehicleService.SPECS[extra] then
+			table.insert(kinds, extra)
+		end
+	end
 	for _, kind in kinds do
 		local spec = VehicleService.SPECS[kind]
 		local cf = CFrame.new(origin + Vector3.new(spec.pad.X, spec.lift + spec.body.Y / 2 + 0.1, spec.pad.Y))

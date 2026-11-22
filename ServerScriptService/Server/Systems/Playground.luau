@@ -702,22 +702,38 @@ local function sign(text: string, onto: BasePart, height: number, color: Color3)
 end
 
 local function buildLava()
-	-- Front left, between the fall tower and the dummies' row. (21 Nov 2026: it stays here, at the edge of the
-	-- spawn's view beside the bullseye: a destination, not a danger by the spawn; the west side has no room
-	-- for it and a path.)
-	local x, z, w, d = -27.5, -41, 21, 18
+	-- (session v849, owner: "ryk rundt på tingene så de står psykologisk bedst"): the hazard pit is now
+	-- the BOXING RING (Config.BOXING_RING; see Server/Systems/BoxingPit), the NEW feature. Moved from the
+	-- old lava spot (-27.5, -41) to (0, -32): centred in front of the spawn, so it is the FIRST thing a
+	-- new player sees. The bullseye (at (-6, -42) in PathPlan) still lives just behind it; path obstacles
+	-- were updated to match (Shared/PathPlan: "Lava" obstacle now (-11, -41) to (11, -23)).
+	local x, z, w, d = 0, -32, 21, 18
 	local pool = part("LavaPool", Vector3.new(w, 0.4, d), at(x, 0.2, z), LAVA, Enum.Material.CrackedLava)
-	pool:SetAttribute("LaunchVelocity", Vector3.new(0, 105, 0)) -- (dummies too: PropContacts)
-	CollectionService:AddTag(pool, "DummyAvoid") -- (a fleeing dummy turns aside: ActiveRagdoll)
+	-- (session v850, owner: "lavaen skal ikke være under bokseringen, det skal være en helt normal bokse-
+	-- ring, man skal bare kunne hoppe en anelse højere"): the hazard launch is off under the ring —
+	-- when Config.BOXING_RING is on, no LaunchVelocity on the pool and no DummyAvoid tag. Stepping on
+	-- the ring canvas is harmless; the jump boost lives in BoxingPit.dress (a little spring to each jump
+	-- while standing on it). The old lava still launches when BOXING_RING is off.
+	if not (Config :: any).BOXING_RING then
+		pool:SetAttribute("LaunchVelocity", Vector3.new(0, 105, 0)) -- (dummies too: PropContacts)
+		CollectionService:AddTag(pool, "DummyAvoid") -- (a fleeing dummy turns aside: ActiveRagdoll)
+	end
 	-- (21 Nov 2026, Config.LAVA_V2: a real pit, LavaPit: a rounded glowing pool, rocks, embers, a sound
 	-- and a warning picture; the pool part stays the trigger.)
+	-- (session v848, owner: "udskift lavaen med boxing ring"): if Config.BOXING_RING is on, the pool
+	-- is dressed as a BOXING RING instead (Server/Systems/BoxingPit, V3Assets.BoxingRing). The pool
+	-- part, LaunchVelocity, DummyAvoid tag and throwOnTouch below stay the same — only the picture
+	-- changed. The slot name "LavaPool" is kept so experiments/missions/paths keep resolving.
+	local ring = (Config :: any).BOXING_RING == true
 	local v2 = (Config :: any).LAVA_V2 == true
-	if v2 then
+	if ring then
+		require(script.Parent.BoxingPit).dress(pool, origin.Y + 0.02)
+	elseif v2 then
 		require(script.Parent.LavaPit).dress(pool, origin.Y + 0.02)
 	else
 		hazardRim(x, z, w, d, 0.6)
 	end
-	local flames: { Vector3 } = if v2 then {} else { Vector3.new(-6, 0, -4), Vector3.new(5, 0, 3), Vector3.new(-2, 0, 6) }
+	local flames: { Vector3 } = if ring or v2 then {} else { Vector3.new(-6, 0, -4), Vector3.new(5, 0, 3), Vector3.new(-2, 0, 6) }
 	for _, spot in flames do
 		local flame = Instance.new("Fire")
 		flame.Size = 6
@@ -731,7 +747,7 @@ local function buildLava()
 		holder.Transparency = 1
 		flame.Parent = holder
 	end
-	if not v2 then
+	if not ring and not v2 then
 		local glow = Instance.new("PointLight")
 		glow.Color = LAVA
 		glow.Range = 22
@@ -740,11 +756,15 @@ local function buildLava()
 		sign("LAVA!", pool, 7, LAVA)
 	end
 	-- Step in: up you go, a little to one side.
-	throwOnTouch(pool, 1.5, 120, "CannonPad", function(root)
-		local side = Vector3.new(root.Position.X - pool.Position.X, 0, root.Position.Z - pool.Position.Z)
-		local away = if side.Magnitude > 0.5 then side.Unit else Vector3.xAxis
-		return away * 18 + Vector3.new(0, 125, 0)
-	end)
+	-- (session v850: with BOXING_RING on the throwOnTouch is off; the ring is walk-on, the small jump
+	-- boost in BoxingPit does the rest.)
+	if not (Config :: any).BOXING_RING then
+		throwOnTouch(pool, 1.5, 120, "CannonPad", function(root)
+			local side = Vector3.new(root.Position.X - pool.Position.X, 0, root.Position.Z - pool.Position.Z)
+			local away = if side.Magnitude > 0.5 then side.Unit else Vector3.xAxis
+			return away * 18 + Vector3.new(0, 125, 0)
+		end)
+	end
 end
 
 local function buildBullseye()

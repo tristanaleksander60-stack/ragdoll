@@ -27,8 +27,23 @@ Compressor.QUEUE = 3
 Compressor.LAND_WAIT = 1.0 -- s for the tossed dummy to land on the bed
 Compressor.SLAM_AFTER = 0.45 -- s from the lamp to the slam (the clients time the plate by it)
 Compressor.FLAT_TIME = 2 -- s a body stays a pancake
+Compressor.THUD = 9114397505 -- (a heavy metal slam)
+Compressor.AGAIN = 8 -- s before the same body may be pressed again (no KO farm)
+-- V9-overhaul (Tier 1, lab-overhaul, 21 Jan 2027): the press is an industrial machine that
+-- loads pressure between hits, not a dumb tween. While the bed is empty and no press is running,
+-- the PressurePSI attribute climbs from 0 to 100 over RECHARGE_TIME seconds. On every press it
+-- resets. The plate's slam then applies a radial shove to bodies standing within BOOM_RADIUS of
+-- the bed (bystanders only - bodies on the bed get the normal squish), scaled by the PSI at that
+-- moment. If the bed stays empty long enough for PSI to top out, the valve releases: an empty
+-- press fires anyway (safety-valve), which is funny and keeps the recharge loop from stalling.
+Compressor.RECHARGE_TIME = 10 -- s from empty bed to full pressure
+Compressor.BOOM_RADIUS = 14 -- studs around the bed centre that feels the boom
+Compressor.BOOM_MAX_VELOCITY = 120 -- studs/s outward kick at PSI = 100 (0 at PSI = 0, linear)
+Compressor.BOOM_MAX_UP = 55 -- studs/s upward kick at PSI = 100 (adds a little lift so bodies tumble)
 
 local presses = 0
+local boomPresses = 0 -- (tests: how many presses actually applied the radial boom)
+local valveReleases = 0 -- (tests: how many empty presses the safety valve fired)
 local machines: { Model } = {}
 
 local function lazy(name: string): any
@@ -85,6 +100,90 @@ function Compressor.onBed(machine: Model): { Model }
 	return out
 end
 
+-- V9-overhaul: bodies standing near the bed but NOT on it, i.e. the bystanders the boom reaches.
+-- Reuses onBed to skip anyone already being squished, so we never double-apply forces.
+local function nearBed(machine: Model, radius: number, exclude: { Model }): { { model: Model, part: BasePart } }
+	local bed = machine:FindFirstChild("Bed")
+	if not (bed and bed:IsA("BasePart")) then
+		return {}
+	end
+	local skip: { [Model]: boolean } = {}
+	for _, m in exclude do
+		skip[m] = true
+	end
+	local centre = bed.Position
+	local out: { { model: Model, part: BasePart } } = {}
+	local function consider(model: Model, p: Instance?)
+		if skip[model] or not (p and p:IsA("BasePart")) then
+			return
+		end
+		local d = (p.Position - centre)
+		local flat = Vector3.new(d.X, 0, d.Z).Magnitude
+		-- Inside the disc horizontally, and within a vertical band around bed height (not above the
+		-- top beam, not deep underground): the boom is a ground-level shockwave.
+		if flat > 0.5 and flat < radius and math.abs(d.Y) < 8 then
+			table.insert(out, { model = model, part = p })
+		end
+	end
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if dummies then
+		for _, m in dummies:GetChildren() do
+			if m:IsA("Model") then
+				consider(m, m:FindFirstChild("LowerTorso"))
+			end
+		end
+	end
+	for _, plr in Players:GetPlayers() do
+		local c = plr.Character
+		if c then
+			consider(c, c:FindFirstChild("HumanoidRootPart"))
+		end
+	end
+	return out
+end
+
+-- V9-overhaul: the radial shove on PressAt. Pure physics - no new remotes, no attributes that
+-- clients need to know about. Bodies get a horizontal push away from the bed plus a lift, scaled
+-- by the pressure built up before this press. Dummies use DummyControl.hit (same path the squish
+-- uses); players get an AssemblyLinearVelocity nudge. Everything is best-effort; a missing part
+-- is skipped silently.
+local function radialBoom(machine: Model, psi: number, onBed: { Model }, owner: Player?)
+	if psi <= 1 then
+		return
+	end
+	local scale = math.clamp(psi / 100, 0, 1)
+	local pushOut = Compressor.BOOM_MAX_VELOCITY * scale
+	local pushUp = Compressor.BOOM_MAX_UP * scale
+	local targets = nearBed(machine, Compressor.BOOM_RADIUS, onBed)
+	if #targets == 0 then
+		return
+	end
+	local bed = machine:FindFirstChild("Bed") :: BasePart
+	local DummyControl = lazy("DummyControl")
+	for _, t in targets do
+		local d = t.part.Position - bed.Position
+		local outward = Vector3.new(d.X, 0, d.Z)
+		if outward.Magnitude < 0.1 then
+			continue
+		end
+		outward = outward.Unit
+		local kick = outward * pushOut + Vector3.new(0, pushUp, 0)
+		-- Falloff: closer to the bed = more kick. Linear from 1.0 at centre to 0.2 at the rim.
+		local flat = Vector3.new(d.X, 0, d.Z).Magnitude
+		local fall = 1 - 0.8 * math.clamp(flat / Compressor.BOOM_RADIUS, 0, 1)
+		kick = kick * fall
+		if t.model:GetAttribute("IsDummy") == true then
+			local mass = (t.model:GetAttribute("Mass") :: number?) or 6.4
+			pcall(DummyControl.hit, t.model, t.part, kick * mass, t.part.Position, 20, owner)
+		else
+			pcall(function()
+				t.part.AssemblyLinearVelocity = t.part.AssemblyLinearVelocity + kick
+			end)
+		end
+		boomPresses += 1
+	end
+end
+
 -- One press: a dummy onto the bed, the slam, the pancakes, the lift.
 function Compressor.press(machine: Model, presser: Player?, owner: Player?)
 	local bed = machine:WaitForChild("Bed") :: BasePart
@@ -95,18 +194,50 @@ function Compressor.press(machine: Model, presser: Player?, owner: Player?)
 			task.wait(Compressor.LAND_WAIT)
 		end
 	end
+	-- V9-overhaul: read the pressure the machine built up before the slam, then drain it. Bodies
+	-- on the bed still get the normal squish below; the radial boom runs for bystanders after the
+	-- plate lands. PressurePSI is a server-owned attribute that replicates for free to a cosmetic
+	-- needle gauge (added in a follow-up). Safety-valve presses with no onBed() targets still get
+	-- credit for draining the pressure, same contract.
+	local psiAtPress = (machine:GetAttribute("PressurePSI") :: number?) or 0
+	machine:SetAttribute("PressurePSI", 0)
 	machine:SetAttribute("PressAt", Workspace:GetServerTimeNow())
 	task.wait(Compressor.SLAM_AFTER)
+	-- (Owner, 21 Nov 2026: the plate itself slams down and lifts again, on every screen.)
+	local plate = machine:FindFirstChild("Plate")
+	if plate and plate:IsA("BasePart") then
+		local TweenService = game:GetService("TweenService")
+		local up, down = plate:GetAttribute("UpY"), plate:GetAttribute("DownY")
+		if type(up) == "number" and type(down) == "number" then
+			local function at(y: number): CFrame
+				return plate.CFrame - Vector3.new(0, plate.Position.Y - y, 0)
+			end
+			TweenService:Create(plate, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { CFrame = at(down) }):Play()
+			task.delay(Compressor.FLAT_TIME, function()
+				if plate.Parent then
+					TweenService:Create(plate, TweenInfo.new(0.8, Enum.EasingStyle.Sine), { CFrame = at(up) }):Play()
+				end
+			end)
+			-- (session v850, owner: "compressoren GRISKRIG, gør den helt lydløs"): the press's metal-slam
+			-- played every COOLDOWN s (2.5 s) at full volume; dropped altogether. Other feedback (the plate
+			-- tween, the shockwave, the body's own land sound) keeps the press readable.
+		end
+	end
 	local flatUntil = Workspace:GetServerTimeNow() + Compressor.FLAT_TIME
 	local DummyControl = lazy("DummyControl")
-	for _, m in Compressor.onBed(machine) do
+	local onBedNow = Compressor.onBed(machine)
+	-- V9-overhaul: shockwave to the bystanders right as the plate lands (bodies on the bed are
+	-- excluded so the squish stays authoritative over the kick).
+	radialBoom(machine, psiAtPress, onBedNow, owner)
+	for _, m in onBedNow do
 		m:SetAttribute("Flat", flatUntil)
+		m:SetAttribute("PressedAt", Workspace:GetServerTimeNow()) -- (a body left on the bed is not pressed again for AGAIN s)
 		if m:GetAttribute("IsDummy") == true then
 			local pelvis = m:FindFirstChild("LowerTorso")
 			if pelvis and pelvis:IsA("BasePart") then
 				-- (Knocked flat on the bed: down and out cold a moment, never hurt.)
 				local mass = (m:GetAttribute("Mass") :: number?) or 6.4
-				pcall(DummyControl.hit, m, pelvis, Vector3.new(0, -40, 0) * mass, pelvis.Position, 40, nil)
+				pcall(DummyControl.hit, m, pelvis, Vector3.new(0, -40, 0) * mass, pelvis.Position, 40, owner)
 			end
 		end
 		task.delay(Compressor.FLAT_TIME, function()
@@ -127,13 +258,13 @@ end
 -- The press in one lab (Playground builds the lab): the bed, four steel pillars with pistons, the top
 -- beam, the press plate (a picture: the clients move it), the PRESS lamp, warning stripes, and the
 -- terminal on the side you come from.
-function Compressor.build(folder: Instance, origin: Vector3)
+function Compressor.build(folder: Instance, origin: Vector3, at: Vector3?)
 	if not Config.COMPRESSOR then
 		return
 	end
 	local m = Instance.new("Model")
 	m.Name = "Compressor"
-	local base = origin + Vector3.new(Compressor.AT.X, 0, Compressor.AT.Y)
+	local base = at or (origin + Vector3.new(Compressor.AT.X, 0, Compressor.AT.Y))
 	local face = CFrame.lookAt(base, Vector3.new(origin.X, base.Y, origin.Z)) -- (its open side to the spawn)
 	local steel = Color3.fromRGB(70, 76, 88)
 	local dark = Color3.fromRGB(38, 42, 52)
@@ -183,8 +314,75 @@ function Compressor.build(folder: Instance, origin: Vector3)
 	m:SetAttribute("Compressor", true)
 	m.Parent = folder
 	table.insert(machines, m)
+	-- (Owner, 21 Nov 2026: no computers. A ragdoll thrown onto the bed is pressed by itself, one every COOLDOWN s;
+	-- its fall is the lab player's KO.)
+	-- V9-overhaul: start the pressure attribute at zero so clients always see a defined value.
+	m:SetAttribute("PressurePSI", 0)
+	task.spawn(function()
+		local last = 0
+		while m.Parent do
+			task.wait(0.3)
+			if os.clock() - last >= Compressor.COOLDOWN then
+				local fresh = 0
+				for _, body in Compressor.onBed(m) do
+					local was = body:GetAttribute("PressedAt")
+					if type(was) ~= "number" or Workspace:GetServerTimeNow() - was > Compressor.AGAIN then
+						fresh += 1
+					end
+				end
+				if fresh > 0 then
+					last = os.clock()
+					local ok, err = pcall(Compressor.press, m, nil, lazy("Lab").ownerAt(origin + Vector3.new(0, 1, 0)))
+					if not ok then
+						warn("[Compressor] " .. tostring(err))
+					end
+			end
+			end
+		end
+	end)
+	-- V9-overhaul: pressure recharge + safety valve. One loop per machine, ticks at 0.2 s. While
+	-- no fresh bodies are on the bed, PSI climbs linearly to 100 over RECHARGE_TIME. When it caps
+	-- out AND the main auto-press loop has not fired recently, the valve releases: an empty press
+	-- fires so the gauge resets and bystanders get a free comedy shove. The press() path drains
+	-- PSI itself, so this loop just tops up.
+	task.spawn(function()
+		local lastValve = 0
+		while m.Parent do
+			task.wait(0.2)
+			local fresh = false
+			for _, body in Compressor.onBed(m) do
+				local was = body:GetAttribute("PressedAt")
+				if type(was) ~= "number" or Workspace:GetServerTimeNow() - was > Compressor.AGAIN then
+					fresh = true
+					break
+				end
+			end
+			local psi = (m:GetAttribute("PressurePSI") :: number?) or 0
+			if fresh then
+				-- A fresh body on the bed: the main loop is about to press. Let it do its thing and
+				-- let PSI stay where it is; press() itself drains it.
+			else
+				local step = (100 / Compressor.RECHARGE_TIME) * 0.2
+				psi = math.min(100, psi + step)
+				m:SetAttribute("PressurePSI", psi)
+			end
+			-- Safety valve: empty press to drain the gauge, no more often than every 2 × COOLDOWN
+			-- so we never fight the main loop.
+			if psi >= 100 and os.clock() - lastValve > Compressor.COOLDOWN * 2 then
+				lastValve = os.clock()
+				valveReleases += 1
+				local ok, err = pcall(Compressor.press, m, nil, lazy("Lab").ownerAt(origin + Vector3.new(0, 1, 0)))
+				if not ok then
+					warn("[Compressor] valve " .. tostring(err))
+				end
+			end
+		end
+	end)
 	-- Its terminal (the same family as the feed terminals): PRESS, one every COOLDOWN s, QUEUE queued.
 	pcall(function()
+		if not Config.FEED_TERMINAL then
+			return
+		end
 		local LabGuide = lazy("LabGuide")
 		local guideFolder = folder:FindFirstChild("Guide") or folder
 		local screen = LabGuide.addTerminal(guideFolder, origin, "Compressor", function(): Vector3
@@ -213,6 +411,14 @@ function Compressor.pressesForTest(): number
 end
 function Compressor.machinesForTest(): { Model }
 	return machines
+end
+-- V9-overhaul tests: how many bystander kicks the boom applied, and how many empty presses the
+-- safety valve fired. Both monotonic counters since module load.
+function Compressor.boomsForTest(): number
+	return boomPresses
+end
+function Compressor.valveReleasesForTest(): number
+	return valveReleases
 end
 
 return Compressor

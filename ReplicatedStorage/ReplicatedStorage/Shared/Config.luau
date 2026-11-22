@@ -5,7 +5,7 @@ local Config = {
 	GameName = "Ragdoll Havoc", -- (the owner's name for the game, 10 Nov 2026)
 	-- Bumped with every change that goes live (round 5): SessionStats keeps it per visit, so the
 	-- numbers of one build can be told from another's.
-	Version = "0.33.7", -- (0.33.7, 21 Nov 2026: no feed computers or feed buttons, you throw the ragdoll in; 0.33.6, 21 Nov 2026: terminals and the Map Board: the view turns freely, presses work close up, left click only; 0.33.5, 21 Nov 2026: the view turns freely near a terminal; 0.33.4, 21 Nov 2026: skip or hide missions, keys for everything (E use, - skip, = hide, 7 GOD, 8 LAB, 9 MORE); 0.33.3, 21 Nov 2026: weapons sit in the hand on every avatar, running dummies over is a KO; 0.33.2, 21 Nov 2026, V9-NOW 24: no hold E, press the thing itself; 0.33.1, 21 Nov 2026, hotfix: the bow shot one arrow but looked and sounded like two, a feed terminal stood in the wrecking ball's arc; 0.33.0, 21 Nov 2026, V9-NOW 17-21: no bullseye, no neon glow, the crash wall badge out of the wall, a travel corner (MAPS board + portals), KOs from every event you start; 0.32.0, 21 Nov 2026, V9-NOW 11-16: target blocks that topple, the 2X KO + BOLTS event, What's New closes itself, the monitor in the corner, cars with a cockpit and sounds; 0.31.1, 21 Nov 2026, V9-NOW hotfix: bullet holes on every dummy, a reaction by where it is hit, one map place (the board); 0.31.0, 21 Nov 2026, V9 milestone 1: GOD MODE free in the beta with aimed patterns, the time dial (Z), grey matte ragdolls, the first shot in first person, bigger unlock gaps, the 3D shop, codes, the town square, padded hub floor, always a ragdoll to shoot; 0.30.0, 21 Nov 2026: wide paths (twice as wide, no stub at the bullseye), GOD MODE: create life with a free 60 s try; 0.29.0, 21 Nov 2026: connected path network with a plaza, grass verges with bushes, a real lava pit, icons instead of words, a full 6-weapon start bar, toss buttons at the cannon, lava and trampoline, fewer pop-ups; 0.28.0, 21 Nov 2026: every weapon its own sound, a 4-tool start bar with Launch at 3 and the Rocket among the hardest, SURPRISE-style banners, nicer lab paths, a FEED button, sign and drop ring at every creature and station; 0.27.1 UI audit before the ads, 21 Nov 2026: one WEAPONS button, a quiet start, signs in the world, knockable barrels/crates/cones, the weapon in your hand in 3D; 0.27.0 V8-1..6: CRASH score and the long cannon arc, missions, readable hits, fair chase, spawn dummies, streak freeze, admins, 21 Nov 2026; 0.26.0 V8-0: the first hit lands, a full bar from the start, a calm first minutes, the cannon in view, 21 Nov 2026; 0.25.0 v7: paths, crash-test dummies, event banner card, console layout, 20 Nov 2026; 0.24.0 v6: notifications, admin and director menus, bigger lab with garden, creature yard, birds, map shop, 20 Nov 2026; 0.18.0 phase 0; 0.19.0 phases 1-3; 0.20.0 the release; 0.21.0 v3 look, cars, animals; 0.22.0 open-air maps, launchers, disasters, train, throw tower, 19 Nov 2026; 0.23.0 v4: talk to NPCs, real gorilla and bulls, 11 surprises, cars, slow-mo, lab zones, 20 Nov 2026; SessionStats also keeps game.PlaceVersion)
+	Version = "0.34.0", -- (0.34.0, 21 Nov 2026: a supercar, a jeep and a go-kart in every lab, smoother steering; 0.33.7, 21 Nov 2026: no feed computers or feed buttons, you throw the ragdoll in; 0.33.6, 21 Nov 2026: terminals and the Map Board: the view turns freely, presses work close up, left click only; 0.33.5, 21 Nov 2026: the view turns freely near a terminal; 0.33.4, 21 Nov 2026: skip or hide missions, keys for everything (E use, - skip, = hide, 7 GOD, 8 LAB, 9 MORE); 0.33.3, 21 Nov 2026: weapons sit in the hand on every avatar, running dummies over is a KO; 0.33.2, 21 Nov 2026, V9-NOW 24: no hold E, press the thing itself; 0.33.1, 21 Nov 2026, hotfix: the bow shot one arrow but looked and sounded like two, a feed terminal stood in the wrecking ball's arc; 0.33.0, 21 Nov 2026, V9-NOW 17-21: no bullseye, no neon glow, the crash wall badge out of the wall, a travel corner (MAPS board + portals), KOs from every event you start; 0.32.0, 21 Nov 2026, V9-NOW 11-16: target blocks that topple, the 2X KO + BOLTS event, What's New closes itself, the monitor in the corner, cars with a cockpit and sounds; 0.31.1, 21 Nov 2026, V9-NOW hotfix: bullet holes on every dummy, a reaction by where it is hit, one map place (the board); 0.31.0, 21 Nov 2026, V9 milestone 1: GOD MODE free in the beta with aimed patterns, the time dial (Z), grey matte ragdolls, the first shot in first person, bigger unlock gaps, the 3D shop, codes, the town square, padded hub floor, always a ragdoll to shoot; 0.30.0, 21 Nov 2026: wide paths (twice as wide, no stub at the bullseye), GOD MODE: create life with a free 60 s try; 0.29.0, 21 Nov 2026: connected path network with a plaza, grass verges with bushes, a real lava pit, icons instead of words, a full 6-weapon start bar, toss buttons at the cannon, lava and trampoline, fewer pop-ups; 0.28.0, 21 Nov 2026: every weapon its own sound, a 4-tool start bar with Launch at 3 and the Rocket among the hardest, SURPRISE-style banners, nicer lab paths, a FEED button, sign and drop ring at every creature and station; 0.27.1 UI audit before the ads, 21 Nov 2026: one WEAPONS button, a quiet start, signs in the world, knockable barrels/crates/cones, the weapon in your hand in 3D; 0.27.0 V8-1..6: CRASH score and the long cannon arc, missions, readable hits, fair chase, spawn dummies, streak freeze, admins, 21 Nov 2026; 0.26.0 V8-0: the first hit lands, a full bar from the start, a calm first minutes, the cannon in view, 21 Nov 2026; 0.25.0 v7: paths, crash-test dummies, event banner card, console layout, 20 Nov 2026; 0.24.0 v6: notifications, admin and director menus, bigger lab with garden, creature yard, birds, map shop, 20 Nov 2026; 0.18.0 phase 0; 0.19.0 phases 1-3; 0.20.0 the release; 0.21.0 v3 look, cars, animals; 0.22.0 open-air maps, launchers, disasters, train, throw tower, 19 Nov 2026; 0.23.0 v4: talk to NPCs, real gorilla and bulls, 11 surprises, cars, slow-mo, lab zones, 20 Nov 2026; SessionStats also keeps game.PlaceVersion)
 	Phase = 3,
 	-- Heavy weapons and close blasts can cut a limb off (round 2, N2). Roblox lists severed body
 	-- parts as Restricted (18+, ID-checked players only): switching this off keeps the game at a
@@ -171,7 +171,7 @@ local Config = {
 	ADMIN_V2 = true, -- V6-2: the owner's tabbed admin menu (Client/AdminPanel, Server/Systems/AdminTools)
 	DIRECTOR = true, -- V6-3: the owner's F8 director mode for filming (Client/Director; AdminTools Shot/LaunchDummy/DirectorSave)
 	LAB_V6 = true, -- V6-4: wider plots (Zones.PLOT_SPACING 250) with a garden on both sides (Server/Systems/LabGarden)
-	LAB_CREATURES = true, -- V6-5: the creature yard in front of each lab (Server/Systems/LabCreatures): spider, plant, frog, whale, chicken, washer, slingshot, mole, vacuum
+	LAB_CREATURES = true, -- V6-5: the creature yard in front of each lab (Server/Systems/LabCreatures): spider, plant, frog, shark tank (slot id "Whale"), chicken, washer, slingshot, mole, vacuum/compressor
 	BIRDS = false, -- V6-6: client-side flocks (Client/Birds) round the lab and the open-air maps (20 Nov 2026, the owner: "remove the birds"; true brings them back)
 	MAP_SHOP = true, -- V6-7: showcase booths on the maps selling Shop.OFFERS map items (Server/Systems/MapShopService); id 0 = no booth live
 	PATHS = true, -- V7-2: earthen paths to everything in the lab, and repainted terrain paths on the plaza and open-air maps (Shared/PathPlan, Server/Systems/PathBuilder)
@@ -193,7 +193,10 @@ local Config = {
 	WRECKING_V2 = true, -- owner 20 Nov 2026: the wrecking ball as a steel ball on a chain under a yellow A-frame gantry (Playground)
 	NEW_SINCE = "2026-11-20", -- UTC date of the update whose things get a NEW tag
 	NEW_DAYS = 7,
-	NEW_IN_LAB = table.freeze({ "BigButton", "LabCar", "LabTruck", "PortalMulti" }), -- names in the lab's folder
+	-- (session v850, owner: "fjern det ret du har tilføjet oven på bilerne"): the NEW tag was floating
+	-- over every vehicle; a cluttered look. The cars are no longer the one newest feature — kept the
+	-- tag on the BigButton and PortalMulti only.
+	NEW_IN_LAB = table.freeze({ "BigButton", "PortalMulti" }), -- names in the lab's folder
 	-- v4 A5 (owner): bodies die from enough hits, not only headshots. Every hit adds damage =
 	-- weapon power x DAMAGE_PER_POWER x the region (head, limbs) x DAMAGE_BLUNT for blows; BODY_HP of it
 	-- kills (about 6 Popper rounds to the body, about 10 punches). Headshots stay instant.
@@ -278,8 +281,13 @@ local Config = {
 	-- driver's screen). Speeds in studs/s; a hit over HitMath.MACHINE_MIN_SPEED knocks a dummy.
 	VEHICLES = table.freeze({
 		enabled = true,
-		Car = table.freeze({ speed = 62, reverse = 22, accel = 2.2, turn = 1.9 }),
-		Truck = table.freeze({ speed = 52, reverse = 18, accel = 1.8, turn = 1.5 }),
+		-- (session v846, owner: "bakker sygt langsomt, alle leaver": reverse was ~30% of forward which felt broken.
+		-- Raised to ~55% and accel +15% so getting out of a wall/off a dummy is snappy. Retention fix.)
+		Car = table.freeze({ speed = 72, reverse = 40, accel = 3.0, turn = 1.9 }), -- (the supercar: the fastest)
+		Truck = table.freeze({ speed = 52, reverse = 30, accel = 2.1, turn = 1.5 }),
+		Kart = table.freeze({ speed = 58, reverse = 32, accel = 3.0, turn = 2.1 }), -- (V9-NOW 26: the go-kart, quick and twitchy)
+		Jeep = table.freeze({ speed = 56, reverse = 32, accel = 2.3, turn = 1.7 }), -- (owner 21 Nov 2026: the jeep on its own pad)
+		MuscleCar = table.freeze({ speed = 68, reverse = 38, accel = 2.8, turn = 1.8 }), -- (session v842: a 70s muscle car, fast and heavy, slightly less nimble than the supercar)
 		flippedReset = 4, -- s an empty flipped or fallen car waits before it goes home
 		idleReset = 30, -- s an empty car left away from its pad waits before it goes home
 		-- v4 C2: sounds (free Creator Store audio): engine loop (Roblox Resources), horn, crash.
@@ -339,6 +347,11 @@ local Config = {
 	-- of volcanic rocks, embers, heat haze, a bubbling sound and a warning picture (Server/Systems/LavaPit,
 	-- Client/LavaClient). false = the flat box with hazard tape.
 	LAVA_V2 = true,
+	-- (session v848, owner: "udskift lavaen med boxing ring"): the lab's hazard pit is dressed as a
+	-- BOXING RING instead of a lava pool (Server/Systems/BoxingPit, V3Assets.BoxingRing). The pool
+	-- part stays the trigger and still throws the ragdoll up — only the picture changed. true = the
+	-- ring; false = the lava pit (LAVA_V2 / LavaPit).
+	BOXING_RING = true,
 	-- Icon signs (21 Nov 2026, the owner: "remove distracting text, make it nice signs and icons a child
 	-- understands"): the lab's word signs become drawn pictograms (Playground.iconBadge, the signposts,
 	-- today's machine, the HUD's key chips and help line). false = the words.
@@ -376,7 +389,13 @@ local Config = {
 	SHOP_V9 = true,
 	-- V9-0j (owner, 21 Nov 2026: "always a ragdoll to shoot"): bodies standing in your own lab at least, by
 	-- device tier (VisitorService.keepTargets: walkers come in from the rim; all under FX_CAPS.ragdolls).
-	LAB_MIN_TARGETS = table.freeze({ low = 4, mid = 5, high = 6 }),
+	-- (session v850, owner: "der skal ikke spawne random ragdolls rundt om en, men at dem der står på den
+	-- sorte plade nu og står stille bare spawner der og så begår at gå rundt i hele ens map"): the VisitorService
+	-- walk-in system (bodies that puff in from the rim into the player's view) is turned off. The ten
+	-- lab dummies (Lab.DUMMY_COUNT, see below) stand on the test row and then wander the whole lab on
+	-- their own (DummyLife + RowRoam). 0 for every tier means VisitorService.keepTargets never walks
+	-- a new body in.
+	LAB_MIN_TARGETS = table.freeze({ low = 0, mid = 0, high = 0 }),
 	-- V9-0k (owner, 21 Nov 2026: "the floor looks like white tiles, it should look like 3D cushions"): the hub floor
 	-- wears a PBR MaterialVariant of soft padded pads (MaterialService "HubPads", place file; 2 x 2 pads a
 	-- 28-stud tile = 14-stud pads), still one flat floor part. nil = the V9-0h tile texture.
@@ -474,6 +493,7 @@ local Config = {
 	-- terminal by every creature and machine instead of the floating prompt (LabGuide, Client/TerminalClient).
 	FEED_TERMINAL = false, -- (owner, 21 Nov 2026: "remove the computers completely, people know to throw the ragdoll there")
 	GUIDE_PROMPTS = false, -- (and no feed button in their place: the ring and the sign show where; you throw it in)
+	COMPRESSOR = true, -- (owner, 21 Nov 2026: the hydraulic press on the robot vacuum's spot; a ragdoll thrown on the bed is pressed: Compressor)
 	-- V9-P fix round 2: the plaster strips on a broken limb are not drawn (on the sculpted skins they read as
 	-- stray geometry); they still mark the break (DummyLife's limp), and the vitals monitor shows it.
 	PLASTER_VISIBLE = false,

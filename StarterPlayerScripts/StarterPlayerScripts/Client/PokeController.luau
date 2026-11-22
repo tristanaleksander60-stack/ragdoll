@@ -44,6 +44,11 @@ local Controller = require(UI:WaitForChild("LihFolkUIController"))
 
 local Client = script.Parent
 local FxController = require(Client:WaitForChild("FxController"))
+-- V9-NOW crosshair-sync: FeelV2 owns the live camera recoil angles; the mouse gun path adds the
+-- same pixel offset the Crosshair module paints with, so the icon the player sees and the
+-- raycast through camera:ViewportPointToRay always agree - including through burst recoil and
+-- recovery. Touch and gamepad already come in through TouchShoot.fire with the offset applied.
+local FeelV2 = require(Client:WaitForChild("FeelV2"))
 local DummySim = require(Client:WaitForChild("DummySim"))
 local ViewMode = require(Client:WaitForChild("ViewMode"))
 local ToolCatalog = require(Client:WaitForChild("ToolCatalog"))
@@ -806,6 +811,10 @@ end
 
 -- The bar's first slab: WEAPONS, or CANCEL while a slot is picked. UI v2: where the word does not
 -- fit at the 14 px floor (an upright phone), the drawn toolbox (or a close mark) alone.
+-- (session v850, owner: "tilføj så man kan se en keybind til våben menuen ved siden af ens våben i
+-- hotbaren hvor der står WEAPONS"): on a keyboard, the catalog's keybind shows next to the word
+-- (e.g. "WEAPONS [T]"). Touch/pad get the plain word; CANCEL also has no keybind (the picker is
+-- driven by the slot keys, and a long key would push CANCEL off narrow screens).
 drawTools = function(picking: boolean)
 	toolsPicking = picking
 	local tools = toolsSlab
@@ -817,7 +826,14 @@ drawTools = function(picking: boolean)
 		tools.button.setIcon(if picking then "close" else "toolbox")
 	else
 		tools.button.setIcon(nil)
-		tools.button.setText(if picking then "CANCEL" else "WEAPONS")
+		local label = if picking then "CANCEL" else "WEAPONS"
+		if not picking and UserInputService.KeyboardEnabled and not (UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled) then
+			local key = Keybinds.labelOf("Catalog")
+			if key and key ~= "" then
+				label = "WEAPONS [" .. key .. "]"
+			end
+		end
+		tools.button.setText(label)
 	end
 end
 
@@ -1401,6 +1417,12 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 		end
 		-- (V8-0.2: a pad aims at the screen centre with a stick: it gets the same help as a finger.)
 		local padAim = (Config :: any).V8_FIRST_HIT and string.sub(UserInputService:GetLastInputType().Name, 1, 7) == "Gamepad"
+		-- V9-NOW crosshair-sync: on PC (mouse, not touch, not pad) a gun's shot pixel shifts by the
+		-- current camera recoil in viewport pixels, matching the Crosshair icon's own offset. Touch
+		-- and pad already come in with the offset baked into screenPosition (TouchShoot.aimPixel).
+		if picked and picked.gun and not ViewMode.isTouch() and not padAim then
+			screenPosition = screenPosition + FeelV2.recoilPixelOffset(camera)
+		end
 		if picked and (picked.kind == "hit" or picked.kind == "dummy") and (ViewMode.isTouch() or padAim) then
 			screenPosition = GunFeel.aim(picked, assisted(camera, screenPosition))
 		elseif picked and picked.gun then

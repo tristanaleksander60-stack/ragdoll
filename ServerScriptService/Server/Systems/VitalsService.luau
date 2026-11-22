@@ -639,6 +639,7 @@ function VitalsService.step(model: Model, v: Vitals, dt: number)
 end
 
 local REVIVE_AFTER = 10 -- s a dead body lies green before it comes round
+local LAB_REVIVE_AFTER = 6
 local WAKE_SLOW = 3 -- s it lies out cold after that, eyes dizzy, before it gets up
 VitalsService.REVIVE_AFTER = REVIVE_AFTER
 local DEAD_GREEN = Color3.fromRGB(96, 196, 84)
@@ -677,7 +678,9 @@ local function tend(model: Model, v: Vitals, dt: number, now: number)
 	if v.state == "Dead" then
 		paintDead(model, true)
 	end
-	if v.state == "Dead" and now - v.since >= REVIVE_AFTER and next(v.severed) == nil and model:GetAttribute("IsDummy") == true then
+	local labDummy = type(model:GetAttribute("LabOwner")) == "number" and type(model:GetAttribute("Slot")) == "number"
+	if v.state == "Dead" and now - v.since >= (if labDummy then LAB_REVIVE_AFTER else REVIVE_AFTER) and (next(v.severed) == nil or labDummy) and model:GetAttribute("IsDummy") == true then
+		if labDummy and next(v.severed) ~= nil then reattach(model, v) end
 		paintDead(model, false)
 		patchUp(model, v, true)
 		v.knockUntil = now + WAKE_SLOW
@@ -686,7 +689,7 @@ local function tend(model: Model, v: Vitals, dt: number, now: number)
 		publish(model, v, false)
 		return
 	end
-	if v.state == "Dead" and now - v.since >= DEAD_HOLD then
+	if v.state == "Dead" and not labDummy and now - v.since >= DEAD_HOLD then
 		-- Gone in a puff; whoever looks after it (the lab, the crowd) brings a new one.
 		local pelvis = model:FindFirstChild("LowerTorso")
 		if pelvis and pelvis:IsA("BasePart") then
@@ -697,7 +700,7 @@ local function tend(model: Model, v: Vitals, dt: number, now: number)
 	elseif v.state == "Unconscious" and next(v.severed) == nil and (now - v.since >= OUT_HOLD or model:GetAttribute("Waking") == true) and now >= v.knockUntil then
 		model:SetAttribute("Waking", nil)
 		patchUp(model, v)
-	elseif v.state == "Unconscious" and (v.severed.LeftLeg or v.severed.RightLeg) and now - v.since >= DEAD_HOLD * 2 then
+	elseif v.state == "Unconscious" and not labDummy and (v.severed.LeftLeg or v.severed.RightLeg) and now - v.since >= DEAD_HOLD * 2 then
 		vitals[model] = nil
 		model:Destroy()
 	end
@@ -710,8 +713,8 @@ VitalsService.MAX_CORPSES = MAX_CORPSES
 
 local function capCorpses()
 	local count = 0
-	for _, v in vitals do
-		if v.state == "Dead" then
+	for model, v in vitals do
+		if v.state == "Dead" and not (type(model:GetAttribute("LabOwner")) == "number" and type(model:GetAttribute("Slot")) == "number") then
 			count += 1
 		end
 	end
@@ -720,7 +723,7 @@ local function capCorpses()
 	end
 	local dead: { { model: Model, since: number } } = {}
 	for model, v in vitals do
-		if v.state == "Dead" and model.Parent then
+		if v.state == "Dead" and model.Parent and not (type(model:GetAttribute("LabOwner")) == "number" and type(model:GetAttribute("Slot")) == "number") then
 			table.insert(dead, { model = model, since = v.since })
 		end
 	end

@@ -668,7 +668,11 @@ function LabCamera.start()
 
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if processed then
-			return
+			if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+			local at = UserInputService:GetMouseLocation()
+			for _, object in GuiService:GetGuiObjectsAtPosition(at.X, at.Y) do
+				if object:IsA("GuiButton") or object:IsA("TextBox") then return end
+			end
 		end
 		local kind = input.UserInputType
 		if kind == Enum.UserInputType.Touch then
