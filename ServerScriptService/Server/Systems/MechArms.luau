@@ -87,10 +87,12 @@ function MechArms.build(anchored: boolean): Model
 	w0.Parent = band
 	-- Shoulders: upper pair out and up over the shoulders, lower pair out to the sides.
 	local SHOULDERS = {
-		{ at = Vector3.new(-0.6, 0.6, 0.4), aim = CFrame.Angles(0, 0, math.rad(-140)) * CFrame.Angles(math.rad(-25), 0, 0) },
-		{ at = Vector3.new(0.6, 0.6, 0.4), aim = CFrame.Angles(0, 0, math.rad(140)) * CFrame.Angles(math.rad(-25), 0, 0) },
-		{ at = Vector3.new(-0.6, -0.5, 0.4), aim = CFrame.Angles(0, 0, math.rad(-65)) * CFrame.Angles(math.rad(-20), 0, 0) },
-		{ at = Vector3.new(0.6, -0.5, 0.4), aim = CFrame.Angles(0, 0, math.rad(65)) * CFrame.Angles(math.rad(-20), 0, 0) },
+			-- (23 Nov 2026, owner: "not hanging in front through your body: behind you"): each arm points up or down, out
+		-- and back (+Z of the pack is behind the player).
+		{ at = Vector3.new(-0.6, 0.6, 0.4), aim = CFrame.fromRotationBetweenVectors(Vector3.new(0, -1, 0), Vector3.new(-0.55, 0.65, 0.55).Unit) },
+		{ at = Vector3.new(0.6, 0.6, 0.4), aim = CFrame.fromRotationBetweenVectors(Vector3.new(0, -1, 0), Vector3.new(0.55, 0.65, 0.55).Unit) },
+		{ at = Vector3.new(-0.6, -0.5, 0.4), aim = CFrame.fromRotationBetweenVectors(Vector3.new(0, -1, 0), Vector3.new(-0.6, -0.35, 0.7).Unit) },
+		{ at = Vector3.new(0.6, -0.5, 0.4), aim = CFrame.fromRotationBetweenVectors(Vector3.new(0, -1, 0), Vector3.new(0.6, -0.35, 0.7).Unit) },
 	}
 	for i, s in SHOULDERS do
 		local joint = part("Joint" .. i, Vector3.one * 0.55, GRAPHITE, Enum.Material.Metal, Enum.PartType.Ball)
@@ -124,7 +126,10 @@ function MechArms.build(anchored: boolean): Model
 		local em = Instance.new("Motor6D")
 		em.Name = "Elbow" .. i
 		em.Part0, em.Part1 = upper, lower
-		em.C0 = CFrame.new(0, -1.6, 0) * CFrame.Angles(math.rad(if i <= 2 then 70 else 40), 0, 0)
+		-- (The forearm curls on backwards: its way in the pack's space, turned into the upper arm's.)
+		local sideX = if i % 2 == 1 then -1 else 1
+		local lowerWay = if i <= 2 then Vector3.new(0.2 * sideX, 0.35, 1).Unit else Vector3.new(0.3 * sideX, -0.6, 0.75).Unit
+		em.C0 = CFrame.new(0, -1.6, 0) * CFrame.fromRotationBetweenVectors(Vector3.new(0, -1, 0), s.aim:VectorToObjectSpace(lowerWay))
 		em.C1 = CFrame.new(0, 1.8, 0)
 		em.Parent = upper
 		-- The claw: three steel fingers round a graphite palm at the tip.
@@ -245,13 +250,56 @@ function MechArms.buildStand(folder: Instance, origin: Vector3)
 	m.Parent = folder
 end
 
--- lihfolk-ignore: remote-unvalidated-args (kind is checked on the first line: only "Tear" passes)
+-- (23 Nov 2026, owner: "the ragdoll must not move while you hold one of its limbs"): a grab stops the body where
+-- it stands (a command Home on the spot, CommandedBy -3, so it neither walks nor roams) until the tear, a let go,
+-- or HOLD_MAX s.
+MechArms.HOLD_MAX = 10
+local held: { [Model]: { by: Player, home: any, look: any, at: number } } = {}
+local function letGo(model: Model)
+	local h = held[model]
+	held[model] = nil
+	if h and model.Parent then
+		if model:GetAttribute("CommandedBy") == -3 then
+			model:SetAttribute("CommandedBy", nil)
+		end
+		model:SetAttribute("Home", h.home)
+		model:SetAttribute("HomeLook", h.look)
+	end
+end
+
+-- lihfolk-ignore: remote-unvalidated-args (kind is checked on the first line: only Grab, Let and Tear pass)
 local function onTear(player: Player, kind: unknown, target: unknown, asked: unknown)
-	if kind ~= "Tear" or typeof(target) ~= "Instance" or not (target :: Instance):IsA("Model") then
+	if (kind ~= "Tear" and kind ~= "Grab" and kind ~= "Let") or typeof(target) ~= "Instance" or not (target :: Instance):IsA("Model") then
 		return
 	end
 	local model = target :: Model
 	if player:GetAttribute("MechArms") ~= true or model:GetAttribute("IsDummy") ~= true or not model.Parent then
+		return
+	end
+	if kind == "Let" then
+		if held[model] and held[model].by == player then
+			letGo(model)
+		end
+		return
+	end
+	if kind == "Grab" then
+		local ch = player.Character
+		local r = ch and ch:FindFirstChild("HumanoidRootPart")
+		local p = model:FindFirstChild("LowerTorso")
+		if r and r:IsA("BasePart") and p and p:IsA("BasePart") and (p.Position - r.Position).Magnitude <= MechArms.REACH
+			and Zones.mayEnter(player, Zones.plotAt(p.Position)) and not held[model] and model:GetAttribute("CommandedBy") == nil then
+			held[model] = { by = player, home = model:GetAttribute("Home"), look = model:GetAttribute("HomeLook"), at = os.clock() }
+			model:SetAttribute("CommandedBy", -3)
+			model:SetAttribute("Home", p.Position)
+			model:SetAttribute("HomeLook", r.Position)
+			model:SetAttribute("PanicUntil", nil)
+			task.delay(MechArms.HOLD_MAX, function()
+				local h = held[model]
+				if h and os.clock() - h.at >= MechArms.HOLD_MAX - 0.1 then
+					letGo(model)
+				end
+			end)
+		end
 		return
 	end
 	local now = os.clock()
@@ -300,6 +348,8 @@ local function onTear(player: Player, kind: unknown, target: unknown, asked: unk
 		pcall(function()
 			lazy("VitalsService").sever(model, piece :: string, point)
 		end)
+		letGo(model)
+		event():FireAllClients("Torn", model, piece) -- (every screen: flesh strands from the stump to the piece)
 		pcall(function()
 			lazy("FxService").hit(point, 70, "Punch")
 		end)
@@ -333,6 +383,11 @@ function MechArms.start()
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		lastTear[player] = nil
+		for m, h in held do
+			if h.by == player then
+				letGo(m)
+			end
+		end
 	end)
 end
 

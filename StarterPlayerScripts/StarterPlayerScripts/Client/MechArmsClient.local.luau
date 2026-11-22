@@ -1,18 +1,21 @@
 --!strict
--- MechArmsClient (23 Nov 2026, owner: "mechanical arms on your back that pull ragdolls apart"; then "the arms do not
--- move; you must tear the piece off yourself, not just press on it: the best mechanics of the top games").
--- Moves every MechArms set this screen sees (Server/MechArms builds them on Motor6D joints; the joints' C0 is set
--- here on every screen, from the C0 they were built with, since a character's Animator resets Transform): a slow
--- idle sway, and a pair of arms reaching out when a set tears ("Reach" from the server).
--- Tearing, your own: HOLD Q with the mouse on a ragdoll's arm, leg, head or body: a claw grabs that piece. Then
--- PULL: drag the mouse away (or walk back); the piece is dragged towards the claw (in your own lab the bodies are
--- yours to move), a red bar fills with the strain, the screen shakes a little, and when it is full the piece rips
--- off (the server checks and cuts it). Let go of Q and the claw lets go. Touch: hold TEAR to grab the nearest body's
--- next piece and keep holding to rip it. Pad: hold L1.
+-- MechArmsClient (23 Nov 2026, owner: "mechanical arms on your back that pull ragdolls apart"; then "you must tear it
+-- off yourself"; then "the body must not move while you hold a limb, the arms rest behind you, you see the claw take
+-- hold of the limb, then a few clicks tear it more and more and you see strands of flesh between the pieces; in
+-- first person too").
+-- Every screen: moves every MechArms set it sees (Server/MechArms builds them on Motor6D joints; the joints' C0 is
+-- set here from the C0 they were built with, since a character's Animator resets Transform): resting behind the
+-- back with a slow sway; a pair reaches out when a set tears ("Reach"); and when a piece comes off ("Torn") strands
+-- of flesh stretch from the stump to the falling piece, thin out and snap.
+-- Your own: Q (pad L1, touch TEAR) on a ragdoll's arm, leg, head or body: two arms shoot out and the claws take hold
+-- of it (the server holds the body still). Then CLICK (or Q again, or TEAR): each click wrenches it, blood spurts and
+-- the wound opens wider; after a few the piece rips off. Your gun rests while you hold (player attribute MechGrab).
+-- Your own arms stay drawn in first person.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
@@ -25,27 +28,32 @@ end
 
 local REACH = 16
 local REACH_TIME = 0.55
-local BEND = { math.rad(70), math.rad(70), math.rad(40), math.rad(40) }
-local STRAIN_NEED = 1 -- the bar
-local STRAIN_START = 1.2 -- studs of stretch before it counts
-local STRAIN_RATE = 0.55 -- bar per second per stud of stretch past STRAIN_START
-local TOUCH_RATE = 0.8 -- bar per second while TEAR is held on touch
+local HOLD_MAX = 10
+local CLICKS = { LeftArm = 3, RightArm = 3, LeftLeg = 3, RightLeg = 3, Head = 3, Waist = 4 } :: { [string]: number }
+local BLOOD = Color3.fromRGB(140, 14, 24)
+local FLESH = Color3.fromRGB(160, 40, 52)
 
-type Reach = { point: Vector3, t0: number, pair: number, hold: boolean? }
+-- The pieces: the part the claws hold, the first part that comes off, the part it hangs on, and the joint.
+local PIECES = {
+	LeftArm = { grip = "LeftLowerArm", first = "LeftUpperArm", body = "UpperTorso", joint = "LeftShoulder" },
+	RightArm = { grip = "RightLowerArm", first = "RightUpperArm", body = "UpperTorso", joint = "RightShoulder" },
+	LeftLeg = { grip = "LeftLowerLeg", first = "LeftUpperLeg", body = "LowerTorso", joint = "LeftHip" },
+	RightLeg = { grip = "RightLowerLeg", first = "RightUpperLeg", body = "LowerTorso", joint = "RightHip" },
+	Head = { grip = "Head", first = "Head", body = "UpperTorso", joint = "Neck" },
+	Waist = { grip = "UpperTorso", first = "UpperTorso", body = "LowerTorso", joint = "Waist" },
+} :: { [string]: { grip: string, first: string, body: string, joint: string } }
+local PIECE_OF = {
+	Head = "Head", UpperTorso = "Waist", LowerTorso = "Waist",
+	LeftUpperArm = "LeftArm", LeftLowerArm = "LeftArm", LeftHand = "LeftArm",
+	RightUpperArm = "RightArm", RightLowerArm = "RightArm", RightHand = "RightArm",
+	LeftUpperLeg = "LeftLeg", LeftLowerLeg = "LeftLeg", LeftFoot = "LeftLeg",
+	RightUpperLeg = "RightLeg", RightLowerLeg = "RightLeg", RightFoot = "RightLeg",
+} :: { [string]: string }
+
+type Reach = { point: Vector3, t0: number, pair: number }
 local reaches: { [Player]: Reach } = {}
 local turn: { [Player]: number } = {}
 local baseC0: { [Motor6D]: CFrame } = setmetatable({}, { __mode = "k" }) :: any
-
-remote.OnClientEvent:Connect(function(kind: unknown, who: unknown, point: unknown)
-	if kind == "Reach" and typeof(who) == "Instance" and (who :: Instance):IsA("Player") and typeof(point) == "Vector3" then
-		local p = who :: Player
-		if p == player then
-			return -- (your own arms already reach while you hold)
-		end
-		turn[p] = ((turn[p] or 0) % 2) + 1
-		reaches[p] = { point = point :: Vector3, t0 = os.clock(), pair = turn[p] }
-	end
-end)
 
 local function setJoint(m: Motor6D, offset: CFrame)
 	local base = baseC0[m]
@@ -55,28 +63,26 @@ local function setJoint(m: Motor6D, offset: CFrame)
 	end
 	m.C0 = (base :: CFrame) * offset
 end
+local function straight(m: Motor6D): CFrame
+	local base = baseC0[m] or m.C0
+	baseC0[m] = base
+	return base.Rotation:Inverse()
+end
 
--- The grab (your own).
-type Grab = { model: Model, part: BasePart, piece: string, depth: number, strain: number, align: AlignPosition?, at: Attachment?, touch: boolean, t0: number }
+-- Your grab.
+type Grab = { model: Model, part: BasePart, piece: string, clicks: number, t0: number, kick: number, gash: Part? }
 local grab: Grab? = nil
 
-local function clawPoint(): Vector3?
-	local g = grab
-	local camera = Workspace.CurrentCamera
-	if not (g and camera) then
-		return nil
-	end
-	if g.touch then
-		local character = player.Character
-		local root = character and character:FindFirstChild("HumanoidRootPart")
-		if root and root:IsA("BasePart") then
-			return root.Position + root.CFrame.LookVector * 3 + Vector3.new(0, 3, 0)
-		end
-		return nil
-	end
-	local m = UserInputService:GetMouseLocation()
-	local ray = camera:ViewportPointToRay(m.X, m.Y)
-	return ray.Origin + ray.Direction * g.depth
+local function severed(model: Model, piece: string): boolean
+	local raw = model:GetAttribute("Severed")
+	return type(raw) == "string" and string.find("," .. raw .. ",", "," .. piece .. ",", 1, true) ~= nil
+end
+
+local function jointPoint(model: Model, piece: string): Vector3?
+	local spec = PIECES[piece]
+	local first = spec and model:FindFirstChild(spec.first)
+	local socket = first and first:FindFirstChild(spec.joint .. "RigAttachment")
+	return if socket and socket:IsA("Attachment") then socket.WorldPosition else nil
 end
 
 RunService.RenderStepped:Connect(function()
@@ -91,8 +97,12 @@ RunService.RenderStepped:Connect(function()
 		local r = reaches[p]
 		local k = 0
 		if p == player and grab then
-			local point = clawPoint()
-			r = if point then { point = point, t0 = t, pair = 1, hold = true } else nil
+			local g = grab :: Grab
+			-- (Holding: the claws on the piece; a wrench throws them back a little after each click.)
+			local kick = math.max(0, g.kick - t)
+			local pull = (g.part.Position - pack.Position)
+			local point = g.part.Position - (if pull.Magnitude > 0.1 then pull.Unit else Vector3.zero) * kick * 3
+			r = { point = point, t0 = t, pair = 1 }
 			k = 1
 		elseif r then
 			local a = (t - r.t0) / REACH_TIME
@@ -110,8 +120,8 @@ RunService.RenderStepped:Connect(function()
 			if not (sh and sh:IsA("Motor6D") and el and el:IsA("Motor6D")) then
 				continue
 			end
-			local idle = CFrame.Angles(math.sin(t * 1.3 + i) * 0.14, 0, math.cos(t * 1.1 + i * 1.7) * 0.12)
-			local idleEl = CFrame.Angles(math.sin(t * 1.7 + i * 2) * 0.18, 0, 0)
+			local idle = CFrame.Angles(math.sin(t * 1.3 + i) * 0.1, 0, math.cos(t * 1.1 + i * 1.7) * 0.08)
+			local idleEl = CFrame.Angles(math.sin(t * 1.7 + i * 2) * 0.12, 0, 0)
 			local reachThis = r ~= nil and ((r.pair == 1 and i <= 2) or (r.pair == 2 and i > 2))
 			if reachThis and r then
 				local base = baseC0[sh] or sh.C0
@@ -119,15 +129,103 @@ RunService.RenderStepped:Connect(function()
 				local frame = pack.CFrame * base
 				local d = frame:VectorToObjectSpace(r.point - frame.Position)
 				if d.Magnitude > 0.1 then
+					-- (`d` is already in the shoulder's rest frame: turn its -Y onto it.)
 					local aim = CFrame.fromRotationBetweenVectors(Vector3.new(0, -1, 0), d.Unit)
 					setJoint(sh, idle:Lerp(aim, k))
-					setJoint(el, idleEl:Lerp(CFrame.Angles(-BEND[i], 0, 0), k))
+					setJoint(el, idleEl:Lerp(straight(el), k))
 				end
 			else
 				setJoint(sh, idle)
 				setJoint(el, idleEl)
 			end
 		end
+		-- (First person hides your character; your own arms stay drawn.)
+		if p == player then
+			for _, d in set:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.LocalTransparencyModifier = 0
+				end
+			end
+		end
+	end
+	-- The gash at the joint follows it.
+	local g = grab
+	if g and g.gash then
+		local at = jointPoint(g.model, g.piece)
+		if at then
+			(g.gash :: Part).Position = at
+		end
+	end
+end)
+
+remote.OnClientEvent:Connect(function(kind: unknown, a: unknown, b: unknown)
+	if kind == "Reach" and typeof(a) == "Instance" and (a :: Instance):IsA("Player") and typeof(b) == "Vector3" then
+		local p = a :: Player
+		if p == player then
+			return
+		end
+		turn[p] = ((turn[p] or 0) % 2) + 1
+		reaches[p] = { point = b :: Vector3, t0 = os.clock(), pair = turn[p] }
+	elseif kind == "Torn" and typeof(a) == "Instance" and (a :: Instance):IsA("Model") and type(b) == "string" then
+		-- Strands of flesh from the stump to the piece: they stretch as it falls, thin out and snap.
+		local model = a :: Model
+		local spec = PIECES[b :: string]
+		local first = spec and model:FindFirstChild(spec.first)
+		local body = spec and model:FindFirstChild(spec.body)
+		local socket = first and first:FindFirstChild(spec.joint .. "RigAttachment")
+		local bodySocket = body and body:FindFirstChild(spec.joint .. "RigAttachment")
+		if not (first and body and socket and bodySocket and socket:IsA("Attachment") and bodySocket:IsA("Attachment")) then
+			return
+		end
+		local rng = Random.new()
+		local made: { Instance } = {}
+		local beams: { Beam } = {}
+		for _ = 1, 6 do
+			local off = Vector3.new(rng:NextNumber(-0.25, 0.25), rng:NextNumber(-0.25, 0.25), rng:NextNumber(-0.25, 0.25))
+			local a0 = Instance.new("Attachment")
+			a0.Position = socket.Position + off
+			a0.Parent = first
+			local a1 = Instance.new("Attachment")
+			a1.Position = bodySocket.Position + off * 0.8
+			a1.Parent = body
+			local beam = Instance.new("Beam")
+			beam.Attachment0, beam.Attachment1 = a0, a1
+			beam.Color = ColorSequence.new(FLESH, BLOOD)
+			beam.Width0 = rng:NextNumber(0.06, 0.14)
+			beam.Width1 = rng:NextNumber(0.05, 0.12)
+			beam.FaceCamera = true
+			beam.Segments = 8
+			beam.CurveSize0 = rng:NextNumber(-0.6, 0.6)
+			beam.CurveSize1 = rng:NextNumber(-0.6, 0.6)
+			beam.LightInfluence = 1
+			beam.Transparency = NumberSequence.new(0)
+			beam.Parent = a0
+			table.insert(made, a0)
+			table.insert(made, a1)
+			table.insert(beams, beam)
+		end
+		task.spawn(function()
+			local t0 = os.clock()
+			local life = 1.8
+			while os.clock() - t0 < life do
+				local f = (os.clock() - t0) / life
+				for i, beam in beams do
+					if beam.Parent then
+						-- (One by one they snap; the rest thin out.)
+						if f > 0.25 + i * 0.1 then
+							beam.Enabled = false
+						else
+							beam.Width0 *= 0.985
+							beam.Width1 *= 0.985
+						end
+					end
+				end
+				task.wait()
+			end
+			for _, inst in made do
+				inst:Destroy()
+			end
+		end)
 	end
 end)
 
@@ -146,33 +244,18 @@ local function dummyOf(inst: Instance?): Model?
 	return nil
 end
 
-local PIECE_OF = {
-	Head = "Head", UpperTorso = "Waist", LowerTorso = "Waist",
-	LeftUpperArm = "LeftArm", LeftLowerArm = "LeftArm", LeftHand = "LeftArm",
-	RightUpperArm = "RightArm", RightLowerArm = "RightArm", RightHand = "RightArm",
-	LeftUpperLeg = "LeftLeg", LeftLowerLeg = "LeftLeg", LeftFoot = "LeftLeg",
-	RightUpperLeg = "RightLeg", RightLowerLeg = "RightLeg", RightFoot = "RightLeg",
-} :: { [string]: string }
-local GRIP_PART = { Head = "Head", Waist = "UpperTorso", LeftArm = "LeftLowerArm", RightArm = "RightLowerArm", LeftLeg = "LeftLowerLeg", RightLeg = "RightLowerLeg" } :: { [string]: string }
-
-local function severed(model: Model, piece: string): boolean
-	local raw = model:GetAttribute("Severed")
-	return type(raw) == "string" and string.find("," .. raw .. ",", "," .. piece .. ",", 1, true) ~= nil
-end
-
--- The body part of `model` nearest `point` that can still come off, and its piece.
-local function pieceAt(model: Model, point: Vector3): (BasePart?, string?)
-	local best, bestD, bestPiece = nil :: BasePart?, math.huge, nil :: string?
+local function pieceAt(model: Model, point: Vector3): string?
+	local bestD, bestPiece = math.huge, nil :: string?
 	for name, piece in PIECE_OF do
 		local part = model:FindFirstChild(name)
 		if part and part:IsA("BasePart") and not severed(model, piece) then
 			local d = (part.Position - point).Magnitude
 			if d < bestD then
-				best, bestD, bestPiece = part, d, piece
+				bestD, bestPiece = d, piece
 			end
 		end
 	end
-	return best, bestPiece
+	return bestPiece
 end
 
 local function rootPos(): Vector3?
@@ -181,46 +264,17 @@ local function rootPos(): Vector3?
 	return if root and root:IsA("BasePart") then root.Position else nil
 end
 
--- The bar by the cursor.
+-- The HUD: a hint and, while you hold, the clicks left.
 local gui = Instance.new("ScreenGui")
 gui.Name = "MechArmsHud"
 gui.ResetOnSpawn = false
 gui.DisplayOrder = 8
 gui.Enabled = false
-gui.IgnoreGuiInset = true
 local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-local bar = Instance.new("Frame")
-bar.Name = "Strain"
-bar.AnchorPoint = Vector2.new(0.5, 0)
-bar.Size = UDim2.fromOffset(120, 14)
-bar.BackgroundColor3 = Color3.fromRGB(30, 30, 34)
-bar.BackgroundTransparency = 0.2
-bar.Visible = false
-bar.Parent = gui
-local barCorner = Instance.new("UICorner")
-barCorner.CornerRadius = UDim.new(1, 0)
-barCorner.Parent = bar
-local fill = Instance.new("Frame")
-fill.Size = UDim2.fromScale(0, 1)
-fill.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
-fill.Parent = bar
-local fillCorner = Instance.new("UICorner")
-fillCorner.CornerRadius = UDim.new(1, 0)
-fillCorner.Parent = fill
-local barWord = Instance.new("TextLabel")
-barWord.BackgroundTransparency = 1
-barWord.Size = UDim2.new(1, 0, 0, 18)
-barWord.Position = UDim2.fromOffset(0, -20)
-barWord.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
-barWord.TextScaled = true
-barWord.TextColor3 = Color3.new(1, 1, 1)
-barWord.TextStrokeTransparency = 0.4
-barWord.Text = "PULL!"
-barWord.Parent = bar
 local hint = Instance.new("TextButton")
 hint.AnchorPoint = Vector2.new(1, 1)
 hint.Position = if touch then UDim2.new(1, -200, 1, -150) else UDim2.new(0.5, 130, 1, -118)
-hint.Size = if touch then UDim2.fromOffset(84, 84) else UDim2.fromOffset(190, 34)
+hint.Size = if touch then UDim2.fromOffset(84, 84) else UDim2.fromOffset(210, 34)
 hint.BackgroundColor3 = Color3.fromRGB(46, 48, 54)
 hint.BackgroundTransparency = 0.15
 hint.TextColor3 = Color3.new(1, 1, 1)
@@ -228,7 +282,6 @@ hint.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.Font
 hint.TextScaled = true
 hint.AutoButtonColor = touch
 hint.Active = touch
-hint.Text = if touch then "TEAR" else "Hold [Q] on a limb, pull"
 hint.Parent = gui
 local hintCorner = Instance.new("UICorner")
 hintCorner.CornerRadius = UDim.new(0, if touch then 42 else 10)
@@ -240,18 +293,52 @@ stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 stroke.Parent = hint
 gui.Parent = player:WaitForChild("PlayerGui")
 
-local function release()
+local function drawHint()
+	local g = grab
+	if g then
+		local left = (CLICKS[g.piece] or 3) - g.clicks
+		hint.Text = if touch then "RIP " .. left else string.format("CLICK to rip! (%d)", left)
+		stroke.Color = Color3.fromRGB(220, 40, 40)
+	else
+		hint.Text = if touch then "GRAB" else "[Q] Grab a limb"
+		stroke.Color = Color3.fromRGB(235, 120, 30)
+	end
+end
+
+local function release(tell: boolean)
 	local g = grab
 	grab = nil
-	bar.Visible = false
+	player:SetAttribute("MechGrab", nil)
 	if g then
-		if g.align then
-			g.align:Destroy()
+		if g.gash then
+			local gash = g.gash :: Part
+			TweenService:Create(gash, TweenInfo.new(1.2), { Transparency = 1 }):Play()
+			game:GetService("Debris"):AddItem(gash, 1.3)
 		end
-		if g.at then
-			g.at:Destroy()
+		if tell then
+			remote:FireServer("Let", g.model)
 		end
 	end
+	drawHint()
+end
+
+local function burst(at: Vector3, n: number)
+	local p = Instance.new("Part")
+	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.Transparency = true, false, false, false, 1
+	p.Size = Vector3.one * 0.2
+	p.Position = at
+	p.Parent = Workspace
+	local e = Instance.new("ParticleEmitter")
+	e.Color = ColorSequence.new(BLOOD)
+	e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.28), NumberSequenceKeypoint.new(1, 0.1) })
+	e.Speed = NumberRange.new(6, 14)
+	e.SpreadAngle = Vector2.new(70, 70)
+	e.Lifetime = NumberRange.new(0.4, 0.8)
+	e.Acceleration = Vector3.new(0, -45, 0)
+	e.Rate = 0
+	e.Parent = p
+	e:Emit(n)
+	game:GetService("Debris"):AddItem(p, 1.5)
 end
 
 local function startGrab(useTouch: boolean)
@@ -276,7 +363,6 @@ local function startGrab(useTouch: boolean)
 		hitPoint = if hit then hit.Position else nil
 	end
 	if not model then
-		-- (Touch, or the mouse just off a body: the nearest one in reach.)
 		local params = OverlapParams.new()
 		params.FilterType = Enum.RaycastFilterType.Exclude
 		params.FilterDescendantsInstances = { player.Character :: Instance }
@@ -300,7 +386,7 @@ local function startGrab(useTouch: boolean)
 	if not (pelvis and pelvis:IsA("BasePart")) or (pelvis.Position - here).Magnitude > REACH or body:GetAttribute("InMachine") ~= nil then
 		return
 	end
-	local _, piece = pieceAt(body, hitPoint :: Vector3)
+	local piece = pieceAt(body, hitPoint :: Vector3)
 	if useTouch then
 		for _, name in { "LeftArm", "RightArm", "LeftLeg", "RightLeg", "Head", "Waist" } do
 			if not severed(body, name) then
@@ -309,108 +395,100 @@ local function startGrab(useTouch: boolean)
 			end
 		end
 	end
-	if not piece then
+	local spec = piece and PIECES[piece]
+	local grip = spec and body:FindFirstChild(spec.grip)
+	if not (piece and grip and grip:IsA("BasePart")) then
 		return
 	end
-	local grip = body:FindFirstChild(GRIP_PART[piece :: string])
-	if not (grip and grip:IsA("BasePart")) then
-		return
-	end
-	-- The tug: pulls the piece towards the claw (works on bodies this screen moves: your own lab's).
-	local at = Instance.new("Attachment")
-	at.Name = "MechGrip"
-	at.Parent = grip
-	local align = Instance.new("AlignPosition")
-	align.Name = "MechTug"
-	align.Mode = Enum.PositionAlignmentMode.OneAttachment
-	align.Attachment0 = at
-	align.MaxForce = 2500
-	align.Responsiveness = 18
-	align.Position = grip.Position
-	align.Parent = grip
-	grab = {
-		model = body,
-		part = grip,
-		piece = piece :: string,
-		depth = (grip.Position - camera.CFrame.Position).Magnitude,
-		strain = 0,
-		align = align,
-		at = at,
-		touch = useTouch,
-		t0 = os.clock(),
-	}
-	bar.Visible = true
-	fill.Size = UDim2.fromScale(0, 1)
+	remote:FireServer("Grab", body)
+	player:SetAttribute("MechGrab", true)
+	grab = { model = body, part = grip, piece = piece, clicks = 0, t0 = os.clock(), kick = 0, gash = nil }
+	drawHint()
 end
 
-RunService.Heartbeat:Connect(function(dt)
+local function tearStep()
+	local g = grab
+	if not g then
+		return
+	end
+	g.clicks += 1
+	g.kick = os.clock() + 0.18
+	local at = jointPoint(g.model, g.piece) or g.part.Position
+	burst(at, 10 + g.clicks * 8)
+	-- The wound opens wider with each wrench.
+	local gash = g.gash
+	if not gash then
+		local made = Instance.new("Part")
+		made.Name = "MechGash"
+		made.Shape = Enum.PartType.Ball
+		made.Anchored, made.CanCollide, made.CanQuery, made.CanTouch, made.CastShadow = true, false, false, false, false
+		made.Color = FLESH
+		made.Material = Enum.Material.SmoothPlastic
+		made.Position = at
+		made.Size = Vector3.one * 0.2
+		made.Parent = Workspace
+		g.gash = made
+		gash = made
+	end
+	local need = CLICKS[g.piece] or 3
+	TweenService:Create(gash :: Part, TweenInfo.new(0.15, Enum.EasingStyle.Back), { Size = Vector3.one * (0.25 + 0.18 * g.clicks), Color = if g.clicks >= need - 1 then BLOOD else FLESH }):Play()
+	-- A little jolt of the view.
+	local camera = Workspace.CurrentCamera
+	if camera then
+		camera.CFrame *= CFrame.Angles(math.rad(0.6), math.rad((math.random() - 0.5) * 1.2), 0)
+	end
+	if g.clicks >= need then
+		remote:FireServer("Tear", g.model, g.piece)
+		release(false)
+	else
+		drawHint()
+	end
+end
+
+RunService.Heartbeat:Connect(function()
 	local g = grab
 	if not g then
 		return
 	end
 	local here = rootPos()
 	if not g.model.Parent or not g.part.Parent or severed(g.model, g.piece) or not here or not wearing()
-		or (g.part.Position - here).Magnitude > REACH + 10 then
-		release()
-		return
-	end
-	local claw = clawPoint()
-	if not claw then
-		return
-	end
-	if g.align then
-		(g.align :: AlignPosition).Position = claw
-	end
-	local stretch = (claw - g.part.Position).Magnitude
-	local rate = if g.touch then TOUCH_RATE else math.max(0, stretch - STRAIN_START) * STRAIN_RATE
-	g.strain = math.min(STRAIN_NEED, g.strain + rate * dt)
-	fill.Size = UDim2.fromScale(g.strain / STRAIN_NEED, 1)
-	local mouse = UserInputService:GetMouseLocation()
-	bar.Position = if g.touch then UDim2.new(0.5, 0, 0.6, 0) else UDim2.fromOffset(mouse.X, mouse.Y + 22)
-	barWord.Text = if g.strain > 0.75 then "RIP IT!" elseif rate > 0 then "PULL!" else "PULL AWAY!"
-	-- A little shake on the claw while it strains.
-	local camera = Workspace.CurrentCamera
-	if camera and rate > 0 then
-		camera.CFrame *= CFrame.Angles(0, 0, math.rad((math.random() - 0.5) * 0.6 * g.strain))
-	end
-	if g.strain >= STRAIN_NEED and os.clock() - g.t0 > 0.4 then
-		remote:FireServer("Tear", g.model, g.piece)
-		release()
+		or (g.part.Position - here).Magnitude > REACH + 6 or os.clock() - g.t0 > HOLD_MAX then
+		release(true)
 	end
 end)
 
 UserInputService.InputBegan:Connect(function(input, processed)
-	if processed then
+	-- (A click while holding always wrenches, even if the gun's controls saw it first.)
+	if processed and not (grab and input.UserInputType == Enum.UserInputType.MouseButton1) then
 		return
 	end
-	if input.KeyCode == Enum.KeyCode.Q or input.KeyCode == Enum.KeyCode.ButtonL1 then
-		startGrab(false)
-	end
-end)
-UserInputService.InputEnded:Connect(function(input)
-	if input.KeyCode == Enum.KeyCode.Q or input.KeyCode == Enum.KeyCode.ButtonL1 then
-		if grab and not (grab :: Grab).touch then
-			release()
+	local q = input.KeyCode == Enum.KeyCode.Q or input.KeyCode == Enum.KeyCode.ButtonL1
+	if q then
+		if grab then
+			tearStep()
+		else
+			startGrab(false)
 		end
+	elseif grab and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.KeyCode == Enum.KeyCode.ButtonR2) then
+		tearStep()
 	end
 end)
 if touch then
-	hint.MouseButton1Down:Connect(function()
-		startGrab(true)
-	end)
-	hint.MouseButton1Up:Connect(release)
-	hint.MouseLeave:Connect(function()
-		if grab and (grab :: Grab).touch then
-			release()
+	hint.Activated:Connect(function()
+		if grab then
+			tearStep()
+		else
+			startGrab(true)
 		end
 	end)
 end
 
 local function refresh()
 	gui.Enabled = wearing()
-	if not wearing() then
-		release()
+	if not wearing() and grab then
+		release(true)
 	end
+	drawHint()
 end
 player:GetAttributeChangedSignal("MechArms"):Connect(refresh)
 refresh()

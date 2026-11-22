@@ -861,18 +861,11 @@ drawTools = function(picking: boolean)
 	end
 	if toolsIconOnly then
 		-- (V10, owner: "WEAPONS must always show its key": the key beside the picture on a keyboard.)
-		local key = if not picking and UserInputService.KeyboardEnabled and not (UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled) then Keybinds.labelOf("Catalog") else ""
-		tools.button.setText(if key ~= "" then "[" .. key .. "]" else "")
+		tools.button.setText("") -- (23 Nov 2026, owner: "remove the [T] under WEAPONS, keep the small one in the corner")
 		tools.button.setIcon(if picking then "close" else "toolbox")
 	else
 		tools.button.setIcon(nil)
 		local label = if picking then "CANCEL" else "WEAPONS"
-		if not picking and UserInputService.KeyboardEnabled and not (UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled) then
-			local key = Keybinds.labelOf("Catalog")
-			if key and key ~= "" then
-				label = "WEAPONS [" .. key .. "]"
-			end
-		end
 		tools.button.setText(label)
 	end
 end
@@ -1444,7 +1437,7 @@ PokeController.assistedForTest = assisted
 
 local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 	local camera = Workspace.CurrentCamera
-	if not camera or not enabled or doctorHold or handEmpty then
+	if not camera or not enabled or doctorHold or handEmpty or player:GetAttribute("MechGrab") == true then -- (MechGrab: a click tears with the claw, the gun rests)
 		return false
 	end
 	do

@@ -203,6 +203,52 @@ local function squish(b: GuiObject)
 		s.Scale = 0.88
 	end
 end
+-- (23 Nov 2026, owner: "after picking one, 4-5 s of an empty world before it loads"): the menu stays up, saying
+-- it loads, until the lab is really there (its floor, the character, 6 dressed ragdolls; the LoadCover test),
+-- at most READY_MAX s.
+local READY_MAX = 20
+local function labReady(): boolean
+	if not player.Character or typeof(player:GetAttribute("LabOrigin")) ~= "Vector3" then
+		return false
+	end
+	local plot = player:GetAttribute("LabPlot")
+	if plot == nil then
+		return true -- (a guest on a shared server: the host's lab)
+	end
+	local labs = workspace:FindFirstChild("Labs")
+	local plotFolder = labs and labs:FindFirstChild("Lab" .. tostring(plot))
+	if not (plotFolder and plotFolder:FindFirstChild("LabFloor", true)) then
+		return false
+	end
+	local dummies = workspace:FindFirstChild("Dummies")
+	local mine, dressed = 0, 0
+	for _, m in if dummies then dummies:GetChildren() else {} do
+		if m:GetAttribute("LabOwner") == player.UserId then
+			mine += 1
+			if m:FindFirstChild("Skins") then
+				dressed += 1
+			end
+		end
+	end
+	return mine > 0 and dressed >= math.min(6, mine)
+end
+local function liftWhenReady()
+	task.spawn(function()
+		local t0 = os.clock()
+		if not labReady() then
+			note.Text = "Loading your lab..."
+		end
+		while not labReady() and os.clock() - t0 < READY_MAX do
+			task.wait(0.2)
+		end
+		local cover = player.PlayerGui:FindFirstChild("LoadCover")
+		while cover and cover.Parent and os.clock() - t0 < READY_MAX do
+			task.wait(0.2)
+		end
+		task.wait(0.3)
+		lift()
+	end)
+end
 local function pickSingle()
 	if picked or done then
 		return
@@ -210,7 +256,7 @@ local function pickSingle()
 	picked = true
 	squish(single)
 	note.Text = "Your own lab!"
-	task.delay(0.25, lift)
+	task.delay(0.25, liftWhenReady)
 end
 local function pickMulti()
 	if picked or done then
@@ -229,7 +275,7 @@ local function pickMulti()
 			end
 			local d = if type(data) == "table" then data :: any else {}
 			note.Text = if type(d.text) == "string" then d.text .. " Playing in your own lab." else "Playing in your own lab."
-			task.delay(2, lift) -- (no shared server: play here, your own lab)
+			task.delay(2, liftWhenReady) -- (no shared server: play here, your own lab)
 		end
 	end)
 	remote:FireServer("Shared")
