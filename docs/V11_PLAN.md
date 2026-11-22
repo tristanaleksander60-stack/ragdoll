@@ -5,7 +5,7 @@ what makes the start more fun, then the big single/multiplayer change. As few cr
 tests everything; Claude compile-checks every changed script in Studio before saying "ready" and never puts a
 comment inside an expression.
 
-**State:** phase A done (0.40.0). Phase B done in code (0.41.0, not compile-checked yet: Studio was in Play): HeldService portalGun (white, green glass core, barrel, prongs), ToyService green swirl portals (rim/core/eye layers, swirl + spark particles, light, opens from a point; players go through too), Toys HARD_RUNGS Portal = 4, Server PurchaseChat (MessagingService BoughtChat_v1, Remotes.BoughtChat) + Client BoughtChat (RBXSystem line). Next: compile-check, owner test, then phase C.
+**State:** phase A done (0.40.0). Phase B done in code (0.41.0, compile-checked in Studio, not play-tested): HeldService portalGun (white, green glass core, barrel, prongs), ToyService green swirl portals (rim/core/eye layers, swirl + spark particles, light, opens from a point; players go through too), Toys HARD_RUNGS Portal = 4, Server PurchaseChat (MessagingService BoughtChat_v1, Remotes.BoughtChat) + Client BoughtChat (RBXSystem line). Next: compile-check, owner test, then phase C.
 
 ## Phase A: quiet screen (small, do first)
 1. **No egg pop-up.** The EggReady window never opens by itself (ProgressUI offer, AutoEgg). Instead a red "!"
