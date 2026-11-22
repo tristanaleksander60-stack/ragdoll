@@ -291,7 +291,7 @@ end
 MapBoard.TRAVEL_SPOTS = table.freeze({
 	-- (0.37.14, owner: "the portals and the map where the 3 white blocks stand behind the spider, one portal each
 	-- side of the map board"): in a row across the back of the lab, the board in the middle (lab studs, not spread).
-	Board = Vector2.new(0, -90),
+	Board = Vector2.new(30, -24), -- (V10 phase 4, owner: "the maps up beside the event button": PathPlan.BUTTON_AT (16, -19) x LAB_SPREAD)
 	PortalSolo = Vector2.new(-15, -90),
 	PortalMulti = Vector2.new(15, -90),
 }) :: { [string]: Vector2 }
@@ -470,6 +470,16 @@ function MapBoard.start()
 			task.wait(1)
 		end
 		local mapsFolder = WorldMaps.folder()
+		-- (V10 phase 4, owner: "a map at the plaza, so you can get away from it again": the same board at the
+		-- plaza's arrival.)
+		pcall(function()
+			local arrival = WorldMaps.arrival("Plaza")
+			local playground = workspace:FindFirstChild("Playground")
+			local plaza = playground and playground:FindFirstChild("Plaza")
+			if arrival and plaza and not plaza:FindFirstChild("MapPlace") then
+				MapBoard.buildMap("Plaza", arrival - Vector3.new(0, 3.5, 0), plaza)
+			end
+		end)
 		for _, place in Places.list do
 			if place.outdoor then
 				local ok, err = pcall(function()

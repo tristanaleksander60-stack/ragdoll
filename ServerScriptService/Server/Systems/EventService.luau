@@ -46,7 +46,7 @@ export type Source = "Robux" | "Free" | "TikTok" | "Test"
 -- A paid job carries its order, so it can be completed when it runs or given back.
 export type Paid = { purchaseId: string, userId: number }
 -- hostId: the player it is for (their UserId), when there is one: it happens in their lab.
-type Job = { id: string, by: string, source: Source, paid: Paid?, retried: boolean?, hostId: number? }
+type Job = { id: string, by: string, source: Source, paid: Paid?, retried: boolean?, hostId: number?, allLabs: boolean? }
 
 local RAIN_COUNT = 12
 local RAIN_HEIGHT = 45
@@ -425,6 +425,17 @@ local function run(job: Job)
 		handlers[job.id](job, function(fn: () -> ())
 			table.insert(undo, fn)
 		end)
+		-- (V10 phase 4, owner: "the red button: the event happens in every lab on the server"): the same event,
+		-- at the same time, in every other player's lab too.
+		if job.allLabs then
+			for _, p in Players:GetPlayers() do
+				if p.UserId ~= job.hostId and Lab.plotIndex(p) then
+					pcall(handlers[job.id], { id = job.id, by = job.by, source = job.source, hostId = p.UserId }, function(fn: () -> ())
+						table.insert(undo, fn)
+					end)
+				end
+			end
+		end
 	end)
 	local paid = job.paid
 	if ok then
@@ -493,7 +504,7 @@ end
 
 -- Queues an event. `force` (a paid order) always queues: refusing after payment is not allowed.
 -- Returns its place in the queue (1 = next), or nil when refused.
-function EventService.trigger(id: string, by: string, source: Source, force: boolean?, paid: Paid?, hostId: number?): number?
+function EventService.trigger(id: string, by: string, source: Source, force: boolean?, paid: Paid?, hostId: number?, allLabs: boolean?): number?
 	if not Events.byId[id] then
 		return nil
 	end
@@ -524,7 +535,7 @@ function EventService.trigger(id: string, by: string, source: Source, force: boo
 			end
 		end
 	end
-	table.insert(queue, { id = id, by = by, source = source, paid = paid, hostId = hostId })
+	table.insert(queue, { id = id, by = by, source = source, paid = paid, hostId = hostId, allLabs = allLabs })
 	broadcast()
 	return #queue
 end

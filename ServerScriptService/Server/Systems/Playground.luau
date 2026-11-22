@@ -1256,7 +1256,7 @@ local function buildBigButton()
 			end
 		end
 		local pick = pool[math.random(1, #pool)]
-		local started = EventService.current() == nil and EventService.queued() == 0 and not EventService.miniRunning() and EventService.trigger(pick, player.DisplayName, "Free", false, nil, owner.UserId)
+		local started = EventService.current() == nil and EventService.queued() == 0 and not EventService.miniRunning() and EventService.trigger(pick, player.DisplayName, "Free", false, nil, owner.UserId, true) -- (V10 phase 4: every lab on the server)
 		if not started then
 			prompt.ActionText = "Busy, try again soon"
 			task.delay(2.5, function()
@@ -1286,6 +1286,46 @@ local function buildBigButton()
 	local _ = base
 end
 
+-- V10 phase 4 (owner: "a wooden info post: 50 likes = Area 51"): a post and a plank sign at the edge of the spawn
+-- plaza, readable from both sides. A shared update goal only: nothing is given to anyone who likes (Roblox rules).
+local function buildLikePost()
+	local wood = Color3.fromRGB(150, 104, 64)
+	local dark = Color3.fromRGB(96, 64, 38)
+	local x, z = -24 * S, 18 * S
+	local face = CFrame.lookAt((at(x, 0, z)).Position, (at(0, 0, 0)).Position)
+	for _, sx in { -2.6, 2.6 } do
+		part("LikePost", Vector3.new(0.6, 7, 0.6), face * CFrame.new(sx, 3.5, 0), dark, Enum.Material.Wood)
+	end
+	local board = part("LikeSign", Vector3.new(6.6, 3.2, 0.4), face * CFrame.new(0, 5.4, 0), wood, Enum.Material.WoodPlanks)
+	part("LikeSignTop", Vector3.new(7.2, 0.4, 0.7), face * CFrame.new(0, 7.1, 0), dark, Enum.Material.Wood)
+	for _, side in { Enum.NormalId.Front, Enum.NormalId.Back } do
+		local gui = Instance.new("SurfaceGui")
+		gui.Face = side
+		gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		gui.PixelsPerStud = 50
+		gui.LightInfluence = 1
+		local list = Instance.new("UIListLayout")
+		list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		list.VerticalAlignment = Enum.VerticalAlignment.Center
+		list.Parent = gui
+		for i, line in { { "LIKE GOAL", 0.26, Color3.fromRGB(255, 236, 200) }, { "50 LIKES = AREA 51", 0.42, Color3.fromRGB(255, 255, 255) }, { "next update", 0.22, Color3.fromRGB(230, 210, 170) } } do
+			local t = Instance.new("TextLabel")
+			t.LayoutOrder = i
+			t.BackgroundTransparency = 1
+			t.Size = UDim2.fromScale(0.92, line[2] :: number)
+			t.FontFace = Font.new("rbxasset://fonts/families/FredokaOne.json")
+			t.TextScaled = true
+			t.TextColor3 = line[3] :: Color3
+			t.TextStrokeColor3 = Color3.fromRGB(60, 36, 20)
+			t.TextStrokeTransparency = 0.3
+			t.Text = line[1] :: string
+			t.Parent = gui
+		end
+		gui.Parent = board
+	end
+end
+
+
 function Playground.build(labOrigin: Vector3, name: string?)
 	if not root then
 		local new = Instance.new("Folder")
@@ -1313,6 +1353,7 @@ function Playground.build(labOrigin: Vector3, name: string?)
 		end
 		buildStations() -- (round 5: PUT RAGDOLL HERE)
 		buildBigButton() -- (v3 Phase C)
+		pcall(buildLikePost) -- (V10 phase 4)
 		-- Round 5, phase 3: round pedestals under the things to try.
 		pedestal(48 * S, 6 * S, 7.5) -- the human cannon
 		-- Round 5, phase 4: SINGLEPLAYER and MULTIPLAYER behind the spawn.
