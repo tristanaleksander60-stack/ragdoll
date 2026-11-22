@@ -32,6 +32,7 @@ NpcCommand.TARGET_REACH = 60 -- studs from the NPC to its target
 NpcCommand.REQUEST_GAP = 0.3 -- s
 NpcCommand.FOLLOW_BACK = 5 -- studs behind you a follower walks
 NpcCommand.STRIKE_REACH = 6 -- studs: close enough to hit
+NpcCommand.GUN_REACH = 30 -- studs: a gun fires from this far (22 Nov 2026)
 NpcCommand.STRIKE_GAP_MIN = 0.7 -- s between an NPC's hits (a fast gun is slowed to this)
 NpcCommand.ATTACK_WOUND = 2.2 -- times a weapon's power an NPC's hit wounds with (about 3 hits kill; 22 Nov 2026)
 NpcCommand.TICK = 0.25
@@ -309,11 +310,16 @@ local function step(now: number)
 			end
 			local gap = tp.Position - pelvis.Position
 			local flat = Vector3.new(gap.X, 0, gap.Z)
-			if flat.Magnitude > NpcCommand.STRIKE_REACH - 1 then
-				goTo(m, tp.Position - (if flat.Magnitude > 0.01 then flat.Unit else Vector3.zAxis) * (NpcCommand.STRIKE_REACH - 2), tp.Position)
-			end
 			local toy = o.toy
-			if toy and flat.Magnitude <= NpcCommand.STRIKE_REACH and now >= o.nextHit then
+			-- (22 Nov 2026, owner: a gunman walked right up before it fired once): a gun fires from GUN_REACH,
+			-- standing still and facing the target; it only walks when the target gets further away.
+			local reach = if toy and toy.gun then NpcCommand.GUN_REACH else NpcCommand.STRIKE_REACH
+			if flat.Magnitude > reach - 1 then
+				goTo(m, tp.Position - (if flat.Magnitude > 0.01 then flat.Unit else Vector3.zAxis) * (reach - 2), tp.Position)
+			elseif toy and toy.gun then
+				goTo(m, pelvis.Position, tp.Position) -- (stops where it is and turns to it)
+			end
+			if toy and flat.Magnitude <= reach and now >= o.nextHit then
 				o.nextHit = now + math.max(toy.cooldown, NpcCommand.STRIKE_GAP_MIN)
 				local dir = if gap.Magnitude > 0.01 then gap.Unit else Vector3.zAxis
 				local chest = target:FindFirstChild("UpperTorso")
