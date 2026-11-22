@@ -57,7 +57,7 @@ local HEAL_AFTER = 12 -- s resting at home with a broken limb before it is patch
 local LOST_DISTANCE = 600 -- this far from the slot in any state: bring it home now
 local FELL_BELOW = -25 -- fell off the world
 -- Their ways, by slot (see the top). Ten entries now (session v850).
-local PERSONALITY = { "Brave", "Coward", "Friendly", "Chatty", "Chatty", "Coward", "Brave", "Friendly", "Chatty", "Brave" }
+local PERSONALITY = { "Coward", "Friendly", "Brave", "Chatty", "Coward", "Friendly", "Coward", "Chatty", "Friendly", "Coward", "Brave", "Chatty", "Coward", "Friendly", "Coward", "Chatty", "Friendly", "Coward" } -- (22 Nov 2026, owner: they must fear guns: 18 ways, only 2 Brave; slots past the list were all Brave)
 local CHAT_PAIR = { 4, 5 }
 -- (session v850, owner: "dem der står på den sorte plade står stille, så begår at gå rundt i hele ens map"):
 -- every slot picks a new wandering Home every ROAM_EVERY s (or when it reaches the last one). The

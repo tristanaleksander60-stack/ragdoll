@@ -667,11 +667,15 @@ end
 ------------------------------------------------------------------------------------------------
 
 local started = false
--- (22 Nov 2026 fix: PokeController and TouchShoot call this, but it was never written, so every
--- gun shot errored and nothing happened.) The camera recoil already turns the camera itself, so
--- the screen centre ray follows it: no extra pixel offset is needed.
-function FeelV2.recoilPixelOffset(_camera: Camera): Vector2
-	return Vector2.zero
+-- (22 Nov 2026, owner: "the crosshair must follow the recoil"): the kick in screen pixels, up and to
+-- the side. The crosshair (Crosshair, TouchShoot) is drawn there and the shot (PokeController,
+-- TouchShoot.fire) goes there, so the crosshair climbs with the recoil and eases back with it.
+function FeelV2.recoilPixelOffset(camera: Camera): Vector2
+	if kick < 0.01 and math.abs(kickYaw) < 0.01 then
+		return Vector2.zero
+	end
+	local focal = (camera.ViewportSize.Y / 2) / math.tan(math.rad(camera.FieldOfView / 2))
+	return Vector2.new(-math.tan(math.rad(kickYaw)) * focal, -math.tan(math.rad(kick)) * focal)
 end
 
 function FeelV2.start()

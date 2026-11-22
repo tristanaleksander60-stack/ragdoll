@@ -303,10 +303,13 @@ local function step(dt: number)
 		setPointerHidden(false)
 	elseif gun and mouse then
 		-- (A locked mouse, as in shift lock, aims at the middle of the screen.)
-		f.Position = UDim2.fromOffset(at.X, at.Y)
+		-- (22 Nov 2026, owner: the crosshair follows the recoil; the shot goes there too: PokeController.)
+		local kicked = at + require(script.Parent:WaitForChild("FeelV2")).recoilPixelOffset(workspace.CurrentCamera)
+		f.Position = UDim2.fromOffset(kicked.X, kicked.Y)
 		f.Visible = true
 		setPointerHidden(true)
-	elseif gun and os.clock() < touchUntil then
+	elseif gun and os.clock() < touchUntil and not (UserInputService.TouchEnabled and not UserInputService.MouseEnabled) then
+		-- (22 Nov 2026, owner: no extra crosshair in the middle on a phone; TouchShoot draws the one there.)
 		f.Position = UDim2.fromOffset(touchAt.X, touchAt.Y)
 		f.Visible = true
 		setPointerHidden(false)
