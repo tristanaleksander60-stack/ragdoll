@@ -15,14 +15,14 @@ local Mourning = {}
 
 Mourning.STEP = 0.5
 Mourning.SEE = 25 -- studs
-Mourning.PER_BODY = 2
+Mourning.PER_BODY = 1 -- (23 Nov 2026, owner: "only 1 ragdoll goes to give CPR")
 Mourning.LAB_MAX = 3
-Mourning.JOIN_CHANCE = 0.7
+Mourning.JOIN_CHANCE = 0.85
 Mourning.CPR_CHANCE = 0.5
 Mourning.SAVE_CHANCE = 0.3
-Mourning.SHOCK_TIME = 1.3
+Mourning.SHOCK_TIME = 0.9
 Mourning.WALK_MAX = 12
-Mourning.KNEEL_TIME = 8
+Mourning.KNEEL_TIME = 20 -- s of CPR at most (a try every CPR_TRY s)
 Mourning.CPR_TRY = 6
 Mourning.SIDE = 2.4 -- studs from the body's middle where it kneels
 
@@ -73,6 +73,7 @@ local function stop(m: Model, say: string?)
 	if not job then
 		return
 	end
+	m:SetAttribute("Pace", nil)
 	m:SetAttribute("Mood", nil)
 	if m:GetAttribute("CommandedBy") == -2 then
 		m:SetAttribute("CommandedBy", nil)
@@ -121,6 +122,7 @@ local function step()
 				local spot = Vector3.new(cp.Position.X, pelvis.Position.Y, cp.Position.Z) + dir * Mourning.SIDE
 				job.phase, job.since = "Walk", now
 				m:SetAttribute("Mood", nil)
+				m:SetAttribute("Pace", 2) -- (it runs to it)
 				m:SetAttribute("Home", spot)
 				m:SetAttribute("HomeLook", cp.Position)
 			end
@@ -129,6 +131,7 @@ local function step()
 			local gap = if typeof(home) == "Vector3" then flat(home - pelvis.Position).Magnitude else 0
 			if gap < 3.2 and state == "Standing" then
 				job.phase, job.since = "Act", now
+				m:SetAttribute("Pace", nil)
 				m:SetAttribute("Home", pelvis.Position)
 				m:SetAttribute("Mood", job.kind)
 			elseif now - job.since > Mourning.WALK_MAX then
@@ -136,8 +139,9 @@ local function step()
 			end
 		elseif job.phase == "Act" then
 			local held = now - job.since
-			if job.kind == "CPR" and not job.tried and held >= Mourning.CPR_TRY then
-				job.tried = true
+			local tries = math.floor(held / Mourning.CPR_TRY)
+			if job.kind == "CPR" and tries > ((job :: any).tries or 0) then
+				(job :: any).tries = tries
 				if math.random() < Mourning.SAVE_CHANCE then
 					local ok = pcall(function()
 						lazy("VitalsService").reviveNow(corpse)
@@ -146,7 +150,7 @@ local function step()
 					continue
 				end
 			end
-			if held >= Mourning.KNEEL_TIME + (if job.kind == "CPR" then 2 else 0) then
+			if held >= Mourning.KNEEL_TIME then
 				stop(m, "Gone")
 			end
 		end
@@ -200,7 +204,7 @@ local function step()
 						corpse = body,
 						phase = "Shock",
 						since = now,
-						kind = if taken == 0 and math.random() < Mourning.CPR_CHANCE then "CPR" else "Mourn",
+						kind = "CPR", -- (23 Nov 2026, owner: "it comes running in shock and helps the dead one")
 						homeWas = m:GetAttribute("Home"),
 						lookWas = m:GetAttribute("HomeLook"),
 						owner = owner,

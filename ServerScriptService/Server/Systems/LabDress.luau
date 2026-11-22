@@ -161,6 +161,13 @@ function LabDress.dress(into: Instance, origin: Vector3)
 			x += LabDress.FENCE_STEP
 		end
 	end
+	-- (23 Nov 2026, owner: "the mechanical arms standing at the spawn, E to equip"): MechArms' stand.
+	local okM, errM = pcall(function()
+		require(script.Parent:WaitForChild("MechArms")).buildStand(folder, origin)
+	end)
+	if not okM then
+		warn("[LabDress] mech arms: " .. tostring(errM))
+	end
 	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).THROW_TOWER == true then -- (0.37.10: off unless switched on; the owner removed the castle)
 		LabDress.throwTower(folder, origin)
 	end

@@ -467,7 +467,7 @@ function VitalsService.sever(model: Model, limb: string, position: Vector3?): bo
 	-- A leg off: it cannot stand. An arm off (round 3, M3 rule from the owner: an arm never puts a
 	-- body down on its own): it stays up, bleeding hard, until the blood decides.
 	-- (Cut in half: no one lives through that.)
-	if limb == "Waist" then
+	if limb == "Waist" or limb == "Head" then
 		v.lethalAt = os.clock()
 	end
 	if v.state == "Alive" and string.find(limb, "Leg") then
@@ -716,6 +716,7 @@ end
 
 local REVIVE_AFTER = 10 -- s a dead body lies green before it comes round
 local LAB_REVIVE_AFTER = 8 -- (22 Nov 2026: 4 s rotting in, a little while green, then the rot fades: ROT_IN, ROT_OUT)
+local LAB_REVIVE_MIN, LAB_REVIVE_MAX = 20, 30
 local WAKE_SLOW = 3 -- s it lies out cold after that, eyes dizzy, before it gets up
 VitalsService.REVIVE_AFTER = REVIVE_AFTER
 local DEAD_GREEN = Color3.fromRGB(96, 196, 84)
@@ -782,7 +783,13 @@ local function tend(model: Model, v: Vitals, dt: number, now: number)
 			end
 		end
 	end
-	if v.state == "Dead" and now - v.since >= (if labDummy then LAB_REVIVE_AFTER else REVIVE_AFTER) and (next(v.severed) == nil or labDummy) and model:GetAttribute("IsDummy") == true then
+	-- (23 Nov 2026, owner: "20 to 30 seconds from green to normal again"): a lab body lies dead a random 20-30 s.
+	local vr: any = v
+	if v.state == "Dead" and vr.reviveFor ~= v.since then
+		vr.reviveFor = v.since
+		vr.reviveIn = LAB_REVIVE_MIN + math.random() * (LAB_REVIVE_MAX - LAB_REVIVE_MIN)
+	end
+	if v.state == "Dead" and now - v.since >= (if labDummy then (vr.reviveIn or LAB_REVIVE_AFTER) else REVIVE_AFTER) and (next(v.severed) == nil or labDummy) and model:GetAttribute("IsDummy") == true then
 		if labDummy and next(v.severed) ~= nil then reattach(model, v) end
 		-- (A zombie killed: back to normal. One chosen to rise: it stays green and goes for its lab's player.)
 		local rise = model:GetAttribute("ZombieNext") == true
