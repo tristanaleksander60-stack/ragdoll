@@ -46,11 +46,16 @@ function DoubleEventChip.start()
 	local chip = Instance.new("TextLabel")
 	chip.Name = "Chip"
 	chip.AnchorPoint = Vector2.new(1, 0.5)
-	chip.Position = UDim2.new(0.5, -128, 0.5, 12)
+	chip.Position = UDim2.new(0.5, -134, 0.5, 12)
 	-- (22 Nov 2026, owner: "2X just an icon like the gift, symmetric, a bit lower"): a 44 px round badge.
 	chip.Size = UDim2.fromOffset(44, 44)
-	chip.BackgroundColor3 = Color3.fromRGB(255, 200, 60)
-	chip.TextColor3 = Color3.fromRGB(40, 28, 6)
+	-- (22 Nov 2026: the gift's look: a dark glass circle, the 2X in gold, the same 1.2 scale.)
+	chip.BackgroundColor3 = Color3.fromRGB(22, 24, 30)
+	chip.BackgroundTransparency = 0.1
+	chip.TextColor3 = Color3.fromRGB(255, 205, 64)
+	local chipScale = Instance.new("UIScale")
+	chipScale.Scale = 1.2
+	chipScale.Parent = chip
 	chip.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Heavy)
 	chip.TextSize = 20
 	chip.Text = ""
@@ -62,8 +67,8 @@ function DoubleEventChip.start()
 	round.CornerRadius = UDim.new(0, 22)
 	round.Parent = chip
 	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(120, 80, 10)
-	stroke.Thickness = 1.5
+	stroke.Color = Color3.fromRGB(255, 205, 64)
+	stroke.Thickness = 0
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = chip
 	chip.Parent = gui

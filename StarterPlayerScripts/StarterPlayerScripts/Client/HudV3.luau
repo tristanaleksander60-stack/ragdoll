@@ -285,7 +285,10 @@ local function buildTop(onRewards: () -> ())
 	tapWindows[gift] = "Rewards"
 	-- (22 Nov 2026, owner: the gift next to the Next pill, on the same line): just right of the centred pill.
 	gift.AnchorPoint = Vector2.new(0, 0.5)
-	gift.Position = UDim2.new(0.5, 128, 0.5, 12) -- (a little under the top bar line, with the pill and 2X)
+	gift.Position = UDim2.new(0.5, 134, 0.5, 12) -- (a little under the top bar line, with the pill and 2X)
+	local giftScale = Instance.new("UIScale") -- (22 Nov 2026: the same size as the pill and the 2X icon)
+	giftScale.Scale = 1.2
+	giftScale.Parent = gift
 	gift.Parent = g
 	local pill = Instance.new("Frame")
 	pill.Name = "Next"
