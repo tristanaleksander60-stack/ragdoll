@@ -69,7 +69,30 @@ function FirstPerson.toggle()
 	FirstPerson.set(not on)
 end
 
+-- (22 Nov 2026, owner: "notices you have to close yourself vanish by themselves after a few seconds in
+-- first person, so you never have to leave it"): the mouse is locked in first person, so a window
+-- there cannot be clicked shut. One that stays open AUTO_CLOSE s closes itself.
+FirstPerson.AUTO_CLOSE = 4
+local function autoClose()
+	local Controller = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIController")) :: any
+	local openSince: number? = nil
+	while true do
+		task.wait(0.5)
+		local current = if on then Controller.getCurrent() else nil
+		if current then
+			openSince = openSince or os.clock()
+			if os.clock() - (openSince :: number) >= FirstPerson.AUTO_CLOSE then
+				Controller.closeAll()
+				openSince = nil
+			end
+		else
+			openSince = nil
+		end
+	end
+end
+
 function FirstPerson.start()
+	task.spawn(autoClose)
 	ViewMode.onChanged(function()
 		if ViewMode.isLab() and on then
 			FirstPerson.set(false)

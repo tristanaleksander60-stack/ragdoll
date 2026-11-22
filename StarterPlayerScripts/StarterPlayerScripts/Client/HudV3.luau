@@ -220,9 +220,10 @@ local function drawChips()
 	local order = 0
 	-- (UI audit 21 Nov 2026: Lab view joins the keys; its top-right button only shows as WALK, the way
 	-- back, so the PC top right is the gift and the next weapon.)
+	-- (22 Nov 2026, owner: the eye chip is first person, V; lab view keeps its C key without a chip.)
 	-- Three keys only: 1st person and revive all are in the LAB window and KEYS; five chips ran
 	-- into the help line on a small window.
-	for _, pair in { { "Ragdoll", "Ragdoll", "hud_ragdoll" }, { "View", "Lab view", "eye" }, { "SlowMo", if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "Time" else "Slow-mo", "hud_slowmo" } } do
+	for _, pair in { { "Ragdoll", "Ragdoll", "hud_ragdoll" }, { "FirstPerson", "1st person", "eye" }, { "SlowMo", if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "Time" else "Slow-mo", "hud_slowmo" } } do
 		local key = keyOf(pair[1])
 		if key then
 			order += 1
