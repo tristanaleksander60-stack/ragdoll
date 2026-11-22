@@ -74,15 +74,10 @@ title.Parent = back
 
 local row = Instance.new("Frame")
 row.BackgroundTransparency = 1
-row.AnchorPoint = Vector2.new(0.5, 1)
-row.Position = UDim2.new(0.5, 0, 1, -28)
+row.AnchorPoint = Vector2.new(0.5, 0.5)
+row.Position = UDim2.new(0.5, 0, 0.56, 0) -- (23 Nov 2026, owner: "in the middle of the screen")
 row.Size = UDim2.new(0.9, 0, 0, 96)
 row.Parent = back
-local list = Instance.new("UIListLayout")
-list.FillDirection = Enum.FillDirection.Horizontal
-list.HorizontalAlignment = Enum.HorizontalAlignment.Center
-list.Padding = UDim.new(0, 18)
-list.Parent = row
 local limit = Instance.new("UISizeConstraint")
 limit.MaxSize = Vector2.new(760, 96)
 limit.Parent = row
@@ -129,8 +124,8 @@ local single = button("SINGLEPLAYER", "Your own lab", Color3.fromRGB(46, 160, 80
 local multi = button("MULTIPLAYER", "One lab with everyone", Color3.fromRGB(50, 120, 210), 2)
 local note = Instance.new("TextLabel")
 note.BackgroundTransparency = 1
-note.AnchorPoint = Vector2.new(0.5, 1)
-note.Position = UDim2.new(0.5, 0, 1, -130)
+note.AnchorPoint = Vector2.new(0.5, 0)
+note.Position = UDim2.new(0.5, 0, 0.56, 70)
 note.Size = UDim2.new(0.6, 0, 0, 26)
 note.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
 note.TextScaled = true
@@ -143,7 +138,31 @@ pcall(function()
 	GuiService.SelectedObject = single
 end)
 
-local live = RunService.RenderStepped:Connect(function() end) -- (no scene to move any more)
+-- (23 Nov 2026, owner: "make them bounce up and down"): each button hops on its own beat; it grows a little
+-- under the mouse.
+local t0 = os.clock()
+local hover: { [GuiObject]: boolean } = {}
+for _, b in { single, multi } do
+	b.MouseEnter:Connect(function()
+		hover[b] = true
+	end)
+	b.MouseLeave:Connect(function()
+		hover[b] = nil
+	end)
+	local s = Instance.new("UIScale")
+	s.Parent = b
+end
+local live = RunService.RenderStepped:Connect(function()
+	local t = os.clock() - t0
+	for i, b in { single, multi } do
+		local hop = math.abs(math.sin(t * 3 + i * 1.2)) * 14
+		b.Position = UDim2.new(if i == 1 then 0 else 0.5, if i == 1 then 0 else 9, 0, -hop) -- (SINGLEPLAYER left, the default)
+		local s = b:FindFirstChildOfClass("UIScale")
+		if s then
+			s.Scale += ((if hover[b] then 1.08 else 1) - s.Scale) * 0.2
+		end
+	end
+end)
 
 local done = false
 local function lift()
@@ -174,28 +193,53 @@ local function lift()
 	end)
 end
 
-single.Activated:Connect(lift)
-multi.Activated:Connect(function()
-	if done then
+-- (23 Nov 2026, owner: "nothing happens when you pick one"): a pick always shows: the button squishes and a line
+-- says what happens; SINGLEPLAYER lifts the menu, MULTIPLAYER says it is going (or, in Studio, why it cannot, for
+-- 2 s) and then lifts. Activated and a plain press both count (a press the camera or a pad ate still picks).
+local picked = false
+local function squish(b: GuiObject)
+	local s = b:FindFirstChildOfClass("UIScale")
+	if s then
+		s.Scale = 0.88
+	end
+end
+local function pickSingle()
+	if picked or done then
 		return
 	end
+	picked = true
+	squish(single)
+	note.Text = "Your own lab!"
+	task.delay(0.25, lift)
+end
+local function pickMulti()
+	if picked or done then
+		return
+	end
+	picked = true
+	squish(multi)
 	note.Text = "Finding a lab with other players..."
 	local Net = require(Shared:WaitForChild("Net")) :: any
 	local remote = Net.event(Net.Names.Portal)
 	local conn: RBXScriptConnection? = nil
-	conn = remote.OnClientEvent:Connect(function(kind: unknown)
+	conn = remote.OnClientEvent:Connect(function(kind: unknown, data: unknown)
 		if kind == "Refused" then
 			if conn then
 				conn:Disconnect()
 			end
-			note.Text = ""
-			lift() -- (no shared server: play here, your own lab)
+			local d = if type(data) == "table" then data :: any else {}
+			note.Text = if type(d.text) == "string" then d.text .. " Playing in your own lab." else "Playing in your own lab."
+			task.delay(2, lift) -- (no shared server: play here, your own lab)
 		end
 	end)
 	remote:FireServer("Shared")
-end)
+end
+single.Activated:Connect(pickSingle)
+multi.Activated:Connect(pickMulti)
+single.MouseButton1Down:Connect(pickSingle)
+multi.MouseButton1Down:Connect(pickMulti)
 UserInputService.InputBegan:Connect(function(input)
 	if not done and (input.KeyCode == Enum.KeyCode.Return or input.KeyCode == Enum.KeyCode.KeypadEnter) then
-		lift()
+		pickSingle()
 	end
 end)
