@@ -220,7 +220,8 @@ function MechArms.buildStand(folder: Instance, origin: Vector3)
 	base.Parent = m
 	local ring = part("Ring", Vector3.new(0.3, 5.3, 5.3), ORANGE, Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
 	ring.Anchored = true
-	ring.CFrame = CFrame.new(ground + Vector3.new(0, 0.85, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	-- (Its top above the plinth's: no flicker.)
+	ring.CFrame = CFrame.new(ground + Vector3.new(0, 0.93, 0)) * CFrame.Angles(0, 0, math.rad(90))
 	ring.Parent = m
 	local post = part("Post", Vector3.new(0.7, 3.6, 0.7), STEEL)
 	post.Anchored, post.CanCollide = true, true
@@ -237,6 +238,7 @@ function MechArms.buildStand(folder: Instance, origin: Vector3)
 	prompt.ObjectText = "Mech Arms"
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.MaxActivationDistance = 12
+	prompt.ClickablePrompt = false -- (23 Nov 2026: a clickable prompt took the mouse, the view could not turn near it)
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = post
 	prompt.Triggered:Connect(MechArms.toggle)
@@ -244,7 +246,7 @@ function MechArms.buildStand(folder: Instance, origin: Vector3)
 end
 
 -- lihfolk-ignore: remote-unvalidated-args (kind is checked on the first line: only "Tear" passes)
-local function onTear(player: Player, kind: unknown, target: unknown)
+local function onTear(player: Player, kind: unknown, target: unknown, asked: unknown)
 	if kind ~= "Tear" or typeof(target) ~= "Instance" or not (target :: Instance):IsA("Model") then
 		return
 	end
@@ -272,7 +274,11 @@ local function onTear(player: Player, kind: unknown, target: unknown)
 	local raw = model:GetAttribute("Severed")
 	local gone = if type(raw) == "string" then raw else ""
 	local piece: string? = nil
-	for _, name in MechArms.ORDER do
+	-- (23 Nov 2026: the piece the player pulled off with the claw, when it is one that can still come off.)
+	if type(asked) == "string" and table.find(MechArms.ORDER, asked) and not string.find("," .. gone .. ",", "," .. asked .. ",", 1, true) then
+		piece = asked
+	end
+	for _, name in (if piece then {} else MechArms.ORDER) do
 		if not string.find("," .. gone .. ",", "," .. name .. ",", 1, true) then
 			piece = name
 			break
