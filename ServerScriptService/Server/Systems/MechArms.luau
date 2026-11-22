@@ -22,6 +22,7 @@ MechArms.GAP = 0.7 -- s between two tears
 MechArms.ORDER = { "LeftArm", "RightArm", "LeftLeg", "RightLeg", "Head", "Waist" }
 MechArms.STAND_ANGLE = -35 -- degrees from the spawn's facing (left)
 MechArms.STAND_DISTANCE = 12
+MechArms.STAND_SIDE = 8 -- studs beside the LIKE GOAL post
 
 local GRAPHITE = Color3.fromRGB(46, 48, 54)
 local STEEL = Color3.fromRGB(168, 172, 180)
@@ -39,7 +40,7 @@ local function event(): RemoteEvent
 	if r and r.Parent then
 		return r
 	end
-	local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+	local remotes = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage:WaitForChild("Remotes", 10) -- (23 Nov 2026: it was made before the Remotes folder, so the client never found it)
 	local made = (remotes and remotes:FindFirstChild("MechArms")) :: RemoteEvent?
 	if not made then
 		local e = Instance.new("RemoteEvent")
@@ -203,10 +204,14 @@ end
 
 -- The stand by a lab's spawn: a round plinth, a short post with the display set on it, and the prompt.
 function MechArms.buildStand(folder: Instance, origin: Vector3)
-	local Lab = lazy("Lab")
-	local facing = Lab.SPAWN_FACING :: Vector3
-	local dir = CFrame.Angles(0, math.rad(-MechArms.STAND_ANGLE), 0):VectorToWorldSpace(facing)
-	local ground = floorAt(origin + dir * MechArms.STAND_DISTANCE)
+	-- (23 Nov 2026, owner: "move the stand out to the side, next to the like goal"): beside Playground's LIKE GOAL
+	-- post (at -24, 18 times the lab spread), on the same line, facing the spawn the same way.
+	local S = (require(Shared:WaitForChild("Config")) :: any).LAB_SPREAD or 1
+	local post0 = origin + Vector3.new(-24 * S, 0, 18 * S)
+	local toMid = Vector3.new(origin.X - post0.X, 0, origin.Z - post0.Z)
+	local side = if toMid.Magnitude > 0.1 then toMid.Unit:Cross(Vector3.yAxis) else Vector3.xAxis
+	local ground = floorAt(post0 + side * MechArms.STAND_SIDE)
+	local dir = if toMid.Magnitude > 0.1 then -toMid.Unit else Vector3.zAxis
 	local m = Instance.new("Model")
 	m.Name = "MechArmsStand"
 	local base = part("Plinth", Vector3.new(1, 5, 5), GRAPHITE, Enum.Material.Metal, Enum.PartType.Cylinder)

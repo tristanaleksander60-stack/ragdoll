@@ -7,7 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextChatService = game:GetService("TextChatService")
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
-local remote = remotes:WaitForChild("BoughtChat", 60)
+local remote = remotes:FindFirstChild("BoughtChat") or ReplicatedStorage:FindFirstChild("BoughtChat") or remotes:WaitForChild("BoughtChat", 60)
 if not (remote and remote:IsA("RemoteEvent")) then
 	return
 end

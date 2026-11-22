@@ -26,7 +26,7 @@ local function event(): RemoteEvent
 	if r and r.Parent then
 		return r
 	end
-	local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+	local remotes = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage:WaitForChild("Remotes", 10) -- (23 Nov 2026: it was made before the Remotes folder, so the client never found it)
 	local made = (remotes and remotes:FindFirstChild("BoughtChat")) :: RemoteEvent?
 	if not made then
 		local e = Instance.new("RemoteEvent")

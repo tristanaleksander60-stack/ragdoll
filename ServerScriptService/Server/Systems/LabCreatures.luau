@@ -923,7 +923,7 @@ local function wasted(): RemoteEvent
 	if r and r.Parent then
 		return r
 	end
-	local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+	local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes") or game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 10)
 	local made = (remotes and remotes:FindFirstChild("Wasted")) :: RemoteEvent?
 	if not made then
 		made = Instance.new("RemoteEvent")

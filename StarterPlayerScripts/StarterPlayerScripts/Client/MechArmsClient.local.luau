@@ -12,7 +12,7 @@ local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
-local remote = remotes:WaitForChild("MechArms", 60)
+local remote = remotes:FindFirstChild("MechArms") or ReplicatedStorage:FindFirstChild("MechArms") or remotes:WaitForChild("MechArms", 60)
 if not (remote and remote:IsA("RemoteEvent")) then
 	return
 end

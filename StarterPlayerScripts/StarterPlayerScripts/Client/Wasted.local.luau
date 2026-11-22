@@ -11,7 +11,7 @@ local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
-local remote = remotes:WaitForChild("Wasted", 60)
+local remote = remotes:FindFirstChild("Wasted") or game:GetService("ReplicatedStorage"):FindFirstChild("Wasted") or remotes:WaitForChild("Wasted", 60)
 if not (remote and remote:IsA("RemoteEvent")) then
 	return
 end
