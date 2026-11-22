@@ -243,7 +243,7 @@ end
 
 local function setPrompt(p: ProximityPrompt, allowed: boolean)
 	-- (Local only: hides it on this screen. The server's "Talkable" says whether it can be used.)
-	p.Enabled = allowed and p:GetAttribute("Talkable") ~= false
+	p.Enabled = false -- (22 Nov 2026, owner: no E prompt at the ragdolls; the Talk wand opens the card)
 	-- (Not clickable with a mouse; on touch a short hold, so a quick tap meant as a hit never talks.)
 	local clickable, hold = TalkRules.promptStyle(ViewMode.isTouch())
 	p.ClickablePrompt = clickable
