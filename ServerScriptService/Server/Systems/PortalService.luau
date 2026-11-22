@@ -250,6 +250,9 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 		go(player, "Own", nil)
 	elseif kind == "Shared" then
 		goShared(player)
+	elseif kind == "Friend" and type(arg) == "string" and #arg <= 64 and string.match(arg, "^[%x%-]+$") then
+		-- (23 Nov 2026, owner: "join your friends"): to a friend's server (its job id, from Roblox's friends list).
+		go(player, "Multi", { id = arg, name = "", region = "", players = 0, max = 0, t = 0 })
 	elseif kind == "Solo" then
 		if Workspace:GetAttribute("SharedLab") == true then
 			go(player, "Back", nil) -- (V11 C10: back from the shared lab to an ordinary server: your own lab)

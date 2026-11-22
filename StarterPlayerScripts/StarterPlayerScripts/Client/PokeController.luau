@@ -704,7 +704,7 @@ local function layout()
 	for _, id in list do
 		ensureSlab(id)
 	end
-	local withTools = allowed == nil
+	local withTools = true -- (23 Nov 2026, owner: "WEAPONS loads in first on the hotbar"): never held back in the first minute
 	local touch = ViewMode.isTouch()
 	local plan = PokeController.plan(gui.AbsoluteSize, touch, ViewMode.isLab(), withTools, #list, NextUnlocks.count())
 	chipFits = plan.chip
@@ -2267,7 +2267,7 @@ function PokeController.start()
 			return
 		end
 		if Keybinds.is("Catalog", input.KeyCode) then
-			if allowed == nil and enabled then
+			if enabled then
 				openCatalog()
 			end
 			return

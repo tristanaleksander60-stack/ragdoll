@@ -232,7 +232,7 @@ local function labReady(): boolean
 	end
 	return mine > 0 and dressed >= math.min(6, mine)
 end
-local function liftWhenReady()
+local function liftWhenReady(after: (() -> ())?)
 	task.spawn(function()
 		local t0 = os.clock()
 		if not labReady() then
@@ -245,8 +245,27 @@ local function liftWhenReady()
 		while cover and cover.Parent and os.clock() - t0 < READY_MAX do
 			task.wait(0.2)
 		end
-		task.wait(0.3)
+		-- (23 Nov 2026, owner: "still a few seconds where it has not loaded in"): the whole game loaded, the world
+		-- streamed in round the lab, and a beat for the HUD before the menu lifts.
+		while not game:IsLoaded() and os.clock() - t0 < READY_MAX do
+			task.wait(0.2)
+		end
+		local origin = player:GetAttribute("LabOrigin")
+		if typeof(origin) == "Vector3" then
+			pcall(function()
+				player:RequestStreamAroundAsync(origin, 6)
+			end)
+		end
+		local hud = player.PlayerGui:FindFirstChild("ToyBar")
+		while not hud and os.clock() - t0 < READY_MAX do
+			task.wait(0.2)
+			hud = player.PlayerGui:FindFirstChild("ToyBar")
+		end
+		task.wait(1.2)
 		lift()
+		if after then
+			pcall(after)
+		end
 	end)
 end
 local function pickSingle()
@@ -256,7 +275,9 @@ local function pickSingle()
 	picked = true
 	squish(single)
 	note.Text = "Your own lab!"
-	task.delay(0.25, liftWhenReady)
+	task.delay(0.25, function()
+		liftWhenReady(nil)
+	end)
 end
 local function pickMulti()
 	if picked or done then
@@ -264,21 +285,12 @@ local function pickMulti()
 	end
 	picked = true
 	squish(multi)
-	note.Text = "Finding a lab with other players..."
-	local Net = require(Shared:WaitForChild("Net")) :: any
-	local remote = Net.event(Net.Names.Portal)
-	local conn: RBXScriptConnection? = nil
-	conn = remote.OnClientEvent:Connect(function(kind: unknown, data: unknown)
-		if kind == "Refused" then
-			if conn then
-				conn:Disconnect()
-			end
-			local d = if type(data) == "table" then data :: any else {}
-			note.Text = if type(d.text) == "string" then d.text .. " Playing in your own lab." else "Playing in your own lab."
-			task.delay(2, liftWhenReady) -- (no shared server: play here, your own lab)
-		end
+	-- (23 Nov 2026, owner: "multiplayer shows the servers, joining your friends, making your own"): the menu lifts
+	-- once the world is in and the multiplayer hub opens (PortalUI.openHub).
+	note.Text = "Opening multiplayer..."
+	liftWhenReady(function()
+		(require(script.Parent:WaitForChild("PortalUI")) :: any).openHub()
 	end)
-	remote:FireServer("Shared")
 end
 single.Activated:Connect(pickSingle)
 multi.Activated:Connect(pickMulti)

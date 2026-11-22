@@ -28,6 +28,7 @@ local player = Players.LocalPlayer
 local remote: RemoteEvent
 local rowsFrame: Frame? = nil
 local hereLabel: TextLabel? = nil
+local friendsFrame: Frame? = nil
 
 local function blackScreen(text: string): ScreenGui
 	local g = Instance.new("ScreenGui")
@@ -99,9 +100,68 @@ local function drawRows(rows: { any })
 	end
 end
 
+-- Friends online in this game (Roblox's own list), each with JOIN (their server, through PortalService "Friend").
+local function drawFriends()
+	local frame = friendsFrame
+	if not frame then
+		return
+	end
+	for _, c in frame:GetChildren() do
+		if c:IsA("GuiObject") then
+			c:Destroy()
+		end
+	end
+	local ok, list = pcall(function()
+		return player:GetFriendsOnline(50)
+	end)
+	local shown = 0
+	if ok and type(list) == "table" then
+		for _, f in list :: any do
+			if f.PlaceId == game.PlaceId and type(f.GameId) == "string" and f.GameId ~= game.JobId then
+				shown += 1
+				local line = C.Row({ height = 48, gap = SP.sm, layoutOrder = shown, parent = frame })
+				C.Text("body", tostring(f.DisplayName or f.UserName), { size = UDim2.new(1, -120, 1, 0), layoutOrder = 1, parent = line })
+				local id = f.GameId
+				C.Button({ text = "JOIN", role = "go", size = UDim2.fromOffset(100, 44), layoutOrder = 2, parent = line, onActivated = function()
+					remote:FireServer("Friend", id)
+				end })
+			end
+		end
+	end
+	if shown == 0 then
+		C.Text("body", "No friends playing right now. Invite them from the Roblox menu!", { wrap = true, autoY = true, layoutOrder = 1, parent = frame })
+	end
+end
+
+-- The multiplayer hub, opened by the start menu and the MULTIPLAYER portal.
+function PortalUI.openHub()
+	Controller.open("Servers")
+	remote:FireServer("List")
+	task.spawn(drawFriends)
+end
+
 local function build()
 	local multi = C.Window({ name = "Servers", title = "Multiplayer", theme = "rebirth", icon = "friends", size = PortalUI.WINDOW })
-	hereLabel = C.Text("caption", "", { wrap = true, autoY = true, layoutOrder = 0, parent = multi.body })
+	hereLabel = C.Text("caption", "", { wrap = true, autoY = true, layoutOrder = -10, parent = multi.body })
+	-- (23 Nov 2026, owner: "multiplayer: see the servers, join your friends, make your own server"): the hub.
+	-- ONE LAB: everyone in one shared lab (PortalService "Shared"). FRIENDS: friends online in this game, JOIN.
+	C.SectionHeader("ONE LAB TOGETHER", "rebirth", -9, multi.body)
+	C.Button({ text = "PLAY TOGETHER IN ONE LAB", role = "go", size = UDim2.new(1, 0, 0, Theme.Size.buttonH), layoutOrder = -8, parent = multi.body, onActivated = function()
+		remote:FireServer("Shared")
+	end })
+	C.SectionHeader("FRIENDS", "rebirth", -7, multi.body)
+	local friendsHolder = Instance.new("Frame")
+	friendsHolder.Name = "Friends"
+	friendsHolder.BackgroundTransparency = 1
+	friendsHolder.Size = UDim2.fromScale(1, 0)
+	friendsHolder.AutomaticSize = Enum.AutomaticSize.Y
+	friendsHolder.LayoutOrder = -6
+	local fl = Instance.new("UIListLayout")
+	fl.Padding = UDim.new(0, SP.xs)
+	fl.SortOrder = Enum.SortOrder.LayoutOrder
+	fl.Parent = friendsHolder
+	friendsHolder.Parent = multi.body
+	friendsFrame = friendsHolder
 	C.SectionHeader("EVERYONE", "rebirth", 1, multi.body)
 	local play = C.Button({ text = "PLAY NOW", role = "go", size = UDim2.new(1, 0, 0, Theme.Size.buttonH), layoutOrder = 2, parent = multi.body, onActivated = function()
 		remote:FireServer("PlayNow")
@@ -157,11 +217,7 @@ function PortalUI.start()
 			elseif d.portal == "PortalSolo" then
 				Controller.open("Solo")
 			else
-				if game:GetService("Workspace"):GetAttribute("SharedLab") == true then
-					Controller.open("Solo") -- (V11 C10: on the shared server MULTIPLAYER is where you are)
-				else
-					Controller.open("Shared")
-				end
+				PortalUI.openHub() -- (23 Nov 2026: the hub: one lab, friends, every server, your own)
 			end
 		elseif kind == "List" then
 			local here = d.here
