@@ -280,8 +280,20 @@ local function buildTop(onRewards: () -> ())
 	clock.Visible = false
 	corner(clock, 8)
 	clock.Parent = gift
-	gift.Activated:Connect(onRewards)
-	tapActions[gift] = onRewards
+	-- (V11 A1, owner: "a ! on the gift to claim eggs"): with an egg waiting the gift wears a red "!" and a tap opens
+	-- the egg; otherwise it opens Rewards. Its counter (IconCount "Rewards") is what waits there.
+	local function onGift()
+		local IconCount = require(script.Parent:WaitForChild("IconCount")) :: any
+		if IconCount.has("Rewards") then
+			(require(script.Parent:WaitForChild("ProgressUI")) :: any).openEggNow()
+		else
+			onRewards()
+		end
+	end
+	local giftCount = require(script.Parent:WaitForChild("IconCount")) :: any
+	giftCount.attach("Rewards", gift)
+	gift.Activated:Connect(onGift)
+	tapActions[gift] = onGift
 	tapWindows[gift] = "Rewards"
 	-- (22 Nov 2026, owner: the gift next to the Next pill, on the same line): just right of the centred pill.
 	gift.AnchorPoint = Vector2.new(0, 0.5)
@@ -532,7 +544,7 @@ local function step()
 		tg.Enabled = (on and not held.Top) or phonePill
 		local giftButton = tg:FindFirstChild("Gift", true)
 		if giftButton and giftButton:IsA("GuiObject") then
-			giftButton.Visible = not phonePill
+			giftButton.Visible = not phonePill or (require(Client:WaitForChild("IconCount")) :: any).has("Rewards") -- (V11 A1: a phone sees the gift while an egg waits)
 		end
 	end
 	local UI = ReplicatedStorage:WaitForChild("LihFolkUI")

@@ -170,6 +170,7 @@ function PokeController.iconOnly(width: number, height: number, text: string): b
 end
 
 local selected: string = Toys.default
+local handEmpty = false -- (V11 A4, owner: "press the picked slot again: nothing in the hand, out of first person")
 local loadout: { string } = table.clone(Toys.defaultLoadout)
 local slabs: { [string]: Slab } = {}
 local toolsSlab: Slab? = nil
@@ -545,7 +546,7 @@ local function refresh()
 	changedEvent:Fire()
 	refreshHelp()
 	-- (Doctor mode rests the tools: the hand is empty, "", so no patient sees a gun.)
-	local want = if doctorHold then "" else selected
+	local want = if doctorHold or handEmpty then "" else selected
 	if want ~= heldSent then
 		heldSent = want
 		Net.event(Net.Names.Hold):FireServer(want)
@@ -553,7 +554,7 @@ local function refresh()
 	local picking = pendingEquip ~= nil
 	for id, slab in slabs do
 		local toy = Toys.byId[id]
-		local lit = id == selected and not picking
+		local lit = id == selected and not picking and not handEmpty
 		live3D(slab, id, lit and Config.UI_3D == true)
 		slab.button.setSwatch(swatchFor(toy.color, lit))
 		-- Colour plus one more cue: the selected tool (or, while picking, every slot) has a ring.
@@ -801,6 +802,7 @@ end
 
 local function select(id: string)
 	if Toys.byId[id] and table.find(shown(), id) then
+		handEmpty = false
 		local changed = selected ~= id
 		selected = id
 		refresh()
@@ -827,6 +829,8 @@ drawTools = function(picking: boolean)
 	-- other squares, on a keyboard, whatever the button shows.
 	do
 		local root = tools.button.root
+		local weaponsCount = require(script.Parent:WaitForChild("IconCount")) :: any
+		weaponsCount.attach("Weapons", root) -- (V11 A2: new weapons count here)
 		local kb = UserInputService.KeyboardEnabled and not (UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled)
 		local key = if kb then Keybinds.badgeOf("Catalog") else ""
 		local chip = root:FindFirstChild("KeyChip") :: TextLabel?
@@ -1436,7 +1440,7 @@ PokeController.assistedForTest = assisted
 
 local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 	local camera = Workspace.CurrentCamera
-	if not camera or not enabled or doctorHold then
+	if not camera or not enabled or doctorHold or handEmpty then
 		return false
 	end
 	do
@@ -2279,6 +2283,14 @@ function PokeController.start()
 		end
 		local id = index and shown()[index]
 		if id then
+			if id == selected and not pendingEquip and not handEmpty then
+				handEmpty = true
+				refresh()
+				pcall(function()
+					(require(script.Parent:WaitForChild("FirstPerson")) :: any).set(false)
+				end)
+				return
+			end
 			pressed(id)
 		end
 	end)

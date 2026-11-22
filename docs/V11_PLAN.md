@@ -5,7 +5,7 @@ what makes the start more fun, then the big single/multiplayer change. As few cr
 tests everything; Claude compile-checks every changed script in Studio before saying "ready" and never puts a
 comment inside an expression.
 
-**State:** plan sent to the owner, waiting for a yes.
+**State:** phase A done in code (0.40.0, compile-checked in Studio, not play-tested): Config.COUNTERS_ONLY, Client/IconCount (red counters on the gift and WEAPONS, "!" on the gift for an egg; a tap opens it), Notify drops all but critical (events made critical), no self-opening windows, no "+1 TAKEDOWN", PokeController handEmpty (picked slot key again), RocketRide flies only the rocket (rocketParts). Next: owner test, then phase B.
 
 ## Phase A: quiet screen (small, do first)
 1. **No egg pop-up.** The EggReady window never opens by itself (ProgressUI offer, AutoEgg). Instead a red "!"

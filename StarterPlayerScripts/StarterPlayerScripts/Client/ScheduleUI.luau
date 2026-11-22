@@ -77,7 +77,7 @@ function ScheduleUI.start()
 		local on = Workspace:GetAttribute("OwnerParty") == true
 		if on and not partyTold then
 			partyTold = true
-			Notify.say("info", "THE OWNER IS IN YOUR SERVER! Every weapon is yours while you play with them. Open WEAPONS!", Color3.fromRGB(255, 90, 90))
+			Notify.say("critical", "THE OWNER IS IN YOUR SERVER! Every weapon is yours while you play with them. Open WEAPONS!", Color3.fromRGB(255, 90, 90))
 		elseif not on and partyTold then
 			partyTold = false
 			Notify.say("info", "The owner's free weapons have ended. Thanks for playing with them!")
@@ -99,13 +99,13 @@ function ScheduleUI.start()
 					local key = string.format("%d@%d", s, at)
 					if left <= s and left > s - 30 and not told[key] then
 						told[key] = true
-						Notify.say("info", string.format("THE ADMIN SHOW starts in %d minute%s: free events for everyone!", s // 60, if s >= 120 then "s" else ""), GOLD)
+						Notify.say("critical", string.format("THE ADMIN SHOW starts in %d minute%s: free events for everyone!", s // 60, if s >= 120 then "s" else ""), GOLD)
 					end
 				end
 				local key = "on@" .. at
 				if left <= 0 and left > -30 and not told[key] then
 					told[key] = true
-					Notify.say("info", "THE ADMIN SHOW IS ON! Free events for everyone", GOLD)
+					Notify.say("critical", "THE ADMIN SHOW IS ON! Free events for everyone", GOLD)
 				end
 			end
 		end

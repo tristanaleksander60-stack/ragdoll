@@ -359,6 +359,10 @@ local function calm(): boolean
 end
 
 function offerEgg(force: boolean)
+	-- (V11 A1, owner: "no egg pop-up; a ! on the gift"): the gift carries the egg (IconCount bang, HudV3 taps open it).
+	if (Config :: any).COUNTERS_ONLY then
+		return
+	end
 	if offerWaiting or state.eggs <= 0 or Controller.isOpen("EggReady") then
 		return
 	end
@@ -655,6 +659,9 @@ function ProgressUI.start()
 				end
 			end
 			PokeController.setNext(if nextAt < math.huge then (state.takedowns - prev) / math.max(1, nextAt - prev) else nil)
+			pcall(function()
+				(require(script.Parent:WaitForChild("IconCount")) :: any).bang("Rewards", state.eggs > 0)
+			end)
 			if state.eggs > eggsBefore then
 				offerEgg(false) -- (a new egg: offered when the moment is calm)
 			end
@@ -707,6 +714,9 @@ function ProgressUI.start()
 				ProgressUI.popTakedown((1 + (if type(d.bonus) == "number" then d.bonus else 0)) * (if type(d.mult) == "number" then d.mult else 1)) -- (V9-NOW 12: "+2" in the 2X event)
 			end
 		elseif kind == "AutoEgg" then
+			if (Config :: any).COUNTERS_ONLY then
+				return -- (V11 A1: the egg waits on the gift)
+			end
 			-- The first egg opens by itself (round 5, phase 00), once the first minute's bar is free.
 			OnboardingController.whenFree(function()
 				task.wait(math.max(0.5, Config.QUIET_START - time())) -- (phase 0: after the quiet start)
@@ -821,6 +831,9 @@ ProgressUI.POP_FOR = 120 -- (the owner, 10 Nov: small and quiet, only at the ver
 local popGui: ScreenGui? = nil
 local popCount = 0
 function ProgressUI.popTakedown(n: number)
+	if (Config :: any).COUNTERS_ONLY then
+		return -- (V11 A3, owner: "no takedown message")
+	end
 	local gui = popGui
 	if not gui then
 		local g = Instance.new("ScreenGui")

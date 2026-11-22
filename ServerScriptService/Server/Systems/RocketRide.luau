@@ -63,10 +63,93 @@ local function stillCopy(model: Model, at: CFrame, into: Instance)
 	end
 end
 
+-- (V11 A5, owner: "only the rocket flies, not the platform"): the model is a rocket on a launch tower. The
+-- rocket is the stack of big square-section pieces on one upright axis plus everything close round that axis
+-- from the stack's bottom up; the tower, the gantry arms and the base stay where they are.
+local function rocketParts(rocket: Model): ({ BasePart }, Vector3?, number, number, number)
+	local all: { BasePart } = {}
+	for _, d in rocket:GetDescendants() do
+		if d:IsA("BasePart") then
+			table.insert(all, d)
+		end
+	end
+	local w = 0
+	for _, p in all do
+		if math.abs(p.Size.X - p.Size.Z) < 0.05 * p.Size.X and p.Size.Y > p.Size.X * 0.5 then
+			w = math.max(w, p.Size.X)
+		end
+	end
+	local sum, n, bottom = Vector3.zero, 0, math.huge
+	for _, p in all do
+		if w > 0 and math.abs(p.Size.X - w) < 0.05 * w and math.abs(p.Size.Z - w) < 0.05 * w and p.Size.Y > w * 0.5 then
+			sum += p.Position
+			n += 1
+			bottom = math.min(bottom, p.Position.Y - p.Size.Y / 2)
+		end
+	end
+	if n < 2 then
+		return all, nil, 0, 0, 0
+	end
+	local axis = sum / n
+	local fly: { BasePart } = {}
+	local top = bottom
+	for _, p in all do
+		local d = Vector2.new(p.Position.X - axis.X, p.Position.Z - axis.Z).Magnitude
+		if d < w * 0.8 and math.max(p.Size.X, p.Size.Z) < w * 1.5 and p.Position.Y > bottom - w * 0.1 then
+			table.insert(fly, p)
+			top = math.max(top, p.Position.Y + p.Size.Y / 2)
+		end
+	end
+	return fly, axis, w, bottom, top
+end
+
 function RocketRide.wire(rocket: Model, origin: Vector3)
 	local home = rocket:GetPivot()
 	local cf, size = rocket:GetBoundingBox()
 	local radius = math.min(size.X, size.Z) / 2
+	local fly, axis, w, bottom, top = rocketParts(rocket)
+	if axis then
+		cf = CFrame.new(axis.X, (bottom + top) / 2, axis.Z)
+		size = Vector3.new(w, top - bottom, w)
+		radius = w / 2
+	end
+	local flySet: { [Instance]: boolean } = {}
+	for _, p in fly do
+		flySet[p] = true
+	end
+	local frame = if axis then CFrame.new(axis.X, bottom, axis.Z) else home
+	-- Moves the flying set (the rocket, its fire, the strapped copy and straps) by `offset` from home.
+	local moving: { BasePart } = {}
+	local from: { CFrame } = {}
+	local function gather()
+		table.clear(moving)
+		table.clear(from)
+		local seen: { [BasePart]: boolean } = {}
+		for _, p in fly do
+			seen[p] = true
+			table.insert(moving, p)
+			table.insert(from, p.CFrame)
+		end
+		for _, d in rocket:GetDescendants() do
+			if d:IsA("BasePart") and not seen[d] and (d:GetAttribute("RideTemp") == true or d.Name == "RocketPromptPart") then
+				table.insert(moving, d)
+				table.insert(from, d.CFrame)
+			end
+		end
+	end
+	local function place(offset: CFrame)
+		local delta = frame * offset * frame:Inverse()
+		local parts: { BasePart } = {}
+		local to: { CFrame } = {}
+		for i, c in from do
+			local p = moving[i]
+			if p.Parent then
+				table.insert(parts, p)
+				table.insert(to, delta * c)
+			end
+		end
+		Workspace:BulkMoveTo(parts, to, Enum.BulkMoveMode.FireCFrameChanged)
+	end
 	local base = Instance.new("Part")
 	base.Name = "RocketPromptPart"
 	base.Anchored, base.CanCollide, base.CanQuery, base.CanTouch = true, false, false, false
@@ -136,12 +219,13 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 					strap.Parent = rocket
 				end
 				lazy("DummyControl").move(body, CFrame.new(spot))
+				gather()
 				-- Countdown: smoke, a shake.
 				smoke.Enabled = true
 				local t0 = os.clock()
 				while os.clock() - t0 < RocketRide.COUNTDOWN do
 					local k = (os.clock() - t0) / RocketRide.COUNTDOWN
-					rocket:PivotTo(home * CFrame.new(math.sin(os.clock() * 60) * 0.08 * k, 0, math.cos(os.clock() * 50) * 0.08 * k))
+					place(CFrame.new(math.sin(os.clock() * 60) * 0.08 * k, 0, math.cos(os.clock() * 50) * 0.08 * k))
 					RunService.Heartbeat:Wait()
 				end
 				-- Lift-off: faster and faster, a slight wobble.
@@ -153,7 +237,7 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 					local t = os.clock() - t0
 					height = 0.5 * RocketRide.ACCEL * t * t
 					local wob = CFrame.Angles(math.sin(t * 7) * 0.04, 0, math.cos(t * 5) * 0.04)
-					rocket:PivotTo(home * CFrame.new(0, height, 0) * wob)
+					place(CFrame.new(0, height, 0) * wob)
 					RunService.Heartbeat:Wait()
 				end
 				-- The burst, high up: the real body falls out of it, flung, a piece or two short.
@@ -170,7 +254,7 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 					if d:IsA("BasePart") then
 						if d:GetAttribute("RideTemp") == true then
 							d:Destroy()
-						elseif d.Name ~= "RocketPromptPart" then
+						elseif flySet[d] then
 							d:SetAttribute("RideWas", d.Transparency)
 							d.Transparency = 1
 						end
@@ -189,7 +273,7 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 					end
 				end
 				-- Back on its spot after a moment.
-				rocket:PivotTo(home)
+				place(CFrame.identity)
 				task.wait(RocketRide.BACK_AFTER)
 				for _, d in rocket:GetDescendants() do
 					if d:IsA("BasePart") and d:GetAttribute("RideWas") ~= nil then
@@ -207,7 +291,7 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 			end)
 			if not ok then
 				warn("[RocketRide] " .. tostring(err))
-				rocket:PivotTo(home)
+				place(CFrame.identity)
 				for _, d in rocket:GetDescendants() do
 					if d:IsA("BasePart") and d:GetAttribute("RideTemp") == true then
 						d:Destroy()

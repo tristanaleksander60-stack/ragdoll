@@ -197,6 +197,21 @@ end
 function Notify.push(text: string, kind: string?, opts: { key: string?, color: Color3?, icon: string? }?)
 	local k = if kind and NotifyRules.PRIORITY[kind] then kind else "info"
 	local o = opts or {}
+	-- (V11 A2, owner: "no pop-ups, only (1),(2) on the icons; only events tell you"): only critical lines (the
+	-- events) still show; a reward adds to the counter on its icon (weapons on WEAPONS, the rest on the gift);
+	-- tips and news are dropped.
+	if (Config :: any).COUNTERS_ONLY and k ~= "critical" then
+		if k == "reward" then
+			local low = string.lower(text)
+			local IconCount = require(Client:WaitForChild("IconCount")) :: any
+			if string.find(low, "weapon", 1, true) or string.find(low, "bar", 1, true) or string.find(low, "unlocked", 1, true) or string.find(low, "tool", 1, true) then
+				IconCount.bump("Weapons")
+			else
+				IconCount.bump("Rewards")
+			end
+		end
+		return
+	end
 	if not on() then
 		Toast.show(text, o.color or COLORS[k], nil, o.icon)
 		return
@@ -217,6 +232,17 @@ end
 function Notify.waitBig(name: string, maxWait: number?): boolean
 	if not on() then
 		return true
+	end
+	-- (V11 A1/A2, owner: "no pop-ups"): nothing opens by itself any more; the caller waits forever (or gives up
+	-- after its maxWait), and the icon's counter says what is waiting.
+	if (Config :: any).COUNTERS_ONLY then
+		if maxWait then
+			task.wait(maxWait)
+			return false
+		end
+		while true do
+			task.wait(3600)
+		end
 	end
 	Notify.start()
 	local t0 = os.clock()

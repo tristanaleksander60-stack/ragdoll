@@ -97,7 +97,7 @@ function ChristmasFx.start()
 	local Notify = require(script.Parent:WaitForChild("Notify")) :: any -- V6-1
 	Workspace:GetAttributeChangedSignal("GiftDrop"):Connect(function()
 		if Workspace:GetAttribute("Christmas") == true then
-			Notify.say("info", "Presents are falling in the plaza! Grab one for an egg", Color3.fromRGB(255, 205, 70))
+			Notify.say("critical", "Presents are falling in the plaza! Grab one for an egg", Color3.fromRGB(255, 205, 70))
 		end
 	end)
 	refresh()
