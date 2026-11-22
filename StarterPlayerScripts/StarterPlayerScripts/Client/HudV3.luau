@@ -283,7 +283,10 @@ local function buildTop(onRewards: () -> ())
 	gift.Activated:Connect(onRewards)
 	tapActions[gift] = onRewards
 	tapWindows[gift] = "Rewards"
-	gift.Parent = row
+	-- (22 Nov 2026, owner: the gift next to the Next pill, on the same line): just right of the centred pill.
+	gift.AnchorPoint = Vector2.new(0, 0.5)
+	gift.Position = UDim2.new(0.5, 128, 0.5, 0)
+	gift.Parent = g
 	local pill = Instance.new("Frame")
 	pill.Name = "Next"
 	pill.LayoutOrder = 2

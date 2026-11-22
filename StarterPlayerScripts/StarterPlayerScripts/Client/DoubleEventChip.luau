@@ -38,13 +38,15 @@ function DoubleEventChip.start()
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "DoubleEventChip"
 	gui.ResetOnSpawn = false
-	gui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
+	-- (22 Nov 2026, owner: "the 2X, the gift and Next together"): on the top bar's line, just left of the
+	-- centred Next pill (HudV3; the gift is just right of it).
+	gui.ScreenInsets = Enum.ScreenInsets.TopbarSafeInsets
 	gui.DisplayOrder = 6
 	gui.Enabled = false
 	local chip = Instance.new("TextLabel")
 	chip.Name = "Chip"
-	chip.AnchorPoint = Vector2.new(1, 0)
-	chip.Position = UDim2.new(1, -DoubleEventChip.RIGHT, 0, DoubleEventChip.TOP)
+	chip.AnchorPoint = Vector2.new(1, 0.5)
+	chip.Position = UDim2.new(0.5, -128, 0.5, 0)
 	chip.AutomaticSize = Enum.AutomaticSize.X
 	chip.Size = UDim2.fromOffset(0, 26)
 	chip.BackgroundColor3 = Color3.fromRGB(255, 200, 60)
