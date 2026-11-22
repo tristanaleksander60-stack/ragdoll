@@ -372,26 +372,50 @@ function VitalsService.sever(model: Model, limb: string, position: Vector3?): bo
 	local socket = first:FindFirstChild(spec.joint .. "RigAttachment")
 	if socket and socket:IsA("Attachment") then
 		local body = model:FindFirstChild((spec :: any).parent or (if string.find(limb, "Leg") then "LowerTorso" else "UpperTorso"))
+		-- 0.36.9 (owner: "not just a circle"): a real-looking stump on both sides, sized to the limb: a dark
+		-- wound face a little inside the cut, a lighter flesh ring, a bone end sticking out and a few drops round
+		-- the edge. Every piece is named Stump (a heal or revive takes them all off again).
+		local fp = first :: BasePart
+		local thick = math.clamp(math.min(fp.Size.X, fp.Size.Z), 0.25, 1.2)
 		for _, holder in { first, body } do
 			if holder and holder:IsA("BasePart") then
-				local cap = Instance.new("Part")
-				cap.Name = "Stump"
-				cap:SetAttribute("Limb", limb)
-				cap.Shape = Enum.PartType.Cylinder
-				cap.Size = Vector3.new(0.18, 0.9, 0.9)
-				cap.Color = Anatomy.BLOOD
-				cap.Material = Enum.Material.SmoothPlastic
-				cap.CanCollide = false
-				cap.CanQuery = false
-				cap.CanTouch = false
-				cap.Massless = true
-				cap.CastShadow = false
-				cap.CFrame = CFrame.lookAt(socket.WorldPosition, socket.WorldPosition + (holder.Position - socket.WorldPosition)) * CFrame.Angles(0, math.rad(90), 0)
-				local weld = Instance.new("WeldConstraint")
-				weld.Part0 = holder
-				weld.Part1 = cap
-				weld.Parent = cap
-				cap.Parent = holder
+				-- X points into the holder (along the limb), so -X is out of the cut.
+				local base = CFrame.lookAt(socket.WorldPosition, socket.WorldPosition + (holder.Position - socket.WorldPosition)) * CFrame.Angles(0, math.rad(90), 0)
+				local function piece(shape: Enum.PartType, size: Vector3, colour: Color3, at: CFrame)
+					local p = Instance.new("Part")
+					p.Name = "Stump"
+					p:SetAttribute("Limb", limb)
+					p.Shape = shape
+					p.Size = size
+					p.Color = colour
+					p.Material = Enum.Material.SmoothPlastic
+					p.CanCollide = false
+					p.CanQuery = false
+					p.CanTouch = false
+					p.Massless = true
+					p.CastShadow = false
+					p.CFrame = at
+					local weld = Instance.new("WeldConstraint")
+					weld.Part0 = holder
+					weld.Part1 = p
+					weld.Parent = p
+					p.Parent = holder
+				end
+				local flesh = Color3.fromRGB(150, 45, 60)
+				local inner = Color3.fromRGB(95, 15, 30)
+				-- The flesh ring, then the darker wound face just out of it.
+				piece(Enum.PartType.Cylinder, Vector3.new(0.12, thick * 0.92, thick * 0.92), flesh, base * CFrame.new(0.04, 0, 0))
+				piece(Enum.PartType.Cylinder, Vector3.new(0.06, thick * 0.66, thick * 0.66), inner, base * CFrame.new(-0.03, 0, 0))
+				-- The bone end: off-white, sticking out of the middle.
+				piece(Enum.PartType.Cylinder, Vector3.new(0.34, thick * 0.26, thick * 0.26), Color3.fromRGB(236, 228, 208), base * CFrame.new(-0.12, thick * 0.04, 0))
+				piece(Enum.PartType.Ball, Vector3.one * thick * 0.3, Color3.fromRGB(236, 228, 208), base * CFrame.new(-0.29, thick * 0.04, 0))
+				-- Ragged drops round the edge.
+				for i = 1, 4 do
+					local a = i * math.pi / 2 + rng:NextNumber(-0.5, 0.5)
+					local r = thick * 0.42
+					piece(Enum.PartType.Ball, Vector3.one * thick * rng:NextNumber(0.16, 0.24), if i % 2 == 0 then Anatomy.BLOOD else flesh,
+						base * CFrame.new(-0.02, math.cos(a) * r, math.sin(a) * r))
+				end
 			end
 		end
 	end
