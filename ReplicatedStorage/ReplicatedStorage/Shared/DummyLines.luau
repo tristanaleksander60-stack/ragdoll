@@ -116,14 +116,55 @@ end
 DummyLines.FEAR_COLOR = Color3.fromRGB(255, 205, 64)
 DummyLines.IDLE_COLOR = Color3.fromRGB(245, 245, 245)
 DummyLines.BOX_COLOR = Color3.fromRGB(16, 16, 18)
-DummyLines.BOX_ALPHA = 0.12 -- the box's transparency
-DummyLines.HOLD = 2.6 -- s a line stays up
-DummyLines.IDLE_GAP = Vector2.new(18, 40) -- s between one dummy's idle lines (random in the range)
+DummyLines.BOX_ALPHA = 0.3 -- the box's transparency
+DummyLines.HOLD = 2.2 -- s a line stays up
+DummyLines.IDLE_GAP = Vector2.new(35, 75) -- s between one dummy's idle lines (random in the range)
 DummyLines.IDLE_MAX = 1 -- idle lines on one screen at once (UI audit 21 Nov 2026: 2 -> 1, fewer floating words)
 DummyLines.OUCH_WINDOW = 1.5 -- s after getting up an ouch line may show
 DummyLines.OUCH_CHANCE = 0.45
 DummyLines.DISTANCE = 45 -- studs: further away no line is drawn (UI audit 21 Nov 2026: 60 -> 45)
 
+-- 0.36.7 (owner, 22 Nov 2026: "they say something different by where you shoot them"): a line for the
+-- spot a hit landed on (the newest wound in the body's Wounds list), and one for a blow (a bat, a punch).
+DummyLines.HIT = table.freeze({
+	Head = table.freeze({ "My head!", "Right in the noggin!", "I saw stars!", "Not the face!", "My brain hurts!", "Hey, I need that!" }),
+	Neck = table.freeze({ "My neck!", "Ack! The neck!", "Can't turn my head now!" }),
+	Chest = table.freeze({ "Oof, my chest!", "Right in the ribs!", "Can't... breathe...", "My heart!", "That one went deep!" }),
+	Belly = table.freeze({ "My tummy!", "There goes lunch!", "Oof, the belly!", "I just ate!" }),
+	Hips = table.freeze({ "My hips!", "There goes my dancing!", "Ow, my back!" }),
+	Arm = table.freeze({ "My arm!", "I need that to wave!", "Ow, my elbow!", "Not my good arm!" }),
+	Hand = table.freeze({ "My fingers!", "Ow, my hand!", "How will I high-five now?" }),
+	Leg = table.freeze({ "My leg!", "I can't run now!", "Ow, my knee!", "Right in the shin!" }),
+	Foot = table.freeze({ "My toes!", "Ow, my foot!", "I just got new shoes!" }),
+	Blast = table.freeze({ "KABOOM?!", "My ears are ringing!", "I'm on fire! Kind of!" }),
+	Blunt = table.freeze({ "Bonk!", "Hey, no hitting!", "That's gonna bruise!", "Ow ow ow!", "Watch the bat!" }),
+})
+
+-- The group a wound zone id falls in (DummyLines.HIT).
+function DummyLines.hitGroup(zoneId: string): string
+	if zoneId == "Brain" or zoneId == "Skull" or zoneId == "Jaw" then
+		return "Head"
+	elseif zoneId == "Neck" then
+		return "Neck"
+	elseif zoneId == "Blast" then
+		return "Blast"
+	elseif zoneId == "Pelvis" then
+		return "Hips"
+	elseif zoneId == "Liver" or zoneId == "Stomach" or zoneId == "Intestines" or string.find(zoneId, "Kidney", 1, true) then
+		return "Belly"
+	elseif string.find(zoneId, "Hand", 1, true) then
+		return "Hand"
+	elseif string.find(zoneId, "Foot", 1, true) then
+		return "Foot"
+	elseif string.find(zoneId, "Arm", 1, true) or string.find(zoneId, "Forearm", 1, true) then
+		return "Arm"
+	elseif string.find(zoneId, "Thigh", 1, true) or string.find(zoneId, "Femoral", 1, true) or string.find(zoneId, "Shin", 1, true) then
+		return "Leg"
+	end
+	return "Chest"
+end
+DummyLines.HIT_GAP = 1.2 -- s between hit lines on this screen (one dummy talks at a time, never a wall of text)
+DummyLines.TEXT_SIZE = 16
 -- One line of a list, picked by a seed (the same dummy does not say the same thing twice in a row:
 -- the turn moves on each time).
 -- 21 Nov 2026 (Config.ICON_SIGNS): the same moods as faces, no reading (DummyLife shows these).

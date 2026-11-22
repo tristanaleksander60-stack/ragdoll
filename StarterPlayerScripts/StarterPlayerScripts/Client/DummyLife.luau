@@ -32,6 +32,7 @@ local Assets = require(Shared:WaitForChild("Assets"))
 local GunThreat = require(Shared:WaitForChild("GunThreat"))
 local Config = require(Shared:WaitForChild("Config"))
 local DummyLines = require(Shared:WaitForChild("DummyLines"))
+local Anatomy = require(Shared:WaitForChild("Anatomy"))
 
 local Faces = Assets.Faces
 local rad, deg, sin, cos = math.rad, math.deg, math.sin, math.cos
@@ -131,6 +132,7 @@ type Life = {
 	lineKind: string?, -- "Fear", "Ouch" or "Idle" while one is up
 	lineUntil: number,
 	lineTurn: number,
+	woundsRaw: string, -- 0.36.7: the Wounds list last seen (a longer one = a new hit to answer)
 	idleAt: number, -- next idle line (os.clock)
 	wasHandsUp: boolean,
 	ouchFor: number, -- the stateSince of the last get-up already answered
@@ -228,6 +230,7 @@ local function build(model: Model): Life?
 		lineKind = nil,
 		lineUntil = 0,
 		lineTurn = 0,
+		woundsRaw = "",
 		idleAt = os.clock() + rng:NextNumber(4, 30),
 		wasHandsUp = false,
 		ouchFor = -1,
@@ -1030,11 +1033,11 @@ local function hideLine(life: Life)
 	end
 end
 
-local function showLine(life: Life, kind: string, now: number)
+local function showLine(life: Life, kind: string, now: number, given: { string }?)
 	if life.lineKind == "Idle" then
 		idleShown = math.max(0, idleShown - 1)
 	end
-	local list = if kind == "Fear" then DummyLines.FEAR elseif kind == "Ouch" then DummyLines.OUCH else DummyLines.idleFor(life.model:GetAttribute("Zone")) -- (v4 B2: what they say fits the place)
+	local list = if given then given elseif kind == "Fear" then DummyLines.FEAR elseif kind == "Ouch" then DummyLines.OUCH else DummyLines.idleFor(life.model:GetAttribute("Zone")) -- (v4 B2: what they say fits the place)
 	life.lineTurn += 1
 	if not life.line then
 		local g = Instance.new("BillboardGui")
@@ -1050,7 +1053,7 @@ local function showLine(life: Life, kind: string, now: number)
 		box.Name = "Box"
 		box.AnchorPoint = Vector2.new(0.5, 1)
 		box.Position = UDim2.fromScale(0.5, 1)
-		box.Size = UDim2.fromOffset(0, 30)
+		box.Size = UDim2.fromOffset(0, 26)
 		box.AutomaticSize = Enum.AutomaticSize.X
 		box.BackgroundColor3 = DummyLines.BOX_COLOR
 		box.BackgroundTransparency = DummyLines.BOX_ALPHA
@@ -1069,7 +1072,7 @@ local function showLine(life: Life, kind: string, now: number)
 		text.Size = UDim2.fromScale(0, 1)
 		text.AutomaticSize = Enum.AutomaticSize.X
 		text.Font = Enum.Font.BuilderSansBold
-		text.TextSize = 18
+		text.TextSize = DummyLines.TEXT_SIZE
 		text.Parent = box
 		g.Parent = life.head
 		life.line = g
@@ -1077,12 +1080,8 @@ local function showLine(life: Life, kind: string, now: number)
 	end
 	local text = life.lineText :: TextLabel
 	text.Text = DummyLines.pick(list, life.seed, life.lineTurn)
-	-- (21 Nov 2026, Config.ICON_SIGNS, the owner: "no text to read": a face says it, bigger, no words.)
-	if (Config :: any).ICON_SIGNS then
-		local faces = if kind == "Fear" then DummyLines.EMOJI_FEAR elseif kind == "Ouch" then DummyLines.EMOJI_OUCH else DummyLines.EMOJI_IDLE
-		text.Text = DummyLines.pick(faces, life.seed, life.lineTurn)
-		text.TextSize = 30
-	end
+	-- (0.36.7, owner: text again, like the big ragdoll games: short, small, one at a time. The faces of
+	-- Config.ICON_SIGNS are gone from here.)
 	text.TextColor3 = if kind == "Idle" then DummyLines.IDLE_COLOR else DummyLines.FEAR_COLOR
 	;(life.line :: BillboardGui).Enabled = true
 	life.lineKind = kind
@@ -1092,10 +1091,30 @@ local function showLine(life: Life, kind: string, now: number)
 	end
 end
 
+local lastHitLine = -math.huge
 local function updateLine(life: Life, now: number)
+	-- 0.36.7: a new wound = a line for where it landed (one hit line on this screen per HIT_GAP; a dead
+	-- body says nothing).
+	local raw = life.model:GetAttribute("Wounds")
+	local rawText = if type(raw) == "string" then raw else ""
+	if rawText ~= life.woundsRaw then
+		local grew = #rawText > #life.woundsRaw
+		life.woundsRaw = rawText
+		if grew and now - lastHitLine >= DummyLines.HIT_GAP and life.model:GetAttribute("Vital") ~= "Dead" then
+			local wounds = Anatomy.parseWounds(rawText)
+			local newest = wounds[#wounds]
+			if newest then
+				lastHitLine = now
+				local group = if newest.blunt and rng:NextNumber() < 0.5 then "Blunt" else DummyLines.hitGroup(newest.zone.id)
+				showLine(life, "Hit", now, DummyLines.HIT[group] or DummyLines.OUCH)
+				return
+			end
+		end
+	end
 	local raised = life.handsUp and not life.wasHandsUp
 	life.wasHandsUp = life.handsUp
-	if raised then
+	-- (0.36.7: not every raised pair of hands talks: fewer words on the screen.)
+	if raised and rng:NextNumber() < 0.4 and now - lastHitLine >= DummyLines.HIT_GAP then
 		showLine(life, "Fear", now)
 		return
 	end
