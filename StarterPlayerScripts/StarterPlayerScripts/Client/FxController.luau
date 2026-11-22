@@ -955,7 +955,10 @@ local function roundInBody(position: Vector3, sourceUserId: number?, toyId: stri
 	local dry = dryHit()
 	-- (V9-NOW, owner 21 Nov 2026: "bullet holes on every dummy": a dry hit leaves one too, in the mild style:
 	-- a dark round hole with a grey scorch ring, never purple.)
-	local part = if body then BulletHoles.body(body, position, dry) else nil
+	-- (V10, owner: "much smaller holes from the Glock; holes and blood fit the weapon"): the hole's size follows the
+	-- round's wound (Toys: 1 = a pistol): a pistol a small hole, a magnum or a rifle bigger, a sniper the biggest.
+	local holeScale = math.clamp(0.42 * math.sqrt(tool.wound or 1), 0.3, 1.3)
+	local part = if body then BulletHoles.body(body, position, dry, holeScale) else nil
 	-- (V9-NOW 10: your own round puts that body on the small vitals monitor for 3 s.)
 	if body and sourceUserId == localUserId then
 		pcall(function()

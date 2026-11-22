@@ -201,7 +201,7 @@ end
 
 -- A round hit a body at `at`: a hole on that spot of the limb, which moves with it. Returns the
 -- part it is on (nil: no body part there).
-function BulletHoles.body(model: Model, at: Vector3, mild: boolean?): BasePart?
+function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: number?): BasePart? -- (V10: scale = the weapon's size of hole)
 	local part, normal = nearestPart(model, at)
 	if not part then
 		return nil
@@ -284,7 +284,7 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?): BasePart?
 	-- (V10 phase 2, owner: "the bullet holes and blood still sit out on the ragdoll like bubbles": the sunk balls
 	-- showed as domes. Now every hole is a flat disc lying on the surface, thin as paint; on a skin it lies on the
 	-- ellipse a little inside the box, where the sculpted mesh is.)
-	local hole = disc(if mild then 0.3 else 0.26, if mild then HOLE else BODY_HOLE, flatOn(worldAt, worldNormal, if skin then 0.012 else 0.03))
+	local hole = disc((if mild then 0.3 else 0.26) * (scale or 1), if mild then HOLE else BODY_HOLE, flatOn(worldAt, worldNormal, if skin then 0.012 else 0.03))
 	if skin then
 		hole.Size = Vector3.new(0.02, hole.Size.Y, hole.Size.Z)
 	end
@@ -296,7 +296,7 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?): BasePart?
 	weld.Parent = hole
 	hole.Parent = part
 	if mild and not skin then
-		local ring = disc(0.56, SCORCH, flatOn(worldAt, worldNormal, 0.02), 0.35)
+		local ring = disc(0.56 * (scale or 1), SCORCH, flatOn(worldAt, worldNormal, 0.02), 0.35)
 		ring.Name = "BulletScorch"
 		ring.Anchored = false
 		local w = Instance.new("WeldConstraint")

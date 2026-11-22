@@ -16,7 +16,7 @@ local TONE = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Con
 
 local DummySkins = {}
 
-DummySkins.OVERLAP = 1.12 -- each skin this much longer than its limb: the joints close up
+DummySkins.OVERLAP = 1.0 -- (V10, owner: "the body must not overlap in several places": each skin its limb's own length; was 1.12)
 DummySkins.DETAILS = true -- V7-4: crash-test joint rings, belt and test targets on the mannequins
 DummySkins.TARGET = "rbxassetid://91578612138787" -- the yellow and black crash-test target (art/dummy/target.png)
 -- V9-0o (Config.DUMMY_TONE): matte skins, no shine in the bright sun.
