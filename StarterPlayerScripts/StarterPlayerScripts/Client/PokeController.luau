@@ -823,6 +823,34 @@ drawTools = function(picking: boolean)
 	if not tools then
 		return
 	end
+	-- (V10, owner: "make the weapons keybind visible"): a key chip in the WEAPONS button's corner, like the
+	-- other squares, on a keyboard, whatever the button shows.
+	do
+		local root = tools.button.root
+		local kb = UserInputService.KeyboardEnabled and not (UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled)
+		local key = if kb then Keybinds.badgeOf("Catalog") else ""
+		local chip = root:FindFirstChild("KeyChip") :: TextLabel?
+		if not chip then
+			local made = Instance.new("TextLabel")
+			made.Name = "KeyChip"
+			made.Size = UDim2.fromOffset(22, 20)
+			made.Position = UDim2.fromOffset(3, 3)
+			made.BackgroundColor3 = Color3.fromRGB(20, 22, 28)
+			made.BackgroundTransparency = 0.1
+			made.TextColor3 = Color3.new(1, 1, 1)
+			made.Font = Enum.Font.GothamBlack
+			made.TextSize = 12
+			made.ZIndex = 20
+			local r = Instance.new("UICorner")
+			r.CornerRadius = UDim.new(0, 5)
+			r.Parent = made
+			made.Parent = root
+			chip = made
+		end
+		local c = chip :: TextLabel
+		c.Text = key
+		c.Visible = key ~= "" and not picking
+	end
 	if toolsIconOnly then
 		-- (V10, owner: "WEAPONS must always show its key": the key beside the picture on a keyboard.)
 		local key = if not picking and UserInputService.KeyboardEnabled and not (UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled) then Keybinds.labelOf("Catalog") else ""
