@@ -50,7 +50,33 @@ local isGrabbing: (() -> boolean)? = nil
 
 local BUTTON_W, BUTTON_H = 260, 44
 
+-- (22 Nov 2026, owner): a green outline round the ragdoll you talk to while the card is open, and a
+-- red one round the one you point at in ATTACK WHO? (and keep while picking the weapon).
+local function outline(color: Color3): Highlight
+	local h = Instance.new("Highlight")
+	h.FillTransparency = 1
+	h.OutlineColor = color
+	h.OutlineTransparency = 0
+	h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	h.Enabled = false
+	h.Parent = Workspace
+	return h
+end
+local talkOutline: Highlight? = nil
+local targetOutline: Highlight? = nil
+local function mark(which: "talk" | "target", model: Model?)
+	if which == "talk" then
+		talkOutline = talkOutline or outline(Color3.fromRGB(80, 230, 110))
+	else
+		targetOutline = targetOutline or outline(Color3.fromRGB(255, 70, 60))
+	end
+	local h = (if which == "talk" then talkOutline else targetOutline) :: Highlight
+	h.Adornee = model
+	h.Enabled = model ~= nil and model.Parent ~= nil
+end
+
 local function clear()
+	mark("target", nil)
 	firstButton = nil
 	firstOrder = math.huge
 	for _, c in list:GetChildren() do
@@ -67,6 +93,7 @@ local function close()
 	gui.Enabled = false
 	current = nil
 	clear()
+	mark("talk", nil)
 	ContextActionService:UnbindAction(NpcTalk.CLOSE_ACTION)
 	local selected = GuiService.SelectedObject
 	if selected and selected:IsDescendantOf(gui) then
@@ -74,12 +101,13 @@ local function close()
 	end
 end
 
-local function button(text: string, role: string, order: number, onActivated: () -> ())
+local function button(text: string, role: string, order: number, onActivated: () -> ()): GuiObject
 	local b = C.Button({ text = text, role = role, size = UDim2.fromOffset(BUTTON_W, BUTTON_H), layoutOrder = order, parent = list, onActivated = onActivated })
 	if order < firstOrder then
 		firstOrder = order
 		firstButton = b.hit
 	end
+	return b.hit
 end
 
 -- After a page is drawn: a pad selects its first button.
@@ -98,6 +126,9 @@ local pageMain: (data: any) -> ()
 
 local function pageWeapons(data: any, target: any)
 	clear()
+	if typeof(target.model) == "Instance" and (target.model :: Instance):IsA("Model") then
+		mark("target", target.model :: Model) -- (the chosen one stays marked while you pick the weapon)
+	end
 	title.Text = "WITH WHAT?"
 	local shown = 0
 	for _, id in if type(data.weapons) == "table" then data.weapons else {} do
@@ -123,8 +154,19 @@ local function pageTargets(data: any)
 		if i > 4 then
 			break
 		end
-		button(string.upper(tostring(t.name)), "neutral", i, function()
+		local hit = button(string.upper(tostring(t.name)), "neutral", i, function()
 			pageWeapons(data, t)
+		end)
+		-- (Pointing at a name marks that ragdoll red, so you see who you set on whom.)
+		local model = if typeof(t.model) == "Instance" and (t.model :: Instance):IsA("Model") then t.model :: Model else nil
+		hit.MouseEnter:Connect(function()
+			mark("target", model)
+		end)
+		hit.SelectionGained:Connect(function()
+			mark("target", model)
+		end)
+		hit.MouseLeave:Connect(function()
+			mark("target", nil)
 		end)
 	end
 	button("BACK", "neutral", 9, function()
@@ -171,6 +213,7 @@ local function open(data: any)
 		return
 	end
 	openedByWand = data.wand == true
+	mark("talk", data.npc :: Model)
 	current = data.npc :: Model
 	gui.Enabled = true
 	pageMain(data)

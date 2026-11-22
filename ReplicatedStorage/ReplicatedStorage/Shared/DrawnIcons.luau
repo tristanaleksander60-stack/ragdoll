@@ -101,6 +101,7 @@ DrawnIcons.ASSETS = {
 	tool_Portal = "rbxassetid://117503135412883",
 	tool_Slime = "rbxassetid://79057600461015",
 	tool_Grab = "rbxassetid://136501616539674",
+	tool_Wand = "rbxassetid://95532848645038", -- (22 Nov 2026: the Magic Wand, Talk)
 	tool_Poke = "rbxassetid://101520545808183",
 	tool_Slap = "rbxassetid://107084901425399",
 	tool_Shove = "rbxassetid://136568706025396",

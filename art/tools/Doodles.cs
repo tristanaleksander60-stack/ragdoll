@@ -733,6 +733,11 @@ public static partial class Doodles
 				Line(Pink, 9, 128, 40, 196, 76, 210, 140, 170, 196, 110, 200, 72, 160, 80, 110, 120, 88, 160, 112);
 				Flat(Oval(128, 128, 34, 34), Black);
 				break;
+			case "tool_Wand":
+				Add(Turn(Rect(118, 70, 22, 170), 40, 128, 140), Rgb(70, 50, 40));
+				Add(Star(92, 84, 64, 28, 5, 0), Yellow);
+				Add(Star(196, 58, 22, 10, 4, 0), Purple); Add(Star(204, 132, 16, 7, 4, 0), Pink); Add(Star(40, 168, 14, 6, 4, 0), Purple);
+				break;
 			case "tool_Heal":
 				Add(Turn(Rect(20, 92, 216, 72), -35, 128, 128), Rgb(245, 214, 170));
 				Add(Turn(Rect(98, 98, 60, 60), -35, 128, 128), White);
@@ -958,7 +963,7 @@ public static partial class Doodles
 		"tool_Grab", "tool_Poke", "tool_Slap", "tool_Shove", "tool_Punch", "tool_Kick", "tool_Uppercut", "tool_MegaSlap", "tool_Glove",
 		"tool_Pan", "tool_Bat", "tool_Golf", "tool_Hammer", "tool_Crowbar", "tool_Axe", "tool_Cleaver", "tool_Katana", "tool_Chainsaw", "tool_PlasmaBlade",
 		"tool_Launch", "tool_Firecracker", "tool_TNT", "tool_Shockwave", "tool_StickyBomb", "tool_Cannon", "tool_BigBoom",
-		"tool_Rocket", "tool_Balloon", "tool_Freeze", "tool_Zap", "tool_BlackHole", "tool_Heal", "tool_Anvil", "tool_Trampoline", "tool_SpringPad",
+		"tool_Rocket", "tool_Balloon", "tool_Freeze", "tool_Zap", "tool_BlackHole", "tool_Heal", "tool_Wand", "tool_Anvil", "tool_Trampoline", "tool_SpringPad",
 		"tool_Banana", "tool_Fan", "tool_Bowling", "tool_Shrink", "tool_Chicken", "tool_Float", "tool_Slowmo",
 		"tool_Grenade", "tool_C4", "tool_Minigun", "tool_Sniper", "tool_RPG", "tool_GravityGun", "tool_Nuke",
 		"tool_Revolver", "tool_FlareGun", "tool_GoldenDeagle", "tool_SMG", "tool_AK", "tool_M4", "tool_TommyGun",

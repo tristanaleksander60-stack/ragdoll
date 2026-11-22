@@ -33,6 +33,7 @@ NpcCommand.REQUEST_GAP = 0.3 -- s
 NpcCommand.FOLLOW_BACK = 5 -- studs behind you a follower walks
 NpcCommand.STRIKE_REACH = 6 -- studs: close enough to hit
 NpcCommand.STRIKE_GAP_MIN = 0.7 -- s between an NPC's hits (a fast gun is slowed to this)
+NpcCommand.ATTACK_WOUND = 2.2 -- times a weapon's power an NPC's hit wounds with (about 3 hits kill; 22 Nov 2026)
 NpcCommand.TICK = 0.25
 
 type Order = { owner: Player, mode: string, target: Model?, toy: Toys.Toy?, nextHit: number, place: unknown, held: Model?, home: unknown, homeLook: unknown }
@@ -320,6 +321,9 @@ local function step(now: number)
 				-- (No requester: the server applies the push itself, as nobody predicted it, and an
 				-- NPC's hits never count as your takedowns, so they cannot be farmed.)
 				pcall(HitService.applyToy, toy, part, part.Position, dir, nil)
+				-- (22 Nov 2026, owner: "ATTACK kills the other one, not one swing"): every NPC hit also
+				-- wounds, enough that a few hits kill; the order keeps going until the target is dead.
+				pcall(require(script.Parent.VitalsService).wound, target, part, part.Position, nil, math.max(toy.power or 0, 1) * NpcCommand.ATTACK_WOUND)
 			end
 		end
 	end
