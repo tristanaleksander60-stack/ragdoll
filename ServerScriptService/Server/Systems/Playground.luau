@@ -1346,6 +1346,13 @@ function Playground.build(labOrigin: Vector3, name: string?)
 		pcall(function()
 			require(script.Parent.LabDress).dress(folder, origin)
 		end)
+		-- 0.37.9: bridges, a slide, a sky deck and jump steps in the height area (after LabDress: it joins the throw tower).
+		local okH, errH = pcall(function()
+			require(script.Parent.Heights).build(folder, origin)
+		end)
+		if not okH then
+			log.warn("Heights failed in " .. folder.Name .. ": " .. tostring(errH))
+		end
 		-- v3 Phase C: a car and a monster truck on the east side (after parenting: they move).
 		local ok, err = pcall(function()
 			require(script.Parent.VehicleService).build(folder, origin)
