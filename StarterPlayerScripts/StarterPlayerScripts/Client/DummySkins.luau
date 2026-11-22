@@ -178,6 +178,13 @@ local function dress(model: Model)
 			if s:IsA("BasePart") then
 				s.LocalTransparencyModifier = if hidden then 1 else 0
 			end
+			-- (0.37.19, owner: "the yellow and black marks on the head come up before the ragdoll": the crash-test
+			-- marks are decals on see-through parts, which the modifier does not hide; they go with the body.)
+			for _, d in s:GetDescendants() do
+				if d:IsA("Decal") then
+					d.Transparency = if hidden then 1 else 0
+				end
+			end
 		end
 		for _, d in model:GetDescendants() do
 			if d:IsA("BasePart") and not skins[d] and not d:IsDescendantOf(folder) and d.Name ~= "HumanoidRootPart" then
