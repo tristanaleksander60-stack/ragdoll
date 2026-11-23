@@ -1316,16 +1316,9 @@ function Lab.joinShared(player: Player): boolean
 		end
 	end
 	if not hostPlot then
-		-- (23 Nov 2026, owner: "I picked multiplayer, stayed on the same server, and was not put in a lab with the
-		-- others"): nobody here shares a lab yet, so the lab of another player on this server (the one who has been
-		-- here longest) becomes the shared one and you join them. Alone on the server: your own lab is the shared one.
+		-- (23 Nov 2026, owner: "you must not be able to walk into someone else's singleplayer in multiplayer"): a lab
+		-- that is not shared stays its owner's; with no shared lab here you host one yourself.
 		local best: Player? = nil
-		for _, other in Players:GetPlayers() do
-			if other ~= player and plotOf[other] and other:GetAttribute("SharedGuest") == nil then
-				best = other
-				break
-			end
-		end
 		if best then
 			best:SetAttribute("SharedHost", true)
 			hostPlot = plotOf[best]
@@ -1574,6 +1567,11 @@ function Lab.build()
 		-- (23 Nov 2026, owner: "switching servers in multiplayer must always put you in the same lab"): everyone who
 		-- arrives through multiplayer (PLAY NOW, JOIN, a friend, the start menu) joins this server's one shared lab.
 		if type(data) == "table" and data.from == "Multi" then
+			Lab.joinShared(player)
+		end
+		-- (A friend who followed someone in a shared lab joins it too.)
+		local followed = if player.FollowUserId ~= 0 then Players:GetPlayerByUserId(player.FollowUserId) else nil
+		if followed and (followed:GetAttribute("SharedHost") == true or followed:GetAttribute("SharedGuest") ~= nil) then
 			Lab.joinShared(player)
 		end
 		-- Every avatar starts in its own lab (the plaza when there is none; a shared server's guests in the host's).
