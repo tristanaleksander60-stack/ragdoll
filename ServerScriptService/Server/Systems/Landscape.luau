@@ -64,6 +64,27 @@ function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: num
 			(base :: any).MaterialVariant = ""
 		end)
 	end
+	-- (23 Nov 2026, owner's picture: one smooth green floor with a thin grid over the whole lab. The sizes and edges of the
+	-- three base plates are whole tiles, so the lines run on from one to the next.)
+	local tiles = (Config :: any).GREEN_TILES
+	if tiles then
+		for _, name in { "Baseplate", "BaseplateEast", "BaseplateWest" } do
+			local plate = Workspace:FindFirstChild(name)
+			if plate and plate:IsA("BasePart") then
+				plate.Material = Enum.Material.SmoothPlastic
+				plate.MaterialVariant = ""
+				plate.Reflectance = 0
+				plate.Color = tiles.color
+				local grid = Instance.new("Texture")
+				grid.Name = "Tiles"
+				grid.Face = Enum.NormalId.Top
+				grid.Texture = tiles.texture
+				grid.StudsPerTileU = tiles.studs
+				grid.StudsPerTileV = tiles.studs
+				grid.Parent = plate
+			end
+		end
+	end
 	local terrain = Workspace.Terrain
 	pcall(function()
 		terrain:SetMaterialColor(Enum.Material.Grass, Landscape.GRASS)

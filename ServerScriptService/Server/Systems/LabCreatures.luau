@@ -1499,6 +1499,9 @@ function LabCreatures.build(into: Instance, origin: Vector3)
 	-- The yard's ground: soft grass under it all.
 	local ground = part(folder, "YardGrass", Vector3.new(250 * S, 0.2, 38), CFrame.new(origin + Vector3.new(0, 0.1, LabCreatures.YARD_Z)), Color3.fromRGB(86, 124, 64), Enum.Material.Grass)
 	ground.CanCollide = false
+	if (Config :: any).GREEN_TILES then
+		ground.Transparency = 1 -- (the green tiles under it show)
+	end
 	local ticks: { () -> () } = {}
 	for _, spot in LabCreatures.LAYOUT do
 		-- (Owner, 21 Nov 2026: "a COMPRESSOR instead of the robot vacuum": the press stands on the vacuum's spot.)

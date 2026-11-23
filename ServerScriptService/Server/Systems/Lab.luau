@@ -998,6 +998,10 @@ local function dressPlot(plot: Plot)
 		floor.MaterialVariant = ""
 		floor.Material = Enum.Material.Grass
 		floor.Color = Color3.fromRGB(92, 148, 66)
+		if (Config :: any).GREEN_TILES then
+			floor.Material = Enum.Material.SmoothPlastic
+			floor.Transparency = 1 -- (Landscape's green tiles under it are the floor you see, the same everywhere)
+		end
 		local stoneColor = Color3.fromRGB(196, 190, 176)
 		local PLAZA_R = 30
 		local plaza = paint(folder, "Plaza", Vector3.new(0.06, PLAZA_R * 2, PLAZA_R * 2), Vector3.new(o.X, ground + 0.08, o.Z), stoneColor, Enum.Material.Slate)
@@ -1013,7 +1017,7 @@ local function dressPlot(plot: Plot)
 		-- gets its own ground, so you see four places, not one lawn with machines on it. Launch (east, in
 		-- front: cannon, ramp, stations) on red rubber; cars and crashes (east, behind) on asphalt; danger
 		-- (west, in front: mace, press) on sand; height (west, behind: tower, fan, throw tower) on concrete.
-		for _, a in {
+		for _, a in if (Config :: any).GREEN_TILES then {} else {
 			{ name = "LaunchArea", at = Vector2.new(42, 30), size = Vector2.new(68, 62), color = Color3.fromRGB(150, 70, 60), material = Enum.Material.Concrete },
 			{ name = "CarArea", at = Vector2.new(58, -42), size = Vector2.new(46, 72), color = Color3.fromRGB(70, 72, 78), material = Enum.Material.Asphalt },
 			{ name = "DangerArea", at = Vector2.new(-40, 42), size = Vector2.new(58, 56), color = Color3.fromRGB(214, 190, 140), material = Enum.Material.Sand },
@@ -1029,8 +1033,10 @@ local function dressPlot(plot: Plot)
 		-- (0.37.14, owner: "remove the path at the portals": no stone platform under the travel corner any more.)
 		-- (0.37.3, owner: "the boxing ring overlaps the grass"): a stone floor under the ring (Playground: the pit at
 		-- -6, 54, 21 x 18), with room to walk round it.
+		if not (Config :: any).GREEN_TILES then
 		paint(folder, "RingFloor", Vector3.new(29, 0.05, 26), Vector3.new(o.X - 111, ground + 0.075, o.Z - 28), stoneColor, Enum.Material.Slate)
 		paint(folder, "RingFloorEdge", Vector3.new(30.2, 0.04, 27.2), Vector3.new(o.X - 111, ground + 0.069, o.Z - 28), Color3.fromRGB(120, 116, 108), Enum.Material.Slate)
+		end
 		-- 0.37.5 (owner: "the walks to every thing are ugly: one walk from the spawn to each area's platform, not
 		-- three or four per area"): one straight walk from the plaza's rim to where each area's ground starts
 		-- (an area the plaza already touches needs none), and one out to the creature yard. No caps: a walk runs

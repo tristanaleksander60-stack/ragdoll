@@ -118,7 +118,10 @@ function LabGarden.build(into: Instance, origin: Vector3): Folder?
 			return pathX
 		end
 		-- Grass and the path (thin, a hair above the ground so nothing flickers).
-		part(folder, "GardenGrass", Vector3.new(width, 0.2, depth), CFrame.new(origin + Vector3.new(xMid, 0.1, zMid)), GRASS, Enum.Material.Grass)
+		local lawn = part(folder, "GardenGrass", Vector3.new(width, 0.2, depth), CFrame.new(origin + Vector3.new(xMid, 0.1, zMid)), GRASS, Enum.Material.Grass)
+		if (require(Shared:WaitForChild("Config")) :: any).GREEN_TILES then
+			lawn.Transparency = 1 -- (the green tiles under it show)
+		end
 		if (require(Shared:WaitForChild("Config")) :: any).LAB_NO_PATHS then
 			-- (0.37.8, owner: no paths in the lab, its garden included)
 		elseif (require(Shared:WaitForChild("Config")) :: any).PATHS then
