@@ -86,19 +86,6 @@ local function isPublic(): boolean
 	return game.PrivateServerId == "" and game.JobId ~= ""
 end
 
--- (23 Nov 2026, owner: "phones leave because they load in twice"): a player who presses Play stays on the server they
--- land on, in a lab of their own there: no second load. Only past Config.SOLO_HERE_MAX players (no lab or no room left)
--- are they sent on to a server of their own. Asked by Lab and here; the first answer stands.
-local staying: { [Player]: boolean } = setmetatable({}, { __mode = "k" }) :: any
-function PortalService.staysHere(player: Player): boolean
-	local known = staying[player]
-	if known == nil then
-		known = #Players:GetPlayers() <= ((require(ReplicatedStorage.Shared.Config) :: any).SOLO_HERE_MAX or 0)
-		staying[player] = known
-	end
-	return known :: boolean
-end
-
 local function beat()
 	local m = map
 	if not m or not isPublic() then
@@ -426,26 +413,7 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 		-- (23 Nov 2026, owner: "join your friends"): to a friend's server (its job id, from Roblox's friends list).
 		go(player, "Multi", { id = arg, name = "", region = "", players = 0, max = 0, t = 0 })
 	elseif kind == "Solo" then
-		-- (23 Nov 2026: SINGLEPLAYER on a multiplayer server: a guest of the shared lab, or a host nobody is with, gets
-		-- their own lab here, without a load. A host with guests goes on alone, so the guests keep the lab.)
-		if isPublic() and player:GetAttribute("SpectateTarget") == nil then
-			local Lab = require(script.Parent:WaitForChild("Lab")) :: any
-			local host = player:GetAttribute("SharedHost") == true
-			local guests = player:GetAttribute("LabGuests")
-			if player:GetAttribute("SharedGuest") ~= nil and Lab.hasFreePlot() then
-				Lab.leaveShared(player)
-				return
-			elseif host and (type(guests) ~= "string" or guests == "") then
-				Lab.leaveShared(player)
-				remote:FireClient(player, "Refused", { text = "This lab is your own again" })
-				return
-			elseif not host and player:GetAttribute("SharedGuest") == nil then
-				remote:FireClient(player, "Refused", { text = "You are in your own lab already" })
-				return
-			end
-		end
 		go(player, "Solo", nil)
-
 	end
 end
 PortalService.onRequestForTest = onRequest
@@ -626,6 +594,7 @@ end
 function PortalService.start()
 	remote = Net.event(Net.Names.Portal)
 	remote.OnServerEvent:Connect(onRequest)
+	refill()
 	-- (A teleport that fails after it set off: the player stays here, so they get a lab.)
 	TeleportService.TeleportInitFailed:Connect(function(player)
 		local tries = passing[player]
@@ -656,7 +625,7 @@ function PortalService.start()
 			end)
 			local data = if okJ and type(join) == "table" then (join :: any).TeleportData else nil
 			local from = if type(data) == "table" then data.from else nil
-			if from ~= "Multi" and from ~= "Shared" and player.FollowUserId == 0 and not PortalService.staysHere(player) then -- (a friend who joined someone through Roblox stays with them)
+			if from ~= "Multi" and from ~= "Shared" and player.FollowUserId == 0 then -- (a friend who joined someone through Roblox stays with them)
 				-- (Owner: "you still come into multiplayer for a second": no body here meanwhile, and the same
 				-- loading screen all the way, PortalUI "Join".)
 				passing[player] = 1
