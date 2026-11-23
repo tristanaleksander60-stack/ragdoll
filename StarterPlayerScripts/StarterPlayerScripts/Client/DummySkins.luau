@@ -25,6 +25,70 @@ DummySkins.TARGET = "rbxassetid://91578612138787" -- the yellow and black crash-
 DummySkins.MATERIAL = if TONE then TONE.material else Enum.Material.SmoothPlastic -- (V10, owner: "exactly the same as their head", not fabric: the head's material, DUMMY_TONE)
 DummySkins.REFLECTANCE = if TONE then (TONE.reflectance or 0) else 0.04 -- (V10: glossy)
 
+-- (23 Nov 2026, owner's pictures of their own ragdoll: glossy grey; a hurt arm or leg turns purple, the struck piece the
+-- darkest, and a badly hurt one wears a white bandage.) On this screen only, from the shared Wounds list; healed or
+-- dead (green) it goes.
+local Anatomy = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Anatomy")) :: any
+local BRUISE = Color3.fromRGB(112, 88, 190)
+local BRUISE_AT: { [string]: string } = { UpperArm = "UpperArm", ArmStump = "UpperArm", Forearm = "LowerArm", Hand = "Hand",
+	Thigh = "UpperLeg", Femoral = "UpperLeg", Shin = "LowerLeg", Foot = "Foot" }
+local function hurtOf(model: Model): ({ [string]: number }, { [string]: string })
+	local count: { [string]: number } = {}
+	if model:GetAttribute("Vital") ~= "Dead" then
+		for _, w in Anatomy.parseWounds(model:GetAttribute("Wounds")) do
+			local side, rest = string.match(w.zone.id, "^(%u%l+)(%u.*)$")
+			local piece = rest and BRUISE_AT[rest]
+			if piece and (side == "Left" or side == "Right") then
+				count[side .. piece] = (count[side .. piece] or 0) + 1
+			end
+		end
+	end
+	local tint: { [string]: number } = {}
+	local wrap: { [string]: string } = {}
+	for _, side in { "Left", "Right" } do
+		for _, limb in { { "UpperArm", "LowerArm", "Hand" }, { "UpperLeg", "LowerLeg", "Foot" } } do
+			local total, worst, most = 0, limb[1], 0
+			for _, piece in limb do
+				local n = count[side .. piece] or 0
+				total += n
+				if n > most then
+					worst, most = piece, n
+				end
+			end
+			if total > 0 then
+				for _, piece in limb do
+					tint[side .. piece] = if (count[side .. piece] or 0) > 0 then 0.95 else 0.68
+				end
+				if total >= 2 then
+					wrap[side .. limb[2]] = worst
+				end
+			end
+		end
+	end
+	return tint, wrap
+end
+-- White wraps round the top of a forearm or a shin.
+local function bandage(limb: BasePart, folder: Instance)
+	for i = 0, 3 do
+		local r = Instance.new("Part")
+		r.Name = "Bandage"
+		r.Shape = Enum.PartType.Cylinder
+		local thick = limb.Size.Y * 0.15
+		local wide = math.max(limb.Size.X, limb.Size.Z) * (1.04 - i * 0.015)
+		r.Size = Vector3.new(thick, wide, wide)
+		r.Color = if i % 2 == 0 then Color3.fromRGB(236, 236, 232) else Color3.fromRGB(222, 222, 216)
+		r.Material = Enum.Material.SmoothPlastic
+		r.CanCollide, r.CanQuery, r.CanTouch, r.Massless, r.Anchored, r.CastShadow = false, false, false, true, false, false
+		r.CFrame = limb.CFrame * CFrame.new(0, limb.Size.Y * (0.42 - i * 0.13), 0) * CFrame.Angles(0, 0, math.rad(90 + (if i % 2 == 0 then 6 else -5)))
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = limb
+		w.Part1 = r
+		w.Parent = r
+		r.Parent = folder
+	end
+end
+
+local template: Instance? = nil
 local template: Instance? = nil
 local skins: { [BasePart]: MeshPart } = {}
 
@@ -59,6 +123,7 @@ local function dress(model: Model)
 	local folder = Instance.new("Model")
 	folder.Name = "Skins"
 	folder:SetAttribute("Worn", true)
+	local tint: { [string]: number } = {}
 	for _, d in model:GetChildren() do
 		if d:IsA("BasePart") and d.Name ~= "Head" and d.Name ~= "HumanoidRootPart" then
 			local src = source:FindFirstChild(d.Name, true)
@@ -94,7 +159,7 @@ local function dress(model: Model)
 				d.LocalTransparencyModifier = 1
 				-- (A limb recoloured later, a frozen one, keeps its skin the same colour.)
 				local recolour = d:GetPropertyChangedSignal("Color"):Connect(function()
-					skin.Color = d.Color
+					skin.Color = d.Color:Lerp(BRUISE, tint[d.Name] or 0)
 				end)
 				skin.Destroying:Once(function()
 					recolour:Disconnect() -- (stripped and dressed again: no pile of old connections)
@@ -185,6 +250,43 @@ local function dress(model: Model)
 		end
 	end
 	folder.Parent = model
+	local function showHurt()
+		if folder.Parent ~= model then
+			return
+		end
+		local wrap: { [string]: string }
+		tint, wrap = hurtOf(model)
+		for _, d in model:GetChildren() do
+			local skin = if d:IsA("BasePart") then skins[d] else nil
+			if skin and d:IsA("BasePart") then
+				skin.Color = d.Color:Lerp(BRUISE, tint[d.Name] or 0)
+			end
+		end
+		local sign = ""
+		for _, name in { "LeftLowerArm", "RightLowerArm", "LeftLowerLeg", "RightLowerLeg" } do
+			if wrap[name] then
+				sign ..= name
+			end
+		end
+		if folder:GetAttribute("Wraps") == sign then
+			return
+		end
+		folder:SetAttribute("Wraps", sign)
+		for _, b in folder:GetChildren() do
+			if b.Name == "Bandage" then
+				b:Destroy()
+			end
+		end
+		for name in wrap do
+			local limb = model:FindFirstChild(name)
+			if limb and limb:IsA("BasePart") then
+				bandage(limb, folder)
+			end
+		end
+	end
+	model:GetAttributeChangedSignal("Wounds"):Connect(showHurt)
+	model:GetAttributeChangedSignal("Vital"):Connect(showHurt)
+	showHurt()
 	-- (V6-5: a body inside a lab creature (the plant, the egg, the washer, the vacuum) is hidden on
 	-- every screen through its skins too: the server sets MachineHidden on the model.)
 	local function machineHide()

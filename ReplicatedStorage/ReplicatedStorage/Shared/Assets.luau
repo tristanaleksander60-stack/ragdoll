@@ -5,12 +5,12 @@
 
 return table.freeze({
 	Faces = table.freeze({
-		Neutral = "rbxassetid://118036776168698",
-		Blink = "rbxassetid://105356191562052",
-		Ouch = "rbxassetid://104706203982986",
+		Neutral = "rbxassetid://94304467307380",
+		Blink = "rbxassetid://106424863891837",
+		Ouch = "rbxassetid://93327759701699",
 		Dizzy = "rbxassetid://116714927219944",
-		Scared = "rbxassetid://117187404699134",
-		Grumpy = "rbxassetid://119712894206796",
+		Scared = "rbxassetid://93327759701699",
+		Grumpy = "rbxassetid://93327759701699",
 	}),
 	Star = "rbxassetid://138586015540643",
 	Recenter = "rbxassetid://74920012383888",
