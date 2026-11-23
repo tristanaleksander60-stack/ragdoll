@@ -19,22 +19,22 @@ local SOFT = true
 if SOFT and not THUMB then
 	local soft = table.clone(V3 :: any)
 	soft.ClockTime = 13
-	soft.Brightness = 1.4
+	soft.Brightness = 1.1
 	soft.Ambient = Color3.fromRGB(122, 126, 134)
-	soft.OutdoorAmbient = Color3.fromRGB(168, 172, 180)
-	soft.ExposureCompensation = 0.15
+	soft.OutdoorAmbient = Color3.fromRGB(150, 154, 160)
+	soft.ExposureCompensation = 0.5
 	soft.EnvironmentDiffuseScale = 1
 	soft.EnvironmentSpecularScale = 0.35
 	soft.ShadowSoftness = 1
 	soft.bloom = 0.04
 	soft.contrast = -0.03
-	soft.saturation = -0.06
-	soft.airDensity = 0.3
-	soft.airOffset = 0.2
-	soft.airHaze = 1.4
+	soft.saturation = -0.12
+	soft.airDensity = 0.33
+	soft.airOffset = 0
+	soft.airHaze = 6
 	soft.airGlare = 0
-	soft.airColor = Color3.fromRGB(205, 210, 220)
-	soft.airDecay = Color3.fromRGB(160, 170, 185)
+	soft.airColor = Color3.fromRGB(222, 229, 235)
+	soft.airDecay = Color3.fromRGB(222, 229, 235)
 	V3 = soft
 end
 
@@ -291,6 +291,33 @@ local function thumbSky()
 	end
 end
 
+-- (23 Nov 2026, owner's picture: "remove the sunshine, this mood with these clouds"): a pale blue-grey sky with soft thin
+-- clouds, no sun disc, a light haze that takes the hills. On this screen only.
+local function overcastSky()
+	local clouds = workspace.Terrain:FindFirstChildOfClass("Clouds")
+	if not clouds then
+		local made = Instance.new("Clouds")
+		made.Parent = workspace.Terrain
+		clouds = made
+	end
+	assert(clouds)
+	clouds.Cover = 0.64
+	clouds.Density = 0.2
+	clouds.Color = Color3.fromRGB(255, 250, 246)
+	clouds.Enabled = true
+	local function sky(d: Instance)
+		if d:IsA("Sky") then
+			d.CelestialBodiesShown = false
+			d.StarCount = 0
+		end
+	end
+	for _, d in Lighting:GetChildren() do
+		sky(d)
+	end
+	Lighting.ChildAdded:Connect(sky)
+	Lighting.ColorShift_Top = Color3.new(0, 0, 0)
+end
+
 -- LOOK_V3's finish: soft shadows, almost no bloom, no sun rays or far blur, a low haze.
 local function finishV3()
 	Lighting.ShadowSoftness = V3.ShadowSoftness
@@ -344,6 +371,8 @@ local function finishV3()
 	air.Decay = V3.airDecay
 	if THUMB then
 		thumbSky()
+	elseif SOFT then
+		overcastSky()
 	end
 end
 
