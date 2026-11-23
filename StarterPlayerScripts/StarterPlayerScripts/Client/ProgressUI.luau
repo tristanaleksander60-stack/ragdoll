@@ -542,58 +542,52 @@ local function build()
 	overlay = o
 end
 
--- V8-1.4 (unlocks that feel like presents): a 1.5 s reveal in the middle of the screen, never in the
--- way (nothing in it takes a tap): the new weapon turning, its name, a rising chord.
+-- (23 Nov 2026, owner: "the notice minimal when you unlock a weapon, on phones too".) One small pill under the top bar for
+-- 1.6 s: the weapon's picture and its name, one quiet tick; the newest replaces the one before; it takes no tap.
 function ProgressUI.reveal(id: string, label: string)
+	local playerGui = player:WaitForChild("PlayerGui")
+	local before = playerGui:FindFirstChild("UnlockReveal")
+	if before then
+		before:Destroy()
+	end
 	local g = Instance.new("ScreenGui")
 	g.Name = "UnlockReveal"
 	g.ResetOnSpawn = false
 	g.DisplayOrder = 40
-	g.IgnoreGuiInset = true
-	local box = Instance.new("Frame")
-	box.Active = false
-	box.AnchorPoint = Vector2.new(0.5, 0.5)
-	box.Position = UDim2.fromScale(0.5, 0.42)
-	box.Size = UDim2.fromOffset(220, 200)
-	box.BackgroundTransparency = 1
-	box.Parent = g
-	local pic = ToolPicture.make(id, UDim2.fromOffset(140, 140), nil, true)
-	pic.AnchorPoint = Vector2.new(0.5, 0)
-	pic.Position = UDim2.new(0.5, 0, 0, 0)
+	g.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
+	local pill = Instance.new("CanvasGroup")
+	pill.AnchorPoint = Vector2.new(0.5, 0)
+	pill.Position = UDim2.new(0.5, 0, 0, 62)
+	pill.Size = UDim2.fromOffset(150, 32)
+	pill.BackgroundColor3 = Color3.fromRGB(18, 20, 26)
+	pill.BackgroundTransparency = 0.25
+	pill.GroupTransparency = 1
+	pill.Active = false
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0.5, 0)
+	corner.Parent = pill
+	local pic = ToolPicture.make(id, UDim2.fromOffset(24, 24))
+	pic.AnchorPoint = Vector2.new(0, 0.5)
+	pic.Position = UDim2.new(0, 8, 0.5, 0)
 	pic.Active = false
-	pic.Parent = box
+	pic.Parent = pill
 	local name = Instance.new("TextLabel")
 	name.BackgroundTransparency = 1
-	name.AnchorPoint = Vector2.new(0.5, 0)
-	name.Position = UDim2.new(0.5, 0, 0, 146)
-	name.Size = UDim2.fromOffset(220, 44)
+	name.Position = UDim2.fromOffset(38, 6)
+	name.Size = UDim2.new(1, -50, 1, -12)
 	name.Font = Enum.Font.FredokaOne
 	name.TextScaled = true
+	name.TextXAlignment = Enum.TextXAlignment.Left
 	name.TextColor3 = Color3.fromRGB(255, 214, 64)
-	name.Text = "NEW: " .. string.upper(label)
-	local stroke = Instance.new("UIStroke")
-	stroke.Thickness = 3
-	stroke.Color = Color3.fromRGB(40, 24, 0)
-	stroke.Parent = name
-	name.Parent = box
-	local scale = Instance.new("UIScale")
-	scale.Scale = 0.3
-	scale.Parent = box
-	g.Parent = player:WaitForChild("PlayerGui")
-	TweenService:Create(scale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
-	task.spawn(function()
-		for i, pitch in { 1, 1.26, 1.5 } do -- (a rising chord: root, third, fifth)
-			C.playSound("tick", pitch)
-			task.wait(0.09)
-			if i == 3 then
-				C.playSound("unlock")
-			end
-		end
-	end)
-	task.delay(1.5, function()
-		local out = TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Scale = 0 })
-		out:Play()
-		out.Completed:Wait()
+	name.Text = label
+	name.Parent = pill
+	pill.Parent = g
+	g.Parent = playerGui
+	TweenService:Create(pill, TweenInfo.new(0.15), { GroupTransparency = 0 }):Play()
+	C.playSound("tick")
+	task.delay(1.6, function()
+		TweenService:Create(pill, TweenInfo.new(0.25), { GroupTransparency = 1 }):Play()
+		task.wait(0.3)
 		g:Destroy()
 	end)
 end
@@ -793,7 +787,6 @@ function ProgressUI.start()
 					then string.format("NEW: %s! It's on your bar. Try it!", string.upper(tostring(d.name)))
 					else string.format("UNLOCKED: %s! Find it in WEAPONS.", string.upper(tostring(d.name))), Color3.fromRGB(120, 230, 140))
 			end
-			C.playSound("reward")
 		end
 	end)
 	remote:FireServer("Hello")
