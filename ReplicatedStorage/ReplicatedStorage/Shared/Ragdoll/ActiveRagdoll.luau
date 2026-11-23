@@ -1102,11 +1102,28 @@ end
 -- leaves it there; dead or out cold it slumps on the seat. A grab, a blast or a hard blow takes it off (seatLost).
 ActiveRagdoll.SEAT_TOP = 1.7
 ActiveRagdoll.SEAT_TIME = 0.9 -- s to sit down or rise
+-- The seat: a bench's (the Seat attribute) or the bike's (SeatOn, BikeService: the floor point under its saddle).
+function ActiveRagdoll.seatOf(rig: any): any
+	local link = rig.model:FindFirstChild("SeatOn")
+	local body = if link and link:IsA("ObjectValue") then link.Value else nil
+	if body and body:IsA("BasePart") then
+		rig.seatFixed = body
+		return body.CFrame * CFrame.new(0, 0, 1.0)
+	end
+	rig.seatFixed = nil
+	return rig.model:GetAttribute("Seat")
+end
 function ActiveRagdoll.seated(rig: any): boolean
-	local seat = rig.model:GetAttribute("Seat")
+	local seat = ActiveRagdoll.seatOf(rig)
 	if typeof(seat) ~= "CFrame" then
 		rig.seatLost = nil
 		return false
+	end
+	if rig.seatFixed then
+		if rig.held > 0 or rig.state == "Frozen" or flat(rig.pelvis.Position - seat.Position).Magnitude > 9 then
+			return false
+		end
+		return true
 	end
 	if rig.seatLost == seat then
 		return false
@@ -1135,7 +1152,7 @@ function ActiveRagdoll.seatHeight(rig: any): number
 end
 -- One step of it; limp: dead or out cold. Also the rising, once Seat is gone. True while it has the body.
 function ActiveRagdoll.holdSeat(rig: any, dt: number, limp: boolean): boolean
-	local seat = rig.model:GetAttribute("Seat")
+	local seat = ActiveRagdoll.seatOf(rig)
 	local on = ActiveRagdoll.seated(rig)
 	if not on and (limp or not rig.seatW or rig.seatLost ~= nil or rig.held > 0) then
 		if rig.seatW then
@@ -1156,6 +1173,9 @@ function ActiveRagdoll.holdSeat(rig: any, dt: number, limp: boolean): boolean
 			end
 		end
 		rig.seatCF = seat
+		if rig.seatFixed then
+			rig.seatW = 1 -- (on the moving bike: never a slow slide onto it)
+		end
 	end
 	local cf: CFrame = rig.seatCF
 	if not limp then
@@ -1181,6 +1201,22 @@ function ActiveRagdoll.holdSeat(rig: any, dt: number, limp: boolean): boolean
 	lift.ForceLimitMode = Enum.ForceLimitMode.Magnitude
 	lift.MaxForce = rig.mass * Config.NORMAL_GRAVITY * 6
 	lift.Position = Vector3.new(x, y, z)
+	if on and rig.seatFixed and rig.seatFixed.Parent then
+		local v = rig.seatFixed.AssemblyLinearVelocity
+		lift.Position += Vector3.new(v.X, 0, v.Z) * 0.18 -- (the lift trails by about this long)
+		-- (The bike moves: the whole body takes its speed and is drawn onto the saddle, so it never trails behind.)
+		local off = Vector3.new(x - rig.pelvis.Position.X, y - rig.pelvis.Position.Y, z - rig.pelvis.Position.Z)
+		local want = rig.seatFixed.AssemblyLinearVelocity + off * 10
+		local change = want - rig.pelvis.AssemblyLinearVelocity
+		if change.Magnitude > 25 then
+			change = change.Unit * 25
+		end
+		for _, p in rig.parts do
+			if p ~= rig.root then
+				p:ApplyImpulse(change * p.Mass * 0.6)
+			end
+		end
+	end
 	lift.Enabled = true
 	rig.heading = flatLook(rig.pelvis)
 	local look = flat(cf.LookVector).Unit

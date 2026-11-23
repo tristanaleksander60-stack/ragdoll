@@ -50,12 +50,14 @@ VehicleService.SPECS = {
 	-- safe since SPECS[kind] returns nil and those systems iterate or key-check.
 	Truck = { label = "Ford Truck", body = Vector3.new(8.4, 2.2, 19), color = Color3.fromRGB(60, 70, 90), wheel = 3.4, lift = 1.2, pad = Vector2.new(68, -32), look = "FordTruck", flip = true } :: Spec,
 	-- (session v842: 5th slot — 70s muscle car. Look model Phoenix Slayer (8x5x20), script-stripped, chassis-compatible wheel names FL/FR/RL/RR.)
+	-- (23 Nov 2026: the owner's bike, a ragdoll rides it round the lab: BikeService.)
+	Bike = { label = "Bike", body = Vector3.new(2.4, 1.6, 6.4), color = Color3.fromRGB(40, 42, 48), wheel = 2.4, lift = 0.85, pad = Vector2.new(27, -12), look = "Bike" } :: Spec,
 	MuscleCar = { label = "Panzer Tank", body = Vector3.new(11, 2.6, 23), color = Color3.fromRGB(90, 96, 80), wheel = 3, lift = 0.9, pad = Vector2.new(66, -60), look = "Panzer" } :: Spec,
 }
 
 -- 0.37.12: the game pass that unlocks each vehicle (the owner creates them on the dashboard and sends the ids).
 -- 0 = no pass yet: free to drive until the id is filled in.
-VehicleService.PASSES = { Car = 0, Truck = 0, MuscleCar = 0 } -- (V10, owner: free for now; the passes: Silvia 2092302232, Ford 2092632252, Panzer 2093220108) -- (Silvia, Ford, Panzer; owner 22 Nov 2026) :: { [string]: number }
+VehicleService.PASSES = { Car = 0, Truck = 0, MuscleCar = 0, Bike = 0 } -- (V10, owner: free for now; the passes: Silvia 2092302232, Ford 2092632252, Panzer 2093220108) -- (Silvia, Ford, Panzer; owner 22 Nov 2026) :: { [string]: number }
 local MarketplaceService = game:GetService("MarketplaceService")
 local owned: { [Player]: { [number]: boolean } } = {}
 game:GetService("Players").PlayerRemoving:Connect(function(p)
@@ -525,7 +527,7 @@ function VehicleService.build(into: Folder, origin: Vector3)
 	holder.Name = "Vehicles"
 	holder.Parent = into
 	local kinds: { Kind } = { "Car", "Truck" }
-	for _, extra in { "Kart", "Jeep", "MuscleCar" } do
+	for _, extra in { "Kart", "Jeep", "MuscleCar", "Bike" } do
 		if (Config.VEHICLES :: any)[extra] and VehicleService.SPECS[extra] then
 			table.insert(kinds, extra)
 		end
@@ -628,6 +630,10 @@ function VehicleService.start()
 		local reach = Lab.PLOT_HALF - 4
 		for _, car in cars do
 			if not car.model.Parent then
+				continue
+			end
+			if car.model:GetAttribute("Ridden") == true then
+				car.idleSince, car.badSince = now, 0 -- (a ragdoll rides it: BikeService)
 				continue
 			end
 			local p = car.body.Position

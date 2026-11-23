@@ -1240,7 +1240,7 @@ local function moodPose(life: Life, now: number, dt: number, moving: boolean): b
 		want = pose(now)
 	end
 	-- (Sitting: the standing joints are welded on each screen by itself, so every screen bends the legs too.)
-	local sits = mood == "Sit" and typeof(model:GetAttribute("Seat")) == "CFrame"
+	local sits = mood == "Sit" and (model:FindFirstChild("SeatOn") ~= nil or typeof(model:GetAttribute("Seat")) == "CFrame")
 	if sits then
 		quick = 5
 		own.satDown = true

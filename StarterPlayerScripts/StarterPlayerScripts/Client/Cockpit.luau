@@ -412,7 +412,7 @@ function Cockpit.start()
 		local character = player.Character
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		local seat = humanoid and humanoid.SeatPart
-		if seat and seat:IsA("VehicleSeat") and seat:GetAttribute("LabCar") ~= nil then
+		if seat and seat:IsA("VehicleSeat") and seat:GetAttribute("LabCar") ~= nil and seat:GetAttribute("LabCar") ~= "Bike" then
 			if not ride then
 				enter(seat)
 			end
