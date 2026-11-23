@@ -180,7 +180,19 @@ local function goShared(player: Player)
 	end
 	remote:FireClient(player, "Going", { kind = "Shared" })
 	local ok, err = pcall(function()
-		local code = sharedTarget() or TeleportService:ReserveServer(game.PlaceId)
+		local code = sharedTarget()
+		if not code then
+			-- (A new shared server: listed at once, so a player picking MULTIPLAYER on another server a moment later
+			-- finds this one instead of making a second.)
+			code = TeleportService:ReserveServer(game.PlaceId)
+			local m = sharedMap
+			if m then
+				pcall(function()
+					-- lihfolk-ignore: datastore-setasync-player (a MemoryStore server listing that expires, not player data)
+					(m :: MemoryStoreSortedMap):SetAsync(code :: string, { n = 0 }, PortalService.EXPIRE)
+				end)
+			end
+		end
 		local options = Instance.new("TeleportOptions")
 		options.ReservedServerAccessCode = code
 		options:SetTeleportData({ from = "Shared", code = code })
@@ -249,10 +261,23 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 	elseif kind == "Own" then
 		go(player, "Own", nil)
 	elseif kind == "JoinShared" then
-		-- (23 Nov 2026: the start menu's MULTIPLAYER: the shared lab on this server, Lab.joinShared.)
-		pcall(function()
-			(require(script.Parent:WaitForChild("Lab")) :: any).joinShared(player)
-		end)
+		-- (23 Nov 2026: the start menu's MULTIPLAYER. Owner: "2 accounts picked multiplayer and did not end up in the same
+		-- lab": they were on two servers. A shared lab already on this server (or this is a shared server, or Studio):
+		-- join it here, Lab.joinShared. Otherwise to the shared-lab server everyone who picks MULTIPLAYER goes to
+		-- (goShared: the fullest one with room, or a new one).)
+		local localHost = false
+		for _, other in Players:GetPlayers() do
+			if other ~= player and other:GetAttribute("SharedHost") == true then
+				localHost = true
+			end
+		end
+		if localHost or RunService:IsStudio() or Workspace:GetAttribute("SharedLab") == true then
+			pcall(function()
+				(require(script.Parent:WaitForChild("Lab")) :: any).joinShared(player)
+			end)
+		else
+			goShared(player)
+		end
 	elseif kind == "Shared" then
 		goShared(player)
 	elseif kind == "Friend" and type(arg) == "string" and #arg <= 64 and string.match(arg, "^[%x%-]+$") then

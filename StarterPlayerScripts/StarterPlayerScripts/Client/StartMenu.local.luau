@@ -297,12 +297,33 @@ local function pickMulti()
 	-- (PortalService "JoinShared", Lab.joinShared); the MULTIPLAYER portal in the lab opens the server hub.
 	note.Text = "Joining the shared lab..."
 	local Net = require(Shared:WaitForChild("Net")) :: any
-	Net.event(Net.Names.Portal):FireServer("JoinShared")
-	-- (Until the server has made this player the host or a guest, so the menu lifts in the right lab.)
+	local portal = Net.event(Net.Names.Portal)
+	-- (No shared lab on this server: the server sends everyone who picks MULTIPLAYER to the same shared-lab
+	-- server; the menu stays up through the teleport. Refused (Studio, a failed teleport): play here.)
+	local going = false
+	local refused = false
+	local conn = portal.OnClientEvent:Connect(function(kind: unknown)
+		if kind == "Going" then
+			going = true
+			note.Text = "Taking you to the multiplayer lab..."
+		elseif kind == "Refused" then
+			refused = true
+		end
+	end)
+	portal:FireServer("JoinShared")
+	-- (Until the server has made this player the host or a guest here, or sends them on.)
 	local t0 = os.clock()
-	while player:GetAttribute("SharedGuest") == nil and player:GetAttribute("SharedHost") ~= true and os.clock() - t0 < 3 do
+	while player:GetAttribute("SharedGuest") == nil and player:GetAttribute("SharedHost") ~= true and not going and not refused and os.clock() - t0 < 4 do
 		task.wait(0.05)
 	end
+	if going then
+		task.delay(15, function()
+			conn:Disconnect()
+			liftWhenReady(nil) -- (the teleport never happened)
+		end)
+		return
+	end
+	conn:Disconnect()
 	liftWhenReady(nil)
 end
 single.Activated:Connect(pickSingle)
