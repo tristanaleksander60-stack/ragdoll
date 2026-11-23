@@ -36,7 +36,7 @@ PortalService.GAP = 3 -- s between two requests from one player
 local ADJECTIVES = { "ZIPPY", "FUZZY", "WOBBLY", "CRISPY", "SNEAKY", "BOUNCY", "SPICY", "GOOFY", "TURBO", "SLEEPY", "MIGHTY", "SQUISHY", "LUCKY", "FROSTY", "JOLLY", "RUSTY" }
 local ANIMALS = { "PUFFIN", "OTTER", "LLAMA", "WOMBAT", "GECKO", "PANDA", "BADGER", "GOOSE", "KOALA", "LOBSTER", "MOOSE", "NARWHAL", "PENGUIN", "RACCOON", "SLOTH", "WALRUS" }
 
-export type Entry = { id: string, name: string, region: string, players: number, max: number, t: number }
+export type Entry = { id: string, name: string, region: string, players: number, max: number, t: number, shared: number? }
 
 -- A server's fun name from its job id (the same on every machine, never typed by anyone).
 function PortalService.nameOf(jobId: string): string
@@ -54,14 +54,24 @@ end
 
 -- What this server tells the list.
 function PortalService.entry(): Entry
-	return { id = jobId(), name = PortalService.nameOf(jobId()), region = region, players = #Players:GetPlayers(), max = Players.MaxPlayers, t = os.time() }
+	-- (shared: how many play in this server's one shared lab, the multiplayer crowd.)
+	local shared = 0
+	for _, p in Players:GetPlayers() do
+		if p:GetAttribute("SharedHost") == true or p:GetAttribute("SharedGuest") ~= nil then
+			shared += 1
+		end
+	end
+	return { id = jobId(), name = PortalService.nameOf(jobId()), region = region, players = #Players:GetPlayers(), max = Players.MaxPlayers, t = os.time(), shared = shared }
 end
 
 -- PLAY NOW's choice: the fullest server with room that is not this one (nil: none).
 function PortalService.fullest(list: { Entry }, selfId: string): Entry?
 	local best: Entry? = nil
 	for _, e in list do
-		if e.id ~= selfId and e.players < e.max and (best == nil or e.players > (best :: Entry).players) then
+		-- (The most players in a shared lab first, then the most players: 23 Nov 2026, "nobody feels alone".)
+		local b = best
+		local better = b == nil or (e.shared or 0) > (b.shared or 0) or ((e.shared or 0) == (b.shared or 0) and e.players > b.players)
+		if e.id ~= selfId and e.players < e.max and better then
 			best = e
 		end
 	end
@@ -265,18 +275,19 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 		-- lab": they were on two servers. A shared lab already on this server (or this is a shared server, or Studio):
 		-- join it here, Lab.joinShared. Otherwise to the shared-lab server everyone who picks MULTIPLAYER goes to
 		-- (goShared: the fullest one with room, or a new one).)
-		local localHost = false
-		for _, other in Players:GetPlayers() do
-			if other ~= player and other:GetAttribute("SharedHost") == true then
-				localHost = true
-			end
-		end
-		if localHost or RunService:IsStudio() or Workspace:GetAttribute("SharedLab") == true then
+		-- (23 Nov 2026, owner: "multiplayer sends you to the fullest server already, nobody feels alone; switching
+		-- servers must always land you in the same lab"): a fuller public server with room: there (TeleportData from
+		-- "Multi"; on arrival Lab puts every multiplayer arrival in that server's one shared lab). Otherwise this
+		-- server is the fullest: the shared lab here.
+		local target = if RunService:IsStudio() then nil else PortalService.fullest(PortalService.list(), jobId())
+		local here = PortalService.entry()
+		local there = if target then (target.shared or 0) else -1
+		if target and (there > (here.shared or 0) or (there == (here.shared or 0) and target.players >= here.players)) then
+			go(player, "Multi", target)
+		else
 			pcall(function()
 				(require(script.Parent:WaitForChild("Lab")) :: any).joinShared(player)
 			end)
-		else
-			goShared(player)
 		end
 	elseif kind == "Shared" then
 		goShared(player)

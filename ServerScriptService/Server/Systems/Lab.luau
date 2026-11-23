@@ -1517,6 +1517,11 @@ function Lab.build()
 			Workspace:SetAttribute("SharedLab", true)
 		end
 		claim(player)
+		-- (23 Nov 2026, owner: "switching servers in multiplayer must always put you in the same lab"): everyone who
+		-- arrives through multiplayer (PLAY NOW, JOIN, a friend, the start menu) joins this server's one shared lab.
+		if type(data) == "table" and data.from == "Multi" then
+			Lab.joinShared(player)
+		end
 		-- Every avatar starts in its own lab (the plaza when there is none; a shared server's guests in the host's).
 		player.CharacterAdded:Connect(function(character)
 			local plot = plotOf[player] or guestOf[player]
