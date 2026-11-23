@@ -152,6 +152,10 @@ SLOTS.Shoot = function(ctx)
 	return slot(1, 1, UDim2.new(1, -28, 1, -250), 92, 92)
 end
 
+-- 23 Nov 2026: the small first-person eye (touch), in LAB VIEW's old corner.
+SLOTS.Eye = function()
+	return slot(1, 0, UDim2.new(1, -12, 0, 10), 44, 44)
+end
 -- 23 Nov 2026: RELOAD (touch, a gun with a magazine): over the jump button, beside the action button.
 SLOTS.Reload = function(ctx)
 	if ctx.phone then

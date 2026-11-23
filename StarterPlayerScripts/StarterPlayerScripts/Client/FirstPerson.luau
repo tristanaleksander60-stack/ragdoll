@@ -101,7 +101,52 @@ local function autoClose()
 	end
 end
 
+-- (23 Nov 2026, owner: "a first person button on phones that does not disturb".) A small see-through eye in the top right
+-- corner, touch only, the player view only; a little brighter while first person is on.
+local function touchButton()
+	local HudSlots = require(Client:WaitForChild("HudSlots")) :: any
+	local Icons = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("DrawnIcons")) :: any
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "FirstPersonTouch"
+	gui.ResetOnSpawn = false
+	gui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
+	gui.DisplayOrder = 5
+	local b = Instance.new("ImageButton")
+	b.Name = "Eye"
+	b.BackgroundColor3 = Color3.fromRGB(18, 20, 26)
+	b.Image = ""
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0.5, 0)
+	corner.Parent = b
+	local icon = Instance.new("ImageLabel")
+	icon.Name = "Icon"
+	icon.BackgroundTransparency = 1
+	icon.AnchorPoint = Vector2.new(0.5, 0.5)
+	icon.Position = UDim2.fromScale(0.5, 0.5)
+	icon.Size = UDim2.fromScale(0.62, 0.62)
+	icon.ScaleType = Enum.ScaleType.Fit
+	icon.Image = Icons.ASSETS.eye or ""
+	icon.Parent = b
+	b.Activated:Connect(FirstPerson.toggle)
+	b.Parent = gui
+	local function look()
+		gui.Enabled = ViewMode.isTouch() and not ViewMode.isLab() and player:GetAttribute("Building") ~= true
+		b.BackgroundTransparency = if on then 0.3 else 0.65
+		icon.ImageTransparency = if on then 0 else 0.3
+	end
+	ViewMode.onChanged(look)
+	FirstPerson.onChanged(look)
+	player:GetAttributeChangedSignal("Building"):Connect(look)
+	HudSlots.watch(function()
+		HudSlots.apply(b, "Eye", HudSlots.context(ViewMode.isTouch(), ViewMode.isLab()))
+		look()
+	end)
+	gui.Parent = player:WaitForChild("PlayerGui")
+	look()
+end
+
 function FirstPerson.start()
+	task.spawn(touchButton)
 	task.spawn(autoClose)
 	-- (0.37.20: while any window is open in first person, the mouse is free to click it: a Modal button, the
 	-- engine's own way to unlock a locked mouse; it locks again when the window closes.)
