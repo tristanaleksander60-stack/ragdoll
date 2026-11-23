@@ -410,10 +410,14 @@ function BodyCard.show(model: Model?)
 	local u = ui or build()
 	ui = u
 	redraw()
-	local base = (u.scale:GetAttribute("Base") :: number?) or 1
-	u.scale.Scale = base * 0.85
-	u.gui.Enabled = true
-	TweenService:Create(u.scale, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = base }):Play()
+	-- (23 Nov 2026, bug: the very first time its size was not known yet, and it opened at full size: huge on a phone.
+	-- Then it waits for BodyCard.place, which shows it at its size.)
+	local base = u.scale:GetAttribute("Base") :: number?
+	if base then
+		u.scale.Scale = base * 0.85
+		u.gui.Enabled = true
+		TweenService:Create(u.scale, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = base }):Play()
+	end
 	task.spawn(function()
 		while token == mine and body == model do
 			task.wait(BodyCard.REFRESH)
@@ -440,6 +444,9 @@ function BodyCard.place(anchor: Vector2, position: UDim2, fit: number)
 	if u.scale:GetAttribute("Base") ~= fit then
 		u.scale:SetAttribute("Base", fit)
 		u.scale.Scale = fit
+	end
+	if body and not u.gui.Enabled then
+		u.gui.Enabled = true
 	end
 end
 
