@@ -18,7 +18,7 @@ local BodyCard = {}
 BodyCard.W = 230
 BodyCard.H = 356
 BodyCard.REFRESH = 0.25
-BodyCard.MAX_DOTS = 14
+BodyCard.MAX_DOTS = 80
 
 local CARD = Color3.fromRGB(38, 38, 42)
 local SHELL = Color3.fromRGB(120, 126, 138)
@@ -286,6 +286,7 @@ local function redraw()
 	-- The hurt segments, and a dot for every shot (blows bruise: no dot).
 	local hurt: { [string]: boolean } = {}
 	local used = 0
+	local same: { [string]: number } = {} -- (shots in one second on one spot: each its own place)
 	local first = math.max(1, #wounds - BodyCard.MAX_DOTS + 1)
 	for i, w in wounds do
 		local seg = segmentOf(w.zone.id)
@@ -295,8 +296,11 @@ local function redraw()
 			used += 1
 			local d = u.dots[used]
 			local pos, size = piece.Position, piece.Size
-			local fx = 0.25 + 0.5 * spot(w.at, 1)
-			local fy = 0.2 + 0.6 * spot(w.at, 2)
+			local key = seg .. w.at
+			local nth = same[key] or 0
+			same[key] = nth + 1
+			local fx = 0.2 + 0.6 * spot(w.at, 1 + nth * 2)
+			local fy = 0.12 + 0.76 * spot(w.at, 2 + nth * 2)
 			d.Position = UDim2.fromOffset(pos.X.Offset + size.X.Offset * fx, pos.Y.Offset + size.Y.Offset * fy)
 			d.Visible = true
 		end

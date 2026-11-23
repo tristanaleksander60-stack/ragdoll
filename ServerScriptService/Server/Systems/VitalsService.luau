@@ -66,7 +66,7 @@ local DEAD_HOLD = 60 -- s a dead body lies still before it goes (round 4, M10: 6
 VitalsService.DEAD_HOLD = DEAD_HOLD
 local INSTANT_LETHAL_POWER = 0.6 -- a blade or better to the brain: dead this update (round 4, M10)
 local HEADSHOT = Anatomy.HEADSHOT -- a gun round there: dead this update, whatever its power
-local MAX_WOUNDS = 8 -- kept on the model (the monitor's list)
+local MAX_WOUNDS = 80 -- (23 Nov 2026, owner: every shot stays visible; it was 8) kept on the model (the monitor's list)
 local INFO_GAP = 0.08 -- s: at most this often a line to one player (a shotgun's pellets: one line)
 
 -- Every round, bolt or blade that lands weakens the heart a little for good (round 3, M2: the
@@ -481,7 +481,7 @@ end
 -- A hit on a body: opens a wound on what is under the point. Returns the line for the hitter (and
 -- the zone), or nil when it was no body.
 -- power: how hard the wound is (Toys: wound; 1 = a pistol round).
-local MAX_KEPT = 24 -- wounds kept per body
+local MAX_KEPT = 80 -- wounds kept per body
 
 -- At most MAX_KEPT wounds. What goes first: the oldest that no longer bleeds, then the oldest blow,
 -- and only then the oldest wound; so a flurry of pokes never pushes out the open wound that is

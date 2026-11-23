@@ -19,7 +19,7 @@ local BulletHoles = {}
 
 BulletHoles.MAX_WORLD = 60 -- holes in the world on this screen
 BulletHoles.WORLD_HOLD = 25 -- s a hole in the world stays
-BulletHoles.MAX_PER_BODY = 8
+BulletHoles.MAX_PER_BODY = 80 -- (23 Nov 2026, owner: old shots are never deleted; it was 8)
 BulletHoles.BLEEDS_FOR = 60 -- s a hole on a body is a place it bleeds from
 BulletHoles.SKIN_FIT = 0.86 -- (0.36.6: the ellipse a hole sits on, as a share of the skin box; well inside, since the sculpted mesh is thinner than its box)
 BulletHoles.SKIN_SINK = 0.06 -- studs a hole ball sits under that ellipse
@@ -278,7 +278,21 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 	do
 		local cam = workspace.CurrentCamera
 		if skin and cam and worldNormal:Dot((cam.CFrame.Position - worldAt).Unit) < 0.1 then
-			return part
+			-- (23 Nov 2026, owner: every shot must show: a graze goes a little further in, where the limb faces you.)
+			local eye = cam.CFrame.Position
+			local aim = worldAt:Lerp(skin.CFrame:PointToWorldSpace(Vector3.new(0, skin.CFrame:PointToObjectSpace(worldAt).Y, 0)), 0.45)
+			local params = RaycastParams.new()
+			params.FilterType = Enum.RaycastFilterType.Include
+			params.FilterDescendantsInstances = { skin }
+			local was = skin.CanQuery
+			skin.CanQuery = true
+			local hit = workspace:Raycast(eye, (aim - eye) * 1.2, params)
+			skin.CanQuery = was
+			if not hit then
+				return part
+			end
+			worldAt = hit.Position
+			worldNormal = hit.Normal
 		end
 	end
 	-- (V10 phase 2, owner: "the bullet holes and blood still sit out on the ragdoll like bubbles": the sunk balls
