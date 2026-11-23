@@ -129,18 +129,88 @@ local lastAsk: { [Player]: number } = {}
 local lastList: { [Player]: number } = {}
 local portalTouch: { { [Player]: number } } = {} -- (each portal's last touch per player; cleared on leave)
 
-local function go(player: Player, how: string, target: Entry?)
+-- (23 Nov 2026, owner: "let me spectate people in singleplayer"): a server of one's own is reserved, so only its
+-- access code opens it. Whoever reserves it lists the code under the player's id (server memory only, never sent
+-- to a client); the server itself keeps it fresh while they are in it. Read only for the owner.
+PortalService.SOLO_MAP = "SoloServers_v1"
+PortalService.SOLO_EXPIRE = 150
+local soloMap: MemoryStoreSortedMap? = nil
+local function listSolo(player: Player, code: string, sid: string)
+	local m = soloMap
+	if m then
+		pcall(function()
+			-- lihfolk-ignore: datastore-setasync-player (a MemoryStore listing that expires, not player data)
+			m:SetAsync(tostring(player.UserId), { code = code, sid = sid, n = player.DisplayName, t = os.time() }, PortalService.SOLO_EXPIRE)
+		end)
+	end
+end
+-- Who is in a server of their own now (for the owner's admin menu; no codes in it).
+function PortalService.soloList(): { { id: number, name: string } }
+	local out = {}
+	local m = soloMap
+	local ok, items = pcall(function()
+		return (m :: any):GetRangeAsync(Enum.SortDirection.Ascending, 100)
+	end)
+	if ok and type(items) == "table" then
+		for _, it in items :: any do
+			local id = tonumber(it.key)
+			if id and type(it.value) == "table" then
+				table.insert(out, { id = id, name = tostring(it.value.n) })
+			end
+		end
+	end
+	return out
+end
+-- The owner goes to watch `userId` in their server. Returns what to tell the owner, or nil when on the way.
+function PortalService.spectateSolo(owner: Player, userId: number): string?
+	if RunService:IsStudio() then
+		return "Teleports work in the live game (not in Studio)"
+	end
+	local ok, entry = pcall(function()
+		return (soloMap :: any):GetAsync(tostring(userId))
+	end)
+	if not ok or type(entry) ~= "table" or type(entry.code) ~= "string" then
+		return "They are not in singleplayer any more. REFRESH the list"
+	end
+	local options = Instance.new("TeleportOptions")
+	options.ReservedServerAccessCode = entry.code
+	options:SetTeleportData({ from = "Spectate", target = userId })
+	remote:FireClient(owner, "Going", { kind = "Join" })
+	local sent = pcall(TeleportService.TeleportAsync, TeleportService, game.PlaceId, { owner }, options)
+	if not sent then
+		remote:FireClient(owner, "Refused", { text = "Could not get there. Try again!" })
+	end
+	return nil
+end
+
+local passing: { [Player]: number } = {} -- (on the way from a public server to their own: teleports tried)
+
+-- A player whose way on failed stays after all: a body and a lab here.
+local function stayHere(player: Player)
+	if passing[player] then
+		passing[player] = nil
+		pcall(function()
+			player:LoadCharacter()
+		end)
+	end
+	pcall(function()
+		(require(script.Parent:WaitForChild("Lab")) :: any).ensureLab(player)
+	end)
+end
+
+local function go(player: Player, how: string, target: Entry?, auto: boolean?)
 	if RunService:IsStudio() then
 		remote:FireClient(player, "Refused", { text = "Teleports work in the live game (not in Studio)" })
 		return
 	end
-	remote:FireClient(player, "Going", { kind = how })
+	remote:FireClient(player, "Going", { kind = if auto then "Join" else how })
 	local options = Instance.new("TeleportOptions")
 	options:SetTeleportData({ from = how })
 	local ok, err = pcall(function()
 		if how == "Solo" or how == "Own" then
-			local code = TeleportService:ReserveServer(game.PlaceId)
+			local code, sid = TeleportService:ReserveServer(game.PlaceId)
 			options.ReservedServerAccessCode = code
+			task.spawn(listSolo, player, code, sid)
 		elseif target then
 			options.ServerInstanceId = target.id
 		end
@@ -148,9 +218,7 @@ local function go(player: Player, how: string, target: Entry?)
 	end)
 	if not ok then
 		log.warn("teleport failed: " .. tostring(err))
-		pcall(function()
-			(require(script.Parent:WaitForChild("Lab")) :: any).ensureLab(player) -- (still here: a lab after all)
-		end)
+		stayHere(player) -- (a lab after all)
 		remote:FireClient(player, "Refused", { text = "Could not get there. Try again!" })
 	end
 end
@@ -498,17 +566,25 @@ function PortalService.start()
 	remote.OnServerEvent:Connect(onRequest)
 	-- (A teleport that fails after it set off: the player stays here, so they get a lab.)
 	TeleportService.TeleportInitFailed:Connect(function(player)
-		pcall(function()
-			(require(script.Parent:WaitForChild("Lab")) :: any).ensureLab(player)
-		end)
+		local tries = passing[player]
+		if tries and tries < 2 and player.Parent then
+			passing[player] = tries + 1
+			task.wait(1)
+			go(player, "Solo", nil, true)
+			return
+		end
+		remote:FireClient(player, "Refused", { text = "Could not get there. Try again!" })
+		stayHere(player)
 	end)
 	if not RunService:IsStudio() then
 		local ok, m = pcall(MemoryStoreService.GetSortedMap, MemoryStoreService, PortalService.MAP)
 		map = if ok then m else nil
 		local ok2, m2 = pcall(MemoryStoreService.GetSortedMap, MemoryStoreService, PortalService.SHARED_MAP)
 		sharedMap = if ok2 then m2 else nil
+		local ok3, m3 = pcall(MemoryStoreService.GetSortedMap, MemoryStoreService, PortalService.SOLO_MAP)
+		soloMap = if ok3 then m3 else nil
 	end
-	Players.PlayerAdded:Connect(function(player)
+	local function added(player: Player)
 		-- (23 Nov 2026, owner: "you load into singleplayer automatically: nobody else in your server; multiplayer only
 		-- through the portal"): a player who comes in through Roblox's Play onto a public server (the multiplayer
 		-- servers) goes straight on to a server of their own. Arrivals through the multiplayer portal stay.
@@ -519,7 +595,59 @@ function PortalService.start()
 			local data = if okJ and type(join) == "table" then (join :: any).TeleportData else nil
 			local from = if type(data) == "table" then data.from else nil
 			if from ~= "Multi" and from ~= "Shared" and player.FollowUserId == 0 then -- (a friend who joined someone through Roblox stays with them)
-				task.spawn(go, player, "Solo", nil)
+				-- (Owner: "you still come into multiplayer for a second": no body here meanwhile, and the same
+				-- loading screen all the way, PortalUI "Join".)
+				passing[player] = 1
+				local function noBody(character: Model)
+					task.defer(function()
+						if passing[player] and character.Parent then
+							character:Destroy()
+						end
+					end)
+				end
+				player.CharacterAdded:Connect(noBody)
+				if player.Character then
+					noBody(player.Character)
+				end
+				task.spawn(go, player, "Solo", nil, true)
+			end
+		elseif not RunService:IsStudio() then
+			-- The owner come to watch someone in their own server (checked here, not by what the data says).
+			local okJ, join = pcall(function()
+				return player:GetJoinData()
+			end)
+			local data = if okJ and type(join) == "table" then (join :: any).TeleportData else nil
+			local Owner = require(script.Parent:WaitForChild("Owner")) :: any
+			if type(data) == "table" and data.from == "Spectate" and type(data.target) == "number" and Owner.isOwner(player) then
+				player:SetAttribute("SpectateTarget", data.target)
+				local function unseen(character: Model)
+					local root = character:WaitForChild("HumanoidRootPart", 10)
+					if root and root:IsA("BasePart") then
+						root.Anchored = true
+						character:PivotTo(CFrame.new(0, 600, 0))
+					end
+					local function hide(d: Instance)
+						if d:IsA("BasePart") or d:IsA("Decal") then
+							d.Transparency = 1
+						end
+						if d:IsA("BasePart") then
+							d.CanCollide = false
+							d.CanQuery = false
+						end
+					end
+					for _, d in character:GetDescendants() do
+						hide(d)
+					end
+					character.DescendantAdded:Connect(hide)
+					local humanoid = character:FindFirstChildOfClass("Humanoid")
+					if humanoid then
+						humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+					end
+				end
+				player.CharacterAdded:Connect(unseen)
+				if player.Character then
+					task.spawn(unseen, player.Character)
+				end
 			end
 		end
 		if not sharedCode then
@@ -538,10 +666,38 @@ function PortalService.start()
 				region = code
 			end
 		end
-	end)
+	end
+	Players.PlayerAdded:Connect(added)
+	-- (Bug, 23 Nov 2026: the first player of a fresh server is often in before this starts; they were never sent
+	-- on, and had no lab.)
+	for _, player in Players:GetPlayers() do
+		task.spawn(added, player)
+	end
+	-- A server of someone's own keeps its listing fresh.
+	if not RunService:IsStudio() and game.PrivateServerId ~= "" then
+		task.spawn(function()
+			local codes: { [number]: string } = {}
+			while true do
+				for _, p in Players:GetPlayers() do
+					if not codes[p.UserId] then
+						local ok, entry = pcall(function()
+							return (soloMap :: any):GetAsync(tostring(p.UserId))
+						end)
+						if ok and type(entry) == "table" and entry.sid == game.PrivateServerId then
+							codes[p.UserId] = entry.code
+						end
+					else
+						listSolo(p, codes[p.UserId], game.PrivateServerId)
+					end
+				end
+				task.wait(60)
+			end
+		end)
+	end
 	Players.PlayerRemoving:Connect(function(player)
 		lastAsk[player] = nil
 		lastList[player] = nil
+		passing[player] = nil
 		for _, t in portalTouch do
 			t[player] = nil
 		end

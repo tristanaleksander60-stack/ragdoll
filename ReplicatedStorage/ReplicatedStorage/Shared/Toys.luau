@@ -327,13 +327,14 @@ local CATEGORIES: { Category } = { "Melee", "Guns", "Explosives", "Specials" }
 -- Start bar v9 (Config.START_BAR_V9, research 21 Nov 2026: the biggest ragdoll game now, 125K players,
 -- 19 min sessions, starts every player with a full kit with 3 guns): all 6 slots full: two guns (the
 -- Popper and the Buzz Blaster), Grab, Bat, the Grenade and Launch. The Rocket stays among the hardest.
-local DEFAULT_LOADOUT = if Config.START_BAR_V9 then (if Config.BOW then { "Blaster", "SMG", "Grab", "Wand", "Grenade", "Bow" } else { "Blaster", "SMG", "Grab", "Wand", "Grenade", "Launch" })
+local DEFAULT_LOADOUT = if Config.START_BAR_V9 then { "Blaster", "Grab", "Grenade" }
 	elseif Config.V8_START_BAR then { "Blaster", "Grab", "Bat", "Grenade", "Launch" }
 	else { "Blaster", "Grab", "Punch" }
 -- How many slots the bar has (a fixed number, not the starting bar's length: round 5).
 -- (Phase 0, 19 Nov: back to 6. The cut to 3 in 0.16 made every new weapon a "pick a slot to
 -- replace" step right when WEAPONS unlocks; it lines up with the ~19 s session drop: AUDIT.md 1.3.)
-local SLOTS = 6
+-- (23 Nov 2026, owner: "only 3 slots in the hotbar, and only the next locked weapon".)
+local SLOTS = 3
 
 -- V9-3b (owner, 21 Nov 2026: "bigger gaps between unlocking new weapons"; Config.LADDER_V9): the
 -- first rungs stay as they are (up to LADDER_V9_KEEP: the first presents in the first minutes), then

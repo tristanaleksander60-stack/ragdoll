@@ -53,17 +53,40 @@ local function blackScreen(text: string): ScreenGui
 	return g
 end
 
+-- (23 Nov 2026, owner: "GOING BACK TO SOLO comes up when you join"): the way on to your own server at a join is one
+-- loading screen: the same look as ReplicatedFirst's FirstCover, here and through the teleport.
+local function joinScreen(): ScreenGui
+	local g = blackScreen("Hyper Ragdoll Physics")
+	g.Name = "FirstCover"
+	g.DisplayOrder = 200
+	local f = g:FindFirstChildOfClass("Frame") :: Frame
+	f.BackgroundColor3 = Color3.fromRGB(16, 18, 24)
+	local l = f:FindFirstChildOfClass("TextLabel") :: TextLabel
+	l.Position = UDim2.fromScale(0.5, 0.45)
+	l.TextColor3 = Color3.fromRGB(240, 240, 240)
+	local sub = l:Clone()
+	sub.AnchorPoint = Vector2.new(0.5, 0)
+	sub.Position = UDim2.fromScale(0.5, 0.53)
+	sub.Size = UDim2.new(0.6, 0, 0, 26)
+	sub.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
+	sub.TextColor3 = Color3.fromRGB(190, 190, 200)
+	sub.Text = "Loading..."
+	sub.Parent = f
+	return g
+end
+
 local black: ScreenGui? = nil
 local function going(kind: string)
 	local text = if kind == "Solo" then "GOING BACK TO SOLO" elseif kind == "Back" then "BACK TO SINGLEPLAYER" elseif kind == "Own" then "GOING TO YOUR OWN SERVER" else "GOING TO MULTIPLAYER"
 	if black then
 		black:Destroy() -- (one black screen at a time)
 	end
-	local g = blackScreen(text)
+	local join = kind == "Join"
+	local g = if join then joinScreen() else blackScreen(text)
 	g.Parent = player:WaitForChild("PlayerGui")
 	black = g
 	pcall(function()
-		TeleportService:SetTeleportGui(blackScreen(text))
+		TeleportService:SetTeleportGui(if join then joinScreen() else blackScreen(text))
 	end)
 	Controller.closeAll()
 	task.delay(12, function()

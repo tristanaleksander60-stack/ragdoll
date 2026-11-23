@@ -1591,6 +1591,10 @@ function Lab.build()
 		-- who stay. If that teleport fails, PortalService calls Lab.ensureLab.)
 		local passingThrough = not multi and player.FollowUserId == 0 and game.PrivateServerId == "" and game.JobId ~= ""
 			and not game:GetService("RunService"):IsStudio() and not (type(data) == "table" and data.from == "Shared")
+		-- (The owner come to watch someone in singleplayer: no lab of theirs built there.)
+		if type(data) == "table" and data.from == "Spectate" and (require(script.Parent:WaitForChild("Owner")) :: any).isOwner(player) then
+			passingThrough = true
+		end
 		if not (multi and Lab.joinShared(player)) then
 			if not passingThrough then
 				claim(player)

@@ -53,6 +53,9 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 local t0 = os.clock()
 local function ready(): boolean
+	if player:GetAttribute("SpectateTarget") ~= nil then
+		return true -- (the owner, here only to watch)
+	end
 	local origin = player:GetAttribute("LabOrigin")
 	if typeof(origin) ~= "Vector3" then
 		return false

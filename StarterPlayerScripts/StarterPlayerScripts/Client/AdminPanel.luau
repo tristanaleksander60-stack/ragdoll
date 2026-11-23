@@ -68,6 +68,7 @@ local function page(parent: Instance, name: string, order: number): Frame
 	return f
 end
 
+local onSolo: { ({ any }) -> () } = {}
 local orderOf: { [Instance]: number } = {}
 local function nextOrder(p: Instance): number
 	orderOf[p] = (orderOf[p] or 0) + 1
@@ -217,6 +218,31 @@ local function buildPlayers(p: Frame)
 			require(Client:WaitForChild("Spectate")).watch(who)
 		end
 	end)
+	if Players.LocalPlayer:GetAttribute("IsOwner") == true then
+		header(p, "WATCH SINGLEPLAYER (ONLY YOU)")
+		local top = grid(p, 1)
+		button(top, "REFRESH THE LIST", "info", function()
+			send("SoloList")
+		end)
+		local line = caption(p, "Tap REFRESH to see who plays alone")
+		local rows = grid(p, 3)
+		table.insert(onSolo, function(list: { any })
+			for _, c in rows:GetChildren() do
+				if c:IsA("GuiObject") then
+					c:Destroy()
+				end
+			end
+			line.Text = if #list > 0 then #list .. " playing alone. Tap one to watch" else "Nobody plays alone right now"
+			for _, e in list do
+				local id = tonumber(e.id)
+				if id and id ~= Players.LocalPlayer.UserId then
+					button(rows, tostring(e.name), "neutral", function()
+						send("SpectateSolo", id)
+					end)
+				end
+			end
+		end)
+	end
 	header(p, "FREE WEAPON TRY (2 MIN)")
 	local tr = grid(p, 3)
 	for _, id in AdminPanel.TRIALS do
@@ -426,6 +452,10 @@ function AdminPanel.build()
 			adminList = (data :: any).admins or {}
 			for _, fn in onPlayers do
 				fn()
+			end
+		elseif kind == "SoloList" and type(data) == "table" then
+			for _, fn in onSolo do
+				fn(data :: any)
 			end
 		elseif kind == "Debug" and type(data) == "table" then
 			serverDebug = data :: any

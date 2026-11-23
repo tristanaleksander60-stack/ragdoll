@@ -19,7 +19,7 @@ local KitStyle = require(script.Parent:WaitForChild("KitStyle"))
 
 local NextUnlocks = {}
 
-NextUnlocks.SHOWN = 3
+NextUnlocks.SHOWN = 1 -- (23 Nov 2026, owner: only the next one; was 3)
 NextUnlocks.STACK_GAP = 4 -- px between the small cards in a column (a phone)
 
 local GOLD = Theme.Palette.gold

@@ -54,9 +54,8 @@ function LoadoutStore.withWand(list: { string }?): { string }?
 		out[i] = "Wand"
 	elseif #out < Toys.SLOTS then
 		table.insert(out, "Wand")
-	else
-		out[#out] = "Wand"
 	end
+	-- (23 Nov 2026: with 3 slots a full bar stays the player's own.)
 	return out
 end
 

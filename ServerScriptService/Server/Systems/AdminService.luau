@@ -465,7 +465,7 @@ end
 -- (21 Nov 2026, the owner: admins (Admins) use the menu too. These stay the owner's: settings kept
 -- for every server, the director, and who is admin.)
 AdminService.OWNER_ONLY = table.freeze({
-	FreePasses = true, Theme = true, AllWeapons = true, AdminSet = true,
+	SoloList = true, SpectateSolo = true, FreePasses = true, Theme = true, AllWeapons = true, AdminSet = true,
 	LaunchDummy = true, Shot = true, DirectorSave = true, DirectorGet = true,
 }) :: { [string]: boolean }
 -- (What an admin may never do to the owner or another admin.)
@@ -514,6 +514,29 @@ function AdminService.request(player: Player, kind: unknown, arg: unknown): bool
 	if kind == "Debug" then
 		remote:FireClient(player, "Debug", AdminTools.debug()) -- (not paced: the tab polls it)
 		return true
+	end
+	if kind == "SoloList" or kind == "SpectateSolo" then
+		-- (23 Nov 2026, the owner: watch people in singleplayer, each in a server of their own.)
+		local at = os.clock()
+		if at - (last[player] or -math.huge) < GAP then
+			return false
+		end
+		last[player] = at
+		local Portal = require(script.Parent:WaitForChild("PortalService")) :: any
+		if kind == "SoloList" then
+			remote:FireClient(player, "SoloList", Portal.soloList())
+			return true
+		end
+		if type(arg) ~= "number" then
+			return false
+		end
+		local why = Portal.spectateSolo(player, arg)
+		if why then
+			remote:FireClient(player, "Notice", why)
+		else
+			log.info(string.format("%s (%d) goes to watch %d in singleplayer", player.Name, player.UserId, arg))
+		end
+		return why == nil
 	end
 	if kind == "Spectate" then
 		return spectate(player, arg) -- (not paced: STOP must always work at once)

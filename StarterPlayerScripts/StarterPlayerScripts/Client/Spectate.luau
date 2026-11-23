@@ -206,6 +206,9 @@ function Spectate.stop()
 		follow:Disconnect()
 		follow = nil
 	end
+	if player:GetAttribute("SpectateTarget") ~= nil then
+		Net.event(Net.Names.Portal):FireServer("Solo") -- (come only to watch: back to a server of your own)
+	end
 	PlotPrivacy.setPeek(nil)
 	admin():FireServer("Spectate", nil)
 	local camera = workspace.CurrentCamera
@@ -241,6 +244,26 @@ function Spectate.next()
 end
 
 function Spectate.start()
+	-- (23 Nov 2026: the owner sent into someone's singleplayer server watches them at once.)
+	task.spawn(function()
+		local t0 = os.clock()
+		while os.clock() - t0 < 30 do
+			local id = player:GetAttribute("SpectateTarget")
+			local who = if type(id) == "number" then Players:GetPlayerByUserId(id) else nil
+			if who and who.Character then
+				Spectate.watch(who)
+				return
+			end
+			if type(id) ~= "number" and os.clock() - t0 > 5 then
+				return
+			end
+			task.wait(0.5)
+		end
+		if player:GetAttribute("SpectateTarget") ~= nil then
+			Toast.show("They left")
+			Net.event(Net.Names.Portal):FireServer("Solo")
+		end
+	end)
 	ViewMode.onChanged(function()
 		if target and not switching and ViewMode.isLab() then
 			Spectate.stop() -- (the owner went to the lab view: the watching ends)
