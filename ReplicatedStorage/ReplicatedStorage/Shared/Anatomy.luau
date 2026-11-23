@@ -124,7 +124,7 @@ function Anatomy.cutOf(name: string): { joint: string, parts: { string }, label:
 end
 
 -- What a round in a zone cuts off once enough rounds land there, and how many it takes.
-Anatomy.SHOTS_TO_CUT = table.freeze({ Arm = 4, Forearm = 3, Hand = 2, Leg = 5, Shin = 3, Foot = 2, Waist = 3, Head = 2 })
+Anatomy.SHOTS_TO_CUT = table.freeze({ Arm = 6, Forearm = 5, Hand = 5, Leg = 7, Shin = 5, Foot = 5, Waist = 3, Head = 2 })
 function Anatomy.cutForZone(zoneId: string): (string?, number)
 	if zoneId == "Brain" or zoneId == "Skull" or zoneId == "Jaw" or zoneId == "Neck" then
 		return "Head", Anatomy.SHOTS_TO_CUT.Head
