@@ -52,20 +52,22 @@ local PIECE_OF = {
 type Reach = { point: Vector3, t0: number, pair: number }
 local reaches: { [Player]: Reach } = {}
 local turn: { [Player]: number } = {}
-local baseC0: { [Motor6D]: CFrame } = setmetatable({}, { __mode = "k" }) :: any
-
-local function setJoint(m: Motor6D, offset: CFrame)
-	local base = baseC0[m]
-	if not base then
-		base = m.C0
-		baseC0[m] = base
+-- (23 Nov 2026, owner: "the hands still stick out after Q"): each joint's built C0 is kept as an attribute on the
+-- joint itself (BaseC0, set on this screen only). A weak-keyed table lost it now and then, and the next frame took
+-- the bent C0 of a reach as the new rest, so the arms stayed out.
+local function baseOf(m: Motor6D): CFrame
+	local base = m:GetAttribute("BaseC0")
+	if typeof(base) == "CFrame" then
+		return base
 	end
-	m.C0 = (base :: CFrame) * offset
+	m:SetAttribute("BaseC0", m.C0)
+	return m.C0
+end
+local function setJoint(m: Motor6D, offset: CFrame)
+	m.C0 = baseOf(m) * offset
 end
 local function straight(m: Motor6D): CFrame
-	local base = baseC0[m] or m.C0
-	baseC0[m] = base
-	return base.Rotation:Inverse()
+	return baseOf(m).Rotation:Inverse()
 end
 
 -- Your grab.
@@ -123,8 +125,7 @@ RunService.RenderStepped:Connect(function()
 			local idleEl = CFrame.Angles(math.sin(t * 1.7 + i * 2) * 0.12, 0, 0)
 			local reachThis = r ~= nil and ((r.pair == 1 and i <= 2) or (r.pair == 2 and i > 2))
 			if reachThis and r then
-				local base = baseC0[sh] or sh.C0
-				baseC0[sh] = base
+				local base = baseOf(sh)
 				local frame = pack.CFrame * base
 				local d = frame:VectorToObjectSpace(r.point - frame.Position)
 				if d.Magnitude > 0.1 then
