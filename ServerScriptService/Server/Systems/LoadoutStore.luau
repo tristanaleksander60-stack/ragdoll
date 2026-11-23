@@ -45,6 +45,9 @@ local readFailed: { [Player]: boolean } = {}
 -- (22 Nov 2026: the Magic Wand is a start tool; a bar saved before it gets it in the Bat's place, or the last
 -- free slot, or the last slot.)
 function LoadoutStore.withWand(list: { string }?): { string }?
+	if not (Config :: any).WAND_FORCED then
+		return list -- (23 Nov 2026, owner: Talk no longer pushes a weapon off the bar)
+	end
 	if not list or table.find(list, "Wand") or not Toys.byId["Wand"] then
 		return list
 	end
