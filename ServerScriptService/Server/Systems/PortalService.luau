@@ -82,8 +82,14 @@ local map: MemoryStoreSortedMap? = nil
 local listCache: { Entry } = {}
 local listAt = 0
 
+-- (23 Nov 2026, owner: "load straight into singleplayer": Roblox cannot put a Play into a reserved server, so the
+-- start place is the singleplayer (server size 1: Play is a server of your own, one load) and multiplayer is a second
+-- place of the same experience, Config.MULTI_PLACE. 0 = one place only: Play is sent on, a second load.)
+local START_PLACE: number = (require(ReplicatedStorage.Shared.Config) :: any).START_PLACE
+local MULTI: number = (require(ReplicatedStorage.Shared.Config) :: any).MULTI_PLACE
+local multiPlace = if MULTI ~= 0 then MULTI else game.PlaceId
 local function isPublic(): boolean
-	return game.PrivateServerId == "" and game.JobId ~= ""
+	return game.PrivateServerId == "" and game.JobId ~= "" and (MULTI == 0 or game.PlaceId == MULTI)
 end
 
 local function beat()
@@ -176,7 +182,7 @@ function PortalService.spectateSolo(owner: Player, userId: number): string?
 	options.ReservedServerAccessCode = entry.code
 	options:SetTeleportData({ from = "Spectate", target = userId })
 	remote:FireClient(owner, "Going", { kind = "Join" })
-	local sent = pcall(TeleportService.TeleportAsync, TeleportService, game.PlaceId, { owner }, options)
+	local sent = pcall(TeleportService.TeleportAsync, TeleportService, if MULTI ~= 0 then START_PLACE else game.PlaceId, { owner }, options)
 	if not sent then
 		remote:FireClient(owner, "Refused", { text = "Could not get there. Try again!" })
 	end
@@ -203,7 +209,7 @@ end
 local ready: { code: string, sid: string }? = nil
 local refilling = false
 local function refill()
-	if refilling or ready or RunService:IsStudio() or game.PrivateServerId ~= "" then
+	if MULTI ~= 0 or refilling or ready or RunService:IsStudio() or game.PrivateServerId ~= "" then
 		return
 	end
 	refilling = true
@@ -224,7 +230,7 @@ local function ownServer(): (string, string)
 		refill()
 		return r.code, r.sid
 	end
-	local code, sid = TeleportService:ReserveServer(game.PlaceId)
+	local code, sid = TeleportService:ReserveServer(multiPlace)
 	return code, sid
 end
 
@@ -237,14 +243,17 @@ local function go(player: Player, how: string, target: Entry?, auto: boolean?)
 	local options = Instance.new("TeleportOptions")
 	options:SetTeleportData({ from = how })
 	local ok, err = pcall(function()
-		if how == "Solo" or how == "Own" then
+		local place = multiPlace
+		if how == "Solo" and MULTI ~= 0 then
+			place = START_PLACE -- (a server of size 1: your own)
+		elseif how == "Solo" or how == "Own" then
 			local code, sid = ownServer()
 			options.ReservedServerAccessCode = code
 			task.spawn(listSolo, player, code, sid)
 		elseif target then
 			options.ServerInstanceId = target.id
 		end
-		TeleportService:TeleportAsync(game.PlaceId, { player }, options)
+		TeleportService:TeleportAsync(place, { player }, options)
 	end)
 	if not ok then
 		log.warn("teleport failed: " .. tostring(err))
@@ -295,7 +304,7 @@ local function goShared(player: Player)
 		if not code then
 			-- (A new shared server: listed at once, so a player picking MULTIPLAYER on another server a moment later
 			-- finds this one instead of making a second.)
-			code = TeleportService:ReserveServer(game.PlaceId)
+			code = TeleportService:ReserveServer(multiPlace)
 			local m = sharedMap
 			if m then
 				pcall(function()
@@ -307,7 +316,7 @@ local function goShared(player: Player)
 		local options = Instance.new("TeleportOptions")
 		options.ReservedServerAccessCode = code
 		options:SetTeleportData({ from = "Shared", code = code })
-		TeleportService:TeleportAsync(game.PlaceId, { player }, options)
+		TeleportService:TeleportAsync(multiPlace, { player }, options)
 	end)
 	if not ok then
 		log.warn("shared teleport failed: " .. tostring(err))
@@ -396,6 +405,10 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 		-- server is the fullest: the shared lab here.
 			-- (23 Nov 2026, owner: "load in as fast and lag-free as possible"): with anyone else on this server, the shared
 		-- lab here (no teleport); alone, the fullest multiplayer server.
+		if MULTI ~= 0 and game.PlaceId ~= MULTI then
+			go(player, "Multi", PortalService.fullest(PortalService.list(), jobId()))
+			return
+		end
 		local alone = #Players:GetPlayers() <= 1
 		local target = if RunService:IsStudio() or not alone then nil else PortalService.fullest(PortalService.list(), jobId())
 		local here = PortalService.entry()
@@ -619,7 +632,7 @@ function PortalService.start()
 		-- (23 Nov 2026, owner: "you load into singleplayer automatically: nobody else in your server; multiplayer only
 		-- through the portal"): a player who comes in through Roblox's Play onto a public server (the multiplayer
 		-- servers) goes straight on to a server of their own. Arrivals through the multiplayer portal stay.
-		if isPublic() and not RunService:IsStudio() then
+		if MULTI == 0 and isPublic() and not RunService:IsStudio() then
 			local okJ, join = pcall(function()
 				return player:GetJoinData()
 			end)

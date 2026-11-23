@@ -1618,10 +1618,14 @@ function Lab.build()
 		local followed = if player.FollowUserId ~= 0 then Players:GetPlayerByUserId(player.FollowUserId) else nil
 		local multi = (type(data) == "table" and data.from == "Multi")
 			or (followed ~= nil and (followed:GetAttribute("SharedHost") == true or followed:GetAttribute("SharedGuest") ~= nil))
+		local multiId: number = (Config :: any).MULTI_PLACE
+		if multiId ~= 0 and game.PlaceId == multiId and game.PrivateServerId == "" then
+			multi = true -- (the multiplayer place: one shared lab for everyone in it)
+		end
 		-- (Bug hunt, 23 Nov 2026: someone who came in through Play onto a multiplayer server is sent straight on to
 		-- a server of their own by PortalService: no lab and 18 ragdolls built for a second here, lagging the players
 		-- who stay. If that teleport fails, PortalService calls Lab.ensureLab.)
-		local passingThrough = not multi and player.FollowUserId == 0 and game.PrivateServerId == "" and game.JobId ~= ""
+		local passingThrough = multiId == 0 and not multi and player.FollowUserId == 0 and game.PrivateServerId == "" and game.JobId ~= ""
 			and not game:GetService("RunService"):IsStudio() and not (type(data) == "table" and data.from == "Shared")
 		-- (The owner come to watch someone in singleplayer: no lab of theirs built there.)
 		if type(data) == "table" and data.from == "Spectate" and (require(script.Parent:WaitForChild("Owner")) :: any).isOwner(player) then

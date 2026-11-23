@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
 
 local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Net"))
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
 
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local Theme = require(UI:WaitForChild("LihFolkUITheme"))
@@ -140,7 +141,7 @@ local function drawFriends()
 	local shown = 0
 	if ok and type(list) == "table" then
 		for _, f in list :: any do
-			if f.PlaceId == game.PlaceId and type(f.GameId) == "string" and f.GameId ~= game.JobId then
+			if f.PlaceId == (if Config.MULTI_PLACE ~= 0 then Config.MULTI_PLACE else game.PlaceId) and type(f.GameId) == "string" and f.GameId ~= game.JobId then
 				shown += 1
 				local line = C.Row({ height = 48, gap = SP.sm, layoutOrder = shown, parent = frame })
 				C.Text("body", tostring(f.DisplayName or f.UserName), { size = UDim2.new(1, -120, 1, 0), layoutOrder = 1, parent = line })
