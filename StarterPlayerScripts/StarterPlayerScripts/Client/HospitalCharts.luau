@@ -493,6 +493,7 @@ local function build(): Ui
 
 	local outline = Instance.new("Highlight")
 	outline.Name = "PatientOutline"
+	outline.Enabled = false -- (23 Nov 2026, owner: "remove the outline round the ragdolls")
 	outline.FillTransparency = 1
 	outline.OutlineColor = GREEN
 	outline.OutlineTransparency = 0.15

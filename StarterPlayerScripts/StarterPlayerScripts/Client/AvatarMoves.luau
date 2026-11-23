@@ -503,7 +503,8 @@ local STANCES: { [string]: StanceSet } = {
 	Pistol = {
 		-- (Tuned live: the hands 0.37 studs apart, both on the grip, the muzzle forward and down.)
 		idle = { RightShoulder = v(0.8, 0.9), RightElbow = v(0.5), LeftShoulder = v(0.8, -1.3), LeftElbow = v(0.4), Waist = v(0) },
-		run = { RightShoulder = v(0.3, 0.2), RightElbow = v(1.75), Waist = v(0.12) },
+		-- (23 Nov 2026, owner: "both hands on the weapon, always"): the left hand comes along on the run too.
+		run = { RightShoulder = v(0.3, 0.2), RightElbow = v(1.75), LeftShoulder = v(0.45, -0.85), LeftElbow = v(1.55), Waist = v(0.12) },
 		ready = { RightShoulder = v(1.45, 0.12), RightElbow = v(0.1), LeftShoulder = v(1.35, -0.6), LeftElbow = v(0.35), Waist = v(0.02) },
 		tool = { idle = v(-0.75), run = v(0.9), ready = v(-0.35) },
 	},
@@ -518,8 +519,8 @@ local STANCES: { [string]: StanceSet } = {
 	},
 	-- A bat, a club, an axe or a blade: on the shoulder, pointing back and up.
 	Melee = {
-		idle = { RightShoulder = v(0.4), RightElbow = v(2.1) },
-		run = { RightShoulder = v(0.35), RightElbow = v(1.9), Waist = v(0.1) },
+		idle = { RightShoulder = v(0.4), RightElbow = v(2.1), LeftShoulder = v(0.75, -0.9), LeftElbow = v(1.7) },
+		run = { RightShoulder = v(0.35), RightElbow = v(1.9), LeftShoulder = v(0.7, -0.85), LeftElbow = v(1.6), Waist = v(0.1) },
 		tool = { idle = v(2.0), run = v(2.0) },
 	},
 }

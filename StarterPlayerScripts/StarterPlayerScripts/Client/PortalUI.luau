@@ -144,11 +144,8 @@ local function build()
 	local multi = C.Window({ name = "Servers", title = "Multiplayer", theme = "rebirth", icon = "friends", size = PortalUI.WINDOW })
 	hereLabel = C.Text("caption", "", { wrap = true, autoY = true, layoutOrder = -10, parent = multi.body })
 	-- (23 Nov 2026, owner: "multiplayer: see the servers, join your friends, make your own server"): the hub.
-	-- ONE LAB: everyone in one shared lab (PortalService "Shared"). FRIENDS: friends online in this game, JOIN.
-	C.SectionHeader("ONE LAB TOGETHER", "rebirth", -9, multi.body)
-	C.Button({ text = "PLAY TOGETHER IN ONE LAB", role = "go", size = UDim2.new(1, 0, 0, Theme.Size.buttonH), layoutOrder = -8, parent = multi.body, onActivated = function()
-		remote:FireServer("Shared")
-	end })
+	-- FRIENDS: friends online in this game, JOIN.
+	-- (23 Nov 2026, owner: "remove ONE LAB from the multiplayer menu: the portal just changes server".)
 	C.SectionHeader("FRIENDS", "rebirth", -7, multi.body)
 	local friendsHolder = Instance.new("Frame")
 	friendsHolder.Name = "Friends"

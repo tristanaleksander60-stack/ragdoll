@@ -681,7 +681,7 @@ local function updatePad()
 	-- is beside your avatar instead of on the back of its head.
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
+	if humanoid and player:GetAttribute("ViewBobbing") ~= true then -- (ViewBob owns the offset while it bobs)
 		-- (V8-0.2: a pad fires at the screen centre, which sat on the back of your own head: over the
 		-- shoulder for a pad too, in the player view.)
 		local padShoulder = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).V8_FIRST_HIT

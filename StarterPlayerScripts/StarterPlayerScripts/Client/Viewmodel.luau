@@ -47,6 +47,7 @@ local holder: Model? = nil
 local shownTool: Model? = nil
 local copy: Model? = nil
 local arm: BasePart? = nil
+local support: BasePart? = nil
 local tip: BasePart? = nil
 local kick = 0
 local swingAt = -math.huge -- (V10 phase 3: when the last melee swing started)
@@ -63,6 +64,7 @@ local function clear()
 		holder:Destroy()
 	end
 	holder, copy, arm, tip, flash, flashPart, shownTool = nil, nil, nil, nil, nil, nil, nil
+	support = nil
 end
 
 local function build(held: Model)
@@ -111,6 +113,12 @@ local function build(held: Model)
 	a.CastShadow = false
 	a.Parent = h
 	arm = a
+	-- (23 Nov 2026, owner: "both hands on the weapon, always"): the other forearm from the bottom left up to under the
+	-- barrel, same colour.
+	local s2 = a:Clone()
+	s2.Name = "SupportArm"
+	s2.Parent = h
+	support = s2
 	local fp = Instance.new("Part")
 	fp.Name = "Flash"
 	fp.Shape = Enum.PartType.Ball
@@ -189,6 +197,14 @@ local function frame(dt: number)
 	local a = arm
 	if a then
 		a.CFrame = at * CFrame.new(0.05, -0.2 - Viewmodel.ARM.Y * 0.4, Viewmodel.ARM.Z * 0.55) * CFrame.Angles(math.rad(12), 0, 0)
+	end
+	local s2 = support
+	if s2 then
+		local grip = (at * CFrame.new(-0.05, -0.28, -1.05)).Position
+		local elbow = (at * CFrame.new(-1.0, -1.0, 0.55)).Position
+		local len = (grip - elbow).Magnitude
+		s2.Size = Vector3.new(Viewmodel.ARM.X, Viewmodel.ARM.Y, len)
+		s2.CFrame = CFrame.lookAt((grip + elbow) / 2, grip)
 	end
 	local fp, light = flashPart, flash
 	if fp and light then
