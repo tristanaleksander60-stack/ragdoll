@@ -134,6 +134,19 @@ note.Text = ""
 note.Parent = back
 
 gui.Parent = player:WaitForChild("PlayerGui")
+-- (23 Nov 2026, owner: "load in as fast as possible"): the world round the lab streams in while the menu is up.
+task.spawn(function()
+	local t0 = os.clock()
+	while typeof(player:GetAttribute("LabOrigin")) ~= "Vector3" and os.clock() - t0 < 15 do
+		task.wait(0.1)
+	end
+	local origin = player:GetAttribute("LabOrigin")
+	if typeof(origin) == "Vector3" then
+		pcall(function()
+			player:RequestStreamAroundAsync(origin, 6)
+		end)
+	end
+end)
 pcall(function()
 	GuiService.SelectedObject = single
 end)
@@ -236,7 +249,7 @@ local function labReady(): boolean
 			end
 		end
 	end
-	return mine > 0 and dressed >= math.min(6, mine)
+	return mine > 0 and dressed >= math.min(3, mine) -- (23 Nov 2026, owner: "load in as fast as possible": 3, the rest dress in view)
 end
 local function liftWhenReady(after: (() -> ())?)
 	task.spawn(function()
@@ -245,29 +258,20 @@ local function liftWhenReady(after: (() -> ())?)
 			note.Text = "Loading your lab..."
 		end
 		while not labReady() and os.clock() - t0 < READY_MAX do
-			task.wait(0.2)
+			task.wait(0.1)
 		end
-		local cover = player.PlayerGui:FindFirstChild("LoadCover")
-		while cover and cover.Parent and os.clock() - t0 < READY_MAX do
-			task.wait(0.2)
-		end
-		-- (23 Nov 2026, owner: "still a few seconds where it has not loaded in"): the whole game loaded, the world
-		-- streamed in round the lab, and a beat for the HUD before the menu lifts.
-		while not game:IsLoaded() and os.clock() - t0 < READY_MAX do
-			task.wait(0.2)
-		end
-		local origin = player:GetAttribute("LabOrigin")
-		if typeof(origin) == "Vector3" then
-			pcall(function()
-				player:RequestStreamAroundAsync(origin, 6)
-			end)
-		end
+		-- (23 Nov 2026, owner: "everyone loads in as fast as possible"): the world round the lab was asked for when
+		-- the menu came up (below); once the lab is in and the bar is drawn the menu lifts at once and takes the
+		-- LoadCover under it along.
 		local hud = player.PlayerGui:FindFirstChild("ToyBar")
 		while not hud and os.clock() - t0 < READY_MAX do
-			task.wait(0.2)
+			task.wait(0.1)
 			hud = player.PlayerGui:FindFirstChild("ToyBar")
 		end
-		task.wait(1.2)
+		local cover = player.PlayerGui:FindFirstChild("LoadCover")
+		if cover then
+			cover:Destroy()
+		end
 		lift()
 		if after then
 			pcall(after)
@@ -281,9 +285,7 @@ local function pickSingle()
 	picked = true
 	squish(single)
 	note.Text = "Your own lab!"
-	task.delay(0.25, function()
-		liftWhenReady(nil)
-	end)
+	liftWhenReady(nil)
 end
 local function pickMulti()
 	if picked or done then
@@ -296,7 +298,11 @@ local function pickMulti()
 	note.Text = "Joining the shared lab..."
 	local Net = require(Shared:WaitForChild("Net")) :: any
 	Net.event(Net.Names.Portal):FireServer("JoinShared")
-	task.wait(0.6)
+	-- (Until the server has made this player the host or a guest, so the menu lifts in the right lab.)
+	local t0 = os.clock()
+	while player:GetAttribute("SharedGuest") == nil and player:GetAttribute("SharedHost") ~= true and os.clock() - t0 < 3 do
+		task.wait(0.05)
+	end
 	liftWhenReady(nil)
 end
 single.Activated:Connect(pickSingle)

@@ -1181,7 +1181,7 @@ local function claim(player: Player)
 			task.spawn(function()
 				local okS, SS = pcall(require, script.Parent:WaitForChild("SessionStats"))
 				local t0 = os.clock()
-				while okS and os.clock() - t0 < 4 and player.Parent do
+				while okS and os.clock() - t0 < 2 and player.Parent do -- (23 Nov 2026: 2 s at most, "load in as fast as possible")
 					local r = (SS :: any).recordFor(player)
 					if r and r.plat and r.plat ~= "?" then
 						break
