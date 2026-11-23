@@ -972,9 +972,20 @@ local function nearestPerson(rig: Rig, reach: number): Vector3?
 	return best
 end
 
+-- (23 Nov 2026, owner: "only half the ragdolls run when you aim at or shoot them".) Each body keeps to its own nature:
+-- Seed (0-10, DummyFactory) under RUNNER_SEED runs, the rest stand their ground (hands up at most). 6, as every sixth
+-- one is Brave and never runs either: 0.6 x 5/6 = half. Same line in Lab.heard and CrowdService.panic.
+local RUNNER_SEED = 6
+local function runner(rig: Rig): boolean
+	return ((rig.model:GetAttribute("Seed") :: number?) or 0) < RUNNER_SEED
+end
+
 -- Panic (people in the crowd, CrowdService): something they saw or heard, set on the model as
 -- PanicFrom (where) and PanicUntil (server time). Seconds of it left, and where, or nil.
 local function panicOf(rig: Rig): (Vector3?, number)
+	if not runner(rig) then
+		return nil, 0
+	end
 	local from = rig.model:GetAttribute("PanicFrom")
 	local untilTime = rig.model:GetAttribute("PanicUntil")
 	if typeof(from) ~= "Vector3" or type(untilTime) ~= "number" then
@@ -989,7 +1000,7 @@ end
 
 -- Hurt in the last FLEE_MEMORY s, rested since the last run, and someone close: where they are.
 local function scaredOf(rig: Rig, now: number): Vector3?
-	if now - rig.lastHitAt >= FLEE_MEMORY or now - rig.fledAt <= FLEE_REST or now < rig.fleeUntil then
+	if not runner(rig) or now - rig.lastHitAt >= FLEE_MEMORY or now - rig.fledAt <= FLEE_REST or now < rig.fleeUntil then
 		return nil
 	end
 	return nearestPerson(rig, FLEE_RADIUS)
@@ -1098,7 +1109,7 @@ local function think(rig: Rig)
 		rig.gunWary = false
 	end
 	-- (10 Nov 2026, the owner: they must be properly scared: every one but the brave runs from a gun.)
-	local coward = looking and rig.model:GetAttribute("Personality") ~= "Brave" and rig.model:GetAttribute("Greeter") == nil -- (the greeter walks up to a new player holding the G17: it never runs from it)
+	local coward = looking and runner(rig) and rig.model:GetAttribute("Personality") ~= "Brave" and rig.model:GetAttribute("Greeter") == nil -- (the greeter walks up to a new player holding the G17: it never runs from it)
 	if coward and now - rig.fledAt > FLEE_REST then
 		local gun = GunThreat.cowardRunsFrom(rig.chest.Position)
 		if gun then
@@ -1230,7 +1241,7 @@ local function updateMoving(rig: Rig, dt: number)
 	-- one that ran from a gun stops short of a home a gun is still pointed at.
 	if state == "Walking" and now >= rig.gunLookAt then
 		rig.gunLookAt = now + 0.25 -- (every walker: the personality is read 4 times a second, not every step)
-		if rig.model:GetAttribute("Personality") ~= "Brave" and rig.model:GetAttribute("Greeter") == nil then
+		if runner(rig) and rig.model:GetAttribute("Personality") ~= "Brave" and rig.model:GetAttribute("Greeter") == nil then
 			local gun = if now - rig.fledAt > FLEE_REST then GunThreat.cowardRunsFrom(rig.chest.Position) else nil
 			if gun then
 				rig.gunFledAt = now

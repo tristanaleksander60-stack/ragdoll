@@ -923,6 +923,9 @@ local function panic(npc: Npc, from: Vector3, delay: number, hops: number?)
 	if npc.panicPending or npc.panicUntil > now + 1 or not npc.model.Parent then
 		return
 	end
+	if ((npc.model:GetAttribute("Seed") :: number?) or 0) >= 6 then
+		return -- (only half run: ActiveRagdoll RUNNER_SEED)
+	end
 	local traits = traitsOf(npc)
 	npc.panicPending = true
 	task.delay(delay * traits.react, function()

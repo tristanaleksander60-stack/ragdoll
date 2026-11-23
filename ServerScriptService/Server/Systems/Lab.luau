@@ -568,7 +568,7 @@ local function heard(kind: string, position: Vector3, speed: number, toyId: stri
 					running += 1
 				end
 				local pelvis = model and model:FindFirstChild("LowerTorso")
-				if model and PERSONALITY[slot.index] ~= "Brave" and model:GetAttribute("Greeter") == nil and pelvis and pelvis:IsA("BasePart") and upright(model)
+				if model and PERSONALITY[slot.index] ~= "Brave" and ((model:GetAttribute("Seed") :: number?) or 0) < 6 and model:GetAttribute("Greeter") == nil and pelvis and pelvis:IsA("BasePart") and upright(model)
 					and now - slot.scaredAt >= SCARE_REST then
 					local d = (pelvis.Position - position).Magnitude
 					if d <= reach and d > 2 and d < nearestD then
@@ -591,7 +591,7 @@ local function heard(kind: string, position: Vector3, speed: number, toyId: stri
 				local model = slot.model
 				local pelvis = model and model:FindFirstChild("LowerTorso")
 				-- (10 Nov 2026, the owner: properly scared: every one but the brave runs from a bang.)
-				if model and PERSONALITY[slot.index] ~= "Brave" and model:GetAttribute("Greeter") == nil and pelvis and pelvis:IsA("BasePart") and upright(model)
+				if model and PERSONALITY[slot.index] ~= "Brave" and ((model:GetAttribute("Seed") :: number?) or 0) < 6 and model:GetAttribute("Greeter") == nil and pelvis and pelvis:IsA("BasePart") and upright(model)
 					and now - slot.scaredAt >= SCARE_REST then
 					local d = (pelvis.Position - position).Magnitude
 					if d <= reach and d > 2 then
