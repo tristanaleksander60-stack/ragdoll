@@ -299,7 +299,17 @@ function VehicleFeel.start()
 				drop(f)
 				feels[model] = nil
 			else
-				step(f, dt, camPos)
+				-- (23 Nov 2026, fps: a parked car's wheels and lean were set again every frame, the dearest thing on the client:
+				-- hundreds of welded pieces each. One that stands still and empty rests.)
+				local rest: any = f
+				local moving = (f.seat ~= nil and f.seat.Occupant ~= nil) or f.body.AssemblyLinearVelocity.Magnitude > 1.5
+				if moving then
+					rest.stillAt = now + 1
+				end
+				if now < (rest.stillAt or now + 1) or rest.stillAt == nil then
+					rest.stillAt = rest.stillAt or now + 1
+					step(f, dt, camPos)
+				end
 			end
 		end
 	end)

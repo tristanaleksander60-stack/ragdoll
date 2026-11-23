@@ -48,8 +48,6 @@ Keybinds.ACTIONS = table.freeze({
 	{ id = "CamLeft", label = "Lab view: turn left", context = "Lab", default = "Q", group = "PLAY" },
 	{ id = "CamRight", label = "Lab view: turn right", context = "Lab", default = "E", group = "PLAY" },
 	{ id = "Use", label = "Use what you stand at (terminal, board, button)", context = "Play", default = "E", group = "PLAY" },
-	{ id = "MissionSkip", label = "Skip the mission", context = "Play", default = "Minus", group = "PLAY" },
-	{ id = "MissionHide", label = "Hide or show the mission card", context = "Play", default = "Equals", group = "PLAY" },
 	{ id = "Recenter", label = "Lab view: back to the middle", context = "Play", default = "Home", group = "PLAY" },
 	{ id = "CleanUp", label = "Sweep the lab clean", context = "Global", default = "Delete", group = "PLAY" },
 	{ id = "BodyCard", label = "Hide or show the body card", context = "Global", default = "Period", group = "PLAY" },

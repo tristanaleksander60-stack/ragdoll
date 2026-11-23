@@ -115,7 +115,14 @@ local function buildLine(): (ScreenGui, TextLabel)
 	stroke.Transparency = 0.2
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = pill
-	pill.Parent = gui
+	-- (23 Nov 2026, owner: no mission line on the screen; the rest of the first visit runs on.)
+	local unseen = Instance.new("Frame")
+	unseen.Name = "Unseen"
+	unseen.BackgroundTransparency = 1
+	unseen.Visible = false
+	unseen.Size = UDim2.fromScale(1, 1)
+	unseen.Parent = gui
+	pill.Parent = unseen
 	gui.Parent = player:WaitForChild("PlayerGui")
 	return gui, pill
 end
@@ -124,7 +131,7 @@ end
 -- the text shrinking down to 14 px before that (narrow phones).
 local function setText(pill: TextLabel, text: string)
 	pill.Text = text
-	local gui = pill.Parent :: ScreenGui
+	local gui = pill:FindFirstAncestorOfClass("ScreenGui") :: ScreenGui
 	local maxW = math.max(160, gui.AbsoluteSize.X - 32)
 	local size = 20
 	local w = 0

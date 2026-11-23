@@ -64,6 +64,12 @@ for _, name in { "Horde", "Chase", "Terminal" } do
 		NetM.event(NetM.Names[name])
 	end
 end
+do -- (23 Nov 2026, fps: a leftover car far off the map, 657 pieces nobody sees.)
+	local leftover = workspace:FindFirstChild("CarPreview")
+	if leftover then
+		leftover:Destroy()
+	end
+end
 safe("Purchases", function() Purchases.start() end) -- the one ProcessReceipt; finds out whether orders live in a DataStore
 safe("PurchaseChat", function() require(Systems:WaitForChild("PurchaseChat")).start() end) -- (V11 B7) Robux purchases in chat on every server
 safe("BenchService", function() require(Systems:WaitForChild("BenchService")).start() end) -- benches the lab's ragdolls sit on

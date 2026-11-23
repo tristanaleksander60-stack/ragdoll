@@ -69,8 +69,9 @@ local BUBBLE_DISTANCE = 45 -- studs: bubbles further away are not drawn
 local BUBBLE_SIZE = Vector2.new(42, 26) -- px (was 64 x 40)
 local BUBBLE_OFFSET = 1.25 -- (23 Nov 2026, owner: lower; was 3) studs above the head's middle
 -- Level of detail (distance from the camera): every frame up close, then less often, then not at all.
-local LOD_NEAR, LOD_FAR = 70, 170
-local LOD_MID_RATE = 1 / 15 -- s between updates beyond LOD_NEAR
+local TOUCH = game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").KeyboardEnabled
+local LOD_NEAR, LOD_FAR = if TOUCH then 24 else 50, if TOUCH then 70 else 130 -- (23 Nov 2026, fps: was 70, 170)
+local LOD_MID_RATE = if TOUCH then 1 / 12 else 1 / 15 -- s between updates beyond LOD_NEAR
 local IDLE_JOINTS = { "Neck", "Waist", "RightShoulder", "LeftShoulder", "RightElbow", "LeftElbow" }
 local GAIT_JOINTS = {
 	"Neck", "Waist", "RightShoulder", "LeftShoulder", "RightElbow", "LeftElbow",

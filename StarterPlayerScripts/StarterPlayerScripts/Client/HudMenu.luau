@@ -27,7 +27,7 @@ local ENTRIES: { any } = {
 	{ window = "Sandbox", text = "LAB", role = "go", phoneOnly = true }, -- (V9-2c: the LAB window (TIME, first person, REVIVE, RESET, BUILD); HudMenu.onSandbox without it)
 	{ window = "Rewards", text = "REWARDS", role = "go", phoneOnly = true }, -- (round 5; off a phone: its own launcher)
 	{ window = "Eggs", text = "RANK & EGGS", role = "go" },
-	{ window = "Experiments", text = "MISSIONS", role = "go" }, -- (phase 1: a pad reaches the card's window here; owner 21 Nov 2026: everyone, to show hidden missions again)
+	-- (23 Nov 2026, owner: no missions anywhere.) { window = "Experiments", text = "MISSIONS", role = "go" }, -- (phase 1: a pad reaches the card's window here; owner 21 Nov 2026: everyone, to show hidden missions again)
 	{ window = "Friends", text = "FRIENDS", role = "info" },
 	{ window = "Creator", text = "CLIPS & LIVE", role = "info", notPhone = true }, -- (21 Nov 2026: streaming tools are a computer's; a phone clips from the replay's CLIP IT. Its row went to GOD MODE.)
 	-- (V8-0.9: also wherever the launcher column is hidden, i.e. under HudV3 on PC, tablet and console:

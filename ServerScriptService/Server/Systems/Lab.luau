@@ -91,8 +91,9 @@ local SOURCE_RANGE = 120 -- studs: a bang's maker this close is who it runs from
 local Lab = {}
 Lab.DUMMY_COUNT = DUMMY_COUNT -- (World/Feel v2: T80 adds it to a device's ragdoll budget)
 Lab.FIRST_FILL = 3 -- (23 Nov 2026: these appear at once, the rest one by one, a phone's slower: no stall at the join)
-Lab.PHONE_DUMMIES = 8 -- (V10 phase 1: a phone simulates its own lab's bodies; fewer keep it smooth)
-Lab.TABLET_DUMMIES = 13
+Lab.PHONE_DUMMIES = 7 -- (V10 phase 1: a phone simulates its own lab's bodies; fewer keep it smooth)
+Lab.TABLET_DUMMIES = 10
+Lab.CONSOLE_DUMMIES = 13
 
 Lab.PLOT_COUNT = 10 -- labs on one server (the place's server size should be 10)
 Lab.PLOT_SPACING = Zones.PLOT_SPACING -- studs between the middles of two neighbouring labs (and the plaza; V6-4 wider)
@@ -220,7 +221,7 @@ local function fill(plot: Plot, slot: Slot, generation: number)
 		return (require(script.Parent:WaitForChild("SessionStats")) :: any).recordFor(owner)
 	end)
 	local plat = if okS and record then record.plat else nil
-	local cap = if plat == "phone" then Lab.PHONE_DUMMIES elseif plat == "tablet" then Lab.TABLET_DUMMIES else DUMMY_COUNT
+	local cap = if plat == "phone" then Lab.PHONE_DUMMIES elseif plat == "tablet" then Lab.TABLET_DUMMIES elseif plat == "console" then Lab.CONSOLE_DUMMIES else DUMMY_COUNT
 	if slot.index > cap then
 		return
 	end

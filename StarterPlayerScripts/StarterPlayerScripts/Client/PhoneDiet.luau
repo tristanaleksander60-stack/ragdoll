@@ -31,6 +31,14 @@ end
 local function trim(d: Instance)
 	if d:IsA("SpotLight") or d:IsA("SurfaceLight") or d:IsA("PointLight") then
 		d.Enabled = false
+	elseif d:IsA("SurfaceGui") then
+		d.MaxDistance = if d.MaxDistance > 0 then math.min(d.MaxDistance, 80) else 80 -- (a sign further off cannot be read on a phone)
+	elseif d:IsA("BillboardGui") then
+		d.MaxDistance = if d.MaxDistance > 0 and d.MaxDistance < math.huge then math.min(d.MaxDistance, 80) else 80
+	elseif d:IsA("ParticleEmitter") then
+		d.Rate *= 0.5
+	elseif d:IsA("Beam") then
+		d.Segments = math.min(d.Segments, 4)
 	elseif d:IsA("BasePart") and d.Anchored and not d.CanCollide and not d.CanQuery and not d.CanTouch and d.Transparency < 1 then
 		local s = d.Size
 		if math.max(s.X, s.Y, s.Z) < PhoneDiet.TINY then
