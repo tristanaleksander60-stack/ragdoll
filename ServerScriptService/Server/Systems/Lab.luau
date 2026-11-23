@@ -1250,53 +1250,53 @@ local function release(player: Player)
 	guestOf[player] = nil
 	local plot = plotOf[player]
 	plotOf[player] = nil
-	if plot then
+	if not plot then
+		return
+	end
+	local guests: { Player } = {}
+	for other, g in guestOf do
+		if g == plot and other ~= player and other.Parent then
+			table.insert(guests, other)
+		end
+	end
+	if #guests == 0 then
 		freePlot(plot)
-		local orphans = false
-		for _, g in guestOf do
-			if g == plot then
-				orphans = true
-				break
-			end
-		end
-		if Workspace:GetAttribute("SharedLab") == true or orphans then
-			-- (V11 C10: the host left: the next of its guests takes a lab, the rest become its guests there. The same for
-			-- a shared lab on an ordinary server: Lab.joinShared.)
-			local guests: { Player } = {}
-			for other, g in guestOf do
-				if g == plot and other ~= player and other.Parent then
-					table.insert(guests, other)
-				end
-			end
-			local wasHost = player:GetAttribute("SharedHost") == true
-			task.defer(function()
-				local heir: Player? = guests[1]
-				if not heir then
-					return
-				end
-				if not heir.Parent then
-					return
-				end
-				guestOf[heir] = nil
-				heir:SetAttribute("SharedGuest", nil)
-				claim(heir)
-				local hostPlot = plotOf[heir]
-				if hostPlot then
-					if wasHost then
-						heir:SetAttribute("SharedHost", true)
-					end
-					placeOnPlot(heir, hostPlot)
-					for i = 2, #guests do
-						local other = guests[i]
-						if other.Parent and not plotOf[other] then
-							joinAsGuest(other, hostPlot)
-						end
-					end
-				end
-			end)
-			return
-		end
 		task.defer(handOn, player)
+		return
+	end
+	-- (23 Nov 2026, owner: "on a multiplayer server someone left, the whole lab reset and we were all sent to the
+	-- lab's spawn"): the host left a shared lab: it is handed to one of its guests, as it is: the
+	-- same ragdolls (now simulated by the new host's machine), nobody moved, nothing rebuilt.
+	local wasHost = player:GetAttribute("SharedHost") == true or Workspace:GetAttribute("SharedLab") == true
+	local heir = guests[1]
+	guestOf[heir] = nil
+	heir:SetAttribute("SharedGuest", nil)
+	plot.owner = heir
+	plotOf[heir] = plot
+	if wasHost then
+		heir:SetAttribute("SharedHost", true)
+	end
+	if plot.sign then
+		plot.sign.Text = signText(heir)
+	end
+	plot.folder:SetAttribute("Owner", heir.UserId)
+	heir:SetAttribute("LabPlot", plot.index)
+	heir:SetAttribute("LabOrigin", plot.origin)
+	heir:SetAttribute("LabFocus", focusOf(plot.origin))
+	local list = ","
+	for i = 2, #guests do
+		local other = guests[i]
+		other:SetAttribute("SharedGuest", heir.UserId)
+		list ..= tostring(other.UserId) .. ","
+	end
+	heir:SetAttribute("LabGuests", if list == "," then nil else list)
+	local DummyControl = require(script.Parent:WaitForChild("DummyControl")) :: any
+	for _, slot in plot.slots do
+		local model = slot.model
+		if model and model.Parent then
+			model:SetAttribute("LabOwner", heir.UserId)
+			pcall(DummyControl.setOwner, model, heir)
+		end
 	end
 end
 
