@@ -141,11 +141,11 @@ end
 local function refreshPad()
 	local holdingAny = current ~= nil or PlayerGrabClient.isHolding()
 	if grabButton then
-		grabButton.Text = if holdingAny then "DROP" else "GRAB"
+		grabButton.Text = "DROP"
+		grabButton.Visible = holdingAny -- (a tap on the ragdoll grabs; the buttons are for what you hold)
 	end
 	if throwButton then
-		throwButton.BackgroundTransparency = if holdingAny then 0.05 else 0.55
-		throwButton.TextTransparency = if holdingAny then 0 else 0.45
+		throwButton.Visible = holdingAny
 	end
 end
 
@@ -586,6 +586,7 @@ local function buildPad()
 	ds.Color = Color3.new(0, 0, 0)
 	ds.Transparency = 0.4
 	ds.Parent = d
+	d.Visible = false -- (no aiming with the middle any more: GrabController.tapAt)
 	d.Parent = gui
 	dot = d
 
@@ -691,7 +692,7 @@ local function updatePad()
 			humanoid.CameraOffset = offset
 		end
 	end
-	if wanted and dot and not current then
+	if wanted and dot and dot.Visible and not current then
 		-- The dot turns green over something you can grab.
 		local model = aimAt(screenCenter())
 		local want = if model then GREEN else Color3.new(1, 1, 1)
@@ -727,6 +728,34 @@ end
 
 function GrabController.isGrabbing(): boolean
 	return current ~= nil
+end
+
+-- (23 Nov 2026, owner: "on a phone just tap a ragdoll".) A short tap in the player view picks up the ragdoll under the
+-- finger, or the nearest one within a fingertip of it; it then hangs in front of you until DROP or THROW. A drag still
+-- turns the camera.
+local TAP_RINGS = { 14, 28, 42 } -- px
+function GrabController.tapAt(at: Vector2): boolean
+	if not padWanted() or current or PlayerGrabClient.busy() or PlayerGrabClient.isHolding() then
+		return false
+	end
+	local spot = at
+	if not aimAt(at) then
+		local found = false
+		for _, r in TAP_RINGS do
+			for i = 0, 7 do
+				local a = i * math.pi / 4
+				local try = at + Vector2.new(math.cos(a), math.sin(a)) * r
+				if aimAt(try) then
+					spot, found = try, true
+					break
+				end
+			end
+			if found then
+				break
+			end
+		end
+	end
+	return begin(spot, nil, true)
 end
 
 -- Called by LabCamera's pointer routing on a press (viewport position; the touch, or nil for the

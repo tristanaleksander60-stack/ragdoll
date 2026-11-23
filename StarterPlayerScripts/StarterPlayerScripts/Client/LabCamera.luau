@@ -277,7 +277,7 @@ local function onRelease(key: any, at: Vector2)
 	end
 	pointers[key] = nil
 	if p.role == "pending" and os.clock() - p.began <= TAP_TIME then
-		if not BuildController.tapAt(at) then
+		if not BuildController.tapAt(at) and not (p.input and GrabController.tapAt(at)) then
 			PokeController.tapAt(at)
 		end
 	end

@@ -382,7 +382,7 @@ function PokeController.helpText(id: string, lab: boolean): string
 	if not toy then
 		first = "Pick a weapon in the bar"
 	elseif toy.kind == "grab" then
-		first = if lab then "Press on a dummy and drag it, let go to throw" else "Pick a dummy up, swing it, throw it"
+		first = if lab then "Press on a dummy and drag it, let go to throw" elseif ViewMode.isTouch() then "Tap a ragdoll to pick it up" else "Pick a dummy up, swing it, throw it"
 	elseif toy.kind == "dummy" or toy.kind == "place" then
 		first = "Click the ground to put down the " .. toy.label
 	else
