@@ -41,15 +41,19 @@ local function shade(color: Color3, hurt: number?): Color3
 end
 local BRUISE_AT: { [string]: string } = { UpperArm = "UpperArm", ArmStump = "UpperArm", Forearm = "LowerArm", Hand = "Hand",
 	Thigh = "UpperLeg", Femoral = "UpperLeg", Shin = "LowerLeg", Foot = "Foot" }
-local function hurtOf(model: Model): ({ [string]: number }, { [string]: string })
+local function hurtOf(model: Model): ({ [string]: number }, { [string]: string }, { [string]: number })
 	local count: { [string]: number } = {}
 	local flow: { [string]: number } = {}
+	local shots: { [string]: number } = {} -- (rounds and blades, no blows)
 	do
 		for _, w in Anatomy.parseWounds(model:GetAttribute("Wounds")) do
 			local side, rest = string.match(w.zone.id, "^(%u%l+)(%u.*)$")
 			local piece = rest and BRUISE_AT[rest]
 			if piece and (side == "Left" or side == "Right") then
 				count[side .. piece] = (count[side .. piece] or 0) + 1
+				if not w.blunt then
+					shots[side .. piece] = (shots[side .. piece] or 0) + 1
+				end
 				flow[side .. piece] = (flow[side .. piece] or 0) + w.zone.bleed * (if w.blunt then 0.5 else 1)
 			end
 		end
@@ -80,7 +84,7 @@ local function hurtOf(model: Model): ({ [string]: number }, { [string]: string }
 			end
 		end
 	end
-	return tint, wrap
+	return tint, wrap, shots
 end
 -- White wraps round the top of a forearm or a shin.
 local function bandage(limb: BasePart, folder: Instance)
@@ -113,6 +117,98 @@ local FIT: { [string]: Vector3 } = {
 }
 local DROP: { [string]: number } = { Hand = -0.7, Foot = 0.24, UpperTorso = -0.08, LowerTorso = 0.3 }
 local shaped = false
+
+-- X-ray (23 Nov 2026, owner: "shot 3 times on the same limb you see through that limb only: its bone, broken where the
+-- bullets struck"). The piece's skin goes see-through and wears its bone inside, broken at its bullet holes.
+local XRAY_SHOTS = 3
+local XRAY_CLEAR = 0.58
+local XRAY_TINT = Color3.fromRGB(104, 138, 186)
+local BONE = Color3.fromRGB(238, 231, 213)
+local MARROW = Color3.fromRGB(128, 34, 48)
+local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: string)
+	local rng = Random.new(#limb.Name * 7 + 3)
+	local size = skin.Size
+	local len = size.Y * 0.88
+	local thick = math.min(size.X, size.Z) * 0.24
+	local function bit(shape: Enum.PartType, s: Vector3, at: CFrame, colour: Color3)
+		local p = Instance.new("Part")
+		p.Name = "XrayBone"
+		p:SetAttribute("Of", limb.Name)
+		p.Shape = shape
+		p.Size = s
+		p.Color = colour
+		p.Material = Enum.Material.SmoothPlastic
+		p.CanCollide, p.CanQuery, p.CanTouch, p.Massless, p.Anchored, p.CastShadow = false, false, false, true, false, false
+		p.CFrame = skin.CFrame * at
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = limb
+		w.Part1 = p
+		w.Parent = p
+		p.Parent = folder
+	end
+	-- Where the rounds struck, along the limb (its holes), at most 4, apart from each other.
+	local breaks: { number } = {}
+	for _, hole in limb:GetChildren() do
+		if hole.Name == "BulletHole" and hole:IsA("BasePart") and #breaks < 4 then
+			local y = math.clamp(skin.CFrame:PointToObjectSpace(hole.Position).Y, -len * 0.4, len * 0.4)
+			local apart = true
+			for _, b in breaks do
+				apart = apart and math.abs(b - y) > len * 0.1
+			end
+			if apart then
+				table.insert(breaks, y)
+			end
+		end
+	end
+	if #breaks == 0 then
+		table.insert(breaks, 0)
+	end
+	table.sort(breaks)
+	local function bone(x: number, z: number, t: number, length: number, knobs: boolean)
+		local from = -length / 2
+		local turn = CFrame.Angles(0, 0, math.rad(90)) -- (a cylinder's axis is X: along the limb)
+		local stops = table.clone(breaks)
+		table.insert(stops, length / 2)
+		for i, stop in stops do
+			local last = i == #stops
+			local to = math.clamp(stop - (if last then 0 else len * 0.018), -length / 2, length / 2)
+			local l = to - from
+			if l > 0.03 then
+				local loose = i > 1 or not last
+				local off = if loose then t * 0.38 * (if i % 2 == 0 then 1 else -1) else 0
+				local tilt = if loose then math.rad(rng:NextNumber(5, 13)) * (if i % 2 == 0 then 1 else -1) else 0
+				bit(Enum.PartType.Cylinder, Vector3.new(l, t, t), CFrame.new(x + off, (from + to) / 2, z) * CFrame.Angles(tilt * 0.6, 0, tilt) * turn, BONE)
+				if not last then
+					bit(Enum.PartType.Cylinder, Vector3.new(0.03, t * 0.7, t * 0.7), CFrame.new(x + off, to, z) * CFrame.Angles(tilt * 0.6, 0, tilt) * turn, MARROW)
+				end
+			end
+			from = stop + len * 0.018
+		end
+		if knobs then
+			bit(Enum.PartType.Ball, Vector3.one * t * 1.6, CFrame.new(x, length / 2, z), BONE)
+			bit(Enum.PartType.Ball, Vector3.one * t * 1.6, CFrame.new(x, -length / 2, z), BONE)
+		end
+	end
+	if key == "LowerArm" or key == "LowerLeg" then
+		bone(-thick * 0.55, 0, thick * 0.78, len, true)
+		bone(thick * 0.6, 0, thick * 0.6, len * 0.94, true)
+	elseif key == "Hand" or key == "Foot" then
+		for k = -1, 1 do
+			bone(k * thick * 0.8, 0, thick * 0.42, len * 0.8, true)
+		end
+	else
+		bone(0, 0, thick, len, true)
+	end
+	-- Splinters round each break.
+	for _, y in breaks do
+		for _ = 1, 4 do
+			local s = thick * rng:NextNumber(0.18, 0.4)
+			bit(Enum.PartType.Block, Vector3.new(s, s * rng:NextNumber(0.4, 1), s * 0.45),
+				CFrame.new(rng:NextNumber(-1, 1) * thick, y + rng:NextNumber(-0.5, 0.5) * thick, rng:NextNumber(-1, 1) * thick)
+					* CFrame.Angles(rng:NextNumber(0, 6), rng:NextNumber(0, 6), rng:NextNumber(0, 6)), BONE)
+		end
+	end
+end
 
 local template: Instance? = nil
 local template: Instance? = nil
@@ -294,11 +390,38 @@ local function dress(model: Model)
 			return
 		end
 		local wrap: { [string]: string }
-		tint, wrap = hurtOf(model)
+		local shots: { [string]: number }
+		tint, wrap, shots = hurtOf(model)
 		for _, d in model:GetChildren() do
 			local skin = if d:IsA("BasePart") then skins[d] else nil
 			if skin and d:IsA("BasePart") then
 				skin.Color = shade(d.Color, tint[d.Name])
+				local n = shots[d.Name] or 0
+				local clear = n >= XRAY_SHOTS
+				skin.Transparency = if clear then XRAY_CLEAR else 0
+				if clear then
+					skin.Color = skin.Color:Lerp(XRAY_TINT, 0.55)
+				end
+				local was = skin:GetAttribute("Xray")
+				local now = if clear then n else nil
+				if was ~= now then
+					skin:SetAttribute("Xray", now)
+					local limb, key = d, string.gsub(string.gsub(d.Name, "^Left", ""), "^Right", "")
+					-- (A moment later: the round's own hole is there by then.)
+					task.delay(if clear then 0.15 else 0, function()
+						if folder.Parent ~= model or skin:GetAttribute("Xray") ~= now then
+							return
+						end
+						for _, b in folder:GetChildren() do
+							if b.Name == "XrayBone" and b:GetAttribute("Of") == limb.Name then
+								b:Destroy()
+							end
+						end
+						if clear then
+							xrayBone(limb, skin, folder, key)
+						end
+					end)
+				end
 			end
 		end
 		local sign = ""
