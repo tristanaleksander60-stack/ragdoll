@@ -214,7 +214,16 @@ function PortalUI.start()
 			elseif d.portal == "PortalSolo" then
 				Controller.open("Solo")
 			else
-				PortalUI.openHub() -- (23 Nov 2026: the hub: one lab, friends, every server, your own)
+				-- (23 Nov 2026, owner: "just a multiplayer portal"): in = the shared lab with the others; again = back to a
+				-- lab of your own.
+				local shared = player:GetAttribute("SharedGuest") ~= nil or player:GetAttribute("SharedHost") == true
+				if shared then
+					remote:FireServer("LeaveShared")
+					Toast.show("Back to your own lab")
+				else
+					remote:FireServer("JoinShared")
+					Toast.show("Joining the multiplayer lab...")
+				end
 			end
 		elseif kind == "List" then
 			local here = d.here

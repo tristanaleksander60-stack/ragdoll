@@ -1347,6 +1347,43 @@ function Lab.joinShared(player: Player): boolean
 	return true
 end
 
+-- (23 Nov 2026, owner: "just one multiplayer portal"): through it again, out of the shared lab. A guest gets a lab
+-- of their own here (and is placed in it); the host keeps their lab, and every guest of it gets one of their own.
+function Lab.leaveShared(player: Player)
+	local hostPlot = guestOf[player]
+	if hostPlot then
+		guestOf[player] = nil
+		player:SetAttribute("SharedGuest", nil)
+		local owner = hostPlot.owner
+		if owner then
+			local list = owner:GetAttribute("LabGuests")
+			if type(list) == "string" then
+				local key = "," .. tostring(player.UserId) .. ","
+				local at = string.find(list, key, 1, true)
+				if at then
+					local text = string.sub(list, 1, at) .. string.sub(list, at + #key)
+					owner:SetAttribute("LabGuests", if text == "," then nil else text)
+				end
+			end
+		end
+		claim(player)
+		local own = plotOf[player]
+		if own then
+			placeOnPlot(player, own)
+		end
+		return
+	end
+	if player:GetAttribute("SharedHost") == true then
+		player:SetAttribute("SharedHost", nil)
+		local mine = plotOf[player]
+		for other, g in guestOf do
+			if g == mine and other ~= player then
+				Lab.leaveShared(other)
+			end
+		end
+	end
+end
+
 ------------------------------------------------------------------------------------------------
 -- Asking about labs
 

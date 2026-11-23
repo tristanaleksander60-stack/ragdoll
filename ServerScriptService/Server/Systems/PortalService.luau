@@ -279,6 +279,11 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 		else
 			remote:FireClient(player, "Stay")
 		end
+	elseif kind == "LeaveShared" then
+		-- (23 Nov 2026: the MULTIPLAYER portal again, from inside a shared lab: back to a lab of your own here.)
+		pcall(function()
+			(require(script.Parent:WaitForChild("Lab")) :: any).leaveShared(player)
+		end)
 	elseif kind == "JoinShared" then
 		-- (23 Nov 2026: the start menu's MULTIPLAYER. Owner: "2 accounts picked multiplayer and did not end up in the same
 		-- lab": they were on two servers. A shared lab already on this server (or this is a shared server, or Studio):
@@ -288,7 +293,10 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 		-- servers must always land you in the same lab"): a fuller public server with room: there (TeleportData from
 		-- "Multi"; on arrival Lab puts every multiplayer arrival in that server's one shared lab). Otherwise this
 		-- server is the fullest: the shared lab here.
-		local target = if RunService:IsStudio() then nil else PortalService.fullest(PortalService.list(), jobId())
+			-- (23 Nov 2026, owner: "load in as fast and lag-free as possible"): with anyone else on this server, the shared
+		-- lab here (no teleport); alone, the fullest multiplayer server.
+		local alone = #Players:GetPlayers() <= 1
+		local target = if RunService:IsStudio() or not alone then nil else PortalService.fullest(PortalService.list(), jobId())
 		local here = PortalService.entry()
 		local there = if target then (target.shared or 0) else -1
 		if target and (there > (here.shared or 0) or (there == (here.shared or 0) and target.players >= here.players)) then
@@ -472,11 +480,11 @@ function PortalService.buildPortals(folder: Instance, origin: Vector3)
 			end)
 			m.Parent = folder
 		end
-		door("PortalSolo", 30, Color3.fromRGB(80, 210, 120), "SINGLEPLAYER")
+		-- (23 Nov 2026, owner: "just one multiplayer portal": walking in again takes you back to your own lab.)
 		door("PortalMulti", 44, Color3.fromRGB(90, 170, 250), "MULTIPLAYER")
 		return
 	end
-	arch("PortalSolo", -7, Color3.fromRGB(70, 220, 110), "SINGLEPLAYER")
+	-- (23 Nov 2026: one MULTIPLAYER portal only.)
 	arch("PortalMulti", 7, Color3.fromRGB(80, 170, 255), "MULTIPLAYER")
 end
 
