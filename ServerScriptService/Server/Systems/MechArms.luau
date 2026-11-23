@@ -98,12 +98,14 @@ function MechArms.build(anchored: boolean): Model
 	for _, x in { -0.5, 0.5 } do
 		decor("Vent", Vector3.new(0.35, 0.6, 0.12), Color3.fromRGB(28, 29, 33), Enum.Material.Metal, nil, pack, CFrame.new(x, -0.45, 0.42))
 	end
+	-- (23 Nov 2026, owner: "the arms fold onto your back when you do not hold Q, not two hanging out in front"): at
+	-- rest every forearm bends back behind you; holding Q, a pair reaches forward (Client/MechArmsClient).
 	-- (pack space: +Z is behind the player, -Z ahead, +Y up; the sign of X is the side.)
 	local ARMS = {
-		{ at = Vector3.new(-0.65, 0.65, 0.45), up = Vector3.new(-0.55, 0.78, 0.3), low = Vector3.new(-0.4, 0.2, -0.9), upper = 3.0, lower = 3.6 },
-		{ at = Vector3.new(0.65, 0.65, 0.45), up = Vector3.new(0.55, 0.78, 0.3), low = Vector3.new(0.4, 0.2, -0.9), upper = 3.0, lower = 3.6 },
-		{ at = Vector3.new(-0.65, -0.55, 0.45), up = Vector3.new(-0.78, 0.15, 0.6), low = Vector3.new(-0.3, -0.88, -0.38), upper = 3.2, lower = 4.2 },
-		{ at = Vector3.new(0.65, -0.55, 0.45), up = Vector3.new(0.78, 0.15, 0.6), low = Vector3.new(0.3, -0.88, -0.38), upper = 3.2, lower = 4.2 },
+		{ at = Vector3.new(-0.65, 0.65, 0.45), up = Vector3.new(-0.55, 0.78, 0.3), low = Vector3.new(-0.3, 0.55, 0.78), upper = 3.0, lower = 3.6 },
+		{ at = Vector3.new(0.65, 0.65, 0.45), up = Vector3.new(0.55, 0.78, 0.3), low = Vector3.new(0.3, 0.55, 0.78), upper = 3.0, lower = 3.6 },
+		{ at = Vector3.new(-0.65, -0.55, 0.45), up = Vector3.new(-0.78, 0.15, 0.6), low = Vector3.new(-0.3, -0.75, 0.6), upper = 3.2, lower = 4.2 },
+		{ at = Vector3.new(0.65, -0.55, 0.45), up = Vector3.new(0.78, 0.15, 0.6), low = Vector3.new(0.3, -0.75, 0.6), upper = 3.2, lower = 4.2 },
 	}
 	local DOWN = Vector3.new(0, -1, 0)
 	local TUBE = CFrame.Angles(0, 0, math.rad(90)) -- (a cylinder's axis is X: turned onto the segment's Y)
