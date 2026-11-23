@@ -642,20 +642,23 @@ end
 -- obstacle) we try again a few times, else we fall back to the row spot.)
 -- (23 Nov 2026, owner: "they all stand in the circle; spread them round the lab": the machines' wide footprints sent
 -- nearly every roll back onto the open spawn plaza.) Each slot has its own slice of the lab all the way out to its edge,
--- on floor that really is free; only every fifth one may be on the plaza.
+-- on floor that really is free; the first PLAZA_SLOTS always walk about on the white spawn circle (owner, same day), the rest stay off it.
+Lab.PLAZA_SLOTS = 3
+local PLAZA_NEAR, PLAZA_FAR = 8, 26 -- studs from the spawn (the circle is 30)
 pickRoamSpot = function(plot: Plot, slot: Slot): Vector3
 	local PathPlan = require(ReplicatedStorage.Shared:WaitForChild("PathPlan")) :: any
 	local Visitors = require(script.Parent:WaitForChild("VisitorService")) :: any
 	local origin = plot.origin
 	local slice = math.pi * 2 / DUMMY_COUNT
 	local half = Lab.CORE_HALF - 10
-	local plazaFree = slot.index % 5 == 0
+	local onPlaza = slot.index <= Lab.PLAZA_SLOTS
 	local checked = 0
 	for try = 1, 60 do
-		local near = if plazaFree then ROAM_NEAR_MIN else (if try <= 45 then 50 else 34)
-		local r = math.sqrt(near * near + math.random() * (ROAM_RANGE * ROAM_RANGE - near * near))
+		local near = if onPlaza then PLAZA_NEAR else (if try <= 45 then 50 else 34)
+		local far = if onPlaza then PLAZA_FAR else ROAM_RANGE
+		local r = math.sqrt(near * near + math.random() * (far * far - near * near))
 		-- (Its own slice first; with no room there, anywhere.)
-		local a = if try <= 25 then (slot.index * 7 % DUMMY_COUNT + math.random()) * slice else math.random() * math.pi * 2
+		local a = if try <= 25 and not onPlaza then (slot.index * 7 % DUMMY_COUNT + math.random()) * slice else math.random() * math.pi * 2
 		local x, z = math.cos(a) * r, math.sin(a) * r
 		local blocked = math.abs(x) > half or z > ROAM_YARD_Z or z < ROAM_BACK_Z
 		if not blocked then
@@ -676,7 +679,7 @@ pickRoamSpot = function(plot: Plot, slot: Slot): Vector3
 			local free = plot.owner == nil or Visitors.floorAt(plot.owner, Vector3.new(origin.X + x, origin.Y, origin.Z + z)) ~= nil
 			for _, other in plot.slots do
 				local home = other.roamHome
-				if other ~= slot and home and Vector3.new(home.X - origin.X - x, 0, home.Z - origin.Z - z).Magnitude < 10 then
+				if other ~= slot and home and Vector3.new(home.X - origin.X - x, 0, home.Z - origin.Z - z).Magnitude < (if onPlaza then 6 else 10) then
 					free = false
 				end
 			end

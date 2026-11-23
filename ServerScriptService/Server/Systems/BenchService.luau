@@ -218,6 +218,9 @@ end
 
 local function free(m: Model): boolean
 	local state = m:GetAttribute("RagdollState")
+	if ((m:GetAttribute("Slot") :: number?) or 0) <= Lab.PLAZA_SLOTS then
+		return false -- (these always walk about on the spawn circle)
+	end
 	return m.Parent ~= nil and (state == "Standing" or state == "Walking") and m:GetAttribute("Vital") ~= "Dead"
 		and m:GetAttribute("CommandedBy") == nil and m:GetAttribute("Mood") == nil and m:GetAttribute("Greeter") == nil
 		and m:GetAttribute("InMachine") == nil and m:GetAttribute("MachineHidden") ~= true and m:GetAttribute("Held") ~= true
