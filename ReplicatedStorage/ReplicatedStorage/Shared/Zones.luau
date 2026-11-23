@@ -92,6 +92,19 @@ function Zones.mayGrab(grabber: Player, target: Player, a: Vector3, b: Vector3, 
 	if Zones.isPlaza(a) and Zones.isPlaza(b) then
 		return true
 	end
+	-- (23 Nov 2026, owner: "multiplayer must play like the top ragdoll games"): players sharing one lab (the host:
+	-- SharedHost, the guests: SharedGuest = the host's UserId) may grab and throw each other in it.
+	local function group(p: Player): number?
+		if p:GetAttribute("SharedHost") == true then
+			return p.UserId
+		end
+		local g = p:GetAttribute("SharedGuest")
+		return if type(g) == "number" then g else nil
+	end
+	local ga, gb = group(grabber), group(target)
+	if ga ~= nil and ga == gb then
+		return true
+	end
 	if not partyThrows then
 		return false
 	end

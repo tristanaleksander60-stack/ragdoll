@@ -110,7 +110,7 @@ end
 -- The other player under this viewport point, if they could be grabbed from here.
 local function playerAt(screen: Vector2): Player?
 	local root = myRoot()
-	if not root or (not Zones.isPlaza(root.Position) and player:GetAttribute("PartyLab") == nil) then
+	if not root or (not Zones.isPlaza(root.Position) and player:GetAttribute("PartyLab") == nil and player:GetAttribute("SharedGuest") == nil and player:GetAttribute("SharedHost") ~= true) then -- (23 Nov 2026: a shared lab too)
 		return nil
 	end
 	local camera = Workspace.CurrentCamera

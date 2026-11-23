@@ -1151,6 +1151,9 @@ local function claim(player: Player)
 	end
 	guestOf[player] = nil
 	player:SetAttribute("SharedGuest", nil)
+	if Workspace:GetAttribute("SharedLab") == true then
+		player:SetAttribute("SharedHost", true) -- (the shared server's host: grabs and throws with its guests)
+	end
 	for _, plot in plots do
 		if plot.owner == nil then
 			plot.owner = player
