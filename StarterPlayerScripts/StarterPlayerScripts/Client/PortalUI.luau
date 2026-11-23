@@ -145,7 +145,12 @@ local function build()
 	hereLabel = C.Text("caption", "", { wrap = true, autoY = true, layoutOrder = -10, parent = multi.body })
 	-- (23 Nov 2026, owner: "multiplayer: see the servers, join your friends, make your own server"): the hub.
 	-- FRIENDS: friends online in this game, JOIN.
-	-- (23 Nov 2026, owner: "remove ONE LAB from the multiplayer menu: the portal just changes server".)
+	-- (23 Nov 2026: back in the portal's list: the lab everyone here shares, then every server.)
+	C.SectionHeader("THIS SERVER", "rebirth", -9, multi.body)
+	C.Button({ text = "PLAY WITH EVERYONE HERE", role = "go", size = UDim2.new(1, 0, 0, Theme.Size.buttonH), layoutOrder = -8, parent = multi.body, onActivated = function()
+		remote:FireServer("JoinShared")
+		Controller.closeAll()
+	end })
 	C.SectionHeader("FRIENDS", "rebirth", -7, multi.body)
 	local friendsHolder = Instance.new("Frame")
 	friendsHolder.Name = "Friends"
@@ -212,18 +217,16 @@ function PortalUI.start()
 			if d.portal == "PortalPlaces" then
 				Controller.open("Maps") -- (V9-0e: the gold PLACES portal opens the places)
 			elseif d.portal == "PortalSolo" then
-				Controller.open("Solo")
-			else
-				-- (23 Nov 2026, owner: "just a multiplayer portal"): in = the shared lab with the others; again = back to a
-				-- lab of your own.
-				local shared = player:GetAttribute("SharedGuest") ~= nil or player:GetAttribute("SharedHost") == true
-				if shared then
+				-- (23 Nov 2026, owner: "a singleplayer portal in the multiplayer lab"): out of the shared lab, into your own.
+				if player:GetAttribute("SharedGuest") ~= nil or player:GetAttribute("SharedHost") == true then
 					remote:FireServer("LeaveShared")
 					Toast.show("Back to your own lab")
 				else
-					remote:FireServer("JoinShared")
-					Toast.show("Joining the multiplayer lab...")
+					Toast.show("You are in your own lab already")
 				end
+			else
+				-- (23 Nov 2026, owner: "choose servers in the portal as before"): the server list, with the lab here on top.
+				PortalUI.openHub()
 			end
 		elseif kind == "List" then
 			local here = d.here

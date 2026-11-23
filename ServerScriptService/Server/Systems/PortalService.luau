@@ -480,11 +480,12 @@ function PortalService.buildPortals(folder: Instance, origin: Vector3)
 			end)
 			m.Parent = folder
 		end
-		-- (23 Nov 2026, owner: "just one multiplayer portal": walking in again takes you back to your own lab.)
+		-- (23 Nov 2026, owner: "a singleplayer portal in the multiplayer lab": out of the shared lab, back to your own.)
+		door("PortalSolo", 30, Color3.fromRGB(80, 210, 120), "SINGLEPLAYER")
 		door("PortalMulti", 44, Color3.fromRGB(90, 170, 250), "MULTIPLAYER")
 		return
 	end
-	-- (23 Nov 2026: one MULTIPLAYER portal only.)
+	arch("PortalSolo", -7, Color3.fromRGB(70, 220, 110), "SINGLEPLAYER")
 	arch("PortalMulti", 7, Color3.fromRGB(80, 170, 255), "MULTIPLAYER")
 end
 
