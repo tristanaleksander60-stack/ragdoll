@@ -57,9 +57,13 @@ local function hurtOf(model: Model): ({ [string]: number }, { [string]: string }
 			end
 			if total > 0 then
 				for _, piece in limb do
-					tint[side .. piece] = if (count[side .. piece] or 0) > 0 then 0.95 else 0.68
+					-- (23 Nov 2026, owner: only the struck piece, not the whole limb.)
+					local n = count[side .. piece] or 0
+					if n > 0 then
+						tint[side .. piece] = if n >= 2 then 0.95 else 0.75
+					end
 				end
-				if total >= 2 then
+				if (count[side .. limb[2]] or 0) >= 2 then
 					wrap[side .. limb[2]] = worst
 				end
 			end
