@@ -848,12 +848,45 @@ BUILD.Whale = function(f, at, m)
 	part(f, "TankRim", Vector3.new(32, 1.2, 22), at * CFrame.new(0, 0.1, 0), Color3.fromRGB(140, 134, 125), Enum.Material.Cobblestone)
 	-- The shark itself: big, placed in the middle of the tank, facing along X so its length sweeps the pool.
 	local shark = place(f, "MShark", (at * CFrame.new(0, 0.6, 0)).Position, 90, 24)
-	-- (V10 phase 2, owner: "you must not walk through the shark": solid for players and bodies.)
+	-- (23 Nov 2026, owner: "the shark under the water, only the fin sticking up".) The whole shark lies under the floor
+	-- of the shallow pool; a fin (wedge: the slope to the front) and its dark shadow swim for it (Client/CreatureLife).
+	local finParts: { BasePart } = {}
 	if shark then
-		for _, d in shark:GetDescendants() do
-			if d:IsA("BasePart") then
-				d.CanCollide = true
-			end
+		local cfS, sizeS = shark:GetBoundingBox()
+		local surface = (at * CFrame.new(0, 1, 0)).Position.Y
+		shark:PivotTo(shark:GetPivot() + Vector3.new(0, surface - 0.7 - (cfS.Position.Y + sizeS.Y / 2), 0))
+		local pivot = shark:GetPivot()
+		local up = surface - pivot.Position.Y
+		local fin = Instance.new("WedgePart")
+		fin.Name = "SharkFin"
+		fin.Size = Vector3.new(0.45, 3, 3.2)
+		fin.Color = Color3.fromRGB(84, 92, 102)
+		fin.CFrame = pivot * CFrame.new(0, up + 1, 0)
+		local tip = Instance.new("WedgePart")
+		tip.Name = "SharkFinBack"
+		tip.Size = Vector3.new(0.4, 2.4, 0.9)
+		tip.Color = fin.Color
+		tip.CFrame = pivot * CFrame.new(0, up + 0.7, 2.05) * CFrame.Angles(0, math.pi, 0)
+		local shade = Instance.new("Part")
+		shade.Name = "SharkShade"
+		shade.Size = Vector3.new(3.6, 0.3, 15)
+		shade.Color = Color3.fromRGB(16, 30, 44)
+		shade.Transparency = 0.35
+		shade.CFrame = pivot * CFrame.new(0, up - 0.6, 0)
+		local oval = Instance.new("SpecialMesh")
+		oval.MeshType = Enum.MeshType.Sphere
+		oval.Parent = shade
+		for _, p in { fin, tip, shade } :: { BasePart } do
+			p.Material = Enum.Material.SmoothPlastic
+			p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.CastShadow = true, false, false, false, false
+			p:SetAttribute("Shown", p.Transparency)
+			p.Parent = shark
+			table.insert(finParts, p)
+		end
+	end
+	local function showFin(on: boolean)
+		for _, p in finParts do
+			p.Transparency = if on then (p:GetAttribute("Shown") :: number) else 1
 		end
 	end
 	local basePivot = shark and shark:GetPivot()
@@ -899,12 +932,15 @@ BUILD.Whale = function(f, at, m)
 			local red = Color3.fromRGB(150, 18, 24)
 			TweenService:Create(pool, TweenInfo.new(0.9), { Color = red, Transparency = 0.15 }):Play()
 			if shark and basePivot then
+				-- (It bursts up out of the water, jaws first, thrashes, and goes under again.)
+				showFin(false)
 				play(1.8, function(t)
-					local roll = math.sin(t * math.pi * 6) * 0.45
-					local lift = math.abs(math.sin(t * math.pi * 3)) * 0.9
-					shark:PivotTo(basePivot * CFrame.new(math.sin(t * 9) * 1.5, lift, 0) * CFrame.Angles(0, math.sin(t * 7) * 0.4, roll))
+					local out = math.sin(math.min(1, t * 1.15) * math.pi)
+					local roll = math.sin(t * math.pi * 6) * 0.4 * out
+					shark:PivotTo(basePivot * CFrame.new(math.sin(t * 9) * 1.5, out * 7.5, 0) * CFrame.Angles(out * 0.35, math.sin(t * 7) * 0.4, roll))
 				end)
 				shark:PivotTo(basePivot)
+				showFin(true)
 			else
 				task.wait(1.8)
 			end

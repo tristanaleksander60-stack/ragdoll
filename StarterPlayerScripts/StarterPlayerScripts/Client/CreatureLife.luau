@@ -7,7 +7,7 @@
 --   Plant    sways, turns its head to you, snaps at the air every few seconds
 --   Frog     breathes (a throat bob), turns to you, hops on the spot now and then
 --   Chicken  pecks at the straw, turns its head this way and that
---   Whale    rolls and bobs in its pool
+--   Whale    the shark: circles its pool under the water, only the fin up
 --   Washer   rumbles through a short spin now and then
 --   Mole     peeks out of its hole, looks round and ducks back down
 -- While its machine works (the folder's Busy, LabCreatures.swallow) the server moves it and this
@@ -84,7 +84,9 @@ local function pose(l: Life, t: number): CFrame
 		local look = math.sin(t * 0.7 + s) * 0.6
 		return CFrame.Angles(0, l.yaw * 0.5 + look, 0) * CFrame.Angles(-peck * 0.45, 0, 0)
 	elseif k == "Whale" then
-		return CFrame.new(0, math.sin(t * 0.8) * 0.35, 0) * CFrame.Angles(math.sin(t * 0.5) * 0.04, 0, math.sin(t * 0.6 + s) * 0.06)
+		local a = t * 0.55 + s
+		local dx, dz = 5 * math.cos(a), -5.5 * math.sin(a)
+		return CFrame.new(5 * math.sin(a), math.sin(t * 0.8) * 0.2, 5.5 * math.cos(a)) * CFrame.Angles(0, math.atan2(-dx, -dz) + math.sin(t * 3) * 0.08, 0)
 	elseif k == "Washer" then
 		local spin = math.max(0, math.sin(t * 0.35 + s)) ^ 20
 		return CFrame.new(math.sin(t * 60) * 0.12 * spin, 0, math.cos(t * 47) * 0.12 * spin)

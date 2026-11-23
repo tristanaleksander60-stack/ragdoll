@@ -69,7 +69,9 @@ end
 local function rocketParts(rocket: Model): ({ BasePart }, Vector3?, number, number, number)
 	local all: { BasePart } = {}
 	for _, d in rocket:GetDescendants() do
-		if d:IsA("BasePart") then
+		-- (23 Nov 2026, owner: "the little box flies, not the rocket": a TrussPart cannot get thinner than 2 studs, so
+		-- in the scaled model the tower's trusses were the widest square pieces and were taken for the rocket.)
+		if d:IsA("BasePart") and not d:IsA("TrussPart") then
 			table.insert(all, d)
 		end
 	end
@@ -80,11 +82,15 @@ local function rocketParts(rocket: Model): ({ BasePart }, Vector3?, number, numb
 		end
 	end
 	local sum, n, bottom = Vector3.zero, 0, math.huge
+	local columns: { Vector2 } = {}
+	local stackTop = -math.huge
 	for _, p in all do
 		if w > 0 and math.abs(p.Size.X - w) < 0.05 * w and math.abs(p.Size.Z - w) < 0.05 * w and p.Size.Y > w * 0.5 then
 			sum += p.Position
 			n += 1
+			table.insert(columns, Vector2.new(p.Position.X, p.Position.Z))
 			bottom = math.min(bottom, p.Position.Y - p.Size.Y / 2)
+			stackTop = math.max(stackTop, p.Position.Y + p.Size.Y / 2)
 		end
 	end
 	if n < 2 then
@@ -94,8 +100,12 @@ local function rocketParts(rocket: Model): ({ BasePart }, Vector3?, number, numb
 	local fly: { BasePart } = {}
 	local top = bottom
 	for _, p in all do
-		local d = Vector2.new(p.Position.X - axis.X, p.Position.Z - axis.Z).Magnitude
-		if d < w * 0.8 and math.max(p.Size.X, p.Size.Z) < w * 1.5 and p.Position.Y > bottom - w * 0.1 then
+		-- (Round any of the rocket's columns: the core and the boosters go up together.)
+		local d = math.huge
+		for _, c in columns do
+			d = math.min(d, (Vector2.new(p.Position.X, p.Position.Z) - c).Magnitude)
+		end
+		if d < w * 0.8 and math.max(p.Size.X, p.Size.Z) < w * 1.5 and p.Position.Y > bottom - w * 0.6 and p.Position.Y < bottom + (stackTop - bottom) * 1.6 then -- (the nose, not the tower's crane over it)
 			table.insert(fly, p)
 			top = math.max(top, p.Position.Y + p.Size.Y / 2)
 		end
