@@ -47,7 +47,7 @@ local UserInputService = game:GetService("UserInputService")
 local PHONE = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 local POOL = if PHONE then 1 else 2 -- loaded Sounds made per asset id at start, reused play after play
 local LOAD_WAIT = if PHONE then 0.2 else 0.1 -- s a sound not yet loaded may wait; later it is dropped, never late
-local LOAD_WAIT_OWN = 0.35 -- s the player's own shot or hit may wait (heard a little late beats silence)
+local LOAD_WAIT_OWN = 0.5 -- s the player's own shot or hit may wait (heard a little late beats silence)
 local POOL_MAX = 6 -- voices an asset may grow to before a busy one is restarted
 local CUT_FADE = 0.05 -- s a sound takes to fade out before its voice is freed (no click)
 local SOUND_REACH = 160 -- studs a sound is heard, unless the caller says otherwise
@@ -207,6 +207,11 @@ local function steal(): boolean
 			return true
 		end
 	end
+	local first = live[1] -- (all of them own: the oldest tail gives way, a new shot is never silent)
+	if first then
+		release(first, first.play)
+		return true
+	end
 	return false
 end
 
@@ -220,34 +225,43 @@ local function variant(bank: string, list: { string }): string
 	return list[index]
 end
 
--- A pooled voice of an asset if one is free, else a new one (it joins the pool when freed).
+-- A voice of an asset. (23 Nov 2026, owner: "on a phone you only hear the shots land": the one loaded voice was still
+-- busy with the last shot, so the next took a brand new Sound that never loaded in time and was dropped.) A LOADED one
+-- first; with none free, the one that has played longest starts over, while a spare loads for next time.
 local count: { [string]: number } = {} -- voices made per asset id (pooled ones)
-local function takeVoice(id: string): Voice
+local function takeVoice(id: string, own: boolean): Voice
 	local pool = free[id]
-	while pool and #pool > 0 do
-		local voice = table.remove(pool) :: Voice
-		if voice.at.Parent then
-			return voice
+	if not pool then
+		return newVoice(id, false)
+	end
+	for i = #pool, 1, -1 do
+		local voice = pool[i]
+		if not voice.at.Parent then
+			table.remove(pool, i)
+		elseif voice.sound.IsLoaded then
+			return table.remove(pool, i) :: Voice
 		end
 	end
-	-- None free: grow the pool up to POOL_MAX, then restart this asset's oldest loaded voice
-	-- (always heard at once; a fresh Sound would still be loading).
-	if pool and (count[id] or 0) >= POOL_MAX then
-		for _, busy in live do
-			if busy.id == id and busy.sound.IsLoaded and not busy.priority then
-				release(busy, busy.play)
-				local again = table.remove(pool)
-				if again and again.at.Parent then
-					return again
+	for _, busy in live do
+		if busy.id == id and busy.pooled and busy.sound.IsLoaded and busy.at.Parent and (own or not busy.priority) then
+			release(busy, busy.play)
+			local i = table.find(pool, busy)
+			if i then
+				table.remove(pool, i)
+				if #pool == 0 and (count[id] or 0) < POOL_MAX then
+					count[id] = (count[id] or 0) + 1
+					table.insert(pool, newVoice(id, true))
 				end
-				break
+				return busy
 			end
+			break
 		end
 	end
-	if pool then
-		count[id] = (count[id] or 0) + 1
+	if #pool > 0 then
+		return table.remove(pool) :: Voice -- (none has loaded yet)
 	end
-	return newVoice(id, pool ~= nil)
+	count[id] = (count[id] or 0) + 1
+	return newVoice(id, true)
 end
 
 local function hasBank(bank: string): boolean
@@ -273,7 +287,7 @@ local function play(bank: string, position: Vector3, volume: number, speed: numb
 		return
 	end
 	local id = variant(bank, BANK[bank])
-	local voice = takeVoice(id)
+	local voice = takeVoice(id, o.priority == true)
 	plays += 1
 	voice.play = plays
 	voice.priority = o.priority == true
@@ -1608,8 +1622,23 @@ function FxController.start()
 			loadList(list)
 		end
 	end
+	-- (A failed fetch is tried once more: a phone's bad moment must not take a gun's sound away for the whole visit.)
 	local function preloadNow(list: { Instance })
+		local again: { Instance } = {}
 		game:GetService("ContentProvider"):PreloadAsync(list, function(id: string, status: Enum.AssetFetchStatus)
+			if status == Enum.AssetFetchStatus.Failure then
+				for _, sound in list do
+					if (sound :: Sound).SoundId == id then
+						table.insert(again, sound)
+					end
+				end
+			end
+		end)
+		if #again == 0 then
+			return
+		end
+		task.wait(8)
+		game:GetService("ContentProvider"):PreloadAsync(again, function(id: string, status: Enum.AssetFetchStatus)
 			if status == Enum.AssetFetchStatus.Failure then
 				for _, ids in BANK do
 					local i = table.find(ids, id)
@@ -1620,6 +1649,27 @@ function FxController.start()
 			end
 		end)
 	end
+	-- The gun in your hand gets spare voices at once, so quick shots each have one ready.
+	task.spawn(function()
+		local last: any = nil
+		while true do
+			task.wait(0.5)
+			local character = Players.LocalPlayer.Character
+			local held = character and character:FindFirstChild("HeldTool")
+			local tool = held and held:GetAttribute("Tool")
+			if tool ~= last then
+				last = tool
+				local g = if type(tool) == "string" then SoundManifest.GUNS[tool] else nil
+				for _, id in (g and BANK[g.fire]) or {} do
+					local pool = free[id]
+					while pool and (count[id] or 0) < 4 do
+						count[id] = (count[id] or 0) + 1
+						table.insert(pool, newVoice(id, true))
+					end
+				end
+			end
+		end
+	end)
 	task.delay(if PHONE then 20 else 6, function()
 		preload = {}
 		for name, list in BANK do
@@ -1629,19 +1679,7 @@ function FxController.start()
 		end
 		preloadNow(preload)
 	end)
-	task.spawn(function()
-		game:GetService("ContentProvider"):PreloadAsync(preload, function(id: string, status: Enum.AssetFetchStatus)
-			-- (Only a real failure: a slow phone's timeout keeps the id, a late play is dropped anyway.)
-			if status == Enum.AssetFetchStatus.Failure then
-				for _, list in BANK do
-					local i = table.find(list, id)
-					if i then
-						table.remove(list, i)
-					end
-				end
-			end
-		end)
-	end)
+	task.spawn(preloadNow, preload)
 
 	FeelV2.play = function(bank: string, position: Vector3, volume: number, pitch: number)
 		play(bank, position, volume, pitch)
