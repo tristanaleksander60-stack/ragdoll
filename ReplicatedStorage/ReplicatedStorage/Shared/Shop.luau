@@ -247,7 +247,6 @@ Shop.WHATS_NEW = table.freeze({
 			"EXPERIMENTS: a quick goal card with a timer and stars. Three DAILY EXPERIMENTS, the same for everyone",
 			"X-RAY REPLAY: see the bones fly, get a score and a SHARE CODE for your friends",
 			"BOLTS: earn them from experiments and playing, spend them on the next weapon",
-			"BONE JOURNAL: 15 pages to fill",
 			"PRANK PARTY: friends in your lab share one experiment, and can toss each other into the traps",
 			"Controllers work now, and phones held upright get their own layout",
 		},

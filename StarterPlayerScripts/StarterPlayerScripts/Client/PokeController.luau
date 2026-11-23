@@ -1028,17 +1028,44 @@ local function pruneLocked()
 	end
 end
 
+-- (23 Nov 2026, owner: "picking a weapon puts you in first person; pressing it again takes you out and the weapon out of
+-- your hand; the first shot or blow too, also on phones".) Never while driving, building or in the lab view.
+function PokeController.eyes(on: boolean)
+	pcall(function()
+		local FirstPerson = require(script.Parent:WaitForChild("FirstPerson")) :: any
+		if on then
+			local character = player.Character
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			if not humanoid or humanoid.Health <= 0 or humanoid.SeatPart or ViewMode.isLab() or player:GetAttribute("Building") == true then
+				return
+			end
+		end
+		FirstPerson.set(on)
+	end)
+end
+local struck = false -- (the first shot or blow of the visit has been)
+local function firstStrike(used: boolean): boolean
+	local toy = Toys.byId[selected]
+	if used and not struck and toy and toy.kind == "hit" then
+		struck = true
+		task.delay(0.1, PokeController.eyes, true) -- (the shot first)
+	end
+	return used
+end
+
 local function pressed(id: string)
 	-- (23 Nov 2026, owner: "on a phone, press the weapon again and it leaves the hand", as the number keys do.)
-	if ViewMode.isTouch() and id == selected and not pendingEquip and not handEmpty then
+	if id == selected and not pendingEquip and not handEmpty then
 		handEmpty = true
 		refresh()
+		PokeController.eyes(false)
 		return
 	end
 	if pendingEquip then
 		placeIn(id)
 	else
 		select(id)
+		PokeController.eyes(true)
 	end
 end
 
@@ -1823,7 +1850,7 @@ function PokeController.pressAt(viewportPosition: Vector2): boolean
 	if bow ~= nil then
 		return bow
 	end
-	return tryUse(viewportPosition, "press")
+	return firstStrike(tryUse(viewportPosition, "press"))
 end
 
 function PokeController.tapAt(viewportPosition: Vector2): boolean
@@ -1835,7 +1862,7 @@ function PokeController.tapAt(viewportPosition: Vector2): boolean
 	if bow ~= nil then
 		return bow
 	end
-	return tryUse(viewportPosition, "tap")
+	return firstStrike(tryUse(viewportPosition, "tap"))
 end
 
 -- Shows or hides the toy bar and turns tapping on or off.
@@ -2294,14 +2321,6 @@ function PokeController.start()
 		end
 		local id = index and shown()[index]
 		if id then
-			if id == selected and not pendingEquip and not handEmpty then
-				handEmpty = true
-				refresh()
-				pcall(function()
-					(require(script.Parent:WaitForChild("FirstPerson")) :: any).set(false)
-				end)
-				return
-			end
 			pressed(id)
 		end
 	end)

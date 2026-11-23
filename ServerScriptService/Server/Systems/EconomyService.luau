@@ -97,6 +97,9 @@ end
 
 -- Counts what happened into the journal; new pages pay JOURNAL_BOLTS each.
 function EconomyService.count(player: Player, kind: string, n: number)
+	if not Config.BONE_JOURNAL then
+		return -- (23 Nov 2026, owner: no bone journal, no notices about it)
+	end
 	local e = ProgressService.ecoOf(player)
 	if not e then
 		return
