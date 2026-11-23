@@ -773,7 +773,7 @@ local function tend(model: Model, v: Vitals, dt: number, now: number)
 	-- (22 Nov 2026, owner: every 3rd lab dummy killed comes back a zombie: Zombies.) Each death counted once.
 	if labDummy and v.state == "Dead" and deathSeen[model] ~= v.since then
 		deathSeen[model] = v.since
-		if model:GetAttribute("Zombie") == true then
+		if model:GetAttribute("Zombie") == true or model:GetAttribute("ZombieDied") == true then
 			model:SetAttribute("ZombieDied", true) -- (killed as a zombie: it wakes up normal)
 		else
 			local ownerId = model:GetAttribute("LabOwner") :: number

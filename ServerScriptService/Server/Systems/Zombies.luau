@@ -23,6 +23,7 @@ Zombies.TAG = "Zombie"
 local RED = Color3.fromRGB(220, 30, 30)
 local nextHit: { [Model]: number } = {}
 local running = false
+local watch: { [Model]: RBXScriptConnection } = {} -- (each zombie's death)
 
 local function lazy(name: string): any
 	return require(script.Parent:WaitForChild(name)) :: any
@@ -74,13 +75,18 @@ function Zombies.clear(model: Model)
 	if model:GetAttribute("Zombie") ~= true then
 		return
 	end
+	local conn = watch[model]
+	if conn then
+		conn:Disconnect()
+		watch[model] = nil
+	end
 	model:SetAttribute("Zombie", nil)
 	model:SetAttribute("ZombieTarget", nil)
 	if model:GetAttribute("CommandedBy") == -1 then
 		model:SetAttribute("CommandedBy", nil)
 	end
 	local was = model:GetAttribute("ZombieWas")
-	model:SetAttribute("Personality", if type(was) == "string" then was else "Brave")
+	model:SetAttribute("Personality", if type(was) == "string" then was else nil)
 	model:SetAttribute("ZombieWas", nil)
 	CollectionService:RemoveTag(model, Zombies.TAG)
 	nextHit[model] = nil
@@ -149,8 +155,24 @@ function Zombies.rise(model: Model, targetUserId: number)
 	model:SetAttribute("Zombie", true)
 	model:SetAttribute("ZombieTarget", targetUserId)
 	model:SetAttribute("CommandedBy", -1)
+	model:SetAttribute("ZombieDied", nil)
 	CollectionService:AddTag(model, Zombies.TAG)
 	marks(model, true)
+	-- (23 Nov 2026, owner: "the moment a zombie dies the ZOMBIE text goes, and it wakes up normal"): tag, outline and
+	-- hunt end at its death, not when it wakes. ZombieDied tells VitalsService this death makes no new zombie.
+	if watch[model] then
+		watch[model]:Disconnect()
+	end
+	watch[model] = model:GetAttributeChangedSignal("Vital"):Connect(function()
+		if model:GetAttribute("Vital") == "Dead" and model:GetAttribute("Zombie") == true then
+			model:SetAttribute("ZombieDied", true)
+			Zombies.clear(model)
+		end
+	end)
+	model.Destroying:Once(function()
+		watch[model] = nil
+		nextHit[model] = nil
+	end)
 	if not running then
 		running = true
 		task.spawn(function()
