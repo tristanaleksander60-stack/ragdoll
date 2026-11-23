@@ -51,9 +51,7 @@ local function hurtOf(model: Model): ({ [string]: number }, { [string]: string }
 			local piece = rest and BRUISE_AT[rest]
 			if piece and (side == "Left" or side == "Right") then
 				count[side .. piece] = (count[side .. piece] or 0) + 1
-				if not w.blunt then
-					shots[side .. piece] = (shots[side .. piece] or 0) + 1
-				end
+				shots[side .. piece] = (shots[side .. piece] or 0) + 1 -- (23 Nov 2026, owner: blows too, bat and all)
 				flow[side .. piece] = (flow[side .. piece] or 0) + w.zone.bleed * (if w.blunt then 0.5 else 1)
 			end
 		end
@@ -125,7 +123,7 @@ local XRAY_CLEAR = 0.58
 local XRAY_TINT = Color3.fromRGB(104, 138, 186)
 local BONE = Color3.fromRGB(238, 231, 213)
 local MARROW = Color3.fromRGB(128, 34, 48)
-local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: string)
+local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: string, hits: number)
 	local rng = Random.new(#limb.Name * 7 + 3)
 	local size = skin.Size
 	local len = size.Y * 0.88
@@ -160,8 +158,13 @@ local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: s
 			end
 		end
 	end
-	if #breaks == 0 then
-		table.insert(breaks, 0)
+	-- (Struck with no holes: a break per blow after the second, spread over the bone.)
+	local want = math.clamp(math.floor(hits / 2), 1, 3)
+	local spots = { 0.04, -0.26, 0.28 }
+	for i = 1, want do
+		if #breaks < want then
+			table.insert(breaks, spots[i] * len)
+		end
 	end
 	table.sort(breaks)
 	local function bone(x: number, z: number, t: number, length: number, knobs: boolean)
@@ -418,7 +421,7 @@ local function dress(model: Model)
 							end
 						end
 						if clear then
-							xrayBone(limb, skin, folder, key)
+							xrayBone(limb, skin, folder, key, n)
 						end
 					end)
 				end

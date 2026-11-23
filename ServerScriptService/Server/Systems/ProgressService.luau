@@ -62,8 +62,8 @@ local pranksChanged: { [Player]: boolean } = {} -- the switch was flipped this s
 local loadedHooks: { (Player, boolean) -> () } = {}
 
 local STORE = "Profile_v1"
-local SAVE_DELAY = 6 -- s after the last change
-local SAVE_MAX_WAIT = 60 -- s: in non-stop play it saves at least this often (a crash loses less)
+local SAVE_DELAY = 3 -- s after the last change
+local SAVE_MAX_WAIT = 20 -- s: in non-stop play it saves at least this often (a crash loses less)
 local RETRIES = 3
 local READ_RETRY_GAP = 15
 local REQUESTS_PER_10S = 12 -- open / wear
@@ -425,7 +425,10 @@ local function load(userId: number): (boolean, Profile?)
 		return true, if m then clean(m) else nil
 	end
 	local ok, raw = retry(function()
-		return ds:GetAsync(tostring(userId))
+		-- (23 Nov 2026: never the server's own cached copy, seconds old: a hop between our two places reads what was just saved.)
+		local options = Instance.new("DataStoreGetOptions")
+		options.UseCache = false
+		return ds:GetAsync(tostring(userId), options)
 	end)
 	if not ok then
 		return false, nil
@@ -437,6 +440,12 @@ end
 -- goes onto the stored count (a quick hop to another server neither brings back an opened egg
 -- nor loses a found one).
 local eggBase: { [Player]: number } = {}
+-- (23 Nov 2026, bug: takedowns were kept as the larger of the stored and this visit's count. A hop between the
+-- singleplayer and the multiplayer place that read the profile before the first server had saved it started from the
+-- old count, and the smaller of the two visits was lost. Now both takedowns and time played are saved as what this visit
+-- added since the last save, as eggs are.)
+local tdBase: { [Player]: number } = {}
+local playBase: { [Player]: number } = {}
 -- One save per player at a time: a second one (leaving while an overdue one still retries) waits
 -- for the first, then reads the egg baseline it moved (never adding the same found eggs twice).
 local saveBusy: { [Player]: boolean } = {}
@@ -463,6 +472,7 @@ local function save(player: Player, profile: Profile): boolean
 	if (require(script.Parent:WaitForChild("TestAccount")) :: any).is(player) then
 		return true
 	end
+	saving += 1 -- (from here: a closing server waits for one that still queues, too)
 	local waited = 0
 	while saveBusy[player] and waited < SAVE_QUEUE_WAIT do
 		waited += task.wait(0.2)
@@ -470,6 +480,7 @@ local function save(player: Player, profile: Profile): boolean
 	saveBusy[player] = true
 	local ok, result = pcall(saveLocked, player, profile)
 	saveBusy[player] = nil
+	saving -= 1
 	return ok and result == true
 end
 
@@ -478,14 +489,21 @@ function saveLocked(player: Player, profile: Profile): boolean
 	local ds = store
 	local base = eggBase[player] or profile.eggs
 	local eggsNow = profile.eggs
+	local tdNow, playNow = profile.takedowns, profile.playSeconds
+	local tdFrom, playFrom = tdBase[player] or tdNow, playBase[player] or playNow
+	local total, totalPlay = tdNow, playNow
 	local function withEggs(stored: Profile, merged: Profile): Profile
 		merged.eggs = math.clamp(stored.eggs + (eggsNow - base), 0, Progress.MAX_EGGS)
+		merged.takedowns = math.max(0, stored.takedowns + (tdNow - tdFrom))
+		merged.playSeconds = math.max(0, stored.playSeconds + (playNow - playFrom))
+		total, totalPlay = merged.takedowns, merged.playSeconds
 		return merged
 	end
 	if not ds then
 		local stored = clean(memory[userId])
 		memory[userId] = withEggs(stored, merge(stored, profile))
 		eggBase[player] = eggsNow
+		tdBase[player], playBase[player] = tdNow, playNow
 		return true
 	end
 	saving += 1
@@ -524,6 +542,13 @@ function saveLocked(player: Player, profile: Profile): boolean
 	saving -= 1
 	if ok then
 		eggBase[player] = eggsNow
+		-- (What another server had added meanwhile shows here too: the count goes on from the stored total.)
+		profile.takedowns += total - tdNow
+		profile.playSeconds += totalPlay - playNow
+		tdBase[player], playBase[player] = total, totalPlay
+		if total ~= tdNow and player.Parent then
+			ProgressService.refreshCount(player)
+		end
 	end
 	return ok
 end
@@ -1476,7 +1501,7 @@ end
 -- never get a session's small number in place of their real one.)
 function ProgressService.eachLoaded(fn: (Player, number, number) -> ())
 	for player, p in profiles do
-		if loaded[player] and not readFailed[player] then
+		if player.Parent and loaded[player] and not readFailed[player] then
 			fn(player, p.takedowns, p.playSeconds)
 		end
 	end
@@ -1852,6 +1877,8 @@ local function onJoin(player: Player)
 		pendingNoPranks[player] = nil
 	end
 	profiles[player] = profile
+	tdBase[player] = if stored then stored.takedowns else 0
+	playBase[player] = if stored then stored.playSeconds else 0
 	eggBase[player] = if stored then stored.eggs else 0 -- (eggs are saved as the change from here)
 	if told then
 		remote:FireClient(player, "Notice", "Your progress is back!")
@@ -1986,6 +2013,30 @@ function ProgressService.countPlayForTest(player: Player, seconds: number): numb
 	return countPlay(player)
 end
 
+-- Saves now and waits for it (before a teleport to our other place).
+function ProgressService.saveNow(player: Player): boolean
+	local p = profiles[player]
+	if not p or not loaded[player] or readFailed[player] then
+		return false
+	end
+	countPlay(player)
+	local token = dirty[player]
+	if save(player, p) then
+		playUnsaved[player] = 0
+		if dirty[player] == token then
+			dirty[player] = nil
+		end
+		return true
+	end
+	return false
+end
+function ProgressService.refreshCount(player: Player)
+	if profiles[player] then
+		showStats(player)
+		sendState(player)
+	end
+end
+
 function ProgressService.saveNowForTest(player: Player): boolean
 	local p = profiles[player]
 	return p ~= nil and save(player, p)
@@ -2019,12 +2070,13 @@ function ProgressService.start(labOrigin: Vector3)
 		end
 		if p and dirty[player] and loaded[player] and not readFailed[player] then
 			dirty[player] = nil
+			playUnsaved[player] = 0
 			task.spawn(save, player, p)
 		elseif p and readFailed[player] and dirty[player] then
 			dirty[player] = nil
 			task.spawn(saveOnto, player, p) -- (never read: added on top inside the update)
 		end
-		task.delay(1, function()
+		task.delay(30, function() -- (after the save on the way out, and its retries: it was 1 s, while it still read these)
 			if not player.Parent then
 				profiles[player] = nil
 				loaded[player] = nil
@@ -2035,6 +2087,8 @@ function ProgressService.start(labOrigin: Vector3)
 				combos[player] = nil
 				pranksChanged[player] = nil
 				eggBase[player] = nil
+				tdBase[player] = nil
+				playBase[player] = nil
 				dirtySince[player] = nil
 				pendingNoPranks[player] = nil
 				playCounted[player] = nil
@@ -2045,7 +2099,9 @@ function ProgressService.start(labOrigin: Vector3)
 	end)
 	game:BindToClose(function()
 		for player, p in profiles do
-			countPlay(player)
+			if player.Parent then
+				countPlay(player)
+			end
 			if (playUnsaved[player] or 0) > 0 then
 				dirty[player] = dirty[player] or 1
 			end
@@ -2082,6 +2138,9 @@ function ProgressService.start(labOrigin: Vector3)
 		while true do
 			task.wait(PLAY_TICK)
 			for player in profiles do
+				if not player.Parent then
+					continue -- (gone; kept a while only for the save on the way out)
+				end
 				countPlay(player)
 				ProgressService.checkNewDay(player)
 				if (playUnsaved[player] or 0) >= PLAY_SAVE_EVERY and loaded[player] and not readFailed[player] then

@@ -240,6 +240,18 @@ local function go(player: Player, how: string, target: Entry?, auto: boolean?)
 		return
 	end
 	remote:FireClient(player, "Going", { kind = if auto then "Join" else how })
+	-- (23 Nov 2026: the profile is saved first, so the other place reads it as it is now; at most 4 s.)
+	local saved = false
+	task.spawn(function()
+		pcall(function()
+			(require(script.Parent:WaitForChild("ProgressService")) :: any).saveNow(player)
+		end)
+		saved = true
+	end)
+	local savedFrom = os.clock()
+	while not saved and os.clock() - savedFrom < 4 do
+		task.wait(0.05)
+	end
 	local options = Instance.new("TeleportOptions")
 	options:SetTeleportData({ from = how })
 	local ok, err = pcall(function()
