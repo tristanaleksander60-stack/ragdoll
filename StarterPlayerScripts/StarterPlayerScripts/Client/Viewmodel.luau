@@ -145,6 +145,38 @@ local function build(held: Model)
 	h.Parent = workspace.CurrentCamera
 end
 
+-- (23 Nov 2026, owner: "a bat is not held like a gun: upright, and many others too".) How a tool is held: rise = degrees
+-- its far end points up, lean = degrees it leans in over the view, both = two hands on the handle. nil = like a gun.
+-- The models have the handle at the origin and the far end along -Z (N7Assets.Weapons).
+type Hold = { rise: number, lean: number, both: boolean, at: Vector3 }
+local UPRIGHT: Hold = { rise = 72, lean = 16, both = false, at = Vector3.new(0, -0.15, 0.1) }
+local UPRIGHT2: Hold = { rise = 70, lean = 24, both = true, at = Vector3.new(-0.2, -0.15, 0.1) }
+local WAND: Hold = { rise = 48, lean = 14, both = false, at = Vector3.new(0, -0.1, 0) }
+local CARRIED: Hold = { rise = 12, lean = 0, both = false, at = Vector3.new(-0.1, -0.05, -0.1) }
+local HOLDS: { [string]: Hold } = {
+	Bat = UPRIGHT2, Golf = UPRIGHT2, Hammer = UPRIGHT2, Axe = UPRIGHT2, Katana = UPRIGHT2, PlasmaBlade = UPRIGHT2,
+	Pan = UPRIGHT, Crowbar = UPRIGHT, Cleaver = UPRIGHT,
+}
+local LIKE_A_GUN = { Chainsaw = true, RPG = true, GravityGun = true, Portal = true, Bow = true, Slime = true }
+local function holdOf(id: string): Hold?
+	local toy = Toys.byId[id]
+	if not toy or toy.gun or LIKE_A_GUN[id] then
+		return nil
+	end
+	if HOLDS[id] then
+		return HOLDS[id]
+	end
+	if toy.category == "Melee" then
+		return UPRIGHT
+	end
+	if toy.move == "Cast" then
+		return WAND
+	elseif toy.move == "Throw" or toy.kind == "place" and toy.move ~= "Aim" then
+		return CARRIED
+	end
+	return nil
+end
+
 local function heldTool(): Model?
 	local character = player.Character
 	local held = character and character:FindFirstChild("HeldTool")
@@ -193,6 +225,26 @@ local function frame(dt: number)
 		* CFrame.Angles(-swing * 1.3, swing * 0.5, swing * 0.7)
 		* CFrame.new(sway.X * Viewmodel.SWAY, sway.Y * Viewmodel.SWAY - dip * 0.45 + bob, kick)
 		* CFrame.Angles(kick * Viewmodel.TILT + dip * -0.5, 0, dip * 0.6)
+	local hold = holdOf(toolId)
+	if hold then
+		local base = at * CFrame.new(hold.at)
+		local turn = base * CFrame.Angles(0, 0, math.rad(hold.lean)) * CFrame.Angles(math.rad(hold.rise), 0, 0)
+		c:PivotTo(turn)
+		local function reach(p: BasePart?, elbow: Vector3, hand: Vector3)
+			if p then
+				p.Size = Vector3.new(Viewmodel.ARM.X * 0.8, Viewmodel.ARM.Y * 0.8, (hand - elbow).Magnitude)
+				p.CFrame = CFrame.lookAt((hand + elbow) / 2, hand)
+			end
+		end
+		reach(arm, (base * CFrame.new(0.55, -1.25, 0.75)).Position, (turn * CFrame.new(0, 0, -0.12)).Position)
+		if support then
+			support.Transparency = if hold.both then 0 else 1
+			if hold.both then
+				reach(support, (base * CFrame.new(-1.15, -1.3, 0.75)).Position, (turn * CFrame.new(0, 0, 0.3)).Position)
+			end
+		end
+		return
+	end
 	c:PivotTo(at)
 	local a = arm
 	if a then

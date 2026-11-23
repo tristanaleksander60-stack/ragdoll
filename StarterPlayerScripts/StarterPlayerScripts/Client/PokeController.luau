@@ -386,7 +386,7 @@ function PokeController.helpText(id: string, lab: boolean): string
 	elseif toy.kind == "dummy" or toy.kind == "place" then
 		first = "Click the ground to put down the " .. toy.label
 	else
-		first = "Click a dummy to use the " .. toy.label
+		first = ""
 	end
 	-- (Audit area 1: a newcomer's first visit shows only what to do now, until the HUD comes in.)
 	if time() < HudSlots.newcomerUntil then
@@ -1557,7 +1557,9 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 		-- A plain tap that missed what this tool needs: say so (a drag to turn the camera never
 		-- gets here).
 		if phase == "tap" and aimed and not isDummy and not plazaFight and (onPlayer or not ViewMode.isTouch()) then
-			hint(if onPlayer then "You can only hit other players in the plaza" else "Click a dummy to use " .. toy.label)
+			if onPlayer then
+				hint("You can only hit other players in the plaza")
+			end -- (23 Nov 2026, owner: no "Click a dummy to use" and no "Get closer")
 		end
 		return false
 	end
@@ -1621,7 +1623,6 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 	local distance = if avatar and avatar:IsA("BasePart") then (avatar.Position - result.Position).Magnitude else math.huge
 	local walking = not ViewMode.isLab()
 	if toy.byHand and walking and distance > HitFeel.MELEE_REACH then
-		hint("Get closer to hit with " .. toy.label .. "!")
 		return true
 	end
 	local standing = character ~= nil and AvatarMoves.upright(character)
@@ -2282,7 +2283,7 @@ function PokeController.start()
 		if reason == "Unlock" and toy then
 			local have = (player:GetAttribute("Takedowns") :: number?) or 0
 			hint(string.format("Take down %d more for the %s, or get it in WEAPONS", math.max(1, toy.unlockAt - have), toy.label))
-		else
+		elseif reason ~= "TooFar" then
 			hint(REFUSALS[reason] or "That did not work. Try again")
 		end
 	end)
