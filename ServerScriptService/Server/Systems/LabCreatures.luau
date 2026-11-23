@@ -857,23 +857,8 @@ BUILD.Whale = function(f, at, m)
 		end
 	end
 	local basePivot = shark and shark:GetPivot()
-	-- (Phase D, 23 Nov 2026: alive in its tank: a slow patrol from end to end, the body swaying as it swims; on a
-	-- catch the water foams and splashes.)
-	local swimHome = basePivot
-	if shark and swimHome then
-		task.spawn(function()
-			local t = 0
-			while f.Parent and shark.Parent do
-				if not m.busy and m.owner() then
-					t += 1 / 15
-					local along = math.sin(t * 0.35) * 2.5
-					local sway = math.sin(t * 2.2) * 0.12
-					shark:PivotTo((swimHome :: CFrame) * CFrame.new(along, math.sin(t * 0.8) * 0.15, 0) * CFrame.Angles(0, sway, math.sin(t * 1.1) * 0.04))
-				end
-				task.wait(1 / 15)
-			end
-		end)
-	end
+	-- (Phase D, 23 Nov 2026: on a catch the water foams and splashes. The patrol from the server jittered back and
+	-- forth over the water (owner): taken out; it lies still until it eats.)
 	-- A red mist burst when the tank eats (replaces the whale's clean white spout).
 	local burst = Instance.new("ParticleEmitter")
 	burst.Texture = "rbxasset://textures/particles/smoke_main.dds"
