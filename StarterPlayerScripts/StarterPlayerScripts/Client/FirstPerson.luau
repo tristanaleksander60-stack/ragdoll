@@ -218,8 +218,21 @@ function FirstPerson.start()
 	end)
 	-- (23 Nov 2026, owner: "zoomed in on a phone I must see my weapon": pinching all the way in is first person too;
 	-- pinching out leaves it.)
+	-- (23 Nov 2026, bug: the walking thumb and the turning finger together read as a pinch and threw you out. A pinch counts
+	-- only with no finger on the stick, and both fingers on the free part of the screen.)
+	local onStick: { [InputObject]: boolean } = {}
+	UserInputService.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Touch and (require(Client:WaitForChild("MoveStick")) :: any).has(input) then
+			onStick[input] = true
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		onStick[input] = nil
+	end)
 	UserInputService.TouchPinch:Connect(function(_, scale: number, _, _, processed: boolean)
-		if on and not processed and scale < 0.85 then
+		local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		local walking = humanoid ~= nil and humanoid.MoveDirection.Magnitude > 0.05
+		if on and not processed and not walking and next(onStick) == nil and scale < 0.6 then
 			FirstPerson.set(false)
 		end
 	end)

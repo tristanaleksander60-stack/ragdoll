@@ -29,7 +29,7 @@ DummySkins.REFLECTANCE = if TONE then (TONE.reflectance or 0) else 0.04 -- (V10:
 -- darkest, and a badly hurt one wears a white bandage.) On this screen only, from the shared Wounds list; healed or
 -- dead (green) it goes.
 local Anatomy = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Anatomy")) :: any
-local BRUISE = Color3.fromRGB(112, 88, 190)
+local BRUISE = Color3.fromRGB(88, 66, 160)
 local BRUISE_AT: { [string]: string } = { UpperArm = "UpperArm", ArmStump = "UpperArm", Forearm = "LowerArm", Hand = "Hand",
 	Thigh = "UpperLeg", Femoral = "UpperLeg", Shin = "LowerLeg", Foot = "Foot" }
 local function hurtOf(model: Model): ({ [string]: number }, { [string]: string })
@@ -74,7 +74,7 @@ local function bandage(limb: BasePart, folder: Instance)
 		r.Name = "Bandage"
 		r.Shape = Enum.PartType.Cylinder
 		local thick = limb.Size.Y * 0.15
-		local wide = math.max(limb.Size.X, limb.Size.Z) * (1.04 - i * 0.015)
+		local wide = math.max(limb.Size.X, limb.Size.Z) * (1.2 - i * 0.015)
 		r.Size = Vector3.new(thick, wide, wide)
 		r.Color = if i % 2 == 0 then Color3.fromRGB(236, 236, 232) else Color3.fromRGB(222, 222, 216)
 		r.Material = Enum.Material.SmoothPlastic
@@ -87,6 +87,17 @@ local function bandage(limb: BasePart, folder: Instance)
 		r.Parent = folder
 	end
 end
+
+-- The shape of the owner's ragdoll (ReplicatedStorage.DummySkin2, place file): a straight rounded torso over the hips,
+-- slim arms and legs, big hands, rounded shoes. FIT: each skin's size against its limb's block; DROP: how far along the
+-- block it sits (of the block's length).
+local FIT: { [string]: Vector3 } = {
+	UpperArm = Vector3.new(0.7, 1.16, 0.8), LowerArm = Vector3.new(0.66, 1.2, 0.74), Hand = Vector3.new(0.8, 2.5, 0.8),
+	UpperLeg = Vector3.new(0.76, 1.1, 0.8), LowerLeg = Vector3.new(0.72, 1.1, 0.8), Foot = Vector3.new(0.82, 1.55, 1.12),
+	UpperTorso = Vector3.new(1.0, 1.18, 0.98), LowerTorso = Vector3.new(0.86, 1.3, 0.84),
+}
+local DROP: { [string]: number } = { Hand = -0.7, Foot = 0.24, UpperTorso = -0.08, LowerTorso = 0.3 }
+local shaped = false
 
 local template: Instance? = nil
 local template: Instance? = nil
@@ -150,6 +161,14 @@ local function dress(model: Model)
 				local up = if d.Name == "LeftUpperLeg" or d.Name == "RightUpperLeg" then DummySkins.LEG_REACH elseif d.Name == "LowerTorso" then -DummySkins.HIP_REACH else 0
 				skin.Size = Vector3.new(d.Size.X, d.Size.Y * (DummySkins.OVERLAP + math.abs(up)), d.Size.Z)
 				skin.CFrame = d.CFrame * CFrame.new(0, d.Size.Y * up / 2, 0)
+				local key = string.gsub(string.gsub(d.Name, "^Left", ""), "^Right", "")
+				local fit = if shaped then FIT[key] else nil
+				if fit then
+					skin.Size = d.Size * fit
+					local side = if string.sub(d.Name, 1, 4) == "Left" then 1 elseif string.sub(d.Name, 1, 5) == "Right" then -1 else 0
+					local inward = if key == "UpperArm" or key == "LowerArm" or key == "Hand" then side * (d.Size.X * (1 - fit.X) * 0.5 + 0.1) else 0
+					skin.CFrame = d.CFrame * CFrame.new(inward, (DROP[key] or 0) * d.Size.Y, 0)
+				end
 				local weld = Instance.new("WeldConstraint")
 				weld.Part0 = d
 				weld.Part1 = skin
@@ -280,7 +299,7 @@ local function dress(model: Model)
 		for name in wrap do
 			local limb = model:FindFirstChild(name)
 			if limb and limb:IsA("BasePart") then
-				bandage(limb, folder)
+				bandage(skins[limb] or limb, folder)
 			end
 		end
 	end
@@ -349,7 +368,11 @@ local function follow(model: Instance)
 end
 
 function DummySkins.start()
-	template = ReplicatedStorage:WaitForChild("DummySkin", 15)
+	template = ReplicatedStorage:FindFirstChild("DummySkin2")
+	shaped = template ~= nil
+	if not template then
+		template = ReplicatedStorage:WaitForChild("DummySkin", 15)
+	end
 	if not template then
 		return -- (no template in the place: the block bodies stay as they are)
 	end

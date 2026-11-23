@@ -40,10 +40,10 @@ if TONE then
 end
 DummyFactory.MATERIAL = if TONE then TONE.material else Enum.Material.SmoothPlastic
 DummyFactory.REFLECTANCE = if TONE then (TONE.reflectance or 0) else 0.04 -- (V10: glossy, head and body alike)
-DummyFactory.HEAD = 0.86 -- the head's size after the build (a real body's head is smaller than Roblox's)
+DummyFactory.HEAD = if game:GetService("ReplicatedStorage"):FindFirstChild("DummySkin2") then 1 else 0.86 -- the head's size after the build (a real body's head is smaller than Roblox's)
 -- (Slender human proportions: Roblox's own scales at their thin end, the body type towards Rthro's
 -- longer limbs and smaller head.)
-local SCALE = { width = 0.7, depth = 0.75, height = 1, head = 0.95, bodyType = 0.7, proportion = 1 }
+local SCALE = if game:GetService("ReplicatedStorage"):FindFirstChild("DummySkin2") then { width = 0.95, depth = 0.95, height = 1, head = 1, bodyType = 0, proportion = 0 } else { width = 0.7, depth = 0.75, height = 1, head = 0.95, bodyType = 0.7, proportion = 1 }
 
 local function description(): HumanoidDescription
 	local d = Instance.new("HumanoidDescription")

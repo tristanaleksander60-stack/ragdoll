@@ -774,7 +774,7 @@ local function step(p: Player)
 	setPet(p, f, "parrot", MapShopService.has(p, "Parrot"))
 	setLabThing(p, f, "tramp", MapShopService.has(p, "MegaTrampoline"))
 	setLabThing(p, f, "fan", MapShopService.has(p, "GiantFan"))
-	goldDummies(p, MapShopService.has(p, "GoldDummies"))
+	goldDummies(p, p.UserId ~= game.CreatorId and MapShopService.has(p, "GoldDummies")) -- (the owner owns every pass: theirs stay plain, the look everyone else sees)
 	local lab = labFolderOf(p)
 	if lab then
 		lab:SetAttribute("SpiderDeluxe", if MapShopService.has(p, "SpiderDeluxe") then true else nil)

@@ -71,10 +71,13 @@ function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: num
 		for _, name in { "Baseplate", "BaseplateEast", "BaseplateWest" } do
 			local plate = Workspace:FindFirstChild(name)
 			if plate and plate:IsA("BasePart") then
-				plate.Material = Enum.Material.SmoothPlastic
+				plate.Material = tiles.material or Enum.Material.SmoothPlastic
 				plate.MaterialVariant = ""
 				plate.Reflectance = 0
 				plate.Color = tiles.color
+				if not tiles.texture then
+					continue
+				end
 				local grid = Instance.new("Texture")
 				grid.Name = "Tiles"
 				grid.Face = Enum.NormalId.Top
