@@ -647,7 +647,7 @@ function HudPlus.start()
 		end
 		if Keybinds.is("SlowMo", input.KeyCode) then
 			HudPlus.sandbox("SlowMo")
-		elseif Keybinds.is("ReviveAll", input.KeyCode) then
+		elseif Keybinds.is("ReviveAll", input.KeyCode) and player:GetAttribute("MechArms") ~= true then -- (23 Nov 2026: with the mech arms on, X takes them off: MechArmsClient)
 			HudPlus.sandbox("Revive")
 		end
 	end)

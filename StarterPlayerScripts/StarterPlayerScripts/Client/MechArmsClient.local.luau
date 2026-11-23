@@ -271,14 +271,23 @@ gui.DisplayOrder = 8
 gui.Enabled = false
 local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 local hint = Instance.new("TextButton")
-hint.AnchorPoint = Vector2.new(1, 1)
-hint.Position = if touch then UDim2.new(1, -200, 1, -150) else UDim2.new(0.5, 130, 1, -118)
-hint.Size = if touch then UDim2.fromOffset(84, 84) else UDim2.fromOffset(210, 34)
+-- (23 Nov 2026, owner: "move Hold Q up under the next weapon"): on a keyboard a pill under the top bar's Next pill.
+hint.AnchorPoint = if touch then Vector2.new(1, 1) else Vector2.new(0.5, 0)
+hint.Position = if touch then UDim2.new(1, -200, 1, -150) else UDim2.new(0.5, 0, 0, 62)
+hint.Size = if touch then UDim2.fromOffset(84, 84) else UDim2.fromOffset(0, 30)
+if not touch then
+	hint.AutomaticSize = Enum.AutomaticSize.X
+	local pad = Instance.new("UIPadding")
+	pad.PaddingLeft = UDim.new(0, 12)
+	pad.PaddingRight = UDim.new(0, 12)
+	pad.Parent = hint
+end
 hint.BackgroundColor3 = Color3.fromRGB(46, 48, 54)
 hint.BackgroundTransparency = 0.15
 hint.TextColor3 = Color3.new(1, 1, 1)
 hint.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
-hint.TextScaled = true
+hint.TextScaled = touch
+hint.TextSize = 17
 hint.AutoButtonColor = touch
 hint.Active = touch
 hint.Parent = gui
@@ -298,7 +307,7 @@ local function drawHint()
 		hint.Text = if touch then "PULL!" else "PULL the mouse away!"
 		stroke.Color = Color3.fromRGB(220, 40, 40)
 	else
-		hint.Text = if touch then "HOLD: RIP" else "Hold [Q] on a limb"
+		hint.Text = if touch then "HOLD: RIP" else "Hold [Q] on a limb  \u{00B7}  [X] take off"
 		stroke.Color = Color3.fromRGB(235, 120, 30)
 	end
 end
@@ -500,6 +509,14 @@ end)
 
 UserInputService.InputBegan:Connect(function(input, processed)
 	if processed then
+		return
+	end
+	-- (23 Nov 2026, owner: "press X to take the arms off again"): the server takes them off (HudPlus skips revive-all).
+	if input.KeyCode == Enum.KeyCode.X and wearing() then
+		if grab then
+			release(true)
+		end
+		remote:FireServer("TakeOff")
 		return
 	end
 	if input.KeyCode == Enum.KeyCode.Q or input.KeyCode == Enum.KeyCode.ButtonL1 then

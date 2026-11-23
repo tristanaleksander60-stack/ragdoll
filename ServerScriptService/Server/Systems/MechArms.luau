@@ -269,8 +269,14 @@ local function letGo(model: Model)
 	end
 end
 
--- lihfolk-ignore: remote-unvalidated-args (kind is checked on the first line: only Grab, Let and Tear pass)
+-- lihfolk-ignore: remote-unvalidated-args (kind is checked first: only TakeOff, Grab, Let and Tear pass)
 local function onTear(player: Player, kind: unknown, target: unknown, asked: unknown)
+	if kind == "TakeOff" then
+		if player:GetAttribute("MechArms") == true then
+			MechArms.toggle(player)
+		end
+		return
+	end
 	if (kind ~= "Tear" and kind ~= "Grab" and kind ~= "Let") or typeof(target) ~= "Instance" or not (target :: Instance):IsA("Model") then
 		return
 	end
