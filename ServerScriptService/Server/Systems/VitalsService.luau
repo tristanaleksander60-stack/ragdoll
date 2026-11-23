@@ -388,11 +388,28 @@ function VitalsService.sever(model: Model, limb: string, position: Vector3?): bo
 		-- wound face a little inside the cut, a lighter flesh ring, a bone end sticking out and a few drops round
 		-- the edge. Every piece is named Stump (a heal or revive takes them all off again).
 		local fp = first :: BasePart
-		local thick = math.clamp(math.min(fp.Size.X, fp.Size.Z), 0.25, 1.2)
+		local thick = math.clamp(math.min(fp.Size.X, fp.Size.Z) * (if game:GetService("ReplicatedStorage"):FindFirstChild("DummySkin2") and limb ~= "Head" and limb ~= "Waist" then 0.7 else 1), 0.25, 1.2)
 		for _, holder in { first, body } do
 			if holder and holder:IsA("BasePart") then
 				-- X points into the holder (along the limb), so -X is out of the cut.
 				local base = CFrame.lookAt(socket.WorldPosition, socket.WorldPosition + (holder.Position - socket.WorldPosition)) * CFrame.Angles(0, math.rad(90), 0)
+				-- (23 Nov 2026, owner: the bone sat in the air beside the body: the joint is the block's, the body you see is
+				-- the skin's (DummySkins FIT): the cut goes on the middle of the skin's own end.)
+				if game:GetService("ReplicatedStorage"):FindFirstChild("DummySkin2") and limb ~= "Head" and limb ~= "Waist" then
+					local onLeft = string.find(first.Name, "Left", 1, true) ~= nil
+					local side = if onLeft then -1 else 1 -- (the body's own left is -X)
+					local size = holder.Size
+					if holder.Name == "UpperTorso" then
+						base = holder.CFrame * CFrame.new(side * (size.X / 2 - 0.1), size.Y * 0.26, 0) * CFrame.Angles(0, if side > 0 then math.pi else 0, 0)
+					elseif holder.Name == "LowerTorso" then
+						base = holder.CFrame * CFrame.new(side * size.X * 0.25, -size.Y * 0.3, 0) * CFrame.Angles(0, 0, math.rad(90))
+					else
+						local arm = string.find(holder.Name, "Arm", 1, true) ~= nil or string.find(holder.Name, "Hand", 1, true) ~= nil
+						local inward = if arm then -side * (size.X * 0.15 + 0.1) else 0
+						local up = if holder == first then 1 else -1
+						base = holder.CFrame * CFrame.new(inward, up * size.Y * 0.5, 0) * CFrame.Angles(0, 0, math.rad(if up > 0 then -90 else 90))
+					end
+				end
 				local function piece(shape: Enum.PartType, size: Vector3, colour: Color3, at: CFrame)
 					local p = Instance.new("Part")
 					p.Name = "Stump"
