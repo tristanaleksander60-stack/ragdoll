@@ -32,6 +32,7 @@ local Assets = require(Shared:WaitForChild("Assets"))
 local GunThreat = require(Shared:WaitForChild("GunThreat"))
 local Config = require(Shared:WaitForChild("Config"))
 local DummyLines = require(Shared:WaitForChild("DummyLines"))
+local Poses = require(Shared:WaitForChild("Ragdoll"):WaitForChild("Poses")) :: any
 local Anatomy = require(Shared:WaitForChild("Anatomy"))
 
 local Faces = Assets.Faces
@@ -1188,6 +1189,62 @@ local function updateLine(life: Life, now: number)
 	end
 end
 
+-- (23 Nov 2026, owner: "one must see it give CPR, not just kneel, and see it punch".) A Mood (Server/Mourning) owns the
+-- upper body: the arms, waist and neck are drawn on every screen, so the idle breathing must not run over them. The
+-- legs are ActiveRagdoll's. Punch counts up on the server a moment before each hit lands: right and left in turn.
+local PUNCH_TIME = 0.42 -- s
+local function moodPose(life: Life, now: number, dt: number, moving: boolean): boolean
+	local model = life.model
+	local mood = model:GetAttribute("Mood")
+	local pose = if type(mood) == "string" then Poses.MOODS[mood] else nil
+	local own: any = life
+	if not pose then
+		own.moodAt2 = nil
+		own.moodJoints = nil
+		return false
+	end
+	if moving and mood ~= "Angry" and mood ~= "Box" then
+		return false
+	end
+	local kept = own.moodJoints
+	if not kept then
+		kept = {}
+		own.moodJoints = kept
+		own.punchSeen = model:GetAttribute("Punch")
+	end
+	local want: any
+	local quick = 14
+	if mood == "Angry" or mood == "Box" then
+		local n = model:GetAttribute("Punch")
+		if n ~= own.punchSeen then
+			own.punchSeen = n
+			own.punchAt = now
+		end
+		local since = now - (own.punchAt or -10)
+		if since < PUNCH_TIME then
+			quick = 40
+			want = Poses.punch(since / PUNCH_TIME, if type(n) == "number" and n % 2 == 0 then -1 else 1)
+		else
+			want = Poses.fists(now)
+		end
+	else
+		want = pose(now)
+	end
+	local k = 1 - math.exp(-quick * dt)
+	for name, joint in life.joints do
+		if not string.find(name, "Hip", 1, true) and not string.find(name, "Knee", 1, true) and not string.find(name, "Ankle", 1, true) then
+			local to = want[name] or CFrame.identity
+			local from = kept[name] or joint.Transform
+			local at = from:Lerp(to, k)
+			kept[name] = at
+			joint.Transform = at
+		end
+	end
+	life.idle = true
+	life.handsUp = false
+	return true
+end
+
 local function step(life: Life, now: number, dt: number)
 	local model = life.model
 	local state = (model:GetAttribute("RagdollState") :: string?) or "Standing"
@@ -1249,10 +1306,15 @@ local function step(life: Life, now: number, dt: number)
 	setFace(life, expression)
 
 	if state == "Standing" and model:GetAttribute("Frozen") ~= true then
-		updateIdle(life, now, dt)
-		clutch(life, 1)
+		if not moodPose(life, now, dt, false) then
+			updateIdle(life, now, dt)
+			clutch(life, 1)
+		end
 	elseif MOVING[state] then
 		updateGait(life, state, now, dt)
+		if state == "Walking" then
+			moodPose(life, now, dt, true)
+		end
 	end
 	freeLoose(life)
 	if not MOVING[state] then

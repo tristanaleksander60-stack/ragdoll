@@ -263,6 +263,21 @@ function Poses.fists(t: number): Pose
 	out.Neck = ang(-4, 0, 0)
 	return out
 end
+-- One straight punch: u 0..1 through it (out fast, held, back), side 1 = right, -1 = left. The other fist guards.
+local punchOut: Pose = {}
+function Poses.punch(u: number, side: number): Pose
+	local x = if u < 0.12 then -0.35 * (u / 0.12) elseif u < 0.4 then -0.35 + 1.35 * ((u - 0.12) / 0.28) elseif u < 0.55 then 1 else 1 - (u - 0.55) / 0.45
+	local hit = math.max(0, x)
+	local hand, other = if side > 0 then "Right" else "Left", if side > 0 then "Left" else "Right"
+	local out = punchOut
+	out[hand .. "Shoulder"] = ang(55 + 45 * x, 0, side * (-12 + 10 * hit))
+	out[hand .. "Elbow"] = ang(115 - 113 * hit, 0, 0)
+	out[other .. "Shoulder"] = ang(58, 0, side * 14)
+	out[other .. "Elbow"] = ang(120, 0, 0)
+	out.Waist = ang(-10 - 12 * hit, side * 34 * x, 0)
+	out.Neck = ang(0, side * -22 * x, 0)
+	return out
+end
 local boxOut: Pose = {}
 function Poses.box(t: number): Pose
 	local wave = sin(t * 8.4) -- (a punch every half of HIT_GAP, right and left in turn)

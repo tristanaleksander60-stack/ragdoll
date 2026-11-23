@@ -27,12 +27,13 @@ Mourning.ANGRY_CHANCE = 0.77 -- of the ones that fail
 Mourning.REACT_TIME = 3
 Mourning.SHOCK_TIME = 0.9
 Mourning.WALK_MAX = 12
-Mourning.REACH = 4.6 -- studs
-Mourning.HIT_GAP = 0.75
+Mourning.REACH = 3.9 -- studs
+Mourning.HIT_GAP = 0.8
+Mourning.HIT_LANDS = 0.2 -- s from the start of a punch until the fist is there
 Mourning.HIT_DAMAGE = 12
 Mourning.SHOVE = 10
 Mourning.ATTACK_MAX = 90
-Mourning.SIDE = 2.4 -- studs from the body's middle where it kneels
+Mourning.SIDE = 1.9 -- studs from the body's middle where it kneels
 
 type Job = {
 	corpse: Model,
@@ -212,14 +213,21 @@ local function attack(m: Model, job: Job, now: number)
 	if state == "Standing" and now - job.since > 1.2 and not (inReach and facing) then
 		m:SetAttribute("Home", pelvis.Position + dir * (dist + 6)) -- (far enough off that it sets out again)
 	else
-		m:SetAttribute("Home", root.Position - dir * math.min(2.4, dist))
+		m:SetAttribute("Home", root.Position - dir * math.min(1.6, dist))
 	end
-	local mood = if inReach and state == "Standing" then "Box" else "Angry"
+	local mood = if inReach then "Box" else "Angry"
 	if m:GetAttribute("Mood") ~= mood then
 		m:SetAttribute("Mood", mood)
 	end
-	if inReach and facing and state == "Standing" and m:GetAttribute("Held") ~= true and now >= a.nextHit then
+	if inReach and facing and (state == "Standing" or state == "Walking") and m:GetAttribute("Held") ~= true and now >= a.nextHit then
 		a.nextHit = now + Mourning.HIT_GAP
+		m:SetAttribute("Punch", ((m:GetAttribute("Punch") :: number?) or 0) + 1) -- (every screen draws the punch: DummyLife)
+		task.delay(Mourning.HIT_LANDS, function()
+		local standing = m:GetAttribute("RagdollState")
+		if jobs[m] ~= job or hum.Health <= 0 or not root.Parent or not pelvis.Parent or (standing ~= "Standing" and standing ~= "Walking")
+			or flat(root.Position - pelvis.Position).Magnitude > Mourning.REACH + 1 then
+			return -- (stepped back, or knocked down before it landed: a miss)
+		end
 		hum:TakeDamage(Mourning.HIT_DAMAGE)
 		root.AssemblyLinearVelocity += dir * Mourning.SHOVE
 		pcall(function()
@@ -233,6 +241,7 @@ local function attack(m: Model, job: Job, now: number)
 			end
 			stop(m, nil)
 		end
+		end)
 	end
 end
 
@@ -269,14 +278,22 @@ local function step()
 			stop(m, nil)
 		elseif job.phase == "Shock" then
 			if now - job.since >= Mourning.SHOCK_TIME then
-				local side = flat(pelvis.Position - cp.Position)
+				-- (By its chest, on the near side of it, so the hands reach.)
+				local chest = corpse:FindFirstChild("UpperTorso")
+				local aim = if chest and chest:IsA("BasePart") then chest.Position else cp.Position
+				local side = flat(pelvis.Position - aim)
+				local along = flat(aim - cp.Position)
+				if along.Magnitude > 0.3 then
+					local across = Vector3.new(-along.Z, 0, along.X).Unit
+					side = if side:Dot(across) < 0 then -across else across
+				end
 				local dir = if side.Magnitude > 0.1 then side.Unit else Vector3.xAxis
-				local spot = Vector3.new(cp.Position.X, pelvis.Position.Y, cp.Position.Z) + dir * Mourning.SIDE
+				local spot = Vector3.new(aim.X, pelvis.Position.Y, aim.Z) + dir * Mourning.SIDE
 				job.phase, job.since = "Walk", now
 				m:SetAttribute("Mood", nil)
 				m:SetAttribute("Pace", 2) -- (it runs to it)
 				m:SetAttribute("Home", spot)
-				m:SetAttribute("HomeLook", cp.Position)
+				m:SetAttribute("HomeLook", aim)
 			end
 		elseif job.phase == "Walk" then
 			local home = m:GetAttribute("Home")
