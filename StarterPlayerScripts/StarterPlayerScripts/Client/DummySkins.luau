@@ -29,17 +29,28 @@ DummySkins.REFLECTANCE = if TONE then (TONE.reflectance or 0) else 0.04 -- (V10:
 -- darkest, and a badly hurt one wears a white bandage.) On this screen only, from the shared Wounds list; healed or
 -- dead (green) it goes.
 local Anatomy = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Anatomy")) :: any
-local BRUISE = Color3.fromRGB(88, 66, 160)
+-- (Two purples, owner 23 Nov 2026: a little hurt, badly hurt, by how much that piece bleeds.)
+local BRUISE = Color3.fromRGB(142, 112, 206)
+local BRUISE_BAD = Color3.fromRGB(66, 40, 128)
+local BAD_AT = 0.58 -- bleed (%/s, all its wounds) a piece is badly hurt from
+local function shade(color: Color3, hurt: number?): Color3
+	if not hurt or hurt <= 0 then
+		return color
+	end
+	return color:Lerp(if hurt >= 2 then BRUISE_BAD else BRUISE, 0.9)
+end
 local BRUISE_AT: { [string]: string } = { UpperArm = "UpperArm", ArmStump = "UpperArm", Forearm = "LowerArm", Hand = "Hand",
 	Thigh = "UpperLeg", Femoral = "UpperLeg", Shin = "LowerLeg", Foot = "Foot" }
 local function hurtOf(model: Model): ({ [string]: number }, { [string]: string })
 	local count: { [string]: number } = {}
+	local flow: { [string]: number } = {}
 	do
 		for _, w in Anatomy.parseWounds(model:GetAttribute("Wounds")) do
 			local side, rest = string.match(w.zone.id, "^(%u%l+)(%u.*)$")
 			local piece = rest and BRUISE_AT[rest]
 			if piece and (side == "Left" or side == "Right") then
 				count[side .. piece] = (count[side .. piece] or 0) + 1
+				flow[side .. piece] = (flow[side .. piece] or 0) + w.zone.bleed * (if w.blunt then 0.5 else 1)
 			end
 		end
 	end
@@ -60,7 +71,7 @@ local function hurtOf(model: Model): ({ [string]: number }, { [string]: string }
 					-- (23 Nov 2026, owner: only the struck piece, not the whole limb.)
 					local n = count[side .. piece] or 0
 					if n > 0 then
-						tint[side .. piece] = if n >= 2 then 0.95 else 0.75
+						tint[side .. piece] = if (flow[side .. piece] or 0) >= BAD_AT then 2 else 1
 					end
 				end
 				if (count[side .. limb[2]] or 0) >= 2 then
@@ -182,7 +193,7 @@ local function dress(model: Model)
 				d.LocalTransparencyModifier = 1
 				-- (A limb recoloured later, a frozen one, keeps its skin the same colour.)
 				local recolour = d:GetPropertyChangedSignal("Color"):Connect(function()
-					skin.Color = d.Color:Lerp(BRUISE, tint[d.Name] or 0)
+					skin.Color = shade(d.Color, tint[d.Name])
 				end)
 				skin.Destroying:Once(function()
 					recolour:Disconnect() -- (stripped and dressed again: no pile of old connections)
@@ -287,7 +298,7 @@ local function dress(model: Model)
 		for _, d in model:GetChildren() do
 			local skin = if d:IsA("BasePart") then skins[d] else nil
 			if skin and d:IsA("BasePart") then
-				skin.Color = d.Color:Lerp(BRUISE, tint[d.Name] or 0)
+				skin.Color = shade(d.Color, tint[d.Name])
 			end
 		end
 		local sign = ""
