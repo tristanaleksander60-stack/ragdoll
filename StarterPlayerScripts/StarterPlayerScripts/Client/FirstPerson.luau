@@ -77,6 +77,9 @@ FirstPerson.KEEP_OPEN = { Tools = true, Shop = true, Menu = true } :: { [string]
 local function autoClose()
 	local Controller = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIController")) :: any
 	local openSince: number? = nil
+	if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).COUNTERS_ONLY then
+		return -- (23 Nov 2026: nothing opens by itself any more, so Maps, Multiplayer and the rest stay until you close them)
+	end
 	while true do
 		task.wait(0.5)
 		local current = if on then Controller.getCurrent() else nil
@@ -111,11 +114,26 @@ function FirstPerson.start()
 		free.Modal = true
 		free.Text = ""
 		free.BackgroundTransparency = 1
-		free.Size = UDim2.fromOffset(0, 0)
+		free.Size = UDim2.fromOffset(1, 1)
 		free.Parent = gui
 		gui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-		game:GetService("RunService").Heartbeat:Connect(function()
-			gui.Enabled = on and Controller.getCurrent() ~= nil
+		-- (23 Nov 2026, owner: "weapons, maps and multiplayer in first person: let me use my mouse"): after Roblox's
+		-- camera each frame, with any window open and the camera in your head (however it got there), the mouse
+		-- is unlocked and its pointer shown; the camera takes it back when the window closes.
+		game:GetService("RunService"):BindToRenderStep("FirstPersonFreeMouse", Enum.RenderPriority.Last.Value, function()
+			local window = Controller.getCurrent() ~= nil
+			local camera = workspace.CurrentCamera
+			local head = player.Character and player.Character:FindFirstChild("Head")
+			local inHead = on or player.CameraMode == Enum.CameraMode.LockFirstPerson
+				or (camera ~= nil and head ~= nil and head:IsA("BasePart") and (camera.CFrame.Position - head.Position).Magnitude < 1.5)
+			local want = window and inHead
+			if gui.Enabled ~= want then
+				gui.Enabled = want
+			end
+			if want then
+				UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+				UserInputService.MouseIconEnabled = true
+			end
 		end)
 	end)
 	ViewMode.onChanged(function()

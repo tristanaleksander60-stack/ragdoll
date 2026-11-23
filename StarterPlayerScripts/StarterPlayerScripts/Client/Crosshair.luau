@@ -298,7 +298,12 @@ local function step(dt: number)
 	local mouse = UserInputService.MouseEnabled and UserInputService:GetLastInputType() ~= Enum.UserInputType.Touch
 	local mouseFree = UserInputService.MouseBehavior ~= Enum.MouseBehavior.LockCenter
 	local at = if mouseFree then UserInputService:GetMouseLocation() else workspace.CurrentCamera.ViewportSize / 2
-	if gun and mouse and mouseFree and pointerOverUi(at) then
+	local Controller = require(game:GetService("ReplicatedStorage"):WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIController")) :: any
+	if Controller.getCurrent() ~= nil then
+		-- (23 Nov 2026: a window is open: the pointer instead.)
+		f.Visible = false
+		setPointerHidden(false)
+	elseif gun and mouse and mouseFree and pointerOverUi(at) then
 		f.Visible = false
 		setPointerHidden(false)
 	elseif gun and mouse then

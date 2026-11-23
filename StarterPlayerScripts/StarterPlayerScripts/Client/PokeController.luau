@@ -2236,6 +2236,9 @@ function PokeController.start()
 			return
 		end
 		clearCooldown(toyId) -- nothing happened, so it is ready again
+		if reason == "Reload" then
+			return -- (23 Nov 2026, owner: no "Reloading..." notice; the ring by the crosshair shows it)
+		end
 		lastHint = 0 -- the server's word always shows
 		local toy = Toys.byId[toyId]
 		if reason == "Unlock" and toy then

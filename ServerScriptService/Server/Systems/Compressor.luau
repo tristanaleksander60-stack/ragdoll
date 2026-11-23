@@ -22,7 +22,7 @@ local Compressor = {}
 -- 0.37.15 (owner, 22 Nov 2026: "make the compressor 10x bigger, so it is huge"): built as before, then scaled
 -- SCALE times round its footing. At that size it does not fit in the lab: it stands behind it, past the portals and the
 -- back edge of the floor (z -113), its open side to the spawn; Landscape keeps the ground flat out to it (BACK_ROOM).
-Compressor.SCALE = 3 -- (0.37.16, owner: "10x is FAR too big, it fills the whole map")
+Compressor.SCALE = 1 -- (23 Nov 2026, owner: "the original size again, not HUGE"; it was 3, behind the lab)
 Compressor.AT = if Compressor.SCALE > 2 then Vector2.new(0, -136) else Vector2.new(-20, 35) * (Config.LAB_SPREAD or 1) -- lab x, z (on the hub's rim; V9-0n fine-tunes it)
 Compressor.PLATE = 8 -- studs across the press bed
 Compressor.HEIGHT = 13 -- studs from the bed to the top beam
@@ -549,6 +549,13 @@ function Compressor.build(folder: Instance, origin: Vector3, at: Vector3?)
 	local steel = Color3.fromRGB(70, 76, 88)
 	local dark = Color3.fromRGB(38, 42, 52)
 	local yellow = Color3.fromRGB(255, 196, 40)
+	-- (23 Nov 2026, owner: "made of metal so it looks more real".)
+	local Finish = lazy("Finish")
+	local chrome = Color3.fromRGB(190, 196, 204)
+	local function round(p: BasePart)
+		local mesh = Instance.new("CylinderMesh") -- (round along its height, and it stretches with the part)
+		mesh.Parent = p
+	end
 	local S = Compressor.PLATE
 	part(m, "Footing", Vector3.new(S + 3, 0.6, S + 3), face * CFrame.new(0, 0.3, 0), dark, Enum.Material.DiamondPlate, true)
 	local bed = part(m, "Bed", Vector3.new(S, 1, S), face * CFrame.new(0, 1.1, 0), Color3.fromRGB(110, 116, 128), Enum.Material.Metal, true)
@@ -589,8 +596,49 @@ function Compressor.build(folder: Instance, origin: Vector3, at: Vector3?)
 	local plate = part(m, "Plate", Vector3.new(S - 0.4, 1.4, S - 0.4), face * CFrame.new(0, 1.6 + H - 4.7, 0), steel, Enum.Material.DiamondPlate, false)
 	plate:SetAttribute("UpY", plate.Position.Y)
 	plate:SetAttribute("DownY", bed.Position.Y + bed.Size.Y / 2 + 0.75)
+	-- The look: machined steel all over, round polished rods, flange rings and bolts, two side cylinders with
+	-- hoses, rails along the beam. Pictures only.
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			local x, z = sx * (S / 2 + 0.9), sz * (S / 2 + 0.9)
+			for _, y in { 1.15, 1.6 + H - 0.35 } do
+				round(part(m, "Flange", Vector3.new(2, 0.35, 2), face * CFrame.new(x, y, z), dark, Enum.Material.Metal, false))
+			end
+			for _, bx in { -0.8, 0.8 } do
+				for _, bz in { -0.8, 0.8 } do
+					round(part(m, "Bolt", Vector3.new(0.34, 0.22, 0.34), face * CFrame.new(x + bx, 1.08, z + bz), chrome, Enum.Material.Metal, false))
+				end
+			end
+		end
+		local cx = sx * (S / 2 + 0.9)
+		round(part(m, "SideCylinder", Vector3.new(1.1, 5, 1.1), face * CFrame.new(cx, 1.6 + H - 3.2, 0), dark, Enum.Material.Metal, false))
+		round(part(m, "SideRod", Vector3.new(0.5, H - 4, 0.5), face * CFrame.new(cx, 1 + (H - 4) / 2, 0), chrome, Enum.Material.Metal, false))
+		local hose = part(m, "Hose", Vector3.new(3.4, 0.35, 0.35), face * CFrame.new(sx * (S / 2 - 0.6), 1.6 + H - 0.2, 0), Color3.fromRGB(24, 25, 28), Enum.Material.Rubber, false)
+		hose.Shape = Enum.PartType.Cylinder
+		part(m, "Rail", Vector3.new(0.4, 2.3, S + 3.6), face * CFrame.new(sx * (S / 2 + 1.75), 1.6 + H + 1, 0), steel, Enum.Material.Metal, false)
+	end
+	for _, d in m:GetChildren() do
+		if d:IsA("BasePart") then
+			if d.Name == "Pillar" then
+				d.Color = chrome
+				round(d)
+			elseif d.Name == "Sleeve" then
+				d.Color = steel
+				round(d)
+			elseif d.Name == "Ram" then
+				round(d)
+			end
+			if d.Name == "Pillar" or d.Name == "Ram" or d.Name == "SideRod" or d.Name == "Bed" or d.Name == "Plate" or d.Name == "Bolt" then
+				Finish.apply(d, "Brushed")
+				d.Reflectance = 0.15
+			elseif d.Name ~= "Stripe" and d.Name ~= "Hose" and d.Name ~= "Footing" then
+				Finish.apply(d, "Painted")
+			end
+		end
+	end
+	plate.Color = Color3.fromRGB(150, 156, 166)
 	-- The PRESS lamp and sign on the beam.
-	local lamp = part(m, "Lamp", Vector3.new(1.2, 1.2, 1.2), face * CFrame.new(S / 2, 1.6 + H + 2.6, -S / 2), Color3.fromRGB(255, 60, 40), Enum.Material.Neon, false)
+	local lamp = part(m, "Lamp", Vector3.new(1.2, 1.2, 1.2), face * CFrame.new(S / 2, 1.6 + H + 2.6, -S / 2), Color3.fromRGB(200, 50, 36), Enum.Material.Glass, false)
 	lamp.Shape = Enum.PartType.Ball
 	local sign = part(m, "Sign", Vector3.new(6, 1.6, 0.2), face * CFrame.new(0, 1.6 + H + 1, -S / 2 - 1.75), dark, Enum.Material.Metal, false)
 	local gui = Instance.new("SurfaceGui")
