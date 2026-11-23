@@ -31,6 +31,7 @@ local Ammo = require(Shared.Ammo)
 local Config = require(Shared.Config)
 local WeaponMechanics = require(script.Parent.WeaponMechanics)
 local BowMath = require(Shared.BowMath) -- (V9-NOW 23)
+local BURSTS: { [string]: boolean } = { Deagle = true, GoldenDeagle = true, Shotgun = true, AutoShotgun = true, DoubleBarrel = true } -- (a round to the head takes it apart)
 local chargeNow = 0 -- (the blow being applied now: 0..1 held, HitMath.charges)
 local drawNow: number? = nil -- (V9-NOW 23: the draw of the Bow round being applied now: applyToy reads it)
 -- (An extra round of a gun's own mechanics never starts more: per player, so one player's rounds
@@ -313,7 +314,7 @@ function HitService.applyToy(toy: Toys.Toy, part: BasePart, position: Vector3, d
 			-- with a headshot.)
 			local power = if draw then toy.wound * BowMath.woundScale(draw) else toy.wound * (1 + (HitMath.CHARGE_WOUND - 1) * chargeNow)
 			local round = toy.gun == true and (draw == nil or draw >= 0.9)
-			VitalsService.wound(model, woundPart, woundAt, requester, power, { sever = sever, blunt = blunt, guarded = guarded, round = round, boost = boost, strike = HitMath.strikes(toy) })
+			VitalsService.wound(model, woundPart, woundAt, requester, power, { sever = sever, blunt = blunt, guarded = guarded, round = round, boost = boost, strike = HitMath.strikes(toy), burst = BURSTS[toy.id] == true })
 		end
 		-- Round 5: each gun's own (pellets, a round through bodies, a flare, gold sparks). Never
 		-- from inside one of its own extra rounds.

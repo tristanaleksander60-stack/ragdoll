@@ -65,6 +65,11 @@ local function disc(diameter: number, color: Color3, cframe: CFrame, transparenc
 		p.Massless = true
 	end
 	local part = p :: Part
+	for _, art in part:GetChildren() do
+		if art:IsA("Decal") then
+			art:Destroy()
+		end
+	end
 	part.Shape = Enum.PartType.Cylinder
 	part.Name = "Hole"
 	part.Size = Vector3.new(0.03, diameter, diameter)
@@ -302,6 +307,16 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 	if skin then
 		hole.Size = Vector3.new(0.02, hole.Size.Y, hole.Size.Z)
 	end
+	-- (23 Nov 2026, owner's pictures: a black torn hole with a grey rim and a pale ring, not a purple dot.)
+	local wide = math.clamp(0.52 * (scale or 1), 0.4, 1.1)
+	hole.Shape = Enum.PartType.Block
+	hole.Size = Vector3.new(0.02, wide, wide)
+	hole.CFrame = flatOn(worldAt, worldNormal, 0.02) * CFrame.Angles(math.random() * math.pi * 2, 0, 0)
+	hole.Transparency = 1
+	local art = Instance.new("Decal")
+	art.Texture = if (scale or 1) >= 1.35 then "rbxassetid://138114443309934" else "rbxassetid://75824870103399"
+	art.Face = Enum.NormalId.Right
+	art.Parent = hole
 	hole.Name = "BulletHole"
 	hole.Anchored = false
 	local weld = Instance.new("WeldConstraint")

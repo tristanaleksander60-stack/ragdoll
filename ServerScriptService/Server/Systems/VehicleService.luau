@@ -353,6 +353,9 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 				+ math.abs(driverSpot.CFrame.LookVector:Dot(up)) * half.Z
 			local top = driverSpot.Position + up * rise
 			local at = body.CFrame:PointToObjectSpace(top)
+			if kind == "Bike" then
+				at += Vector3.new(0, -0.62, -0.25) -- (its saddle slopes: the box's top is well over the cushion)
+			end
 			-- (session v850, owner: "fiks så man vender den rigtige vej i bilen"): the look model's own driver
 			-- seat could point to the rear (its DriverSeat/SeatFL inherited whichever way the import pivoted).
 			-- The humanoid sits facing the seat's +LookVector; the car drives along its body's +LookVector

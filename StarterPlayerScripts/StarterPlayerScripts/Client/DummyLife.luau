@@ -56,6 +56,7 @@ local MAX_YAW, MAX_PITCH_UP, MAX_PITCH_DOWN = 70, 30, 25
 local LOOK_SMOOTH = 5 -- 1/s
 local AIR_CLEARANCE = require(Shared:WaitForChild("Ragdoll"):WaitForChild("Config")).AIR_CLEARANCE
 local LAND_OUCH = 0.45 -- seconds of "ouch" after hitting the ground
+local STARS = false -- (23 Nov 2026, owner: no stars over the head)
 local STARS_AFTER = 2.6 -- seconds the stars stay after the dizzy face ends
 local STARS_DELAY = 0.45 -- dizzy this long before stars appear
 local GRUMPY_AFTER_GETUP = 1.4
@@ -499,7 +500,7 @@ local function makeStars(life: Life): BillboardGui
 end
 
 local function updateStars(life: Life, now: number)
-	local visible = now < life.starsUntil and life.model:GetAttribute("MachineHidden") ~= true -- (0.37.7: not over the pancake in the press)
+	local visible = STARS and now < life.starsUntil and life.model:GetAttribute("MachineHidden") ~= true -- (0.37.7: not over the pancake in the press)
 	local gui = life.stars
 	if not visible then
 		if gui then

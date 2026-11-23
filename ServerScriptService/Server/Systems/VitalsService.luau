@@ -541,7 +541,89 @@ end
 --   guarded  the server could not see the spot from the hitter (HitService): no zone that kills
 --            or bleeds out fast (GUARDED)
 --   round    a gun's round (Toys: gun): any of it to the head kills at once (HEADSHOT)
-export type WoundOptions = { sever: number?, zone: Anatomy.Zone?, blunt: boolean?, guarded: boolean?, round: boolean?, boost: number?, strike: boolean? }
+export type WoundOptions = { sever: number?, zone: Anatomy.Zone?, blunt: boolean?, guarded: boolean?, round: boolean?, boost: number?, strike: boolean?, burst: boolean? }
+-- The head gone in pieces: hidden (it comes back when the body is put together again), bits of it fly.
+function VitalsService.burstHead(model: Model)
+	local head = model:FindFirstChild("Head")
+	if not (head and head:IsA("BasePart")) then
+		return
+	end
+	local at = head.Position
+	local shown = head.Transparency
+	local faces: { SurfaceGui } = {}
+	local caps: { BasePart } = {}
+	head.Transparency = 1
+	head.CanCollide = false
+	for _, d in head:GetDescendants() do
+		if d:IsA("SurfaceGui") and d.Enabled then
+			d.Enabled = false
+			table.insert(faces, d)
+		elseif d:IsA("BasePart") then
+			if d.Name ~= "Stump" and d.Transparency < 1 then
+				table.insert(caps, d)
+			end
+			d.Transparency = 1
+		elseif d:IsA("ParticleEmitter") then
+			d.Enabled = false
+		end
+	end
+	local conn: RBXScriptConnection? = nil
+	conn = model:GetAttributeChangedSignal("Severed"):Connect(function()
+		local raw = model:GetAttribute("Severed")
+		if type(raw) == "string" and string.find("," .. raw .. ",", ",Head,", 1, true) then
+			return
+		end
+		if conn then
+			conn:Disconnect()
+		end
+		if head.Parent then
+			head.Transparency = shown
+			head.CanCollide = true
+			for _, f in faces do
+				f.Enabled = true
+			end
+			for _, c in caps do
+				c.Transparency = 0
+			end
+		end
+	end)
+	for i = 1, 14 do
+		local p = Instance.new("Part")
+		p.Name = "HeadBit"
+		local s = rng:NextNumber(0.14, 0.42)
+		p.Size = Vector3.new(s, s * rng:NextNumber(0.5, 1), s * rng:NextNumber(0.5, 1))
+		p.Shape = if i % 3 == 0 then Enum.PartType.Ball else Enum.PartType.Block
+		p.Color = if i % 4 == 0 then head.Color elseif i % 4 == 1 then Color3.fromRGB(236, 228, 208) elseif i % 2 == 0 then Anatomy.BLOOD else Color3.fromRGB(150, 45, 60)
+		p.Material = Enum.Material.SmoothPlastic
+		p.CanQuery, p.CanTouch, p.CastShadow = false, false, false
+		p.CFrame = CFrame.new(at + rng:NextUnitVector() * 0.4) * CFrame.Angles(rng:NextNumber(0, 6), rng:NextNumber(0, 6), 0)
+		p.Parent = workspace
+		p.AssemblyLinearVelocity = rng:NextUnitVector() * rng:NextNumber(8, 24) + Vector3.new(0, 14, 0)
+		game:GetService("Debris"):AddItem(p, 7 + rng:NextNumber(0, 2))
+	end
+	if Config.BLOOD ~= "off" then
+		local a = Instance.new("Attachment")
+		a.WorldPosition = at
+		a.Parent = workspace.Terrain
+		local e = Instance.new("ParticleEmitter")
+		e.Color = ColorSequence.new(Anatomy.BLOOD)
+		e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0.15) })
+		e.Speed = NumberRange.new(8, 22)
+		e.SpreadAngle = Vector2.new(180, 180)
+		e.Lifetime = NumberRange.new(0.4, 0.9)
+		e.Acceleration = Vector3.new(0, -45, 0)
+		e.Rate = 500
+		e.Parent = a
+		task.delay(0.15, function()
+			e.Enabled = false
+		end)
+		game:GetService("Debris"):AddItem(a, 2)
+	end
+	pcall(function()
+		FxService.hit(at, 90, "Punch")
+	end)
+end
+
 function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by: Player?, power: number, options: WoundOptions?): (string?, Anatomy.Zone?)
 	local o: WoundOptions = options or {}
 	local blunt = o.blunt == true
@@ -640,6 +722,10 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 				severed = cut
 			end
 		end
+	end
+	-- (23 Nov 2026, owner: "a Deagle or a shotgun to the head: the head bursts".)
+	if o.burst and o.round and not o.guarded and HEADSHOT[zone.id] and v.state == "Dead" and not v.severed.Head and VitalsService.sever(model, "Head", position) then
+		VitalsService.burstHead(model)
 	end
 	VitalsService.step(model, v, 0)
 	local label = if severed then (((Anatomy.cutOf(severed :: string) :: any).label) .. " severed")

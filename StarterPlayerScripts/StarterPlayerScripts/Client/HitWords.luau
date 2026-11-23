@@ -82,8 +82,12 @@ function HitWords.show(model: Model, word: string, color: Color3)
 	end)
 end
 
+HitWords.STARS = false
 -- Three stars circling the head for a moment.
 function HitWords.stars(model: Model)
+	if not HitWords.STARS then
+		return -- (23 Nov 2026, owner: no stars over the head)
+	end
 	local head = model:FindFirstChild("Head")
 	if not head or not head:IsA("BasePart") or model:GetAttribute("MachineHidden") == true then
 		return

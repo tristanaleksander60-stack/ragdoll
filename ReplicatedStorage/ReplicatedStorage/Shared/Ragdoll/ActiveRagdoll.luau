@@ -1108,7 +1108,7 @@ function ActiveRagdoll.seatOf(rig: any): any
 	local body = if link and link:IsA("ObjectValue") then link.Value else nil
 	if body and body:IsA("BasePart") then
 		rig.seatFixed = body
-		return body.CFrame * CFrame.new(0, 0, 1.0)
+		return body.CFrame * CFrame.new(0, -0.42, 0.6)
 	end
 	rig.seatFixed = nil
 	return rig.model:GetAttribute("Seat")
