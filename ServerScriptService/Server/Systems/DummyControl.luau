@@ -208,6 +208,9 @@ function DummyControl.stampServerHit(model: Model, by: number?)
 end
 
 -- gun: a gun's round (HitMath.gunOf): where it lands decides what the body does (round 3, M2).
+DummyControl.HANDOFF_GAP = 1.5
+local lastHandoff: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+
 function DummyControl.hit(model: Model, part: BasePart, impulse: Vector3, position: Vector3, maxBodySpeed: number?, by: Player?, gun: number?): string?
 	if not known[model] then
 		return nil
@@ -221,6 +224,16 @@ function DummyControl.hit(model: Model, part: BasePart, impulse: Vector3, positi
 			shatter(model)
 			return "Shatter"
 		end
+	end
+	-- (23 Nov 2026, owner: "it lags like mad in a lab with others"): the body's simulation goes to whoever hits it
+	-- (as the top ragdoll games do), so the hitter sees it react at once instead of a round trip through the lab
+	-- owner's machine, and no one machine runs every body. Only between players sharing a lab, at most every
+	-- HANDOFF_GAP s a body.
+	local current = owners[model]
+	if by and current and by ~= current and by.Parent and (by:GetAttribute("SharedGuest") ~= nil or by:GetAttribute("SharedHost") == true)
+		and os.clock() - (lastHandoff[model] or -math.huge) >= DummyControl.HANDOFF_GAP then
+		lastHandoff[model] = os.clock()
+		DummyControl.setOwner(model, by)
 	end
 	local owner = owners[model]
 	if owner then
@@ -572,7 +585,9 @@ function DummyControl.start()
 		reportWindow[player] = nil
 		for model, owner in owners do
 			if owner == player then
-				DummyControl.setOwner(model, nil)
+				-- (Back to the lab's own player when one is still here, else the server.)
+				local labOwner = Players:GetPlayerByUserId((model:GetAttribute("LabOwner") :: number?) or 0)
+				DummyControl.setOwner(model, if labOwner and labOwner ~= player then labOwner else nil)
 			end
 		end
 	end)
