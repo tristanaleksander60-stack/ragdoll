@@ -545,7 +545,8 @@ local function buildRecenterButton()
 		-- (UI audit 21 Nov 2026: on a computer with the big HUD the lab view is a key, C, in the chips and
 		-- the LAB window; the button only shows as WALK, the way back.)
 		local pcBig = not ViewMode.isTouch() and HudGate.active()
-		view.Visible = ViewMode.isLab() or (HudSlots.shownNow("View", ctx, time(), Config.QUIET_START) and not pcBig)
+		view.Visible = ViewMode.isLab() or (not ViewMode.isTouch() and -- (23 Nov 2026, owner: no LAB VIEW button on phones)
+			HudSlots.shownNow("View", ctx, time(), Config.QUIET_START) and not pcBig)
 		-- The V badge only fits the wide button (off phones).
 		local key = view:FindFirstChild("Key")
 		if key and key:IsA("GuiObject") then

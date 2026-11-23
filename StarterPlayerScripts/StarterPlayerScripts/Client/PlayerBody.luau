@@ -91,6 +91,8 @@ local function refreshButton()
 	local stayingDown = down and stayDown
 	b.Text = if stayingDown then "GET UP" else "RAGDOLL"
 	b.BackgroundColor3 = if stayingDown then KitStyle.GO else KitStyle.SLAB
+	-- (23 Nov 2026, owner: no RAGDOLL button on phones. Only GET UP, while you stay down.)
+	b.Visible = not ViewMode.isTouch() or stayingDown
 	KitStyle.button(b)
 	b.TextSize = 16 -- "RAGDOLL" fits the 86 px slot
 end

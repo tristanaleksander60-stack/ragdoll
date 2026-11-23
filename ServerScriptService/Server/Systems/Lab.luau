@@ -90,7 +90,8 @@ local SOURCE_RANGE = 120 -- studs: a bang's maker this close is who it runs from
 
 local Lab = {}
 Lab.DUMMY_COUNT = DUMMY_COUNT -- (World/Feel v2: T80 adds it to a device's ragdoll budget)
-Lab.PHONE_DUMMIES = 9 -- (V10 phase 1: a phone simulates its own lab's bodies; fewer keep it smooth)
+Lab.FIRST_FILL = 3 -- (23 Nov 2026: these appear at once, the rest one by one, a phone's slower: no stall at the join)
+Lab.PHONE_DUMMIES = 8 -- (V10 phase 1: a phone simulates its own lab's bodies; fewer keep it smooth)
 Lab.TABLET_DUMMIES = 13
 
 Lab.PLOT_COUNT = 10 -- labs on one server (the place's server size should be 10)
@@ -1214,6 +1215,11 @@ local function claim(player: Player)
 			local generation = plot.generation
 			-- (V10 phase 1: the bodies come once the device is known, at most 4 s: a phone gets fewer, fill.)
 			task.spawn(function()
+				for s = 1, Lab.FIRST_FILL do
+					if plot.slots[s] then
+						fill(plot, plot.slots[s], generation)
+					end
+				end
 				local okS, SS = pcall(require, script.Parent:WaitForChild("SessionStats"))
 				local t0 = os.clock()
 				while okS and os.clock() - t0 < 2 and player.Parent do -- (23 Nov 2026: 2 s at most, "load in as fast as possible")
@@ -1223,8 +1229,15 @@ local function claim(player: Player)
 					end
 					task.wait(0.2)
 				end
-				for _, slot in plot.slots do
-					fill(plot, slot, generation)
+				local rec = if okS then (SS :: any).recordFor(player) else nil
+				local small = rec ~= nil and (rec.plat == "phone" or rec.plat == "tablet")
+				for i, slot in plot.slots do
+					if i > Lab.FIRST_FILL then
+						task.wait(if small then 1 else 0.1)
+						if not slot.model then
+							fill(plot, slot, generation)
+						end
+					end
 				end
 			end)
 			log.info(string.format("%s has lab %d", player.Name, plot.index))
@@ -1579,7 +1592,9 @@ function Lab.build()
 	Workspace:SetAttribute("LabSpacing", Lab.PLOT_SPACING)
 	labsFolder = Instance.new("Folder")
 	labsFolder.Name = "Labs"
-	for i = 1, Lab.PLOT_COUNT do
+	-- (23 Nov 2026: the start place is a server for one, Config.MULTI_PLACE: one lab, not ten.)
+	local solo = (Config :: any).MULTI_PLACE ~= 0 and game.PlaceId == (Config :: any).START_PLACE
+	for i = 1, if solo then 1 else Lab.PLOT_COUNT do
 		local folder = Instance.new("Folder")
 		folder.Name = "Lab" .. i
 		folder:SetAttribute("Plot", i)

@@ -10,8 +10,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
-local MAX_WAIT = 12 -- s
-local MIN_DUMMIES = 6 -- dressed ragdolls of this lab before it lifts (fewer if the lab has fewer)
+local TOUCH = game:GetService("UserInputService").TouchEnabled
+local MAX_WAIT = if TOUCH then 8 else 12 -- s
+local MIN_DUMMIES = if TOUCH then 2 else 4 -- dressed ragdolls of this lab before it lifts (fewer if the lab has fewer)
 
 local player = Players.LocalPlayer
 -- (V10, owner 22 Nov 2026: phones play in landscape, like the big ragdoll games; every phone in the data was held
@@ -114,9 +115,9 @@ task.spawn(function()
 end)
 
 while os.clock() - t0 < MAX_WAIT and not ready() do
-	task.wait(0.25)
+	task.wait(0.1)
 end
-task.wait(0.3) -- (a beat for the last skins)
+task.wait(0.1) -- (a beat for the last skins)
 pcall(function()
 	local remotes = ReplicatedStorage:FindFirstChild("Remotes")
 	local r = remotes and remotes:FindFirstChild("Session")

@@ -1617,10 +1617,15 @@ function FxController.start()
 	end
 	-- (21 Nov 2026: the 43 tool banks, "tool...", load in a second wave, so a phone's first shots and
 	-- hits are never behind them; a tool used before then grows its voice on demand.)
-	for name, list in BANK do
-		if string.sub(name, 1, 4) ~= "tool" then
-			loadList(list)
+	local function loadRest()
+		for name, list in BANK do
+			if string.sub(name, 1, 4) ~= "tool" then
+				loadList(list)
+			end
 		end
+	end
+	if not PHONE then
+		loadRest()
 	end
 	-- (A failed fetch is tried once more: a phone's bad moment must not take a gun's sound away for the whole visit.)
 	local function preloadNow(list: { Instance })
@@ -1647,6 +1652,14 @@ function FxController.start()
 					end
 				end
 			end
+		end)
+	end
+	if PHONE then
+		-- (23 Nov 2026: not while a phone is loading in; a sound needed before then makes its own voice.)
+		task.delay(12, function()
+			local before = #preload
+			loadRest()
+			preloadNow(table.move(preload, before + 1, #preload, 1, {}))
 		end)
 	end
 	-- The gun in your hand gets spare voices at once, so quick shots each have one ready.

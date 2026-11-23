@@ -52,6 +52,9 @@ local safe = require(Shared:WaitForChild("SafeStart")).new(function(failedList: 
 end, "ClientBoot")
 -- The hand-drawn icons (Shared.DrawnIcons), before anything draws an icon.
 require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIIcons")).registerMany(require(Shared:WaitForChild("DrawnIcons")).ASSETS)
+local PhoneDiet = require(Client:WaitForChild("PhoneDiet"))
+safe("PhoneDiet", PhoneDiet.start) -- 23 Nov 2026: what a phone does not draw
+local LATER = if PhoneDiet.wanted() then 8 else 0 -- s: on a phone the living decor starts once the first seconds are over
 safe("PlotPrivacy", function() PlotPrivacy.start() end) -- (first: other labs leave this screen before anything draws them)
 task.spawn(require(Client:WaitForChild("DummySkins")).start) -- the dummies' sculpted mannequin bodies
 safe("SoundMix", function() require(Client:WaitForChild("SoundMix")).start() end) -- v4 A3: the mix's groups and compressor
@@ -76,9 +79,9 @@ do
 	me:GetAttributeChangedSignal("IsOwner"):Connect(startDirector)
 	startDirector()
 end
-task.spawn(require(Client:WaitForChild("Birds")).start) -- V6-6: birds round the lab and the maps
-task.spawn(require(Client:WaitForChild("CreatureLife")).start) -- 20 Nov: the lab creatures move while they wait
-task.spawn(require(Client:WaitForChild("BoothSpin")).start) -- V6-7: the booth items turn on their pedestals
+task.delay(LATER, function() require(Client:WaitForChild("Birds")).start() end) -- V6-6: birds round the lab and the maps
+task.delay(LATER, function() require(Client:WaitForChild("CreatureLife")).start() end) -- 20 Nov: the lab creatures move while they wait
+task.delay(LATER, function() require(Client:WaitForChild("BoothSpin")).start() end) -- V6-7: the booth items turn on their pedestals
 safe("FxController", function() FxController.start() end)
 safe("AvatarMoves", function() AvatarMoves.start() end)
 

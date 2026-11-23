@@ -1472,7 +1472,13 @@ function CrowdService.start(labOrigin: Vector3)
 			makeZone(place.id, centre, half - 10, half - 5, math.max(place.size.X, place.size.Z) / 2 + 30, place.crowd, roles, false)
 		end
 	end
-	while (plaza :: Zone).filling or not (plaza :: Zone).populated do
+	-- (23 Nov 2026: in singleplayer the plaza fills when someone comes near, and empties again: no people built at the join.)
+	local cfg = require(game:GetService("ReplicatedStorage").Shared.Config) :: any
+	local solo = cfg.MULTI_PLACE ~= 0 and game.PlaceId == cfg.START_PLACE
+	if solo then
+		(plaza :: Zone).persistent = false
+	end
+	while not solo and ((plaza :: Zone).filling or not (plaza :: Zone).populated) do
 		populate(plaza :: Zone)
 	end
 	FxService.onMoment(onMoment)
