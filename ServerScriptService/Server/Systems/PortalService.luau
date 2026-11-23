@@ -312,10 +312,6 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 		-- (23 Nov 2026, owner: "join your friends"): to a friend's server (its job id, from Roblox's friends list).
 		go(player, "Multi", { id = arg, name = "", region = "", players = 0, max = 0, t = 0 })
 	elseif kind == "Solo" then
-		if Workspace:GetAttribute("SharedLab") == true then
-			go(player, "Back", nil) -- (V11 C10: back from the shared lab to an ordinary server: your own lab)
-			return
-		end
 		go(player, "Solo", nil)
 	end
 end
@@ -481,11 +477,16 @@ function PortalService.buildPortals(folder: Instance, origin: Vector3)
 			m.Parent = folder
 		end
 		-- (23 Nov 2026, owner: "a singleplayer portal in the multiplayer lab": out of the shared lab, back to your own.)
-		door("PortalSolo", 30, Color3.fromRGB(80, 210, 120), "SINGLEPLAYER")
+		-- (Only on a multiplayer server: on your own server you are in singleplayer already.)
+		if isPublic() then
+			door("PortalSolo", 30, Color3.fromRGB(80, 210, 120), "SINGLEPLAYER")
+		end
 		door("PortalMulti", 44, Color3.fromRGB(90, 170, 250), "MULTIPLAYER")
 		return
 	end
-	arch("PortalSolo", -7, Color3.fromRGB(70, 220, 110), "SINGLEPLAYER")
+	if isPublic() then
+		arch("PortalSolo", -7, Color3.fromRGB(70, 220, 110), "SINGLEPLAYER")
+	end
 	arch("PortalMulti", 7, Color3.fromRGB(80, 170, 255), "MULTIPLAYER")
 end
 
@@ -499,6 +500,19 @@ function PortalService.start()
 		sharedMap = if ok2 then m2 else nil
 	end
 	Players.PlayerAdded:Connect(function(player)
+		-- (23 Nov 2026, owner: "you load into singleplayer automatically: nobody else in your server; multiplayer only
+		-- through the portal"): a player who comes in through Roblox's Play onto a public server (the multiplayer
+		-- servers) goes straight on to a server of their own. Arrivals through the multiplayer portal stay.
+		if isPublic() and not RunService:IsStudio() then
+			local okJ, join = pcall(function()
+				return player:GetJoinData()
+			end)
+			local data = if okJ and type(join) == "table" then (join :: any).TeleportData else nil
+			local from = if type(data) == "table" then data.from else nil
+			if from ~= "Multi" and from ~= "Shared" then
+				task.spawn(go, player, "Solo", nil)
+			end
+		end
 		if not sharedCode then
 			local okJ, join = pcall(function()
 				return player:GetJoinData()
