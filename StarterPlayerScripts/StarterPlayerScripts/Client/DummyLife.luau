@@ -394,7 +394,7 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 		setJoint(life, "RightElbow", ang(20 + 35 * math.max(0, c) * amount, 0, 0))
 		setJoint(life, "LeftElbow", ang(20 + 35 * math.max(0, -c) * amount, 0, 0))
 		setJoint(life, "Neck", ang(38, 6 * s * amount, 0))
-		setJoint(life, "Waist", ang(4, 7 * s * amount, 0))
+		setJoint(life, "Waist", ang(4, 0, 0))
 		clutch(life, 1)
 		return
 	end
@@ -445,7 +445,7 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 		setJoint(life, "LeftElbow", ang(elbow - 8 * c * amount, 0, 0))
 	end
 	local lean = if fleeing then -14 else -3
-	setJoint(life, "Waist", ang(lean * amount, 5 * s * amount, 0))
+	setJoint(life, "Waist", ang(lean * amount, 0, 0))
 	if fleeing then
 		-- Glances back over its shoulder at whoever it runs from.
 		local back = if sin((now + life.seed) * 1.4) > 0.55 then 55 else 0
@@ -658,7 +658,7 @@ local function updateIdle(life: Life, now: number, dt: number)
 	-- The start it gives at a bang: shoulders up, a jolt back.
 	local jolt = if hearing and sinceNoise < NOISE_START then sin(sinceNoise / NOISE_START * math.pi) else 0
 	if j.Waist then
-		j.Waist.Transform = ang(1.3 * breathe - 5 * jolt, waistYaw + 2 * sin(t * 0.31), 0)
+		j.Waist.Transform = ang(1.3 * breathe - 5 * jolt, 0, 0) -- (23 Nov 2026, owner: the upper body never turns apart from the legs)
 	end
 	if j.Neck then
 		j.Neck.Transform = ang(life.pitch - 1 * breathe + 4 * jolt, neckYaw, 0)
@@ -743,7 +743,7 @@ local function updateIdle(life: Life, now: number, dt: number)
 		blend("LeftShoulder", ang(170, 0, -12))
 		blend("RightElbow", ang(15, 0, 0))
 		blend("LeftElbow", ang(15, 0, 0))
-		blend("Waist", ang(-8, waistYaw, 0))
+		blend("Waist", ang(-8, 0, 0))
 		blend("Neck", ang(14, neckYaw, 0))
 	elseif gesture == "Scratch" then
 		-- A hand behind the head, scratching; the head tilts.
@@ -775,7 +775,7 @@ local function updateIdle(life: Life, now: number, dt: number)
 		-- Bent over laughing, a hand on the belly, shaking.
 		local shake = sin(t * 22)
 		if j.Waist then
-			j.Waist.Transform = ang(14 + 4 * shake, life.yaw * 0.25, 0)
+			j.Waist.Transform = ang(14 + 4 * shake, 0, 0)
 		end
 		if j.Neck then
 			j.Neck.Transform = ang(-18 + 6 * shake, life.yaw * 0.5, 0)

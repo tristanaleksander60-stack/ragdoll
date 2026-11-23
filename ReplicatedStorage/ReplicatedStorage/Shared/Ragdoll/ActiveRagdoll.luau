@@ -1709,6 +1709,17 @@ local function update(dt: number)
 		end
 
 		local sat: any = rig
+		-- (23 Nov 2026, owner: the upper body and the legs turn together: the chest takes the hips' turn, and what it is
+		-- behind by.)
+		if (state == "Standing" or state == "Walking" or state == "Fleeing") and rig.chest and rig.chest ~= rig.pelvis and not rig.chest.Anchored then
+			local off = rig.pelvis.CFrame:VectorToObjectSpace(rig.chest.CFrame.LookVector)
+			local yaw = math.atan2(-off.X, -off.Z)
+			if math.abs(yaw) > 0.03 then
+				local spin = rig.chest.AssemblyAngularVelocity
+				local want = rig.pelvis.AssemblyAngularVelocity.Y - math.clamp(yaw, -1.2, 1.2) * 14
+				rig.chest.AssemblyAngularVelocity = Vector3.new(spin.X, spin.Y + (want - spin.Y) * 0.7, spin.Z)
+			end
+		end
 		if (state == "Walking" or state == "Fleeing" or state == "Flinch" or state == "Stumble" or state == "Crawling") and ActiveRagdoll.seated(rig) then
 			enter(rig, "Standing")
 			state = rig.state
@@ -2311,7 +2322,7 @@ local function shotReaction(rig: any, impulse: Vector3)
 		local w = Vector3.new(0, -rig.hitLimbSide * ActiveRagdoll.SHOT_ARM_TURN, 0)
 		for _, p in { rig.pelvis, rig.chest } do
 			if p and not p.Anchored then
-				p.AssemblyAngularVelocity += w
+				p.AssemblyAngularVelocity += w * 0.4
 			end
 		end
 	elseif region == "torso" then
