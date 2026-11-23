@@ -46,8 +46,8 @@ local MAX_VOICES = 28
 local UserInputService = game:GetService("UserInputService")
 local PHONE = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 local POOL = if PHONE then 1 else 2 -- loaded Sounds made per asset id at start, reused play after play
-local LOAD_WAIT = if PHONE then 0.2 else 0.1 -- s a sound not yet loaded may wait; later it is dropped, never late
-local LOAD_WAIT_OWN = 0.5 -- s the player's own shot or hit may wait (heard a little late beats silence)
+local LOAD_WAIT = if PHONE then 0.5 else 0.1 -- s a sound not yet loaded may wait; later it is dropped, never late
+local LOAD_WAIT_OWN = if PHONE then 0.9 else 0.5 -- s the player's own shot or hit may wait (heard a little late beats silence)
 local POOL_MAX = 6 -- voices an asset may grow to before a busy one is restarted
 local CUT_FADE = 0.05 -- s a sound takes to fade out before its voice is freed (no click)
 local SOUND_REACH = 160 -- studs a sound is heard, unless the caller says otherwise
@@ -225,6 +225,36 @@ local function variant(bank: string, list: { string }): string
 	return list[index]
 end
 
+-- Whether an asset has a voice that can be heard right now.
+local function ready(id: string): boolean
+	local pool = free[id]
+	for _, v in pool or {} do
+		if v.sound.IsLoaded and v.at.Parent then
+			return true
+		end
+	end
+	for _, v in live do
+		if v.id == id and v.pooled and v.sound.IsLoaded then
+			return true
+		end
+	end
+	return false
+end
+-- The recording to play (23 Nov 2026, owner: "not every sound comes through on phones"): the picked one if it is loaded,
+-- else another of the bank that is, so nothing is silent while the rest still downloads.
+local function heard(bank: string, list: { string }): string
+	local id = variant(bank, list)
+	if ready(id) then
+		return id
+	end
+	for _, other in list do
+		if ready(other) then
+			return other
+		end
+	end
+	return id
+end
+
 -- A voice of an asset. (23 Nov 2026, owner: "on a phone you only hear the shots land": the one loaded voice was still
 -- busy with the last shot, so the next took a brand new Sound that never loaded in time and was dropped.) A LOADED one
 -- first; with none free, the one that has played longest starts over, while a spare loads for next time.
@@ -232,7 +262,11 @@ local count: { [string]: number } = {} -- voices made per asset id (pooled ones)
 local function takeVoice(id: string, own: boolean): Voice
 	local pool = free[id]
 	if not pool then
-		return newVoice(id, false)
+		-- (Not made yet, a phone's first seconds: kept and loaded on from here, never thrown away unheard each time.)
+		pool = {}
+		free[id] = pool
+		count[id] = 1
+		return newVoice(id, true)
 	end
 	for i = #pool, 1, -1 do
 		local voice = pool[i]
@@ -278,6 +312,15 @@ end
 --   vary     how far volume and pitch wander (default 0.08 pitch, 0.1 volume; a real gun: 0.03).
 --   fade     s the end of a cut fades over (default CUT_FADE; a gun's tail: longer).
 type Options = { cut: number?, from: number?, reach: number?, priority: boolean?, vary: number?, fade: number? }
+-- (Whether a bank can be heard at once: a phone plays the gun's fallback while its own recording still loads.)
+local function bankReady(bank: string): boolean
+	for _, id in BANK[bank] or {} do
+		if ready(id) then
+			return true
+		end
+	end
+	return false
+end
 local function play(bank: string, position: Vector3, volume: number, speed: number, options: Options?)
 	local o: Options = options or {}
 	if not hasBank(bank) or (throttled(bank) and not o.priority) then
@@ -286,7 +329,7 @@ local function play(bank: string, position: Vector3, volume: number, speed: numb
 	if #live >= MAX_VOICES and not (o.priority and steal()) then
 		return
 	end
-	local id = variant(bank, BANK[bank])
+	local id = heard(bank, BANK[bank])
 	local voice = takeVoice(id, o.priority == true)
 	plays += 1
 	voice.play = plays
@@ -746,7 +789,17 @@ local function fireGun(toyId: string, muzzle: Vector3, _feet: Vector3?, priority
 		return
 	end
 	local options = { cut = g.cut, reach = g.maxDistance, priority = priority, vary = g.vary, fade = g.fade }
-	if hasBank(g.fire) then
+	local spare = PHONE and not bankReady(g.fire) and bankReady(g.fallback.bank)
+	if spare then
+		-- (Its own recording is asked for now, for the next shots.)
+		for _, id in BANK[g.fire] or {} do
+			if not free[id] then
+				count[id] = 1
+				free[id] = { newVoice(id, true) }
+			end
+		end
+	end
+	if hasBank(g.fire) and not spare then
 		play(g.fire, muzzle, g.volume, g.pitch, options)
 	else
 		play(g.fallback.bank, muzzle, g.fallback.volume, g.fallback.pitch, options)
@@ -1642,6 +1695,15 @@ function FxController.start()
 		if #again == 0 then
 			return
 		end
+		if PHONE then
+			-- (A phone's line comes and goes: tried again later, and a sound is never taken out of its bank.)
+			task.delay(8, function()
+				pcall(function()
+					game:GetService("ContentProvider"):PreloadAsync(again)
+				end)
+			end)
+			return
+		end
 		task.wait(8)
 		game:GetService("ContentProvider"):PreloadAsync(again, function(id: string, status: Enum.AssetFetchStatus)
 			if status == Enum.AssetFetchStatus.Failure then
@@ -1656,10 +1718,15 @@ function FxController.start()
 	end
 	if PHONE then
 		-- (23 Nov 2026: not while a phone is loading in; a sound needed before then makes its own voice.)
-		task.delay(12, function()
+		-- (A few at a time, from 4 s in: no stall, and all of them are there within the first half minute.)
+		task.delay(4, function()
 			local before = #preload
 			loadRest()
-			preloadNow(table.move(preload, before + 1, #preload, 1, {}))
+			local rest = table.move(preload, before + 1, #preload, 1, {})
+			for i = 1, #rest, 6 do
+				preloadNow(table.move(rest, i, math.min(i + 5, #rest), 1, {}))
+				task.wait(0.15)
+			end
 		end)
 	end
 	-- The gun in your hand gets spare voices at once, so quick shots each have one ready.
@@ -1683,16 +1750,24 @@ function FxController.start()
 			end
 		end
 	end)
-	task.delay(if PHONE then 20 else 6, function()
+	task.delay(if PHONE then 14 else 6, function()
 		preload = {}
 		for name, list in BANK do
 			if string.sub(name, 1, 4) == "tool" then
 				loadList(list)
 			end
 		end
-		preloadNow(preload)
+		if PHONE then
+			local rest = preload
+			for i = 1, #rest, 6 do
+				preloadNow(table.move(rest, i, math.min(i + 5, #rest), 1, {}))
+				task.wait(0.15)
+			end
+		else
+			preloadNow(preload)
+		end
 	end)
-	task.spawn(preloadNow, preload)
+	task.spawn(preloadNow, table.clone(preload))
 
 	FeelV2.play = function(bank: string, position: Vector3, volume: number, pitch: number)
 		play(bank, position, volume, pitch)

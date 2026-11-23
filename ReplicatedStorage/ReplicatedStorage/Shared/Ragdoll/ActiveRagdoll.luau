@@ -1675,6 +1675,8 @@ local function vitalDown(rig: Rig): boolean
 	return vital == "Unconscious" or vital == "Dead" or rig.model:GetAttribute("Spent") == true
 end
 
+ActiveRagdoll.lodTurn = false
+local LOD_PHONE = game:GetService("RunService"):IsClient() and game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").KeyboardEnabled
 local function update(dt: number)
 	-- (Limp bodies still moving: a heap coming down. Ones lying still, asleep, cost nothing and do not count.)
 	table.clear(limpMoving)
@@ -1683,7 +1685,17 @@ local function update(dt: number)
 			table.insert(limpMoving, r.pelvis.Position)
 		end
 	end
+	local eye = if workspace.CurrentCamera then workspace.CurrentCamera.CFrame.Position else Vector3.zero
+	ActiveRagdoll.lodTurn = not ActiveRagdoll.lodTurn
 	for model, rig in rigs do
+		-- (23 Nov 2026, fps on phones: a body far off that just stands or lies takes every second step; what holds it up
+		-- are constraints, they work on in between.)
+		local far: any = rig
+		if LOD_PHONE and (rig.state == "Standing" or rig.state == "Out") and rig.held == 0 and os.clock() - (rig.lastImpulseAt or 0) > 2
+			and not far.seatW and (rig.pelvis.Position - eye).Magnitude > 45 and ActiveRagdoll.lodTurn then
+			rig.stateTime += dt
+			continue
+		end
 		if not model.Parent or not rig.pelvis.Parent then
 			rigs[model] = nil
 			continue

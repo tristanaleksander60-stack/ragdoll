@@ -77,7 +77,15 @@ local function onScreen(g: GuiObject): boolean
 	return false
 end
 
-local function frame(dt: number)
+local PACE = if game:GetService("UserInputService").TouchEnabled then 1 / 24 else 0 -- (a turning picture needs no more on a phone)
+local waited = 0
+local function frame(step: number)
+	waited += step
+	if waited < PACE then
+		return
+	end
+	local dt = waited
+	waited = 0
 	local live = budget()
 	-- The ones under the pointer or held first, then the rest in the order they were made.
 	local count = 0
