@@ -527,8 +527,27 @@ end
 BUILD.Frog = function(f, at, m)
 	part(f, "FrogPond", Vector3.new(14, 0.3, 14), at * CFrame.new(0, 0.15, 0), Color3.fromRGB(70, 120, 150), Enum.Material.Glass, Enum.PartType.Cylinder).CFrame = at * CFrame.new(0, 0.15, 0) * CFrame.Angles(0, 0, math.rad(90))
 	local frog = place(f, "MFrog", (at * CFrame.new(0, 0.3, 0)).Position, 180, 9)
-	local mouth = (if frog then frog:GetPivot() else at) * CFrame.new(0, 3, -3)
+	local home = if frog then frog:GetPivot() else at
+	-- (Phase D, 23 Nov 2026, owner: "make the frog, the chicken, the shark, the washer... more realistic and fun"):
+	-- the frog turns to its catch, puffs its throat, shoots a thick sticky tongue with a ball on the end, reels the
+	-- body in and gulps it; a lump slides down its throat into the belly, which bulges and kicks while it digests;
+	-- then it rears up and burps: green slime, a spray of bones, and the body comes flying out a piece short.
+	local skin = Color3.fromRGB(90, 160, 70)
+	if frog then
+		local biggest = 0
+		for _, d in frog:GetDescendants() do
+			if d:IsA("BasePart") and d.Size.Magnitude > biggest then
+				biggest = d.Size.Magnitude
+				skin = d.Color
+			end
+		end
+	end
 	local nextAt = 0
+	local function setFrog(cf: CFrame)
+		if frog then
+			frog:PivotTo(cf)
+		end
+	end
 	return function()
 		if m.busy or os.clock() < nextAt then
 			return
@@ -540,26 +559,115 @@ BUILD.Frog = function(f, at, m)
 		nextAt = os.clock() + 4
 		swallow(m, body, function(model)
 			local r = rootOf(model)
-			local tongue = part(f, "Tongue", Vector3.new(0.7, 0.7, 1), mouth, Color3.fromRGB(230, 90, 120), Enum.Material.SmoothPlastic)
-			table.insert(m.temp, tongue)
-			local target = if r then r.Position else mouth.Position
-			play(0.25, function(t)
-				local tip = mouth.Position:Lerp(target, t)
-				tongue.Size = Vector3.new(0.7, 0.7, math.max(1, (tip - mouth.Position).Magnitude))
-				tongue.CFrame = CFrame.lookAt((mouth.Position + tip) / 2, tip)
+			local target = if r then r.Position else (home * CFrame.new(0, 3, -6)).Position
+			-- Turn to it, and crouch.
+			local flat = Vector3.new(target.X, home.Position.Y, target.Z)
+			local facing = if (flat - home.Position).Magnitude > 0.5 then CFrame.lookAt(home.Position, flat) else home
+			play(0.22, function(t)
+				setFrog(home:Lerp(facing, t) * CFrame.new(0, -0.4 * t, 0))
 			end)
+			local mouth = facing * CFrame.new(0, 3, -3)
+			-- The throat puffs.
+			local throat = part(f, "FrogThroat", Vector3.new(1.6, 1.6, 1.6), mouth * CFrame.new(0, -1, 0.6), skin:Lerp(Color3.new(1, 1, 0.85), 0.35), Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+			table.insert(m.temp, throat)
+			play(0.18, function(t)
+				throat.Size = Vector3.one * (1.6 + math.sin(t * math.pi) * 1.4)
+			end)
+			-- The tongue: thick, pink, a sticky ball on the end; out fast, a little wobble.
+			local tongue = part(f, "Tongue", Vector3.new(0.9, 0.55, 1), mouth, Color3.fromRGB(225, 85, 115), Enum.Material.SmoothPlastic)
+			local tip = part(f, "TongueTip", Vector3.one * 1.3, mouth, Color3.fromRGB(240, 110, 140), Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+			table.insert(m.temp, tongue)
+			table.insert(m.temp, tip)
+			local function stretch(to: Vector3, wob: number)
+				local from = mouth.Position
+				local len = math.max(1, (to - from).Magnitude)
+				tongue.Size = Vector3.new(0.9, 0.55, len)
+				tongue.CFrame = CFrame.lookAt((from + to) / 2, to) * CFrame.Angles(0, 0, wob)
+				tip.CFrame = CFrame.new(to)
+			end
+			play(0.16, function(t)
+				stretch(mouth.Position:Lerp(target, t), math.sin(t * 20) * 0.15)
+			end)
+			lazy("FxService").hit(target, 40, "Punch")
+			-- Reel it in: the body stuck to the tip.
 			task.spawn(hold, model, function()
-				local rr = rootOf(model)
-				return CFrame.new(if rr then rr.Position:Lerp(mouth.Position, 0.35) else mouth.Position)
-			end, 0.6)
-			play(0.6, function(t)
-				local tip = target:Lerp(mouth.Position, t)
-				tongue.Size = Vector3.new(0.7, 0.7, math.max(1, (tip - mouth.Position).Magnitude))
-				tongue.CFrame = CFrame.lookAt((mouth.Position + tip) / 2 + Vector3.new(0, 0, 0.01), tip)
+				return CFrame.new(tip.Position)
+			end, 0.45)
+			play(0.45, function(t)
+				stretch(target:Lerp(mouth.Position, t * t), math.sin(t * 14) * 0.1)
 			end)
 			tongue:Destroy()
-			task.wait(0.5)
-			return m.toLab * 80 + Vector3.new(0, 55, 0)
+			tip:Destroy()
+			-- Gulp: the body is inside; the frog snaps shut and the throat swells.
+			hideBody(model, true)
+			task.spawn(hold, model, function()
+				return facing * CFrame.new(0, 1.5, 0)
+			end, 3)
+			play(0.2, function(t)
+				setFrog(facing * CFrame.new(0, -0.4 + math.sin(t * math.pi) * 0.6, 0))
+				throat.Size = Vector3.one * (1.6 + math.sin(t * math.pi) * 2)
+			end)
+			throat:Destroy()
+			-- A lump down the throat, into a belly that bulges and kicks.
+			local lump = part(f, "FrogLump", Vector3.one * 1.8, mouth * CFrame.new(0, -0.6, 0.4), skin, Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+			table.insert(m.temp, lump)
+			local belly = facing * CFrame.new(0, 1.4, 0.6)
+			play(0.6, function(t)
+				lump.CFrame = (mouth * CFrame.new(0, -0.6, 0.4)):Lerp(belly, t)
+				lump.Size = Vector3.one * (1.8 + t * 1.6)
+			end)
+			play(1.5, function(t)
+				local kick = math.abs(math.sin(t * 22)) * 0.5
+				lump.CFrame = belly * CFrame.new(math.sin(t * 17) * 0.3, kick * 0.4, math.cos(t * 13) * 0.3)
+				lump.Size = Vector3.one * (3.4 + kick)
+				setFrog(facing * CFrame.new(0, -0.4 + kick * 0.15, 0) * CFrame.Angles(0, 0, math.sin(t * 9) * 0.04))
+			end)
+			-- The burp: it rears, green slime and bones fly out, then the body.
+			play(0.25, function(t)
+				setFrog(facing * CFrame.new(0, -0.4 + t * 0.9, 0) * CFrame.Angles(math.rad(-18 * t), 0, 0))
+				lump.Size = Vector3.one * (3.4 - t * 3)
+			end)
+			lump:Destroy()
+			local spit = (facing * CFrame.new(0, 3.2, -3.2)).Position
+			local slime = Instance.new("Part")
+			slime.Anchored, slime.CanCollide, slime.CanQuery, slime.CanTouch, slime.Transparency = true, false, false, false, 1
+			slime.Position = spit
+			slime.Parent = f
+			local e = Instance.new("ParticleEmitter")
+			e.Color = ColorSequence.new(Color3.fromRGB(150, 220, 70), Color3.fromRGB(90, 160, 40))
+			e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 0.2) })
+			e.Speed = NumberRange.new(12, 22)
+			e.SpreadAngle = Vector2.new(35, 35)
+			e.EmissionDirection = Enum.NormalId.Front
+			e.Acceleration = Vector3.new(0, -40, 0)
+			e.Lifetime = NumberRange.new(0.6, 1)
+			e.Rate = 0
+			e.Parent = slime
+			slime.CFrame = CFrame.lookAt(spit, spit + facing.LookVector + Vector3.new(0, 0.4, 0))
+			e:Emit(45)
+			game:GetService("Debris"):AddItem(slime, 2)
+			for i = 1, 6 do
+				local bone = Instance.new("Part")
+				bone.Name = "Bone"
+				bone.Size = if i % 3 == 0 then Vector3.one * 0.55 else Vector3.new(0.25, 0.25, 1.1)
+				bone.Shape = if i % 3 == 0 then Enum.PartType.Ball else Enum.PartType.Block
+				bone.Color = Color3.fromRGB(236, 228, 208)
+				bone.Material = Enum.Material.SmoothPlastic
+				bone.CFrame = CFrame.new(spit) * CFrame.Angles(math.random() * 6, math.random() * 6, 0)
+				bone.CanQuery, bone.CanTouch = false, false
+				bone.Parent = f
+				bone.AssemblyLinearVelocity = facing.LookVector * math.random(14, 26) + Vector3.new(math.random(-8, 8), math.random(10, 20), math.random(-8, 8))
+				game:GetService("Debris"):AddItem(bone, 6)
+			end
+			lazy("FxService").hit(spit, 120, "CannonPad")
+			play(0.3, function(t)
+				setFrog(facing:Lerp(home, t))
+			end)
+			setFrog(home)
+			if model.Parent then
+				lazy("DummyControl").move(model, CFrame.new(spit))
+			end
+			return facing.LookVector * 60 + Vector3.new(0, 40, 0)
 		end)
 	end
 end
