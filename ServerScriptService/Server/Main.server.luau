@@ -56,6 +56,14 @@ end)
 local safe = require(Shared:WaitForChild("SafeStart")).new(function(failedList: string)
 	workspace:SetAttribute("BootFailed", failedList)
 end)
+-- (23 Nov 2026, bug: with ONLY_LAB_DUMMIES the horde and the chase are off, so their remotes never existed; the client waited
+-- for Horde for ever and nothing after MinigameHud started: gamepad, likes, weapons catalog.) Made whatever is on.
+for _, name in { "Horde", "Chase", "Terminal" } do
+	local NetM = require(Shared:WaitForChild("Net")) :: any
+	if NetM.Names[name] then
+		NetM.event(NetM.Names[name])
+	end
+end
 safe("Purchases", function() Purchases.start() end) -- the one ProcessReceipt; finds out whether orders live in a DataStore
 safe("PurchaseChat", function() require(Systems:WaitForChild("PurchaseChat")).start() end) -- (V11 B7) Robux purchases in chat on every server
 safe("BenchService", function() require(Systems:WaitForChild("BenchService")).start() end) -- benches the lab's ragdolls sit on
@@ -129,7 +137,7 @@ safe("CrowdService", function() CrowdService.start(workspace:GetAttribute("LabOr
 safe("ProgressService", function() ProgressService.start(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- takedowns, eggs, hats, the profile
 safe("LeaderboardService", function() LeaderboardService.start(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- the plaza's four boards (round 3, M6)
 safe("LeaderboardService", function() LeaderboardService.buildLabBoards() end) -- and two in every lab, by the spawn (10 Nov 2026)
-safe("ChristmasService", function() ChristmasService.start(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- the Christmas theme (round 3, M7)
+task.spawn(safe, "ChristmasService", function() ChristmasService.start(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- (not waited for: it reads a DataStore) the Christmas theme (round 3, M7)
 safe("AdminService", function() AdminService.start() end) -- the owner's own controls (round 3, M7)
 safe("ScheduleService", function() require(Systems:WaitForChild("ScheduleService")).start() end) -- the weekly ADMIN SHOW and the free weekend (round 3, M9)
 safe("MinigameService", function() MinigameService.boot(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- the arena games

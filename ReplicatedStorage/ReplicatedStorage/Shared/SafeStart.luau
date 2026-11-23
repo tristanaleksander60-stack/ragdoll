@@ -8,6 +8,7 @@
 
 local SafeStart = {}
 
+SafeStart.CLIENT_WAIT = 4 -- s
 SafeStart.SLOW_AFTER = 8 -- s a start may take before the log names it
 
 export type Runner = (name: string, fn: () -> ()) -> boolean
@@ -22,7 +23,36 @@ function SafeStart.new(report: ((failedList: string) -> ())?, tag: string?): Run
 				warn(string.format("[%s] %s is still starting after %d s", label, name, SafeStart.SLOW_AFTER))
 			end
 		end)
-		local ok, err = pcall(fn)
+		local t0 = os.clock()
+		local ok, err = true, nil :: any
+		if game:GetService("RunService"):IsServer() then
+			ok, err = pcall(fn)
+		else
+			-- (23 Nov 2026: a client start that waits for something holds the rest up 4 s at most, never for ever.)
+			local done = false
+			task.spawn(function()
+				ok, err = pcall(fn)
+				if done then
+					finished = true
+					if not ok then
+						warn(string.format("[%s] %s failed late: %s", label, name, tostring(err)))
+					end
+				end
+				done = true
+			end)
+			while not done and os.clock() - t0 < SafeStart.CLIENT_WAIT do
+				task.wait()
+			end
+			if not done then
+				done = true
+				warn(string.format("[%s] %s is slow: the rest goes on without it", label, name))
+				return true
+			end
+		end
+		local took = os.clock() - t0
+		if took > 0.1 then
+			print(string.format("[%s] %s took %.2f s", label, name, took)) -- (what a join waits for)
+		end
 		finished = true
 		if not ok then
 			warn(string.format("[%s] %s failed: %s", label, name, tostring(err)))
