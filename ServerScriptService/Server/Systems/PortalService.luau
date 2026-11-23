@@ -509,7 +509,7 @@ function PortalService.start()
 			end)
 			local data = if okJ and type(join) == "table" then (join :: any).TeleportData else nil
 			local from = if type(data) == "table" then data.from else nil
-			if from ~= "Multi" and from ~= "Shared" then
+			if from ~= "Multi" and from ~= "Shared" and player.FollowUserId == 0 then -- (a friend who joined someone through Roblox stays with them)
 				task.spawn(go, player, "Solo", nil)
 			end
 		end
