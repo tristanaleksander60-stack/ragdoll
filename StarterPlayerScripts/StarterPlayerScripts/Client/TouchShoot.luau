@@ -82,7 +82,7 @@ end
 
 -- Whether the action button shows now.
 function TouchShoot.wanted(): boolean
-	return ViewMode.isTouch() and not ViewMode.isLab() and PokeController.active() and actionPicked() ~= nil and player.Character ~= nil
+	return ViewMode.isTouch() and not ViewMode.isLab() and PokeController.active() and not PokeController.handIsEmpty() and actionPicked() ~= nil and player.Character ~= nil
 end
 
 -- Phase 0: a gamepad fires at the centre too (R2: GamepadControls), so it gets the crosshair

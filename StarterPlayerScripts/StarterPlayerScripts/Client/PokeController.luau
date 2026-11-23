@@ -1029,6 +1029,12 @@ local function pruneLocked()
 end
 
 local function pressed(id: string)
+	-- (23 Nov 2026, owner: "on a phone, press the weapon again and it leaves the hand", as the number keys do.)
+	if ViewMode.isTouch() and id == selected and not pendingEquip and not handEmpty then
+		handEmpty = true
+		refresh()
+		return
+	end
 	if pendingEquip then
 		placeIn(id)
 	else
@@ -1859,6 +1865,11 @@ end
 
 -- Whether tools can be used right now: the bar on, and not resting for doctor mode. (isEnabled
 -- says only whether the bar is on, which build mode keeps to put back.)
+-- Nothing in the hand (the picked slot was pressed again).
+function PokeController.handIsEmpty(): boolean
+	return handEmpty
+end
+
 function PokeController.active(): boolean
 	return enabled and not doctorHold
 end

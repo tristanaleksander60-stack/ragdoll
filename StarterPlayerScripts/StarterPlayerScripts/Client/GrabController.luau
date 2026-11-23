@@ -400,7 +400,7 @@ end
 -- Phone pad
 
 local function padWanted(): boolean
-	return ViewMode.isTouch() and not ViewMode.isLab() and PokeController.active() and PokeController.getSelected() == "Grab"
+	return ViewMode.isTouch() and not ViewMode.isLab() and PokeController.active() and not PokeController.handIsEmpty() and PokeController.getSelected() == "Grab"
 end
 
 -- The mouse help: shown on a computer in the player view while Grab is picked (not while the
@@ -669,6 +669,9 @@ local function updatePad()
 		return
 	end
 	local wanted = padWanted()
+	if current and ViewMode.isTouch() and PokeController.handIsEmpty() then
+		release(false) -- (the Grab slot pressed again while carrying: it is put down)
+	end
 	if gui.Enabled ~= wanted then
 		gui.Enabled = wanted
 		if buttonsGui then
