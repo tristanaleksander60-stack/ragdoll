@@ -413,6 +413,19 @@ function Poses.rage(t: number): Pose
 	stand(feelOut, -14 + s * 0.4, ang(-6, s, 0), ang(25 + s, 0, 28), ang(25 - s, 0, -28), 70, 70)
 	return feelOut
 end
-Poses.MOODS = { Check = Poses.check, Breath = Poses.breath, CPRFast = Poses.cprFast, CPRSlam = Poses.cprSlam, CPROne = Poses.cprOne, Gasp = Poses.gasp, Point = Poses.point, Cheer = Poses.cheer, Relief = Poses.relief, Hug = Poses.hug, Despair = Poses.despair, Sky = Poses.sky, Rage = Poses.rage, Angry = Poses.fists, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr } :: { [string]: (number) -> Pose }
+-- Sitting on a bench, hands in the lap, looking about (bend 0..1: how far down it is).
+local sitOut: Pose = {}
+function Poses.sit(t: number, bend: number?): Pose
+	local b = bend or 1
+	local out = sitOut
+	out.RightHip, out.LeftHip = ang(86 * b, 0, 4 * b), ang(86 * b, 0, -4 * b)
+	out.RightKnee, out.LeftKnee = ang(-84 * b, 0, 0), ang(-84 * b, 0, 0)
+	out.RightShoulder, out.LeftShoulder = ang(34 * b, 0, -4 * b), ang(34 * b, 0, 4 * b)
+	out.RightElbow, out.LeftElbow = ang(44 * b, 0, 0), ang(44 * b, 0, 0)
+	out.Waist = ang(4 * b + sin(t * 1.6) * 1.2, 0, 0)
+	out.Neck = ang(0, sin(t * 0.55) * 26 * b, 0)
+	return out
+end
+Poses.MOODS = { Sit = Poses.sit, Check = Poses.check, Breath = Poses.breath, CPRFast = Poses.cprFast, CPRSlam = Poses.cprSlam, CPROne = Poses.cprOne, Gasp = Poses.gasp, Point = Poses.point, Cheer = Poses.cheer, Relief = Poses.relief, Hug = Poses.hug, Despair = Poses.despair, Sky = Poses.sky, Rage = Poses.rage, Angry = Poses.fists, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr } :: { [string]: (number) -> Pose }
 
 return Poses

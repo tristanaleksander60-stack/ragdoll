@@ -1097,6 +1097,103 @@ ActiveRagdoll.unsinkForTest = function(model: Model): boolean
 	return rig ~= nil and unsink(rig)
 end
 
+-- Sitting on a bench (23 Nov 2026, Server/BenchService): Seat is a CFrame on the floor under the seat, facing out. It stays
+-- in the Standing state: the lift holds the pelvis over the seat, the balance faces it out, hips and knees bend. A round
+-- leaves it there; dead or out cold it slumps on the seat. A grab, a blast or a hard blow takes it off (seatLost).
+ActiveRagdoll.SEAT_TOP = 1.7
+ActiveRagdoll.SEAT_TIME = 0.9 -- s to sit down or rise
+function ActiveRagdoll.seated(rig: any): boolean
+	local seat = rig.model:GetAttribute("Seat")
+	if typeof(seat) ~= "CFrame" then
+		rig.seatLost = nil
+		return false
+	end
+	if rig.seatLost == seat then
+		return false
+	end
+	if rig.held > 0 or rig.state == "Frozen" or flat(rig.pelvis.Position - seat.Position).Magnitude > 6 then
+		rig.seatLost = seat
+		return false
+	end
+	return true
+end
+-- How high over the floor the pelvis sits: the thighs on the seat, the feet not through the floor.
+function ActiveRagdoll.seatHeight(rig: any): number
+	if rig.seatY then
+		return rig.seatY
+	end
+	local function size(name: string): Vector3
+		local p = rig.model:FindFirstChild(name)
+		return if p and p:IsA("BasePart") then p.Size else Vector3.new(1, 1, 1)
+	end
+	local hipAt = rig.pelvis:FindFirstChild("LeftHipRigAttachment")
+	local hip = if hipAt and hipAt:IsA("Attachment") then hipAt.Position.Y else -rig.pelvis.Size.Y / 2
+	local onSeat = math.max(size("LeftUpperLeg").Z / 2 - hip, rig.pelvis.Size.Y / 2) + ActiveRagdoll.SEAT_TOP
+	local shin = size("LeftLowerLeg").Y + size("LeftFoot").Y
+	rig.seatY = math.max(onSeat, shin * 0.9 - hip) + 0.06
+	return rig.seatY
+end
+-- One step of it; limp: dead or out cold. Also the rising, once Seat is gone. True while it has the body.
+function ActiveRagdoll.holdSeat(rig: any, dt: number, limp: boolean): boolean
+	local seat = rig.model:GetAttribute("Seat")
+	local on = ActiveRagdoll.seated(rig)
+	if not on and (limp or not rig.seatW or rig.seatLost ~= nil or rig.held > 0) then
+		if rig.seatW then
+			rig.seatW = nil
+			rig.lift.Enabled = false
+			if rig.state == "Standing" then
+				enter(rig, "Standing")
+			end
+		end
+		return false
+	end
+	if on then
+		if not rig.seatW then
+			rig.seatW = if flat(rig.pelvis.Position - seat.Position).Magnitude < 0.9 then 1 else 0
+			rig.seatFrom = rig.pelvis.Position
+			if isMoving(rig.state) then
+				enter(rig, "Standing")
+			end
+		end
+		rig.seatCF = seat
+	end
+	local cf: CFrame = rig.seatCF
+	if not limp then
+		rig.seatW = math.clamp(rig.seatW + (if on then dt else -dt) / ActiveRagdoll.SEAT_TIME, 0, 1)
+	end
+	if not on and rig.seatW <= 0 then
+		rig.seatW = nil
+		enter(rig, "Standing")
+		return true
+	end
+	if rig.seatW >= 1 then
+		rig.seatFrom = (cf * CFrame.new(0, 0, -2.6)).Position -- (where it rises to)
+	end
+	local w: number = rig.seatW
+	local slide = math.clamp((w - 0.2) / 0.8, 0, 1)
+	slide = slide * slide * (3 - 2 * slide)
+	local bend = math.clamp(w / 0.75, 0, 1)
+	bend = bend * bend * (3 - 2 * bend)
+	local from: Vector3 = rig.seatFrom
+	local x, z = from.X + (cf.X - from.X) * slide, from.Z + (cf.Z - from.Z) * slide
+	local y = cf.Y + rig.standOffset + 0.05 + (ActiveRagdoll.seatHeight(rig) - rig.standOffset - 0.05) * slide
+	local lift: AlignPosition = rig.lift
+	lift.ForceLimitMode = Enum.ForceLimitMode.Magnitude
+	lift.MaxForce = rig.mass * Config.NORMAL_GRAVITY * 6
+	lift.Position = Vector3.new(x, y, z)
+	lift.Enabled = true
+	rig.heading = flatLook(rig.pelvis)
+	local look = flat(cf.LookVector).Unit
+	rig.balance.AlignType = Enum.AlignType.AllAxes
+	rig.balance.CFrame = uprightFrame(Vector3.yAxis, look)
+	rig.balance.MaxTorque = gravityTorque(rig, Tone.STANDING_BALANCE)
+	rig.balance.Enabled = true
+	if not limp then
+		applyPose(rig, Poses.sit(os.clock(), bend))
+	end
+	return true
+end
+
 -- Standing still: decide whether to set off (run from someone, crawl, or walk home).
 local function think(rig: Rig)
 	-- (Checked a few times a second, not every step.)
@@ -1563,7 +1660,7 @@ local function update(dt: number)
 			enter(rig, "Ragdoll")
 			state = rig.state
 			-- (V9-0ac fix round 1: a body killed by a round falls away from it, not in a heap where it stood.)
-			local dir = rig.lastShotDir
+			local dir = if ActiveRagdoll.seated(rig) then nil else rig.lastShotDir
 			if dir and rig.lastShotAt and os.clock() - rig.lastShotAt < DEATH_PUSH_WINDOW then
 				local push = dir * DEATH_PUSH + Vector3.new(0, -2, 0)
 				for _, p in rig.parts do
@@ -1575,7 +1672,25 @@ local function update(dt: number)
 			rig.lastShotDir = nil
 		end
 
-		if state == "Standing" then
+		local sat: any = rig
+		if (state == "Walking" or state == "Fleeing" or state == "Flinch" or state == "Stumble" or state == "Crawling") and ActiveRagdoll.seated(rig) then
+			enter(rig, "Standing")
+			state = rig.state
+		end
+		if state == "Standing" and (sat.seatW or ActiveRagdoll.seated(rig)) and ActiveRagdoll.holdSeat(rig, dt, false) then
+			-- (on the bench: it neither thinks of going anywhere nor loses its balance)
+		elseif (state == "Ragdoll" or state == "Out") and sat.seatW and ActiveRagdoll.seated(rig) then
+			if vitalDown(rig) or os.clock() < rig.koUntil then
+				ActiveRagdoll.holdSeat(rig, dt, true)
+			else
+				startRamp(rig, "Recovering", 0.8) -- (awake: it sits up again)
+			end
+		elseif state == "Recovering" and sat.seatW and ActiveRagdoll.seated(rig) then
+			updateRamp(rig)
+			if rig.state == "Standing" or rig.state == "Recovering" then
+				ActiveRagdoll.holdSeat(rig, dt, false)
+			end
+		elseif state == "Standing" then
 			if tiltDegrees(rig) > 60 then
 				enter(rig, "Ragdoll")
 			else
@@ -2217,6 +2332,17 @@ function ActiveRagdoll.hit(model: Model, part: BasePart, impulse: Vector3, posit
 		rig.lastHitAt = now -- it remembers who hurts it (and runs from people for a while)
 	end
 	rig.lastImpulseAt = now
+	if current ~= "Ragdoll" and current ~= "Out" and ActiveRagdoll.seated(rig) then
+		if (gun and gun > 0) or deltaV < STUMBLE_MAX then
+			-- (On a bench: the struck part jerks, it stays where it sits.)
+			local jerk = impulse * 0.3
+			local most = part.AssemblyMass * GUN_LOCAL_MAX * 0.5
+			part:ApplyImpulseAtPosition(if jerk.Magnitude > most then jerk.Unit * most else jerk, position)
+			return "Flinch"
+		end
+		local off: any = rig
+		off.seatLost = model:GetAttribute("Seat") -- (blown or knocked off it)
+	end
 	-- V8-0.2 (the first hit lands): a newcomer's first few hits with any tool knock it flat with a
 	-- big, readable flop: thrown back at FIRST_HIT_PUSH studs/s at the least, a little up. (The
 	-- playtest needed 7 shots for the first knock-down; time played follows takedowns.) The client

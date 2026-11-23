@@ -862,7 +862,7 @@ local function expressionFor(life: Life, now: number): string
 		return "Grumpy"
 	elseif temper == "Mourn" or temper == "Despair" or temper == "Sky" or temper == "CPRSlam" then
 		return "Ouch"
-	elseif temper == "Cheer" or temper == "Relief" or temper == "Hug" then
+	elseif temper == "Sit" or temper == "Cheer" or temper == "Relief" or temper == "Hug" then
 		return "Neutral"
 	elseif type(temper) == "string" then
 		return "Scared"
@@ -1200,6 +1200,14 @@ local function moodPose(life: Life, now: number, dt: number, moving: boolean): b
 	local own: any = life
 	if not pose then
 		own.moodAt2 = nil
+		if own.satDown then
+			own.satDown = nil
+			for name, joint in life.joints do
+				if string.find(name, "Hip", 1, true) or string.find(name, "Knee", 1, true) or string.find(name, "Ankle", 1, true) then
+					joint.Transform = CFrame.identity
+				end
+			end
+		end
 		own.moodJoints = nil
 		return false
 	end
@@ -1230,9 +1238,15 @@ local function moodPose(life: Life, now: number, dt: number, moving: boolean): b
 	else
 		want = pose(now)
 	end
+	-- (Sitting: the standing joints are welded on each screen by itself, so every screen bends the legs too.)
+	local sits = mood == "Sit" and typeof(model:GetAttribute("Seat")) == "CFrame"
+	if sits then
+		quick = 5
+		own.satDown = true
+	end
 	local k = 1 - math.exp(-quick * dt)
 	for name, joint in life.joints do
-		if not string.find(name, "Hip", 1, true) and not string.find(name, "Knee", 1, true) and not string.find(name, "Ankle", 1, true) then
+		if sits or not string.find(name, "Hip", 1, true) and not string.find(name, "Knee", 1, true) and not string.find(name, "Ankle", 1, true) then
 			local to = want[name] or CFrame.identity
 			local from = kept[name] or joint.Transform
 			local at = from:Lerp(to, k)
