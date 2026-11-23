@@ -300,6 +300,17 @@ stroke.Color = Color3.fromRGB(235, 120, 30)
 stroke.Thickness = 2
 stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 stroke.Parent = hint
+if touch then
+	local off = hint:Clone()
+	off.Name = "TakeOff"
+	off.Position = UDim2.new(1, -290, 1, -190)
+	off.Size = UDim2.fromOffset(46, 46)
+	off.Text = "OFF"
+	off.Parent = gui
+	off.Activated:Connect(function()
+		remote:FireServer("TakeOff")
+	end)
+end
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local function drawHint()

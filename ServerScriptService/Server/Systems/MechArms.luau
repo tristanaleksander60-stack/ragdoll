@@ -247,8 +247,24 @@ function MechArms.buildStand(folder: Instance, origin: Vector3)
 	prompt.MaxActivationDistance = 12
 	prompt.ClickablePrompt = false -- (23 Nov 2026: a clickable prompt took the mouse, the view could not turn near it)
 	prompt.RequiresLineOfSight = false
-	prompt.Parent = post
-	prompt.Triggered:Connect(MechArms.toggle)
+	-- (The whole set takes the press, not only the thin post: a finger finds it.)
+	local press = part("Press", Vector3.new(5, 8, 5), GRAPHITE)
+	press.Anchored, press.Transparency = true, 1
+	press.CFrame = CFrame.new(ground + Vector3.new(0, 4, 0))
+	press.Parent = m
+	prompt.Parent = press
+	-- (23 Nov 2026: on a phone or tablet the stand only puts them on; a button on the screen takes them off.)
+	prompt.Triggered:Connect(function(player: Player)
+		if player:GetAttribute("MechArms") == true then
+			local okS, rec = pcall(function()
+				return lazy("SessionStats").recordFor(player)
+			end)
+			if okS and rec and (rec.plat == "phone" or rec.plat == "tablet") then
+				return
+			end
+		end
+		MechArms.toggle(player)
+	end)
 	m.Parent = folder
 end
 

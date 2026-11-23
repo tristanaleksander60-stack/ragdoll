@@ -111,20 +111,16 @@ local function hitBox(part: BasePart, origin: Vector3, dir: Vector3): number?
 	return math.max(tMin, 0)
 end
 
-UserInputService.InputBegan:Connect(function(input, processed)
-	local t = input.UserInputType
-	if processed or (t ~= Enum.UserInputType.MouseButton1 and t ~= Enum.UserInputType.Touch) then
-		return
-	end
+local function clickAt(input: InputObject)
 	local camera = Workspace.CurrentCamera
 	local character = Players.LocalPlayer.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	if not (camera and root and root:IsA("BasePart")) then
 		return
 	end
-	local ray = if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
+	local ray = if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter and input.UserInputType ~= Enum.UserInputType.Touch
 		then camera:ViewportPointToRay(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
-		else camera:ScreenPointToRay(input.Position.X, input.Position.Y)
+		else camera:ScreenPointToRay(input.Position.X, input.Position.Y) -- (where the pointer is, or the finger went down)
 	local best: Clickable? = nil
 	local bestT = math.huge
 	for part, c in clickables do
@@ -137,6 +133,33 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	end
 	if best then
 		best.fn(ray.Origin + ray.Direction * bestT)
+	end
+end
+-- (23 Nov 2026, bug: on a phone every finger that went down counted as a press, the thumb on the walking stick and a turn
+-- of the camera too, so by the arms' stand walking away took the arms off again. A finger presses a thing only with a
+-- short tap that stays where it is and is not on the stick.)
+local TAP_TIME, TAP_MOVE = 0.4, 16
+local downs: { [InputObject]: { at: Vector2, t: number } } = {}
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed then
+		return
+	end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		clickAt(input)
+	elseif input.UserInputType == Enum.UserInputType.Touch then
+		local okS, onStick = pcall(function()
+			return (require(script.Parent:WaitForChild("MoveStick")) :: any).has(input)
+		end)
+		if not (okS and onStick) then
+			downs[input] = { at = Vector2.new(input.Position.X, input.Position.Y), t = os.clock() }
+		end
+	end
+end)
+UserInputService.InputEnded:Connect(function(input)
+	local down = downs[input]
+	downs[input] = nil
+	if down and os.clock() - down.t <= TAP_TIME and (Vector2.new(input.Position.X, input.Position.Y) - down.at).Magnitude <= TAP_MOVE then
+		clickAt(input)
 	end
 end)
 
