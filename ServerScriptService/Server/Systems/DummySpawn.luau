@@ -230,7 +230,7 @@ function DummySpawn.spawnFor(player: Player, kind: unknown, at: unknown): (Model
 		return nil, "bad request"
 	end
 	local Lab = require(script.Parent:WaitForChild("Lab")) :: any
-	if Lab.ownerAt(point) ~= player then
+	if Lab.ownerAt(point) ~= player and DummySpawn.labOwnerFor(player, point) == nil then -- (a shared lab's guest too)
 		return nil, "only in your own lab"
 	end
 	local character = player.Character
@@ -378,6 +378,9 @@ function DummySpawn.labOwnerFor(player: Player, point: Vector3): Player?
 	local owner = Lab.ownerAt(point)
 	if owner == player then
 		return owner
+	end
+	if owner and player:GetAttribute("SharedGuest") == owner.UserId then
+		return owner -- (bug hunt, 23 Nov 2026: a guest of a shared lab creates in it too)
 	end
 	if owner and (Config :: any).PRANK_PARTY and player:GetAttribute("PartyLab") == owner.UserId then
 		return owner

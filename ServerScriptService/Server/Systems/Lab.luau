@@ -1380,6 +1380,11 @@ end
 ------------------------------------------------------------------------------------------------
 -- Asking about labs
 
+-- (Bug hunt, 23 Nov 2026): whether a player lives in a lab: their own, or the shared one they are a guest in.
+function Lab.inLab(player: Player): boolean
+	return plotOf[player] ~= nil or guestOf[player] ~= nil
+end
+
 -- The plot a player owns (nil: none, they live in the plaza).
 function Lab.plotIndex(player: Player): number?
 	local plot = plotOf[player]
@@ -1388,7 +1393,7 @@ end
 
 -- Where a player's lab is (the plaza's middle when they have none).
 function Lab.originFor(player: Player): Vector3
-	local plot = plotOf[player]
+	local plot = plotOf[player] or guestOf[player] -- (bug hunt, 23 Nov 2026: a guest's events and its lab view are in the shared lab, not the plaza)
 	return if plot then plot.origin else worldOrigin
 end
 
@@ -1563,16 +1568,18 @@ function Lab.build()
 		if type(data) == "table" and data.from == "Shared" then
 			Workspace:SetAttribute("SharedLab", true)
 		end
-		claim(player)
 		-- (23 Nov 2026, owner: "switching servers in multiplayer must always put you in the same lab"): everyone who
-		-- arrives through multiplayer (PLAY NOW, JOIN, a friend, the start menu) joins this server's one shared lab.
-		if type(data) == "table" and data.from == "Multi" then
-			Lab.joinShared(player)
-		end
-		-- (A friend who followed someone in a shared lab joins it too.)
+		-- arrives through multiplayer (PLAY NOW, JOIN, a friend) joins this server's one shared lab, and a friend who
+		-- followed someone in it too. (Bug hunt, 23 Nov: straight in as a guest, never building a lab of their own
+		-- first only to tear it down: that cost a whole lab of ragdolls and a stall on every arrival.)
 		local followed = if player.FollowUserId ~= 0 then Players:GetPlayerByUserId(player.FollowUserId) else nil
-		if followed and (followed:GetAttribute("SharedHost") == true or followed:GetAttribute("SharedGuest") ~= nil) then
-			Lab.joinShared(player)
+		local multi = (type(data) == "table" and data.from == "Multi")
+			or (followed ~= nil and (followed:GetAttribute("SharedHost") == true or followed:GetAttribute("SharedGuest") ~= nil))
+		if not (multi and Lab.joinShared(player)) then
+			claim(player)
+			if multi then
+				Lab.joinShared(player) -- (no shared lab here yet: this lab is the shared one)
+			end
 		end
 		-- Every avatar starts in its own lab (the plaza when there is none; a shared server's guests in the host's).
 		player.CharacterAdded:Connect(function(character)

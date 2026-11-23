@@ -881,7 +881,7 @@ function WorldMaps.travel(player: Player, id: unknown): (boolean, string?)
 		root.AssemblyLinearVelocity = Vector3.zero
 	end
 	-- (With no lab of your own, "My Lab" takes you to the plaza, and that is where you are.)
-	local landed = if placeId == "Lab" and not Lab.plotIndex(player) then "Plaza" else placeId
+	local landed = if placeId == "Lab" and not Lab.inLab(player) then "Plaza" else placeId
 	player:SetAttribute("Place", landed)
 	Metrics.event(player, "Place", 1, if Places.labPlot(landed) then "OtherLab" else landed)
 	local hook = WorldMaps.onTrip
@@ -1113,11 +1113,11 @@ function WorldMaps.build(labOrigin: Vector3)
 		lastRefusal[player] = nil
 	end)
 	local function track(player: Player)
-		local home = if Lab.plotIndex(player) then "Lab" else "Plaza"
+		local home = if Lab.inLab(player) then "Lab" else "Plaza"
 		player:SetAttribute("Place", home)
 		player.CharacterAdded:Connect(function()
 			-- A fresh avatar starts in its own lab (the plaza without one).
-			player:SetAttribute("Place", if Lab.plotIndex(player) then "Lab" else "Plaza")
+			player:SetAttribute("Place", if Lab.inLab(player) then "Lab" else "Plaza")
 		end)
 	end
 	for _, player in Players:GetPlayers() do

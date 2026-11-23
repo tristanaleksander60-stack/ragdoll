@@ -24,8 +24,15 @@ local SandboxService = {}
 SandboxService.GAP = { SlowMo = 8, Revive = 3, Reset = 2 } :: { [string]: number }
 local last: { [Player]: { [string]: number } } = {}
 
+-- (Bug hunt, 23 Nov 2026): a guest in a shared lab uses the sandbox buttons on that lab, as its host does.
+local function labPlayer(player: Player): Player
+	local host = player:GetAttribute("SharedGuest")
+	local hostPlayer = if type(host) == "number" then Players:GetPlayerByUserId(host) else nil
+	return hostPlayer or player
+end
+
 local function inOwnLab(player: Player): boolean
-	local index = Lab.plotIndex(player)
+	local index = Lab.plotIndex(labPlayer(player))
 	if not index then
 		return false
 	end
@@ -64,7 +71,7 @@ function SandboxService.run(player: Player, action: unknown): string?
 		return if ok then "slowmo" else nil
 	elseif action == "Revive" then
 		local n = 0
-		for _, model in Lab.dummiesOf(player) do
+		for _, model in Lab.dummiesOf(labPlayer(player)) do
 			if VitalsService.reviveNow(model) then
 				n += 1
 			end
@@ -79,7 +86,7 @@ function SandboxService.run(player: Player, action: unknown): string?
 				DummySpawn.clearLab(player) -- (V9-0l: and party guests' in this lab)
 			end
 		end)
-		local n = Lab.rewind(player)
+		local n = Lab.rewind(labPlayer(player))
 		local origin = player:GetAttribute("LabOrigin")
 		if typeof(origin) == "Vector3" then
 			Knockables.resetNear(origin, 140) -- (UI audit 21 Nov 2026: the knocked barrels go back too)
@@ -117,7 +124,7 @@ local function inTimeLab(player: Player): boolean
 	if zone ~= "Lab" or at == nil then
 		return false
 	end
-	if at == Lab.plotIndex(player) then
+	if at == Lab.plotIndex(labPlayer(player)) then
 		return true
 	end
 	local host = player:GetAttribute("PartyLab")

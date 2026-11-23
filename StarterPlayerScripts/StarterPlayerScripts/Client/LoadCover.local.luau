@@ -57,6 +57,27 @@ local function ready(): boolean
 	if typeof(origin) ~= "Vector3" then
 		return false
 	end
+	-- (Bug hunt, 23 Nov 2026: a guest in a shared lab has no LabPlot, so the cover waited its whole 12 s. A guest is
+	-- ready once standing in the host's lab with the host's ragdolls dressed.)
+	local host = player:GetAttribute("SharedGuest")
+	if player:GetAttribute("LabPlot") == nil and type(host) == "number" then
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if not (root and root:IsA("BasePart")) or Vector2.new(root.Position.X - origin.X, root.Position.Z - origin.Z).Magnitude > 90 then
+			return false
+		end
+		local dummies = Workspace:FindFirstChild("Dummies")
+		local theirs, dressed = 0, 0
+		for _, m in if dummies then dummies:GetChildren() else {} do
+			if m:GetAttribute("LabOwner") == host then
+				theirs += 1
+				if m:FindFirstChild("Skins") then
+					dressed += 1
+				end
+			end
+		end
+		return theirs > 0 and dressed >= math.min(MIN_DUMMIES, theirs)
+	end
 	local labs = Workspace:FindFirstChild("Labs")
 	local plot = player:GetAttribute("LabPlot")
 	local plotFolder = labs and labs:FindFirstChild("Lab" .. tostring(plot))
