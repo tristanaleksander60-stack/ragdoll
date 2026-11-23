@@ -1316,11 +1316,25 @@ function Lab.joinShared(player: Player): boolean
 		end
 	end
 	if not hostPlot then
-		if plotOf[player] then
+		-- (23 Nov 2026, owner: "I picked multiplayer, stayed on the same server, and was not put in a lab with the
+		-- others"): nobody here shares a lab yet, so the lab of another player on this server (the one who has been
+		-- here longest) becomes the shared one and you join them. Alone on the server: your own lab is the shared one.
+		local best: Player? = nil
+		for _, other in Players:GetPlayers() do
+			if other ~= player and plotOf[other] and other:GetAttribute("SharedGuest") == nil then
+				best = other
+				break
+			end
+		end
+		if best then
+			best:SetAttribute("SharedHost", true)
+			hostPlot = plotOf[best]
+		elseif plotOf[player] then
 			player:SetAttribute("SharedHost", true)
 			return true
+		else
+			return false
 		end
-		return false
 	end
 	local own = plotOf[player]
 	if own then
