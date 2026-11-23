@@ -589,39 +589,51 @@ end
 -- (Pro Sound Effects "Bullet Drops 7", pitch by kind, quieter for other players' shots), lies there a moment
 -- and fades.
 FeelV2.CLINK_ID = "rbxassetid://9113631210"
-FeelV2.CLINK_VOLUME = 0.22 -- own shots; other players' at 60 %
+FeelV2.CLINK_VOLUME = 0.32 -- own shots; other players' at 60 %
 FeelV2.CASING_LIFE = 3
 local clinkPool: { Sound } = {}
 local clinkTurn = 0
-local function clink(at: Vector3, kind: string, own: boolean)
+-- (23 Nov 2026, owner: "hear them, but not far too loud": the clink faded from 4 studs off, so over the shoulder only a
+-- third was left. Full out to 16 now, and the second bounce is heard too, softer.)
+local CLINK_VOICES = 6
+local function voice(i: number): Sound
+	local s = clinkPool[i]
+	if s then
+		return s
+	end
+	local holder = Instance.new("Part")
+	holder.Name = "Clink"
+	holder.Anchored, holder.CanCollide, holder.CanQuery, holder.CanTouch = true, false, false, false
+	holder.Transparency = 1
+	holder.Size = Vector3.one * 0.1
+	holder.Parent = folder()
+	local made = Instance.new("Sound")
+	made.SoundId = FeelV2.CLINK_ID
+	made.RollOffMode = Enum.RollOffMode.InverseTapered
+	made.RollOffMinDistance = 16
+	made.RollOffMaxDistance = 55
+	made.Parent = holder
+	clinkPool[i] = made
+	return made
+end
+local lastClink = 0
+local function clink(at: Vector3, kind: string, own: boolean, loud: number)
 	local camera = Workspace.CurrentCamera
 	if camera and (camera.CFrame.Position - at).Magnitude > 60 then
 		return
 	end
-	clinkTurn = clinkTurn % 4 + 1
-	local s = clinkPool[clinkTurn]
-	if not s then
-		local holder = Instance.new("Part")
-		holder.Name = "Clink"
-		holder.Anchored, holder.CanCollide, holder.CanQuery, holder.CanTouch = true, false, false, false
-		holder.Transparency = 1
-		holder.Size = Vector3.one * 0.1
-		holder.Parent = folder()
-		local made = Instance.new("Sound")
-		made.SoundId = FeelV2.CLINK_ID
-		made.RollOffMinDistance = 4
-		made.RollOffMaxDistance = 45
-		made.Parent = holder
-		clinkPool[clinkTurn] = made
-		s = made
+	if os.clock() - lastClink < 0.04 then
+		return
 	end
-	local snd = s :: Sound
+	lastClink = os.clock()
+	clinkTurn = clinkTurn % CLINK_VOICES + 1
+	local snd = voice(clinkTurn)
 	local holder = snd.Parent :: BasePart
 	if not holder.Parent then
 		holder.Parent = folder()
 	end
 	holder.Position = at
-	snd.Volume = FeelV2.CLINK_VOLUME * (if own then 1 else 0.6) * rng:NextNumber(0.8, 1.1)
+	snd.Volume = FeelV2.CLINK_VOLUME * (if own then 1 else 0.5) * loud * rng:NextNumber(0.8, 1.1)
 	snd.PlaybackSpeed = (if kind == "shell" then 0.72 else 1.05) * rng:NextNumber(0.92, 1.1)
 	snd.TimePosition = 0
 	snd:Play()
@@ -632,8 +644,19 @@ castParams.FilterType = Enum.RaycastFilterType.Exclude
 castParams.RespectCanCollide = true
 
 local function casing(from: BasePart, kind: "brass" | "shell", own: boolean?)
+	for i = 1, CLINK_VOICES do
+		voice(i) -- (made at the first shot, so the sound is loaded when the casing lands)
+	end
 	if #casings >= FeelV2.caps.casings then
-		local old = table.remove(casings, 1)
+		-- (One that lies still goes first, so fast guns' casings get to land.)
+		local at = 1
+		for i, c in casings do
+			if (c :: any).resting then
+				at = i
+				break
+			end
+		end
+		local old = table.remove(casings, at)
 		if old then
 			old.part:Destroy()
 		end
@@ -652,10 +675,16 @@ local function casing(from: BasePart, kind: "brass" | "shell", own: boolean?)
 		p.Size = Vector3.new(0.22, 0.22, 0.5)
 	else
 		p.Color = Color3.fromRGB(214, 172, 80)
-		p.Size = Vector3.new(0.12, 0.12, 0.3)
+		p.Size = Vector3.new(0.16, 0.16, 0.4)
 	end
 	local cf = from.CFrame
-	p.CFrame = cf * CFrame.new(0.25, 0.1, 0.4)
+	local start = (cf * CFrame.new(0.25, 0.1, 0.4)).Position
+	local gun = from.Parent
+	if gun and gun:IsA("Model") and not gun:FindFirstChildOfClass("Humanoid") then
+		-- (Out of the gun's middle, not the muzzle.)
+		start = gun:GetPivot().Position:Lerp(from.Position, 0.35) + Vector3.new(0, 0.15, 0)
+	end
+	p.CFrame = CFrame.new(start) * cf.Rotation
 	p.Parent = folder()
 	local out = cf.RightVector * rng:NextNumber(7, 10) + cf.UpVector * rng:NextNumber(5, 8) + cf.LookVector * rng:NextNumber(-1.5, 0.5)
 	local c: any = { part = p, velocity = out, spin = Vector3.new(rng:NextNumber(-20, 20), rng:NextNumber(-20, 20), rng:NextNumber(-20, 20)), born = os.clock() }
@@ -695,9 +724,7 @@ local function stepCasings(dt: number)
 			local hit = Workspace:Raycast(here, move + move.Unit * 0.1, castParams)
 			if hit then
 				c.bounces += 1
-				if c.bounces == 1 then
-					clink(hit.Position, c.kind, c.own)
-				end
+				clink(hit.Position, c.kind, c.own, if c.bounces == 1 then 1 else 0.4)
 				if c.bounces >= 2 or c.velocity.Magnitude < 6 then
 					c.resting = true
 					c.part.CFrame = CFrame.new(hit.Position + hit.Normal * 0.06) * CFrame.Angles(0, rng:NextNumber(0, 6.28), math.rad(90))

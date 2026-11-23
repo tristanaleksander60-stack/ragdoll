@@ -779,7 +779,7 @@ local function dart(position: Vector3, sourceUserId: number?, toyId: string?, no
 	end
 	local real = REAL_GUNS[toyId or ""]
 	fireGun(toyId or "", start0(from, position), feet, priority)
-	if FeelV2.ON and from and toyId and (from.Position - position).Magnitude < 400 then
+	if FeelV2.ON and from and toyId and (from.Position - position).Magnitude < 1200 then
 		FeelV2.muzzle(toyId, from, position, shooter == nil or shooter.UserId == localUserId)
 	end
 	local start = if from then from.Position else nil
