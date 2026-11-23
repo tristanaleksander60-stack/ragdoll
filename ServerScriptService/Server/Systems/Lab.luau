@@ -356,6 +356,8 @@ local function watchSlot(plot: Plot, slot: Slot, dt: number)
 		-- Knocked further off or running away: the trip home is measured from there.
 		slot.bestDistance = if slot.bestDistance == math.huge then distance else math.max(slot.bestDistance, distance)
 		slot.awayTime = 0
+	elseif state == "Standing" and GunThreat.near(pelvis.Position, 70) then
+		slot.awayTime = 0 -- (stands firm before a gun, ActiveRagdoll: never sent home meanwhile)
 	elseif distance < slot.bestDistance - 1 then
 		slot.bestDistance = distance
 		slot.awayTime = 0

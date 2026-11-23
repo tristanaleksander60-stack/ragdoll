@@ -1006,6 +1006,31 @@ local function scaredOf(rig: Rig, now: number): Vector3?
 	return nearestPerson(rig, FLEE_RADIUS)
 end
 
+-- (23 Nov 2026, owner: "they all still run about with their backs to me; I want to stand and shoot a specific one where
+-- I like".) The other half (and every Brave one) does not wander off or walk home while a gun points its way or it was
+-- hurt a moment ago: it stays where it stands and turns to the one with the gun. Where that is, or nil when free to go.
+local FIRM_REACH = 70 -- studs to the gun
+local FIRM_HURT = 8 -- s after a hit
+local function standsFirm(rig: Rig, now: number): Vector3?
+	local own: any = rig
+	if now < (own.firmLookAt or 0) then
+		return own.firmAt
+	end
+	own.firmLookAt = now + 0.25
+	own.firmAt = nil
+	local m = rig.model
+	if (runner(rig) and m:GetAttribute("Personality") ~= "Brave") or m:GetAttribute("Mood") ~= nil or m:GetAttribute("CommandedBy") ~= nil
+		or m:GetAttribute("Chaser") ~= nil or m:GetAttribute("Horde") ~= nil or m:GetAttribute("Minigame") ~= nil or m:GetAttribute("Greeter") ~= nil then
+		return nil
+	end
+	local gun = GunThreat.near(rig.chest.Position, FIRM_REACH)
+	if not gun and now - rig.lastHitAt < FIRM_HURT then
+		gun = nearestPerson(rig, FIRM_REACH)
+	end
+	own.firmAt = gun
+	return gun
+end
+
 local function startFleeing(rig: Rig, danger: Vector3, now: number, seconds: number?)
 	rig.fleeFrom = danger
 	rig.fleeUntil = now + (seconds or FLEE_TIME)
@@ -1117,6 +1142,14 @@ local function think(rig: Rig)
 			startFleeing(rig, gun, now, GUN_FLEE)
 			return
 		end
+	end
+	local firm = standsFirm(rig, now)
+	if firm then
+		local to = flat(firm - rig.pelvis.Position)
+		if to.Magnitude > 1 and flatLook(rig.pelvis):Dot(to.Unit) < 0.5 and brokenLegs(rig) < 2 then
+			enter(rig, "Walking") -- (only turns on the spot: updateMoving)
+		end
+		return
 	end
 	if flat(home - rig.pelvis.Position).Magnitude > HOME_LEAVE then
 		-- (Ran from a gun that is still pointed at its place: it keeps its distance, no running
@@ -1260,6 +1293,10 @@ local function updateMoving(rig: Rig, dt: number)
 	end
 
 	local home = homeOf(rig)
+	local firm = if state == "Walking" then standsFirm(rig, now) else nil
+	if firm then
+		home = here -- (stops where it is and faces the gun)
+	end
 
 	-- Where to.
 	local goal: Vector3? = nil
@@ -1303,7 +1340,7 @@ local function updateMoving(rig: Rig, dt: number)
 		local blockedHome = not fleeing and distance <= 4 and rig.stuckTime > 2
 		if not fleeing and (distance <= HOME_ARRIVE or blockedHome) then
 			-- Home: turn to face the way it stands (towards the lab), then stand.
-			local lookAt = rig.model:GetAttribute("HomeLook")
+			local lookAt: any = firm or rig.model:GetAttribute("HomeLook")
 			local face = if typeof(lookAt) == "Vector3" then flat(lookAt - here) else Vector3.zero
 			wantHeading = if face.Magnitude > 0.1 then face.Unit else rig.heading
 			-- Stands once the body itself (not just where it wants to go) faces the lab, or after a
