@@ -285,7 +285,34 @@ local function pickSingle()
 	picked = true
 	squish(single)
 	note.Text = "Your own lab!"
-	liftWhenReady(nil)
+	-- (23 Nov 2026, owner: "singleplayer must not hold a place on the multiplayer server"): on a public server the
+	-- server sends you to one of your own (PortalService "PickSingle" -> "Going"); the menu stays up through it.
+	-- "Stay" (already private, Studio) or "Refused": play here.
+	task.spawn(function()
+		local Net = require(Shared:WaitForChild("Net")) :: any
+		local portal = Net.event(Net.Names.Portal)
+		local answer: string? = nil
+		local conn = portal.OnClientEvent:Connect(function(kind: unknown)
+			if kind == "Going" or kind == "Stay" or kind == "Refused" then
+				answer = kind :: string
+			end
+		end)
+		portal:FireServer("PickSingle")
+		local t0 = os.clock()
+		while not answer and os.clock() - t0 < 3 do
+			task.wait(0.05)
+		end
+		if answer == "Going" then
+			note.Text = "Taking you to your own server..."
+			task.delay(15, function()
+				conn:Disconnect()
+				liftWhenReady(nil) -- (the teleport never happened)
+			end)
+			return
+		end
+		conn:Disconnect()
+		liftWhenReady(nil)
+	end)
 end
 local function pickMulti()
 	if picked or done then

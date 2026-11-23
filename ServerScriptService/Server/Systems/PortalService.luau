@@ -270,6 +270,15 @@ local function onRequest(player: Player, kind: unknown, arg: unknown)
 		remote:FireClient(player, "Refused", { text = "That server is full or gone. Pick another!" })
 	elseif kind == "Own" then
 		go(player, "Own", nil)
+	elseif kind == "PickSingle" then
+		-- (23 Nov 2026, owner: "I picked singleplayer but stay on the same server as multiplayer: I only hold a place
+		-- others could use"): on a public server, singleplayer is a server of your own (a reserved one, "Solo");
+		-- already on a private one, or in Studio, you stay.
+		if isPublic() and not RunService:IsStudio() then
+			go(player, "Solo", nil)
+		else
+			remote:FireClient(player, "Stay")
+		end
 	elseif kind == "JoinShared" then
 		-- (23 Nov 2026: the start menu's MULTIPLAYER. Owner: "2 accounts picked multiplayer and did not end up in the same
 		-- lab": they were on two servers. A shared lab already on this server (or this is a shared server, or Studio):
