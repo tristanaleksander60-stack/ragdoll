@@ -1413,6 +1413,15 @@ end
 -- Asking about labs
 
 -- A lab for a player who has none (their teleport to a server of their own failed).
+function Lab.hasFreePlot(): boolean
+	for _, plot in plots do
+		if not plot.owner then
+			return true
+		end
+	end
+	return false
+end
+
 function Lab.ensureLab(player: Player)
 	if not plotOf[player] and not guestOf[player] and player.Parent then
 		claim(player)
@@ -1623,6 +1632,7 @@ function Lab.build()
 		-- who stay. If that teleport fails, PortalService calls Lab.ensureLab.)
 		local passingThrough = not multi and player.FollowUserId == 0 and game.PrivateServerId == "" and game.JobId ~= ""
 			and not game:GetService("RunService"):IsStudio() and not (type(data) == "table" and data.from == "Shared")
+			and not (require(script.Parent:WaitForChild("PortalService")) :: any).staysHere(player) -- (stays: a lab here, no second load)
 		-- (The owner come to watch someone in singleplayer: no lab of theirs built there.)
 		if type(data) == "table" and data.from == "Spectate" and (require(script.Parent:WaitForChild("Owner")) :: any).isOwner(player) then
 			passingThrough = true
