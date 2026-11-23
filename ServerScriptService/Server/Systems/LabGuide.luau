@@ -206,6 +206,7 @@ function LabGuide.tossModel(model: Model, target: Vector3): boolean
 	local v = LabGuide.arc(pelvis.Position, target)
 	local mass = (model:GetAttribute("Mass") :: number?) or 10
 	local flat = Vector3.new(target.X - pelvis.Position.X, 0, target.Z - pelvis.Position.Z).Magnitude
+	model:SetAttribute("GivenAt", os.clock()) -- (a player's press sent it)
 	model:SetAttribute("GuideTossUntil", os.clock() + math.clamp(flat / LabGuide.FLIGHT_SPEED, 0.8, 1.5) + 0.8)
 	lazy("DummyControl").hit(model, pelvis, v * mass, pelvis.Position, v.Magnitude + 20, nil)
 	tossedCount += 1

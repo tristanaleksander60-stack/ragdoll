@@ -524,6 +524,9 @@ function applyReport(player: Player, m: Model, state: string, broken: { string }
 	end
 	-- Held only drives looks on other screens (scared face); a lie here harms nothing.
 	m:SetAttribute("Held", held and (state == "Ragdoll" or state == "Out"))
+	if held and os.clock() - ((m:GetAttribute("GivenAt") :: number?) or -10) > 1 then
+		m:SetAttribute("GivenAt", os.clock()) -- (a player has it: what a machine does to it next is theirs, LabCreatures)
+	end
 
 	-- First report from this owner: the client simulates the dummy now; deliver what waited.
 	if not ready[m] then

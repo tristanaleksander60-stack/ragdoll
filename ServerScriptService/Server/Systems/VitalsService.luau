@@ -630,7 +630,9 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 	local line = string.format("%s \u{00B7} %d%% blood \u{00B7} %s", label, math.floor(v.blood + 0.5), if v.state == "Dead" then "no pulse" else "pulse " .. math.floor(v.pulse + 0.5))
 	local killedNow = not wasDead and v.state == "Dead"
 	-- (Round 4, M10: the line for the hit that killed is never held back by INFO_GAP.)
-	if by and infoRemote and (killedNow or now - (lastInfo[by] or -math.huge) >= INFO_GAP) then
+	-- (A creature's bite on a body no player gave it: no card, LabCreatures "Fed".)
+	local unseen = o.zone == Anatomy.zones.Neck and model:GetAttribute("InMachine") ~= nil and model:GetAttribute("Fed") ~= true
+	if by and infoRemote and not unseen and (killedNow or now - (lastInfo[by] or -math.huge) >= INFO_GAP) then
 		lastInfo[by] = now
 		-- (The pulse before the hit too: the line shows which way it went.)
 		-- (And whether this very wound killed: the hitter's crosshair shows its kill mark.)

@@ -186,6 +186,8 @@ local function swallow(m: Machine, model: Model, inside: (Model) -> Vector3)
 	m.busy = true
 	m.folder:SetAttribute("Busy", true) -- (CreatureLife on the screens rests while it works)
 	model:SetAttribute("InMachine", m.id)
+	-- (23 Nov 2026, owner: "no hit card for ragdolls I did not give it myself": held or sent in by a player just now.)
+	model:SetAttribute("Fed", os.clock() - ((model:GetAttribute("GivenAt") :: number?) or -100) < 12)
 	task.spawn(function()
 		local ok, err = pcall(function()
 			local out = inside(model)
