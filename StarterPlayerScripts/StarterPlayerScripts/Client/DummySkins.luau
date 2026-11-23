@@ -129,10 +129,7 @@ local XRAY_CLEAR = 0.74
 local XRAY_TINT = Color3.fromRGB(104, 138, 186)
 local BONE = Color3.fromRGB(168, 152, 118)
 local BONE_END = Color3.fromRGB(180, 166, 134)
-local RIM = Color3.fromRGB(132, 112, 82)
-local CRACK = Color3.fromRGB(52, 34, 28)
-local LEAD = Color3.fromRGB(70, 68, 64)
-local MARROW = Color3.fromRGB(58, 22, 26)
+local MARROW = Color3.fromRGB(96, 44, 40)
 local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: string, hits: number)
 	local rng = Random.new(#limb.Name * 7 + 3) -- (the same bone every time it is drawn again)
 	local size = skin.Size
@@ -161,19 +158,78 @@ local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: s
 		return p
 	end
 	local turn = CFrame.Angles(0, 0, math.rad(90)) -- (a cylinder's axis is X: along the limb)
-	-- One long bone: a slim waisted shaft, flared ends, two knuckles at each end, a shade line down the back.
-	type Shaft = { x: number, z: number, t: number, len: number }
-	local shafts: { Shaft } = {}
+	-- (23 Nov 2026, owner: no holes and cracks: the bone itself is shot away bit by bit, where it is hit.) Where it was
+	-- struck: its bullet holes, else spread over the bone for blows.
+	local marks: { { y: number, x: number, hard: number } } = {}
+	for _, hole in limb:GetChildren() do
+		if hole.Name == "BulletHole" and hole:IsA("BasePart") and #marks < 20 then
+			local l = skin.CFrame:PointToObjectSpace(hole.Position)
+			table.insert(marks, { y = math.clamp(l.Y, -len * 0.44, len * 0.44), x = l.X, hard = 1 })
+		end
+	end
+	for i = 1, math.clamp(hits - #marks, 0, 8) do
+		table.insert(marks, { y = ({ 0.06, -0.24, 0.27, -0.06, 0.16, -0.34, 0.36, -0.15 })[i] * len, x = (if i % 2 == 0 then 1 else -1) * thick, hard = 0.8 })
+	end
+	local boneXs: { number } = if key == "LowerArm" then { -thick * 0.62, thick * 0.62 } elseif key == "LowerLeg" then { -thick * 0.32, thick * 0.92 } else {}
+	-- How much is gone of the bone at (x, y): 0 whole .. 1 shot through.
+	local function gone(x: number, y: number, step: number): number
+		local sum = 0
+		for _, m in marks do
+			local share = 1
+			if #boneXs == 2 then -- (two bones side by side: most of it on the nearer one)
+				local other = if x == boneXs[1] then boneXs[2] else boneXs[1]
+				share = if math.abs(m.x - x) <= math.abs(m.x - other) then 1 else 0.35
+			end
+			local d = math.abs(m.y - y) / step
+			if d < 1.6 then
+				sum += 0.42 * m.hard * share * (1 - d / 1.6)
+			end
+		end
+		return math.min(sum, 1)
+	end
+	local SLICES = if key == "Hand" or key == "Foot" then 5 else 13
+	-- One long bone in slices: each slice thinner, crooked and darker the more of it is shot away, at last gone; splinters
+	-- lie round the gaps. Flared ends with two knuckles (they go too).
 	local function bone(x: number, z: number, t: number, length: number, knuckle: number)
 		local half = length / 2
-		bit(Enum.PartType.Cylinder, Vector3.new(length * 0.94, t, t), CFrame.new(x, 0, z) * turn, BONE)
+		local step = length * 0.94 / SLICES
+		for k = 1, SLICES do
+			local y = -length * 0.47 + (k - 0.5) * step
+			local g = gone(x, y, step)
+			local mid = math.abs(y) / half
+			local wide = t * (0.92 + 0.22 * mid * mid) -- (slim in the middle)
+			if g < 0.9 then
+				local left = 1 - g * 0.78
+				local side = rng:NextNumber(0, math.pi * 2)
+				local off = wide * g * 0.34 -- (bitten from one side)
+				local tilt = math.rad(rng:NextNumber(-16, 16)) * g
+				bit(Enum.PartType.Cylinder, Vector3.new(step * (1.04 + 0.1 * g), wide * left, wide * left * rng:NextNumber(1 - 0.25 * g, 1)),
+					CFrame.new(x + math.cos(side) * off, y, z + math.sin(side) * off) * CFrame.Angles(tilt, 0, tilt * 0.8) * turn,
+					if g < 0.12 then BONE else BONE:Lerp(MARROW, math.min(0.55, g * 0.6)))
+			end
+			if g > 0.3 then
+				-- Splinters: standing out of the broken edges, the more the worse.
+				for _ = 1, if g > 0.65 then 3 else 1 do
+					local c = t * rng:NextNumber(0.12, 0.26)
+					bit(Enum.PartType.Block, Vector3.new(c * 0.55, c * rng:NextNumber(1.4, 3.2), c * 0.45),
+						CFrame.new(x + rng:NextNumber(-0.85, 0.85) * t, y + rng:NextNumber(-0.9, 0.9) * step, z + rng:NextNumber(-0.85, 0.85) * t)
+							* CFrame.Angles(math.rad(rng:NextNumber(-55, 55)), rng:NextNumber(0, 6), math.rad(rng:NextNumber(-55, 55))),
+						if rng:NextNumber() < 0.6 then BONE else BONE_END)
+				end
+			end
+		end
 		for _, e in { 1, -1 } do
 			local at = e * half
-			bit(Enum.PartType.Block, Vector3.new(t * 1.45, length * 0.3, t * 1.35), CFrame.new(x, at * 0.8, z), BONE, true) -- (the flare)
-			bit(Enum.PartType.Block, Vector3.new(t * 1.15, t * 1.2, t * 1.3) * knuckle, CFrame.new(x - t * 0.46 * knuckle, at * 0.97, z), BONE_END, true)
-			bit(Enum.PartType.Block, Vector3.new(t * 1.15, t * 1.2, t * 1.3) * knuckle, CFrame.new(x + t * 0.46 * knuckle, at * 0.97, z), BONE_END, true)
+			local g = gone(x, at * 0.9, step)
+			if g < 0.85 then
+				local left = 1 - g * 0.55
+				bit(Enum.PartType.Block, Vector3.new(t * 1.45, length * 0.24, t * 1.35) * left, CFrame.new(x, at * 0.84, z), BONE, true) -- (the flare)
+				bit(Enum.PartType.Block, Vector3.new(t * 1.15, t * 1.2, t * 1.3) * knuckle * left, CFrame.new(x - t * 0.46 * knuckle, at * 0.97, z), BONE_END, true)
+				if g < 0.45 then
+					bit(Enum.PartType.Block, Vector3.new(t * 1.15, t * 1.2, t * 1.3) * knuckle, CFrame.new(x + t * 0.46 * knuckle, at * 0.97, z), BONE_END, true)
+				end
+			end
 		end
-		table.insert(shafts, { x = x, z = z, t = t, len = length })
 	end
 	if key == "LowerArm" then
 		bone(-thick * 0.62, 0, thick * 0.74, len, 0.95)
@@ -186,7 +242,6 @@ local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: s
 		for k = 1, n do
 			local x = (k - (n + 1) / 2) * thick * 0.72
 			bone(x, 0, thick * 0.3, len * 0.42, 1)
-			shafts[#shafts].len = len * 0.42
 			bit(Enum.PartType.Block, Vector3.new(thick * 0.4, len * 0.22, thick * 0.4), CFrame.new(x, -len * 0.34, 0), BONE, true)
 		end
 		for k = 1, 5 do -- (the little wrist or ankle bones)
@@ -195,60 +250,6 @@ local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: s
 		end
 	else
 		bone(0, 0, thick * 1.08, len, 1.2)
-	end
-	-- Where it was struck: its bullet holes (small), else spread over the bone for blows.
-	local marks: { { y: number, x: number, round: boolean } } = {}
-	for _, hole in limb:GetChildren() do
-		if hole.Name == "BulletHole" and hole:IsA("BasePart") and #marks < 10 then
-			local l = skin.CFrame:PointToObjectSpace(hole.Position)
-			table.insert(marks, { y = math.clamp(l.Y, -len * 0.43, len * 0.43), x = l.X, round = true })
-		end
-	end
-	local blows = math.clamp(hits - #marks, 0, 4)
-	for i = 1, blows do
-		table.insert(marks, { y = ({ 0.06, -0.24, 0.27, -0.06 })[i] * len, x = (if i % 2 == 0 then 1 else -1) * thick, round = false })
-	end
-	for i, m in marks do
-		-- (On the shaft nearest the hit, on the side that faces the front.)
-		local s = shafts[1]
-		for _, c in shafts do
-			if math.abs(c.x - m.x) < math.abs(s.x - m.x) then
-				s = c
-			end
-		end
-		local y = math.clamp(m.y, -s.len * 0.45, s.len * 0.45)
-		local front = -s.t * 0.5 -- (the limb's front is -Z)
-		for _, face in { front, -front } do
-			local out = if face < 0 then -1 else 1
-			if m.round then
-				-- A small round hole, its rim chipped pale.
-				local d = math.min(s.t * 0.42, 0.11)
-				bit(Enum.PartType.Cylinder, Vector3.new(0.012, d * 1.5, d * 1.5), CFrame.new(s.x, y, s.z + face + out * 0.004) * CFrame.Angles(0, math.rad(90), 0), RIM)
-				bit(Enum.PartType.Cylinder, Vector3.new(0.014, d, d), CFrame.new(s.x, y, s.z + face + out * 0.008) * CFrame.Angles(0, math.rad(90), 0), MARROW)
-			end
-			-- Hairline cracks running from it.
-			for k = 1, if m.round then 3 else 5 do
-				local a = rng:NextNumber(0, math.pi * 2)
-				local l = s.t * rng:NextNumber(0.35, 0.95)
-				bit(Enum.PartType.Block, Vector3.new(math.max(0.012, s.t * 0.05), l, 0.01),
-					CFrame.new(s.x, y, s.z + face + out * 0.006) * CFrame.Angles(0, 0, a) * CFrame.new(0, l * 0.55, 0), CRACK)
-			end
-		end
-		-- A break right across for every third blow or so: a dark jagged line round the shaft and a few small splinters.
-		if i % 3 == 0 or not m.round then
-			bit(Enum.PartType.Cylinder, Vector3.new(0.025, s.t * 1.03, s.t * 1.03), CFrame.new(s.x, y, s.z) * CFrame.Angles(0, 0, math.rad(rng:NextNumber(-22, 22))) * turn, MARROW)
-			for _ = 1, 3 do
-				local c = s.t * rng:NextNumber(0.1, 0.2)
-				bit(Enum.PartType.Block, Vector3.new(c, c * rng:NextNumber(1.2, 2.4), c * 0.5),
-					CFrame.new(s.x + rng:NextNumber(-0.9, 0.9) * s.t, y + rng:NextNumber(-0.5, 0.5) * s.t, s.z + rng:NextNumber(-0.9, 0.9) * s.t)
-						* CFrame.Angles(rng:NextNumber(0, 6), rng:NextNumber(0, 6), rng:NextNumber(0, 6)), BONE)
-			end
-		end
-		if m.round and i <= 6 then
-			-- The round itself, flattened, beside its hole.
-			local b = math.min(s.t * 0.22, 0.07)
-			bit(Enum.PartType.Block, Vector3.new(b, b * 0.7, b), CFrame.new(s.x + rng:NextNumber(-0.5, 0.5) * s.t, y - s.t * 0.3, s.z + rng:NextNumber(-0.3, 0.3) * s.t), LEAD, true)
-		end
 	end
 end
 
