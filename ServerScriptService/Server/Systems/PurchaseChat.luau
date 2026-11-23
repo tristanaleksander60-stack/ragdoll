@@ -75,7 +75,7 @@ function PurchaseChat.start()
 		return
 	end
 	started = true
-	event()
+	task.spawn(event) -- (23 Nov 2026: never hold up the server's boot waiting for the Remotes folder)
 	if not RunService:IsStudio() then
 		task.spawn(function()
 			pcall(MessagingService.SubscribeAsync, MessagingService, PurchaseChat.TOPIC, function(message)

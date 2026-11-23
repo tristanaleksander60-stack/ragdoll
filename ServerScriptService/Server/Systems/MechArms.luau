@@ -364,7 +364,10 @@ local function onTear(player: Player, kind: unknown, target: unknown, asked: unk
 end
 
 function MechArms.start()
-	event().OnServerEvent:Connect(onTear)
+	-- (23 Nov 2026: never hold up the server's boot waiting for the Remotes folder: that stalled every lab ~10 s.)
+	task.spawn(function()
+		event().OnServerEvent:Connect(onTear)
+	end)
 	Players.PlayerAdded:Connect(function(player)
 		player.CharacterAdded:Connect(function()
 			if player:GetAttribute("MechArms") == true then
