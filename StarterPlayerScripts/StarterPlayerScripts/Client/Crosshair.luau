@@ -315,7 +315,8 @@ local function step(dt: number)
 		setPointerHidden(true)
 	elseif gun and os.clock() < touchUntil and not (UserInputService.TouchEnabled and not UserInputService.MouseEnabled) then
 		-- (22 Nov 2026, owner: no extra crosshair in the middle on a phone; TouchShoot draws the one there.)
-		f.Position = UDim2.fromOffset(touchAt.X, touchAt.Y)
+		local fp = (require(script.Parent:WaitForChild("FirstPerson")) :: any).isOn()
+		f.Position = if fp then UDim2.fromScale(0.5, 0.5) else UDim2.fromOffset(touchAt.X, touchAt.Y)
 		f.Visible = true
 		setPointerHidden(false)
 	elseif not gun then

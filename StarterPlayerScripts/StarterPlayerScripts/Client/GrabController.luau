@@ -690,7 +690,7 @@ local function updatePad()
 		-- shoulder for a pad too, in the player view.)
 		local padShoulder = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).V8_FIRST_HIT
 			and not ViewMode.isLab() and string.sub(game:GetService("UserInputService"):GetLastInputType().Name, 1, 7) == "Gamepad"
-		local offset = if wanted or padShoulder then SHOULDER_OFFSET else Vector3.zero
+		local offset = if padShoulder and not (require(Client:WaitForChild("FirstPerson")) :: any).isOn() then SHOULDER_OFFSET else Vector3.zero
 		if humanoid.CameraOffset ~= offset then
 			humanoid.CameraOffset = offset
 		end

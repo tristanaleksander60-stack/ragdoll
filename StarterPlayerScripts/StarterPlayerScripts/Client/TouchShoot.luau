@@ -416,7 +416,8 @@ function TouchShoot.start()
 			-- also reads aimPixel so the shot ray and the icon never drift.
 			if cross and crossOn and camera then
 				local pxl = aimPixel(camera)
-				cross.Position = UDim2.fromOffset(pxl.X, pxl.Y)
+				-- (23 Nov 2026, owner: in first person the crosshair is the middle of the screen, whatever the phone's shape.)
+				cross.Position = if FirstPerson.isOn() then UDim2.fromScale(0.5, 0.5) else UDim2.fromOffset(pxl.X, pxl.Y)
 			end
 			local on = crossOn or handShown -- (the hand lives in the crosshair's layer)
 			if cg.Enabled ~= on then

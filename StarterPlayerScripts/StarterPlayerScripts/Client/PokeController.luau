@@ -1043,6 +1043,15 @@ function PokeController.eyes(on: boolean)
 		FirstPerson.set(on)
 	end)
 end
+-- (23 Nov 2026: a gun in first person on a touch screen fires at the crosshair, the middle, wherever the finger taps.)
+local function aimSpot(at: Vector2): Vector2
+	local toy = Toys.byId[selected]
+	local camera = Workspace.CurrentCamera
+	if camera and toy and toy.gun and ViewMode.isTouch() and (require(script.Parent:WaitForChild("FirstPerson")) :: any).isOn() then
+		return camera.ViewportSize / 2
+	end
+	return at
+end
 local struck = false -- (the first shot or blow of the visit has been)
 local function firstStrike(used: boolean): boolean
 	local toy = Toys.byId[selected]
@@ -1851,7 +1860,7 @@ function PokeController.pressAt(viewportPosition: Vector2): boolean
 	if bow ~= nil then
 		return bow
 	end
-	return firstStrike(tryUse(viewportPosition, "press"))
+	return firstStrike(tryUse(aimSpot(viewportPosition), "press"))
 end
 
 function PokeController.tapAt(viewportPosition: Vector2): boolean
@@ -1863,7 +1872,7 @@ function PokeController.tapAt(viewportPosition: Vector2): boolean
 	if bow ~= nil then
 		return bow
 	end
-	return firstStrike(tryUse(viewportPosition, "tap"))
+	return firstStrike(tryUse(aimSpot(viewportPosition), "tap"))
 end
 
 -- Shows or hides the toy bar and turns tapping on or off.
