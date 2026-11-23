@@ -249,28 +249,12 @@ function Poses.mourn(t: number): Pose
 	out.LeftElbow = ang(35, 0, 0)
 	return out
 end
-local cprOut: Pose = {}
-function Poses.cpr(t: number): Pose
-	local pump = sin(t * 11)
-	local out = cprOut
-	out.RightHip = ang(20, 0, 0)
-	out.LeftHip = ang(20, 0, 0)
-	out.RightKnee = ang(-95, 0, 0)
-	out.LeftKnee = ang(-95, 0, 0)
-	out.Waist = ang(-38 - pump * 6, 0, 0)
-	out.Neck = ang(-12, 0, 0)
-	out.RightShoulder = ang(75 + pump * 6, 0, 8)
-	out.LeftShoulder = ang(75 + pump * 6, 0, -8)
-	out.RightElbow = ang(0, 0, 0)
-	out.LeftElbow = ang(0, 0, 0)
-	return out
-end
 -- (23 Nov 2026, owner: "hits you like a boxer".) Guard: fists up by the chin, bouncing. Box: straight punches in turn
 -- out of it, the body turning with them.
-local guardOut: Pose = {}
-function Poses.guard(t: number): Pose
+local fistsOut: Pose = {}
+function Poses.fists(t: number): Pose
 	local bob = sin(t * 8) * 4
-	local out = guardOut
+	local out = fistsOut
 	out.RightShoulder = ang(55 + bob, 0, -12)
 	out.LeftShoulder = ang(55 - bob, 0, 12)
 	out.RightElbow = ang(115, 0, 0)
@@ -293,6 +277,127 @@ function Poses.box(t: number): Pose
 	out.Neck = ang(-4, -12 * (r - l), 0)
 	return out
 end
-Poses.MOODS = { Angry = Poses.guard, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr } :: { [string]: (number) -> Pose }
+-- (23 Nov 2026, owner: better CPR, and a different body every time.) Kneeling poses share the legs.
+local function kneeling(out: Pose, waist: number, neck: number)
+	out.RightHip = ang(20, 0, 4)
+	out.LeftHip = ang(20, 0, -4)
+	out.RightKnee = ang(-98, 0, 0)
+	out.LeftKnee = ang(-98, 0, 0)
+	out.Waist = ang(waist, 0, 0)
+	out.Neck = ang(neck, 0, 0)
+end
+-- Presses: quick down, slower up, hands on top of each other, the whole back in it.
+local function press(out: Pose, t: number, speed: number, depth: number)
+	local p = (0.5 - 0.5 * math.cos(t * speed)) ^ 1.6
+	kneeling(out, -30 - depth * p, -14 + 6 * p)
+	out.RightShoulder = ang(72 + 14 * p, 0, -16)
+	out.LeftShoulder = ang(72 + 14 * p, 0, 16)
+	out.RightElbow = ang(16 - 16 * p, 0, 0)
+	out.LeftElbow = ang(16 - 16 * p, 0, 0)
+end
+local cprOut: Pose = {}
+function Poses.cpr(t: number): Pose
+	press(cprOut, t, 11.5, 22)
+	return cprOut
+end
+function Poses.cprFast(t: number): Pose
+	press(cprOut, t, 19, 15) -- (in a panic, the head shaking)
+	cprOut.Neck = ang(-10, sin(t * 9) * 22, 0)
+	return cprOut
+end
+-- Both fists up over the head and down on the chest.
+function Poses.cprSlam(t: number): Pose
+	local up = (0.5 + 0.5 * math.cos(t * 5.5)) ^ 0.7
+	kneeling(cprOut, -46 + 50 * up, -10 + 12 * up)
+	cprOut.RightShoulder = ang(78 + 82 * up, 0, -14)
+	cprOut.LeftShoulder = ang(78 + 82 * up, 0, 14)
+	cprOut.RightElbow = ang(8 + 45 * up, 0, 0)
+	cprOut.LeftElbow = ang(8 + 45 * up, 0, 0)
+	return cprOut
+end
+-- One hand presses, the other holds its head.
+function Poses.cprOne(t: number): Pose
+	press(cprOut, t, 10, 18)
+	cprOut.LeftShoulder = ang(125, 0, -25)
+	cprOut.LeftElbow = ang(110, 0, 0)
+	cprOut.Neck = ang(-14, 0, 10 * sin(t * 4))
+	return cprOut
+end
+-- An ear to the mouth, two fingers on the neck.
+function Poses.check(t: number): Pose
+	kneeling(cprOut, -56 + 2 * sin(t * 3), -8)
+	cprOut.Neck = ang(-8, 48, 0)
+	cprOut.RightShoulder = ang(78, 0, -6)
+	cprOut.LeftShoulder = ang(40, 0, -12)
+	cprOut.RightElbow = ang(26, 0, 0)
+	cprOut.LeftElbow = ang(60, 0, 0)
+	return cprOut
+end
+-- A breath: up to fill the chest, down to the face.
+function Poses.breath(t: number): Pose
+	local d = 0.5 - 0.5 * math.cos(t * 5)
+	kneeling(cprOut, -18 - 50 * d, 14 - 26 * d)
+	cprOut.RightShoulder = ang(58 + 22 * d, 0, 6)
+	cprOut.LeftShoulder = ang(58 + 22 * d, 0, -6)
+	cprOut.RightElbow = ang(50, 0, 0)
+	cprOut.LeftElbow = ang(50, 0, 0)
+	return cprOut
+end
+local feelOut: Pose = {}
+local function stand(out: Pose, waist: number, neck: CFrame, rs: CFrame, ls: CFrame, re: number, le: number)
+	out.RightHip, out.LeftHip, out.RightKnee, out.LeftKnee = nil, nil, nil, nil
+	out.Waist, out.Neck = ang(waist, 0, 0), neck
+	out.RightShoulder, out.LeftShoulder = rs, ls
+	out.RightElbow, out.LeftElbow = ang(re, 0, 0), ang(le, 0, 0)
+end
+-- Hands over the mouth.
+function Poses.gasp(t: number): Pose
+	local s = sin(t * 18) * 3
+	stand(feelOut, 8, ang(4, 0, 0), ang(78 + s, 0, -22), ang(78 - s, 0, 22), 118, 118)
+	return feelOut
+end
+-- Pointing at the body, the other hand on the head.
+function Poses.point(t: number): Pose
+	stand(feelOut, 6, ang(-10, sin(t * 10) * 8, 0), ang(62 + sin(t * 16) * 5, 0, 0), ang(150, 0, -30), 4, 85)
+	return feelOut
+end
+-- Arms up, fists pumping.
+function Poses.cheer(t: number): Pose
+	local s = sin(t * 12)
+	stand(feelOut, 8 + 5 * s, ang(16, 0, 0), ang(155 + 18 * s, 0, 18), ang(155 + 18 * s, 0, -18), 25 - 20 * s, 25 - 20 * s)
+	return feelOut
+end
+-- Bent over, hands on the knees, catching its breath.
+function Poses.relief(t: number): Pose
+	local s = sin(t * 5)
+	stand(feelOut, -38 + 5 * s, ang(-12 + 4 * s, 0, 0), ang(52, 0, 8), ang(52, 0, -8), 12, 12)
+	return feelOut
+end
+-- Arms wide open for its friend.
+function Poses.hug(t: number): Pose
+	local s = sin(t * 6) * 8
+	stand(feelOut, -6, ang(6, 0, s), ang(82, 0, 42 + s), ang(82, 0, -42 - s), 22, 22)
+	return feelOut
+end
+-- Hands on the head, shaking it.
+function Poses.despair(t: number): Pose
+	stand(feelOut, -20, ang(-18, sin(t * 7) * 28, 0), ang(148, 0, 30), ang(148, 0, -30), 92, 92)
+	return feelOut
+end
+-- On its knees, arms to the sky.
+function Poses.sky(t: number): Pose
+	local s = sin(t * 14) * 4
+	kneeling(feelOut, 16, 28)
+	feelOut.RightShoulder, feelOut.LeftShoulder = ang(140 + s, 0, 38), ang(140 - s, 0, -38)
+	feelOut.RightElbow, feelOut.LeftElbow = ang(28, 0, 0), ang(28, 0, 0)
+	return feelOut
+end
+-- Shaking with anger, fists down, leaning at you.
+function Poses.rage(t: number): Pose
+	local s = sin(t * 24) * 5
+	stand(feelOut, -14 + s * 0.4, ang(-6, s, 0), ang(25 + s, 0, 28), ang(25 - s, 0, -28), 70, 70)
+	return feelOut
+end
+Poses.MOODS = { Check = Poses.check, Breath = Poses.breath, CPRFast = Poses.cprFast, CPRSlam = Poses.cprSlam, CPROne = Poses.cprOne, Gasp = Poses.gasp, Point = Poses.point, Cheer = Poses.cheer, Relief = Poses.relief, Hug = Poses.hug, Despair = Poses.despair, Sky = Poses.sky, Rage = Poses.rage, Angry = Poses.fists, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr } :: { [string]: (number) -> Pose }
 
 return Poses

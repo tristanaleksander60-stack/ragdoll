@@ -9,7 +9,7 @@
 -- the pose (Poses.MOODS), DummyLife says the line (DummyLines.MOURN). It stops at once on a hit, a fall, a bang,
 -- a hand that grabs it, or when the body is gone or up. Never the greeter, or ones in a machine.
 
--- (23 Nov 2026, owner: every 3rd helper whose CPR fails turns angry: a sour face, "You killed my ...!", and it runs
+-- (23 Nov 2026, owner: CPR works SAVE_CHANCE of the time; of the rest ANGRY_CHANCE turn angry: a sour face, "You killed my ...!", and it runs
 -- up and boxes the player until they die, it dies, or ATTACK_MAX s: phase "Attack", Moods "Angry" and "Box".)
 
 local Players = game:GetService("Players")
@@ -22,17 +22,16 @@ Mourning.PER_BODY = 1 -- (23 Nov 2026, owner: "only 1 ragdoll goes to give CPR")
 Mourning.LAB_MAX = 3
 Mourning.JOIN_CHANCE = 0.85
 Mourning.CPR_CHANCE = 0.5
-Mourning.SAVE_CHANCE = 0.3
+Mourning.SAVE_CHANCE = 0.33
+Mourning.ANGRY_CHANCE = 0.77 -- of the ones that fail
+Mourning.REACT_TIME = 3
 Mourning.SHOCK_TIME = 0.9
 Mourning.WALK_MAX = 12
-Mourning.KNEEL_TIME = 12.5 -- s of CPR at most (a try every CPR_TRY s; before the body wakes by itself)
-Mourning.ANGRY_EVERY = 3 -- every 3rd failed CPR in a lab attacks
 Mourning.REACH = 4.6 -- studs
 Mourning.HIT_GAP = 0.75
 Mourning.HIT_DAMAGE = 12
 Mourning.SHOVE = 10
 Mourning.ATTACK_MAX = 90
-Mourning.CPR_TRY = 6
 Mourning.SIDE = 2.4 -- studs from the body's middle where it kneels
 
 type Job = {
@@ -48,7 +47,6 @@ type Job = {
 
 local jobs: { [Model]: Job } = {}
 local mourned: { [Model]: boolean } = {} -- bodies that had their mourners this death
-local fails: { [number]: number } = {} -- (failed CPRs per lab player)
 local running = false
 
 local function lazy(name: string): any
@@ -83,10 +81,11 @@ local function stop(m: Model, say: string?)
 		return
 	end
 	m:SetAttribute("Pace", nil)
+	m:SetAttribute("MournedName", nil)
+	job.corpse:SetAttribute("BeingHelped", nil)
 	local angry: any = job
 	if angry.target then
 		m:SetAttribute("Personality", angry.personWas)
-		m:SetAttribute("MournedName", nil)
 	end
 	m:SetAttribute("Mood", nil)
 	if m:GetAttribute("CommandedBy") == -2 then
@@ -104,6 +103,49 @@ local function stop(m: Model, say: string?)
 			end
 		end)
 	end
+end
+
+local SHOCK_MOODS = { "Shock", "Gasp", "Point" }
+local CPR_MOODS = { "CPR", "CPRFast", "CPRSlam", "CPROne" }
+local SAVED_MOODS = { "Cheer", "Relief", "Hug" }
+local GONE_MOODS = { "Mourn", "Despair", "Sky" }
+
+local lastMood: { [any]: string } = {}
+-- One of the list, never the one picked last time.
+local function pickMood(list: { string }): string
+	local pick = list[math.random(#list)]
+	if pick == lastMood[list] then
+		pick = list[(table.find(list, pick) :: number) % #list + 1]
+	end
+	lastMood[list] = pick
+	return pick
+end
+
+-- Shows how it feels for REACT_TIME s, then goes back to its own.
+local function react(m: Model, job: Job, moods: { string })
+	job.phase, job.since = "React", os.clock()
+	job.corpse:SetAttribute("BeingHelped", nil)
+	m:SetAttribute("Mood", pickMood(moods))
+end
+
+-- What this one does: feels for a pulse, presses, (mostly) breathes, presses another way.
+local function cprPlan(): { { mood: string, time: number } }
+	local plan = {}
+	local function add(mood: string, time: number)
+		table.insert(plan, { mood = mood, time = time })
+	end
+	if math.random() < 0.75 then
+		add("Check", 1.6 + math.random() * 0.8)
+	end
+	add(pickMood(CPR_MOODS), 3 + math.random() * 1.5)
+	if math.random() < 0.75 then
+		add("Breath", 2)
+	end
+	add(pickMood(CPR_MOODS), 3 + math.random() * 1.5)
+	if math.random() < 0.5 then
+		add("Check", 1.4)
+	end
+	return plan
 end
 
 -- The nearest living player in the lab `owner` has.
@@ -126,22 +168,19 @@ local function targetFor(m: Model, owner: Player): Player?
 	return best
 end
 
--- The CPR failed: every ANGRY_EVERY-th one in a lab goes for the player; the others give up.
+-- The CPR failed: most go for the player (ANGRY_CHANCE); the others mourn and give up.
 local function failed(m: Model, job: Job)
-	local id = job.owner.UserId
-	fails[id] = (fails[id] or 0) + 1
-	local target = if fails[id] % Mourning.ANGRY_EVERY == 0 then targetFor(m, job.owner) else nil
+	job.corpse:SetAttribute("BeingHelped", nil)
+	local target = if math.random() < Mourning.ANGRY_CHANCE then targetFor(m, job.owner) else nil
 	if not target then
-		stop(m, "Gone")
+		react(m, job, GONE_MOODS)
 		return
 	end
 	local a: any = job
 	a.phase, a.since = "Attack", os.clock()
 	a.target, a.personWas, a.nextHit = target, m:GetAttribute("Personality"), os.clock() + 1.5
 	m:SetAttribute("Personality", "Brave")
-	local name = job.corpse:GetAttribute("PersonName")
-	m:SetAttribute("MournedName", if type(name) == "string" and name ~= "" then name else "buddy")
-	m:SetAttribute("Mood", "Angry")
+	m:SetAttribute("Mood", if math.random() < 0.6 then "Rage" else "Angry")
 	m:SetAttribute("Pace", 1.8)
 end
 
@@ -167,6 +206,9 @@ local function attack(m: Model, job: Job, now: number)
 	local state = m:GetAttribute("RagdollState")
 	local inReach = dist <= Mourning.REACH and math.abs(root.Position.Y - pelvis.Position.Y) < 5
 	m:SetAttribute("HomeLook", root.Position)
+	if now - job.since < 1.3 then
+		return -- (the anger shows first)
+	end
 	if state == "Standing" and now - job.since > 1.2 and not (inReach and facing) then
 		m:SetAttribute("Home", pelvis.Position + dir * (dist + 6)) -- (far enough off that it sets out again)
 	else
@@ -219,8 +261,12 @@ local function step()
 			or (state ~= "Standing" and state ~= "Walking") or (type(panic) == "number" and panic > serverNow)
 		if not m.Parent or not pelvis or hurt then
 			stop(m, nil)
+		elseif job.phase == "React" then
+			if now - job.since >= Mourning.REACT_TIME then
+				stop(m, nil)
+			end
 		elseif not cp or corpse:GetAttribute("Vital") ~= "Dead" then
-			stop(m, if job.phase == "Act" and job.kind == "CPR" then "Saved" else nil)
+			stop(m, nil)
 		elseif job.phase == "Shock" then
 			if now - job.since >= Mourning.SHOCK_TIME then
 				local side = flat(pelvis.Position - cp.Position)
@@ -239,25 +285,44 @@ local function step()
 				job.phase, job.since = "Act", now
 				m:SetAttribute("Pace", nil)
 				m:SetAttribute("Home", pelvis.Position)
-				m:SetAttribute("Mood", job.kind)
+				local a: any = job
+				a.plan, a.turn, a.nextAt = cprPlan(), 0, now
+				a.works = math.random() < Mourning.SAVE_CHANCE
 			elseif now - job.since > Mourning.WALK_MAX then
 				stop(m, nil)
 			end
 		elseif job.phase == "Act" then
-			local held = now - job.since
-			local tries = math.floor(held / Mourning.CPR_TRY)
-			if job.kind == "CPR" and tries > ((job :: any).tries or 0) then
-				(job :: any).tries = tries
-				if math.random() < Mourning.SAVE_CHANCE then
-					local ok = pcall(function()
-						lazy("VitalsService").reviveNow(corpse)
+			-- (23 Nov 2026, owner: better CPR, different every time.) The job's own plan of moods, one after the other;
+			-- whether it works was drawn when it knelt (SAVE_CHANCE).
+			local a: any = job
+			if now >= a.nextAt then
+				a.turn += 1
+				local stage = a.plan[a.turn]
+				if stage then
+					a.nextAt = now + stage.time
+					m:SetAttribute("Mood", stage.mood)
+				elseif a.works then
+					local ok, woke = pcall(function()
+						return lazy("VitalsService").reviveNow(corpse)
 					end)
-					stop(m, if ok then "Saved" else "Gone")
-					continue
+					if ok and woke then
+						react(m, job, SAVED_MOODS)
+						task.delay(7, function()
+							if corpse.Parent and corpse:GetAttribute("Vital") == "Alive" and corpse:GetAttribute("Mood") == nil then
+								corpse:SetAttribute("MoodSay", "Thanks")
+								task.delay(3, function()
+									if corpse.Parent and corpse:GetAttribute("MoodSay") == "Thanks" then
+										corpse:SetAttribute("MoodSay", nil)
+									end
+								end)
+							end
+						end)
+					else
+						failed(m, job)
+					end
+				else
+					failed(m, job)
 				end
-			end
-			if held >= Mourning.KNEEL_TIME then
-				failed(m, job)
 			end
 		end
 	end
@@ -319,7 +384,10 @@ local function step()
 					m:SetAttribute("CommandedBy", -2)
 					m:SetAttribute("Home", p.Position)
 					m:SetAttribute("HomeLook", bp.Position)
-					m:SetAttribute("Mood", "Shock")
+					m:SetAttribute("Mood", pickMood(SHOCK_MOODS))
+					local name = body:GetAttribute("PersonName")
+					m:SetAttribute("MournedName", if type(name) == "string" and name ~= "" then name else "buddy")
+					body:SetAttribute("BeingHelped", true) -- (it does not wake by itself meanwhile)
 					taken += 1
 					busy += 1
 				end
@@ -333,9 +401,6 @@ function Mourning.start()
 		return
 	end
 	running = true
-	Players.PlayerRemoving:Connect(function(p)
-		fails[p.UserId] = nil
-	end)
 	task.spawn(function()
 		while true do
 			task.wait(Mourning.STEP)

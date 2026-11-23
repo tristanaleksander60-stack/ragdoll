@@ -148,6 +148,9 @@ end
 -- Whether a wound still bleeds.
 local function bleeds(w: Wound, now: number): boolean
 	local age = now - w.opened
+	if (w :: any).closed then
+		return false
+	end
 	if w.blunt then
 		return age < BLUNT_CLOT
 	end
@@ -236,17 +239,25 @@ end
 
 -- Patched up where it lies: full blood, no wounds, awake (it gets up by itself).
 -- quiet: no sparkle here (the Heal tool plays its own where it was used).
-local function patchUp(model: Model, v: Vitals, quiet: boolean?)
+-- keep: the wounds close but stay to be seen (23 Nov 2026, owner: shots stay until it has been dead and is alive again).
+local function patchUp(model: Model, v: Vitals, quiet: boolean?, keep: boolean?)
 	v.blood = 100
 	v.pulse = v.rest
-	table.clear(v.wounds)
+	if keep then
+		for _, w in v.wounds do
+			local shut: any = w
+			shut.closed = true
+		end
+	else
+		table.clear(v.wounds)
+	end
 	v.weak = 0
 	v.ceiling = nil
 	v.damage = 0
 	v.lethalAt = nil
 	v.knockUntil = 0
-	v.shared = ""
-	model:SetAttribute("Wounds", "")
+	v.shared = encodeWounds(v, os.clock())
+	model:SetAttribute("Wounds", v.shared)
 	model:SetAttribute("LegShotLeft", nil) -- (patched up: no leg round counts any more)
 	model:SetAttribute("LegShotRight", nil)
 	model:SetAttribute("Damage", nil)
@@ -638,6 +649,9 @@ function VitalsService.step(model: Model, v: Vitals, dt: number)
 	local bluntShock = 0
 	local weak = v.weak -- bpm the rounds that landed took off for good (DROP_PER_LOSS; kept as a total, so trimming old wounds never gives it back)
 	for _, w in v.wounds do
+		if (w :: any).closed then
+			continue
+		end
 		local age = now - w.opened
 		if w.blunt then
 			if age < BLUNT_CLOT then
@@ -768,7 +782,7 @@ local function tend(model: Model, v: Vitals, dt: number, now: number)
 		vr.reviveFor = v.since
 		vr.reviveIn = LAB_REVIVE_MIN + math.random() * (LAB_REVIVE_MAX - LAB_REVIVE_MIN)
 	end
-	if v.state == "Dead" and now - v.since >= (if labDummy then (vr.reviveIn or LAB_REVIVE_AFTER) else REVIVE_AFTER) and (next(v.severed) == nil or labDummy) and model:GetAttribute("IsDummy") == true then
+	if v.state == "Dead" and model:GetAttribute("BeingHelped") ~= true and now - v.since >= (if labDummy then (vr.reviveIn or LAB_REVIVE_AFTER) else REVIVE_AFTER) and (next(v.severed) == nil or labDummy) and model:GetAttribute("IsDummy") == true then
 		if labDummy and next(v.severed) ~= nil then reattach(model, v) end
 		paintDead(model, false)
 		patchUp(model, v, true)
@@ -788,7 +802,7 @@ local function tend(model: Model, v: Vitals, dt: number, now: number)
 		model:Destroy()
 	elseif v.state == "Unconscious" and next(v.severed) == nil and (now - v.since >= OUT_HOLD or model:GetAttribute("Waking") == true) and now >= v.knockUntil then
 		model:SetAttribute("Waking", nil)
-		patchUp(model, v)
+		patchUp(model, v, false, true)
 	elseif v.state == "Unconscious" and not labDummy and (v.severed.LeftLeg or v.severed.RightLeg) and now - v.since >= DEAD_HOLD * 2 then
 		vitals[model] = nil
 		model:Destroy()
@@ -884,10 +898,12 @@ function VitalsService.reviveNow(model: Model): boolean
 		return true
 	end
 	if v.state == "Dead" then
-		if next(v.severed) ~= nil then
+		if next(v.severed) ~= nil and type(model:GetAttribute("Slot")) ~= "number" then
 			return false
 		end
-		v.since = math.min(v.since, os.clock() - REVIVE_AFTER)
+		-- (A lab body waits 20-30 s by itself: past that, so it really wakes now.)
+		model:SetAttribute("BeingHelped", nil)
+		v.since = math.min(v.since, os.clock() - math.max(REVIVE_AFTER, LAB_REVIVE_MAX + 1))
 		return true
 	end
 	return VitalsService.heal(model)

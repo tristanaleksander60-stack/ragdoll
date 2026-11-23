@@ -857,6 +857,14 @@ local function expressionFor(life: Life, now: number): string
 	local temper = model:GetAttribute("Mood")
 	if temper == "Angry" or temper == "Box" then
 		return "Grumpy"
+	elseif temper == "Rage" then
+		return "Grumpy"
+	elseif temper == "Mourn" or temper == "Despair" or temper == "Sky" or temper == "CPRSlam" then
+		return "Ouch"
+	elseif temper == "Cheer" or temper == "Relief" or temper == "Hug" then
+		return "Neutral"
+	elseif type(temper) == "string" then
+		return "Scared"
 	end
 	if life.handsUp then
 		return "Scared"
