@@ -1523,8 +1523,8 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 		end
 		-- A plain tap that missed what this tool needs: say so (a drag to turn the camera never
 		-- gets here).
-		if phase == "tap" and aimed and not isDummy and not plazaFight then
-			hint(if onPlayer then "You can only hit other players in the plaza" else "Tap a dummy to use " .. toy.label)
+		if phase == "tap" and aimed and not isDummy and not plazaFight and (onPlayer or not ViewMode.isTouch()) then
+			hint(if onPlayer then "You can only hit other players in the plaza" else "Click a dummy to use " .. toy.label)
 		end
 		return false
 	end

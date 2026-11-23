@@ -36,7 +36,7 @@ local FeelV2 = require(Client:WaitForChild("FeelV2"))
 
 local TouchShoot = {}
 
-TouchShoot.HAND_FOR = 45 -- s: the "tap a dummy" hand shows at most this long into a visit
+TouchShoot.HAND_FOR = 0 -- (23 Nov 2026, owner: no "TAP A DUMMY!" on phones; it was 45) s: the "tap a dummy" hand shows at most this long into a visit
 local SHOOT_RED = Color3.fromRGB(230, 50, 50)
 
 local player = Players.LocalPlayer
