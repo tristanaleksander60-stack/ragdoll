@@ -127,11 +127,11 @@ local shaped = false
 -- bullets struck"). The piece's skin goes see-through and wears its bone inside, broken at its bullet holes.
 local XRAY_CLEAR = 0.74
 local XRAY_TINT = Color3.fromRGB(104, 138, 186)
-local BONE = Color3.fromRGB(232, 222, 198)
-local BONE_END = Color3.fromRGB(240, 232, 212)
-local RIM = Color3.fromRGB(206, 192, 164)
-local CRACK = Color3.fromRGB(74, 52, 44)
-local LEAD = Color3.fromRGB(112, 108, 102)
+local BONE = Color3.fromRGB(168, 152, 118)
+local BONE_END = Color3.fromRGB(180, 166, 134)
+local RIM = Color3.fromRGB(132, 112, 82)
+local CRACK = Color3.fromRGB(52, 34, 28)
+local LEAD = Color3.fromRGB(70, 68, 64)
 local MARROW = Color3.fromRGB(58, 22, 26)
 local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: string, hits: number)
 	local rng = Random.new(#limb.Name * 7 + 3) -- (the same bone every time it is drawn again)
@@ -321,6 +321,11 @@ local function dress(model: Model)
 					local side = if string.sub(d.Name, 1, 4) == "Left" then 1 elseif string.sub(d.Name, 1, 5) == "Right" then -1 else 0
 					local inward = if key == "UpperArm" or key == "LowerArm" or key == "Hand" then side * (d.Size.X * (1 - fit.X) * 0.5 + 0.1) else 0
 					skin.CFrame = d.CFrame * CFrame.new(inward, (DROP[key] or 0) * d.Size.Y, 0)
+					if key == "UpperTorso" then
+						-- (Its shape is a rounded head: the faint eyes in it go under the arm, out of sight.)
+						skin.Size = Vector3.new(skin.Size.Z, skin.Size.Y, skin.Size.X)
+						skin.CFrame *= CFrame.Angles(0, math.rad(90), 0)
+					end
 				end
 				local weld = Instance.new("WeldConstraint")
 				weld.Part0 = d
