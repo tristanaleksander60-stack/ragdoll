@@ -148,6 +148,9 @@ local function go(player: Player, how: string, target: Entry?)
 	end)
 	if not ok then
 		log.warn("teleport failed: " .. tostring(err))
+		pcall(function()
+			(require(script.Parent:WaitForChild("Lab")) :: any).ensureLab(player) -- (still here: a lab after all)
+		end)
 		remote:FireClient(player, "Refused", { text = "Could not get there. Try again!" })
 	end
 end
@@ -493,6 +496,12 @@ end
 function PortalService.start()
 	remote = Net.event(Net.Names.Portal)
 	remote.OnServerEvent:Connect(onRequest)
+	-- (A teleport that fails after it set off: the player stays here, so they get a lab.)
+	TeleportService.TeleportInitFailed:Connect(function(player)
+		pcall(function()
+			(require(script.Parent:WaitForChild("Lab")) :: any).ensureLab(player)
+		end)
+	end)
 	if not RunService:IsStudio() then
 		local ok, m = pcall(MemoryStoreService.GetSortedMap, MemoryStoreService, PortalService.MAP)
 		map = if ok then m else nil

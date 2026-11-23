@@ -1380,6 +1380,17 @@ end
 ------------------------------------------------------------------------------------------------
 -- Asking about labs
 
+-- A lab for a player who has none (their teleport to a server of their own failed).
+function Lab.ensureLab(player: Player)
+	if not plotOf[player] and not guestOf[player] and player.Parent then
+		claim(player)
+		local plot = plotOf[player]
+		if plot and player.Character then
+			placeOnPlot(player, plot)
+		end
+	end
+end
+
 -- (Bug hunt, 23 Nov 2026): whether a player lives in a lab: their own, or the shared one they are a guest in.
 function Lab.inLab(player: Player): boolean
 	return plotOf[player] ~= nil or guestOf[player] ~= nil
@@ -1575,8 +1586,15 @@ function Lab.build()
 		local followed = if player.FollowUserId ~= 0 then Players:GetPlayerByUserId(player.FollowUserId) else nil
 		local multi = (type(data) == "table" and data.from == "Multi")
 			or (followed ~= nil and (followed:GetAttribute("SharedHost") == true or followed:GetAttribute("SharedGuest") ~= nil))
+		-- (Bug hunt, 23 Nov 2026: someone who came in through Play onto a multiplayer server is sent straight on to
+		-- a server of their own by PortalService: no lab and 18 ragdolls built for a second here, lagging the players
+		-- who stay. If that teleport fails, PortalService calls Lab.ensureLab.)
+		local passingThrough = not multi and player.FollowUserId == 0 and game.PrivateServerId == "" and game.JobId ~= ""
+			and not game:GetService("RunService"):IsStudio() and not (type(data) == "table" and data.from == "Shared")
 		if not (multi and Lab.joinShared(player)) then
-			claim(player)
+			if not passingThrough then
+				claim(player)
+			end
 			if multi then
 				Lab.joinShared(player) -- (no shared lab here yet: this lab is the shared one)
 			end
