@@ -45,6 +45,7 @@ local NOISE_START = 0.3 -- s of the little start it gives
 local SOUND_SPEED = 300 -- studs/s: further off, it hears it a beat later
 -- How far a moment is heard (studs), by what it was (FxController passes the tool's fx kind).
 local HEARD = { Boom = 90, Zap = 30, Big = 35, Clang = 30, Smack = 22, Light = 14, Dart = 16, Pop = 18, Ice = 14, Suck = 26 }
+local HANDS_UP = false -- (23 Nov 2026, owner: they must not put their hands up all the time)
 local HANDS_EASE = 0.18 -- s the hands take to go up or down
 local THREAT_GRACE = 2 -- s a gun can leave the aim before it counts as gone (getting used to it carries on)
 local SHOT_HEARD = 120 -- the guns: a shot is heard across the lab and the plaza (round 3, M3: everyone looks)
@@ -65,7 +66,7 @@ local TALK_TURN = 2.4 -- s each speaker talks before the other answers
 local BUBBLES = false -- the speech bubbles (off: the owner wants faces and bodies, no text)
 local BUBBLE_DISTANCE = 45 -- studs: bubbles further away are not drawn
 local BUBBLE_SIZE = Vector2.new(42, 26) -- px (was 64 x 40)
-local BUBBLE_OFFSET = 3 -- studs above the head's middle
+local BUBBLE_OFFSET = 1.25 -- (23 Nov 2026, owner: lower; was 3) studs above the head's middle
 -- Level of detail (distance from the camera): every frame up close, then less often, then not at all.
 local LOD_NEAR, LOD_FAR = 70, 170
 local LOD_MID_RATE = 1 / 15 -- s between updates beyond LOD_NEAR
@@ -428,7 +429,7 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 	setJoint(life, "LeftKnee", ang(-(6 + knee * math.max(0, -c)) * amount, 0, 0))
 	local panicUntil = life.model:GetAttribute("PanicUntil")
 	local panic = fleeing and type(panicUntil) == "number" and panicUntil > Workspace:GetServerTimeNow()
-	if panic then
+	if panic and HANDS_UP then
 		-- A headless chicken (10 Nov 2026): both arms up over the head, flailing out of step.
 		local f = (now + life.seed) * 11
 		setJoint(life, "RightShoulder", ang(150 + 30 * sin(f), 0, 25 + 20 * cos(f * 1.3)))
@@ -616,7 +617,7 @@ local function updateIdle(life: Life, now: number, dt: number)
 	local threat = life.threat
 	-- Hands up: all but the brave, while the gun is new to it or has just fired; one saying hi
 	-- keeps waving unless the gun just fired (M3 fix 1).
-	local handsUp = threat ~= nil and life.model:GetAttribute("Personality") ~= "Brave"
+	local handsUp = HANDS_UP and threat ~= nil and life.model:GetAttribute("Personality") ~= "Brave"
 		and (life.threatRaised or now - (life.threatSince or now) < GunThreat.CALM_AFTER)
 		and not (greeting and not life.threatRaised)
 	if threat then

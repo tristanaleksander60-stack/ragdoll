@@ -24,7 +24,7 @@ if SOFT and not THUMB then
 	soft.OutdoorAmbient = Color3.fromRGB(150, 154, 160)
 	soft.ExposureCompensation = 0.5
 	soft.EnvironmentDiffuseScale = 1
-	soft.EnvironmentSpecularScale = 0.8 -- (0.47.37: the glossy ragdolls catch the sky)
+	soft.EnvironmentSpecularScale = 1 -- (0.47.37: the glossy ragdolls catch the sky)
 	soft.ShadowSoftness = 1
 	soft.bloom = 0.04
 	soft.contrast = -0.03

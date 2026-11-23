@@ -184,7 +184,9 @@ local function clearHint()
 end
 
 local function playReplay(at: number, first: boolean)
-	task.wait(math.max(0, at + REPLAY_DELAY - os.clock()))
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).REPLAY ~= false then
+		task.wait(math.max(0, at + REPLAY_DELAY - os.clock()))
+	end
 	local completed = ReplayController.play(at)
 	if first then
 		replayQueued = false
@@ -206,6 +208,9 @@ local function playReplay(at: number, first: boolean)
 end
 
 local function offerReplay(at: number)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).REPLAY == false then
+		return
+	end
 	-- (V10 phase 1, owner: "remove the replay button on phones completely".)
 	if ViewMode.isTouch() then
 		return

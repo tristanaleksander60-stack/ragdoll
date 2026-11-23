@@ -328,6 +328,7 @@ local function buildGui()
 		Director.setSlow(1)
 		say("Reset")
 	end)
+	--[[ (no replays)
 	makeButton(ac, "REPLAY 2s", 82, function() -- (the X-ray replay keeps the last 2 s round a moment)
 		local ok, Replay = pcall(function()
 			return require(Client:WaitForChild("ReplayController")) :: any
@@ -336,6 +337,7 @@ local function buildGui()
 			task.spawn(Replay.play, os.clock() - 1.7)
 		end
 	end)
+	]]
 	title(p, "ONE-TAP SHOTS", n())
 	local sh = row(p, n())
 	for _, s in Director.SHOTS do

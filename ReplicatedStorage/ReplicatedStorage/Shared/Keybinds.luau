@@ -52,7 +52,6 @@ Keybinds.ACTIONS = table.freeze({
 	{ id = "MissionHide", label = "Hide or show the mission card", context = "Play", default = "Equals", group = "PLAY" },
 	{ id = "Recenter", label = "Lab view: back to the middle", context = "Play", default = "Home", group = "PLAY" },
 	{ id = "CleanUp", label = "Sweep the lab clean", context = "Global", default = "Delete", group = "PLAY" },
-	{ id = "ReplaySkip", label = "Skip a replay", context = "Global", default = "Period", group = "PLAY" },
 	{ id = "Catalog", label = "All weapons", context = "Play", default = "T", group = "PLAY" },
 	{ id = "Slot1", label = "Weapon slot 1", context = "Play", default = "One", group = "PLAY" },
 	{ id = "Slot2", label = "Weapon slot 2", context = "Play", default = "Two", group = "PLAY" },
@@ -66,7 +65,7 @@ Keybinds.ACTIONS = table.freeze({
 	{ id = "Shop", label = "Shop", context = "Global", default = "Y", group = "WINDOWS" },
 	{ id = "Friends", label = "Friends", context = "Global", default = "P", group = "WINDOWS" },
 	{ id = "Clip", label = "Record a clip / stop", context = "Global", default = "Semicolon", group = "WINDOWS" },
-	{ id = "Rewards", label = "Rewards", context = "Global", default = "J", group = "WINDOWS" },
+	{ id = "Rewards", label = "Gift (rewards)", context = "Global", default = "J", group = "WINDOWS" },
 	{ id = "Settings", label = "Settings", context = "Global", default = "O", group = "WINDOWS" }, -- (V8-0.9)
 	{ id = "Creator", label = "Creator mode (hide the screen buttons)", context = "Global", default = "U", group = "WINDOWS" },
 	{ id = "CreatorWindow", label = "Clips & live window", context = "Global", default = "Comma", group = "WINDOWS" },

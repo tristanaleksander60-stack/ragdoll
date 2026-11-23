@@ -10,7 +10,7 @@ local HitMath = {}
 -- held CHARGE_FROM s nothing more, full after CHARGE_TIME s: that many times the push and the wound.
 HitMath.CHARGE_FROM = 0.15
 HitMath.CHARGE_TIME = 1.1
-HitMath.CHARGE_PUSH = 2.5
+HitMath.CHARGE_PUSH = 1.6
 HitMath.CHARGE_WOUND = 2
 function HitMath.charges(toy: any): boolean
 	return toy ~= nil and toy.kind == "hit" and toy.byHand == true and toy.gun ~= true and toy.id ~= "Chainsaw"
@@ -19,12 +19,25 @@ function HitMath.chargeOf(held: number): number
 	return math.clamp((held - HitMath.CHARGE_FROM) / (HitMath.CHARGE_TIME - HitMath.CHARGE_FROM), 0, 1)
 end
 
+-- (23 Nov 2026, owner: "a crowbar must not push a ragdoll 2 metres or just knock it out: it hits and hurts it where you
+-- hit; that takes long with such a weapon, a bat too".) A blow with a held weapon or the bare hands: the body stays up
+-- and the struck part reacts, like a round; the wounds bring it down. Not the ones made for throwing (a kick, an
+-- uppercut, a shove, the giant hand).
+local THROWS = { Kick = true, Uppercut = true, Shove = true, MegaSlap = true }
+function HitMath.strikes(toy: any): boolean
+	return toy ~= nil and toy.kind == "hit" and toy.category == "Melee" and toy.byHand == true and not toy.gun and not THROWS[toy.id]
+end
+HitMath.STRIKE_DAMAGE = 0.6 -- of the damage such a blow did
+
 function HitMath.toyImpulse(toy: Toys.Toy, direction: Vector3, mass: number): Vector3
 	local flat = if direction.Magnitude > 1e-3 then direction.Unit else Vector3.zAxis
 	if toy.gun then
 		-- A round (round 3, M2): a short shove along the shot, never a throw; where it lands decides
 		-- what the body does (ActiveRagdoll.gunReaction).
 		return flat * HitMath.gunPush(toy) * mass
+	end
+	if HitMath.strikes(toy) then
+		return flat * math.clamp(4 + 4 * (toy.wound or 1), 4, 10) * mass
 	end
 	local dir = (flat + Vector3.new(0, toy.lift, 0)).Unit
 	return dir * toy.speed * mass
@@ -39,7 +52,7 @@ end
 -- What a gun's round does to the body it hits (ActiveRagdoll.hit's gun argument): its wound
 -- power; nil for anything that is no gun.
 function HitMath.gunOf(toy: Toys.Toy): number?
-	return if toy.gun then (toy.wound or 1) else nil
+	return if toy.gun or HitMath.strikes(toy) then math.max(toy.wound or 1, 0.1) else nil
 end
 
 -- Recent prop velocities, so an impact is judged by how fast the prop was going when it arrived,

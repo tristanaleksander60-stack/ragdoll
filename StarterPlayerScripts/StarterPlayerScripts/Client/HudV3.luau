@@ -293,6 +293,28 @@ local function buildTop(onRewards: () -> ())
 	local giftCount = require(script.Parent:WaitForChild("IconCount")) :: any
 	giftCount.attach("Rewards", gift)
 	gift.Activated:Connect(onGift)
+	-- (23 Nov 2026, owner: a key for the gift: Keybinds "Rewards", J; RewardsUI calls this. Its chip, on a keyboard only.)
+	HudV3.onGift = onGift
+	local giftKey = Instance.new("TextLabel")
+	giftKey.Name = "Key"
+	giftKey.AnchorPoint = Vector2.new(0.5, 0.5)
+	giftKey.Position = UDim2.new(0, 4, 1, -4)
+	giftKey.Size = UDim2.fromOffset(18, 18)
+	giftKey.BackgroundColor3 = Color3.fromRGB(12, 13, 17)
+	giftKey.BackgroundTransparency = 0.1
+	giftKey.TextColor3 = Color3.new(1, 1, 1)
+	giftKey.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
+	giftKey.TextSize = 12
+	giftKey.ZIndex = 5
+	corner(giftKey, 5)
+	giftKey.Parent = gift
+	local KeybindsG = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Keybinds")) :: any
+	local function drawGiftKey()
+		giftKey.Text = KeybindsG.labelOf("Rewards")
+		giftKey.Visible = game:GetService("UserInputService").KeyboardEnabled and not ViewMode.isTouch()
+	end
+	KeybindsG.onChanged(drawGiftKey)
+	drawGiftKey()
 	tapActions[gift] = onGift
 	tapWindows[gift] = "Rewards"
 	-- (22 Nov 2026, owner: the gift next to the Next pill, on the same line): just right of the centred pill.

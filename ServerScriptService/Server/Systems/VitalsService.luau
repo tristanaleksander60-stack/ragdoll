@@ -27,6 +27,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage.Shared
 local Anatomy = require(Shared.Anatomy)
+local HitMath = require(Shared.HitMath) :: any
 local Config = require(Shared.Config)
 local Net = require(Shared.Net)
 local Log = require(Shared.Log)
@@ -523,7 +524,7 @@ end
 --   guarded  the server could not see the spot from the hitter (HitService): no zone that kills
 --            or bleeds out fast (GUARDED)
 --   round    a gun's round (Toys: gun): any of it to the head kills at once (HEADSHOT)
-export type WoundOptions = { sever: number?, zone: Anatomy.Zone?, blunt: boolean?, guarded: boolean?, round: boolean?, boost: number? }
+export type WoundOptions = { sever: number?, zone: Anatomy.Zone?, blunt: boolean?, guarded: boolean?, round: boolean?, boost: number?, strike: boolean? }
 function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by: Player?, power: number, options: WoundOptions?): (string?, Anatomy.Zone?)
 	local o: WoundOptions = options or {}
 	local blunt = o.blunt == true
@@ -579,7 +580,7 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 			local nowT = os.clock()
 			local worn = math.max(0, (v.damage or 0) - (nowT - (v.damageAt or nowT)) * Config.DAMAGE_DECAY)
 			v.damageAt = nowT
-			v.damage = worn + power * Config.DAMAGE_PER_POWER * region * (if blunt then Config.DAMAGE_BLUNT else 1) * (o.boost or 1)
+			v.damage = worn + power * Config.DAMAGE_PER_POWER * region * (if blunt then Config.DAMAGE_BLUNT else 1) * (o.boost or 1) * (if o.strike then HitMath.STRIKE_DAMAGE else 1)
 			-- (V9-0ac: a round heavy enough (Sniper, Railgun) kills with one body shot; a limb only hurts.)
 			if (Config :: any).SHOT_FLINCH and o.round and not blunt and not zone.limb and power >= (Config :: any).SHOT_ONE_KILL_POWER then
 				v.damage = math.max(v.damage :: number, Config.BODY_HP)
@@ -597,7 +598,7 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 		-- at once. A round drops it by its damage.)
 		-- (Fix round 3: the rule is for rounds only: a blade still knocks out by its zone.)
 		local roundKO = not blunt and not ((Config :: any).SHOT_FLINCH and o.round and power < ((Config :: any).SHOT_ONE_KILL_POWER or math.huge))
-		if zone.knockout and power >= (if blunt then BLUNT_KNOCKOUT else 0.6) and (blunt or roundKO) then
+		if zone.knockout and not o.strike and power >= (if blunt then BLUNT_KNOCKOUT else 0.6) and (blunt or roundKO) then
 			v.knockUntil = math.max(v.knockUntil, now + KNOCK_HOLD)
 		end
 	end

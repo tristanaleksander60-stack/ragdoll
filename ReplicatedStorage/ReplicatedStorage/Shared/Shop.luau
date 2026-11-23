@@ -245,7 +245,6 @@ Shop.WHATS_NEW = table.freeze({
 		version = "0.20.0", -- (0.18 and 0.19 never went live: this entry is all of them)
 		lines = {
 			"EXPERIMENTS: a quick goal card with a timer and stars. Three DAILY EXPERIMENTS, the same for everyone",
-			"X-RAY REPLAY: see the bones fly, get a score and a SHARE CODE for your friends",
 			"BOLTS: earn them from experiments and playing, spend them on the next weapon",
 			"PRANK PARTY: friends in your lab share one experiment, and can toss each other into the traps",
 			"Controllers work now, and phones held upright get their own layout",

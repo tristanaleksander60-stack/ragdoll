@@ -313,6 +313,9 @@ end
 
 -- Plays the recorded window around eventTime (os.clock() at the event). Yields until done.
 function ReplayController.play(eventTime: number): boolean
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).REPLAY == false then
+		return false -- (23 Nov 2026, owner: no replays anywhere)
+	end
 	if playing then
 		return false
 	end
@@ -494,6 +497,9 @@ function ReplayController.isPlaying(): boolean
 end
 
 function ReplayController.start()
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).REPLAY == false then
+		return -- (nothing recorded either)
+	end
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if playing and Keybinds.live(processed) and input.UserInputType == Enum.UserInputType.Keyboard and Keybinds.is("ReplaySkip", input.KeyCode) then
 			skipRequested = true

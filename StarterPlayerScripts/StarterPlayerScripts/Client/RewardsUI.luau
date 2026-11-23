@@ -264,7 +264,12 @@ function RewardsUI.start()
 	Keybinds.onChanged(keyLabel)
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if Keybinds.live(processed) and input.UserInputType == Enum.UserInputType.Keyboard and Keybinds.is("Rewards", input.KeyCode) then
-			Controller.toggle("Rewards")
+			local press = (require(script.Parent:WaitForChild("HudV3")) :: any).onGift
+			if press and not Controller.isOpen("Rewards") then
+				press() -- (as a click on the gift: a waiting egg first)
+			else
+				Controller.toggle("Rewards")
+			end
 		end
 	end)
 	task.spawn(function()

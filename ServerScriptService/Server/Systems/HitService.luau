@@ -313,7 +313,7 @@ function HitService.applyToy(toy: Toys.Toy, part: BasePart, position: Vector3, d
 			-- with a headshot.)
 			local power = if draw then toy.wound * BowMath.woundScale(draw) else toy.wound * (1 + (HitMath.CHARGE_WOUND - 1) * chargeNow)
 			local round = toy.gun == true and (draw == nil or draw >= 0.9)
-			VitalsService.wound(model, woundPart, woundAt, requester, power, { sever = sever, blunt = blunt, guarded = guarded, round = round, boost = boost })
+			VitalsService.wound(model, woundPart, woundAt, requester, power, { sever = sever, blunt = blunt, guarded = guarded, round = round, boost = boost, strike = HitMath.strikes(toy) })
 		end
 		-- Round 5: each gun's own (pellets, a round through bodies, a flare, gold sparks). Never
 		-- from inside one of its own extra rounds.
