@@ -73,79 +73,79 @@ end
 -- Lower on a Motor6D "Elbow<i>" from Upper, a claw welded to Lower. The arm points along its parts' -Y at rest.
 -- `anchored`: a display set on the stand.
 function MechArms.build(anchored: boolean): Model
+	-- (23 Nov 2026, owner: "the arms must face the right way on the body, and look more real"): the upper pair rises
+	-- from the back, out over the shoulders and curls forward, claws ahead of you; the lower pair goes out and back,
+	-- then down and forward to the ground like legs. Each segment is a steel tube with a hydraulic piston along it,
+	-- dark joint housings with an orange ring, and a three-fingered claw with jointed fingers.
 	local m = Instance.new("Model")
 	m.Name = "MechArms"
-	local pack = part("Pack", Vector3.new(1.6, 1.9, 0.7), GRAPHITE)
+	local pack = part("Pack", Vector3.new(1.7, 2, 0.8), GRAPHITE, Enum.Material.DiamondPlate)
 	pack.Anchored = anchored
 	pack.Parent = m
 	m.PrimaryPart = pack
-	local band = part("Band", Vector3.new(1.65, 0.22, 0.75), ORANGE, Enum.Material.SmoothPlastic)
-	band.CFrame = pack.CFrame * CFrame.new(0, 0.45, 0)
-	band.Parent = m
-	local w0 = Instance.new("WeldConstraint")
-	w0.Part0, w0.Part1 = pack, band
-	w0.Parent = band
-	-- Shoulders: upper pair out and up over the shoulders, lower pair out to the sides.
-	local SHOULDERS = {
-			-- (23 Nov 2026, owner: "not hanging in front through your body: behind you"): each arm points up or down, out
-		-- and back (+Z of the pack is behind the player).
-		{ at = Vector3.new(-0.6, 0.6, 0.4), aim = CFrame.fromRotationBetweenVectors(Vector3.new(0, -1, 0), Vector3.new(-0.55, 0.65, 0.55).Unit) },
-		{ at = Vector3.new(0.6, 0.6, 0.4), aim = CFrame.fromRotationBetweenVectors(Vector3.new(0, -1, 0), Vector3.new(0.55, 0.65, 0.55).Unit) },
-		{ at = Vector3.new(-0.6, -0.5, 0.4), aim = CFrame.fromRotationBetweenVectors(Vector3.new(0, -1, 0), Vector3.new(-0.6, -0.35, 0.7).Unit) },
-		{ at = Vector3.new(0.6, -0.5, 0.4), aim = CFrame.fromRotationBetweenVectors(Vector3.new(0, -1, 0), Vector3.new(0.6, -0.35, 0.7).Unit) },
+	local function decor(name: string, size: Vector3, color: Color3, material: Enum.Material, shape: Enum.PartType?, on: BasePart, at: CFrame)
+		local d = part(name, size, color, material, shape)
+		d.Parent = m
+		local w = Instance.new("Weld")
+		w.Part0, w.Part1 = on, d
+		w.C0 = at
+		w.Parent = d
+		return d
+	end
+	-- The pack: a spine plate, two vents and a core light-free orange band.
+	decor("Spine", Vector3.new(0.5, 2.2, 0.35), STEEL, Enum.Material.Metal, nil, pack, CFrame.new(0, 0, 0.5))
+	decor("Band", Vector3.new(1.75, 0.22, 0.85), ORANGE, Enum.Material.SmoothPlastic, nil, pack, CFrame.new(0, 0.45, 0))
+	for _, x in { -0.5, 0.5 } do
+		decor("Vent", Vector3.new(0.35, 0.6, 0.12), Color3.fromRGB(28, 29, 33), Enum.Material.Metal, nil, pack, CFrame.new(x, -0.45, 0.42))
+	end
+	-- (pack space: +Z is behind the player, -Z ahead, +Y up; the sign of X is the side.)
+	local ARMS = {
+		{ at = Vector3.new(-0.65, 0.65, 0.45), up = Vector3.new(-0.55, 0.78, 0.3), low = Vector3.new(-0.4, 0.2, -0.9), upper = 3.0, lower = 3.6 },
+		{ at = Vector3.new(0.65, 0.65, 0.45), up = Vector3.new(0.55, 0.78, 0.3), low = Vector3.new(0.4, 0.2, -0.9), upper = 3.0, lower = 3.6 },
+		{ at = Vector3.new(-0.65, -0.55, 0.45), up = Vector3.new(-0.78, 0.15, 0.6), low = Vector3.new(-0.3, -0.88, -0.38), upper = 3.2, lower = 4.2 },
+		{ at = Vector3.new(0.65, -0.55, 0.45), up = Vector3.new(0.78, 0.15, 0.6), low = Vector3.new(0.3, -0.88, -0.38), upper = 3.2, lower = 4.2 },
 	}
-	for i, s in SHOULDERS do
-		local joint = part("Joint" .. i, Vector3.one * 0.55, GRAPHITE, Enum.Material.Metal, Enum.PartType.Ball)
-		joint.Parent = m
-		local jw = Instance.new("Weld")
-		jw.Part0, jw.Part1 = pack, joint
-		jw.C0 = CFrame.new(s.at)
-		jw.Parent = joint
-		local upper = part("Upper" .. i, Vector3.new(0.32, 3.2, 0.32), STEEL)
+	local DOWN = Vector3.new(0, -1, 0)
+	local TUBE = CFrame.Angles(0, 0, math.rad(90)) -- (a cylinder's axis is X: turned onto the segment's Y)
+	for i, s in ARMS do
+		local aim = CFrame.fromRotationBetweenVectors(DOWN, s.up.Unit)
+		decor("Joint" .. i, Vector3.one * 0.7, GRAPHITE, Enum.Material.Metal, Enum.PartType.Ball, pack, CFrame.new(s.at))
+		-- The upper segment (the moving part: transparent core, the look welded on).
+		local upper = part("Upper" .. i, Vector3.new(0.3, s.upper, 0.3), STEEL)
+		upper.Transparency = 1
 		upper.Parent = m
 		local sm = Instance.new("Motor6D")
 		sm.Name = "Shoulder" .. i
 		sm.Part0, sm.Part1 = pack, upper
-		sm.C0 = CFrame.new(s.at) * s.aim
-		sm.C1 = CFrame.new(0, 1.6, 0)
+		sm.C0 = CFrame.new(s.at) * aim
+		sm.C1 = CFrame.new(0, s.upper / 2, 0)
 		sm.Parent = pack
-		local stripe = part("Stripe" .. i, Vector3.new(0.36, 0.5, 0.36), ORANGE, Enum.Material.SmoothPlastic)
-		stripe.Parent = m
-		local sw = Instance.new("Weld")
-		sw.Part0, sw.Part1 = upper, stripe
-		sw.C0 = CFrame.new(0, 0.6, 0)
-		sw.Parent = stripe
-		local knee = part("Knee" .. i, Vector3.one * 0.45, GRAPHITE, Enum.Material.Metal, Enum.PartType.Ball)
-		knee.Parent = m
-		local kw = Instance.new("Weld")
-		kw.Part0, kw.Part1 = upper, knee
-		kw.C0 = CFrame.new(0, -1.6, 0)
-		kw.Parent = knee
-		local lower = part("Lower" .. i, Vector3.new(0.26, 3.6, 0.26), STEEL)
+		decor("Tube" .. i, Vector3.new(s.upper, 0.34, 0.34), STEEL, Enum.Material.Metal, Enum.PartType.Cylinder, upper, TUBE)
+		decor("Piston" .. i, Vector3.new(s.upper * 0.7, 0.14, 0.14), Color3.fromRGB(215, 218, 224), Enum.Material.Metal, Enum.PartType.Cylinder, upper, CFrame.new(0, 0, 0.26) * TUBE)
+		decor("Sleeve" .. i, Vector3.new(s.upper * 0.35, 0.2, 0.2), GRAPHITE, Enum.Material.Metal, Enum.PartType.Cylinder, upper, CFrame.new(0, s.upper * 0.2, 0.26) * TUBE)
+		decor("Collar" .. i, Vector3.new(0.22, 0.48, 0.48), ORANGE, Enum.Material.SmoothPlastic, Enum.PartType.Cylinder, upper, CFrame.new(0, s.upper / 2 - 0.35, 0) * TUBE)
+		decor("Knee" .. i, Vector3.one * 0.55, GRAPHITE, Enum.Material.Metal, Enum.PartType.Ball, upper, CFrame.new(0, -s.upper / 2, 0))
+		-- The lower segment, bent at the elbow onto its own way (given in the pack's space).
+		local lower = part("Lower" .. i, Vector3.new(0.26, s.lower, 0.26), STEEL)
+		lower.Transparency = 1
 		lower.Parent = m
 		local em = Instance.new("Motor6D")
 		em.Name = "Elbow" .. i
 		em.Part0, em.Part1 = upper, lower
-		-- (The forearm curls on backwards: its way in the pack's space, turned into the upper arm's.)
-		local sideX = if i % 2 == 1 then -1 else 1
-		local lowerWay = if i <= 2 then Vector3.new(0.2 * sideX, 0.35, 1).Unit else Vector3.new(0.3 * sideX, -0.6, 0.75).Unit
-		em.C0 = CFrame.new(0, -1.6, 0) * CFrame.fromRotationBetweenVectors(Vector3.new(0, -1, 0), s.aim:VectorToObjectSpace(lowerWay))
-		em.C1 = CFrame.new(0, 1.8, 0)
+		em.C0 = CFrame.new(0, -s.upper / 2, 0) * CFrame.fromRotationBetweenVectors(DOWN, aim:VectorToObjectSpace(s.low.Unit))
+		em.C1 = CFrame.new(0, s.lower / 2, 0)
 		em.Parent = upper
-		-- The claw: three steel fingers round a graphite palm at the tip.
-		local palm = part("Palm" .. i, Vector3.new(0.4, 0.35, 0.4), GRAPHITE)
-		palm.Parent = m
-		local pw = Instance.new("Weld")
-		pw.Part0, pw.Part1 = lower, palm
-		pw.C0 = CFrame.new(0, -1.9, 0)
-		pw.Parent = palm
+		decor("Shin" .. i, Vector3.new(s.lower, 0.28, 0.28), STEEL, Enum.Material.Metal, Enum.PartType.Cylinder, lower, TUBE)
+		decor("Rod" .. i, Vector3.new(s.lower * 0.6, 0.12, 0.12), Color3.fromRGB(215, 218, 224), Enum.Material.Metal, Enum.PartType.Cylinder, lower, CFrame.new(0, s.lower * 0.1, 0.22) * TUBE)
+		decor("Ring" .. i, Vector3.new(0.18, 0.4, 0.4), ORANGE, Enum.Material.SmoothPlastic, Enum.PartType.Cylinder, lower, CFrame.new(0, s.lower / 2 - 0.3, 0) * TUBE)
+		-- The claw: a palm and three fingers of two joints each, curled in.
+		local palm = decor("Palm" .. i, Vector3.new(0.45, 0.4, 0.45), GRAPHITE, Enum.Material.Metal, nil, lower, CFrame.new(0, -s.lower / 2 - 0.15, 0))
 		for f = 0, 2 do
-			local finger = part("Finger" .. i .. "_" .. f, Vector3.new(0.1, 0.75, 0.12), STEEL)
-			finger.Parent = m
-			local fw = Instance.new("Weld")
-			fw.Part0, fw.Part1 = palm, finger
-			fw.C0 = CFrame.Angles(0, math.rad(f * 120), 0) * CFrame.new(0, -0.4, 0.17) * CFrame.Angles(math.rad(-22), 0, 0)
-			fw.Parent = finger
+			local around = CFrame.Angles(0, math.rad(f * 120), 0)
+			local p1 = decor("Finger" .. i .. "_" .. f, Vector3.new(0.12, 0.5, 0.14), STEEL, Enum.Material.Metal, nil, palm,
+				around * CFrame.new(0, -0.35, 0.2) * CFrame.Angles(math.rad(-25), 0, 0))
+			decor("Tip" .. i .. "_" .. f, Vector3.new(0.1, 0.42, 0.12), Color3.fromRGB(40, 41, 46), Enum.Material.Metal, nil, p1,
+				CFrame.new(0, -0.38, 0) * CFrame.Angles(math.rad(40), 0, 0) * CFrame.new(0, -0.15, 0))
 		end
 	end
 	for _, d in m:GetDescendants() do
