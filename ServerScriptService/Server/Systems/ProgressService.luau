@@ -188,6 +188,7 @@ function ProgressService.cleanSettings(raw: any): { sfx: number, blood: boolean,
 	end
 	out.blood = raw.blood ~= false
 	out.shake = raw.shake ~= false
+	;(out :: any).hideCard = raw.hideCard == true -- (23 Nov 2026: the body card after a hit, hidden)
 	out.deadMon = raw.deadMon == true -- (off unless chosen, 10 Nov 2026; the old 'monitor' key is dropped)
 	-- V9-0w: first person on the first shot (on unless turned off), starting in first person (off unless
 	-- chosen), and whether the first shot has taught it already (once per profile).

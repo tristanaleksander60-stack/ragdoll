@@ -13,7 +13,19 @@ local Workspace = game:GetService("Workspace")
 
 local Anatomy = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Anatomy"))
 
+local Keybinds = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Keybinds")) :: any
+
 local BodyCard = {}
+
+function BodyCard.toggleHidden()
+	local Settings = require(script.Parent:WaitForChild("Settings")) :: any
+	Settings.set("hideCard", not Settings.cardHidden())
+end
+game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
+	if Keybinds.live(processed) and input.UserInputType == Enum.UserInputType.Keyboard and Keybinds.is("BodyCard", input.KeyCode) then
+		BodyCard.toggleHidden()
+	end
+end)
 
 BodyCard.W = 230
 BodyCard.H = 356
@@ -115,6 +127,36 @@ local function build(): Ui
 	stroke.Transparency = 0.6
 	stroke.Thickness = 1.5
 	stroke.Parent = card
+
+	-- (23 Nov 2026, owner: hide it: a cross on a touch screen, a key on a computer; the key is shown only here, while the
+	-- card is up. Back again: the key, or SETTINGS "Body card".)
+	local hide = Instance.new("TextButton")
+	hide.Name = "Hide"
+	hide.AnchorPoint = Vector2.new(1, 0)
+	hide.Position = UDim2.new(1, -4, 0, 4)
+	hide.Size = UDim2.fromOffset(30, 26)
+	hide.BackgroundColor3 = Color3.fromRGB(12, 13, 17)
+	hide.BackgroundTransparency = 0.25
+	hide.TextColor3 = WHITE
+	hide.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
+	hide.TextScaled = true
+	hide.AutoButtonColor = true
+	hide.ZIndex = 10
+	local hc = Instance.new("UICorner")
+	hc.CornerRadius = UDim.new(0, 7)
+	hc.Parent = hide
+	local hp = Instance.new("UIPadding")
+	hp.PaddingTop, hp.PaddingBottom = UDim.new(0.18, 0), UDim.new(0.18, 0)
+	hp.Parent = hide
+	hide.Activated:Connect(BodyCard.toggleHidden)
+	hide.Parent = card
+	local function drawHide()
+		local touch = (require(script.Parent:WaitForChild("ViewMode")) :: any).isTouch()
+		hide.Text = if touch then "\u{2715}" else Keybinds.labelOf("BodyCard")
+		hide.Active = touch
+	end
+	Keybinds.onChanged(drawHide)
+	drawHide()
 
 	local name = label(card, "Name", 12, 6, BodyCard.W - 24, 24, 19, WHITE, Enum.TextXAlignment.Center)
 
@@ -390,6 +432,11 @@ function BodyCard.place(anchor: Vector2, position: UDim2, fit: number)
 	end
 	u.card.AnchorPoint = anchor
 	u.card.Position = position
+	local hide = u.card:FindFirstChild("Hide")
+	if hide and hide:IsA("GuiObject") and (require(script.Parent:WaitForChild("ViewMode")) :: any).isTouch() then
+		local tap = 40 / math.max(fit, 0.2) -- (a fingertip, whatever the card's size)
+		hide.Size = UDim2.fromOffset(tap, tap)
+	end
 	if u.scale:GetAttribute("Base") ~= fit then
 		u.scale:SetAttribute("Base", fit)
 		u.scale.Scale = fit

@@ -73,6 +73,10 @@ function Settings.recoil(): number
 	return (Settings.RECOIL[values.recoil] or Settings.RECOIL[1]).scale
 end
 
+function Settings.cardHidden(): boolean
+	return (values :: any).hideCard == true
+end
+
 function Settings.deadMonitor(): boolean
 	return values.deadMon
 end
@@ -103,6 +107,7 @@ function Settings.clean(raw: unknown): Values
 	v.recoil = pick(t.recoil, Settings.RECOIL) or 1 -- (V9-NOW 9)
 	v.blood = t.blood ~= false
 	v.shake = t.shake ~= false
+	;(v :: any).hideCard = t.hideCard == true -- (23 Nov 2026, owner: the body card after a hit can be hidden)
 	v.deadMon = t.deadMon == true -- (10 Nov 2026, the owner: off unless chosen; a new key, so an old saved 'monitor' is not read)
 	v.fpShot = t.fpShot ~= false -- (V9-0w: first person on the first shot, on unless turned off)
 	v.fpStart = t.fpStart == true -- (V9-0w: start in first person)
@@ -220,14 +225,14 @@ local function build()
 	})
 	-- (Only where there is a mouse to point with: a phone has doctor mode instead.)
 	local monitor = C.SettingRow({
-		label = "Dead monitor",
-		description = "Show a dead body's monitor when you point at it",
+		label = "Body card",
+		description = "Show the ragdoll's health when you hit it",
 		icon = "heart",
-		value = values.deadMon,
+		value = not Settings.cardHidden(),
 		layoutOrder = 6,
 		parent = body,
 		onChanged = function(on: boolean)
-			Settings.set("deadMon", on)
+			Settings.set("hideCard", not on)
 		end,
 	})
 	-- (V9-0w: first person, where it is: a keyboard (V) or a pad (Select).)
@@ -255,7 +260,7 @@ local function build()
 	})
 	local UserInputService = game:GetService("UserInputService")
 	local function mouseRow()
-		monitor.root.Visible = UserInputService.MouseEnabled
+		monitor.root.Visible = true
 		local fp = UserInputService.KeyboardEnabled or UserInputService.GamepadEnabled
 		fpShot.root.Visible = fp
 		fpStart.root.Visible = fp
@@ -265,7 +270,8 @@ local function build()
 	table.insert(redrawers, function()
 		blood.toggle.set(values.blood, true)
 		shake.toggle.set(values.shake, true)
-		monitor.toggle.set(values.deadMon, true)
+		monitor.toggle.set(not Settings.cardHidden(), true)
+		monitor.root.Visible = true
 		fpShot.toggle.set(values.fpShot, true)
 		fpStart.toggle.set(values.fpStart, true)
 	end)

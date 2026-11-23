@@ -1319,7 +1319,7 @@ function HospitalCharts.start()
 			end
 		end
 		local b = shotBody
-		local live = b ~= nil and b.Parent ~= nil and t - shotAt < HospitalCharts.HOLD
+		local live = b ~= nil and not Settings.cardHidden() and b.Parent ~= nil and t - shotAt < HospitalCharts.HOLD
 			and not ReplayController.isPlaying() and player:GetAttribute("Building") ~= true
 		if not live then
 			if auto then

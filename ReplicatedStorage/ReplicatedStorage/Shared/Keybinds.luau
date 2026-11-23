@@ -52,6 +52,7 @@ Keybinds.ACTIONS = table.freeze({
 	{ id = "MissionHide", label = "Hide or show the mission card", context = "Play", default = "Equals", group = "PLAY" },
 	{ id = "Recenter", label = "Lab view: back to the middle", context = "Play", default = "Home", group = "PLAY" },
 	{ id = "CleanUp", label = "Sweep the lab clean", context = "Global", default = "Delete", group = "PLAY" },
+	{ id = "BodyCard", label = "Hide or show the body card", context = "Global", default = "Period", group = "PLAY" },
 	{ id = "Catalog", label = "All weapons", context = "Play", default = "T", group = "PLAY" },
 	{ id = "Slot1", label = "Weapon slot 1", context = "Play", default = "One", group = "PLAY" },
 	{ id = "Slot2", label = "Weapon slot 2", context = "Play", default = "Two", group = "PLAY" },
