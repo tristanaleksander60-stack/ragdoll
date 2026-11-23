@@ -34,7 +34,7 @@ local BRUISE_AT: { [string]: string } = { UpperArm = "UpperArm", ArmStump = "Upp
 	Thigh = "UpperLeg", Femoral = "UpperLeg", Shin = "LowerLeg", Foot = "Foot" }
 local function hurtOf(model: Model): ({ [string]: number }, { [string]: string })
 	local count: { [string]: number } = {}
-	if model:GetAttribute("Vital") ~= "Dead" then
+	do
 		for _, w in Anatomy.parseWounds(model:GetAttribute("Wounds")) do
 			local side, rest = string.match(w.zone.id, "^(%u%l+)(%u.*)$")
 			local piece = rest and BRUISE_AT[rest]
@@ -275,6 +275,11 @@ local function dress(model: Model)
 	folder.Parent = model
 	local function showHurt()
 		if folder.Parent ~= model then
+			return
+		end
+		-- (23 Nov 2026, owner: the purple stays until it is awake again, also while it lies dead and comes round.)
+		local vital = model:GetAttribute("Vital")
+		if (vital == "Dead" or vital == "Unconscious") and (model:GetAttribute("Wounds") or "") == "" then
 			return
 		end
 		local wrap: { [string]: string }

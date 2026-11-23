@@ -848,6 +848,9 @@ VitalsService.ROT_OUT = ROT_OUT
 
 -- Dead: every limb slowly green (its own colours kept to give back); alive again: the colours back.
 local function paintDead(model: Model, dead: boolean)
+	if dead and not Config.DEAD_GREEN then
+		return -- (23 Nov 2026, owner: they do not turn green)
+	end
 	local kept = trueColors[model]
 	if dead then
 		if kept then
