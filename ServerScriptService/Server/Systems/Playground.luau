@@ -324,6 +324,51 @@ local function buildCannon()
 								DummyControl.push(m, CANNON_DIRECTION * CANNON_SPEED * Playground.CANNON_DUMMY_BOOST)
 								FxService.hit(muzzle.Position, 140, "CannonPad")
 								tearOff(m, Playground.TEAR_CANNON, muzzle.Position)
+								-- (Phase D, 23 Nov 2026: "cannon smoke and recoil"): a flash and a cloud of smoke out of
+								-- the muzzle, and the cannon kicks back on its wheels and rolls home.
+								task.spawn(function()
+									local puff = Instance.new("Part")
+									puff.Anchored, puff.CanCollide, puff.CanQuery, puff.CanTouch, puff.Transparency = true, false, false, false, 1
+									puff.Size = Vector3.one * 0.2
+									puff.CFrame = CFrame.lookAt(muzzle.Position, muzzle.Position + CANNON_DIRECTION)
+									puff.Parent = folder
+									local smoke = Instance.new("ParticleEmitter")
+									smoke.Texture = "rbxasset://textures/particles/smoke_main.dds"
+									smoke.Color = ColorSequence.new(Color3.fromRGB(235, 235, 235), Color3.fromRGB(120, 120, 120))
+									smoke.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 2), NumberSequenceKeypoint.new(1, 7) })
+									smoke.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 1) })
+									smoke.Speed = NumberRange.new(8, 18)
+									smoke.SpreadAngle = Vector2.new(25, 25)
+									smoke.Drag = 2
+									smoke.Lifetime = NumberRange.new(1.2, 2.2)
+									smoke.EmissionDirection = Enum.NormalId.Front
+									smoke.Rate = 0
+									smoke.Parent = puff
+									local fire = smoke:Clone()
+									fire.Texture = ""
+									fire.Color = ColorSequence.new(Color3.fromRGB(255, 220, 120), Color3.fromRGB(255, 110, 30))
+									fire.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.6), NumberSequenceKeypoint.new(1, 0) })
+									fire.Lifetime = NumberRange.new(0.12, 0.25)
+									fire.LightEmission = 1
+									fire.Parent = puff
+									smoke:Emit(30)
+									fire:Emit(25)
+									game:GetService("Debris"):AddItem(puff, 3)
+									local model = folder:FindFirstChild("CannonModel")
+									if model and model:IsA("Model") then
+										local home = model:GetPivot()
+										local kick = -CANNON_DIRECTION.Unit * 1.4
+										for i = 1, 6 do
+											model:PivotTo(home + kick * (1 - (i - 1) / 6) * (if i == 1 then 1 else 0.9))
+											task.wait(0.03)
+										end
+										for i = 1, 12 do
+											model:PivotTo(home + kick * (1 - i / 12) * 0.9)
+											task.wait(0.03)
+										end
+										model:PivotTo(home)
+									end
+								end)
 							end
 							task.wait(2.5)
 							loading[m] = nil

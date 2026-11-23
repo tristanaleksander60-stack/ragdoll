@@ -416,6 +416,18 @@ local function run(job: Job)
 	local event = Events.byId[job.id]
 	current = job
 	log.info(string.format("%s: %s (%s)", event.name, job.by, job.source))
+	-- (Phase D, 23 Nov 2026, owner: "events more realistic: a short warning before"): the lab's player (every player
+	-- for an all-labs event) sees "INCOMING!" 1.5 s before it starts. Not for self-tests.
+	if job.source ~= "Test" then
+		for _, p in Players:GetPlayers() do
+			if job.allLabs or p.UserId == job.hostId then
+				pcall(function()
+					(require(script.Parent:WaitForChild("ProgressService")) :: any).notice(p, "\u{26A0}\u{FE0F} " .. string.upper(event.name) .. " INCOMING!")
+				end)
+			end
+		end
+		task.wait(1.5)
+	end
 	local undo: { () -> () } = {}
 	local ok, err = pcall(function()
 		if failStarts > 0 then

@@ -232,6 +232,94 @@ local function swallow(m: Machine, model: Model, inside: (Model) -> Vector3)
 end
 
 ------------------------------------------------------------------------------------------------
+-- Phase D helpers (23 Nov 2026): a one-off burst of particles, bones that fly, and a little block ragdoll (a stand-in
+-- seen spinning in the washer or hatching from the egg while the real body is hidden).
+
+local function spray(f: Instance, at: Vector3, colors: { Color3 }, n: number, speed: number, size: number, dir: Vector3?)
+	local p = Instance.new("Part")
+	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.Transparency = true, false, false, false, 1
+	p.Size = Vector3.one * 0.2
+	p.CFrame = if dir and dir.Magnitude > 0.01 then CFrame.lookAt(at, at + dir) else CFrame.new(at)
+	p.Parent = f
+	local e = Instance.new("ParticleEmitter")
+	local keys = {}
+	for i, c in colors do
+		table.insert(keys, ColorSequenceKeypoint.new(if #colors == 1 then 0 else (i - 1) / (#colors - 1), c))
+	end
+	if #keys == 1 then
+		table.insert(keys, ColorSequenceKeypoint.new(1, colors[1]))
+	end
+	e.Color = ColorSequence.new(keys)
+	e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, size), NumberSequenceKeypoint.new(1, size * 0.3) })
+	e.Speed = NumberRange.new(speed * 0.5, speed)
+	e.SpreadAngle = if dir then Vector2.new(35, 35) else Vector2.new(180, 180)
+	e.EmissionDirection = Enum.NormalId.Front
+	e.Acceleration = Vector3.new(0, -40, 0)
+	e.Lifetime = NumberRange.new(0.5, 1)
+	e.Rate = 0
+	e.Parent = p
+	e:Emit(n)
+	game:GetService("Debris"):AddItem(p, 2)
+end
+
+local function bones(f: Instance, at: Vector3, dir: Vector3, n: number)
+	for i = 1, n do
+		local bone = Instance.new("Part")
+		bone.Name = "Bone"
+		bone.Size = if i % 3 == 0 then Vector3.one * 0.55 else Vector3.new(0.25, 0.25, 1.1)
+		bone.Shape = if i % 3 == 0 then Enum.PartType.Ball else Enum.PartType.Block
+		bone.Color = Color3.fromRGB(236, 228, 208)
+		bone.Material = Enum.Material.SmoothPlastic
+		bone.CFrame = CFrame.new(at) * CFrame.Angles(math.random() * 6, math.random() * 6, 0)
+		bone.CanQuery, bone.CanTouch = false, false
+		bone.Parent = f
+		bone.AssemblyLinearVelocity = dir * math.random(14, 26) + Vector3.new(math.random(-8, 8), math.random(10, 20), math.random(-8, 8))
+		game:GetService("Debris"):AddItem(bone, 6)
+	end
+end
+
+type Puppet = { parts: { [string]: Part }, set: (CFrame, number) -> (), remove: () -> () }
+local function puppet(f: Instance, scale: number): Puppet
+	local parts: { [string]: Part } = {}
+	local white = Color3.fromRGB(226, 226, 222)
+	local function piece(name: string, size: Vector3, shape: Enum.PartType?)
+		local p = Instance.new("Part")
+		p.Name = "Puppet" .. name
+		p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch = true, false, false, false
+		p.Size = size * scale
+		p.Color = white
+		p.Material = Enum.Material.SmoothPlastic
+		if shape then
+			p.Shape = shape
+		end
+		p.Parent = f
+		parts[name] = p
+	end
+	piece("Torso", Vector3.new(2, 2, 1))
+	piece("Head", Vector3.one * 1.2, Enum.PartType.Ball)
+	piece("LA", Vector3.new(0.8, 2, 0.8))
+	piece("RA", Vector3.new(0.8, 2, 0.8))
+	piece("LL", Vector3.new(0.9, 2, 0.9))
+	piece("RL", Vector3.new(0.9, 2, 0.9))
+	local function set(root: CFrame, t: number)
+		local s = scale
+		local flail = math.sin(t * 12)
+		parts.Torso.CFrame = root
+		parts.Head.CFrame = root * CFrame.new(0, 1.65 * s, 0)
+		parts.LA.CFrame = root * CFrame.new(-1.4 * s, 0.9 * s, 0) * CFrame.Angles(flail, 0, 0) * CFrame.new(0, -0.9 * s, 0)
+		parts.RA.CFrame = root * CFrame.new(1.4 * s, 0.9 * s, 0) * CFrame.Angles(-flail, 0, 0) * CFrame.new(0, -0.9 * s, 0)
+		parts.LL.CFrame = root * CFrame.new(-0.5 * s, -1 * s, 0) * CFrame.Angles(-flail * 0.7, 0, 0) * CFrame.new(0, -1 * s, 0)
+		parts.RL.CFrame = root * CFrame.new(0.5 * s, -1 * s, 0) * CFrame.Angles(flail * 0.7, 0, 0) * CFrame.new(0, -1 * s, 0)
+	end
+	local function remove()
+		for _, p in parts do
+			p:Destroy()
+		end
+	end
+	return { parts = parts, set = set, remove = remove }
+end
+
+------------------------------------------------------------------------------------------------
 -- The creatures
 
 local BUILD: { [string]: (Folder, CFrame, Machine) -> ((() -> ())?) } = {}
@@ -498,6 +586,39 @@ end
 BUILD.Plant = function(f, at, m)
 	local plant = place(f, "MPlant", at.Position, 180, 22)
 	local base = if plant then plant:GetPivot() else at
+	-- (Phase D, 23 Nov 2026): the plant lunges down over the body and two big jaws (green, red inside, white
+	-- teeth) snap shut on it; it chews, juice and blood drip from the jaws, then it rears back and spits the bones
+	-- out before the body is flung up and away.
+	local head = base * CFrame.new(0, 14, 0)
+	local green = Color3.fromRGB(70, 140, 60)
+	local function jaw(name: string): (Part, { Part })
+		local j = part(f, name, Vector3.new(6, 0.8, 5), head, green, Enum.Material.SmoothPlastic)
+		local inner = part(f, name .. "Mouth", Vector3.new(5.4, 0.2, 4.4), head, Color3.fromRGB(170, 30, 40), Enum.Material.SmoothPlastic)
+		local teeth = { inner }
+		for i = -2, 2 do
+			local tooth = part(f, name .. "Tooth", Vector3.new(0.35, 0.8, 0.35), head, Color3.fromRGB(245, 242, 230), Enum.Material.SmoothPlastic)
+			tooth:SetAttribute("X", i * 1.1)
+			table.insert(teeth, tooth)
+		end
+		return j, teeth
+	end
+	local upper, upperBits = jaw("JawTop")
+	local lower, lowerBits = jaw("JawBottom")
+	local function setJaws(at0: CFrame, open: number)
+		-- open: 0 shut, 1 wide (75 degrees each way, hinged at the back edge)
+		local a = math.rad(75 * open)
+		local hingeTop = at0 * CFrame.new(0, 0.5, 2.5) * CFrame.Angles(a, 0, 0) * CFrame.new(0, 0, -2.5)
+		local hingeBot = at0 * CFrame.new(0, -0.5, 2.5) * CFrame.Angles(-a, 0, 0) * CFrame.new(0, 0, -2.5)
+		upper.CFrame = hingeTop
+		lower.CFrame = hingeBot
+		for i, b in upperBits do
+			b.CFrame = if i == 1 then hingeTop * CFrame.new(0, -0.45, 0) else hingeTop * CFrame.new(b:GetAttribute("X") :: number, -0.75, -2.1) * CFrame.Angles(math.rad(180), 0, 0)
+		end
+		for i, b in lowerBits do
+			b.CFrame = if i == 1 then hingeBot * CFrame.new(0, 0.45, 0) else hingeBot * CFrame.new(b:GetAttribute("X") :: number, 0.75, -2.1)
+		end
+	end
+	setJaws(head, 0.35)
 	return function()
 		if m.busy then
 			return
@@ -507,16 +628,59 @@ BUILD.Plant = function(f, at, m)
 			return
 		end
 		swallow(m, body, function(model)
-			task.spawn(hold, model, function()
-				return base * CFrame.new(0, 14, 0)
-			end, 1.6)
-			hideBody(model, true)
-			play(1.4, function(t)
+			local r = rootOf(model)
+			local down = CFrame.new((r and r.Position or at.Position) + Vector3.new(0, 2.5, 0)) * head.Rotation
+			-- Lunge down, jaws wide; snap.
+			play(0.25, function(t)
+				setJaws(head:Lerp(down, t), 0.35 + 0.65 * t)
 				if plant then
-					-- (A chomping bob and sway: never a rescale each frame.)
-					plant:PivotTo(base * CFrame.new(0, math.abs(math.sin(t * math.pi * 4)) * 1.2, 0) * CFrame.Angles(math.sin(t * math.pi * 4) * 0.12, 0, 0))
+					plant:PivotTo(base * CFrame.new(0, -1.5 * t, 0) * CFrame.Angles(math.rad(15) * t, 0, 0))
 				end
 			end)
+			play(0.08, function(t)
+				setJaws(down, 1 - t)
+			end)
+			lazy("FxService").hit(down.Position, 90, "Punch")
+			spray(f, down.Position, { Color3.fromRGB(150, 18, 24) }, 25, 14, 0.5)
+			hideBody(model, true)
+			task.spawn(hold, model, function()
+				return head * CFrame.new(0, -1, 0)
+			end, 3)
+			-- Back up and chew, juice and blood dripping.
+			play(0.3, function(t)
+				setJaws(down:Lerp(head, t), 0)
+				if plant then
+					plant:PivotTo(base * CFrame.new(0, -1.5 * (1 - t), 0) * CFrame.Angles(math.rad(15) * (1 - t), 0, 0))
+				end
+			end)
+			play(1.6, function(t)
+				local chew = math.abs(math.sin(t * math.pi * 6))
+				setJaws(head * CFrame.new(0, math.sin(t * 20) * 0.2, 0), chew * 0.25)
+				if math.floor(t * 12) ~= math.floor((t - 0.02) * 12) then
+					spray(f, (head * CFrame.new(0, -1, -2)).Position, { Color3.fromRGB(140, 200, 60), Color3.fromRGB(150, 18, 24) }, 6, 4, 0.35, Vector3.new(0, -1, 0))
+				end
+				if plant then
+					plant:PivotTo(base * CFrame.Angles(math.sin(t * math.pi * 6) * 0.06, 0, math.sin(t * 7) * 0.05))
+				end
+			end)
+			-- Rear back and spit the bones, then the body.
+			play(0.2, function(t)
+				setJaws(head * CFrame.Angles(math.rad(-25) * t, 0, 0), t)
+				if plant then
+					plant:PivotTo(base * CFrame.Angles(math.rad(-10) * t, 0, 0))
+				end
+			end)
+			bones(f, (head * CFrame.new(0, 0, -3)).Position, head.LookVector, 7)
+			spray(f, (head * CFrame.new(0, 0, -3)).Position, { Color3.fromRGB(140, 200, 60) }, 25, 18, 0.5, head.LookVector)
+			play(0.4, function(t)
+				setJaws(head, 1 - 0.65 * t)
+				if plant then
+					plant:PivotTo(base * CFrame.Angles(math.rad(-10) * (1 - t), 0, 0))
+				end
+			end)
+			if plant then
+				plant:PivotTo(base)
+			end
 			hideBody(model, false)
 			return Vector3.new(0, 110, 0) + m.toLab * 30
 		end)
@@ -693,6 +857,23 @@ BUILD.Whale = function(f, at, m)
 		end
 	end
 	local basePivot = shark and shark:GetPivot()
+	-- (Phase D, 23 Nov 2026: alive in its tank: a slow patrol from end to end, the body swaying as it swims; on a
+	-- catch the water foams and splashes.)
+	local swimHome = basePivot
+	if shark and swimHome then
+		task.spawn(function()
+			local t = 0
+			while f.Parent and shark.Parent do
+				if not m.busy and m.owner() then
+					t += 1 / 15
+					local along = math.sin(t * 0.35) * 2.5
+					local sway = math.sin(t * 2.2) * 0.12
+					shark:PivotTo((swimHome :: CFrame) * CFrame.new(along, math.sin(t * 0.8) * 0.15, 0) * CFrame.Angles(0, sway, math.sin(t * 1.1) * 0.04))
+				end
+				task.wait(1 / 15)
+			end
+		end)
+	end
 	-- A red mist burst when the tank eats (replaces the whale's clean white spout).
 	local burst = Instance.new("ParticleEmitter")
 	burst.Texture = "rbxasset://textures/particles/smoke_main.dds"
@@ -727,6 +908,8 @@ BUILD.Whale = function(f, at, m)
 			hideBody(model, true)
 			burst:Emit(30)
 			local TweenService = game:GetService("TweenService")
+			spray(f, (at * CFrame.new(0, 1.2, 0)).Position, { Color3.fromRGB(255, 255, 255), Color3.fromRGB(200, 230, 240) }, 60, 20, 0.9, Vector3.new(0, 1, 0))
+			lazy("FxService").hit((at * CFrame.new(0, 1, 0)).Position, 120, "CannonPad")
 			local blue = pool.Color
 			local red = Color3.fromRGB(150, 18, 24)
 			TweenService:Create(pool, TweenInfo.new(0.9), { Color = red, Transparency = 0.15 }):Play()
@@ -812,6 +995,15 @@ BUILD.Chicken = function(f, at, m)
 	local hen = place(f, "MChicken", (at * CFrame.new(0, 0.4, 2)).Position, 180, 9)
 	local nest = at * CFrame.new(0, 0, -6)
 	part(f, "Nest", Vector3.new(6, 1, 6), nest * CFrame.new(0, 0.5, 0), Color3.fromRGB(205, 180, 110), Enum.Material.Grass, Enum.PartType.Cylinder).CFrame = nest * CFrame.new(0, 0.5, 0) * CFrame.Angles(0, 0, math.rad(90))
+	local henHome = if hen then hen:GetPivot() else at
+	-- (Phase D, 23 Nov 2026): the hen struts to the body and pecks it three times (feathers fly), gobbles it, waddles
+	-- onto the nest and sits; an egg grows under her; she hops off, the egg wobbles harder and harder, cracks (shell
+	-- bits fly) and a little ragdoll flails out of it before the real one is flung from the nest.
+	local function setHen(cf: CFrame)
+		if hen then
+			hen:PivotTo(cf)
+		end
+	end
 	return function()
 		if m.busy then
 			return
@@ -821,33 +1013,74 @@ BUILD.Chicken = function(f, at, m)
 			return
 		end
 		swallow(m, body, function(model)
+			local r = rootOf(model)
+			local target = if r then Vector3.new(r.Position.X, henHome.Position.Y, r.Position.Z) else henHome.Position
+			local face = if (target - henHome.Position).Magnitude > 0.5 then CFrame.lookAt(henHome.Position, target) else henHome
+			local near = face + (target - henHome.Position) * 0.6
+			play(0.4, function(t)
+				setHen(henHome:Lerp(near, t) * CFrame.new(0, math.abs(math.sin(t * math.pi * 4)) * 0.4, 0))
+			end)
+			for _ = 1, 3 do
+				play(0.14, function(t)
+					setHen(near * CFrame.Angles(math.rad(-35) * math.sin(t * math.pi), 0, 0))
+				end)
+				local beak = (near * CFrame.new(0, 1.5, -2)).Position
+				spray(f, beak, { Color3.fromRGB(255, 255, 255), Color3.fromRGB(240, 220, 190) }, 10, 10, 0.4)
+				lazy("FxService").hit(beak, 30, "Punch")
+			end
 			hideBody(model, true)
 			task.spawn(hold, model, function()
 				return nest * CFrame.new(0, 3, 0)
-			end, 2.2)
-			if hen then
-				local base = hen:GetPivot()
-				play(0.6, function(t)
-					hen:PivotTo(base * CFrame.new(0, math.abs(math.sin(t * math.pi * 3)) * 1.5, 0))
-				end)
-			end
-			local egg = part(f, "DummyEgg", Vector3.new(4.5, 6, 4.5), nest * CFrame.new(0, 3.5, 0), Color3.fromRGB(250, 246, 236), Enum.Material.SmoothPlastic, Enum.PartType.Ball)
-			table.insert(m.temp, egg)
-			play(1.6, function(t)
-				egg.CFrame = nest * CFrame.new(0, 3.5, 0) * CFrame.Angles(0, 0, math.sin(t * 25) * 0.2 * t)
+			end, 5)
+			local onNest = CFrame.lookAt(nest.Position, nest.Position + henHome.LookVector) * CFrame.new(0, 1.2, 0)
+			play(0.5, function(t)
+				setHen(near:Lerp(onNest, t) * CFrame.new(0, math.abs(math.sin(t * math.pi * 3)) * 0.5, 0))
 			end)
+			local egg = part(f, "DummyEgg", Vector3.new(1, 1.3, 1), nest * CFrame.new(0, 1.2, 0), Color3.fromRGB(250, 246, 236), Enum.Material.SmoothPlastic, Enum.PartType.Ball)
+			table.insert(m.temp, egg)
+			play(0.9, function(t)
+				setHen(onNest * CFrame.new(0, -0.4 * t, 0) * CFrame.Angles(0, 0, math.sin(t * 30) * 0.05))
+				egg.Size = Vector3.new(1 + 3.5 * t, 1.3 + 4.7 * t, 1 + 3.5 * t)
+				egg.CFrame = nest * CFrame.new(0, 1 + 2.5 * t, 0)
+			end)
+			play(0.4, function(t)
+				setHen(onNest:Lerp(henHome, t) * CFrame.new(0, math.sin(t * math.pi) * 2, 0))
+			end)
+			setHen(henHome)
+			play(1.4, function(t)
+				egg.CFrame = nest * CFrame.new(0, 3.5, 0) * CFrame.Angles(0, 0, math.sin(t * (15 + t * 25)) * 0.35 * t)
+			end)
+			-- Crack: shell bits, then a little ragdoll flails out.
+			local eggAt = egg.Position
 			egg:Destroy()
+			spray(f, eggAt, { Color3.fromRGB(250, 246, 236), Color3.fromRGB(230, 225, 210) }, 30, 16, 0.6)
+			lazy("FxService").hit(eggAt, 80, "Punch")
+			local chick = puppet(f, 0.45)
+			play(0.6, function(t)
+				chick.set(CFrame.new(eggAt + Vector3.new(0, t * 3, 0)) * CFrame.Angles(0, t * 6, 0), t * 3)
+			end)
+			chick.remove()
 			hideBody(model, false)
 			return Vector3.new(0, 70, 0) + m.toLab * 25
 		end)
 	end
 end
 
--- WASHER: spins a dummy (the machine shakes) and throws it out of the door.
+-- WASHER: the door swings open, the body goes in, you see a ragdoll spin round behind the glass while the water
+-- fills and turns red and the machine shakes on its feet; the door bangs open, red water splashes out and the
+-- body flops out limp, a piece short. (Phase D, 23 Nov 2026.)
 BUILD.Washer = function(f, at, m)
 	local washer = place(f, "MWasher", at.Position, 0, 12)
 	local base = if washer then washer:GetPivot() else at
 	local door = base * CFrame.new(0, 6, -6)
+	local drum = door * CFrame.new(0, 0, 1.6)
+	local glass = part(f, "WasherGlass", Vector3.new(0.2, 5.4, 5.4), door * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(190, 220, 235), Enum.Material.Glass, Enum.PartType.Cylinder)
+	glass.Transparency = 0.55
+	local hinge = door * CFrame.new(-2.8, 0, 0)
+	local function setDoor(open: number)
+		glass.CFrame = hinge * CFrame.Angles(0, math.rad(-100 * open), 0) * CFrame.new(2.8, 0, 0) * CFrame.Angles(0, math.rad(90), 0)
+	end
+	setDoor(0)
 	return function()
 		if m.busy then
 			return
@@ -857,38 +1090,87 @@ BUILD.Washer = function(f, at, m)
 			return
 		end
 		swallow(m, body, function(model)
+			play(0.25, function(t)
+				setDoor(t)
+			end)
 			hideBody(model, true)
 			task.spawn(hold, model, function()
 				return base * CFrame.new(0, 6, 0)
-			end, 2.2)
-			play(2.0, function(t)
+			end, 3.6)
+			play(0.25, function(t)
+				setDoor(1 - t)
+			end)
+			local water = part(f, "WasherWater", Vector3.new(0.3, 0.2, 5), drum * CFrame.new(0, -2.2, 0) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(80, 150, 220), Enum.Material.Glass, Enum.PartType.Cylinder)
+			water.Transparency = 0.35
+			table.insert(m.temp, water)
+			local doll = puppet(f, 0.6)
+			local blue, red = Color3.fromRGB(80, 150, 220), Color3.fromRGB(150, 20, 28)
+			play(3.0, function(t)
+				local spin = t * t * 40
+				doll.set(drum * CFrame.Angles(0, 0, spin) * CFrame.new(0, 1, 0) * CFrame.Angles(spin * 0.7, 0, 0), t * 6)
+				local level = math.min(1, t * 2)
+				water.Size = Vector3.new(0.3, 0.2 + level * 4.6, 5)
+				water.CFrame = drum * CFrame.new(0, -2.2 + level * 2.3, 0) * CFrame.Angles(0, math.rad(90), 0)
+				water.Color = blue:Lerp(red, math.clamp(t * 1.4 - 0.2, 0, 1))
 				if washer then
-					washer:PivotTo(base * CFrame.new(math.sin(t * 90) * 0.3, 0, math.cos(t * 70) * 0.3))
+					local shake = 0.15 + t * 0.35
+					washer:PivotTo(base * CFrame.new(math.sin(t * 90) * shake, math.abs(math.sin(t * 60)) * shake * 0.5, math.cos(t * 70) * shake))
 				end
 			end)
 			if washer then
 				washer:PivotTo(base)
 			end
+			doll.remove()
+			play(0.15, function(t)
+				setDoor(t)
+			end)
+			spray(f, door.Position, { red, Color3.fromRGB(110, 10, 20) }, 50, 18, 0.6, door.LookVector + Vector3.new(0, 0.2, 0))
+			water:Destroy()
+			task.delay(1.2, function()
+				play(0.4, function(t)
+					setDoor(1 - t)
+				end)
+			end)
 			hideBody(model, false)
-			return m.toLab * 85 + Vector3.new(0, 45, 0)
+			if model.Parent then
+				lazy("DummyControl").move(model, door * CFrame.new(0, -1, -3))
+			end
+			return m.toLab * 45 + Vector3.new(0, 20, 0)
 		end)
 	end
 end
 
 -- SLINGSHOT: a tree with two bands and a pad; a dummy on the pad is pulled back and fired.
 BUILD.Slingshot = function(f, at, m)
-	place(f, "TreeRound", (at * CFrame.new(-5, 0, 4)).Position, 0, 20)
-	place(f, "TreeRound", (at * CFrame.new(5, 0, 4)).Position, 60, 20)
+	local treeL = place(f, "TreeRound", (at * CFrame.new(-5, 0, 4)).Position, 0, 20)
+	local treeR = place(f, "TreeRound", (at * CFrame.new(5, 0, 4)).Position, 60, 20)
+	local homeL = treeL and treeL:GetPivot()
+	local homeR = treeR and treeR:GetPivot()
 	local pad = part(f, "SlingPad", Vector3.new(6, 0.4, 6), at * CFrame.new(0, 0.2, 0), Color3.fromRGB(150, 60, 50), Enum.Material.Fabric)
 	local left = part(f, "Band", Vector3.new(0.4, 0.4, 1), at, Color3.fromRGB(120, 40, 30), Enum.Material.Fabric)
 	local right = part(f, "Band", Vector3.new(0.4, 0.4, 1), at, Color3.fromRGB(120, 40, 30), Enum.Material.Fabric)
-	local postL, postR = (at * CFrame.new(-5, 7, 4)).Position, (at * CFrame.new(5, 7, 4)).Position
+	local postL0, postR0 = (at * CFrame.new(-5, 7, 4)).Position, (at * CFrame.new(5, 7, 4)).Position
+	local postL, postR = postL0, postR0
 	local function bands(to: Vector3)
 		for _, pair in { { left, postL }, { right, postR } } do
 			local b, post = pair[1], pair[2]
 			b.Size = Vector3.new(0.4, 0.4, math.max(0.5, (to - post).Magnitude))
 			b.CFrame = CFrame.lookAt((to + post) / 2, to)
 		end
+	end
+	-- (Phase D, 23 Nov 2026): as the band is drawn back the two trees bend in towards it; let go, they whip forward
+	-- past straight and wobble back, and the body flies far.
+	local function bend(k: number)
+		local tilt = math.rad(14) * k
+		if treeL and homeL then
+			treeL:PivotTo(homeL * CFrame.Angles(tilt, 0, -tilt * 0.6))
+		end
+		if treeR and homeR then
+			treeR:PivotTo(homeR * CFrame.Angles(tilt, 0, tilt * 0.6))
+		end
+		local back = at:VectorToWorldSpace(Vector3.new(0, -0.4 * k, 1.6 * k))
+		postL = postL0 + at:VectorToWorldSpace(Vector3.new(1.2 * k, 0, 0)) + back
+		postR = postR0 + at:VectorToWorldSpace(Vector3.new(-1.2 * k, 0, 0)) + back
 	end
 	bands(pad.Position + Vector3.new(0, 3, 0))
 	return function()
@@ -901,24 +1183,35 @@ BUILD.Slingshot = function(f, at, m)
 		end
 		swallow(m, body, function(model)
 			local from = at * CFrame.new(0, 3, 0)
-			local back = at * CFrame.new(0, 4, 9)
+			local back = at * CFrame.new(0, 4, 11)
 			task.spawn(hold, model, function()
 				return back
-			end, 0.9)
-			play(0.8, function(t)
-				bands(from.Position:Lerp(back.Position, t))
+			end, 1.3)
+			play(1.1, function(t)
+				local k = t * t
+				bend(k)
+				bands(from.Position:Lerp(back.Position, k))
 			end)
-			task.delay(0.1, function()
-				play(0.15, function(t)
+			lazy("FxService").hit(back.Position, 40, "Punch")
+			task.delay(0.12, function()
+				play(0.12, function(t)
+					bend(1 - 1.6 * t)
 					bands(back.Position:Lerp(from.Position, t))
 				end)
+				play(0.7, function(t)
+					bend(-0.6 * (1 - t) * math.cos(t * math.pi * 3))
+				end)
+				bend(0)
+				bands(pad.Position + Vector3.new(0, 3, 0))
 			end)
-			return at.LookVector * 110 + Vector3.new(0, 60, 0) -- (toward the lab)
+			spray(f, back.Position, { Color3.fromRGB(150, 120, 80) }, 18, 10, 0.5)
+			return at.LookVector * 150 + Vector3.new(0, 75, 0) -- (a long flight toward the lab)
 		end)
 	end
 end
 
--- MOLE: a dirt patch; every few seconds it pops up under one dummy on it and throws it up.
+-- MOLE: a dirt patch; it digs up under a dummy (dirt flies, a hole opens), drags it under, and a moment later the
+-- earth bursts somewhere else on the patch and it throws the body sky-high. (Phase D, 23 Nov 2026.)
 BUILD.Mole = function(f, at, m)
 	part(f, "MoleDirt", Vector3.new(20, 0.3, 20), at * CFrame.new(0, 0.15, 0), Color3.fromRGB(110, 82, 58), Enum.Material.Ground)
 	for i = 1, 5 do
@@ -927,6 +1220,12 @@ BUILD.Mole = function(f, at, m)
 	end
 	local mole = place(f, "MMole", (at * CFrame.new(0, -6, 0)).Position, 0, 6)
 	local nextAt = 0
+	local DIRT = { Color3.fromRGB(110, 82, 58), Color3.fromRGB(80, 60, 42) }
+	local function setMole(cf: CFrame)
+		if mole then
+			mole:PivotTo(cf)
+		end
+	end
 	return function()
 		if m.busy or os.clock() < nextAt then
 			return
@@ -939,17 +1238,43 @@ BUILD.Mole = function(f, at, m)
 		swallow(m, body, function(model)
 			local r = rootOf(model)
 			local under = if r then CFrame.new(r.Position.X, at.Position.Y, r.Position.Z) else at
-			if mole then
-				play(0.25, function(t)
-					mole:PivotTo(under * CFrame.new(0, -5 + 6 * t, 0))
+			local hole = part(f, "MoleHole", Vector3.new(0.2, 0.5, 0.5), under * CFrame.new(0, 0.32, 0) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(30, 22, 16), Enum.Material.Ground, Enum.PartType.Cylinder)
+			table.insert(m.temp, hole)
+			play(0.25, function(t)
+				hole.Size = Vector3.new(0.2, 0.5 + 4 * t, 0.5 + 4 * t)
+				setMole(under * CFrame.new(0, -5 + 5.5 * t, 0))
+			end)
+			spray(f, under.Position + Vector3.new(0, 0.5, 0), DIRT, 40, 18, 0.7, Vector3.new(0, 1, 0))
+			lazy("FxService").hit(under.Position, 60, "Punch")
+			-- Dragged under.
+			hideBody(model, true)
+			task.spawn(hold, model, function()
+				return under * CFrame.new(0, -3, 0)
+			end, 1.6)
+			play(0.3, function(t)
+				setMole(under * CFrame.new(0, 0.5 - 6 * t, 0))
+			end)
+			task.wait(0.8)
+			-- Up somewhere else: the earth bursts, the body flies.
+			local a = math.random() * math.pi * 2
+			local out = at * CFrame.new(math.cos(a) * 6, 0, math.sin(a) * 6)
+			spray(f, out.Position + Vector3.new(0, 0.5, 0), DIRT, 50, 22, 0.8, Vector3.new(0, 1, 0))
+			play(0.2, function(t)
+				setMole(out * CFrame.new(0, -5 + 6 * t, 0))
+				hole.Size = Vector3.new(0.2, 4.5 * (1 - t) + 0.1, 4.5 * (1 - t) + 0.1)
+			end)
+			hole:Destroy()
+			task.delay(0.8, function()
+				play(0.3, function(t)
+					setMole(out * CFrame.new(0, 1 - 7 * t, 0))
 				end)
-				task.delay(0.8, function()
-					play(0.3, function(t)
-						mole:PivotTo(under * CFrame.new(0, 1 - 7 * t, 0))
-					end)
-				end)
+			end)
+			hideBody(model, false)
+			if model.Parent then
+				lazy("DummyControl").move(model, out * CFrame.new(0, 3, 0))
 			end
-			return Vector3.new(0, 95, 0) + m.toLab * 30 -- (off the patch)
+			lazy("FxService").hit(out.Position, 100, "CannonPad")
+			return Vector3.new(0, 105, 0) + m.toLab * 30
 		end)
 	end
 end
