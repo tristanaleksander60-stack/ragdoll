@@ -17,6 +17,7 @@ local FirstPerson = {}
 
 local player = Players.LocalPlayer
 local on = false
+local leftAt = -10
 local kept: { mode: Enum.CameraMode, minZoom: number, maxZoom: number }? = nil
 local listeners: { (boolean) -> () } = {}
 
@@ -40,6 +41,7 @@ function FirstPerson.set(want: boolean)
 		kept = { mode = player.CameraMode, minZoom = player.CameraMinZoomDistance, maxZoom = player.CameraMaxZoomDistance }
 		player.CameraMode = Enum.CameraMode.LockFirstPerson
 	else
+		leftAt = os.clock()
 		local k = kept
 		player.CameraMode = if k then k.mode else Enum.CameraMode.Classic
 		if k then
@@ -155,7 +157,7 @@ function FirstPerson.start()
 	-- out leaves it; V still toggles. Roblox's own zoom is read, never fought: under ENTER_AT studs
 	-- from the head counts as in. Not in the lab view, not while seated (a car), not on touch.
 	game:GetService("RunService").RenderStepped:Connect(function()
-		if on or ViewMode.isLab() or not UserInputService.MouseEnabled or UserInputService.TouchEnabled then
+		if on or ViewMode.isLab() or os.clock() - leftAt < 0.6 or not (UserInputService.MouseEnabled or UserInputService.TouchEnabled) then
 			return
 		end
 		local camera = workspace.CurrentCamera
@@ -167,6 +169,13 @@ function FirstPerson.start()
 		end
 		if (camera.CFrame.Position - head.Position).Magnitude < FirstPerson.ENTER_AT then
 			FirstPerson.set(true)
+		end
+	end)
+	-- (23 Nov 2026, owner: "zoomed in on a phone I must see my weapon": pinching all the way in is first person too;
+	-- pinching out leaves it.)
+	UserInputService.TouchPinch:Connect(function(_, scale: number, _, _, processed: boolean)
+		if on and not processed and scale < 0.85 then
+			FirstPerson.set(false)
 		end
 	end)
 	UserInputService.InputChanged:Connect(function(input, processed)

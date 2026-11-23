@@ -28,6 +28,8 @@ local PokeController = require(Client:WaitForChild("PokeController"))
 local ViewMode = require(Client:WaitForChild("ViewMode"))
 local HudSlots = require(Client:WaitForChild("HudSlots"))
 local KitStyle = require(Client:WaitForChild("KitStyle"))
+local FirstPerson = require(Client:WaitForChild("FirstPerson")) :: any
+local AmmoClient = require(Client:WaitForChild("AmmoClient"))
 local SessionClient = require(Client:WaitForChild("SessionClient"))
 -- V9-NOW crosshair-sync: FeelV2 owns the recoil angles; we read them so the on-screen
 -- crosshair tracks exactly where the pitched/yawed camera's centre ray points, keeping
@@ -45,6 +47,7 @@ local button: TextButton? = nil
 local centreGui: ScreenGui? = nil
 local hand: TextLabel? = nil
 local holding = false
+local shownKind = "gun"
 
 local function gunPicked(): Toys.Toy?
 	local toy = Toys.byId[PokeController.getSelected()]
@@ -54,9 +57,32 @@ local function gunPicked(): Toys.Toy?
 	return nil
 end
 
--- Whether SHOOT and the crosshair show now.
+-- (23 Nov 2026, owner: learn from what the big ragdoll games do on phones. Theirs: ONE big button under the right thumb
+-- that says what the tool in your hand does, and a small RELOAD with the count beside it.) Every tool but Grab (a tap
+-- grabs) and the talk wand has it; tapping a ragdoll still works as before.
+local ACTION: { [string]: { word: string, color: Color3 } } = {
+	gun = { word = "SHOOT", color = SHOOT_RED },
+	hit = { word = "HIT", color = Color3.fromRGB(235, 120, 30) },
+	place = { word = "PLACE", color = Color3.fromRGB(46, 140, 220) },
+	boom = { word = "BOOM!", color = SHOOT_RED },
+	dummy = { word = "USE", color = Color3.fromRGB(46, 140, 220) },
+}
+local function actionPicked(): (Toys.Toy?, string)
+	local toy = Toys.byId[PokeController.getSelected()]
+	if not toy or toy.kind == "grab" or toy.id == "Wand" then
+		return nil, ""
+	end
+	if toy.gun then
+		return toy, "gun"
+	elseif toy.id == "C4" and ((player:GetAttribute("C4Armed") :: number?) or 0) > 0 then
+		return toy, "boom"
+	end
+	return toy, toy.kind
+end
+
+-- Whether the action button shows now.
 function TouchShoot.wanted(): boolean
-	return ViewMode.isTouch() and not ViewMode.isLab() and PokeController.active() and gunPicked() ~= nil and player.Character ~= nil
+	return ViewMode.isTouch() and not ViewMode.isLab() and PokeController.active() and actionPicked() ~= nil and player.Character ~= nil
 end
 
 -- Phase 0: a gamepad fires at the centre too (R2: GamepadControls), so it gets the crosshair
@@ -88,6 +114,9 @@ end
 local centreUntil = 0
 function TouchShoot.fire(): boolean
 	centreUntil = os.clock() + 0.45
+	if FirstPerson.isOn() then
+		(require(Client:WaitForChild("Viewmodel")) :: any).swing()
+	end
 	local at = centre()
 	return PokeController.pressAt(at) or PokeController.tapAt(at)
 end
@@ -105,8 +134,11 @@ local function holdFire()
 	holding = true
 	task.spawn(function()
 		while holding and TouchShoot.wanted() do
-			local toy = gunPicked()
+			local toy, kind = actionPicked()
 			TouchShoot.fire()
+			if kind ~= "gun" and kind ~= "hit" then
+				break -- (one press places one)
+			end
 			local cooldown = if toy then toy.cooldown else 0.2
 			if player:GetAttribute("ZeroDelay") == true then
 				cooldown = math.min(cooldown, Shop.ZERO_DELAY)
@@ -157,7 +189,7 @@ local function build()
 		local kind = input.UserInputType
 		if kind == Enum.UserInputType.Touch or kind == Enum.UserInputType.MouseButton1 then
 			holding = false
-			TweenService:Create(b, TweenInfo.new(0.12), { BackgroundColor3 = SHOOT_RED }):Play()
+			TweenService:Create(b, TweenInfo.new(0.12), { BackgroundColor3 = (ACTION[select(2, actionPicked())] or ACTION.gun).color }):Play()
 		end
 	end)
 	b.Parent = gui
@@ -202,6 +234,15 @@ local function build()
 		KitStyle.fit(z, 20)
 		KitStyle.press(z)
 	end
+	local rl = z:Clone()
+	rl.Name = "Reload"
+	rl.Text = ""
+	rl.BackgroundColor3 = Color3.fromRGB(34, 38, 46)
+	rl.Visible = false
+	rl.Activated:Connect(function()
+		AmmoClient.reload(nil)
+	end)
+	rl.Parent = gui
 	z.Parent = gui -- (its own box over SHOOT, not inside SHOOT's padding: review fix)
 	buttonGui = gui
 	gui.Parent = player:WaitForChild("PlayerGui")
@@ -212,6 +253,7 @@ local function build()
 		if zoom and zoom:IsA("GuiObject") then
 			HudSlots.apply(zoom, "Zoom", ctx)
 		end
+		HudSlots.apply(rl, "Reload", ctx)
 	end)
 
 	-- The crosshair in the middle (its own layer, which ignores the insets: the camera's centre ray).
@@ -322,6 +364,28 @@ function TouchShoot.start()
 			local toy = gunPicked()
 			zoom.Visible = want and toy ~= nil and (toy.id == "Sniper" or toy.id == "DMR")
 		end
+		local b = button
+		if want and b then
+			local _, kind = actionPicked()
+			local look = ACTION[kind] or ACTION.gun
+			if shownKind ~= kind then
+				shownKind = kind
+				b.Text = look.word
+				b.BackgroundColor3 = look.color
+			end
+			-- lihfolk-ignore: findfirstchild-chain (nil-checked on the next line)
+			local rl = bg and bg:FindFirstChild("Reload") :: TextButton?
+			if rl then
+				local toy = gunPicked()
+				local text = if toy then AmmoClient.text(toy.id) else nil
+				local scoped = toy ~= nil and (toy.id == "Sniper" or toy.id == "DMR") and HudSlots.context(true, false).portrait
+				rl.Visible = text ~= nil and not scoped
+				local word = if text == "RELOAD" then "..." elseif text then "RELOAD" .. string.char(10) .. text else ""
+				if rl.Text ~= word then
+					rl.Text = word
+				end
+			end
+		end
 		local h = hand
 		local camera = Workspace.CurrentCamera
 		local handShown = false
@@ -342,7 +406,7 @@ function TouchShoot.start()
 			local cross = cg:FindFirstChild("Cross") :: GuiObject?
 			-- (V10 phase 1, owner: "the phone crosshair not in the middle of the screen, only where you shoot": on a
 			-- touch screen it shows a moment after SHOOT fires there, and all the time only in first person.)
-			local centred = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
+			local centred = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter or FirstPerson.isOn()
 			local crossOn = (want and (os.clock() < centreUntil or centred)) or TouchShoot.padCross()
 			if cross and cross.Visible ~= crossOn then
 				cross.Visible = crossOn

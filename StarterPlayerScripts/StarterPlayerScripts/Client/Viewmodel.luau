@@ -216,6 +216,14 @@ local function frame(dt: number)
 	end
 end
 
+-- A touch or pad action button's blow (its press never reaches InputBegan as a click).
+function Viewmodel.swing()
+	local toy = Toys.byId[toolId or ""]
+	if FirstPerson.isOn() and toy and not toy.gun and os.clock() - swingAt > Viewmodel.SWING_TIME then
+		swingAt = os.clock()
+	end
+end
+
 function Viewmodel.start()
 	RunService.RenderStepped:Connect(frame)
 	table.insert(AmmoClient.onSpent, function(id: string)

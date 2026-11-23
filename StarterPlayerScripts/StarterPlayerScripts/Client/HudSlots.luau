@@ -152,6 +152,14 @@ SLOTS.Shoot = function(ctx)
 	return slot(1, 1, UDim2.new(1, -28, 1, -250), 92, 92)
 end
 
+-- 23 Nov 2026: RELOAD (touch, a gun with a magazine): over the jump button, beside the action button.
+SLOTS.Reload = function(ctx)
+	if ctx.phone then
+		return slot(1, 1, UDim2.new(1, -30, 1, -104), 60, 52)
+	end
+	return slot(1, 1, UDim2.new(1, -44, 1, -352), 64, 56)
+end
+
 -- Round 5, phase 1 (like the big ragdoll games):
 --   Weapons      the big WEAPONS button under the chaos meter: the next weapon, "Next: X 3/5" and
 --                a bar (the left column of launchers starts under it: HudMenu sets COLUMN_TOP)
