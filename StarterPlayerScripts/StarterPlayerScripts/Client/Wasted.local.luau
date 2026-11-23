@@ -16,7 +16,7 @@ if not (remote and remote:IsA("RemoteEvent")) then
 	return
 end
 
-remote.OnClientEvent:Connect(function(seconds: number, by: string?)
+remote.OnClientEvent:Connect(function(seconds: number, by: string?, how: string?)
 	local hold = if type(seconds) == "number" then math.clamp(seconds, 1, 6) else 2.6
 	local grade = Instance.new("ColorCorrectionEffect")
 	grade.Name = "WastedGrade"
@@ -56,7 +56,7 @@ remote.OnClientEvent:Connect(function(seconds: number, by: string?)
 	line.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
 	line.TextScaled = true
 	line.TextColor3 = Color3.fromRGB(230, 230, 230)
-	line.Text = if type(by) == "string" then "Eaten by " .. by else ""
+	line.Text = if type(by) == "string" then (if type(how) == "string" then how else "Eaten by ") .. by else ""
 	line.TextTransparency = 1
 	line.Parent = band
 	local scale = Instance.new("UIScale")

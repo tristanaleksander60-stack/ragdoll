@@ -7,13 +7,16 @@
 -- (pumping the chest, "Come on! Breathe!"). CPR now and then works (SAVE_CHANCE): the body wakes early
 -- (VitalsService.reviveNow), "It worked!". Otherwise it gets up after a while ("I tried..."). ActiveRagdoll holds
 -- the pose (Poses.MOODS), DummyLife says the line (DummyLines.MOURN). It stops at once on a hit, a fall, a bang,
--- a hand that grabs it, or when the body is gone or up. Never zombies, the greeter, or ones in a machine.
+-- a hand that grabs it, or when the body is gone or up. Never the greeter, or ones in a machine.
+
+-- (23 Nov 2026, owner: every 3rd helper whose CPR fails turns angry: a sour face, "You killed my ...!", and it runs
+-- up and boxes the player until they die, it dies, or ATTACK_MAX s: phase "Attack", Moods "Angry" and "Box".)
 
 local Players = game:GetService("Players")
 
 local Mourning = {}
 
-Mourning.STEP = 0.5
+Mourning.STEP = 0.25
 Mourning.SEE = 25 -- studs
 Mourning.PER_BODY = 1 -- (23 Nov 2026, owner: "only 1 ragdoll goes to give CPR")
 Mourning.LAB_MAX = 3
@@ -22,7 +25,13 @@ Mourning.CPR_CHANCE = 0.5
 Mourning.SAVE_CHANCE = 0.3
 Mourning.SHOCK_TIME = 0.9
 Mourning.WALK_MAX = 12
-Mourning.KNEEL_TIME = 20 -- s of CPR at most (a try every CPR_TRY s)
+Mourning.KNEEL_TIME = 12.5 -- s of CPR at most (a try every CPR_TRY s; before the body wakes by itself)
+Mourning.ANGRY_EVERY = 3 -- every 3rd failed CPR in a lab attacks
+Mourning.REACH = 4.6 -- studs
+Mourning.HIT_GAP = 0.75
+Mourning.HIT_DAMAGE = 12
+Mourning.SHOVE = 10
+Mourning.ATTACK_MAX = 90
 Mourning.CPR_TRY = 6
 Mourning.SIDE = 2.4 -- studs from the body's middle where it kneels
 
@@ -39,6 +48,7 @@ type Job = {
 
 local jobs: { [Model]: Job } = {}
 local mourned: { [Model]: boolean } = {} -- bodies that had their mourners this death
+local fails: { [number]: number } = {} -- (failed CPRs per lab player)
 local running = false
 
 local function lazy(name: string): any
@@ -59,7 +69,6 @@ local function free(m: Model): boolean
 	return m.Parent ~= nil
 		and m:GetAttribute("Vital") ~= "Dead"
 		and (state == "Standing" or state == "Walking")
-		and m:GetAttribute("Zombie") ~= true
 		and m:GetAttribute("Greeter") == nil
 		and m:GetAttribute("InMachine") == nil
 		and m:GetAttribute("MachineHidden") ~= true
@@ -74,6 +83,11 @@ local function stop(m: Model, say: string?)
 		return
 	end
 	m:SetAttribute("Pace", nil)
+	local angry: any = job
+	if angry.target then
+		m:SetAttribute("Personality", angry.personWas)
+		m:SetAttribute("MournedName", nil)
+	end
 	m:SetAttribute("Mood", nil)
 	if m:GetAttribute("CommandedBy") == -2 then
 		m:SetAttribute("CommandedBy", nil)
@@ -92,6 +106,94 @@ local function stop(m: Model, say: string?)
 	end
 end
 
+-- The nearest living player in the lab `owner` has.
+local function targetFor(m: Model, owner: Player): Player?
+	local Lab = lazy("Lab")
+	local pelvis = pelvisOf(m)
+	local best: Player? = nil
+	local bestD = math.huge
+	for _, p in Players:GetPlayers() do
+		local c = p.Character
+		local root = c and c:FindFirstChild("HumanoidRootPart")
+		local hum = c and c:FindFirstChildOfClass("Humanoid")
+		if pelvis and root and root:IsA("BasePart") and hum and hum.Health > 0 and Lab.ownerAt(root.Position) == owner then
+			local d = (root.Position - pelvis.Position).Magnitude
+			if d < bestD then
+				best, bestD = p, d
+			end
+		end
+	end
+	return best
+end
+
+-- The CPR failed: every ANGRY_EVERY-th one in a lab goes for the player; the others give up.
+local function failed(m: Model, job: Job)
+	local id = job.owner.UserId
+	fails[id] = (fails[id] or 0) + 1
+	local target = if fails[id] % Mourning.ANGRY_EVERY == 0 then targetFor(m, job.owner) else nil
+	if not target then
+		stop(m, "Gone")
+		return
+	end
+	local a: any = job
+	a.phase, a.since = "Attack", os.clock()
+	a.target, a.personWas, a.nextHit = target, m:GetAttribute("Personality"), os.clock() + 1.5
+	m:SetAttribute("Personality", "Brave")
+	local name = job.corpse:GetAttribute("PersonName")
+	m:SetAttribute("MournedName", if type(name) == "string" and name ~= "" then name else "buddy")
+	m:SetAttribute("Mood", "Angry")
+	m:SetAttribute("Pace", 1.8)
+end
+
+-- One angry body's turn: after its player, and punches in reach.
+local function attack(m: Model, job: Job, now: number)
+	local a: any = job
+	local target: Player = a.target
+	local pelvis = pelvisOf(m)
+	local c = target.Character
+	local root = c and c:FindFirstChild("HumanoidRootPart")
+	local hum = c and c:FindFirstChildOfClass("Humanoid")
+	if not m.Parent or not pelvis or m:GetAttribute("Vital") == "Dead" or m:GetAttribute("InMachine") ~= nil or m:GetAttribute("MachineHidden") == true
+		or not target.Parent or not (root and root:IsA("BasePart") and hum) or hum.Health <= 0
+		or now - job.since > Mourning.ATTACK_MAX or lazy("Lab").ownerAt(root.Position) ~= job.owner then
+		stop(m, nil)
+		return
+	end
+	local gap = flat(root.Position - pelvis.Position)
+	local dist = gap.Magnitude
+	local dir = if dist > 0.1 then gap.Unit else Vector3.zAxis
+	local look = flat(pelvis.CFrame.LookVector)
+	local facing = look.Magnitude > 0.1 and look.Unit:Dot(dir) > 0.3
+	local state = m:GetAttribute("RagdollState")
+	local inReach = dist <= Mourning.REACH and math.abs(root.Position.Y - pelvis.Position.Y) < 5
+	m:SetAttribute("HomeLook", root.Position)
+	if state == "Standing" and now - job.since > 1.2 and not (inReach and facing) then
+		m:SetAttribute("Home", pelvis.Position + dir * (dist + 6)) -- (far enough off that it sets out again)
+	else
+		m:SetAttribute("Home", root.Position - dir * math.min(2.4, dist))
+	end
+	local mood = if inReach and state == "Standing" then "Box" else "Angry"
+	if m:GetAttribute("Mood") ~= mood then
+		m:SetAttribute("Mood", mood)
+	end
+	if inReach and facing and state == "Standing" and m:GetAttribute("Held") ~= true and now >= a.nextHit then
+		a.nextHit = now + Mourning.HIT_GAP
+		hum:TakeDamage(Mourning.HIT_DAMAGE)
+		root.AssemblyLinearVelocity += dir * Mourning.SHOVE
+		pcall(function()
+			lazy("FxService").hit(root.Position, 50, "Punch")
+		end)
+		if hum.Health <= 0 then
+			local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+			local wasted = remotes and remotes:FindFirstChild("Wasted")
+			if wasted and wasted:IsA("RemoteEvent") then
+				wasted:FireClient(target, 2.6, tostring(m:GetAttribute("PersonName") or "an angry dummy"), "Beaten up by ")
+			end
+			stop(m, nil)
+		end
+	end
+end
+
 local function step()
 	local now = os.clock()
 	local serverNow = workspace:GetServerTimeNow()
@@ -104,12 +206,16 @@ local function step()
 	end
 	-- The running jobs.
 	for m, job in jobs do
+		if job.phase == "Attack" then
+			attack(m, job, now)
+			continue
+		end
 		local corpse = job.corpse
 		local pelvis = pelvisOf(m)
 		local cp = corpse.Parent and pelvisOf(corpse)
 		local panic = m:GetAttribute("PanicUntil")
 		local state = m:GetAttribute("RagdollState")
-		local hurt = m:GetAttribute("Vital") == "Dead" or m:GetAttribute("Held") == true or m:GetAttribute("Zombie") == true
+		local hurt = m:GetAttribute("Vital") == "Dead" or m:GetAttribute("Held") == true
 			or (state ~= "Standing" and state ~= "Walking") or (type(panic) == "number" and panic > serverNow)
 		if not m.Parent or not pelvis or hurt then
 			stop(m, nil)
@@ -151,7 +257,7 @@ local function step()
 				end
 			end
 			if held >= Mourning.KNEEL_TIME then
-				stop(m, "Gone")
+				failed(m, job)
 			end
 		end
 	end
@@ -227,6 +333,9 @@ function Mourning.start()
 		return
 	end
 	running = true
+	Players.PlayerRemoving:Connect(function(p)
+		fails[p.UserId] = nil
+	end)
 	task.spawn(function()
 		while true do
 			task.wait(Mourning.STEP)

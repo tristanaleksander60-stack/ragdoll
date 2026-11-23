@@ -45,6 +45,11 @@ gui.Parent = playerGui
 pcall(function()
 	ReplicatedFirst:RemoveDefaultLoadingScreen()
 end)
+-- (23 Nov 2026, owner: "it is like joining twice"): the way on to your own server wears this cover too. Set here, on
+-- the first frame: the teleport may start before PortalUI runs.
+pcall(function()
+	game:GetService("TeleportService"):SetTeleportGui(gui:Clone())
+end)
 
 local t0 = os.clock()
 while os.clock() - t0 < 30 do

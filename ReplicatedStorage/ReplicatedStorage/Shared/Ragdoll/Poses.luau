@@ -265,6 +265,34 @@ function Poses.cpr(t: number): Pose
 	out.LeftElbow = ang(0, 0, 0)
 	return out
 end
-Poses.MOODS = { Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr } :: { [string]: (number) -> Pose }
+-- (23 Nov 2026, owner: "hits you like a boxer".) Guard: fists up by the chin, bouncing. Box: straight punches in turn
+-- out of it, the body turning with them.
+local guardOut: Pose = {}
+function Poses.guard(t: number): Pose
+	local bob = sin(t * 8) * 4
+	local out = guardOut
+	out.RightShoulder = ang(55 + bob, 0, -12)
+	out.LeftShoulder = ang(55 - bob, 0, 12)
+	out.RightElbow = ang(115, 0, 0)
+	out.LeftElbow = ang(115, 0, 0)
+	out.Waist = ang(-10, 0, 0)
+	out.Neck = ang(-4, 0, 0)
+	return out
+end
+local boxOut: Pose = {}
+function Poses.box(t: number): Pose
+	local wave = sin(t * 8.4) -- (a punch every half of HIT_GAP, right and left in turn)
+	local r = math.max(0, wave) ^ 0.6
+	local l = math.max(0, -wave) ^ 0.6
+	local out = boxOut
+	out.RightShoulder = ang(55 + 38 * r, 0, -12 + 8 * r)
+	out.LeftShoulder = ang(55 + 38 * l, 0, 12 - 8 * l)
+	out.RightElbow = ang(115 - 110 * r, 0, 0)
+	out.LeftElbow = ang(115 - 110 * l, 0, 0)
+	out.Waist = ang(-12, 22 * (r - l), 0)
+	out.Neck = ang(-4, -12 * (r - l), 0)
+	return out
+end
+Poses.MOODS = { Angry = Poses.guard, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr } :: { [string]: (number) -> Pose }
 
 return Poses

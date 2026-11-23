@@ -41,13 +41,13 @@ title.Text = "Hyper Ragdoll Physics"
 title.Parent = back
 local sub = Instance.new("TextLabel")
 sub.BackgroundTransparency = 1
-sub.AnchorPoint = Vector2.new(0.5, 0.5)
-sub.Position = UDim2.fromScale(0.5, 0.55)
+sub.AnchorPoint = Vector2.new(0.5, 0)
+sub.Position = UDim2.fromScale(0.5, 0.53)
 sub.Size = UDim2.new(0.6, 0, 0, 26)
 sub.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
 sub.TextScaled = true
-sub.TextColor3 = Color3.fromRGB(170, 176, 190)
-sub.Text = "Building your lab..."
+sub.TextColor3 = Color3.fromRGB(190, 190, 200)
+sub.Text = "Loading..." -- (23 Nov 2026: the same words as FirstCover, so a join looks like one load)
 sub.Parent = back
 gui.Parent = player:WaitForChild("PlayerGui")
 

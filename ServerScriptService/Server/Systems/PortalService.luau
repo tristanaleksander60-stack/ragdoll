@@ -198,6 +198,36 @@ local function stayHere(player: Player)
 	end)
 end
 
+-- (23 Nov 2026, owner: "it is like joining twice"): a public server keeps one reserved server ready, so the way on
+-- does not wait for a new one.
+local ready: { code: string, sid: string }? = nil
+local refilling = false
+local function refill()
+	if refilling or ready or RunService:IsStudio() or game.PrivateServerId ~= "" then
+		return
+	end
+	refilling = true
+	task.spawn(function()
+		local ok, code, sid = pcall(function()
+			return TeleportService:ReserveServer(game.PlaceId)
+		end)
+		if ok then
+			ready = { code = code, sid = sid }
+		end
+		refilling = false
+	end)
+end
+local function ownServer(): (string, string)
+	local r = ready
+	if r then
+		ready = nil
+		refill()
+		return r.code, r.sid
+	end
+	local code, sid = TeleportService:ReserveServer(game.PlaceId)
+	return code, sid
+end
+
 local function go(player: Player, how: string, target: Entry?, auto: boolean?)
 	if RunService:IsStudio() then
 		remote:FireClient(player, "Refused", { text = "Teleports work in the live game (not in Studio)" })
@@ -208,7 +238,7 @@ local function go(player: Player, how: string, target: Entry?, auto: boolean?)
 	options:SetTeleportData({ from = how })
 	local ok, err = pcall(function()
 		if how == "Solo" or how == "Own" then
-			local code, sid = TeleportService:ReserveServer(game.PlaceId)
+			local code, sid = ownServer()
 			options.ReservedServerAccessCode = code
 			task.spawn(listSolo, player, code, sid)
 		elseif target then
@@ -564,6 +594,7 @@ end
 function PortalService.start()
 	remote = Net.event(Net.Names.Portal)
 	remote.OnServerEvent:Connect(onRequest)
+	refill()
 	-- (A teleport that fails after it set off: the player stays here, so they get a lab.)
 	TeleportService.TeleportInitFailed:Connect(function(player)
 		local tries = passing[player]

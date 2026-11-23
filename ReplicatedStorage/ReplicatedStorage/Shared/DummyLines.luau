@@ -186,6 +186,8 @@ DummyLines.MOURN = {
 	CPR = { "Come on! Breathe!", "Stay with me!", "1, 2, 3... breathe!", "Don't you die on me!" },
 	Saved = { "It worked!", "You're back!", "YES! Alive!" },
 	Gone = { "I tried...", "Rest easy, pal...", "He's gone..." },
+	Angry = { "You killed my %s!", "You'll pay for %s!", "%s was my best friend!", "Come here, you!", "I'm gonna get you!" },
+	Box = { "This is for %s!", "Take THAT!", "How do you like it?!", "Not so tough now!", "That's for my %s!" },
 } :: { [string]: { string } }
 
 return table.freeze(DummyLines)

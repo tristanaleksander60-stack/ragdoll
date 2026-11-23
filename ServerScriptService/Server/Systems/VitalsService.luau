@@ -101,9 +101,6 @@ type Vitals = {
 }
 
 local vitals: { [Model]: Vitals } = {}
-local deathSeen: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any -- (each death counted once: Zombies)
-local labKills: { [number]: number } = {} -- (lab dummies killed, per lab player)
-local ZOMBIE_EVERY = 3
 local cutHits: { [Model]: { [string]: number } } = setmetatable({}, { __mode = "k" }) :: any -- (0.36.8: rounds per piece that can come off)
 local infoRemote: RemoteEvent? = nil
 local lastInfo: { [Player]: number } = {}
@@ -756,11 +753,6 @@ local function paintDead(model: Model, dead: boolean)
 	end
 end
 
--- (Zombies: a zombie that gives up gets its own colours back.)
-function VitalsService.paintNormal(model: Model)
-	paintDead(model, false)
-end
-
 -- One body's turn: its step, then out (dead a while), patched up (out cold a while) or gone (a limb off).
 local function tend(model: Model, v: Vitals, dt: number, now: number)
 	VitalsService.step(model, v, dt)
@@ -770,19 +762,6 @@ local function tend(model: Model, v: Vitals, dt: number, now: number)
 		paintDead(model, true)
 	end
 	local labDummy = type(model:GetAttribute("LabOwner")) == "number" and type(model:GetAttribute("Slot")) == "number"
-	-- (22 Nov 2026, owner: every 3rd lab dummy killed comes back a zombie: Zombies.) Each death counted once.
-	if labDummy and v.state == "Dead" and deathSeen[model] ~= v.since then
-		deathSeen[model] = v.since
-		if model:GetAttribute("Zombie") == true or model:GetAttribute("ZombieDied") == true then
-			model:SetAttribute("ZombieDied", true) -- (killed as a zombie: it wakes up normal)
-		else
-			local ownerId = model:GetAttribute("LabOwner") :: number
-			labKills[ownerId] = (labKills[ownerId] or 0) + 1
-			if labKills[ownerId] % ZOMBIE_EVERY == 0 then
-				model:SetAttribute("ZombieNext", true)
-			end
-		end
-	end
 	-- (23 Nov 2026, owner: "20 to 30 seconds from green to normal again"): a lab body lies dead a random 20-30 s.
 	local vr: any = v
 	if v.state == "Dead" and vr.reviveFor ~= v.since then
@@ -791,23 +770,7 @@ local function tend(model: Model, v: Vitals, dt: number, now: number)
 	end
 	if v.state == "Dead" and now - v.since >= (if labDummy then (vr.reviveIn or LAB_REVIVE_AFTER) else REVIVE_AFTER) and (next(v.severed) == nil or labDummy) and model:GetAttribute("IsDummy") == true then
 		if labDummy and next(v.severed) ~= nil then reattach(model, v) end
-		-- (A zombie killed: back to normal. One chosen to rise: it stays green and goes for its lab's player.)
-		local rise = model:GetAttribute("ZombieNext") == true
-		model:SetAttribute("ZombieNext", nil)
-		if model:GetAttribute("ZombieDied") == true then
-			model:SetAttribute("ZombieDied", nil)
-			pcall(function()
-				(require(script.Parent:WaitForChild("Zombies")) :: any).clear(model)
-			end)
-		end
-		if rise then
-			local ownerId = model:GetAttribute("LabOwner")
-			pcall(function()
-				(require(script.Parent:WaitForChild("Zombies")) :: any).rise(model, ownerId)
-			end)
-		else
-			paintDead(model, false)
-		end
+		paintDead(model, false)
 		patchUp(model, v, true)
 		v.knockUntil = now + WAKE_SLOW
 		model:SetAttribute("Waking", true) -- (out cold only WAKE_SLOW, not OUT_HOLD)

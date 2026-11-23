@@ -854,6 +854,10 @@ local function expressionFor(life: Life, now: number): string
 		return "Grumpy"
 	end
 	-- Standing
+	local temper = model:GetAttribute("Mood")
+	if temper == "Angry" or temper == "Box" then
+		return "Grumpy"
+	end
 	if life.handsUp then
 		return "Scared"
 	elseif life.threat and model:GetAttribute("Personality") == "Brave" then
@@ -1079,7 +1083,13 @@ local function showLine(life: Life, kind: string, now: number, given: { string }
 		life.lineText = text
 	end
 	local text = life.lineText :: TextLabel
-	text.Text = DummyLines.pick(list, life.seed, life.lineTurn)
+	local said = DummyLines.pick(list, life.seed, life.lineTurn)
+	local lost = life.model:GetAttribute("MournedName")
+	local friend = if type(lost) == "string" then lost else "buddy"
+	local spoken = string.gsub(said, "%%s", function()
+		return friend
+	end)
+	text.Text = spoken
 	-- (0.36.7, owner: text again, like the big ragdoll games: short, small, one at a time. The faces of
 	-- Config.ICON_SIGNS are gone from here.)
 	text.TextColor3 = if kind == "Idle" then DummyLines.IDLE_COLOR else DummyLines.FEAR_COLOR
@@ -1104,8 +1114,11 @@ local function updateLine(life: Life, now: number)
 	do
 		local moodLife: any = life
 		local mood = life.model:GetAttribute("Mood") or life.model:GetAttribute("MoodSay")
-		if mood ~= moodLife.moodSaid then
+		local furious = mood == "Angry" or mood == "Box"
+		local sinceSaid = now - (moodLife.moodAt or 0)
+		if if furious then sinceSaid > 4.5 or (mood ~= moodLife.moodSaid and sinceSaid > 2.5) else mood ~= moodLife.moodSaid then
 			moodLife.moodSaid = mood
+			moodLife.moodAt = if furious then now else 0
 			local lines = if type(mood) == "string" then (DummyLines :: any).MOURN[mood] else nil
 			if lines then
 				showLine(life, "Mood", now, lines)
