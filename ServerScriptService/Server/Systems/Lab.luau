@@ -67,7 +67,8 @@ local CHAT_PAIR = { 4, 5 }
 local ROAM_FIRST = 0 -- (22 Nov 2026, owner: no row standing still) s before a slot first starts wandering
 local ROAM_EVERY_MIN, ROAM_EVERY_MAX = 10, 22 -- s before it picks the next spot (random in range)
 local ROAM_REACH = 8 -- studs from its current roam Home where it counts as arrived
-local ROAM_RANGE = 55 * ((Config :: any).LAB_SPREAD or 1) -- studs from the plot's spawn: the farthest a roam Home may be (22 Nov: inside the lab core)
+local ROAM_BACK_Z = -88 * ((Config :: any).LAB_SPREAD or 1)
+local ROAM_RANGE = 85 * ((Config :: any).LAB_SPREAD or 1) -- studs from the plot's spawn: the farthest a roam Home may be (22 Nov: inside the lab core)
 local ROAM_YARD_Z = 40 * ((Config :: any).LAB_SPREAD or 1) -- (22 Nov 2026: never past this z, the creature yard, where a walker was swallowed and vanished)
 local ROAM_NEAR_MIN = 18 -- studs: closest a roam Home may be (never right on top of the player)
 local GREET_RANGE = 40 -- studs from its home: a player this close may get a hello
@@ -639,29 +640,49 @@ end
 -- core, never on top of a machine or inside the lava. We keep it simple: random polar offset from
 -- the plot's spawn, between ROAM_NEAR_MIN and ROAM_RANGE. If the roll lands on a machine (PathPlan
 -- obstacle) we try again a few times, else we fall back to the row spot.)
+-- (23 Nov 2026, owner: "they all stand in the circle; spread them round the lab": the machines' wide footprints sent
+-- nearly every roll back onto the open spawn plaza.) Each slot has its own slice of the lab all the way out to its edge,
+-- on floor that really is free; only every fifth one may be on the plaza.
 pickRoamSpot = function(plot: Plot, slot: Slot): Vector3
 	local PathPlan = require(ReplicatedStorage.Shared:WaitForChild("PathPlan")) :: any
+	local Visitors = require(script.Parent:WaitForChild("VisitorService")) :: any
 	local origin = plot.origin
-	for _ = 1, 12 do
-		local r = ROAM_NEAR_MIN + math.random() * (ROAM_RANGE - ROAM_NEAR_MIN)
-		local a = math.random() * math.pi * 2
+	local slice = math.pi * 2 / DUMMY_COUNT
+	local half = Lab.CORE_HALF - 10
+	local plazaFree = slot.index % 5 == 0
+	local checked = 0
+	for try = 1, 60 do
+		local near = if plazaFree then ROAM_NEAR_MIN else (if try <= 45 then 50 else 34)
+		local r = math.sqrt(near * near + math.random() * (ROAM_RANGE * ROAM_RANGE - near * near))
+		-- (Its own slice first; with no room there, anywhere.)
+		local a = if try <= 25 then (slot.index * 7 % DUMMY_COUNT + math.random()) * slice else math.random() * math.pi * 2
 		local x, z = math.cos(a) * r, math.sin(a) * r
-		local local2 = Vector2.new(x, z)
-		local blocked = false
-		for _, o in PathPlan.OBSTACLES do
-			if o.at and o.radius and (local2 - o.at).Magnitude < o.radius + 2 then
-				blocked = true
-				break
-			elseif o.min and o.max and local2.X > o.min.X - 2 and local2.X < o.max.X + 2 and local2.Y > o.min.Y - 2 and local2.Y < o.max.Y + 2 then
-				blocked = true
-				break
+		local blocked = math.abs(x) > half or z > ROAM_YARD_Z or z < ROAM_BACK_Z
+		if not blocked then
+			local local2 = Vector2.new(x, z)
+			for _, o in PathPlan.OBSTACLES do
+				if o.at and o.radius and (local2 - o.at).Magnitude < o.radius + 2 then
+					blocked = true
+					break
+				elseif o.min and o.max and local2.X > o.min.X - 2 and local2.X < o.max.X + 2 and local2.Y > o.min.Y - 2 and local2.Y < o.max.Y + 2 then
+					blocked = true
+					break
+				end
 			end
 		end
-		if z > ROAM_YARD_Z then
-			blocked = true
-		end
-		if not blocked then
-			return Vector3.new(origin.X + x, if slot.homeY ~= 0 then slot.homeY else slot.position.Y, origin.Z + z)
+		if not blocked and checked < 12 then
+			checked += 1
+			-- (nothing solid there, no other ragdoll within a few studs)
+			local free = plot.owner == nil or Visitors.floorAt(plot.owner, Vector3.new(origin.X + x, origin.Y, origin.Z + z)) ~= nil
+			for _, other in plot.slots do
+				local home = other.roamHome
+				if other ~= slot and home and Vector3.new(home.X - origin.X - x, 0, home.Z - origin.Z - z).Magnitude < 10 then
+					free = false
+				end
+			end
+			if free then
+				return Vector3.new(origin.X + x, if slot.homeY ~= 0 then slot.homeY else slot.position.Y, origin.Z + z)
+			end
 		end
 	end
 	return slot.homeAttr or slot.position
