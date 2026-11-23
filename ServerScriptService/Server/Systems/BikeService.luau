@@ -30,7 +30,10 @@ local function free(m: Model): boolean
 		and m:GetAttribute("Held") ~= true
 end
 
--- A clear spot to ride to from `at` (the farthest of a few), or nil.
+-- The next spot of the round: on over the grass round the spawn circle (never across it: KEEP_OUT), each a bit further
+-- round the lab the same way, at a distance of its own; a free way there with no machine, creature or thing on it.
+BikeService.KEEP_OUT = 35 -- studs from the spawn's middle
+local way_: { [any]: number } = {}
 local function nextSpot(owner: Player, origin: Vector3, at: Vector3, skip: { Instance }): Vector3?
 	local Visitors = lazy("VisitorService")
 	local params = RaycastParams.new()
@@ -39,29 +42,78 @@ local function nextSpot(owner: Player, origin: Vector3, at: Vector3, skip: { Ins
 	local overlap = OverlapParams.new()
 	overlap.FilterType = Enum.RaycastFilterType.Exclude
 	overlap.FilterDescendantsInstances = skip
-	local best: Vector3? = nil
-	local bestD = 0
-	for _ = 1, 10 do
-		local floor = Visitors.floorAt(owner, origin + Vector3.new(math.random(-85, 85), 0, math.random(-80, 42)))
-		if floor then
-			local way = Vector3.new(floor.X - at.X, 0, floor.Z - at.Z)
-			if way.Magnitude > 18 and way.Magnitude > bestD and not Workspace:Spherecast(Vector3.new(at.X, floor.Y + 3, at.Z), 1.8, way, params) then
-				-- (Not through a machine or a creature on the way either.)
-				local open = true
-				for k = 1, math.floor(way.Magnitude / 7) do
-					local p = Visitors.floorAt(owner, at + way.Unit * (k * 7))
-					if not p or #Workspace:GetPartBoundsInRadius(p + Vector3.new(0, 3.5, 0), 2.6, overlap) > 0 then
-						open = false
-						break
-					end
-				end
-				if open then
-					best, bestD = floor, way.Magnitude
-				end
+	local mid = Vector2.new(origin.X, origin.Z)
+	local from = Vector2.new(at.X, at.Z)
+	local now = math.atan2(from.Y - mid.Y, from.X - mid.X)
+	local turnWay = way_[owner] or 1
+	for try = 1, 24 do
+		if try == 17 then
+			turnWay = -turnWay -- (nothing open on that way round: back the other)
+		end
+		local angle = now + turnWay * math.rad(math.random(14, 48))
+		local out = math.random(40, 84)
+		local to2 = mid + Vector2.new(math.cos(angle), math.sin(angle)) * out
+		local lx, lz = to2.X - mid.X, to2.Y - mid.Y
+		if math.abs(lx) > 92 or lz > 44 or lz < -84 then
+			continue
+		end
+		local floor = Visitors.floorAt(owner, Vector3.new(to2.X, origin.Y, to2.Y))
+		if not floor then
+			continue
+		end
+		local way = Vector3.new(floor.X - at.X, 0, floor.Z - at.Z)
+		if way.Magnitude < 10 then
+			continue
+		end
+		local open = true
+		for k = 1, math.ceil(way.Magnitude / 5) do
+			local p = at + way * math.min(1, k * 5 / way.Magnitude)
+			local f = Visitors.floorAt(owner, p)
+			if not f or (Vector2.new(p.X, p.Z) - mid).Magnitude < BikeService.KEEP_OUT
+				or #Workspace:GetPartBoundsInRadius(f + Vector3.new(0, 3.5, 0), 2.8, overlap) > 0 then
+				open = false
+				break
 			end
 		end
+		if open and not Workspace:Spherecast(Vector3.new(at.X, floor.Y + 3, at.Z), 1.8, way, params) then
+			way_[owner] = turnWay
+			return floor
+		end
 	end
-	return best
+	return nil
+end
+
+-- How to lean the way to keep clear of people and ragdolls ahead: radians to turn (+ left), and how near the nearest is.
+BikeService.SEE = 13 -- studs
+local function clearOf(body: BasePart, rider: Model, heading: number): (number, number)
+	local here = body.Position
+	local ahead = Vector3.new(-math.sin(heading), 0, -math.cos(heading))
+	local left = Vector3.new(ahead.Z, 0, -ahead.X)
+	local turnBy, nearest = 0, math.huge
+	local function look(at: Vector3)
+		local d = Vector3.new(at.X - here.X, 0, at.Z - here.Z)
+		local far = d.Magnitude
+		local on = d:Dot(ahead)
+		local side = d:Dot(left)
+		if far < BikeService.SEE and on > -1 and math.abs(side) < 5 then
+			nearest = math.min(nearest, far)
+			turnBy += (if side >= 0 then -1 else 1) * (1 - far / BikeService.SEE) * 1.5
+		end
+	end
+	local dummies = Workspace:FindFirstChild("Dummies")
+	for _, m in if dummies then dummies:GetChildren() else {} do
+		local p = m ~= rider and m:FindFirstChild("LowerTorso")
+		if p and p:IsA("BasePart") then
+			look(p.Position)
+		end
+	end
+	for _, pl in Players:GetPlayers() do
+		local r = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
+		if r and r:IsA("BasePart") then
+			look(r.Position)
+		end
+	end
+	return math.clamp(turnBy, -1.4, 1.4), nearest
 end
 
 local function ride(car: any, owner: Player, rider: Model)
@@ -98,7 +150,7 @@ local function ride(car: any, owner: Player, rider: Model)
 	turn.CFrame = body.CFrame.Rotation
 	turn.Parent = body
 	rider:SetAttribute("CommandedBy", MINE)
-	rider:SetAttribute("Mood", "Sit")
+	rider:SetAttribute("Mood", "Ride")
 	rider:SetAttribute("MachineCool", os.clock() + 1e6) -- (no creature takes it off the saddle)
 	local link = Instance.new("ObjectValue")
 	link.Name = "SeatOn"
@@ -161,12 +213,19 @@ local function ride(car: any, owner: Player, rider: Model)
 		end
 		if to then
 			local want = math.atan2(-(to.X - here.X), -(to.Z - here.Z))
+			local dodge, near = clearOf(body, rider, heading)
+			want += dodge
 			local off = math.atan2(math.sin(want - heading), math.cos(want - heading))
 			heading += math.clamp(off, -BikeService.TURN * dt, BikeService.TURN * dt)
 			floorY += (to.Y - floorY) * math.min(1, dt * 2)
 			local ahead = Vector3.new(-math.sin(heading), 0, -math.cos(heading))
 			-- (Slower in a tight turn, leaning into it.)
 			local pace = if math.abs(off) > 1.2 then 0.12 elseif math.abs(off) > 0.35 then 0.35 else 1
+			if near < 5 then
+				pace = math.min(pace, 0.12)
+			elseif near < 9 then
+				pace = math.min(pace, 0.45)
+			end
 			pos.MaxVelocity = math.max(1.5, BikeService.SPEED * pace)
 			pos.Position = Vector3.new(here.X, floorY + BikeService.OVER, here.Z) + ahead * BikeService.SPEED * 0.5
 			turn.CFrame = CFrame.Angles(0, heading, 0) * CFrame.Angles(0, 0, math.clamp(off, -1, 1) * 0.22)
@@ -196,7 +255,7 @@ local function ride(car: any, owner: Player, rider: Model)
 	end
 	if rider.Parent then
 		rider:SetAttribute("MachineCool", os.clock() + 3)
-		if rider:GetAttribute("Mood") == "Sit" then
+		if rider:GetAttribute("Mood") == "Ride" then
 			rider:SetAttribute("Mood", nil)
 		end
 		if rider:GetAttribute("CommandedBy") == MINE then

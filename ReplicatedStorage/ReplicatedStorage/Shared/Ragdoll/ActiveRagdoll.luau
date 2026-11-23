@@ -1225,7 +1225,7 @@ function ActiveRagdoll.holdSeat(rig: any, dt: number, limp: boolean): boolean
 	rig.balance.MaxTorque = gravityTorque(rig, Tone.STANDING_BALANCE)
 	rig.balance.Enabled = true
 	if not limp then
-		applyPose(rig, Poses.sit(os.clock(), bend))
+		applyPose(rig, if rig.seatFixed then Poses.ride(os.clock(), bend) else Poses.sit(os.clock(), bend))
 	end
 	return true
 end

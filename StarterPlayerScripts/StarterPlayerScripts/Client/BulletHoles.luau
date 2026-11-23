@@ -308,7 +308,7 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 		hole.Size = Vector3.new(0.02, hole.Size.Y, hole.Size.Z)
 	end
 	-- (23 Nov 2026, owner's pictures: a black torn hole with a grey rim and a pale ring, not a purple dot.)
-	local wide = math.clamp(0.52 * (scale or 1), 0.4, 1.1)
+	local wide = math.clamp(0.36 * (scale or 1), 0.28, 0.75)
 	hole.Shape = Enum.PartType.Block
 	hole.Size = Vector3.new(0.02, wide, wide)
 	hole.CFrame = flatOn(worldAt, worldNormal, 0.02) * CFrame.Angles(math.random() * math.pi * 2, 0, 0)

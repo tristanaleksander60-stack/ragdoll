@@ -426,6 +426,19 @@ function Poses.sit(t: number, bend: number?): Pose
 	out.Neck = ang(0, sin(t * 0.55) * 26 * b, 0)
 	return out
 end
-Poses.MOODS = { Sit = Poses.sit, Check = Poses.check, Breath = Poses.breath, CPRFast = Poses.cprFast, CPRSlam = Poses.cprSlam, CPROne = Poses.cprOne, Gasp = Poses.gasp, Point = Poses.point, Cheer = Poses.cheer, Relief = Poses.relief, Hug = Poses.hug, Despair = Poses.despair, Sky = Poses.sky, Rage = Poses.rage, Angry = Poses.fists, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr } :: { [string]: (number) -> Pose }
+-- Riding the bike (BikeService): as sitting, leant forward, both hands on the handlebar.
+local rideOut: Pose = {}
+function Poses.ride(t: number, bend: number?): Pose
+	local b = bend or 1
+	local out = rideOut
+	out.RightHip, out.LeftHip = ang(80 * b, 0, 7 * b), ang(80 * b, 0, -7 * b)
+	out.RightKnee, out.LeftKnee = ang(-78 * b, 0, 0), ang(-78 * b, 0, 0)
+	out.RightShoulder, out.LeftShoulder = ang(80 * b, 0, 7 * b), ang(80 * b, 0, -7 * b)
+	out.RightElbow, out.LeftElbow = ang(10 * b, 0, 0), ang(10 * b, 0, 0)
+	out.Waist = ang((-20 + sin(t * 5) * 1) * b, 0, 0)
+	out.Neck = ang(14 * b, 0, 0)
+	return out
+end
+Poses.MOODS = { Sit = Poses.sit, Ride = Poses.ride, Check = Poses.check, Breath = Poses.breath, CPRFast = Poses.cprFast, CPRSlam = Poses.cprSlam, CPROne = Poses.cprOne, Gasp = Poses.gasp, Point = Poses.point, Cheer = Poses.cheer, Relief = Poses.relief, Hug = Poses.hug, Despair = Poses.despair, Sky = Poses.sky, Rage = Poses.rage, Angry = Poses.fists, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr } :: { [string]: (number) -> Pose }
 
 return Poses
