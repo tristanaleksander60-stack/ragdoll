@@ -31,6 +31,7 @@ local Ammo = require(Shared.Ammo)
 local Config = require(Shared.Config)
 local WeaponMechanics = require(script.Parent.WeaponMechanics)
 local BowMath = require(Shared.BowMath) -- (V9-NOW 23)
+local chargeNow = 0 -- (the blow being applied now: 0..1 held, HitMath.charges)
 local drawNow: number? = nil -- (V9-NOW 23: the draw of the Bow round being applied now: applyToy reads it)
 -- (An extra round of a gun's own mechanics never starts more: per player, so one player's rounds
 -- never switch off another's: review fix.)
@@ -255,6 +256,7 @@ function HitService.applyToy(toy: Toys.Toy, part: BasePart, position: Vector3, d
 		return nil
 	end
 	local impulse = HitMath.toyImpulse(toy, direction, mass)
+	impulse *= 1 + (HitMath.CHARGE_PUSH - 1) * chargeNow
 	local draw = if toy.id == "Bow" then drawNow or (if requester then BowMath.MIN_DRAW else 1) else nil -- (V9-NOW 23; no player: a full draw)
 	if draw then
 		impulse *= BowMath.pushScale(draw) -- (a full draw pins a light dummy back a little)
@@ -309,7 +311,7 @@ function HitService.applyToy(toy: Toys.Toy, part: BasePart, position: Vector3, d
 			local boost = if requester then HitService.boostFor(requester:GetAttribute("Newcomer") == true, ProgressService.takedownsOf(requester) or 0) else nil
 			-- (V9-NOW 23: an arrow wounds by its draw; only a near-full draw counts as a round, so only it drops a body
 			-- with a headshot.)
-			local power = if draw then toy.wound * BowMath.woundScale(draw) else toy.wound
+			local power = if draw then toy.wound * BowMath.woundScale(draw) else toy.wound * (1 + (HitMath.CHARGE_WOUND - 1) * chargeNow)
 			local round = toy.gun == true and (draw == nil or draw >= 0.9)
 			VitalsService.wound(model, woundPart, woundAt, requester, power, { sever = sever, blunt = blunt, guarded = guarded, round = round, boost = boost })
 		end
@@ -387,6 +389,12 @@ local function onRequest(player: Player, part: unknown, position: unknown, direc
 	local pos = position :: Vector3
 	local dir = direction :: Vector3
 	local toy = Toys.byId[toyId :: string]
+	-- (Held no longer than the time since the last blow with it: the claim is only ever cut down.)
+	local charge = 0
+	if toy and HitMath.charges(toy) and type(draw) == "number" and draw == draw then
+		local last = lastHit[player] and lastHit[player][toy.id]
+		charge = math.min(math.clamp(draw, 0, 1), if last then HitMath.chargeOf(os.clock() - last + 0.1) else 1)
+	end
 	if not toy or not finite(pos) or not finite(dir) or dir.Magnitude < 0.01 then
 		return
 	end
@@ -469,9 +477,11 @@ local function onRequest(player: Player, part: unknown, position: unknown, direc
 	end
 	local used, reason = false, nil :: string?
 	if toy.kind == "hit" then
+		chargeNow = charge
 		drawNow = if toy.id == "Bow" then bowDraw(player, draw) else nil
 		used = HitService.applyToy(toy, p, pos, dir, player, byHand == true and toy.byHand) ~= nil
 		drawNow = nil
+		chargeNow = 0
 	elseif toy.kind == "dummy" then
 		used, reason = ToyService.onDummy(player, toy.id, p, pos)
 	elseif toy.kind == "place" then

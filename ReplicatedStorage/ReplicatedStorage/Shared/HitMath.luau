@@ -6,6 +6,19 @@ local Toys = require(script.Parent.Toys)
 local HitMath = {}
 
 -- Impulse (mass-studs/s) a toy tap gives a dummy of the given mass.
+-- (23 Nov 2026, owner: "the longer you hold the mouse, or the button on a phone, the harder you hit".) Blows by hand only:
+-- held CHARGE_FROM s nothing more, full after CHARGE_TIME s: that many times the push and the wound.
+HitMath.CHARGE_FROM = 0.15
+HitMath.CHARGE_TIME = 1.1
+HitMath.CHARGE_PUSH = 2.5
+HitMath.CHARGE_WOUND = 2
+function HitMath.charges(toy: any): boolean
+	return toy ~= nil and toy.kind == "hit" and toy.byHand == true and toy.gun ~= true and toy.id ~= "Chainsaw"
+end
+function HitMath.chargeOf(held: number): number
+	return math.clamp((held - HitMath.CHARGE_FROM) / (HitMath.CHARGE_TIME - HitMath.CHARGE_FROM), 0, 1)
+end
+
 function HitMath.toyImpulse(toy: Toys.Toy, direction: Vector3, mass: number): Vector3
 	local flat = if direction.Magnitude > 1e-3 then direction.Unit else Vector3.zAxis
 	if toy.gun then

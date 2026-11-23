@@ -176,6 +176,12 @@ local function onPress(key: any, input: InputObject?, at: Vector2)
 		return
 	end
 	local p: Pointer = { input = input, start = at, position = at, began = os.clock(), movedAt = os.clock(), role = "pending" }
+	if not input and not BuildController.isActive() and PokeController.beginCharge() then
+		(p :: any).charge = true
+		p.role = "claimed"
+		pointers[key] = p
+		return
+	end
 	if BuildController.pressAt(at) or GrabController.tryBegin(at, input) or PokeController.pressAt(at) then
 		p.role = "claimed"
 	end
@@ -276,6 +282,10 @@ local function onRelease(key: any, at: Vector2)
 		return
 	end
 	pointers[key] = nil
+	if (p :: any).charge then
+		PokeController.endCharge(at)
+		return
+	end
 	if p.role == "pending" and os.clock() - p.began <= TAP_TIME then
 		if not BuildController.tapAt(at) and not (p.input and GrabController.tapAt(at)) then
 			PokeController.tapAt(at)

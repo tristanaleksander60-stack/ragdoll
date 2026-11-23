@@ -47,6 +47,7 @@ local button: TextButton? = nil
 local centreGui: ScreenGui? = nil
 local hand: TextLabel? = nil
 local holding = false
+local charging = false
 local shownKind = "gun"
 
 local function gunPicked(): Toys.Toy?
@@ -181,7 +182,11 @@ local function build()
 	b.InputBegan:Connect(function(input)
 		local kind = input.UserInputType
 		if kind == Enum.UserInputType.Touch or kind == Enum.UserInputType.MouseButton1 then
-			holdFire()
+			if PokeController.beginCharge() then
+				charging = true
+			else
+				holdFire()
+			end
 			TweenService:Create(b, TweenInfo.new(0.06), { BackgroundColor3 = Color3.fromRGB(255, 110, 90) }):Play()
 		end
 	end)
@@ -189,6 +194,11 @@ local function build()
 		local kind = input.UserInputType
 		if kind == Enum.UserInputType.Touch or kind == Enum.UserInputType.MouseButton1 then
 			holding = false
+			if charging then
+				charging = false
+				centreUntil = os.clock() + 0.45
+				PokeController.endCharge(centre())
+			end
 			TweenService:Create(b, TweenInfo.new(0.12), { BackgroundColor3 = (ACTION[select(2, actionPicked())] or ACTION.gun).color }):Play()
 		end
 	end)

@@ -1028,6 +1028,7 @@ local function pruneLocked()
 	end
 end
 
+PokeController.charge = 0 -- (0..1: the blow being struck now was held this much)
 -- (23 Nov 2026, owner: "picking a weapon puts you in first person; pressing it again takes you out and the weapon out of
 -- your hand; the first shot or blow too, also on phones".) Never while driving, building or in the lab view.
 function PokeController.eyes(on: boolean)
@@ -1671,6 +1672,7 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 	-- Where on the part it was tapped, in the part's own space: a blow that lands a moment later
 	-- lands on the same spot of a dummy that has moved since.
 	local spot = if part:IsA("BasePart") then part.CFrame:PointToObjectSpace(result.Position) else nil
+	local charge = PokeController.charge
 	local function land()
 		if byHand then
 			-- Gone limp, died or picked another tool during the wind-up: the blow never lands.
@@ -1680,7 +1682,7 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 		end
 		local position = if spot and part:IsA("BasePart") then part.CFrame:PointToWorldSpace(spot) else result.Position
 		-- (byHand travels with it, only for the looks: others draw the avatar's blow or the tool.)
-		Net.event(Net.Names.HitRequest):FireServer(part, position, direction, toy.id, byHand)
+		Net.event(Net.Names.HitRequest):FireServer(part, position, direction, toy.id, byHand, if charge > 0 then charge else nil)
 		if toy.gun then
 			AmmoClient.spent(toy.id)
 			GunFeel.fired(toy, lastAim)
@@ -1701,7 +1703,7 @@ local function tryUse(screenPosition: Vector2, phase: "press" | "tap"): boolean
 				local onPart, at = WoundSpot.find(character, simulated, part, position)
 				local before = simulated:GetAttribute("RagdollState")
 				ActiveRagdoll.ownHit = true
-				local okHit, after = pcall(ActiveRagdoll.hit, simulated, onPart, HitMath.toyImpulse(toy, direction, mass), at, nil, HitMath.gunOf(toy))
+				local okHit, after = pcall(ActiveRagdoll.hit, simulated, onPart, HitMath.toyImpulse(toy, direction, mass) * (1 + (HitMath.CHARGE_PUSH - 1) * charge), at, nil, HitMath.gunOf(toy))
 				ActiveRagdoll.ownHit = false
 				-- (V9-NOW 10: a round on your own dummy shows it on the monitor this frame, before the server's echo.)
 				if toy.gun then
@@ -1902,6 +1904,37 @@ end
 
 -- Whether tools can be used right now: the bar on, and not resting for doctor mode. (isEnabled
 -- says only whether the bar is on, which build mode keeps to put back.)
+-- Holding a blow (HitMath.charges): begin on the press, the blow on letting go, harder the longer it was held.
+local chargeAt: number? = nil
+function PokeController.beginCharge(): boolean
+	local toy = Toys.byId[selected]
+	if not HitMath.charges(toy) or not enabled or doctorHold or handEmpty or pendingEquip or player:GetAttribute("MechGrab") == true then
+		return false
+	end
+	chargeAt = os.clock()
+	player:SetAttribute("Charging", chargeAt)
+	return true
+end
+function PokeController.endCharge(at: Vector2)
+	local from = chargeAt
+	chargeAt = nil
+	player:SetAttribute("Charging", nil)
+	if not from then
+		return
+	end
+	PokeController.charge = HitMath.chargeOf(os.clock() - from)
+	pcall(function()
+		(require(script.Parent:WaitForChild("Viewmodel")) :: any).swing()
+	end)
+	local ok, err = pcall(function()
+		return PokeController.pressAt(at) or PokeController.tapAt(at)
+	end)
+	PokeController.charge = 0
+	if not ok then
+		warn("[Poke] charged blow: " .. tostring(err))
+	end
+end
+
 -- Nothing in the hand (the picked slot was pressed again).
 function PokeController.handIsEmpty(): boolean
 	return handEmpty

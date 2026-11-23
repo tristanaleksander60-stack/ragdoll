@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Ammo = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Ammo"))
 local Toys = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Toys"))
 
+local HitMath = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("HitMath")) :: any
 local Client = script.Parent
 local FirstPerson = require(Client:WaitForChild("FirstPerson"))
 local AmmoClient = require(Client:WaitForChild("AmmoClient"))
@@ -225,6 +226,13 @@ local function frame(dt: number)
 		* CFrame.Angles(-swing * 1.3, swing * 0.5, swing * 0.7)
 		* CFrame.new(sway.X * Viewmodel.SWAY, sway.Y * Viewmodel.SWAY - dip * 0.45 + bob, kick)
 		* CFrame.Angles(kick * Viewmodel.TILT + dip * -0.5, 0, dip * 0.6)
+	-- (Holding a blow: the weapon goes back, the longer the further, trembling when full.)
+	local since = player:GetAttribute("Charging")
+	if type(since) == "number" then
+		local pull = HitMath.chargeOf(os.clock() - since)
+		local shake = if pull >= 1 then math.sin(os.clock() * 45) * 0.012 else 0
+		at = at * CFrame.new(0.2 * pull + shake, 0.18 * pull, 0.4 * pull) * CFrame.Angles(math.rad(26) * pull, 0, math.rad(-10) * pull)
+	end
 	local hold = holdOf(toolId)
 	if hold then
 		local base = at * CFrame.new(hold.at)
@@ -299,7 +307,7 @@ function Viewmodel.start()
 			return
 		end
 		local toy = Toys.byId[toolId or ""]
-		if toy and not toy.gun and os.clock() - swingAt > Viewmodel.SWING_TIME then
+		if toy and not toy.gun and not HitMath.charges(toy) and os.clock() - swingAt > Viewmodel.SWING_TIME then
 			swingAt = os.clock()
 		end
 	end)
