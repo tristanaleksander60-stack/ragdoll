@@ -109,6 +109,11 @@ type Vitals = {
 
 local vitals: { [Model]: Vitals } = {}
 local cutHits: { [Model]: { [string]: number } } = setmetatable({}, { __mode = "k" }) :: any -- (0.36.8: rounds per piece that can come off)
+-- (24 Nov 2026, owner: the head falls off at the second round, and the third bursts it, whatever gun.) Rounds in the head
+-- since the body was last whole, and whether it has burst.
+local headRounds: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+local headBurst: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+local HEAD_BURST_AT = 3
 local infoRemote: RemoteEvent? = nil
 local lastInfo: { [Player]: number } = {}
 -- The last line each player was sent (tests read it; the client only gets the remote).
@@ -328,6 +333,7 @@ local function reattach(model: Model, v: Vitals)
 	table.sort(left)
 	model:SetAttribute("Severed", if #left > 0 then table.concat(left, ",") else nil)
 	cutHits[model] = nil
+	headRounds[model], headBurst[model] = nil, nil
 end
 
 -- The Heal tool: every wound closed, the blood back, cut-off limbs put back, and awake. Returns
@@ -737,7 +743,15 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 	end
 	-- (23 Nov 2026, owner: "a Deagle or a shotgun to the head: the head bursts".)
 	if o.burst and o.round and not o.guarded and HEADSHOT[zone.id] and v.state == "Dead" and not v.severed.Head and VitalsService.sever(model, "Head", position) then
+		headBurst[model] = true
 		VitalsService.burstHead(model)
+	end
+	if o.round and not o.guarded and HEADSHOT[zone.id] and part.Name == "Head" and not headBurst[model] and not quiet() then
+		headRounds[model] = (headRounds[model] or 0) + 1
+		if headRounds[model] >= HEAD_BURST_AT and (v.severed.Head or VitalsService.sever(model, "Head", position)) then
+			headBurst[model] = true
+			VitalsService.burstHead(model)
+		end
 	end
 	VitalsService.step(model, v, 0)
 	local label = if severed then (((Anatomy.cutOf(severed :: string) :: any).label) .. " severed")
@@ -1056,6 +1070,7 @@ function VitalsService.dress(model: Model, group: string)
 		model:SetAttribute(if group == "LeftLeg" then "LegShotLeft" else "LegShotRight", nil)
 	end
 	cutHits[model] = nil
+	headRounds[model], headBurst[model] = nil, nil
 	if #v.wounds == 0 then
 		patchUp(model, v, true)
 	else
