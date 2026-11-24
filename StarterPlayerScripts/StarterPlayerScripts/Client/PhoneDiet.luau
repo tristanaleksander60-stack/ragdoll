@@ -58,8 +58,11 @@ local function watch(root: Instance)
 end
 
 -- (24 Nov 2026, fps on phones, tablets and consoles: a car far off is drawn without its inside and its smallest pieces.)
-PhoneDiet.CAR_FAR = 55
-local INSIDE = { "inter", "leather", "seat", "steer", "engine", "dash" }
+-- (The truck alone is a million triangles up close, in pieces of some 9 000 each, and has no lighter version: on every
+-- device now; a computer keeps the pieces longer.)
+PhoneDiet.CAR_FAR = if UserInputService.KeyboardEnabled then 75 else 42
+PhoneDiet.CAR_SMALL = if UserInputService.KeyboardEnabled then 1.6 else 2.6
+local INSIDE = { "inter", "leather", "seat", "steer", "engine", "dash", "king_ranch", "mirror_inner", "bulb" }
 local function carDiet()
 	local pieces: { [Model]: { BasePart } } = {}
 	local hidden: { [Model]: boolean } = {}
@@ -90,7 +93,7 @@ local function carDiet()
 					local list: { BasePart } = {}
 					for _, d in car:GetDescendants() do
 						if d:IsA("BasePart") and d.Transparency < 0.9 and d.LocalTransparencyModifier == 0 then
-							local small = math.max(d.Size.X, d.Size.Y, d.Size.Z) < 1.6
+							local small = math.max(d.Size.X, d.Size.Y, d.Size.Z) < PhoneDiet.CAR_SMALL and d:FindFirstChild("WheelWeld") == nil
 							local name = string.lower(d.Name)
 							for _, word in INSIDE do
 								small = small or string.find(name, word, 1, true) ~= nil
@@ -114,9 +117,7 @@ local function carDiet()
 end
 
 function PhoneDiet.start()
-	if not UserInputService.KeyboardEnabled then
-		task.spawn(carDiet)
-	end
+	task.spawn(carDiet)
 	if not PhoneDiet.wanted() then
 		return
 	end

@@ -1692,7 +1692,7 @@ local function update(dt: number)
 		-- are constraints, they work on in between.)
 		local far: any = rig
 		if LOD_PHONE and (rig.state == "Standing" or rig.state == "Out") and rig.held == 0 and os.clock() - (rig.lastImpulseAt or 0) > 2
-			and not far.seatW and (rig.pelvis.Position - eye).Magnitude > 45 and ActiveRagdoll.lodTurn then
+			and not far.seatW and (rig.pelvis.Position - eye).Magnitude > 28 and ActiveRagdoll.lodTurn then
 			rig.stateTime += dt
 			continue
 		end
@@ -1702,7 +1702,10 @@ local function update(dt: number)
 		end
 		rig.stateTime += dt
 		governSpeed(rig)
-		guardLimbs(rig)
+		-- (24 Nov 2026, fps: a body nothing has touched for 2 s has no limb to hold back; every second step is enough.)
+		if not (LOD_PHONE and ActiveRagdoll.lodTurn and os.clock() - (rig.lastImpulseAt or 0) > 2 and (rig.state == "Standing" or rig.state == "Walking")) then
+			guardLimbs(rig)
+		end
 		local state = rig.state
 		if state ~= "Ragdoll" and state ~= "Out" and state ~= "Frozen" and rig.held == 0 and vitalDown(rig) then
 			enter(rig, "Ragdoll")
