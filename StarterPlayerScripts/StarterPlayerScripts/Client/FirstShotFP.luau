@@ -100,7 +100,7 @@ end
 
 -- After a shot: teach first person once, when the moment is free.
 function FirstShotFP.onShot()
-	if busy or not Config.FIRST_SHOT_FP or not FirstShotFP.hasWayBack() or not Settings.loaded() then
+	if busy or player:GetAttribute("MechArms") == true or not Config.FIRST_SHOT_FP or not FirstShotFP.hasWayBack() or not Settings.loaded() then
 		return
 	end
 	local v = Settings.get()

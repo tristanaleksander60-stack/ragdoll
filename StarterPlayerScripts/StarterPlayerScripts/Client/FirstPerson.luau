@@ -33,6 +33,10 @@ function FirstPerson.set(want: boolean)
 	if want and ViewMode.isLab() then
 		return -- (first person is the player's own eyes: from the player view)
 	end
+	-- (24 Nov 2026, owner: never first person with the mech arms on, whatever weapon is picked.)
+	if want and player:GetAttribute("MechArms") == true then
+		return
+	end
 	if want == on then
 		return
 	end
@@ -146,6 +150,11 @@ local function touchButton()
 end
 
 function FirstPerson.start()
+	player:GetAttributeChangedSignal("MechArms"):Connect(function()
+		if player:GetAttribute("MechArms") == true then
+			FirstPerson.set(false)
+		end
+	end)
 	task.spawn(touchButton)
 	task.spawn(autoClose)
 	-- (0.37.20: while any window is open in first person, the mouse is free to click it: a Modal button, the
