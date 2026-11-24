@@ -634,6 +634,16 @@ end
 
 local function buildRamp()
 	local RAMP = (require(Shared:WaitForChild("PathPlan")) :: any).RAMP_AT -- (V9-0h: on the rim under LAYOUT_V3)
+	if (Config :: any).STRETCH_MACHINE then
+		-- (24 Nov 2026, owner: the stretching machine in the ramp's place.)
+		local okM, errM = pcall(function()
+			return (require(script.Parent:WaitForChild("StretchMachine")) :: any).build(folder, at(RAMP.X, 0, RAMP.Y))
+		end)
+		if not okM then
+			warn("[Playground] stretch machine: " .. tostring(errM))
+		end
+		return
+	end
 	local ramp = Instance.new("WedgePart")
 	ramp.Name = "Ramp"
 	ramp.Size = Vector3.new(10, 7, 18)
