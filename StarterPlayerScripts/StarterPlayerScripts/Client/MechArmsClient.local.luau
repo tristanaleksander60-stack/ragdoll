@@ -428,9 +428,9 @@ end
 -- (23 Nov 2026, owner: "remove the clicking, you must rip it off again"): HOLD Q on a limb, then PULL: drag the mouse
 -- away from it (on touch: keep holding TEAR). The body stands still; the strain builds with how far you pull, the
 -- wound at the joint opens, blood spurts harder, and when the bar is full the piece rips off. Let go of Q to stop.
-local STRAIN_START = 1.2 -- studs of pull before it counts
-local STRAIN_RATE = 0.5 -- bar a second per stud past that
-local TOUCH_RATE = 0.7
+local STRAIN_START = 0.7 -- studs of pull before it counts
+local STRAIN_RATE = 1.3 -- bar a second per stud past that
+local TOUCH_RATE = 1.2
 local bar = Instance.new("Frame")
 bar.Name = "Strain"
 bar.AnchorPoint = Vector2.new(0.5, 0)
