@@ -27,6 +27,14 @@ local Sprint = {}
 
 Sprint.SPEED = 1.65 -- x the walk speed (16 -> 26.4)
 Sprint.FOV_ADD = 7 -- degrees wider at full sprint
+-- (24 Nov 2026, owner: a little slower with the bigger weapons, never so much that it is a bother.) x the speed, walking
+-- and running, with it in the hand; anything not here: full speed.
+Sprint.WEIGHT = {
+	Minigun = 0.84, Nuke = 0.86, RPG = 0.87, LMG = 0.88, Railgun = 0.88, Chainsaw = 0.9, GravityGun = 0.9, Sniper = 0.9,
+	DMR = 0.92, Hammer = 0.92, AutoShotgun = 0.92, LaserRifle = 0.93, Shotgun = 0.94, DoubleBarrel = 0.94, TommyGun = 0.94,
+	AK = 0.95, M4 = 0.95, Axe = 0.96, SMG = 0.98,
+} :: { [string]: number }
+local weight = 1 -- eased
 local EASE = 8 -- per second: how fast the speed and the view follow
 local ACTION = "RagdollLabSprint"
 
@@ -200,7 +208,14 @@ function Sprint.start()
 		if humanoid and not ViewMode.isLab() then
 			local state = humanoid:GetState()
 			local plain = state ~= Enum.HumanoidStateType.Climbing and state ~= Enum.HumanoidStateType.Swimming and not humanoid.Sit
-			local speed = StarterPlayer.CharacterWalkSpeed * (1 + (Sprint.SPEED - 1) * (if plain then amount else 0))
+			local held = character and character:FindFirstChild("HeldTool")
+			local tool = held and held:GetAttribute("Tool")
+			local wantWeight = if type(tool) == "string" then Sprint.WEIGHT[tool] or 1 else 1
+			weight += (wantWeight - weight) * math.min(1, EASE * dt)
+			if math.abs(weight - wantWeight) < 0.004 then
+				weight = wantWeight
+			end
+			local speed = StarterPlayer.CharacterWalkSpeed * weight * (1 + (Sprint.SPEED - 1) * (if plain then amount else 0))
 			-- (Only while the walk speed is ours to set: the plain walk speed or the one we wrote last.
 			-- Anything else set it (a stop, a slow, a boost): left alone.)
 			local now = humanoid.WalkSpeed
