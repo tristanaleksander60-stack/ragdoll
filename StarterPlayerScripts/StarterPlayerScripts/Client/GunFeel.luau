@@ -36,6 +36,26 @@ GunFeel.SPIN_UP = 0.45
 GunFeel.SPIN_KEEP = 0.6 -- s without a round before the barrels spin down
 GunFeel.CHARGE = 0.75
 GunFeel.ZOOM = { Sniper = -48, DMR = -32 } :: { [string]: number }
+-- (24 Nov 2026, owner: "aim with every weapon, a Glock too".) In first person every other gun can be aimed: the gun comes
+-- up to the middle (Viewmodel) and the view narrows a little. The two with a scope also in the player view, as before.
+GunFeel.AIM_SMALL = -12
+GunFeel.AIM_LONG = -20
+GunFeel.SMALL = { Blaster = true, Deagle = true, Revolver = true, GoldenDeagle = true, FlareGun = true, Shotgun = true, DoubleBarrel = true, AutoShotgun = true, Minigun = true } :: { [string]: boolean }
+function GunFeel.aimOf(id: string): number?
+	local scope = GunFeel.ZOOM[id]
+	if scope then
+		return scope
+	end
+	local toy = Toys.byId[id]
+	if not toy or not toy.gun then
+		return nil
+	end
+	local FirstPerson = require(script.Parent:WaitForChild("FirstPerson")) :: any
+	if not FirstPerson.isOn() then
+		return nil
+	end
+	return if GunFeel.SMALL[id] then GunFeel.AIM_SMALL else GunFeel.AIM_LONG
+end
 
 -- Set by PokeController: fires the picked gun at a screen point (its whole path and checks).
 GunFeel.refire = nil :: ((at: Vector2) -> ())?
@@ -243,7 +263,7 @@ function GunFeel.start()
 	ringGui, ring, ringGrad = g, r, grad
 	RunService.RenderStepped:Connect(function()
 		local id = GunFeel.getSelected and GunFeel.getSelected() or ""
-		local want = GunFeel.ZOOM[id]
+		local want = GunFeel.aimOf(id)
 		local held = want ~= nil and (UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) or zoomToggle)
 		zoomed = held
 		local target = if held and want then want else 0

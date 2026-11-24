@@ -50,6 +50,7 @@ local holding = false
 local charging = false
 local shownKind = "gun"
 
+local zoomSlot = "Zoom" -- the box the ZOOM / AIM button has now
 local function gunPicked(): Toys.Toy?
 	local toy = Toys.byId[PokeController.getSelected()]
 	if toy and toy.gun then
@@ -238,7 +239,6 @@ local function build()
 		local GunFeel = require(Client:WaitForChild("GunFeel")) :: any
 		local on = not GunFeel.zoomed()
 		GunFeel.setZoomToggle(on)
-		z.BackgroundColor3 = if on then Color3.fromRGB(40, 150, 80) else Color3.fromRGB(40, 60, 90)
 	end)
 	if KitStyle.V2 then
 		KitStyle.fit(z, 20)
@@ -261,7 +261,7 @@ local function build()
 		HudSlots.apply(b, "Shoot", ctx)
 		local zoom = gui:FindFirstChild("Zoom")
 		if zoom and zoom:IsA("GuiObject") then
-			HudSlots.apply(zoom, "Zoom", ctx)
+			HudSlots.apply(zoom, zoomSlot, ctx)
 		end
 		HudSlots.apply(rl, "Reload", ctx)
 	end)
@@ -372,7 +372,20 @@ function TouchShoot.start()
 		local zoom = bg and bg:FindFirstChild("Zoom") :: GuiObject?
 		if zoom then
 			local toy = gunPicked()
-			zoom.Visible = want and toy ~= nil and (toy.id == "Sniper" or toy.id == "DMR")
+			-- (24 Nov 2026: every gun can be aimed in first person; the two with a scope in the player view too.)
+			local GunFeel = require(Client:WaitForChild("GunFeel")) :: any
+			local scope = toy ~= nil and (toy.id == "Sniper" or toy.id == "DMR")
+			zoom.Visible = want and toy ~= nil and GunFeel.aimOf(toy.id) ~= nil
+			local slotName = if scope then "Zoom" else "Aim"
+			if slotName ~= zoomSlot then
+				zoomSlot = slotName
+				HudSlots.apply(zoom, slotName, HudSlots.context(true, false))
+				;(zoom :: TextButton).Text = if scope then "ZOOM" else "AIM"
+			end
+			local lit = if GunFeel.zoomed() then Color3.fromRGB(40, 150, 80) else Color3.fromRGB(40, 60, 90)
+			if zoom.BackgroundColor3 ~= lit then
+				zoom.BackgroundColor3 = lit
+			end
 		end
 		local b = button
 		if want and b then

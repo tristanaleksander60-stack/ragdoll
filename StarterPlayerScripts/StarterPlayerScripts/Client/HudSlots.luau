@@ -210,6 +210,14 @@ SLOTS.Zoom = function(ctx)
 	return slot(1, 1, UDim2.new(1, -140, 1, -250), 92, 52)
 end
 
+-- 24 Nov 2026: AIM for every other gun in first person: on a phone over RELOAD, clear of RUN's box.
+SLOTS.Aim = function(ctx)
+	if ctx.phone then
+		return slot(1, 1, UDim2.new(1, -30, 1, -164), 60, 44)
+	end
+	return slot(1, 1, UDim2.new(1, -140, 1, -250), 92, 52)
+end
+
 HudSlots.NAMES = { "View", "Replay", "Ragdoll", "Chaos", "Recenter", "Grab", "Throw", "Mode", "Play", "Counter", "Packs", "MouseHelp", "Sprint", "Weapons", "Deal", "FirstPerson", "SlowMo", "Revive", "Reset", "Shoot", "Zoom", "Experiment" }
 
 -- Whether RUN may show with this tool picked (a landscape phone shares THROW's / ZOOM's box).

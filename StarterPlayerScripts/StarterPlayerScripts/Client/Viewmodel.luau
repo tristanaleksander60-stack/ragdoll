@@ -59,6 +59,9 @@ local flash: PointLight? = nil
 local flashPart: BasePart? = nil
 local flashUntil = 0
 local toolId = ""
+local topY = 0.2 -- studs from the grip to the top of the copy (its sights)
+local aimed = 0 -- 0 at the side .. 1 up in the middle
+Viewmodel.AIM_AT = -1.45 -- studs ahead of the eye the grip sits while aiming
 
 local function clear()
 	if holder then
@@ -90,6 +93,16 @@ local function build(held: Model)
 		c:ScaleTo(c:GetScale() * Viewmodel.SCALE)
 	end)
 	c.Parent = h
+	-- (How high its sights are over the grip: aiming puts them just under the middle of the screen.)
+	local pivot = c:GetPivot()
+	topY = 0.05
+	for _, d in c:GetDescendants() do
+		if d:IsA("BasePart") and d.Transparency < 0.95 then
+			local o = pivot:ToObjectSpace(d.CFrame)
+			local half = math.abs(o.RightVector.Y) * d.Size.X / 2 + math.abs(o.UpVector.Y) * d.Size.Y / 2 + math.abs(o.LookVector.Y) * d.Size.Z / 2
+			topY = math.max(topY, o.Position.Y + half)
+		end
+	end
 	-- The tip (the muzzle): a part or an attachment named Tip; else the far end of the model.
 	local t = c:FindFirstChild("Tip", true)
 	if t and t:IsA("BasePart") then
@@ -220,12 +233,20 @@ local function frame(dt: number)
 	-- arcs the weapon down and across into the middle of the view and back.
 	local st = (os.clock() - swingAt) / Viewmodel.SWING_TIME
 	local swing = if st >= 0 and st < 1 then math.sin(st * math.pi) else 0
+	-- (24 Nov 2026, owner: aim with every gun: it comes up to the middle, its sights under the crosshair.)
+	local GunFeel = require(script.Parent:WaitForChild("GunFeel")) :: any
+	local toyNow = Toys.byId[toolId]
+	local wantAim = if toyNow and toyNow.gun and GunFeel.zoomed() and not reload then 1 else 0
+	aimed += (wantAim - aimed) * math.min(1, dt * 14)
+	local place = Viewmodel.OFFSET:Lerp(CFrame.new(0, -topY - 0.035, Viewmodel.AIM_AT), aimed)
+	sway *= 1 - 0.6 * aimed
+	bob *= 1 - 0.8 * aimed
 	local at = camera.CFrame
-		* Viewmodel.OFFSET
+		* place
 		* CFrame.new(-swing * 0.7, -swing * 0.15, -swing * 0.9)
 		* CFrame.Angles(-swing * 1.3, swing * 0.5, swing * 0.7)
 		* CFrame.new(sway.X * Viewmodel.SWAY, sway.Y * Viewmodel.SWAY - dip * 0.45 + bob, kick)
-		* CFrame.Angles(kick * Viewmodel.TILT + dip * -0.5, 0, dip * 0.6)
+		* CFrame.Angles(kick * Viewmodel.TILT * (1 - 0.6 * aimed) + dip * -0.5, 0, dip * 0.6)
 	-- (Holding a blow: the weapon goes back, the longer the further, trembling when full.)
 	local since = player:GetAttribute("Charging")
 	if type(since) == "number" then
