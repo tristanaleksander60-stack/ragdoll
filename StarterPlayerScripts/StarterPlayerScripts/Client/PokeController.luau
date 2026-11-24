@@ -2232,7 +2232,70 @@ function PokeController.cellSize(): Vector2
 	return cell
 end
 
+-- (24 Nov 2026, from the funnel: half of the new players never use a third tool.) A newcomer who has used one tool a
+-- while sees the next untried slot breathe calmly, no words: for NUDGE_SHOW s at a time, until it is used or picked, or
+-- three tools are tried. Never while a window is open.
+PokeController.NUDGE_AFTER = 18 -- s with the same tool
+PokeController.NUDGE_SHOW = 10
+PokeController.NUDGE_AGAIN = 25
+local function nudgeLoop()
+	local lastPick, since, waitTill = selected, os.clock(), 0
+	while task.wait(0.5) do
+		if player:GetAttribute("Newcomer") == false then
+			return
+		end
+		if selected ~= lastPick then
+			lastPick, since = selected, os.clock()
+		end
+		local tried = 0
+		local nextId: string? = nil
+		for _, id in loadout do
+			if player:GetAttribute("Tried_" .. id) == true then
+				tried += 1
+			elseif id ~= selected and slabs[id] and not nextId then
+				nextId = id
+			end
+		end
+		if tried >= 3 then
+			return
+		end
+		local slab = if nextId then slabs[nextId] else nil
+		if player:GetAttribute("Newcomer") == true and tried >= 1 and slab and os.clock() - since >= PokeController.NUDGE_AFTER and os.clock() >= waitTill and pendingEquip == nil then
+			local glow = Instance.new("UIStroke")
+			glow.Name = "Nudge"
+			glow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+			glow.Color = Color3.fromRGB(255, 255, 255)
+			glow.Thickness = 3
+			glow.Transparency = 0.2
+			local holder = Instance.new("Frame")
+			holder.Name = "NudgeHolder"
+			holder.BackgroundTransparency = 1
+			holder.Size = UDim2.fromScale(1, 1)
+			holder.ZIndex = 7
+			local round = Instance.new("UICorner")
+			round.CornerRadius = UDim.new(0, Theme.Radius.button + 2)
+			round.Parent = holder
+			glow.Parent = holder
+			holder.Parent = slab.ring.Parent and slab.ring.Parent.Parent
+			local tween = if reducedMotion() then nil else TweenService:Create(glow, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Transparency = 0.9 })
+			if tween then
+				tween:Play()
+			end
+			local t0 = os.clock()
+			while os.clock() - t0 < PokeController.NUDGE_SHOW and selected == lastPick and holder.Parent and player:GetAttribute("Tried_" .. (nextId :: string)) ~= true do
+				task.wait(0.15)
+			end
+			if tween then
+				tween:Cancel()
+			end
+			holder:Destroy()
+			waitTill = os.clock() + PokeController.NUDGE_AGAIN
+		end
+	end
+end
+
 function PokeController.start()
+	task.spawn(nudgeLoop)
 	-- (Round 5: the magazine counter reads the picked tool and draws on its slab.)
 	AmmoClient.getSelected = function(): string
 		return selected

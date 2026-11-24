@@ -424,6 +424,9 @@ function OnboardingService.onToyUsed(player: Player, toyId: string)
 	if not p.tried[toyId] then
 		p.tried[toyId] = true
 		p.triedCount += 1
+		if p.triedCount <= TOOLS_GOAL then
+			player:SetAttribute("Tried_" .. toyId, true) -- (24 Nov 2026: the bar's slots show which is not tried yet)
+		end
 	end
 	OnboardingService.checkCounts(player)
 end
