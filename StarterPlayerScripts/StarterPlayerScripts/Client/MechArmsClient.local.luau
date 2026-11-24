@@ -86,6 +86,191 @@ local function jointPoint(model: Model, piece: string): Vector3?
 	return if socket and socket:IsA("Attachment") then socket.WorldPosition else nil
 end
 
+-- (24 Nov 2026, owner: "the limbs must be seen pulled off slowly, not at once"): while you pull, pictures of the limb
+-- stand in for it on your screen: it turns towards the claw, slides out of its joint and stretches, held by strands of
+-- flesh, until it lets go. The real limb comes off where the pictures were.
+type Shown = { source: BasePart, ghost: BasePart, was: number, decals: { [Decal]: number } }
+type Pulled = { model: Model, piece: string, shown: { Shown }, at: BasePart, body: BasePart, made: { Instance }, beams: { Beam }, t: CFrame, out: number, done: boolean }
+local pulled: Pulled? = nil
+local PULL_OUT = 1.5 -- studs it is out of its joint when it lets go
+local CHAIN = {
+	LeftArm = { "LeftUpperArm", "LeftLowerArm", "LeftHand" },
+	RightArm = { "RightUpperArm", "RightLowerArm", "RightHand" },
+	LeftLeg = { "LeftUpperLeg", "LeftLowerLeg", "LeftFoot" },
+	RightLeg = { "RightUpperLeg", "RightLowerLeg", "RightFoot" },
+	Head = { "Head" },
+	Waist = { "UpperTorso", "Head", "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperArm", "RightLowerArm", "RightHand" },
+} :: { [string]: { string } }
+local PIECE_CUTS = {
+	LowerArm = { "Forearm" }, Hand = { "Forearm", "Hand" }, LowerLeg = { "Shin" }, Foot = { "Shin", "Foot" },
+} :: { [string]: { string } }
+
+local function dropPulled()
+	local p = pulled
+	pulled = nil
+	if not p then
+		return
+	end
+	for _, s in p.shown do
+		s.ghost:Destroy()
+		if s.source.Parent then
+			s.source.LocalTransparencyModifier = s.was
+		end
+		for decal, was in s.decals do
+			decal.LocalTransparencyModifier = was
+		end
+	end
+	for _, inst in p.made do
+		inst:Destroy()
+	end
+end
+
+local function beginPulled(model: Model, piece: string)
+	dropPulled()
+	local spec = PIECES[piece]
+	local body = spec and model:FindFirstChild(spec.body)
+	local joint = jointPoint(model, piece)
+	if not (body and body:IsA("BasePart") and joint) then
+		return
+	end
+	local skins = model:FindFirstChild("Skins")
+	local shown: { Shown } = {}
+	local function show(source: Instance)
+		if not source:IsA("BasePart") or source.Transparency >= 0.98 or #shown >= 90 or source.Name == "Stump" then
+			return
+		end
+		local ghost = source:Clone()
+		for _, c in ghost:GetChildren() do
+			if not (c:IsA("Decal") or c:IsA("SpecialMesh") or c:IsA("SurfaceAppearance")) then
+				c:Destroy()
+			end
+		end
+		ghost.Name = "MechGhost"
+		ghost.Anchored, ghost.CanCollide, ghost.CanQuery, ghost.CanTouch = true, false, false, false
+		ghost.Parent = Workspace
+		local decals: { [Decal]: number } = {}
+		for _, c in source:GetChildren() do
+			if c:IsA("Decal") then
+				decals[c] = c.LocalTransparencyModifier
+			end
+		end
+		table.insert(shown, { source = source, ghost = ghost, was = source.LocalTransparencyModifier, decals = decals })
+	end
+	for _, name in CHAIN[piece] or {} do
+		local part = model:FindFirstChild(name)
+		local own = PIECE_OF[name]
+		local gone = own ~= nil and own ~= piece and severed(model, own)
+		local short = string.gsub(string.gsub(name, "^Left", ""), "^Right", "")
+		for _, cut in PIECE_CUTS[short] or {} do
+			gone = gone or severed(model, (if string.sub(name, 1, 4) == "Left" then "Left" else "Right") .. cut)
+		end
+		if part and part:IsA("BasePart") and not gone then
+			local skin = skins and skins:FindFirstChild(name)
+			if skin and skin:IsA("BasePart") then
+				show(skin)
+			else
+				show(part)
+			end
+			for _, c in part:GetChildren() do
+				show(c) -- (its bullet holes)
+			end
+			for _, c in if skins then skins:GetChildren() else {} do
+				if c:GetAttribute("Of") == name then
+					show(c) -- (its bone, seen through)
+				end
+			end
+		end
+	end
+	local at = Instance.new("Part")
+	at.Name = "MechGhost"
+	at.Shape = Enum.PartType.Ball
+	at.Anchored, at.CanCollide, at.CanQuery, at.CanTouch, at.CastShadow = true, false, false, false, false
+	at.Color = FLESH
+	at.Material = Enum.Material.SmoothPlastic
+	at.Size = Vector3.one * 0.3
+	at.Position = joint
+	at.Parent = Workspace
+	local made: { Instance } = { at }
+	local beams: { Beam } = {}
+	local rng = Random.new()
+	for _ = 1, 8 do
+		local off = Vector3.new(rng:NextNumber(-0.28, 0.28), rng:NextNumber(-0.28, 0.28), rng:NextNumber(-0.28, 0.28))
+		local a0 = Instance.new("Attachment")
+		a0.Parent = body
+		a0.WorldPosition = joint + off
+		local a1 = Instance.new("Attachment")
+		a1.Position = off * 0.8
+		a1.Parent = at
+		local beam = Instance.new("Beam")
+		beam.Attachment0, beam.Attachment1 = a0, a1
+		beam.Color = ColorSequence.new(BLOOD, FLESH)
+		beam.FaceCamera = true
+		beam.Segments = 8
+		beam.CurveSize0 = rng:NextNumber(-0.3, 0.3)
+		beam.CurveSize1 = rng:NextNumber(-0.3, 0.3)
+		beam.LightInfluence = 1
+		beam.Transparency = NumberSequence.new(0)
+		beam.Enabled = false
+		beam.Parent = at
+		table.insert(made, a0)
+		table.insert(beams, beam)
+	end
+	pulled = { model = model, piece = piece, shown = shown, at = at, body = body, made = made, beams = beams, t = CFrame.identity, out = 0, done = false }
+end
+
+-- The pictures for this frame: strain 0..1, towards `claw`.
+local function stepPulled(strain: number, claw: Vector3?, dt: number)
+	local p = pulled
+	if not p then
+		return
+	end
+	local joint = jointPoint(p.model, p.piece)
+	local grip = p.model:FindFirstChild(PIECES[p.piece].grip)
+	if not (joint and grip and grip:IsA("BasePart")) then
+		dropPulled()
+		return
+	end
+	local along = grip.Position - joint
+	along = if along.Magnitude > 0.05 then along.Unit else Vector3.yAxis
+	local want = if claw and (claw - joint).Magnitude > 0.3 then (claw - joint).Unit else along
+	if want:Dot(along) < -0.2 then
+		want = along -- (never back through the body)
+	end
+	local turnBy = (if p.piece == "Waist" then 0.12 elseif p.piece == "Head" then 0.25 else 0.6) * math.min(1, strain * 2.2)
+	local rot = CFrame.identity:Lerp(CFrame.fromRotationBetweenVectors(along, want), turnBy)
+	local dir = rot:VectorToWorldSpace(along):Lerp(want, 0.5)
+	dir = if dir.Magnitude > 0.05 then dir.Unit else along
+	-- (It gives a little at first, then more and more; a small tremble while it holds.)
+	local out = PULL_OUT * strain ^ 1.5
+	p.out += (out - p.out) * math.min(1, dt * 12)
+	local shake = if strain > 0.02 then 0.035 * strain else 0
+	local tremble = Vector3.new(math.random() - 0.5, math.random() - 0.5, math.random() - 0.5) * shake * 2
+	p.t = CFrame.new(joint + dir * p.out + tremble) * rot * CFrame.new(-joint)
+	local on = strain > 0.01
+	for _, s in p.shown do
+		if s.source.Parent then
+			s.ghost.CFrame = p.t * s.source.CFrame
+			s.ghost.Color = s.source.Color
+			s.ghost.LocalTransparencyModifier = if on then 0 else 1
+			s.source.LocalTransparencyModifier = if on then 1 else s.was
+			for decal, was in s.decals do
+				decal.LocalTransparencyModifier = if on then 1 else was
+			end
+		else
+			s.ghost.LocalTransparencyModifier = 1
+		end
+	end
+	p.at.Position = joint + dir * p.out
+	p.at.Size = Vector3.one * (0.2 + 0.4 * strain)
+	p.at.LocalTransparencyModifier = if on then 0 else 1
+	for i, beam in p.beams do
+		-- (One after another they snap as it nears the end; the rest get thinner.)
+		beam.Enabled = on and strain < 0.6 + i * 0.055
+		local w = 0.2 - 0.12 * strain
+		beam.Width0, beam.Width1 = w, w * 0.8
+	end
+end
+
 RunService.RenderStepped:Connect(function()
 	local t = os.clock()
 	for _, p in Players:GetPlayers() do
@@ -101,8 +286,9 @@ RunService.RenderStepped:Connect(function()
 			local g = grab :: Grab
 			-- (Holding: the claws on the piece; a wrench throws them back a little after each click.)
 			local kick = math.max(0, g.kick - t)
-			local pull = (g.part.Position - pack.Position)
-			local point = g.part.Position - (if pull.Magnitude > 0.1 then pull.Unit else Vector3.zero) * kick * 3
+			local hold = if pulled and pulled.model == g.model then pulled.t * g.part.Position else g.part.Position
+			local pull = (hold - pack.Position)
+			local point = hold - (if pull.Magnitude > 0.1 then pull.Unit else Vector3.zero) * kick * 3
 			r = { point = point, t0 = t, pair = 1 }
 			k = 1
 		elseif r then
@@ -170,6 +356,20 @@ remote.OnClientEvent:Connect(function(kind: unknown, a: unknown, b: unknown)
 		-- Strands of flesh from the stump to the piece: they stretch as it falls, thin out and snap.
 		local model = a :: Model
 		local spec = PIECES[b :: string]
+		local mine = pulled
+		if mine and mine.model == model then
+			-- (The real limb goes on from where its pictures were.)
+			if b ~= "Waist" and b == mine.piece and severed(model, mine.piece) then
+				for _, name in CHAIN[mine.piece] do
+					local part = model:FindFirstChild(name)
+					if part and part:IsA("BasePart") and not part.Anchored then
+						part.CFrame = mine.t * part.CFrame
+						part.AssemblyLinearVelocity, part.AssemblyAngularVelocity = Vector3.zero, Vector3.zero
+					end
+				end
+			end
+			dropPulled()
+		end
 		local first = spec and model:FindFirstChild(spec.first)
 		local body = spec and model:FindFirstChild(spec.body)
 		local socket = first and first:FindFirstChild(spec.joint .. "RigAttachment")
@@ -325,6 +525,9 @@ local function drawHint()
 end
 
 local function release(tell: boolean)
+	if tell then
+		dropPulled()
+	end
 	local g = grab
 	grab = nil
 	player:SetAttribute("MechGrab", nil)
@@ -422,6 +625,7 @@ local function startGrab(useTouch: boolean)
 	remote:FireServer("Grab", body)
 	player:SetAttribute("MechGrab", true)
 	grab = { model = body, part = grip, piece = piece, clicks = 0, t0 = os.clock(), kick = 0, gash = nil }
+	beginPulled(body, piece)
 	drawHint()
 end
 
@@ -430,7 +634,8 @@ end
 -- wound at the joint opens, blood spurts harder, and when the bar is full the piece rips off. Let go of Q to stop.
 local STRAIN_START = 0.7 -- studs of pull before it counts
 local STRAIN_RATE = 1.3 -- bar a second per stud past that
-local TOUCH_RATE = 1.2
+local TOUCH_RATE = 0.55
+local RATE_MAX = 0.55 -- (24 Nov 2026: never faster than this, so it is seen coming off: 1.8 s at least)
 local bar = Instance.new("Frame")
 bar.Name = "Strain"
 bar.AnchorPoint = Vector2.new(0.5, 0)
@@ -463,10 +668,20 @@ local function clawPoint(g: Grab): Vector3
 	return ray.Origin + ray.Direction * depth
 end
 
+local lastClaw: Vector3? = nil
+local tornAt = 0
 RunService.Heartbeat:Connect(function(dt)
 	local g = grab
 	if not g then
 		bar.Visible = false
+		local p = pulled
+		if p then
+			if not p.model.Parent or not p.done or os.clock() - tornAt > 1.2 then
+				dropPulled()
+			else
+				stepPulled(1, lastClaw, dt) -- (torn: held there until the server's cut arrives)
+			end
+		end
 		return
 	end
 	local here = rootPos()
@@ -477,9 +692,11 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 	local claw = clawPoint(g)
 	local stretch = (claw - g.part.Position).Magnitude
-	local rate = if touchGrab then TOUCH_RATE else math.max(0, stretch - STRAIN_START) * STRAIN_RATE
+	local rate = if touchGrab then TOUCH_RATE else math.min(RATE_MAX, math.max(0, stretch - STRAIN_START) * STRAIN_RATE)
 	g.clicks = math.min(1, g.clicks + rate * dt) -- (the strain, 0..1)
 	local strain = g.clicks
+	lastClaw = if touchGrab then here else claw -- (on touch it comes towards you)
+	stepPulled(strain, lastClaw, dt)
 	bar.Visible = true
 	fill.Size = UDim2.fromScale(strain, 1)
 	local mouse = UserInputService:GetMouseLocation()
@@ -515,6 +732,10 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 	if strain >= 1 and os.clock() - g.t0 > 0.4 then
 		remote:FireServer("Tear", g.model, g.piece)
+		if pulled then
+			pulled.done = true
+			tornAt = os.clock()
+		end
 		release(false)
 	end
 end)
