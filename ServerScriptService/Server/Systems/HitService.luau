@@ -31,7 +31,7 @@ local Ammo = require(Shared.Ammo)
 local Config = require(Shared.Config)
 local WeaponMechanics = require(script.Parent.WeaponMechanics)
 local BowMath = require(Shared.BowMath) -- (V9-NOW 23)
-local BURSTS: { [string]: boolean } = { Deagle = true, GoldenDeagle = true, Shotgun = true, AutoShotgun = true, DoubleBarrel = true } -- (a round to the head takes it apart)
+local BURSTS: { [string]: boolean } = { Deagle = true, GoldenDeagle = true, Revolver = true, Shotgun = true, AutoShotgun = true, DoubleBarrel = true, Sniper = true, DMR = true, Railgun = true, LMG = true, Minigun = true, Nuke = true, RPG = true } -- (a round to the head takes it apart)
 local chargeNow = 0 -- (the blow being applied now: 0..1 held, HitMath.charges)
 local drawNow: number? = nil -- (V9-NOW 23: the draw of the Bow round being applied now: applyToy reads it)
 -- (An extra round of a gun's own mechanics never starts more: per player, so one player's rounds

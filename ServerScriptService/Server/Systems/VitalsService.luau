@@ -791,7 +791,7 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 		VitalsService.burstHead(model)
 	end
 	if o.round and not o.guarded and HEADSHOT[zone.id] and part.Name == "Head" and not headBurst[model] and not quiet() then
-		headRounds[model] = (headRounds[model] or 0) + 1
+		headRounds[model] = if o.burst then HEAD_BURST_AT else (headRounds[model] or 0) + 1 -- (a big gun: at once, also a head that is off already)
 		if headRounds[model] >= HEAD_BURST_AT and (v.severed.Head or VitalsService.sever(model, "Head", position)) then
 			headBurst[model] = true
 			VitalsService.burstHead(model)
