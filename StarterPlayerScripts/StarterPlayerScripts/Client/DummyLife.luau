@@ -238,7 +238,7 @@ local function build(model: Model): Life?
 		idleAt = os.clock() + rng:NextNumber(4, 30),
 		wasHandsUp = false,
 		ouchFor = -1,
-		lodWait = 0,
+		lodWait = math.random() * LOD_MID_RATE, -- (0.50.3, fps: the far ones never all in one frame)
 		noiseAt = -math.huge,
 		noisePos = nil,
 		gesture = nil,
@@ -1251,6 +1251,7 @@ end
 -- upper body: the arms, waist and neck are drawn on every screen, so the idle breathing must not run over them. The
 -- legs are ActiveRagdoll's. Punch counts up on the server a moment before each hit lands: right and left in turn.
 local PUNCH_TIME = 0.42 -- s
+local LEG_JOINT = { LeftHip = true, RightHip = true, LeftKnee = true, RightKnee = true, LeftAnkle = true, RightAnkle = true }
 local function moodPose(life: Life, now: number, dt: number, moving: boolean): boolean
 	local model = life.model
 	local mood = model:GetAttribute("Mood")
@@ -1304,7 +1305,7 @@ local function moodPose(life: Life, now: number, dt: number, moving: boolean): b
 	end
 	local k = 1 - math.exp(-quick * dt)
 	for name, joint in life.joints do
-		if sits or not string.find(name, "Hip", 1, true) and not string.find(name, "Knee", 1, true) and not string.find(name, "Ankle", 1, true) then
+		if sits or not LEG_JOINT[name] then
 			local to = want[name] or CFrame.identity
 			local from = kept[name] or joint.Transform
 			local at = from:Lerp(to, k)
@@ -1335,8 +1336,12 @@ local function step(life: Life, now: number, dt: number)
 
 	-- Flying or dangling vs lying: checked here so every screen gets it, not just the simulator's.
 	if state == "Ragdoll" or state == "Out" then
-		local hit = Workspace:Raycast(life.pelvis.Position, Vector3.new(0, -AIR_CLEARANCE, 0), life.rayParams)
-		local flying = hit == nil
+		local probe: any = life -- (0.50.3, fps: ten looks a second under a fallen body, not one a frame)
+		local flying = life.airborne
+		if now >= (probe.probeAt or 0) then
+			probe.probeAt = now + 0.1
+			flying = Workspace:Raycast(life.pelvis.Position, Vector3.new(0, -AIR_CLEARANCE, 0), life.rayParams) == nil
+		end
 		if life.airborne and not flying and model:GetAttribute("Held") ~= true then
 			life.ouchUntil = now + LAND_OUCH
 		end
@@ -1490,6 +1495,7 @@ local function onRender(dt: number)
 	end
 	local camera = Workspace.CurrentCamera
 	local eye = if camera then camera.CFrame.Position else Vector3.zero
+	local look = if camera then camera.CFrame.LookVector else Vector3.zAxis
 	for model, life in lives do
 		if not model.Parent or not life.head.Parent then
 			lives[model] = nil
@@ -1508,8 +1514,10 @@ local function onRender(dt: number)
 		else
 			-- Up close every frame; further off a few times a second; far away and off screen not
 			-- at all (its face and pose wait where they were).
-			local distance = (life.pelvis.Position - eye).Magnitude
-			if distance <= LOD_NEAR then
+			local offset = life.pelvis.Position - eye
+			local distance = offset.Magnitude
+			-- (0.50.3, fps: one near but beside or behind the view is stepped as a far one.)
+			if distance <= LOD_NEAR and (distance < 8 or offset:Dot(look) > distance * 0.3) then
 				life.lodWait = 0
 				step(life, now, dt)
 			else

@@ -15,9 +15,11 @@ LabGuideClient.CARRY_REACH = 90 -- studs: the ring that lights up while you carr
 LabGuideClient.REST = 0.3 -- a ring's pieces at rest (they breathe 0.15 around it)
 
 -- A ring is an invisible part carrying its glowing pieces: they take the look.
+-- (0.50.3, fps: off a computer the rings rest still; every new transparency made the engine rebuild what it draws.)
+local LITE = not game:GetService("UserInputService").KeyboardEnabled
 local function setRing(ring: BasePart, transparency: number)
 	for _, seg in ring:GetChildren() do
-		if seg:IsA("BasePart") then
+		if seg:IsA("BasePart") and seg.Transparency ~= transparency then
 			seg.Transparency = transparency
 		end
 	end
@@ -89,7 +91,7 @@ function LabGuideClient.start()
 			if ring:IsA("BasePart") then
 				local d = (ring.Position - here).Magnitude
 				if d < LabGuideClient.NEAR then
-					setRing(ring, LabGuideClient.REST + 0.15 * math.sin(t * 2.6 + ring.Position.X * 0.1))
+					setRing(ring, if LITE then LabGuideClient.REST else LabGuideClient.REST + 0.15 * math.sin(t * 2.6 + ring.Position.X * 0.1))
 					if carrying and d < bestD then
 						best, bestD = ring, d
 					end

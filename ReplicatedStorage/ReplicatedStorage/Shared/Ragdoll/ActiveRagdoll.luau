@@ -1697,12 +1697,15 @@ local function update(dt: number)
 	end
 	local eye = if workspace.CurrentCamera then workspace.CurrentCamera.CFrame.Position else Vector3.zero
 	ActiveRagdoll.lodTurn = not ActiveRagdoll.lodTurn
+	local nth = 0 -- (0.50.3, fps: the resting bodies take turns, half each step, never all in one)
 	for model, rig in rigs do
+		nth += 1
+		local turn = ActiveRagdoll.lodTurn ~= (nth % 2 == 0)
 		-- (23 Nov 2026, fps on phones: a body far off that just stands or lies takes every second step; what holds it up
 		-- are constraints, they work on in between.)
 		local far: any = rig
 		if LOD_PHONE and (rig.state == "Standing" or rig.state == "Out") and rig.held == 0 and os.clock() - (rig.lastImpulseAt or 0) > 2
-			and not far.seatW and (rig.pelvis.Position - eye).Magnitude > 28 and ActiveRagdoll.lodTurn then
+			and not far.seatW and (rig.pelvis.Position - eye).Magnitude > 28 and turn then
 			rig.stateTime += dt
 			continue
 		end
@@ -1713,7 +1716,7 @@ local function update(dt: number)
 		rig.stateTime += dt
 		governSpeed(rig)
 		-- (24 Nov 2026, fps: a body nothing has touched for 2 s has no limb to hold back; every second step is enough.)
-		if not (LOD_PHONE and ActiveRagdoll.lodTurn and os.clock() - (rig.lastImpulseAt or 0) > 2 and (rig.state == "Standing" or rig.state == "Walking")) then
+		if not (LOD_PHONE and turn and os.clock() - (rig.lastImpulseAt or 0) > 2 and (rig.state == "Standing" or rig.state == "Walking")) then
 			guardLimbs(rig)
 		end
 		local state = rig.state

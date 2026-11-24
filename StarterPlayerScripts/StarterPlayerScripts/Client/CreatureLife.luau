@@ -20,8 +20,9 @@ local Workspace = game:GetService("Workspace")
 
 local CreatureLife = {}
 
-CreatureLife.LIFE_RANGE = 160
-CreatureLife.STEP = 1 / 30
+local LITE = not game:GetService("UserInputService").KeyboardEnabled -- (0.50.3, fps)
+CreatureLife.LIFE_RANGE = if LITE then 100 else 160
+CreatureLife.STEP = if LITE then 1 / 20 else 1 / 30
 CreatureLife.TURN_REACH = 45 -- studs: a player this close is looked at
 CreatureLife.TURN_MAX = math.rad(70)
 
@@ -126,7 +127,10 @@ function CreatureLife.start()
 				continue
 			end
 			local busy = model.Parent:GetAttribute("Busy") == true
-			if busy or (l.home.Position - camPos).Magnitude > CreatureLife.LIFE_RANGE then
+			-- (0.50.3, fps: one out of view is not moved.)
+			local off = l.home.Position - camPos
+			local far = off.Magnitude
+			if busy or far > CreatureLife.LIFE_RANGE or (far > 30 and off:Dot(cam.CFrame.LookVector) < far * 0.3) then
 				continue
 			end
 			if LOOKS[l.kind] then

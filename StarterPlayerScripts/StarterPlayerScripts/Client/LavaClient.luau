@@ -9,13 +9,14 @@ local Workspace = game:GetService("Workspace")
 
 local LavaClient = {}
 
-LavaClient.NEAR = 160
+local LITE = not game:GetService("UserInputService").KeyboardEnabled -- (0.50.3, fps)
+LavaClient.NEAR = if LITE then 80 else 160
 
 function LavaClient.start()
 	local acc = 0
 	RunService.Heartbeat:Connect(function(dt)
 		acc += dt
-		if acc < 0.05 then
+		if acc < (if LITE then 0.2 else 0.05) then
 			return
 		end
 		acc = 0
