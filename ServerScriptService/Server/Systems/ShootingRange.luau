@@ -1,122 +1,145 @@
 --!strict
--- ShootingRange (24 Nov 2026, owner): a small indoor range behind the creature yard of every lab (behind the compressor,
--- the washer and the mole). Four lanes, eight humanoid plates at two distances a lane. A shot, a blast or something thrown
--- swings a plate back on its hinge; it stands up again by itself. Everything is anchored; no loop runs. Knockables tells
--- of shots, blasts and RESET, so every weapon works as it is.
+-- ShootingRange (24 Nov 2026, owner): WEAPON TESTING, an indoor range behind the creature yard of every lab (behind the
+-- compressor, the washer and the mole). Four lanes; at the end of each a real ragdoll stands on a steel stand, a longer
+-- way off from lane to lane. The ragdolls are only there while someone is at the range (they cost a phone physics), and a
+-- dead, torn or fallen one is swapped for a fresh one. They are ordinary dummies: every weapon hurts them as it does any.
 
 local CollectionService = game:GetService("CollectionService")
-local Debris = game:GetService("Debris")
-local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
 
-local Knockables = require(script.Parent:WaitForChild("Knockables")) :: any
+local Systems = script.Parent
 
 local ShootingRange = {}
 
-ShootingRange.Z = 134 -- lab z of the open front (the yard ends at 129)
+ShootingRange.Z = 134 -- lab z of the front (the yard ends at 129)
 ShootingRange.WIDE = 52
 ShootingRange.DEEP = 44
-ShootingRange.HIGH = 13
-ShootingRange.LANES = 4
-ShootingRange.ROWS = { { 19, 34 }, { 25, 40 } } -- studs in from the front, odd and even lanes
-ShootingRange.UP_AFTER = 3 -- s down
-ShootingRange.TOUCH_SPEED = 16
-ShootingRange.MARGIN = 0.7
-ShootingRange.DING = 9113525391 -- (Pro Sound Effects, already in the game)
+ShootingRange.HIGH = 15
+ShootingRange.DOOR = 28 -- the opening's width
+ShootingRange.DOOR_HIGH = 10
+ShootingRange.LINE = 12 -- studs in to the firing line
+ShootingRange.TARGETS = { 21, 34, 26, 39 } -- studs in, lane by lane
+ShootingRange.NEAR = 42 -- studs from its middle: someone this near brings the targets out
+ShootingRange.AWAY = 10 -- s with nobody near before they go
+ShootingRange.SWAP = 4 -- s down, dead or torn before a fresh one stands there
+ShootingRange.STRAY = 6 -- studs off its stand counts as gone
 
 local WALL = Color3.fromRGB(112, 84, 62)
-local DARK = Color3.fromRGB(58, 46, 38)
-local FLOOR = Color3.fromRGB(128, 124, 118)
+local WALL_LOW = Color3.fromRGB(84, 63, 48)
+local DARK = Color3.fromRGB(46, 42, 40)
+local STEEL = Color3.fromRGB(92, 92, 96)
+local FLOOR = Color3.fromRGB(122, 119, 114)
 local ORANGE = Color3.fromRGB(240, 122, 32)
-local PLATE = Color3.fromRGB(222, 214, 200)
-local HIT = Color3.fromRGB(230, 70, 40)
+local WARM = Color3.fromRGB(255, 196, 128)
 
-type Target = { hinge: BasePart, home: CFrame, pieces: { BasePart }, down: boolean, token: number }
-local targets: { Target } = {}
-
-local function stand(t: Target)
-	t.token += 1
-	t.down = false
-	for _, p in t.pieces do
-		p.Color = PLATE
-	end
-	TweenService:Create(t.hinge, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { CFrame = t.home }):Play()
+-- Words painted on a face, in studs (never a screen-sized label).
+local function words(on: BasePart, face: Enum.NormalId, text: string, color: Color3)
+	local g = Instance.new("SurfaceGui")
+	g.Face = face
+	g.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	g.PixelsPerStud = 24
+	g.LightInfluence = 0.2
+	g.MaxDistance = 220
+	local t = Instance.new("TextLabel")
+	t.Size = UDim2.fromScale(0.94, 0.8)
+	t.Position = UDim2.fromScale(0.03, 0.1)
+	t.BackgroundTransparency = 1
+	t.Font = Enum.Font.BuilderSansExtraBold
+	t.TextScaled = true
+	t.TextColor3 = color
+	t.Text = text
+	t.Parent = g
+	g.Parent = on
 end
 
-local function fall(t: Target, piece: BasePart?)
-	if piece then
-		piece.Color = HIT
-	end
-	if t.down or not t.hinge.Parent then
-		return
-	end
-	t.down = true
-	t.token += 1
-	local mine = t.token
-	-- (The shooters stand towards -Z: it swings away from them.)
-	TweenService:Create(t.hinge, TweenInfo.new(0.28, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), { CFrame = t.home * CFrame.Angles(math.rad(82), 0, 0) }):Play()
-	local s = Instance.new("Sound")
-	s.SoundId = "rbxassetid://" .. ShootingRange.DING
-	s.Volume = 0.7
-	s.PlaybackSpeed = 1.5
-	s.RollOffMaxDistance = 90
-	s.Parent = t.hinge
-	s:Play()
-	Debris:AddItem(s, 3)
-	task.delay(ShootingRange.UP_AFTER, function()
-		if t.token == mine and t.hinge.Parent then
-			stand(t)
-		end
-	end)
-end
+type Stand = { at: Vector3, look: Vector3, model: Model?, badSince: number? }
 
-local function each(fn: (Target) -> ())
-	for i = #targets, 1, -1 do
-		local t = targets[i]
-		if t.hinge.Parent then
-			fn(t)
-		else
-			table.remove(targets, i)
+local function nearSomeone(middle: Vector3): boolean
+	for _, p in Players:GetPlayers() do
+		local c = p.Character
+		local root = c and c:FindFirstChild("HumanoidRootPart")
+		if root and root:IsA("BasePart") and (root.Position - middle).Magnitude < ShootingRange.NEAR then
+			return true
 		end
 	end
+	return false
 end
 
-table.insert(Knockables.listeners, {
-	shot = function(point: Vector3, _from: Vector3)
-		each(function(t)
-			if (t.home.Position - point).Magnitude > 9 then
-				return
+local function bad(s: Stand, m: Model): boolean
+	local pelvis = m:FindFirstChild("LowerTorso")
+	if not pelvis or not pelvis:IsA("BasePart") then
+		return true
+	end
+	local off = pelvis.Position - s.at
+	local state = m:GetAttribute("RagdollState")
+	local severed = m:GetAttribute("Severed")
+	return m:GetAttribute("Vital") == "Dead" or state == "Ragdoll" or state == "Out" or (type(severed) == "string" and severed ~= "")
+		or Vector3.new(off.X, 0, off.Z).Magnitude > ShootingRange.STRAY
+end
+
+-- Once a second: the targets out while someone is here, the spent ones swapped.
+local function tend(model: Model, stands: { Stand }, middle: Vector3)
+	local DummyFactory = require(Systems:WaitForChild("DummyFactory")) :: any
+	local Lab = require(Systems:WaitForChild("Lab")) :: any
+	local EventService = require(Systems:WaitForChild("EventService")) :: any
+	local VisitorService = require(Systems:WaitForChild("VisitorService")) :: any
+	local seenAt = -math.huge
+	while model.Parent do
+		task.wait(1)
+		local now = os.clock()
+		if nearSomeone(middle) then
+			seenAt = now
+		end
+		local owner: Player? = if now - seenAt < ShootingRange.AWAY then Lab.ownerAt(middle) else nil
+		local lanes = #stands
+		if owner and VisitorService.capFor(owner) <= 14 then
+			lanes = 3 -- (a phone or a tablet simulates them: one fewer)
+		end
+		for i, s in stands do
+			local m = s.model
+			if m and not m.Parent then
+				m, s.model, s.badSince = nil, nil, nil
 			end
-			for _, p in t.pieces do
-				local l = p.CFrame:PointToObjectSpace(point)
-				local h = p.Size / 2 + Vector3.one * ShootingRange.MARGIN
-				if math.abs(l.X) <= h.X and math.abs(l.Y) <= h.Y and math.abs(l.Z) <= h.Z then
-					fall(t, p)
-					return
+			if m then
+				local held = m:GetAttribute("Held") == true or m:GetAttribute("InMachine") ~= nil
+				if not owner or i > lanes then
+					if not held then
+						m:Destroy()
+						s.model, s.badSince = nil, nil
+					end
+				elseif not held and bad(s, m) then
+					s.badSince = s.badSince or now
+					if now - (s.badSince :: number) >= ShootingRange.SWAP then
+						m:Destroy()
+						s.model, s.badSince = nil, nil
+					end
+				else
+					s.badSince = nil
 				end
+			elseif owner and i <= lanes and EventService.dummyRoom() > 2 then
+				local made = DummyFactory.spawn(s.at + Vector3.new(0, 3.5, 0), s.look, owner) :: Model
+				made.Name = "RangeTarget"
+				made:SetAttribute("RangeTarget", true)
+				made:SetAttribute("Personality", "Brave")
+				made:SetAttribute("Greeter", -1) -- (nobody's greeter: it stands where it is, neither flees nor wanders off to help)
+				made:SetAttribute("Home", s.at)
+				made:SetAttribute("HomeLook", s.look)
+				s.model = made
 			end
-		end)
-	end,
-	blast = function(center: Vector3, radius: number)
-		each(function(t)
-			if (t.home.Position - center).Magnitude < radius then
-				fall(t, nil)
-			end
-		end)
-	end,
-	reset = function(center: Vector3, radius: number)
-		each(function(t)
-			if t.down and (t.home.Position - center).Magnitude < radius then
-				stand(t)
-			end
-		end)
-	end,
-})
+		end
+	end
+	for _, s in stands do
+		if s.model then
+			s.model:Destroy()
+		end
+	end
+end
 
-function ShootingRange.buildLab(folder: Instance, origin: Vector3): Model
+function ShootingRange.buildLab(folder: Instance, origin: Vector3): (Model, { Stand })
 	local model = Instance.new("Model")
 	model.Name = "ShootingRange"
 	local W, D, H = ShootingRange.WIDE, ShootingRange.DEEP, ShootingRange.HIGH
-	local at = CFrame.new(origin + Vector3.new(0, 0.2, ShootingRange.Z)) -- (floor level, the middle of the open front; +Z goes in)
+	local at = CFrame.new(origin + Vector3.new(0, 0.2, ShootingRange.Z)) -- (floor level, the middle of the front; +Z goes in)
 	local function part(name: string, size: Vector3, offset: Vector3, color: Color3, material: Enum.Material, solid: boolean?): Part
 		local p = Instance.new("Part")
 		p.Name = name
@@ -132,64 +155,89 @@ function ShootingRange.buildLab(folder: Instance, origin: Vector3): Model
 		p.Parent = model
 		return p
 	end
-	local concrete, metal, neon = Enum.Material.Concrete, Enum.Material.Metal, Enum.Material.Neon
-	part("Floor", Vector3.new(W, 0.6, D), Vector3.new(0, -0.3, D / 2), FLOOR, concrete)
-	part("WallLeft", Vector3.new(1, H, D), Vector3.new(-W / 2 + 0.5, H / 2, D / 2), WALL, concrete)
-	part("WallRight", Vector3.new(1, H, D), Vector3.new(W / 2 - 0.5, H / 2, D / 2), WALL, concrete)
-	part("WallBack", Vector3.new(W, H, 1), Vector3.new(0, H / 2, D - 0.5), WALL, concrete)
-	part("Roof", Vector3.new(W, 0.8, D), Vector3.new(0, H + 0.4, D / 2), DARK, concrete)
-	part("Lintel", Vector3.new(W, 2, 1), Vector3.new(0, H - 1, 0.5), WALL, concrete)
-	part("LintelLine", Vector3.new(W, 0.35, 0.1), Vector3.new(0, H - 1.9, -0.05), ORANGE, Enum.Material.SmoothPlastic, false)
-	part("Backstop", Vector3.new(W - 2, 5, 0.6), Vector3.new(0, 2.5, D - 1.4), DARK, Enum.Material.DiamondPlate)
-	part("FireLine", Vector3.new(W - 2, 0.06, 0.5), Vector3.new(0, 0.04, 12.5), ORANGE, Enum.Material.SmoothPlastic, false)
-	local lane = (W - 2) / ShootingRange.LANES
-	for i = 1, ShootingRange.LANES - 1 do
-		local x = -W / 2 + 1 + lane * i
-		part("LaneLine", Vector3.new(0.35, 0.06, D - 14), Vector3.new(x, 0.04, D / 2 + 5.5), ORANGE, Enum.Material.SmoothPlastic, false)
-		part("Divider", Vector3.new(0.6, 6, 5), Vector3.new(x, 3, 9.5), DARK, metal)
+	local function upright(p: Part, height: number, across: number): Part
+		p.Shape = Enum.PartType.Cylinder
+		p.Size = Vector3.new(height, across, across)
+		p.CFrame *= CFrame.Angles(0, 0, math.rad(90))
+		return p
 	end
-	for i = 1, ShootingRange.LANES do
+	local concrete, metal, neon, paint = Enum.Material.Concrete, Enum.Material.Metal, Enum.Material.Neon, Enum.Material.SmoothPlastic
+	local door, doorH = ShootingRange.DOOR, ShootingRange.DOOR_HIGH
+	local side = (W - door) / 2
+	-- The shell: closed walls with a darker foot, a roof that reaches out over the front, steel beams under it.
+	part("Floor", Vector3.new(W, 0.6, D), Vector3.new(0, -0.3, D / 2), FLOOR, concrete)
+	part("Apron", Vector3.new(door + 6, 0.5, 5), Vector3.new(0, -0.27, -2.5), FLOOR, concrete)
+	part("WallBack", Vector3.new(W, H, 1), Vector3.new(0, H / 2, D - 0.5), WALL, concrete)
+	part("FootBack", Vector3.new(W - 2, 3, 0.2), Vector3.new(0, 1.5, D - 1.1), WALL_LOW, concrete, false)
+	for _, s in { -1, 1 } do
+		part("WallSide", Vector3.new(1, H, D), Vector3.new(s * (W / 2 - 0.5), H / 2, D / 2), WALL, concrete)
+		part("FootSide", Vector3.new(0.2, 3, D - 2), Vector3.new(s * (W / 2 - 1.1), 1.5, D / 2), WALL_LOW, concrete, false)
+		part("WallFront", Vector3.new(side, H, 1), Vector3.new(s * (W / 2 - side / 2), H / 2, 0.5), WALL, concrete)
+		part("Pier", Vector3.new(2, H + 0.6, 2.4), Vector3.new(s * (door / 2 + 1), (H + 0.6) / 2, 0.1), DARK, metal)
+		part("PierLine", Vector3.new(0.3, doorH - 1, 0.1), Vector3.new(s * (door / 2 + 1), doorH / 2, -1.15), ORANGE, neon, false)
+	end
+	part("Lintel", Vector3.new(door, H - doorH, 1), Vector3.new(0, (H + doorH) / 2, 0.5), WALL, concrete)
+	part("Roof", Vector3.new(W + 2, 0.9, D + 4), Vector3.new(0, H + 0.45, D / 2 - 1), DARK, metal)
+	part("RoofEdge", Vector3.new(W + 2.2, 0.35, 0.2), Vector3.new(0, H + 0.45, -3.1), ORANGE, paint, false)
+	for _, z in { 12, 23, 34 } do
+		part("Beam", Vector3.new(W - 2, 0.9, 0.6), Vector3.new(0, H - 0.45, z), STEEL, metal, false)
+	end
+	local sign = part("Sign", Vector3.new(door - 4, 3.2, 0.3), Vector3.new(0, (H + doorH) / 2, -0.2), DARK, metal, false)
+	words(sign, Enum.NormalId.Front, "WEAPON TESTING", Color3.fromRGB(255, 170, 84))
+	part("Threshold", Vector3.new(door, 0.08, 0.8), Vector3.new(0, 0.03, 0.5), ORANGE, paint, false)
+	-- The lanes.
+	local lanes = #ShootingRange.TARGETS
+	local lane = (W - 2) / lanes
+	local line = ShootingRange.LINE
+	part("FireLine", Vector3.new(W - 2, 0.06, 0.5), Vector3.new(0, 0.04, line + 1.4), ORANGE, paint, false)
+	part("Backstop", Vector3.new(W - 2, 6, 0.6), Vector3.new(0, 3, D - 1.5), DARK, Enum.Material.DiamondPlate)
+	for i = 1, lanes - 1 do
+		local x = -W / 2 + 1 + lane * i
+		part("Kerb", Vector3.new(0.7, 1.1, D - line - 4.5), Vector3.new(x, 0.55, (D + line) / 2 + 0.4), WALL_LOW, concrete)
+		part("KerbLine", Vector3.new(0.75, 0.12, D - line - 4.5), Vector3.new(x, 1.13, (D + line) / 2 + 0.4), ORANGE, paint, false)
+		part("Booth", Vector3.new(0.6, 7, 5), Vector3.new(x, 3.5, line - 2), DARK, metal)
+	end
+	-- (How far it is, painted across the floor.)
+	for _, far in { 10, 20 } do
+		local z = line + 1.4 + far
+		part("Range" .. far, Vector3.new(W - 2, 0.05, 0.25), Vector3.new(0, 0.04, z), Color3.fromRGB(225, 222, 214), paint, false)
+		local tag = part("RangeTag" .. far, Vector3.new(3, 0.05, 1.6), Vector3.new(-W / 2 + 3, 0.05, z - 1.2), FLOOR, concrete, false)
+		words(tag, Enum.NormalId.Top, tostring(far), Color3.fromRGB(240, 236, 226))
+	end
+	local stands: { Stand } = {}
+	for i, deep in ShootingRange.TARGETS do
 		local x = -W / 2 + 1 + lane * (i - 0.5)
-		part("Counter", Vector3.new(lane - 4, 0.4, 1.6), Vector3.new(x, 3, 11), DARK, metal)
-		for _, deep in ShootingRange.ROWS[(i - 1) % 2 + 1] do
-			local off = if deep > 30 then 2 else -2
-			local hinge = part("Hinge", Vector3.new(3, 0.3, 0.3), Vector3.new(x + off, 0.15, deep), DARK, metal)
-			hinge.CanTouch = false
-			local t: Target = { hinge = hinge, home = hinge.CFrame, pieces = {}, down = false, token = 0 }
-			local function piece(name: string, size: Vector3, y: number)
-				local p = part(name, size, Vector3.new(x + off, y, deep), PLATE, metal)
-				p.Massless = true
-				p.CanCollide = false
-				local weld = Instance.new("WeldConstraint")
-				weld.Part0, weld.Part1 = hinge, p
-				weld.Parent = p
-				p.Anchored = false
-				p.Touched:Connect(function(other)
-					if not other.Anchored and other.AssemblyLinearVelocity.Magnitude > ShootingRange.TOUCH_SPEED then
-						fall(t, nil)
-					end
-				end)
-				table.insert(t.pieces, p)
-			end
-			piece("Legs", Vector3.new(1.5, 2.4, 0.35), 1.4)
-			piece("Torso", Vector3.new(2.7, 2.4, 0.35), 3.8)
-			piece("Head", Vector3.new(1.3, 1.3, 0.35), 5.7)
-			table.insert(targets, t)
+		part("Counter", Vector3.new(lane - 4, 0.4, 1.8), Vector3.new(x, 3, line), STEEL, metal)
+		part("CounterEdge", Vector3.new(lane - 4, 0.12, 0.1), Vector3.new(x, 3.1, line - 0.95), ORANGE, paint, false)
+		local plate = part("Number", Vector3.new(3, 2, 0.2), Vector3.new(x, H - 2.4, line - 0.2), DARK, metal, false)
+		words(plate, Enum.NormalId.Front, tostring(i), Color3.fromRGB(255, 170, 84))
+		-- The stand: a steel disc with an orange rim, a post and a cross bar behind the ragdoll.
+		upright(part("StandRim", Vector3.one, Vector3.new(x, 0.1, deep), ORANGE, paint, false), 0.2, 5.4)
+		upright(part("StandDisc", Vector3.one, Vector3.new(x, 0.15, deep), STEEL, Enum.Material.DiamondPlate), 0.3, 5)
+		part("StandPost", Vector3.new(0.4, 6.4, 0.4), Vector3.new(x, 3.2, deep + 2.2), DARK, metal, false)
+		part("StandBar", Vector3.new(3, 0.3, 0.3), Vector3.new(x, 6.2, deep + 2.2), DARK, metal, false)
+		local spot = (at * CFrame.new(x, 0.3, deep)).Position
+		table.insert(stands, { at = spot, look = (at * CFrame.new(x, 0.3, 0)).Position, model = nil, badSince = nil })
+		-- Hanging lamps: one over the shooter, one over the target.
+		for n, z in { line - 2, deep - 1 } do
+			part("LampRod", Vector3.new(0.15, 1.6, 0.15), Vector3.new(x, H - 0.8, z), DARK, metal, false)
+			local shade = upright(part("LampShade", Vector3.one, Vector3.new(x, H - 1.8, z), DARK, metal, false), 0.7, 2.4)
+			upright(part("LampGlow", Vector3.one, Vector3.new(x, H - 2.2, z), WARM, neon, false), 0.12, 1.9)
+			local light = Instance.new("SpotLight")
+			light.Face = Enum.NormalId.Left -- (the cylinder's foot: straight down)
+			light.Angle = 110
+			light.Range = 24
+			light.Color = WARM
+			light.Brightness = if n == 1 then 1.6 else 2.4
+			light.Shadows = n == 2
+			light.Enabled = false -- (Client/WorldLights lights the nearest few)
+			light.Parent = shade
+			CollectionService:AddTag(light, "WorldLight")
 		end
 	end
-	for i, z in { 8, 22, 36 } do
-		local lamp = part("Lamp" .. i, Vector3.new(W - 14, 0.25, 0.8), Vector3.new(0, H - 0.15, z), Color3.fromRGB(255, 206, 140), neon, false)
-		local light = Instance.new("PointLight")
-		light.Color = Color3.fromRGB(255, 190, 120)
-		light.Range = 30
-		light.Brightness = 1.1
-		light.Shadows = false
-		light.Enabled = false -- (Client/WorldLights lights the nearest few)
-		light.Parent = lamp
-		CollectionService:AddTag(light, "WorldLight")
-	end
 	model.Parent = folder
-	return model
+	task.spawn(tend, model, stands, (at * CFrame.new(0, 3, D / 2 - 4)).Position)
+	return model, stands
 end
 
 return ShootingRange
