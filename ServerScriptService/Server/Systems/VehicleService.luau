@@ -305,6 +305,22 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 		rollWeld.Part0 = body
 		rollWeld.Part1 = root
 		rollWeld.Parent = root
+		-- (24 Nov 2026, fps: the cars' hundreds of pieces were three quarters of every shadow drawn; the four largest
+		-- throw the car's whole shadow.)
+		local shadows: { BasePart } = {}
+		for _, d in look:GetDescendants() do
+			if d:IsA("BasePart") and d.Transparency < 0.9 then
+				table.insert(shadows, d)
+			end
+		end
+		table.sort(shadows, function(x, y)
+			return x.Size.X * x.Size.Y * x.Size.Z > y.Size.X * y.Size.Y * y.Size.Z
+		end)
+		for i, d in shadows do
+			if i > 4 then
+				d.CastShadow = false
+			end
+		end
 		local corners: { [string]: { min: Vector3, max: Vector3 } } = {}
 		for _, shell in look:GetDescendants() do
 			if shell:IsA("BasePart") then

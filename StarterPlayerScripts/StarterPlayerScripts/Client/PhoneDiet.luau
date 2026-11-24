@@ -57,7 +57,66 @@ local function watch(root: Instance)
 	end
 end
 
+-- (24 Nov 2026, fps on phones, tablets and consoles: a car far off is drawn without its inside and its smallest pieces.)
+PhoneDiet.CAR_FAR = 55
+local INSIDE = { "inter", "leather", "seat", "steer", "engine", "dash" }
+local function carDiet()
+	local pieces: { [Model]: { BasePart } } = {}
+	local hidden: { [Model]: boolean } = {}
+	while true do
+		task.wait(0.5)
+		local camera = Workspace.CurrentCamera
+		local ground = Workspace:FindFirstChild("Playground")
+		if not camera or not ground then
+			continue
+		end
+		for car in pieces do
+			if not car.Parent then
+				pieces[car], hidden[car] = nil, nil
+			end
+		end
+		for _, lab in ground:GetChildren() do
+			local cars = lab:FindFirstChild("Vehicles")
+			for _, car in if cars then cars:GetChildren() else {} do
+				if not car:IsA("Model") then
+					continue
+				end
+				local far = (car:GetPivot().Position - camera.CFrame.Position).Magnitude > PhoneDiet.CAR_FAR
+				if far == (hidden[car] == true) then
+					continue
+				end
+				hidden[car] = far
+				if far then
+					local list: { BasePart } = {}
+					for _, d in car:GetDescendants() do
+						if d:IsA("BasePart") and d.Transparency < 0.9 and d.LocalTransparencyModifier == 0 then
+							local small = math.max(d.Size.X, d.Size.Y, d.Size.Z) < 1.6
+							local name = string.lower(d.Name)
+							for _, word in INSIDE do
+								small = small or string.find(name, word, 1, true) ~= nil
+							end
+							if small then
+								d.LocalTransparencyModifier = 1
+								table.insert(list, d)
+							end
+						end
+					end
+					pieces[car] = list
+				else
+					for _, d in pieces[car] or {} do
+						d.LocalTransparencyModifier = 0
+					end
+					pieces[car] = nil
+				end
+			end
+		end
+	end
+end
+
 function PhoneDiet.start()
+	if not UserInputService.KeyboardEnabled then
+		task.spawn(carDiet)
+	end
 	if not PhoneDiet.wanted() then
 		return
 	end
