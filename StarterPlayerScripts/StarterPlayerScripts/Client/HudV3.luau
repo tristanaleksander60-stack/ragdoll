@@ -905,6 +905,50 @@ function HudV3.start()
 	player:GetAttributeChangedSignal("Owned"):Connect(function()
 		HudV3.drawNext(lastTakedowns)
 	end)
+	-- (24 Nov 2026, owner: REVIVE ALL on a phone, out of the way: a small button beside SHOP and MENU in the top left.)
+	local rg = Instance.new("ScreenGui")
+	rg.Name = "PhoneRevive"
+	rg.ResetOnSpawn = false
+	rg.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
+	rg.DisplayOrder = 5
+	rg.Enabled = false
+	local rb = Instance.new("TextButton")
+	rb.Name = "Revive"
+	rb.Text = ""
+	rb.AutoButtonColor = false
+	rb.BackgroundColor3 = HudV3.GLASS
+	rb.Position = UDim2.fromOffset(142, 66)
+	rb.Size = UDim2.fromOffset(52, 50)
+	KitStyle.hoverEdge(rb, KitStyle.glass(rb, 12))
+	KitStyle.press(rb)
+	local ri = (require(UI:WaitForChild("LihFolkUIIcons")) :: any).make("heart", UDim2.fromOffset(26, 26))
+	ri.AnchorPoint = Vector2.new(0.5, 0)
+	ri.Position = UDim2.new(0.5, 0, 0, 5)
+	ri.Parent = rb
+	local rw = Instance.new("TextLabel")
+	rw.BackgroundTransparency = 1
+	rw.AnchorPoint = Vector2.new(0.5, 1)
+	rw.Position = UDim2.new(0.5, 0, 1, -3)
+	rw.Size = UDim2.new(1, 0, 0, 14)
+	rw.Font = Enum.Font.BuilderSansBold
+	rw.TextSize = 12
+	rw.TextColor3 = Color3.new(1, 1, 1)
+	rw.Text = "REVIVE"
+	rw.Parent = rb
+	rb.Activated:Connect(function()
+		HudPlus.sandbox("Revive")
+	end)
+	rb.Parent = rg
+	rg.Parent = player:WaitForChild("PlayerGui")
+	task.spawn(function()
+		local HudSlots = require(Client:WaitForChild("HudSlots")) :: any
+		while true do
+			local touch = ViewMode.isTouch()
+			rg.Enabled = touch and HudSlots.context(touch, ViewMode.isLab()).phone == true and not held.Left
+				and player:GetAttribute("Building") ~= true and Controller.getCurrent() == nil
+			task.wait(0.25)
+		end
+	end)
 	local acc = 0
 	RunService.Heartbeat:Connect(function(dt)
 		acc += dt
