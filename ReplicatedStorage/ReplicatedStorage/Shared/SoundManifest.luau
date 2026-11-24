@@ -303,15 +303,15 @@ local GUNS: { [string]: Gun } = {
 	Blaster = { -- the G17 ("Glock 9mm Shot Close" is 1.98 s; at 10 shots a second each shot's tail
 		-- fades out from 0.4 s, so a flurry holds about 8 of the 28 voices, not 13)
 		fire = "g17", volume = 0.9, pitch = 1, cut = 0.8, fade = 0.4, vary = 0.03, maxDistance = 400,
-		fallback = { bank = "boom", volume = 0.32, pitch = 2.5 }, reload = "reloadPistol",
+		fallback = { bank = "deagle", volume = 0.72, pitch = 1.18 }, reload = "reloadPistol" -- (24 Nov 2026: a real pistol, never the small explosion),
 	},
 	Deagle = { -- the heaviest pistol ("HM Magnum Shot" is 1.33 s, all of it)
 		fire = "deagle", volume = 1, pitch = 1, cut = 1.35, fade = 0.3, vary = 0.03, maxDistance = 450,
-		fallback = { bank = "boom", volume = 0.45, pitch = 1.9 }, dry = "dryfire", reload = "reloadPistol",
+		fallback = { bank = "g17", volume = 1, pitch = 0.82 }, dry = "dryfire", reload = "reloadPistol",
 	},
 	Shotgun = { -- ("HM Shotgun Shot" is 1.47 s, all of it), then the pump
 		fire = "shotgun", volume = 1, pitch = 1, cut = 1.5, fade = 0.3, vary = 0.03, maxDistance = 450,
-		fallback = { bank = "boom", volume = 0.6, pitch = 1.35 },
+		fallback = { bank = "deagle", volume = 1, pitch = 0.72 },
 		after = "shotgunPump", afterDelay = 0.35, dry = "dryfire", reload = "reloadShell",
 	},
 	Crossbow = {
@@ -350,7 +350,7 @@ local GUNS: { [string]: Gun } = {
 	TommyGun = { fire = "tommy", volume = 0.82, pitch = 1, cut = 0.26, fade = 0.1, vary = 0.04, maxDistance = 420,
 		fallback = { bank = "g17", volume = 0.78, pitch = 0.95 }, reload = "reloadTommy" },
 	AutoShotgun = { fire = "autoShotgun", volume = 0.9, pitch = 1, cut = 0.55, fade = 0.25, vary = 0.04, maxDistance = 460,
-		fallback = { bank = "boom", volume = 0.55, pitch = 1.4 }, reload = "reloadShell" },
+		fallback = { bank = "shotgun", volume = 0.9, pitch = 1.1 }, reload = "reloadShell" },
 	LMG = { fire = "lmg", volume = 0.85, pitch = 1, cut = 0.3, fade = 0.12, vary = 0.04, maxDistance = 500,
 		fallback = { bank = "deagle", volume = 0.8, pitch = 1.3 }, reload = "reloadMinigun" },
 	DMR = { fire = "dmr", volume = 0.95, pitch = 1, cut = 1.2, fade = 0.5, vary = 0.02, maxDistance = 560,
@@ -360,7 +360,7 @@ local GUNS: { [string]: Gun } = {
 	Railgun = { fire = "rail", volume = 1, pitch = 0.7, cut = 1, fade = 0.5, vary = 0.02, maxDistance = 650,
 		fallback = { bank = "deagle", volume = 1, pitch = 0.6 }, dry = "dryfire", reload = "reloadRifle" },
 	GoldenDeagle = { fire = "goldenDeagle", volume = 1, pitch = 1, cut = 1.35, fade = 0.3, vary = 0.03, maxDistance = 460,
-		fallback = { bank = "boom", volume = 0.45, pitch = 1.9 }, dry = "dryfire", reload = "reloadPistol" },
+		fallback = { bank = "deagle", volume = 1, pitch = 0.96 }, dry = "dryfire", reload = "reloadPistol" },
 }
 SoundManifest.GUNS = table.freeze(GUNS)
 
