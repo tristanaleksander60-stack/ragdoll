@@ -842,7 +842,7 @@ local function expressionFor(life: Life, now: number): string
 			return "Ouch"
 		end
 		-- On its way to say hi or to chat: friendly; walking home after a knock: grumpy.
-		return if moodOn(model, "GreetUntil") or type(model:GetAttribute("Chatting")) == "number" then "Neutral" else "Grumpy"
+		return if model:GetAttribute("Paper") == true or moodOn(model, "GreetUntil") or type(model:GetAttribute("Chatting")) == "number" then "Neutral" else "Grumpy"
 	end
 	if state == "Ragdoll" then
 		if model:GetAttribute("Held") == true or life.airborne then
@@ -1192,6 +1192,7 @@ local function updateLine(life: Life, now: number)
 			elseif mood == "Ride" then "Ride"
 			elseif mood == "Sit" then "Sit"
 			elseif mood ~= nil then nil
+			elseif model:GetAttribute("Paper") == true and (life.state == "Walking" or life.state == "Standing") then "Paper"
 			elseif life.state == "Walking" then (if type(pace) == "number" and pace >= 1.5 then "Run" else "Walk")
 			elseif life.state == "Standing" and rawText ~= "" then "Hurt"
 			else nil
@@ -1394,6 +1395,20 @@ local function step(life: Life, now: number, dt: number)
 	end
 	-- (10 Nov 2026, the owner: no text bubbles; the faces and the bodies show what they feel.)
 	if Config.LOOK_V3 then
+		-- (24 Nov 2026: the newspaper's arm: bent, the paper beside it, a little bounce.)
+		if model:GetAttribute("Paper") == true and (state == "Walking" or state == "Standing") and model:GetAttribute("Mood") == nil and not life.loose.RightShoulder then
+			local j: any = life.joints
+			local sway = sin((now + life.seed) * 4) * 3
+			if j.RightShoulder then
+				j.RightShoulder.Transform = ang(26 + sway, 0, 4)
+			end
+			if j.RightElbow then
+				j.RightElbow.Transform = ang(62 - sway, 0, 0)
+			end
+			if j.Neck then
+				j.Neck.Transform *= ang(4, 0, sin((now + life.seed) * 2.6) * 7)
+			end
+		end
 		updateLine(life, now)
 	else
 		updateBubble(life, now, BUBBLES)

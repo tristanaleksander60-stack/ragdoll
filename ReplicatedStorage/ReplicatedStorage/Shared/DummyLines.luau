@@ -190,6 +190,7 @@ end
 -- (24 Nov 2026, owner: "make the talk much better and more real, by what they do".) What a body says about what it does
 -- right now, and what the ones standing by shout at one that runs or rides (Cheer).
 DummyLines.ACT = {
+	Paper = { "♪ ♫ ♪", "Extra, extra!", "Fresh off the press!", "Let's see the comics...", "Good news today!", "The mailman was early!", "♪ La la laaa ♪", "Crossword time!" },
 	Walk = { "Just stretching my legs.", "Where was I going again?", "10,000 steps, here I come!", "Don't mind me.", "Nice day for a stroll.", "Left foot, right foot...", "I should call my mom." },
 	Run = { "Coming through!", "Out of my way!", "Gotta go fast!", "Why am I so out of shape?!", "Huff... puff...", "I'm on it!" },
 	Flee = { "RUN! RUN! RUN!", "NOPE NOPE NOPE!", "I'm outta here!", "He's crazy!", "Every dummy for himself!", "Not today!", "Legs, don't fail me now!", "MOOOM!", "I didn't sign up for this!" },
@@ -205,6 +206,8 @@ DummyLines.ACT_GAP = 2.2 -- s between two such lines on this screen
 DummyLines.ACT_AGAIN = Vector2.new(7, 15) -- s before the same body says one again
 
 DummyLines.MOURN = {
+	PaperSeen = { "Ooh, a newspaper!", "Is that today's paper?", "Somebody dropped this!" },
+	PaperFound = { "Finders keepers!", "Free newspaper!", "Don't mind if I do!", "Now, where were we..." },
 	AidComing = { "Hold on, %s!", "I'm coming, %s!", "Oh no, you're hurt!", "Let me help!", "Medic coming through!" },
 	WrapMid = { "Hold still, %s...", "Round and round...", "Almost done!", "This may sting...", "You'll be fine, %s!" },
 	WrapLow = { "Keep that leg still!", "Don't move, %s...", "Nearly there...", "Deep breaths, %s!", "I've got you." },
