@@ -89,7 +89,7 @@ end
 -- (24 Nov 2026, owner: "the limbs must be seen pulled off slowly, not at once"): while you pull, pictures of the limb
 -- stand in for it on your screen: it turns towards the claw, slides out of its joint and stretches, held by strands of
 -- flesh, until it lets go. The real limb comes off where the pictures were.
-type Shown = { source: BasePart, ghost: BasePart, was: number, decals: { [Decal]: number } }
+type Shown = { source: BasePart, ghost: BasePart, was: number, decals: { [Decal]: number }, guis: { [SurfaceGui]: boolean } }
 type Pulled = { model: Model, piece: string, shown: { Shown }, at: BasePart, body: BasePart, made: { Instance }, beams: { Beam }, t: CFrame, out: number, done: boolean }
 local pulled: Pulled? = nil
 local PULL_OUT = 1.5 -- studs it is out of its joint when it lets go
@@ -119,6 +119,9 @@ local function dropPulled()
 		for decal, was in s.decals do
 			decal.LocalTransparencyModifier = was
 		end
+		for g, was in s.guis do
+			g.Enabled = was
+		end
 	end
 	for _, inst in p.made do
 		inst:Destroy()
@@ -141,20 +144,24 @@ local function beginPulled(model: Model, piece: string)
 		end
 		local ghost = source:Clone()
 		for _, c in ghost:GetChildren() do
-			if not (c:IsA("Decal") or c:IsA("SpecialMesh") or c:IsA("SurfaceAppearance")) then
+			if not (c:IsA("Decal") or c:IsA("SurfaceGui") or c:IsA("SpecialMesh") or c:IsA("SurfaceAppearance")) then
 				c:Destroy()
 			end
 		end
 		ghost.Name = "MechGhost"
 		ghost.Anchored, ghost.CanCollide, ghost.CanQuery, ghost.CanTouch = true, false, false, false
 		ghost.Parent = Workspace
+		-- (24 Nov 2026, owner: the face stayed behind: it is a SurfaceGui on the head.)
+		local guis: { [SurfaceGui]: boolean } = {}
 		local decals: { [Decal]: number } = {}
 		for _, c in source:GetChildren() do
 			if c:IsA("Decal") then
 				decals[c] = c.LocalTransparencyModifier
+			elseif c:IsA("SurfaceGui") then
+				guis[c] = c.Enabled
 			end
 		end
-		table.insert(shown, { source = source, ghost = ghost, was = source.LocalTransparencyModifier, decals = decals })
+		table.insert(shown, { source = source, ghost = ghost, was = source.LocalTransparencyModifier, decals = decals, guis = guis })
 	end
 	for _, name in CHAIN[piece] or {} do
 		local part = model:FindFirstChild(name)
@@ -256,6 +263,17 @@ local function stepPulled(strain: number, claw: Vector3?, dt: number)
 			s.source.LocalTransparencyModifier = if on then 1 else s.was
 			for decal, was in s.decals do
 				decal.LocalTransparencyModifier = if on then 1 else was
+			end
+			for g, was in s.guis do
+				g.Enabled = was and not on
+				local copy = s.ghost:FindFirstChild(g.Name)
+				if copy and copy:IsA("SurfaceGui") then
+					copy.Enabled = was and on
+					local a, b = g:FindFirstChild("Image"), copy:FindFirstChild("Image")
+					if a and b and a:IsA("ImageLabel") and b:IsA("ImageLabel") then
+						b.Image = a.Image
+					end
+				end
 			end
 		else
 			s.ghost.LocalTransparencyModifier = 1
