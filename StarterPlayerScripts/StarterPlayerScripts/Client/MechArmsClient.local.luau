@@ -520,7 +520,7 @@ local function drawHint()
 		hint.Text = if touch then "PULL!" else "PULL the mouse away!"
 		stroke.Color = Color3.fromRGB(220, 40, 40)
 	else
-		hint.Text = if touch then "HOLD: RIP" else "Hold [Q] on a limb  \u{00B7}  [X] take off"
+		hint.Text = if touch then "HOLD: RIP" else "Hold [Q] on a limb  \u{00B7}  [X] Take off machine"
 		stroke.Color = Color3.fromRGB(235, 120, 30)
 	end
 end
