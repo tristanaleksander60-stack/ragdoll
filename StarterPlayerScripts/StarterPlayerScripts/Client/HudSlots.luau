@@ -159,9 +159,9 @@ end
 -- 23 Nov 2026: RELOAD (touch, a gun with a magazine): over the jump button, beside the action button.
 SLOTS.Reload = function(ctx)
 	if ctx.phone then
-		return slot(1, 1, UDim2.new(1, -30, 1, -104), 60, 52)
+		return slot(1, 1, UDim2.new(1, -10, 1, -98), 60, 46) -- (24 Nov 2026, owner: at the edge, AIM / ZOOM on top of it)
 	end
-	return slot(1, 1, UDim2.new(1, -44, 1, -352), 64, 56)
+	return slot(1, 1, UDim2.new(1, -12, 1, -352), 64, 56)
 end
 
 -- Round 5, phase 1 (like the big ragdoll games):
@@ -201,21 +201,15 @@ end
 -- Round 5 (review fix): ZOOM for a scoped gun on touch: on a phone just over SHOOT (in THROW's
 -- place: THROW shows only with Grab picked), clear of RAGDOLL and the bar; on a tablet left of SHOOT.
 SLOTS.Zoom = function(ctx)
-	if ctx.portrait then
-		return slot(1, 1, UDim2.new(1, -30, 1, -104), 60, 48) -- (THROW's box: never together)
-	end
-	if ctx.phone then
-		return slot(1, 1, UDim2.new(1, -116, 1, -114), 64, 48)
-	end
-	return slot(1, 1, UDim2.new(1, -140, 1, -250), 92, 52)
+	return SLOTS.Aim(ctx)
 end
 
 -- 24 Nov 2026: AIM for every other gun in first person: on a phone over RELOAD, clear of RUN's box.
 SLOTS.Aim = function(ctx)
 	if ctx.phone then
-		return slot(1, 1, UDim2.new(1, -30, 1, -164), 60, 44)
+		return slot(1, 1, UDim2.new(1, -10, 1, -150), 60, 44)
 	end
-	return slot(1, 1, UDim2.new(1, -140, 1, -250), 92, 52)
+	return slot(1, 1, UDim2.new(1, -12, 1, -416), 64, 52)
 end
 
 HudSlots.NAMES = { "View", "Replay", "Ragdoll", "Chaos", "Recenter", "Grab", "Throw", "Mode", "Play", "Counter", "Packs", "MouseHelp", "Sprint", "Weapons", "Deal", "FirstPerson", "SlowMo", "Revive", "Reset", "Shoot", "Zoom", "Experiment" }

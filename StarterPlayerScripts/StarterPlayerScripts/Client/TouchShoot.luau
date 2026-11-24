@@ -422,8 +422,7 @@ function TouchShoot.start()
 			if rl then
 				local toy = gunPicked()
 				local text = if toy then AmmoClient.text(toy.id) else nil
-				local scoped = toy ~= nil and (toy.id == "Sniper" or toy.id == "DMR") and HudSlots.context(true, false).portrait
-				rl.Visible = text ~= nil and not scoped
+				rl.Visible = text ~= nil
 				local word = if text == "RELOAD" then "..." elseif text then "RELOAD" .. string.char(10) .. text else ""
 				if rl.Text ~= word then
 					rl.Text = word

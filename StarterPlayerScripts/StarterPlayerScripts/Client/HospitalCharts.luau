@@ -1337,19 +1337,30 @@ function HospitalCharts.start()
 			cursor = 0
 		end
 		setAuto(b)
+		local fit = autoFit()
 		-- V9-NOW 15 (owner, 21 Nov 2026: "fixed in the bottom-right corner"): never follows the mouse. A computer or a pad:
 		-- bottom right, above the tool bar. A touch screen: top right, under the top cluster (its thumb buttons have the
 		-- bottom right), smaller.
 		local u = ui :: Ui
 		local c = HospitalCharts.CORNER
 		if ViewMode.isTouch() then
+			-- (24 Nov 2026, owner: it lay over the buttons): a landscape phone has it left of the thumb buttons and right
+			-- of the crosshair, above the bar, small enough to fit; otherwise under the eye.
+			local screen = (Workspace.CurrentCamera :: Camera).ViewportSize
+			local inset = GuiService:GetGuiInset().Y
 			u.panel.AnchorPoint = Vector2.new(1, 0)
-			u.panel.Position = UDim2.new(1, -c, 0, HospitalCharts.TOUCH_TOP)
+			if screen.X > screen.Y and screen.Y <= 500 then
+				local top = inset + 30
+				fit = math.clamp(math.min((screen.Y - top - 90) / BodyCard.H, (screen.X / 2 - 232) / BodyCard.W), 0.36, fit)
+				u.panel.Position = UDim2.new(1, -192, 0, top)
+			else
+				u.panel.Position = UDim2.new(1, -c, 0, inset + 62)
+			end
 		else
 			u.panel.AnchorPoint = Vector2.new(1, 1)
 			u.panel.Position = UDim2.new(1, -c, 1, -(PokeController.height() + c))
 		end
-		BodyCard.place(u.panel.AnchorPoint, u.panel.Position, autoFit())
+		BodyCard.place(u.panel.AnchorPoint, u.panel.Position, fit)
 		if t >= refreshAt then
 			refreshAt = t + 1
 			redraw()

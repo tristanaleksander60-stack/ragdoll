@@ -27,6 +27,42 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
 	end
 end)
 
+-- (24 Nov 2026, owner: hidden, the card is a small arrow that opens it again: beside the eye on a touch screen, at the
+-- right edge on a computer.)
+task.spawn(function()
+	local Settings = require(script.Parent:WaitForChild("Settings")) :: any
+	local ViewMode = require(script.Parent:WaitForChild("ViewMode")) :: any
+	local KitStyle = require(script.Parent:WaitForChild("KitStyle")) :: any
+	local g = Instance.new("ScreenGui")
+	g.Name = "BodyCardArrow"
+	g.ResetOnSpawn = false
+	g.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
+	g.DisplayOrder = 6
+	g.Enabled = false
+	local b = Instance.new("TextButton")
+	b.Name = "Open"
+	b.AnchorPoint = Vector2.new(1, 0)
+	b.AutoButtonColor = false
+	b.BackgroundColor3 = Color3.fromRGB(18, 20, 27)
+	b.BackgroundTransparency = 0.16
+	b.TextColor3 = Color3.new(1, 1, 1)
+	b.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.ExtraBold)
+	b.TextSize = 24
+	b.Text = "<"
+	KitStyle.hoverEdge(b, KitStyle.glass(b, 10))
+	KitStyle.press(b)
+	b.Activated:Connect(BodyCard.toggleHidden)
+	b.Parent = g
+	g.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+	while true do
+		local touch = ViewMode.isTouch()
+		b.Size = UDim2.fromOffset(if touch then 32 else 24, 44)
+		b.Position = if touch then UDim2.new(1, -62, 0, 10) else UDim2.new(1, -4, 0, 130)
+		g.Enabled = Settings.cardHidden() and not ViewMode.isLab()
+		task.wait(0.2)
+	end
+end)
+
 BodyCard.W = 230
 BodyCard.H = 356
 BodyCard.REFRESH = 0.25
