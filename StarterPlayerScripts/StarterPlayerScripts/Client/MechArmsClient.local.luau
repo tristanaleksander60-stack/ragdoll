@@ -188,6 +188,7 @@ local function beginPulled(model: Model, piece: string)
 	at.Color = FLESH
 	at.Material = Enum.Material.SmoothPlastic
 	at.Size = Vector3.one * 0.3
+	at.Transparency = 1 -- (no red ball; it only carries the strands)
 	at.Position = joint
 	at.Parent = Workspace
 	local made: { Instance } = { at }
@@ -718,6 +719,7 @@ RunService.Heartbeat:Connect(function(dt)
 			made.Material = Enum.Material.SmoothPlastic
 			made.Position = at
 			made.Size = Vector3.one * 0.2
+			made.Transparency = 1 -- (24 Nov 2026, owner: no red ball)
 			made.Parent = Workspace
 			g.gash = made
 			gash = made
