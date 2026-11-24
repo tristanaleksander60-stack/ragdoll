@@ -262,6 +262,7 @@ function MapBoard.board(parent: Instance, base: Vector3, toward: Vector3, scale:
 	-- E / a pad's button: the MAPS window (the client handles it: MapBoardClient).
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "MapBoardPrompt"
+	prompt.Enabled = false -- (24 Nov 2026, owner: no E on the map board; its pictures are pressed, pads use MENU)
 	prompt.ActionText = "Choose a map"
 	prompt.ObjectText = "Maps"
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
