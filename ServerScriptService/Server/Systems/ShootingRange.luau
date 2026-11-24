@@ -171,10 +171,10 @@ function ShootingRange.buildLab(folder: Instance, origin: Vector3): (Model, { St
 	part("WallBack", Vector3.new(W, H, 1), Vector3.new(0, H / 2, D - 0.5), WALL, concrete)
 	part("FootBack", Vector3.new(W - 2, 3, 0.2), Vector3.new(0, 1.5, D - 1.1), WALL_LOW, concrete, false)
 	for _, s in { -1, 1 } do
-		part("WallSide", Vector3.new(1, H, D), Vector3.new(s * (W / 2 - 0.5), H / 2, D / 2), WALL, concrete)
+		part("WallSide", Vector3.new(1, H, D - 2), Vector3.new(s * (W / 2 - 0.5), H / 2, D / 2), WALL, concrete)
 		part("FootSide", Vector3.new(0.2, 3, D - 2), Vector3.new(s * (W / 2 - 1.1), 1.5, D / 2), WALL_LOW, concrete, false)
 		part("WallFront", Vector3.new(side, H, 1), Vector3.new(s * (W / 2 - side / 2), H / 2, 0.5), WALL, concrete)
-		part("Pier", Vector3.new(2, H + 0.6, 2.4), Vector3.new(s * (door / 2 + 1), (H + 0.6) / 2, 0.1), DARK, metal)
+		part("Pier", Vector3.new(2, H, 1.1), Vector3.new(s * (door / 2 + 1), H / 2, -0.55), DARK, metal)
 		part("PierLine", Vector3.new(0.3, doorH - 1, 0.1), Vector3.new(s * (door / 2 + 1), doorH / 2, -1.15), ORANGE, neon, false)
 	end
 	part("Lintel", Vector3.new(door, H - doorH, 1), Vector3.new(0, (H + doorH) / 2, 0.5), WALL, concrete)
