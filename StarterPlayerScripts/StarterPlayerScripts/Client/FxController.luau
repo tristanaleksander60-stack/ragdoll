@@ -45,6 +45,7 @@ local MAX_VOICES = 28
 -- fresh, unloaded one.
 local UserInputService = game:GetService("UserInputService")
 local PHONE = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local LEAN = not UserInputService.KeyboardEnabled -- (phones, tablets, consoles: only the sounds of the weapons on the bar lie in memory)
 local POOL = if PHONE then 1 else 2 -- loaded Sounds made per asset id at start, reused play after play
 local LOAD_WAIT = if PHONE then 0.5 else 0.35 -- s a sound not yet loaded may wait; later it is dropped, never late
 local LOAD_WAIT_OWN = if PHONE then 0.9 else 0.75 -- s the player's own shot or hit may wait (heard a little late beats silence)
@@ -1657,7 +1658,7 @@ function FxController.start()
 	end
 	-- (V8-0.9: the start bar's guns first. The key was "G17", which is only the label: the G17's id is
 	-- "Blaster", so its bank was never loaded first.)
-	for _, gun in if PHONE then { "Blaster" } else { "Blaster", "Deagle", "Shotgun", "Revolver" } do
+	for _, gun in if LEAN then { "Blaster" } else { "Blaster", "Deagle", "Shotgun", "Revolver" } do
 		local g = SoundManifest.GUNS[gun]
 		if g then
 			loadList(BANK[g.fire])
@@ -1688,7 +1689,7 @@ function FxController.start()
 		end
 		return out
 	end
-	if PHONE then
+	if LEAN then
 		for _, g in SoundManifest.GUNS :: any do
 			gunBanks[g.fire] = true
 			if type(g.reload) == "string" then
@@ -1754,7 +1755,7 @@ function FxController.start()
 			local character = Players.LocalPlayer.Character
 			local held = character and character:FindFirstChild("HeldTool")
 			local tool = held and held:GetAttribute("Tool")
-			if PHONE then
+			if LEAN then
 				local ok, bar = pcall(function()
 					return (require(script.Parent:WaitForChild("PokeController")) :: any).getLoadout()
 				end)
@@ -1782,7 +1783,7 @@ function FxController.start()
 		end
 	end)
 	task.delay(if PHONE then 14 else 6, function()
-		if PHONE then
+		if LEAN then
 			return -- (only what is on the bar: above)
 		end
 		preload = {}
