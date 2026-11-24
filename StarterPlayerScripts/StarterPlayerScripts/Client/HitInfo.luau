@@ -87,7 +87,13 @@ end
 -- body's state ("Alive" | "Unconscious" | "Dead").
 function HitInfo.status(blood: number, pulse: number?, before: number?, vital: string?): string
 	-- (Phase 0, Config.MILD_TEXT: "health", not blood; the server's line keeps its shape.)
-	local bloodText = string.format("<font color=\"%s\">%d%% %s</font>", severity(blood >= 80, blood < 45), blood, if Config.MILD_TEXT then "health" else "blood")
+	-- (24 Nov 2026, owner: 79% health and DEAD made no sense: health is the blood it can still lose before it dies, 0 when dead.)
+	local dead = vital == "Dead"
+	local shown = blood
+	if Config.MILD_TEXT then
+		shown = if dead then 0 else math.clamp(math.floor((blood - 15) / 85 * 100 + 0.5), 1, 100)
+	end
+	local bloodText = string.format("<font color=\"%s\">%d%% %s</font>", severity(blood >= 80 and not dead, blood < 45 or dead), shown, if Config.MILD_TEXT then "health" else "blood")
 	local pulseText
 	if pulse and pulse > 0 and vital ~= "Dead" then
 		local arrow = ""
