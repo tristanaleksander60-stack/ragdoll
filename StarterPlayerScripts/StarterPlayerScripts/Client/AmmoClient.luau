@@ -156,10 +156,10 @@ local function slabLabel(id: string): TextLabel?
 	local made = Instance.new("TextLabel")
 	made.Name = "AmmoCount"
 	made.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
-	made.BackgroundTransparency = 0.25
-	made.AnchorPoint = Vector2.new(1, 1)
-	made.Position = UDim2.new(1, -4, 1, -6)
-	made.Size = UDim2.fromOffset(42, 14)
+	made.BackgroundTransparency = 0.05
+	made.AnchorPoint = Vector2.zero -- (24 Nov 2026, owner: it lay over the name: on the slot's top edge now)
+	made.Position = UDim2.fromOffset(0, -9)
+	made.Size = UDim2.fromOffset(38, 14)
 	made.FontFace = Theme.Fonts.body
 	made.TextScaled = true
 	made.TextColor3 = Color3.fromRGB(255, 230, 160)

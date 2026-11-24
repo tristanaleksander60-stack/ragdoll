@@ -22,7 +22,9 @@ function BodyCard.toggleHidden()
 	Settings.set("hideCard", not Settings.cardHidden())
 end
 game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
-	if Keybinds.live(processed) and input.UserInputType == Enum.UserInputType.Keyboard and Keybinds.is("BodyCard", input.KeyCode) then
+	-- (24 Nov 2026: "." is also Roblox's emote key, so the press came in as already taken; only a text box keeps it now.)
+	local typing = game:GetService("UserInputService"):GetFocusedTextBox() ~= nil
+	if not typing and Keybinds.live(false) and input.UserInputType == Enum.UserInputType.Keyboard and Keybinds.is("BodyCard", input.KeyCode) then
 		BodyCard.toggleHidden()
 	end
 end)
@@ -61,6 +63,11 @@ task.spawn(function()
 		g.Enabled = Settings.cardHidden() and not ViewMode.isLab()
 		task.wait(0.2)
 	end
+end)
+
+-- (... and the emote wheel stays shut on it.)
+pcall(function()
+	game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.EmotesMenu, false)
 end)
 
 BodyCard.W = 230
