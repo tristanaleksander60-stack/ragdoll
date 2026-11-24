@@ -50,6 +50,8 @@ type Entry = {
 	hitAt: number?,
 }
 
+-- (24 Nov 2026: others that want to hear of shots, blasts and resets: Scaffolds.)
+Knockables.listeners = {} :: { { shot: (Vector3, Vector3) -> (), blast: (Vector3, number) -> (), reset: (Vector3, number) -> () } }
 local entries: { [BasePart]: Entry } = {}
 local started = false
 
@@ -202,6 +204,9 @@ end
 
 -- A blast: everything in reach flies away from its middle (Blasts.blast).
 function Knockables.blast(center: Vector3, radius: number)
+	for _, l in Knockables.listeners do
+		l.blast(center, radius)
+	end
 	for body, e in entries do
 		local offset = body.Position - center
 		local d = offset.Magnitude
@@ -215,6 +220,9 @@ end
 
 -- A shot that landed at `point`, fired from `from` (HitService's Shot): the knockable it hit jumps.
 function Knockables.shot(point: Vector3, from: Vector3): boolean
+	for _, l in Knockables.listeners do
+		l.shot(point, from)
+	end
 	for body, e in entries do
 		local half = body.Size.Magnitude / 2
 		if e.role == "Block" then
@@ -236,6 +244,9 @@ end
 
 -- Everything loose within `radius` of `center` back on its spot (RESET in a lab).
 function Knockables.resetNear(center: Vector3, radius: number): number
+	for _, l in Knockables.listeners do
+		l.reset(center, radius)
+	end
 	local n = 0
 	for _, e in entries do
 		if e.looseAt and (e.home.Position - center).Magnitude <= radius then

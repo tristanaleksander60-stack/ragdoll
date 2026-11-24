@@ -171,6 +171,19 @@ function LabDress.dress(into: Instance, origin: Vector3)
 	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).THROW_TOWER == true then -- (0.37.10: off unless switched on; the owner removed the castle)
 		LabDress.throwTower(folder, origin)
 	end
+	-- (24 Nov 2026, owner: wooden scaffolds to knock over: Scaffolds, once everything else of the lab stands.)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SCAFFOLDS == true then
+		task.delay(5, function()
+			if folder.Parent then
+				local okS, errS = pcall(function()
+					return require(script.Parent:WaitForChild("Scaffolds")).buildLab(folder, origin)
+				end)
+				if not okS then
+					warn("[LabDress] scaffolds: " .. tostring(errS))
+				end
+			end
+		end)
+	end
 	if #folder:GetChildren() == 0 then
 		folder:Destroy()
 	end
