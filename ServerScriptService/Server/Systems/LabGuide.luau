@@ -94,7 +94,11 @@ local function groundUnder(at: Vector3, fallbackY: number): number
 end
 
 -- The sign over a spot: a white card with a cyan edge, the drawn picture and two words.
+LabGuide.SIGNS = false -- (24 Nov 2026, owner: "remove all pictograms": no FEED ME! over the creatures)
 local function sign(point: BasePart, words: string, height: number)
+	if not LabGuide.SIGNS then
+		return
+	end
 	local g = Instance.new("BillboardGui")
 	g.Name = "GuideSign"
 	g.Size = UDim2.fromScale(10, 3.4) -- (studs: a sign in the world, smaller far off)

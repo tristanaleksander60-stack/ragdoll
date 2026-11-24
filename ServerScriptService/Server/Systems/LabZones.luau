@@ -108,7 +108,11 @@ end
 LabZones.PX_PER_STUD = 19 -- a sign designed in px: its size in studs (260 px = 13.7 studs)
 
 -- A gold star over today's machine (Config.ICON_SIGNS): the drawn star on a dark round badge.
+LabZones.PICTOGRAMS = false -- (24 Nov 2026, owner: "remove all pictograms": no star, no NEW tags)
 local function starBadge(parent: Instance, adornee: BasePart, offset: number)
+	if not LabZones.PICTOGRAMS then
+		return
+	end
 	local DrawnIcons = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("DrawnIcons")) :: any
 	local g = Instance.new("BillboardGui")
 	g.Name = "ZoneSign"
@@ -245,7 +249,7 @@ function LabZones.build(folder: Instance, origin: Vector3)
 		end
 	end
 	-- NEW tags.
-	if LabZones.newShowing(os.time()) then
+	if LabZones.PICTOGRAMS and LabZones.newShowing(os.time()) then
 		for _, name in ((Config :: any).NEW_IN_LAB or {}) :: { string } do
 			local thing = folder:FindFirstChild(name, true)
 			local part = if thing and thing:IsA("Model") then thing.PrimaryPart or thing:FindFirstChildWhichIsA("BasePart", true) elseif thing and thing:IsA("BasePart") then thing else nil

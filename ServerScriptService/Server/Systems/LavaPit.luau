@@ -180,6 +180,7 @@ function LavaPit.dress(pool: BasePart, floorY: number): Folder
 	sound.RollOffMaxDistance = 60
 	sound.Parent = plate
 	sound:Play()
+	if false then -- (24 Nov 2026, owner: "remove all pictograms")
 	-- The warning: a post beside the pit with a flame in a red triangle (no words).
 	local post = piece(into, "LavaSignPost", Vector3.new(0.4, 5.5, 0.4), CFrame.new(c.X + rx + 2.6, floorY + 2.75, c.Z + rz * 0.4), Color3.fromRGB(60, 60, 66), Enum.Material.Metal)
 	post.CastShadow = true
@@ -210,6 +211,7 @@ function LavaPit.dress(pool: BasePart, floorY: number): Folder
 			end
 		end
 	end)
+	end
 	into.Parent = pool.Parent
 	return into
 end
