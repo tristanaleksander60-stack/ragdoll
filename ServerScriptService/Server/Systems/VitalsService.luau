@@ -75,6 +75,12 @@ local INFO_GAP = 0.08 -- s: at most this often a line to one player (a shotgun's
 -- up: DROP_PER_LOSS bpm for each % of blood the zone costs at once, HEAD_MORE times that for the
 -- head and neck (which also bleed HEAD_MORE_BLOOD times as much at once), never under DROP_MIN.
 -- Enough of them stop it (Anatomy.DEAD_PULSE): bodies die from being shot often enough.
+-- (24 Nov 2026, owner: "a weapon does not kill by the number of bullets, but by how much blood is left in the body"): a
+-- wound takes blood by where it is (Anatomy: loss) and how strong the weapon is, then bleeds on; only the blood
+-- (Anatomy.DEAD_AT) kills. No hit points, no pulse worn down by rounds. A round to the head still kills at once.
+local BLOOD_KILLS = (Config :: any).BLOOD_KILLS == true
+local BLOOD_PER_WOUND = 4.5 -- times the place's loss, for a round, a blade or a blast
+local BLOOD_PER_BLOW = 3.5 -- for a blow
 local DROP_PER_LOSS = 2.5
 local DROP_MIN = 3
 local DROP_MAX = 40
@@ -645,11 +651,14 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 	local now = os.clock()
 	local head = HEAD_ZONES[zone.id] == true
 	-- (Not for the heart and the brain: they slow the heart their own way, Anatomy's pulse push.)
-	local drop = if blunt or zone.pulse < 0 then nil else math.clamp(zone.loss * power * DROP_PER_LOSS * (if head then HEAD_MORE else 1), DROP_MIN, DROP_MAX)
+	local drop = if BLOOD_KILLS or blunt or zone.pulse < 0 then nil else math.clamp(zone.loss * power * DROP_PER_LOSS * (if head then HEAD_MORE else 1), DROP_MIN, DROP_MAX)
 	table.insert(v.wounds, { zone = zone, at = Workspace:GetServerTimeNow(), opened = now, power = power, blunt = blunt, drop = drop })
 	trimWounds(v, now)
 	if v.state ~= "Dead" then
-		if blunt then
+		if BLOOD_KILLS then
+			local share = if blunt then BLOOD_PER_BLOW * (if o.strike then HitMath.STRIKE_DAMAGE else 1) else BLOOD_PER_WOUND * (if head then HEAD_MORE_BLOOD else 1)
+			v.blood = math.max(0, v.blood - zone.loss * power * share * (o.boost or 1))
+		elseif blunt then
 			-- (A blow costs a little blood, never past BRUISE_FLOOR.)
 			v.blood = math.max(math.min(v.blood, BRUISE_FLOOR), v.blood - zone.loss * power * BLUNT_BLEED)
 		else
@@ -673,7 +682,7 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 		end
 		-- v4 A5 (owner): enough hits kill, body shots and blows too (headshots stay instant, above).
 		-- Region and weapon set the share; the body shows it as today (knocked out, dead green, revive).
-		if v.state ~= "Dead" then
+		if not BLOOD_KILLS and v.state ~= "Dead" then
 			local region = if head then Config.DAMAGE_HEAD elseif zone.limb then Config.DAMAGE_LIMB else 1
 			-- (Damage wears off by Config.DAMAGE_DECAY a second, so a punch an hour ago does not count.)
 			local nowT = os.clock()
@@ -736,7 +745,7 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 	-- (24 Nov 2026: it may get mad at who hit it, the more the nearer it is to dying: Mourning.provoke.)
 	if by and v.state == "Alive" and not severed and not quiet() then
 		local hp = (Config :: any).BODY_HP
-		local near = math.max(1 - v.blood / 100, if type(hp) == "number" and hp > 0 then (v.damage or 0) / hp else 0)
+		local near = math.max((100 - v.blood) / (100 - Anatomy.DEAD_AT), if type(hp) == "number" and hp > 0 then (v.damage or 0) / hp else 0)
 		pcall(function()
 			(require(script.Parent:WaitForChild("Mourning")) :: any).provoke(model, by, near)
 		end)
@@ -788,7 +797,7 @@ function VitalsService.step(model: Model, v: Vitals, dt: number)
 		publish(model, v, false)
 		return
 	end
-	if bruise > 0 and v.blood <= BRUISE_FLOOR then
+	if bruise > 0 and (v.blood <= BRUISE_FLOOR or BLOOD_KILLS) then
 		bruise = 0 -- (blows alone go no further)
 	end
 	if bleed > 0 or bruise > 0 then
@@ -809,7 +818,7 @@ function VitalsService.step(model: Model, v: Vitals, dt: number)
 	if v.ceiling then
 		target = math.min(target, v.ceiling)
 	end
-	target = math.clamp(target, 0, 210)
+	target = math.clamp(target, if BLOOD_KILLS and not v.lethalAt then 28 else 0, 210)
 	local step = PULSE_EASE * (if v.lethalAt then 3 else 1) * dt
 	if dt == 0 then
 		-- A fresh hit shows at once in the line (a jump of a few beats).
@@ -827,7 +836,7 @@ function VitalsService.step(model: Model, v: Vitals, dt: number)
 		return
 	end
 	-- Out cold, dead, or back.
-	local dead = v.blood <= Anatomy.DEAD_AT or (v.lethalAt ~= nil and now >= (v.lethalAt :: number)) or (v.pulse < Anatomy.DEAD_PULSE and target < Anatomy.DEAD_PULSE)
+	local dead = v.blood <= Anatomy.DEAD_AT or (v.lethalAt ~= nil and now >= (v.lethalAt :: number)) or (not BLOOD_KILLS and v.pulse < Anatomy.DEAD_PULSE and target < Anatomy.DEAD_PULSE)
 	if dead then
 		v.pulse = if v.lethalAt then 0 else v.pulse
 		setState(model, v, "Dead")
