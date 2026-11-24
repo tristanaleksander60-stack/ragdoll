@@ -1745,7 +1745,7 @@ function ProgressService.daily(player: Player, today: number?): number
 		-- after an egg is opened, or at the next look; told once a day, never lost.)
 		if dailyWaitTold[player] ~= day then
 			dailyWaitTold[player] = day
-			remote:FireClient(player, "Notice", "Your egg slots are full: open an egg and today's daily egg comes")
+			-- (24 Nov 2026, owner: no egg notice on joining; full slots say nothing, the gift's ! does.)
 		end
 		return 0
 	end
