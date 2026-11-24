@@ -72,7 +72,7 @@ ShopArt.MODELS = table.freeze({ "Crate", "BigButton", "PetRobotDog", "PetParrot"
 
 -- FEATURED: the hero first (BEST VALUE), then a hand-picked row.
 ShopArt.HERO = "Everything"
-ShopArt.FEATURED = table.freeze({ "God", "EntryPack", "VIP", "RobotDog", "GorillaRampage", "MegaTrampoline" })
+ShopArt.FEATURED = table.freeze({ "God", "Ultra", "VIP", "RobotDog", "GorillaRampage", "MegaTrampoline" })
 
 -- The rarity frame by planned price (Robux).
 export type Rarity = { name: string, color: Color3 }

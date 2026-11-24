@@ -30,7 +30,7 @@ Shop.PASSES = table.freeze({
 		-- while it is 0 live, spawning stays free for everyone as before.
 		key = "God",
 		id = 2093692966, -- the GOD MODE game pass (21 Nov 2026)
-		name = "GOD MODE",
+		name = "Spawn Ragdolls",
 		blurb = "Create life! Spawn ragdolls.",
 		perks = { "Spawn ragdolls: tiny, heavy, bouncy, floppy", "Place 1 to 25 where you aim: line, circle, grid, tower, rain", "Each one comes down in a beam of light" },
 		color = "#FFE066",
