@@ -33,7 +33,7 @@ Mourning.HIT_LANDS = 0.2 -- s from the start of a punch until the fist is there
 Mourning.HIT_DAMAGE = 12
 Mourning.SHOVE = 10
 Mourning.ATTACK_MAX = 90
-Mourning.SIDE = 1.9 -- studs from the body's middle where it kneels
+Mourning.SIDE = 1.6 -- studs from the body's middle where it kneels
 
 type Job = {
 	corpse: Model,
@@ -141,7 +141,7 @@ local function cprPlan(): { { mood: string, time: number } }
 	end
 	add(pickMood(CPR_MOODS), 3 + math.random() * 1.5)
 	if math.random() < 0.75 then
-		add("Breath", 2)
+		add("Breath", 2.6)
 	end
 	add(pickMood(CPR_MOODS), 3 + math.random() * 1.5)
 	if math.random() < 0.5 then

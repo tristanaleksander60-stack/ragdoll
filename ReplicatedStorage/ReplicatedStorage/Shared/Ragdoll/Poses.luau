@@ -301,61 +301,71 @@ local function kneeling(out: Pose, waist: number, neck: number)
 	out.Waist = ang(waist, 0, 0)
 	out.Neck = ang(neck, 0, 0)
 end
--- Presses: quick down, slower up, hands on top of each other, the whole back in it.
+-- Presses (24 Nov 2026, owner: it must look like CPR, not like humping): the knees and hips are dead still, the body
+-- leans over the chest and stays there, the arms are locked straight with the hands on top of each other, and only the
+-- shoulders drop a little: a quick short push, a full let-up, some 110 a minute, with a small breather now and then.
 local function press(out: Pose, t: number, speed: number, depth: number)
-	local p = (0.5 - 0.5 * math.cos(t * speed)) ^ 1.6
-	kneeling(out, -30 - depth * p, -14 + 6 * p)
-	out.RightShoulder = ang(72 + 14 * p, 0, -16)
-	out.LeftShoulder = ang(72 + 14 * p, 0, 16)
-	out.RightElbow = ang(16 - 16 * p, 0, 0)
-	out.LeftElbow = ang(16 - 16 * p, 0, 0)
+	local beat = t * speed / (2 * math.pi)
+	local rest = (beat % 18) > 16.2
+	local f = beat % 1
+	-- (Down in a third of the beat, up in the rest.)
+	local p = if rest then 0 elseif f < 0.34 then math.sin(f / 0.34 * math.pi / 2) else math.cos((f - 0.34) / 0.66 * math.pi / 2)
+	kneeling(out, -43 - depth * p - (if rest then -5 else 0), -10 + depth * 0.5 * p)
+	out.RightShoulder = ang(64 - depth * 0.35 * p, 0, -19)
+	out.LeftShoulder = ang(64 - depth * 0.35 * p, 0, 19)
+	out.RightElbow = ang(if rest then 12 else 2, 0, 0)
+	out.LeftElbow = ang(if rest then 12 else 2, 0, 0)
 end
 local cprOut: Pose = {}
 function Poses.cpr(t: number): Pose
-	press(cprOut, t, 11.5, 22)
+	press(cprOut, t, 11.6, 6)
 	return cprOut
 end
 function Poses.cprFast(t: number): Pose
-	press(cprOut, t, 19, 15) -- (in a panic, the head shaking)
-	cprOut.Neck = ang(-10, sin(t * 9) * 22, 0)
+	press(cprOut, t, 13.6, 5) -- (in a panic: quicker, a worried little shake of the head)
+	cprOut.Neck = ang(-10, sin(t * 4) * 8, 0)
 	return cprOut
 end
--- Both fists up over the head and down on the chest.
+-- One thump: the fist is lifted, held, comes down on the chest and stays; the other hand lies on the chest.
 function Poses.cprSlam(t: number): Pose
-	local up = (0.5 + 0.5 * math.cos(t * 5.5)) ^ 0.7
-	kneeling(cprOut, -46 + 50 * up, -10 + 12 * up)
-	cprOut.RightShoulder = ang(78 + 82 * up, 0, -14)
-	cprOut.LeftShoulder = ang(78 + 82 * up, 0, 14)
-	cprOut.RightElbow = ang(8 + 45 * up, 0, 0)
-	cprOut.LeftElbow = ang(8 + 45 * up, 0, 0)
+	local c = t % 2.4
+	local up = if c < 0.5 then c / 0.5 elseif c < 0.95 then 1 elseif c < 1.1 then 1 - (c - 0.95) / 0.15 else 0
+	up = up * up * (3 - 2 * up)
+	kneeling(cprOut, -42 + 8 * up, -10 + 6 * up)
+	cprOut.RightShoulder = ang(62 + 46 * up, 0, -12)
+	cprOut.RightElbow = ang(6 + 62 * up, 0, 0)
+	cprOut.LeftShoulder = ang(62, 0, 19)
+	cprOut.LeftElbow = ang(6, 0, 0)
 	return cprOut
 end
--- One hand presses, the other holds its head.
+-- One hand presses, the other lies on its forehead.
 function Poses.cprOne(t: number): Pose
-	press(cprOut, t, 10, 18)
-	cprOut.LeftShoulder = ang(125, 0, -25)
-	cprOut.LeftElbow = ang(110, 0, 0)
-	cprOut.Neck = ang(-14, 0, 10 * sin(t * 4))
+	press(cprOut, t, 10.6, 5)
+	cprOut.LeftShoulder = ang(60, 0, -18)
+	cprOut.LeftElbow = ang(14, 0, 0)
+	cprOut.Neck = ang(-12, 24 + 4 * sin(t * 1.5), 0)
 	return cprOut
 end
--- An ear to the mouth, two fingers on the neck.
+-- An ear to the mouth, two fingers on the neck: quite still, listening.
 function Poses.check(t: number): Pose
-	kneeling(cprOut, -56 + 2 * sin(t * 3), -8)
-	cprOut.Neck = ang(-8, 48, 0)
-	cprOut.RightShoulder = ang(78, 0, -6)
-	cprOut.LeftShoulder = ang(40, 0, -12)
-	cprOut.RightElbow = ang(26, 0, 0)
-	cprOut.LeftElbow = ang(60, 0, 0)
+	kneeling(cprOut, -56 + sin(t * 1.4), -8)
+	cprOut.Neck = ang(-8, 46, 4)
+	cprOut.RightShoulder = ang(74, 0, -8)
+	cprOut.LeftShoulder = ang(48, 0, -10)
+	cprOut.RightElbow = ang(22, 0, 0)
+	cprOut.LeftElbow = ang(48, 0, 0)
 	return cprOut
 end
--- A breath: up to fill the chest, down to the face.
+-- A breath: it fills its chest, bends slowly down, stays a while at the mouth, and comes up again.
 function Poses.breath(t: number): Pose
-	local d = 0.5 - 0.5 * math.cos(t * 5)
-	kneeling(cprOut, -18 - 50 * d, 14 - 26 * d)
-	cprOut.RightShoulder = ang(58 + 22 * d, 0, 6)
-	cprOut.LeftShoulder = ang(58 + 22 * d, 0, -6)
-	cprOut.RightElbow = ang(50, 0, 0)
-	cprOut.LeftElbow = ang(50, 0, 0)
+	local c = t % 2.6
+	local d = if c < 0.5 then 0 elseif c < 1.1 then (c - 0.5) / 0.6 elseif c < 2.0 then 1 else 1 - (c - 2.0) / 0.6
+	d = d * d * (3 - 2 * d)
+	kneeling(cprOut, -30 - 34 * d, 6 - 20 * d)
+	cprOut.RightShoulder = ang(56 + 14 * d, 0, 6)
+	cprOut.LeftShoulder = ang(56 + 14 * d, 0, -6)
+	cprOut.RightElbow = ang(34, 0, 0)
+	cprOut.LeftElbow = ang(34, 0, 0)
 	return cprOut
 end
 local feelOut: Pose = {}
