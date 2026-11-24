@@ -450,7 +450,7 @@ function TouchShoot.start()
 			-- (V10 phase 1, owner: "the phone crosshair not in the middle of the screen, only where you shoot": on a
 			-- touch screen it shows a moment after SHOOT fires there, and all the time only in first person.)
 			local centred = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter or FirstPerson.isOn()
-			local crossOn = (want and (os.clock() < centreUntil or centred)) or TouchShoot.padCross()
+			local crossOn = want --[[ 24 Nov 2026, owner: always while the button aims at the middle ]] or TouchShoot.padCross()
 			if cross and cross.Visible ~= crossOn then
 				cross.Visible = crossOn
 			end
