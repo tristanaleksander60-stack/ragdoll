@@ -165,6 +165,18 @@ local function startPinch()
 	pinchMid = (free[1].position + free[2].position) / 2
 end
 
+-- (24 Nov 2026, owner: turning the view with a finger fired the weapon): a finger on the world never uses a tool that
+-- has its own button (TouchShoot: SHOOT, HIT, PLACE ...). Grabbing, the wand and the lab view tap as before.
+local function buttonOnly(input: InputObject?): boolean
+	if not input then
+		return false
+	end
+	local ok, on = pcall(function()
+		return (require(script.Parent:WaitForChild("TouchShoot")) :: any).wanted()
+	end)
+	return ok and on == true
+end
+
 local function onPress(key: any, input: InputObject?, at: Vector2)
 	if ReplayController.isPlaying() then
 		return
@@ -182,7 +194,7 @@ local function onPress(key: any, input: InputObject?, at: Vector2)
 		pointers[key] = p
 		return
 	end
-	if BuildController.pressAt(at) or GrabController.tryBegin(at, input) or PokeController.pressAt(at) then
+	if BuildController.pressAt(at) or GrabController.tryBegin(at, input) or (not buttonOnly(input) and PokeController.pressAt(at)) then
 		p.role = "claimed"
 	end
 	pointers[key] = p
@@ -193,7 +205,7 @@ local function onPress(key: any, input: InputObject?, at: Vector2)
 	-- Gun, Railgun, RPG, Golden Deagle and the dummy-tag specials (Sticky, Freeze, Zap, Heal, Rocket,
 	-- Balloon, Shrink, Chicken, C4) all stay tap per round. Chainsaw is held by its own hand.
 	local selectedToy = Toys.byId[PokeController.getSelected()]
-	local holdToFire = selectedToy and (selectedToy.auto == true or selectedToy.id == "Chainsaw")
+	local holdToFire = selectedToy and not buttonOnly(input) and (selectedToy.auto == true or selectedToy.id == "Chainsaw")
 	if holdToFire then
 		-- First shot: if the press did not claim (no NPC under it), fire a miss-shot now so the air
 		-- spam starts on the same press, not one cooldown later. A claimed press already fired its
@@ -287,7 +299,7 @@ local function onRelease(key: any, at: Vector2)
 		return
 	end
 	if p.role == "pending" and os.clock() - p.began <= TAP_TIME then
-		if not BuildController.tapAt(at) and not (p.input and GrabController.tapAt(at)) then
+		if not BuildController.tapAt(at) and not (p.input and GrabController.tapAt(at)) and not buttonOnly(p.input) then
 			PokeController.tapAt(at)
 		end
 	end
