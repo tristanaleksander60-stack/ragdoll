@@ -171,6 +171,15 @@ function LabDress.dress(into: Instance, origin: Vector3)
 	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).THROW_TOWER == true then -- (0.37.10: off unless switched on; the owner removed the castle)
 		LabDress.throwTower(folder, origin)
 	end
+	-- (24 Nov 2026, owner: the indoor weapon range behind the creature yard.)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SHOOTING_RANGE == true then
+		local okR, errR = pcall(function()
+			return require(script.Parent:WaitForChild("ShootingRange")).buildLab(folder, origin)
+		end)
+		if not okR then
+			warn("[LabDress] shooting range: " .. tostring(errR))
+		end
+	end
 	-- (24 Nov 2026, owner: wooden scaffolds to knock over: Scaffolds, once everything else of the lab stands.)
 	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SCAFFOLDS == true then
 		task.delay(5, function()
