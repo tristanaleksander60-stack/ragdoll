@@ -295,7 +295,7 @@ local function step(dt: number)
 	end
 	gap = math.max(Crosshair.GAP, gap - Crosshair.CLOSE * dt)
 	local gun = gunPicked()
-	local mouse = UserInputService.MouseEnabled and UserInputService:GetLastInputType() ~= Enum.UserInputType.Touch
+	local mouse = UserInputService.MouseEnabled and UserInputService:GetLastInputType() ~= Enum.UserInputType.Touch and UserInputService:GetLastInputType() ~= Enum.UserInputType.Gamepad1 -- (a pad aims at the middle: TouchShoot draws that one)
 	local mouseFree = UserInputService.MouseBehavior ~= Enum.MouseBehavior.LockCenter
 	local at = if mouseFree then UserInputService:GetMouseLocation() else workspace.CurrentCamera.ViewportSize / 2
 	local Controller = require(game:GetService("ReplicatedStorage"):WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIController")) :: any

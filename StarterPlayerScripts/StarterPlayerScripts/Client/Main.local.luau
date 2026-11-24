@@ -54,7 +54,7 @@ end, "ClientBoot")
 require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIIcons")).registerMany(require(Shared:WaitForChild("DrawnIcons")).ASSETS)
 local PhoneDiet = require(Client:WaitForChild("PhoneDiet"))
 safe("PhoneDiet", PhoneDiet.start) -- 23 Nov 2026: what a phone does not draw
-local LATER = if PhoneDiet.wanted() then 8 else 0 -- s: on a phone the living decor starts once the first seconds are over
+local LATER = if PhoneDiet.wanted() then 8 elseif not game:GetService("UserInputService").KeyboardEnabled then 5 else 2 -- s: on a phone the living decor starts once the first seconds are over
 safe("PlotPrivacy", function() PlotPrivacy.start() end) -- (first: other labs leave this screen before anything draws them)
 task.spawn(require(Client:WaitForChild("DummySkins")).start) -- the dummies' sculpted mannequin bodies
 safe("SoundMix", function() require(Client:WaitForChild("SoundMix")).start() end) -- v4 A3: the mix's groups and compressor

@@ -46,8 +46,8 @@ local MAX_VOICES = 28
 local UserInputService = game:GetService("UserInputService")
 local PHONE = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 local POOL = if PHONE then 1 else 2 -- loaded Sounds made per asset id at start, reused play after play
-local LOAD_WAIT = if PHONE then 0.5 else 0.1 -- s a sound not yet loaded may wait; later it is dropped, never late
-local LOAD_WAIT_OWN = if PHONE then 0.9 else 0.5 -- s the player's own shot or hit may wait (heard a little late beats silence)
+local LOAD_WAIT = if PHONE then 0.5 else 0.35 -- s a sound not yet loaded may wait; later it is dropped, never late
+local LOAD_WAIT_OWN = if PHONE then 0.9 else 0.75 -- s the player's own shot or hit may wait (heard a little late beats silence)
 local POOL_MAX = 6 -- voices an asset may grow to before a busy one is restarted
 local CUT_FADE = 0.05 -- s a sound takes to fade out before its voice is freed (no click)
 local SOUND_REACH = 160 -- studs a sound is heard, unless the caller says otherwise
@@ -789,7 +789,7 @@ local function fireGun(toyId: string, muzzle: Vector3, _feet: Vector3?, priority
 		return
 	end
 	local options = { cut = g.cut, reach = g.maxDistance, priority = priority, vary = g.vary, fade = g.fade }
-	local spare = PHONE and not bankReady(g.fire) and bankReady(g.fallback.bank)
+	local spare = not bankReady(g.fire) and bankReady(g.fallback.bank)
 	if spare then
 		-- (Its own recording is asked for now, for the next shots.)
 		for _, id in BANK[g.fire] or {} do
@@ -1677,9 +1677,6 @@ function FxController.start()
 			end
 		end
 	end
-	if not PHONE then
-		loadRest()
-	end
 	-- (A failed fetch is tried once more: a phone's bad moment must not take a gun's sound away for the whole visit.)
 	local function preloadNow(list: { Instance })
 		local again: { Instance } = {}
@@ -1695,31 +1692,20 @@ function FxController.start()
 		if #again == 0 then
 			return
 		end
-		if PHONE then
-			-- (A phone's line comes and goes: tried again later, and a sound is never taken out of its bank.)
+		do
+			-- (A line comes and goes, on every device (24 Nov 2026): tried again later, and a sound is never taken out of
+			-- its bank; until it is there another recording or the gun's fallback plays.)
 			task.delay(8, function()
 				pcall(function()
 					game:GetService("ContentProvider"):PreloadAsync(again)
 				end)
 			end)
-			return
 		end
-		task.wait(8)
-		game:GetService("ContentProvider"):PreloadAsync(again, function(id: string, status: Enum.AssetFetchStatus)
-			if status == Enum.AssetFetchStatus.Failure then
-				for _, ids in BANK do
-					local i = table.find(ids, id)
-					if i then
-						table.remove(ids, i)
-					end
-				end
-			end
-		end)
 	end
-	if PHONE then
+	do
 		-- (23 Nov 2026: not while a phone is loading in; a sound needed before then makes its own voice.)
 		-- (A few at a time, from 4 s in: no stall, and all of them are there within the first half minute.)
-		task.delay(4, function()
+		task.delay(if PHONE then 4 else 1, function()
 			local before = #preload
 			loadRest()
 			local rest = table.move(preload, before + 1, #preload, 1, {})
@@ -1757,14 +1743,12 @@ function FxController.start()
 				loadList(list)
 			end
 		end
-		if PHONE then
+		do
 			local rest = preload
 			for i = 1, #rest, 6 do
 				preloadNow(table.move(rest, i, math.min(i + 5, #rest), 1, {}))
 				task.wait(0.15)
 			end
-		else
-			preloadNow(preload)
 		end
 	end)
 	task.spawn(preloadNow, table.clone(preload))

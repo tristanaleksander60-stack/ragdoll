@@ -1676,7 +1676,7 @@ local function vitalDown(rig: Rig): boolean
 end
 
 ActiveRagdoll.lodTurn = false
-local LOD_PHONE = game:GetService("RunService"):IsClient() and game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").KeyboardEnabled
+local LOD_PHONE = game:GetService("RunService"):IsClient() and not game:GetService("UserInputService").KeyboardEnabled -- (phones, tablets, consoles)
 local function update(dt: number)
 	-- (Limp bodies still moving: a heap coming down. Ones lying still, asleep, cost nothing and do not count.)
 	table.clear(limpMoving)

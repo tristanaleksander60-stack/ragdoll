@@ -144,7 +144,7 @@ function GunFeel.charge(at: Vector2)
 			-- (A moved mouse: the shot goes where it points now.)
 			local camera = Workspace.CurrentCamera
 			local now = if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter and camera then camera.ViewportSize / 2
-				elseif UserInputService.TouchEnabled and not UserInputService.MouseEnabled then at
+				elseif (UserInputService.TouchEnabled and not UserInputService.MouseEnabled) or UserInputService:GetLastInputType() == Enum.UserInputType.Gamepad1 then at -- (24 Nov 2026: a pad's railgun fired at the mouse's place)
 				else UserInputService:GetMouseLocation()
 			fire(now)
 		end
