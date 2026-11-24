@@ -327,6 +327,19 @@ local function dress(model: Model)
 					local side = if string.sub(d.Name, 1, 4) == "Left" then 1 elseif string.sub(d.Name, 1, 5) == "Right" then -1 else 0
 					local inward = if key == "UpperArm" or key == "LowerArm" or key == "Hand" then side * (d.Size.X * (1 - fit.X) * 0.5 + 0.1) else 0
 					skin.CFrame = d.CFrame * CFrame.new(inward, (DROP[key] or 0) * d.Size.Y, 0)
+					-- (24 Nov 2026, owner: the elbow sat half inside the upper arm: the two blocks overlap round the joint, and
+					-- the skins more so. Each now ends a little past the elbow itself.)
+					local elbow = if key == "UpperArm" or key == "LowerArm" then d:FindFirstChild(string.sub(d.Name, 1, #d.Name - #key) .. "ElbowRigAttachment") else nil
+					if elbow and elbow:IsA("Attachment") then
+						local half = skin.Size.Y / 2
+						local lap = skin.Size.X * 0.28
+						local top = if key == "UpperArm" then half else elbow.Position.Y + lap
+						local low = if key == "UpperArm" then elbow.Position.Y - lap else -half
+						if top - low > 0.2 then
+							skin.Size = Vector3.new(skin.Size.X, top - low, skin.Size.Z)
+							skin.CFrame = d.CFrame * CFrame.new(inward, (top + low) / 2, 0)
+						end
+					end
 					if key == "UpperTorso" then
 						-- (Its shape is a rounded head: the faint eyes in it go under the arm, out of sight.)
 						skin.Size = Vector3.new(skin.Size.Z, skin.Size.Y, skin.Size.X)
