@@ -1683,7 +1683,9 @@ function ProgressService.giveEgg(player: Player, why: string): boolean
 		return false
 	end
 	p.eggs += 1
-	remote:FireClient(player, "Notice", why)
+	if why ~= "" then
+		remote:FireClient(player, "Notice", why)
+	end
 	sendState(player)
 	scheduleSave(player)
 	return true

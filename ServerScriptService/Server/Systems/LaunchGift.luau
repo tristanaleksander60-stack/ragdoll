@@ -81,7 +81,8 @@ local function onLoaded(player: Player)
 	if not claim(player.UserId) then
 		return
 	end
-	if not ProgressService.giveEgg(player, LaunchGift.TEXT) then
+	if not ProgressService.giveEgg(player, "") -- (24 Nov 2026, owner: no egg notice on joining)
+	 then
 		unclaim(player.UserId)
 	end
 end

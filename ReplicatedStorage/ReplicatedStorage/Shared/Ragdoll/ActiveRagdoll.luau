@@ -976,7 +976,14 @@ end
 -- Seed (0-10, DummyFactory) under RUNNER_SEED runs, the rest stand their ground (hands up at most). 6, as every sixth
 -- one is Brave and never runs either: 0.6 x 5/6 = half. Same line in Lab.heard and CrowdService.panic.
 local RUNNER_SEED = 6
+local function mad(rig: Rig): boolean
+	local mood = rig.model:GetAttribute("Mood")
+	return mood == "Angry" or mood == "Box" or mood == "Rage"
+end
 local function runner(rig: Rig): boolean
+	if mad(rig) then
+		return false -- (24 Nov 2026, owner: an angry one is not afraid)
+	end
 	return ((rig.model:GetAttribute("Seed") :: number?) or 0) < RUNNER_SEED
 end
 
@@ -1368,6 +1375,9 @@ end
 local function updateMoving(rig: Rig, dt: number)
 	local state = rig.state
 	local now = os.clock()
+	if state == "Fleeing" and mad(rig) then
+		rig.fleeUntil, rig.panicking = 0, false
+	end
 	local legs, _ = brokenLegs(rig)
 	if state ~= "Crawling" and legs >= 2 then
 		enter(rig, "Ragdoll") -- both legs gone while up: it collapses, then crawls

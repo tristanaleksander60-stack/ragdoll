@@ -164,6 +164,14 @@ local function drop(lab: Lab_, now: number)
 	end
 end
 
+-- Where in the hand it is held: the middle of the hand you see (DummySkins draws it lower and further in than its block).
+local function gripOf(hand: BasePart): CFrame
+	if game:GetService("ReplicatedStorage"):FindFirstChild("DummySkin2") then
+		return CFrame.new(-(hand.Size.X * 0.1 + 0.1), -hand.Size.Y * 0.85 - 0.2, -0.42)
+	end
+	return CFrame.new(0, -0.2, -0.35)
+end
+
 local function give(lab: Lab_, m: Model, now: number)
 	local hand = partOf(m, "RightHand")
 	if not hand then
@@ -178,10 +186,10 @@ local function give(lab: Lab_, m: Model, now: number)
 	unweld(p)
 	p.CanCollide = false
 	p.Massless = true
-	p.CFrame = hand.CFrame * CFrame.new(0, -0.4, 0)
+	p.CFrame = hand.CFrame * gripOf(hand)
 	local w = Instance.new("Weld")
 	w.Part0, w.Part1 = hand, p
-	w.C0 = CFrame.new(0, -0.4, 0)
+	w.C0 = gripOf(hand)
 	w.Parent = p
 	lab.carrier, lab.wounds, lab.phase, lab.since = m, woundsOf(m), "Carry", now
 	lab.tuneAt = now + 1

@@ -674,6 +674,9 @@ function ProgressUI.start()
 				Notify.say("reward", string.format("DAY %d GIFT: the %s is yours! It's on your bar.", streak, string.upper(weapon.label)), Color3.fromRGB(120, 230, 140))
 				C.playSound("reward")
 			end
+			if (Config :: any).COUNTERS_ONLY then
+				return -- (24 Nov 2026, owner: no egg notice on joining; the gift's ! says it)
+			end
 			-- (Audit area 1: a newcomer's first 90 s carry one objective only; the daily news waits.)
 			local lp = game:GetService("Players").LocalPlayer
 			local newcomerUntil = (lp:GetAttribute("NewcomerUntil") :: number?) or (if lp:GetAttribute("Newcomer") == true then Config.QUIET_START else 0)
