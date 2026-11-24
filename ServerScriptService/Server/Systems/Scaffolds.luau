@@ -1,9 +1,10 @@
 --!strict
--- Scaffolds (24 Nov 2026, owner: "satisfying wooden scaffolds round about that you can knock over"). Wooden towers in
--- every lab, alone and in a row like dominoes. At rest everything is anchored (no cost). A shot or two, a blast, a car,
--- a thrown ragdoll or a running player tips one: it creaks, leans and goes over as one piece, smashes into loose
--- planks with a crash and dust, and takes the next one in the row with it. A while later the planks fly back, one after
--- the other from the bottom, and it stands again. Knockables tells of shots, blasts and RESET.
+-- Scaffolds (24 Nov 2026, owner: "satisfying wooden scaffolds round about that you can knock over", "they break one
+-- post at a time: the little piece you shoot flies off"). Wooden towers in every lab, alone and in a row. At rest every
+-- piece is anchored (no cost). A shot takes off the very piece it hit; a car, a thrown ragdoll, a falling plank or a
+-- running player the pieces they run into; a blast all in its reach. When too few posts are left to hold a storey up,
+-- what stands on it leans over to the weak side and comes down in planks. A while after the last hit the pieces fly
+-- back, from the bottom up. Knockables tells of shots, blasts and RESET.
 
 local Debris = game:GetService("Debris")
 local TweenService = game:GetService("TweenService")
@@ -18,9 +19,7 @@ Scaffolds.LEVEL_H = 4.4
 Scaffolds.WIDE = 5.2 -- along
 Scaffolds.DEEP = 3.8 -- across (it falls this way most easily)
 Scaffolds.TOUCH_SPEED = 19 -- studs/s: what bumps it must be this fast (a run, not a walk)
-Scaffolds.SHOTS = 2 -- rounds that tip it
-Scaffolds.SHOT_MEMORY = 4
-Scaffolds.TIP = 7 -- studs/s its top gets
+Scaffolds.SHOT_MARGIN = 0.9 -- studs from a piece's surface a round still hits it
 Scaffolds.BREAK_TILT = 52 -- degrees it leans when it breaks up
 Scaffolds.BREAK_MAX = 3 -- s at most in one piece
 Scaffolds.REBUILD_AFTER = 14
@@ -28,16 +27,16 @@ Scaffolds.CREAK = { 9120829478, 9114496277, 9114496341 } -- (Pro Sound Effects)
 Scaffolds.CRASH = { 9120964951, 9126254743, 9120871246 }
 Scaffolds.KNOCKS = { 9126254743, 9120871246 }
 
-type Piece = { part: BasePart, home: CFrame }
+type Piece = { part: BasePart, home: CFrame, kind: string, level: number, x: number, z: number, loose: boolean }
 type Tower = {
 	model: Model,
 	pieces: { Piece },
+	byPart: { [BasePart]: Piece },
 	base: CFrame,
-	state: string, -- "Up" | "Tipping" | "Down" | "Rebuild"
-	hits: number,
-	hitAt: number,
+	state: string, -- "Up" (whole or in part) | "Rebuild" | "Gone"
+	falling: { [number]: boolean }, -- storeys that come down now
+	damagedAt: number,
 	token: number,
-	owner: Vector3,
 }
 local towers: { Tower } = {}
 local rng = Random.new()
@@ -76,7 +75,7 @@ local function dust(at: Vector3, n: number)
 	Debris:AddItem(a, 2.5)
 end
 
-local tip: (Tower, Vector3, number) -> ()
+local breakOff: (Tower, Piece, Vector3, boolean?) -> ()
 
 local function fastEnough(part: BasePart): boolean
 	return not part.Anchored and part.AssemblyLinearVelocity.Magnitude >= Scaffolds.TOUCH_SPEED
@@ -85,8 +84,8 @@ end
 local function build(folder: Instance, base: CFrame, origin: Vector3): Tower
 	local model = Instance.new("Model")
 	model.Name = "Scaffold"
-	local tower: Tower = { model = model, pieces = {}, base = base, state = "Up", hits = 0, hitAt = 0, token = 0, owner = origin }
-	local function plank(size: Vector3, at: CFrame, touch: boolean?)
+	local tower: Tower = { model = model, pieces = {}, byPart = {}, base = base, state = "Up", falling = {}, damagedAt = 0, token = 0 }
+	local function plank(size: Vector3, at: CFrame, kind: string, level: number, x: number, z: number)
 		local p = Instance.new("Part")
 		p.Name = "ScaffoldPlank"
 		p.Size = size
@@ -94,39 +93,39 @@ local function build(folder: Instance, base: CFrame, origin: Vector3): Tower
 		p.Color = WOODS[rng:NextInteger(1, #WOODS)]
 		p.Material = Enum.Material.WoodPlanks
 		p.Anchored = true
-		p.CanTouch = touch == true
 		p.CustomPhysicalProperties = PhysicalProperties.new(0.5, 0.55, 0.12)
 		p.Parent = model
-		table.insert(tower.pieces, { part = p, home = p.CFrame })
-		if touch then
-			p.Touched:Connect(function(other: BasePart)
-				if tower.state == "Up" and fastEnough(other) and other.Name ~= "HeadBit" then
-					tip(tower, other.AssemblyLinearVelocity, 1.2)
-				end
-			end)
-		end
+		local piece: Piece = { part = p, home = p.CFrame, kind = kind, level = level, x = x, z = z, loose = false }
+		table.insert(tower.pieces, piece)
+		tower.byPart[p] = piece
+		p.Touched:Connect(function(other: BasePart)
+			if tower.state == "Up" and not piece.loose and p.Anchored and fastEnough(other) and other.Name ~= "HeadBit" then
+				local v = other.AssemblyLinearVelocity
+				breakOff(tower, piece, v.Unit * math.min(v.Magnitude * 0.6, 34))
+			end
+		end)
 	end
 	local W, D, H = Scaffolds.WIDE, Scaffolds.DEEP, Scaffolds.LEVEL_H
 	for level = 0, Scaffolds.LEVELS - 1 do
 		local y = level * H
 		for _, x in { -1, 1 } do
 			for _, z in { -1, 1 } do
-				plank(Vector3.new(0.42, H, 0.42), CFrame.new(x * (W / 2 - 0.25), y + H / 2, z * (D / 2 - 0.25)), level <= 1)
+				plank(Vector3.new(0.42, H, 0.42), CFrame.new(x * (W / 2 - 0.25), y + H / 2, z * (D / 2 - 0.25)), "post", level, x, z)
 			end
 		end
 		-- (The deck, three boards.)
 		for k = -1, 1 do
-			plank(Vector3.new(W + 0.7, 0.24, D / 3 - 0.06), CFrame.new(rng:NextNumber(-0.15, 0.15), y + H + 0.12, k * D / 3))
+			plank(Vector3.new(W + 0.7, 0.24, D / 3 - 0.06), CFrame.new(rng:NextNumber(-0.15, 0.15), y + H + 0.12, k * D / 3), "deck", level, 0, k)
 		end
 		-- (A brace across on each long side, turning over every level; a rail at the ends.)
 		local way = if level % 2 == 0 then 1 else -1
 		local long = math.sqrt((W - 0.5) ^ 2 + (H - 0.6) ^ 2)
 		local lean = math.atan2(H - 0.6, W - 0.5)
 		for _, z in { -1, 1 } do
-			plank(Vector3.new(long, 0.3, 0.16), CFrame.new(0, y + H / 2, z * (D / 2 + 0.06)) * CFrame.Angles(0, 0, lean * way * z))
+			plank(Vector3.new(long, 0.3, 0.16), CFrame.new(0, y + H / 2, z * (D / 2 + 0.06)) * CFrame.Angles(0, 0, lean * way * z), "brace", level, 0, z)
 		end
 		for _, x in { -1, 1 } do
-			plank(Vector3.new(0.16, 0.3, D), CFrame.new(x * (W / 2 + 0.06), y + H * 0.45, 0))
+			plank(Vector3.new(0.16, 0.3, D), CFrame.new(x * (W / 2 + 0.06), y + H * 0.45, 0), "rail", level, x, 0)
 		end
 	end
 	model.Parent = folder
@@ -142,192 +141,277 @@ local function build(folder: Instance, base: CFrame, origin: Vector3): Tower
 end
 
 local function rebuild(tower: Tower)
-	if tower.state ~= "Down" then
+	if tower.state ~= "Up" then
 		return
 	end
 	tower.state = "Rebuild"
 	tower.token += 1
 	local token = tower.token
-	for i, piece in tower.pieces do
-		local p = piece.part
-		for _, w in p:GetChildren() do
-			if w:IsA("WeldConstraint") then
-				w:Destroy()
+	local n = 0
+	for _, piece in tower.pieces do
+		if piece.loose then
+			n += 1
+			local at = n
+			local p = piece.part
+			for _, w in p:GetChildren() do
+				if w:IsA("WeldConstraint") then
+					w:Destroy()
+				end
 			end
+			p.Anchored = true
+			p.CanCollide = false
+			-- (From the bottom up, each with a little overshoot.)
+			task.delay((at - 1) * 0.045, function()
+				if tower.token ~= token or not p.Parent then
+					return
+				end
+				TweenService:Create(p, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { CFrame = piece.home }):Play()
+				if at % 4 == 0 then
+					sound(p, Scaffolds.KNOCKS, 0.35, 1.5)
+				end
+			end)
 		end
-		p.Anchored = true
-		p.CanCollide = false
-		-- (From the bottom up, each with a little overshoot.)
-		local wait_ = (i - 1) * 0.045
-		task.delay(wait_, function()
-			if tower.token ~= token or not p.Parent then
-				return
-			end
-			TweenService:Create(p, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { CFrame = piece.home }):Play()
-			if i % 4 == 0 then
-				sound(p, Scaffolds.KNOCKS, 0.35, 1.5)
-			end
-		end)
 	end
-	task.delay(#tower.pieces * 0.045 + 0.65, function()
+	task.delay(n * 0.045 + 0.65, function()
 		if tower.token ~= token or not tower.model.Parent then
 			return
 		end
 		for _, piece in tower.pieces do
 			piece.part.CFrame = piece.home
 			piece.part.CanCollide = true
+			piece.loose = false
 		end
-		tower.hits = 0
+		tower.falling = {}
 		tower.state = "Up"
 	end)
 end
 
-local function smash(tower: Tower, dir: Vector3)
-	if tower.state ~= "Tipping" then
-		return
-	end
-	tower.state = "Down"
-	tower.token += 1
-	local token = tower.token
-	local middle = Vector3.zero
-	for _, piece in tower.pieces do
-		for _, w in piece.part:GetChildren() do
-			if w:IsA("WeldConstraint") then
-				w:Destroy()
-			end
-		end
-		middle += piece.part.Position / #tower.pieces
-	end
-	for _, piece in tower.pieces do
-		local p = piece.part
-		p.AssemblyLinearVelocity += rng:NextUnitVector() * rng:NextNumber(1, 6) + Vector3.new(0, 2, 0)
-		p.AssemblyAngularVelocity += rng:NextUnitVector() * rng:NextNumber(0, 5)
-	end
-	local first = tower.pieces[1].part
-	sound(first, Scaffolds.CRASH, 1, 1)
-	sound(first, Scaffolds.CRASH, 0.8, 0.8)
-	dust(Vector3.new(middle.X, tower.base.Y + 1, middle.Z), 16)
-	dust(Vector3.new(middle.X, tower.base.Y + 1, middle.Z) + dir * 4, 12)
-	-- (The next one in the way goes too.)
-	for _, other in towers do
-		if other ~= tower and other.state == "Up" then
-			local gap = other.base.Position - tower.base.Position
-			local flat = Vector3.new(gap.X, 0, gap.Z)
-			if flat.Magnitude < Scaffolds.LEVELS * Scaffolds.LEVEL_H + 3 and flat.Magnitude > 0.1 and flat.Unit:Dot(dir) > 0.75 then
-				task.delay(0.12, function()
-					tip(other, dir * 20, 1)
-				end)
-			end
-		end
-	end
+-- Rebuilt REBUILD_AFTER s after the last damage.
+local function hurt(tower: Tower)
+	tower.damagedAt = os.clock()
+	local at = tower.damagedAt
 	task.delay(Scaffolds.REBUILD_AFTER, function()
-		if tower.token == token then
+		if tower.damagedAt == at and tower.model.Parent then
 			rebuild(tower)
 		end
 	end)
 end
 
--- Tips a standing tower the way `push` goes.
-function tip(tower: Tower, push: Vector3, force: number)
-	if tower.state ~= "Up" then
+local function free(piece: Piece)
+	piece.loose = true
+	local p = piece.part
+	p.Anchored = false
+	pcall(function()
+		p:SetNetworkOwner(nil)
+	end)
+end
+
+local function splinters(at: Vector3, color: Color3)
+	local a = Instance.new("Attachment")
+	a.WorldPosition = at
+	a.Parent = Workspace.Terrain
+	local e = Instance.new("ParticleEmitter")
+	e.Color = ColorSequence.new(color)
+	e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.16), NumberSequenceKeypoint.new(1, 0.06) })
+	e.Lifetime = NumberRange.new(0.3, 0.7)
+	e.Speed = NumberRange.new(5, 14)
+	e.SpreadAngle = Vector2.new(180, 180)
+	e.Acceleration = Vector3.new(0, -50, 0)
+	e.LightInfluence = 1
+	e.Rate = 0
+	e.Parent = a
+	e:Emit(9)
+	Debris:AddItem(a, 1.2)
+end
+
+-- What stands on storey `level` comes down: it leans over to `way` as one piece, and breaks up as it hits or has leaned far.
+local function collapse(tower: Tower, level: number, way: Vector3)
+	if tower.falling[level] then
 		return
 	end
-	tower.state = "Tipping"
-	tower.token += 1
-	local token = tower.token
-	local flat = Vector3.new(push.X, 0, push.Z)
-	local dir = if flat.Magnitude > 0.1 then flat.Unit else Vector3.xAxis
-	local core = tower.pieces[1].part
-	for i, piece in tower.pieces do
+	tower.falling[level] = true
+	local group: { Piece } = {}
+	for _, piece in tower.pieces do
+		if not piece.loose and (piece.level > level or (piece.level == level and piece.kind == "deck")) then
+			table.insert(group, piece)
+		end
+	end
+	local core = group[1]
+	if not core then
+		return
+	end
+	local dir = if way.Magnitude > 0.1 then way.Unit else Vector3.xAxis
+	for i, piece in group do
+		piece.loose = true
 		if i > 1 then
 			local w = Instance.new("WeldConstraint")
-			w.Part0, w.Part1 = core, piece.part
+			w.Part0, w.Part1 = core.part, piece.part
 			w.Parent = piece.part
 		end
 	end
-	for _, piece in tower.pieces do
+	for _, piece in group do
 		piece.part.Anchored = false
 	end
 	pcall(function()
-		core:SetNetworkOwner(nil)
+		core.part:SetNetworkOwner(nil)
 	end)
-	-- (Round its far foot: the top goes the way it was pushed, the foot hardly at all.)
-	local axis = Vector3.yAxis:Cross(dir)
-	local spin = Scaffolds.TIP * force / (Scaffolds.LEVELS * Scaffolds.LEVEL_H)
-	local height = Scaffolds.LEVELS * Scaffolds.LEVEL_H / 2
-	core.AssemblyAngularVelocity = axis * spin * 1.5
-	core.AssemblyLinearVelocity = dir * spin * 1.5 * height
-	sound(core, Scaffolds.CREAK, 0.9, 1)
+	core.part.AssemblyAngularVelocity = Vector3.yAxis:Cross(dir) * 0.55
+	core.part.AssemblyLinearVelocity = dir * 2.2
+	sound(core.part, Scaffolds.CREAK, 0.9, 1)
+	hurt(tower)
 	task.spawn(function()
 		local t0 = os.clock()
-		local up0 = tower.base.UpVector
-		while tower.token == token and os.clock() - t0 < Scaffolds.BREAK_MAX do
+		local start = core.part.Position.Y
+		while os.clock() - t0 < Scaffolds.BREAK_MAX do
 			task.wait(0.05)
-			if not core.Parent then
+			if not core.part.Parent or tower.state ~= "Up" then
 				return
 			end
-			local lean = math.deg(math.acos(math.clamp(core.CFrame.UpVector:Dot(up0), -1, 1)))
-			if lean > Scaffolds.BREAK_TILT then
+			local lean = math.deg(math.acos(math.clamp(core.part.CFrame.UpVector:Dot(core.home.UpVector), -1, 1)))
+			local fell = start - core.part.Position.Y
+			if lean > Scaffolds.BREAK_TILT or (fell > 2 and core.part.AssemblyLinearVelocity.Magnitude < 6) then
 				break
 			end
-			-- (A gentle hand on the way over, so it never stops half leaning.)
-			if os.clock() - t0 > 0.5 and core.AssemblyAngularVelocity.Magnitude < 0.5 then
-				core.AssemblyAngularVelocity += axis * 0.6
+		end
+		local middle = Vector3.zero
+		for _, piece in group do
+			for _, w in piece.part:GetChildren() do
+				if w:IsA("WeldConstraint") then
+					w:Destroy()
+				end
+			end
+			middle += piece.part.Position / #group
+		end
+		for _, piece in group do
+			pcall(function()
+				piece.part:SetNetworkOwner(nil)
+			end)
+			piece.part.AssemblyLinearVelocity += rng:NextUnitVector() * rng:NextNumber(1, 5)
+			piece.part.AssemblyAngularVelocity += rng:NextUnitVector() * rng:NextNumber(0, 5)
+		end
+		sound(core.part, Scaffolds.CRASH, 1, 1)
+		sound(core.part, Scaffolds.CRASH, 0.7, 0.8)
+		dust(Vector3.new(middle.X, tower.base.Y + 1, middle.Z), 18)
+	end)
+end
+
+-- Whether each storey still carries what stands on it: three posts do, two across from each other do, less does not.
+local function check(tower: Tower)
+	for level = 0, Scaffolds.LEVELS - 1 do
+		local left: { Piece } = {}
+		local lost = Vector3.zero
+		for _, piece in tower.pieces do
+			if piece.kind == "post" and piece.level == level then
+				if piece.loose then
+					lost += tower.base:VectorToWorldSpace(Vector3.new(piece.x, 0, piece.z))
+				else
+					table.insert(left, piece)
+				end
 			end
 		end
-		if tower.token == token then
-			smash(tower, dir)
+		local across = #left == 2 and left[1].x ~= left[2].x and left[1].z ~= left[2].z
+		if #left < 2 or (#left == 2 and not across) then
+			collapse(tower, level, lost)
+			return
 		end
-	end)
+	end
+end
+
+-- One piece off, flying with `velocity`.
+function breakOff(tower: Tower, piece: Piece, velocity: Vector3, quiet: boolean?)
+	if tower.state ~= "Up" or piece.loose then
+		return
+	end
+	free(piece)
+	local p = piece.part
+	p.AssemblyLinearVelocity = velocity + Vector3.new(0, 3, 0)
+	p.AssemblyAngularVelocity = rng:NextUnitVector() * rng:NextNumber(3, 9)
+	if not quiet then
+		sound(p, Scaffolds.KNOCKS, 0.7, 1.25)
+		splinters(p.Position, p.Color)
+	end
+	hurt(tower)
+	-- (A post takes the brace and the rail that were nailed to it, half the time.)
+	if piece.kind == "post" then
+		for _, other in tower.pieces do
+			if not other.loose and other.level == piece.level and ((other.kind == "brace" and other.z == piece.z) or (other.kind == "rail" and other.x == piece.x)) and rng:NextNumber() < 0.5 then
+				free(other)
+				other.part.AssemblyAngularVelocity = rng:NextUnitVector() * rng:NextNumber(1, 4)
+			end
+		end
+		task.delay(0.12, function()
+			if tower.state == "Up" then
+				check(tower)
+			end
+		end)
+	end
+end
+
+-- How far a point is from a piece's surface.
+local function distance(p: BasePart, point: Vector3): number
+	local l = p.CFrame:PointToObjectSpace(point)
+	local h = p.Size / 2
+	return Vector3.new(math.max(math.abs(l.X) - h.X, 0), math.max(math.abs(l.Y) - h.Y, 0), math.max(math.abs(l.Z) - h.Z, 0)).Magnitude
 end
 
 local function contains(tower: Tower, point: Vector3, margin: number): boolean
 	local l = tower.base:PointToObjectSpace(point)
-	return math.abs(l.X) <= Scaffolds.WIDE / 2 + 0.6 + margin and math.abs(l.Z) <= Scaffolds.DEEP / 2 + 0.6 + margin
+	return math.abs(l.X) <= Scaffolds.WIDE / 2 + 1 + margin and math.abs(l.Z) <= Scaffolds.DEEP / 2 + 1 + margin
 		and l.Y >= -1 and l.Y <= Scaffolds.LEVELS * Scaffolds.LEVEL_H + 1 + margin
 end
 
 local function onShot(point: Vector3, from: Vector3)
-	local now = os.clock()
 	for _, tower in towers do
 		if tower.state == "Up" and contains(tower, point, 0.6) then
-			if now - tower.hitAt > Scaffolds.SHOT_MEMORY then
-				tower.hits = 0
+			local best: Piece? = nil
+			local bestD = Scaffolds.SHOT_MARGIN
+			for _, piece in tower.pieces do
+				if not piece.loose then
+					local d = distance(piece.part, point)
+					if d < bestD then
+						best, bestD = piece, d
+					end
+				end
 			end
-			tower.hits += 1
-			tower.hitAt = now
-			if tower.hits >= Scaffolds.SHOTS then
-				tip(tower, point - from, 1)
-			else
-				sound(tower.pieces[1].part, Scaffolds.KNOCKS, 0.5, 1.3)
+			if best then
+				local way = point - from
+				breakOff(tower, best, (if way.Magnitude > 0.1 then way.Unit else Vector3.xAxis) * 20)
+				return
 			end
-			return
 		end
 	end
 end
 
 local function onBlast(center: Vector3, radius: number)
 	for _, tower in towers do
-		local gap = tower.base.Position + Vector3.new(0, 5, 0) - center
-		if tower.state == "Up" and gap.Magnitude < radius + 4 then
-			tip(tower, gap, 1.8)
-			local t = tower
-			task.delay(0.2, function()
-				if t.state == "Tipping" then
-					smash(t, Vector3.new(gap.X, 0, gap.Z).Magnitude > 0.1 and Vector3.new(gap.X, 0, gap.Z).Unit or Vector3.xAxis)
-					for _, piece in t.pieces do
-						piece.part.AssemblyLinearVelocity += (piece.part.Position - center).Unit * 28 + Vector3.new(0, 10, 0)
+		local mid = tower.base.Position + Vector3.new(0, Scaffolds.LEVELS * Scaffolds.LEVEL_H / 2, 0)
+		if tower.state == "Up" and (mid - center).Magnitude < radius + 10 then
+			local heard = false
+			for _, piece in tower.pieces do
+				local gap = piece.part.Position - center
+				if gap.Magnitude < radius then
+					local out = (if gap.Magnitude > 0.1 then gap.Unit else Vector3.yAxis) * (44 * (1 - gap.Magnitude / radius) + 10)
+					if piece.loose then
+						piece.part.AssemblyLinearVelocity += out
+					else
+						breakOff(tower, piece, out + Vector3.new(0, 8, 0), heard)
+						heard = true
 					end
 				end
-			end)
+			end
 		end
 	end
 end
 
 local function onReset(center: Vector3, radius: number)
 	for _, tower in towers do
-		if tower.state == "Down" and (tower.base.Position - center).Magnitude <= radius then
-			rebuild(tower)
+		if (tower.base.Position - center).Magnitude <= radius then
+			for _, piece in tower.pieces do
+				if piece.loose then
+					rebuild(tower)
+					break
+				end
+			end
 		end
 	end
 end
