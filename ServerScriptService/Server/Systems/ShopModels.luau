@@ -26,6 +26,9 @@ local function keep(d: Instance): boolean
 end
 
 function ShopModels.start()
+	if not ShopArt.LIVE_3D then
+		return
+	end
 	local folder = ReplicatedStorage:FindFirstChild(ShopModels.FOLDER)
 	if folder then
 		folder:Destroy()

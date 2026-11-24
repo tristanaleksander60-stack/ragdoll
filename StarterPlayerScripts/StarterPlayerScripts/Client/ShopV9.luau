@@ -383,7 +383,7 @@ local function media(item: any, size: UDim2, big: boolean, allow3D: boolean?): G
 	holder.ClipsDescendants = true
 	local spec = ShopArt.SHOW[item.key]
 	local vp: GuiObject? = nil
-	if spec and allow3D ~= false and not lowEnd() then
+	if ShopArt.LIVE_3D and spec and allow3D ~= false and not lowEnd() then
 		vp = ShopShowcase.viewport(spec, UDim2.fromScale(1, 1), if big then "big" else nil)
 	end
 	if vp then
@@ -766,7 +766,7 @@ end
 
 -- A card's picture becomes its turning model, once (the page is on screen now).
 local function upgrade(card: Card)
-	if card.live3D or not ShopArt.SHOW[card.item.key] or lowEnd() then
+	if not ShopArt.LIVE_3D or card.live3D or not ShopArt.SHOW[card.item.key] or lowEnd() then
 		return
 	end
 	card.live3D = true

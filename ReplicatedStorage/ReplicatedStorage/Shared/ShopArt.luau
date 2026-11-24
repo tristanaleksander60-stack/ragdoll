@@ -39,6 +39,8 @@ function ShopArt.pictureOf(kind: Kind, key: string): string
 		return "event_" .. key
 	elseif key == "God" then
 		return "god"
+	elseif key == "Ultra" then
+		return "tool_Nuke" -- (24 Nov 2026, owner: a nuke, not the minigun)
 	end
 	return "shop_" .. key
 end
@@ -46,6 +48,7 @@ end
 -- The 3D showcase each one turns in on its card (Client/ShopShowcase builds it). nil: the picture.
 --   weapons: real weapon models fanned out; dummy: the mannequin in a colour; model: a replicated
 --   prop (ReplicatedStorage.ShopModels, Server ShopModels); extra: a code-built touch.
+ShopArt.LIVE_3D = false -- (24 Nov 2026, owner: the shop is flat pictures, the 3D was load for nothing)
 ShopArt.SHOW = table.freeze({
 	EntryPack = { model = "Crate", weapons = { "AK" } },
 	AllMelee = { weapons = { "Katana", "Bat", "Axe" } },
@@ -64,7 +67,7 @@ ShopArt.SHOW = table.freeze({
 	GiantFan = { model = "BigFan" },
 	SpiderDeluxe = { model = "MSpider", gold = true },
 	BoltCrate = { model = "Crate" },
-	Ultra = { weapons = { "Minigun" }, extra = "glow" },
+	Ultra = { weapons = { "Nuke" }, extra = "glow" },
 	VIP = { dummy = "#E9ECF2", extra = "crown" },
 	God = { dummy = "#FFE38A", gold = true, extra = "beam" },
 })
