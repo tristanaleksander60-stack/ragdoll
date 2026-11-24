@@ -147,7 +147,7 @@ end
 -- NAMES for that reason; LayoutCheck checks it against the rest itself).
 SLOTS.Shoot = function(ctx)
 	if ctx.phone then
-		return slot(1, 1, UDim2.new(1, -108, 1, -24), 76, 76) -- (GRAB's box: the bar's side margin is made for it)
+		return slot(1, 1, UDim2.new(1, -102, 1, -20), 84, 84) -- (GRAB's box: the bar's side margin is made for it)
 	end
 	return slot(1, 1, UDim2.new(1, -28, 1, -250), 92, 92)
 end

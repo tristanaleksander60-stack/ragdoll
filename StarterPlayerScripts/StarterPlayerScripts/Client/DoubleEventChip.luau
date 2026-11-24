@@ -46,7 +46,7 @@ function DoubleEventChip.start()
 	local chip = Instance.new("TextLabel")
 	chip.Name = "Chip"
 	chip.AnchorPoint = Vector2.new(1, 0.5)
-	chip.Position = UDim2.new(0.5, -134, 0.5, 12)
+	chip.Position = UDim2.new(0.5, -108, 0.5, 4)
 	-- (22 Nov 2026, owner: "2X just an icon like the gift, symmetric, a bit lower"): a 44 px round badge.
 	chip.Size = UDim2.fromOffset(44, 44)
 	-- (22 Nov 2026: the gift's look: a dark glass circle, the 2X in gold, the same 1.2 scale.)
@@ -54,7 +54,7 @@ function DoubleEventChip.start()
 	chip.BackgroundTransparency = 0.1
 	chip.TextColor3 = Color3.fromRGB(255, 205, 64)
 	local chipScale = Instance.new("UIScale")
-	chipScale.Scale = 1.2
+	chipScale.Scale = 1
 	chipScale.Parent = chip
 	chip.FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Heavy)
 	chip.TextSize = 20
@@ -83,7 +83,9 @@ function DoubleEventChip.start()
 			return
 		end
 		local shift = math.floor(camera.ViewportSize.X / 2 - (gui.AbsolutePosition.X + gui.AbsoluteSize.X / 2))
-		chip.Position = UDim2.new(0.5, -134 + shift, 0.5, 12)
+		-- (24 Nov 2026 layout: an upright phone: at the left end of the top bar's room.)
+		local upright = camera.ViewportSize.X < camera.ViewportSize.Y and camera.ViewportSize.X <= 500
+		chip.Position = if upright then UDim2.new(0, 48, 0.5, 4) else UDim2.new(0.5, -108 + shift, 0.5, 4)
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(recentre)
 	gui:GetPropertyChangedSignal("AbsolutePosition"):Connect(recentre)

@@ -67,7 +67,7 @@ HudMenu.PHONE_KEEP = { Shop = true } -- (GOD MODE sits in MENU on a phone: no ro
 Controller.COLUMN_TOP = 144
 C.HUD_CAPTION_MIN = 11 -- (smaller tiles: "Settings" still fits)
 Controller.HUD_SCALE = 0.85 -- (the owner, 10 Nov: a quieter HUD, focus on the game; a touch tap stays 44 px)
-Controller.PHONE_COLUMN_TOP = 130
+Controller.PHONE_COLUMN_TOP = 64 -- (24 Nov 2026 layout: SHOP and MENU up in the corner, clear of the move thumb)
 HudMenu.onSandbox = nil :: (() -> ())? -- what MENU's SANDBOX does (BuildController.toggle: Main)
 
 local function isPhone(): boolean

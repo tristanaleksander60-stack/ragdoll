@@ -32,12 +32,13 @@ local ORANGE = Color3.fromRGB(255, 122, 47)
 
 local HudV3 = {}
 
-HudV3.CARD = Vector2.new(132, 120) -- px at a 1080 px tall screen
+HudV3.CARD = Vector2.new(84, 84) -- px at a 1080 px tall screen
 HudV3.GAP = 6
 HudV3.MARGIN = 12
 HudV3.GLASS = Color3.fromRGB(18, 18, 22)
 HudV3.GLASS_ALPHA = 0.22
-HudV3.CHIPS_H = 50
+HudV3.CHIPS_H = 44
+HudV3.DOCK = 6 -- px of the nav dock round its squares (24 Nov 2026 layout)
 -- (UI audit 21 Nov 2026: Shop and Lab only; WEAPONS is the bar's own slab, one button, not two.)
 local LEFT_N = #require(script.Parent:WaitForChild("HudV3Layout")).LEFT
 
@@ -50,6 +51,7 @@ local gui: ScreenGui? = nil
 local topGui: ScreenGui? = nil
 local scaleObj: UIScale? = nil
 local nextLabel: TextLabel? = nil
+local upright = false -- (an upright phone's short Next pill)
 local nextCount: TextLabel? = nil
 local nextFill: Frame? = nil
 local chips: Frame? = nil
@@ -133,23 +135,34 @@ local function card(name: string, word: string, icon: string, parent: Instance, 
 	face.BorderSizePixel = 0
 	corner(face, 8)
 	face.Parent = b
-	KitStyle.hoverEdge(b, KitStyle.glass(face))
+	if KitStyle.glass(face, 10) then
+		-- (24 Nov 2026 layout: the squares share one dock; a square lights up only under the pointer.)
+		face.BackgroundTransparency = 1
+		shadow.Visible = false
+		KitStyle.hoverEdge(b, face:FindFirstChildOfClass("UIStroke"))
+		b.MouseEnter:Connect(function()
+			face.BackgroundTransparency = 0.5
+		end)
+		b.MouseLeave:Connect(function()
+			face.BackgroundTransparency = 1
+		end)
+	end
 	local shadowRound = shadow:FindFirstChildOfClass("UICorner")
 	if PREMIUM and shadowRound then
 		shadowRound.CornerRadius = UDim.new(0, 14)
 	end
-	local pic = Icons.make(icon, UDim2.fromOffset(56, 56), Color3.new(1, 1, 1))
+	local pic = Icons.make(icon, UDim2.fromOffset(42, 42), Color3.new(1, 1, 1))
 	pic.AnchorPoint = Vector2.new(0.5, 0)
-	pic.Position = UDim2.new(0.5, 0, 0, 16)
+	pic.Position = UDim2.new(0.5, 0, 0, 12)
 	pic.Parent = face
 	local label = Instance.new("TextLabel")
 	label.Name = "Word"
 	label.BackgroundTransparency = 1
 	label.AnchorPoint = Vector2.new(0.5, 1)
-	label.Position = UDim2.new(0.5, 0, 1, -12)
-	label.Size = UDim2.new(1, -8, 0, 26)
+	label.Position = UDim2.new(0.5, 0, 1, -6)
+	label.Size = UDim2.new(1, -4, 0, 22)
 	label.Font = Enum.Font.BuilderSansBold
-	label.TextSize = 24
+	label.TextSize = 19
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.Text = word
 	label.Parent = face
@@ -280,8 +293,8 @@ local function buildTop(onRewards: () -> ())
 	local clock = Instance.new("TextLabel")
 	clock.Name = "Clock"
 	clock.AnchorPoint = Vector2.new(0.5, 0)
-	clock.Position = UDim2.new(0.5, 0, 1, 2)
-	clock.Size = UDim2.fromOffset(62, 16)
+	clock.Position = UDim2.new(0.5, 0, 1, -8)
+	clock.Size = UDim2.fromOffset(58, 15)
 	clock.BackgroundColor3 = Color3.fromRGB(255, 200, 60)
 	clock.TextColor3 = Color3.fromRGB(40, 28, 6)
 	clock.Font = if PREMIUM then Enum.Font.BuilderSansExtraBold else Enum.Font.GothamBlack
@@ -304,7 +317,7 @@ local function buildTop(onRewards: () -> ())
 	local giftKey = Instance.new("TextLabel")
 	giftKey.Name = "Key"
 	giftKey.AnchorPoint = Vector2.new(0.5, 0.5)
-	giftKey.Position = UDim2.new(0, 4, 1, -4)
+	giftKey.Position = UDim2.new(0, 4, 0, 4)
 	giftKey.Size = UDim2.fromOffset(18, 18)
 	giftKey.BackgroundColor3 = Color3.fromRGB(12, 13, 17)
 	giftKey.BackgroundTransparency = 0.1
@@ -325,12 +338,12 @@ local function buildTop(onRewards: () -> ())
 	tapWindows[gift] = "Rewards"
 	-- (22 Nov 2026, owner: the gift next to the Next pill, on the same line): just right of the centred pill.
 	gift.AnchorPoint = Vector2.new(0, 0.5)
-	gift.Position = UDim2.new(0.5, 134, 0.5, 12) -- (a little under the top bar line, with the pill and 2X)
+	gift.Position = UDim2.new(0.5, 108, 0.5, 4) -- (a little under the top bar line, with the pill and 2X)
 	local giftScale = Instance.new("UIScale") -- (22 Nov 2026: the same size as the pill and the 2X icon)
-	giftScale.Scale = 1.2
+	giftScale.Scale = 1
 	giftScale.Parent = gift
 	gift.Parent = g
-	gift:SetAttribute("KitBase", 1.2) -- (its UIScale at rest)
+	gift:SetAttribute("KitBase", 1) -- (its UIScale at rest)
 	KitStyle.press(gift)
 	-- (V10 phase 2, owner: "the gift wiggles back and forth now and then to catch the eye"): every 6-9 s its icon
 	-- shakes for a moment (a rotation on the icon only, so its place in the bar never moves).
@@ -360,22 +373,38 @@ local function buildTop(onRewards: () -> ())
 	-- (Then, owner: "on the same line as the gift"): back in the top bar, at the gift's height, in the
 	-- middle, a little bigger than the bar's buttons.
 	local scale = Instance.new("UIScale")
-	scale.Scale = 1.2
+	scale.Scale = 1
 	scale.Parent = pill
 	pill.AnchorPoint = Vector2.new(0.5, 0.5)
-	pill.Position = UDim2.new(0.5, 0, 0.5, 12)
+	pill.Position = UDim2.new(0.5, 0, 0.5, 4)
 	pill.Parent = g
 	-- (22 Nov 2026, owner: "in line with the hotbar"): the top bar's layer starts right of Roblox's own buttons,
 	-- so its middle is right of the screen's; the pill and the gift move by the difference (the hotbar is
 	-- centred on the screen). DoubleEventChip does the same for the 2X.
+	local trophy: GuiObject? = nil
 	local function recentre()
 		local camera = workspace.CurrentCamera
 		if not camera or g.AbsoluteSize.X <= 0 then
 			return
 		end
 		local shift = math.floor(camera.ViewportSize.X / 2 - (g.AbsolutePosition.X + g.AbsoluteSize.X / 2))
-		pill.Position = UDim2.new(0.5, shift, 0.5, 12)
-		gift.Position = UDim2.new(0.5, 134 + shift, 0.5, 12)
+		-- (24 Nov 2026 layout: one row, 2X | Next | gift. An upright phone: across the room right of Roblox's buttons.)
+		upright = camera.ViewportSize.X < camera.ViewportSize.Y and camera.ViewportSize.X <= 500
+		if upright then
+			local wide = math.clamp(g.AbsoluteSize.X - 112, 90, 200)
+			pill.Size = UDim2.fromOffset(wide, 44)
+			pill.Position = UDim2.new(0, 56 + wide / 2, 0.5, 4)
+			gift.Position = UDim2.new(1, -48, 0.5, 4)
+		else
+			pill.Size = UDim2.fromOffset(200, 44)
+			pill.Position = UDim2.new(0.5, shift, 0.5, 4)
+			gift.Position = UDim2.new(0.5, 108 + shift, 0.5, 4)
+		end
+		if trophy and nextLabel then
+			trophy.Visible = not upright
+			nextLabel.Position = UDim2.fromOffset(if upright then 14 else 40, 6)
+			nextLabel.Size = UDim2.new(1, if upright then -70 else -96, 0, 22)
+		end
 	end
 	g:GetPropertyChangedSignal("AbsoluteSize"):Connect(recentre)
 	g:GetPropertyChangedSignal("AbsolutePosition"):Connect(recentre)
@@ -395,10 +424,11 @@ local function buildTop(onRewards: () -> ())
 			open()
 		end
 	end)
-	local trophy = Icons.make("crown", UDim2.fromOffset(22, 22), Color3.new(1, 1, 1))
-	trophy.AnchorPoint = Vector2.new(0, 0.5)
-	trophy.Position = UDim2.new(0, 12, 0.5, -3)
-	trophy.Parent = pill
+	local crown = Icons.make("crown", UDim2.fromOffset(22, 22), Color3.new(1, 1, 1))
+	crown.AnchorPoint = Vector2.new(0, 0.5)
+	crown.Position = UDim2.new(0, 12, 0.5, -3)
+	crown.Parent = pill
+	trophy = crown
 	local t = Instance.new("TextLabel")
 	t.Name = "Title"
 	t.BackgroundTransparency = 1
@@ -465,7 +495,7 @@ function HudV3.drawNext(takedowns: number)
 	if toy then
 		local need = math.max(1, toy.unlockAt - from)
 		local have = math.clamp(takedowns - from, 0, need)
-		t.Text = "Next: " .. toy.short
+		t.Text = if upright then toy.short else "Next: " .. toy.short
 		n.Text = string.format("%d / %d", have, need)
 		TweenService:Create(fill, TweenInfo.new(0.3, Enum.EasingStyle.Quad), { Size = UDim2.fromScale(have / need, 1) }):Play()
 		-- (V9-3b: the longer gaps never feel empty: a soft tick and a glint when the bar passes half
@@ -576,7 +606,7 @@ local function step()
 		tg.Enabled = (on and not held.Top) or phonePill
 		local giftButton = tg:FindFirstChild("Gift", true)
 		if giftButton and giftButton:IsA("GuiObject") then
-			giftButton.Visible = not phonePill or (require(Client:WaitForChild("IconCount")) :: any).has("Rewards") -- (V11 A1: a phone sees the gift while an egg waits)
+			giftButton.Visible = true -- (V11 A1: a phone sees the gift while an egg waits)
 		end
 	end
 	local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
@@ -616,6 +646,9 @@ local function step()
 			end
 		end
 	end
+	if leftCol then
+		leftCol.Visible = not held.Left
+	end
 	if rightCol then
 		rightCol.Visible = not held.Right
 	end
@@ -650,7 +683,7 @@ local function step()
 			l.AnchorPoint = Vector2.zero
 			l.Position = UDim2.fromOffset(HudV3.MARGIN, HudV3.MARGIN)
 			local n = #Layout.LEFT
-			l.Size = UDim2.fromOffset(n * HudV3.CARD.X + (n - 1) * HudV3.GAP, HudV3.CARD.Y)
+			l.Size = UDim2.fromOffset(n * HudV3.CARD.X + (n - 1) * HudV3.GAP + 2 * HudV3.DOCK, HudV3.CARD.Y + 2 * HudV3.DOCK)
 			ll.FillDirection = Enum.FillDirection.Horizontal
 			ll.VerticalAlignment = Enum.VerticalAlignment.Top
 			r.Position = UDim2.new(1, -HudV3.MARGIN, 0, Layout.rightTop(screen, bottom) / k)
@@ -659,9 +692,10 @@ local function step()
 			if row and row:IsA("UIScale") then
 				row.Scale = 1
 			end
-			l.AnchorPoint = Vector2.new(0, 1)
-			l.Position = UDim2.new(0, HudV3.MARGIN, 1, -(HudV3.MARGIN + HudV3.CHIPS_H + 8))
-			l.Size = UDim2.fromOffset(HudV3.CARD.X, LEFT_N * HudV3.CARD.Y + (LEFT_N - 1) * HudV3.GAP)
+			-- (24 Nov 2026 layout: the nav dock in the middle of the left edge.)
+			l.AnchorPoint = Vector2.new(0, 0.5)
+			l.Position = UDim2.new(0, HudV3.MARGIN, 0.5, 0)
+			l.Size = UDim2.fromOffset(HudV3.CARD.X + 2 * HudV3.DOCK, LEFT_N * HudV3.CARD.Y + (LEFT_N - 1) * HudV3.GAP + 2 * HudV3.DOCK)
 			ll.FillDirection = Enum.FillDirection.Vertical
 			ll.VerticalAlignment = Enum.VerticalAlignment.Bottom
 			r.Position = UDim2.new(1, -HudV3.MARGIN, 0, 150)
@@ -729,6 +763,11 @@ function HudV3.start()
 	left.Size = UDim2.fromOffset(HudV3.CARD.X, LEFT_N * HudV3.CARD.Y + (LEFT_N - 1) * HudV3.GAP)
 	left.Parent = root
 	leftCol = left
+	KitStyle.glass(left, 16)
+	local dock = Instance.new("UIPadding")
+	dock.PaddingLeft, dock.PaddingRight = UDim.new(0, HudV3.DOCK), UDim.new(0, HudV3.DOCK)
+	dock.PaddingTop, dock.PaddingBottom = UDim.new(0, HudV3.DOCK), UDim.new(0, HudV3.DOCK)
+	dock.Parent = left
 	local ll = Instance.new("UIListLayout")
 	ll.Padding = UDim.new(0, HudV3.GAP)
 	ll.SortOrder = Enum.SortOrder.LayoutOrder
@@ -848,6 +887,9 @@ function HudV3.start()
 	cl.Parent = c
 	c.Parent = root
 	chips = c
+	local small = Instance.new("UIScale") -- (24 Nov 2026 layout: the keys are a quiet footnote)
+	small.Scale = 0.85
+	small.Parent = c
 	drawChips()
 	require(Shared:WaitForChild("Keybinds")).onChanged(drawChips)
 	g.Parent = player:WaitForChild("PlayerGui")

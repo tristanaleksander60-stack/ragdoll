@@ -83,7 +83,7 @@ local WHITE = Color3.new(1, 1, 1)
 
 local GAP = 8
 local EDGE = 10 -- room inside the bar's edges for the rings and the press pop
-local MAX_W = 96
+local MAX_W = 72 -- (24 Nov 2026 layout: square slots, a short bar; was 96)
 local MIN_W_ONE_ROW = 72 -- narrower than this and the bar goes to two rows (labels stay readable)
 local MIN_W = 56 -- two rows: never under this (the kit's 44 px touch floor, with room for a word)
 local PICK_TIME = 10 -- s a tool from the catalog waits for its slot
@@ -353,9 +353,10 @@ local function placePicture(slab: Slab, width: number, height: number)
 	if width < PokeController.STACK_BELOW then
 		icon.AnchorPoint = Vector2.new(0.5, 0)
 		icon.Position = UDim2.new(0.5, 0, 0, 3)
-		icon.Size = UDim2.fromOffset(PokeController.PICTURE_STACKED, PokeController.PICTURE_STACKED)
+		local big = if height >= 64 then height - 34 else PokeController.PICTURE_STACKED
+		icon.Size = UDim2.fromOffset(big, big)
 		padding.PaddingLeft = UDim.new(0, 3)
-		padding.PaddingTop = UDim.new(0, PokeController.STACK_TOP)
+		padding.PaddingTop = UDim.new(0, if height >= 64 then height - 31 else PokeController.STACK_TOP)
 	else
 		local size, pad = PokeController.pictureFor(height)
 		icon.AnchorPoint = Vector2.new(0, 0.5)
@@ -651,6 +652,7 @@ function PokeController.plan(screen: Vector2, touch: boolean, lab: boolean, with
 	local shownCount = count
 	local w = widthFor(lead + count + up, side)
 	local landscapePhone = phone and touch and screen.X > screen.Y
+	local COMPACT = 54 -- (24 Nov 2026 layout: a landscape phone's slot)
 	if landscapePhone and not lab then
 		-- A landscape phone keeps one short row between the move stick and GRAB/SHOOT (their box
 		-- ends PHONE_THUMB_RIGHT from the right edge), never the full width over them (PC play
@@ -659,7 +661,10 @@ function PokeController.plan(screen: Vector2, touch: boolean, lab: boolean, with
 		local fit = math.floor((screen.X - 2 * clear - 2 * EDGE + GAP) / (44 + GAP)) - lead
 		shownCount = math.clamp(fit, math.min(3, count), count)
 		perRow = shownCount
-		w = math.clamp(widthFor(lead + shownCount, clear), 44, MAX_W)
+		w = math.clamp(widthFor(lead + shownCount, clear), 44, COMPACT)
+		-- (The next cards only where the whole bar still ends clear of both thumbs.)
+		tail = if widthFor(lead + shownCount + up, clear) >= 44 then up else 0
+		w = math.min(w, math.max(44, widthFor(lead + shownCount + tail, clear)))
 	elseif landscapePhone and w < MIN_W_ONE_ROW then
 		w = math.max(w, 44) -- (the lab view: no thumb buttons, one row at the touch floor)
 	elseif w < MIN_W_ONE_ROW then
@@ -685,7 +690,7 @@ function PokeController.plan(screen: Vector2, touch: boolean, lab: boolean, with
 		end
 	end
 	-- Phones are short: slabs 48 high (the touch floor is 44) keep the two-row bar low on screen.
-	local h = if touch and math.min(screen.X, screen.Y) <= 500 then 48 elseif touch then 58 else 60
+	local h = if touch and math.min(screen.X, screen.Y) <= 500 then 48 elseif touch then 64 else 72
 	local columns = perRow + lead + tail
 	local size = Vector2.new(2 * EDGE + columns * w + (columns - 1) * GAP, 2 * EDGE + rows * h + (rows - 1) * GAP)
 	return {

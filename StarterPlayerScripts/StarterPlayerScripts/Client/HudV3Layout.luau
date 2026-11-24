@@ -9,7 +9,7 @@
 
 local HudV3Layout = {}
 
-HudV3Layout.CARD = Vector2.new(132, 120) -- px at a 1080 px tall screen (HudV3.CARD)
+HudV3Layout.CARD = Vector2.new(84, 84) -- px at a 1080 px tall screen (HudV3.CARD)
 HudV3Layout.GAP = 6
 HudV3Layout.MARGIN = 12
 HudV3Layout.UNDER_RAGDOLL = 10 -- px between RAGDOLL's bottom and the Maps/Menu row
