@@ -57,7 +57,7 @@ VehicleService.SPECS = {
 
 -- 0.37.12: the game pass that unlocks each vehicle (the owner creates them on the dashboard and sends the ids).
 -- 0 = no pass yet: free to drive until the id is filled in.
-VehicleService.PASSES = { Car = 2092302232, Truck = 2092632252, MuscleCar = 2093220108, Bike = 0 } -- (24 Nov 2026, owner: they cost Robux again; the bike the ragdoll rides stays free) -- (Silvia, Ford, Panzer; owner 22 Nov 2026) :: { [string]: number }
+VehicleService.PASSES = { Car = 2092302232, Truck = 0, MuscleCar = 2093220108, Bike = 0 } -- (24 Nov 2026, owner: they cost Robux again, the Ford is free (its pass: 2092632252); the bike the ragdoll rides stays free) -- (Silvia, Ford, Panzer; owner 22 Nov 2026) :: { [string]: number }
 local MarketplaceService = game:GetService("MarketplaceService")
 local owned: { [Player]: { [number]: boolean } } = {}
 game:GetService("Players").PlayerRemoving:Connect(function(p)
