@@ -317,9 +317,25 @@ RunService.RenderStepped:Connect(function()
 				local d = frame:VectorToObjectSpace(r.point - frame.Position)
 				if d.Magnitude > 0.1 then
 					-- (`d` is already in the shoulder's rest frame: turn its -Y onto it.)
-					local aim = CFrame.fromRotationBetweenVectors(Vector3.new(0, -1, 0), d.Unit)
+					-- (24 Nov 2026, owner: the arms must not go through the ground: they bend at the elbow, upwards, so the
+					-- claw ends at the point, instead of reaching straight on past it.)
+					local DOWN = Vector3.new(0, -1, 0)
+					local one = (upper :: BasePart).Size.Y
+					local lower = set:FindFirstChild("Lower" .. i)
+					local two = (if lower and lower:IsA("BasePart") then lower.Size.Y else 4) + 0.7
+					local far = math.clamp(d.Magnitude, math.abs(one - two) + 0.1, one + two - 0.02)
+					local way = d.Unit
+					local cosA = math.clamp((one * one + far * far - two * two) / (2 * one * far), -1, 1)
+					local over = frame:VectorToObjectSpace(Vector3.yAxis)
+					over -= way * over:Dot(way)
+					over = if over.Magnitude > 0.05 then over.Unit else way:Cross(Vector3.xAxis).Unit
+					local first = way * cosA + over * math.sqrt(1 - cosA * cosA)
+					local aim = CFrame.fromRotationBetweenVectors(DOWN, first)
+					local second = way * far - first * one
+					second = if second.Magnitude > 0.05 then second.Unit else first
+					local bend = straight(el) * CFrame.fromRotationBetweenVectors(DOWN, aim:VectorToObjectSpace(second))
 					setJoint(sh, idle:Lerp(aim, k))
-					setJoint(el, idleEl:Lerp(straight(el), k))
+					setJoint(el, idleEl:Lerp(bend, k))
 				end
 			else
 				setJoint(sh, idle)
