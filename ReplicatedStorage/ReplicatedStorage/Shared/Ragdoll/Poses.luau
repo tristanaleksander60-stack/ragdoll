@@ -439,6 +439,48 @@ function Poses.ride(t: number, bend: number?): Pose
 	out.Neck = ang(14 * b, 0, 0)
 	return out
 end
-Poses.MOODS = { Sit = Poses.sit, Ride = Poses.ride, Check = Poses.check, Breath = Poses.breath, CPRFast = Poses.cprFast, CPRSlam = Poses.cprSlam, CPROne = Poses.cprOne, Gasp = Poses.gasp, Point = Poses.point, Cheer = Poses.cheer, Relief = Poses.relief, Hug = Poses.hug, Despair = Poses.despair, Sky = Poses.sky, Rage = Poses.rage, Angry = Poses.fists, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr } :: { [string]: (number) -> Pose }
+-- (24 Nov 2026: first aid.) The two hands go round and round each other, as if winding a bandage.
+local wrapOut: Pose = {}
+local function winding(t: number, lift: number)
+	local a, b = math.sin(t * 5.5), math.cos(t * 5.5)
+	wrapOut.RightShoulder = ang(lift + 13 * a, 0, -10 + 13 * b)
+	wrapOut.LeftShoulder = ang(lift - 13 * a, 0, 10 + 13 * b)
+	wrapOut.RightElbow = ang(42 + 18 * b, 0, 0)
+	wrapOut.LeftElbow = ang(42 - 18 * b, 0, 0)
+end
+function Poses.wrapHigh(t: number): Pose
+	stand(wrapOut, -4, ang(4, 6 * math.sin(t * 2), 0), CFrame.identity, CFrame.identity, 0, 0)
+	winding(t, 112)
+	return wrapOut
+end
+function Poses.wrapMid(t: number): Pose
+	stand(wrapOut, -14, ang(-16, 6 * math.sin(t * 2), 0), CFrame.identity, CFrame.identity, 0, 0)
+	winding(t, 60)
+	return wrapOut
+end
+function Poses.wrapLow(t: number): Pose
+	kneeling(wrapOut, -32, -14 + 3 * math.sin(t * 2))
+	winding(t, 58)
+	return wrapOut
+end
+-- The one helped: the hurt arm held out, the eyes on it; or just still, a little sway.
+local patientOut: Pose = {}
+local function patient(t: number, side: number): Pose
+	local s = math.sin(t * 9) * 1.5
+	stand(patientOut, -3, ang(-10, -28 * side, 0), ang(if side > 0 then 58 + s else 4, 0, if side > 0 then 16 else 4),
+		ang(if side < 0 then 58 + s else 4, 0, if side < 0 then -16 else -4), if side > 0 then 14 else 8, if side < 0 then 14 else 8)
+	return patientOut
+end
+function Poses.patientLeft(t: number): Pose
+	return patient(t, -1)
+end
+function Poses.patientRight(t: number): Pose
+	return patient(t, 1)
+end
+function Poses.patientStill(t: number): Pose
+	return patient(t, 0)
+end
+
+Poses.MOODS = { WrapHigh = Poses.wrapHigh, WrapMid = Poses.wrapMid, WrapLow = Poses.wrapLow, PatientLeft = Poses.patientLeft, PatientRight = Poses.patientRight, PatientStill = Poses.patientStill, Sit = Poses.sit, Ride = Poses.ride, Check = Poses.check, Breath = Poses.breath, CPRFast = Poses.cprFast, CPRSlam = Poses.cprSlam, CPROne = Poses.cprOne, Gasp = Poses.gasp, Point = Poses.point, Cheer = Poses.cheer, Relief = Poses.relief, Hug = Poses.hug, Despair = Poses.despair, Sky = Poses.sky, Rage = Poses.rage, Angry = Poses.fists, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr } :: { [string]: (number) -> Pose }
 
 return Poses

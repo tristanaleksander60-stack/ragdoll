@@ -990,6 +990,60 @@ end
 
 -- Studio tests: as if a body had been in its state `seconds` longer (a dead one goes at DEAD_HOLD
 -- without a real 60 s wait).
+-- First aid (24 Nov 2026, FirstAid): the place hurt worst (LeftArm, RightArm, LeftLeg, RightLeg, Body, Head) and how long
+-- ago the last wound came; nil with none.
+local function aidGroup(id: string): string
+	local side, rest = string.match(id, "^(%u%l+)(%u.*)$")
+	if side == "Left" or side == "Right" then
+		if rest == "UpperArm" or rest == "ArmStump" or rest == "Forearm" or rest == "Hand" then
+			return side .. "Arm"
+		elseif rest == "Thigh" or rest == "Femoral" or rest == "Shin" or rest == "Foot" or rest == "LegStump" then
+			return side .. "Leg"
+		end
+	end
+	return if HEAD_ZONES[id] then "Head" else "Body"
+end
+function VitalsService.aidNeed(model: Model): (string?, number)
+	local v = vitals[model]
+	if not v or #v.wounds == 0 or v.state == "Dead" then
+		return nil, 0
+	end
+	local worst: { [string]: number } = {}
+	local newest = 0
+	local best: string? = nil
+	for _, w in v.wounds do
+		local g = aidGroup(w.zone.id)
+		worst[g] = (worst[g] or 0) + 0.1 + w.zone.bleed
+		newest = math.max(newest, w.opened)
+		if best == nil or worst[g] > (worst[best :: string] or 0) then
+			best = g
+		end
+	end
+	return best, os.clock() - newest
+end
+-- That place is well again: its wounds go (its colour on every screen too); with none left the body is whole.
+function VitalsService.dress(model: Model, group: string)
+	local v = vitals[model]
+	if not v or v.state == "Dead" then
+		return
+	end
+	for i = #v.wounds, 1, -1 do
+		if aidGroup(v.wounds[i].zone.id) == group then
+			table.remove(v.wounds, i)
+		end
+	end
+	if group == "LeftLeg" or group == "RightLeg" then
+		model:SetAttribute(if group == "LeftLeg" then "LegShotLeft" else "LegShotRight", nil)
+	end
+	cutHits[model] = nil
+	if #v.wounds == 0 then
+		patchUp(model, v, true)
+	else
+		v.damage = (v.damage or 0) * 0.5
+		shareWounds(model, v, os.clock())
+	end
+end
+
 function VitalsService.ageForTest(model: Model, seconds: number)
 	assert(RunService:IsStudio(), "for Studio tests only")
 	local v = vitals[model]

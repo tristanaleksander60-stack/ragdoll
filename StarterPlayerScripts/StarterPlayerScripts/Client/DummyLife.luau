@@ -1104,7 +1104,7 @@ local function showLine(life: Life, kind: string, now: number, given: { string }
 	text.Text = spoken
 	-- (0.36.7, owner: text again, like the big ragdoll games: short, small, one at a time. The faces of
 	-- Config.ICON_SIGNS are gone from here.)
-	text.TextColor3 = if kind == "Idle" then DummyLines.IDLE_COLOR else DummyLines.FEAR_COLOR
+	text.TextColor3 = if kind == "Idle" or kind == "Act" then DummyLines.IDLE_COLOR else DummyLines.FEAR_COLOR
 	;(life.line :: BillboardGui).Enabled = true
 	life.lineKind = kind
 	life.lineUntil = now + DummyLines.HOLD
@@ -1114,6 +1114,7 @@ local function showLine(life: Life, kind: string, now: number, given: { string }
 end
 
 local lastHitLine = -math.huge
+local lastActLine = -math.huge
 local function updateLine(life: Life, now: number)
 	-- (22 Nov 2026, owner: "no ragdoll talks when it is dead"): a dead body says nothing, and a line it had goes.
 	if life.model:GetAttribute("Vital") == "Dead" then
@@ -1177,6 +1178,59 @@ local function updateLine(life: Life, now: number)
 	end
 	if life.lineKind and now >= life.lineUntil then
 		hideLine(life)
+	end
+	-- (24 Nov 2026: what it does right now, DummyLines.ACT.)
+	do
+		local own: any = life
+		local model = life.model
+		local mood = model:GetAttribute("Mood")
+		local pace = model:GetAttribute("Pace")
+		local act: string? = if model:GetAttribute("Held") == true then "Held"
+			elseif life.state == "Ragdoll" and life.airborne then "Air"
+			elseif life.state == "Fleeing" then "Flee"
+			elseif life.state == "Crawling" then "Crawl"
+			elseif mood == "Ride" then "Ride"
+			elseif mood == "Sit" then "Sit"
+			elseif mood ~= nil then nil
+			elseif life.state == "Walking" then (if type(pace) == "number" and pace >= 1.5 then "Run" else "Walk")
+			elseif life.state == "Standing" and rawText ~= "" then "Hurt"
+			else nil
+		if act ~= own.actNow then
+			own.actNow = act
+			local quick = act == "Flee" or act == "Air" or act == "Held"
+			local wait = if quick then rng:NextNumber(0.1, 0.6) else rng:NextNumber(1.5, 6)
+			own.actAt = math.max(now + wait, if quick then (own.actSaid or 0) + 2.5 else (own.actSaid or 0) + 5)
+			own.cheerAt = now + rng:NextNumber(0.4, 2)
+		end
+		local quietUntil = (game:GetService("Players").LocalPlayer:GetAttribute("NewcomerUntil") :: number?) or 0
+		if not life.lineKind and time() >= quietUntil and now - lastActLine >= DummyLines.ACT_GAP then
+			local say = act
+			if act == nil or act == "Walk" or act == "Sit" then
+				-- (One near by runs or rides: a shout at it, now and then.)
+				if now >= (own.cheerAt or 0) then
+					own.cheerAt = now + rng:NextNumber(1.2, 2.5)
+					if (own.cheered or 0) < now and (life.state == "Standing" or life.state == "Walking") and mood ~= "Mourn" then
+						for other, l in lives do
+							local oa = (l :: any).actNow
+							if l ~= life and other.Parent and (oa == "Flee" or oa == "Run" or oa == "Ride") and (l.pelvis.Position - life.pelvis.Position).Magnitude < 32 then
+								if rng:NextNumber() < 0.5 then
+									own.cheered = now + rng:NextNumber(8, 18)
+									say = "Cheer"
+								end
+								break
+							end
+						end
+					end
+				end
+			end
+			if say and (say == "Cheer" or now >= (own.actAt or 0)) then
+				own.actSaid = now
+				own.actAt = now + rng:NextNumber(DummyLines.ACT_AGAIN.X, DummyLines.ACT_AGAIN.Y)
+				lastActLine = now
+				showLine(life, "Act", now, DummyLines.ACT[say])
+				return
+			end
+		end
 	end
 	if not life.lineKind and life.state == "Standing" and now >= life.idleAt then
 		life.idleAt = now + rng:NextNumber(DummyLines.IDLE_GAP.X, DummyLines.IDLE_GAP.Y)

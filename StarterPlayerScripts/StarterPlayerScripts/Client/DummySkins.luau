@@ -432,6 +432,7 @@ local function dress(model: Model)
 		end
 	end
 	folder.Parent = model
+	local hadHoles: { [string]: boolean } = {}
 	local function showHurt()
 		if folder.Parent ~= model then
 			return
@@ -444,6 +445,26 @@ local function dress(model: Model)
 		local wrap: { [string]: string }
 		local shots: { [string]: number }
 		tint, wrap, shots = hurtOf(model)
+		-- (24 Nov 2026, first aid: a place that is well again has no holes either.)
+		local body = false
+		for _, w in Anatomy.parseWounds(model:GetAttribute("Wounds")) do
+			local side, rest = string.match(w.zone.id, "^(%u%l+)(%u.*)$")
+			body = body or not ((side == "Left" or side == "Right") and rest ~= nil and BRUISE_AT[rest] ~= nil)
+		end
+		for _, d in model:GetChildren() do
+			if d:IsA("BasePart") then
+				local limb = skins[d] ~= nil and d.Name ~= "UpperTorso" and d.Name ~= "LowerTorso"
+				local hurt = if limb then (shots[d.Name] or 0) > 0 else body
+				if hadHoles[d.Name] and not hurt and vital == "Alive" then
+					for _, hole in d:GetChildren() do
+						if hole.Name == "BulletHole" then
+							hole:Destroy()
+						end
+					end
+				end
+				hadHoles[d.Name] = hurt
+			end
+		end
 		for _, d in model:GetChildren() do
 			local skin = if d:IsA("BasePart") then skins[d] else nil
 			if skin and d:IsA("BasePart") then

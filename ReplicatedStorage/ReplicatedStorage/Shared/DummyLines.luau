@@ -34,6 +34,13 @@ DummyLines.OUCH = table.freeze({
 
 DummyLines.IDLE = table.freeze({
 	"Is it lunch yet?",
+	"You good, bro?",
+	"Did you hear that?",
+	"I swear that thing moved.",
+	"Nobody told me there'd be a tank.",
+	"What day is it?",
+	"I had the weirdest dream.",
+	"Why is he looking at me like that?",
 	"Do my bolts look loose?",
 	"Today feels like a cannon day.",
 	"I wish I had a dog.",
@@ -180,7 +187,33 @@ end
 
 -- (V11 item 13, owner: "they mourn their mates, kneel and say oh noo, try CPR"): what a mourner says as its
 -- Mood changes (Server/Mourning). Saved: the CPR worked. Gone: it gave up.
+-- (24 Nov 2026, owner: "make the talk much better and more real, by what they do".) What a body says about what it does
+-- right now, and what the ones standing by shout at one that runs or rides (Cheer).
+DummyLines.ACT = {
+	Walk = { "Just stretching my legs.", "Where was I going again?", "10,000 steps, here I come!", "Don't mind me.", "Nice day for a stroll.", "Left foot, right foot...", "I should call my mom." },
+	Run = { "Coming through!", "Out of my way!", "Gotta go fast!", "Why am I so out of shape?!", "Huff... puff...", "I'm on it!" },
+	Flee = { "RUN! RUN! RUN!", "NOPE NOPE NOPE!", "I'm outta here!", "He's crazy!", "Every dummy for himself!", "Not today!", "Legs, don't fail me now!", "MOOOM!", "I didn't sign up for this!" },
+	Crawl = { "Can't... feel... my legs...", "Somebody help me!", "Just... a bit... further...", "I'll walk it off. Somehow.", "Little help here?" },
+	Air = { "AAAAAAH!", "I CAN FLYYY!", "WHY ME?!", "Tell my story!", "Not agaaain!", "Is this safe?!" },
+	Held = { "Put me DOWN!", "Hey! Hands off!", "Whoa, whoa, easy!", "I get motion sick!", "We can talk about this!", "I'm not a toy!" },
+	Sit = { "Ahh, that's better.", "Five more minutes.", "My feet are killing me.", "Best seat in the lab.", "People watching. My favorite.", "Scoot over, please." },
+	Ride = { "WOOO! Look at me!", "No hands! Just kidding.", "Vroom vroom!", "Who needs a license?", "This thing is FAST!", "Try and catch me!" },
+	Hurt = { "That really hurts...", "I don't feel so good.", "Is it supposed to be that color?", "I need a minute.", "Anyone got a bandage?", "I'll be fine... I think." },
+	Cheer = { "U GOT IT BIG DAWG!", "GO GO GO!", "RUN, BRO, RUN!", "Look at him go!", "That's my guy!", "Faster! FASTER!", "Where's the fire?!", "He's cooking!", "Somebody stop that dude!" },
+} :: { [string]: { string } }
+DummyLines.ACT_GAP = 2.2 -- s between two such lines on this screen
+DummyLines.ACT_AGAIN = Vector2.new(7, 15) -- s before the same body says one again
+
 DummyLines.MOURN = {
+	AidComing = { "Hold on, %s!", "I'm coming, %s!", "Oh no, you're hurt!", "Let me help!", "Medic coming through!" },
+	WrapMid = { "Hold still, %s...", "Round and round...", "Almost done!", "This may sting...", "You'll be fine, %s!" },
+	WrapLow = { "Keep that leg still!", "Don't move, %s...", "Nearly there...", "Deep breaths, %s!", "I've got you." },
+	WrapHigh = { "Don't move your head!", "How many fingers?", "Look at me, %s...", "Easy now, %s..." },
+	PatientLeft = { "Ow ow ow!", "Not so tight!", "Is it bad?", "Be gentle, %s!", "Don't look at it..." },
+	PatientRight = { "Ow ow ow!", "Not so tight!", "Is it bad?", "Be gentle, %s!", "Don't look at it..." },
+	PatientStill = { "Is it bad, %s?", "That hurts!", "Be careful!", "I'm brave... I'm brave..." },
+	AidDone = { "Good as new!", "All fixed, %s!", "There you go!", "Take it easy now!" },
+	AidThanks = { "Thanks, %s!", "You're the best, %s!", "Much better!", "I owe you one!" },
 	Shock = { "Oh no!", "NOOO!", "What happened?!", "Is he... dead?!" },
 	Mourn = { "Oh noo...", "Not you, buddy!", "Wake up! Please!", "Why him?!", "Noooo..." },
 	CPR = { "Come on! Breathe!", "Stay with me!", "1, 2, 3, 4...", "Don't you die on me, %s!", "Come on, %s!", "28, 29, 30!" },
