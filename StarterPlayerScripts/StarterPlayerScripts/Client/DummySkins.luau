@@ -39,6 +39,7 @@ local function shade(color: Color3, hurt: number?): Color3
 	end
 	return color:Lerp(if hurt >= 2 then BRUISE_BAD else BRUISE, 0.9)
 end
+local XRAY_TIME = 3 -- s the x-ray shows
 local XRAY_SHOTS = 3 -- hits on one piece of a limb until it is seen through
 local BRUISE_AT: { [string]: string } = { UpperArm = "UpperArm", ArmStump = "UpperArm", Forearm = "LowerArm", Hand = "Hand",
 	Thigh = "UpperLeg", Femoral = "UpperLeg", Shin = "LowerLeg", Foot = "Foot" }
@@ -433,7 +434,10 @@ local function dress(model: Model)
 	end
 	folder.Parent = model
 	local hadHoles: { [string]: boolean } = {}
-	local function showHurt()
+	local xrays: { [string]: { from: number, till: number } } = {}
+	local firstLook = true
+	local showHurt: () -> ()
+	function showHurt()
 		if folder.Parent ~= model then
 			return
 		end
@@ -470,7 +474,30 @@ local function dress(model: Model)
 			if skin and d:IsA("BasePart") then
 				skin.Color = shade(d.Color, tint[d.Name])
 				local n = shots[d.Name] or 0
-				local clear = n >= XRAY_SHOTS
+				-- (24 Nov 2026, owner: after three hits the x-ray shows for 3 s and goes again, until three more hits.)
+				local x = xrays[d.Name]
+				if not x then
+					x = { from = if firstLook then n else 0, till = 0 }
+					xrays[d.Name] = x
+				end
+				x.from = math.min(x.from, n) -- (it was helped: counted anew)
+				if x.till == 0 and n - x.from >= XRAY_SHOTS then
+					x.till = os.clock() + XRAY_TIME
+					local name = d.Name
+					task.delay(XRAY_TIME, function()
+						local count = 0
+						for _, w in Anatomy.parseWounds(model:GetAttribute("Wounds")) do
+							local side, rest = string.match(w.zone.id, "^(%u%l+)(%u.*)$")
+							local piece = rest and BRUISE_AT[rest]
+							if piece and side .. piece == name then
+								count += 1
+							end
+						end
+						x.from, x.till = count, 0
+						showHurt()
+					end)
+				end
+				local clear = x.till > 0 and n > 0
 				skin.Transparency = if clear then XRAY_CLEAR else 0
 				if clear then
 					skin.Color = skin.Color:Lerp(XRAY_TINT, XRAY_BLUE)
@@ -480,15 +507,29 @@ local function dress(model: Model)
 				-- (The holes on the skin fade, however many, so the bone stays in sight.)
 				if clear then
 					task.delay(0.2, function()
+						if x.till == 0 then
+							return
+						end
 						for _, hole in d:GetChildren() do
 							if hole.Name == "BulletHole" then
 								local art = hole:FindFirstChildOfClass("Decal")
-								if art then
+								if art and art:GetAttribute("XrayWas") == nil then
+									art:SetAttribute("XrayWas", art.Transparency)
 									art.Transparency = 0.86
 								end
 							end
 						end
 					end)
+				end
+				if was ~= nil and now == nil then
+					for _, hole in d:GetChildren() do
+						local art = if hole.Name == "BulletHole" then hole:FindFirstChildOfClass("Decal") else nil
+						local old = art and art:GetAttribute("XrayWas")
+						if art and type(old) == "number" then
+							art.Transparency = old
+							art:SetAttribute("XrayWas", nil)
+						end
+					end
 				end
 				if was ~= now then
 					skin:SetAttribute("Xray", now)
@@ -510,6 +551,7 @@ local function dress(model: Model)
 				end
 			end
 		end
+		firstLook = false
 		local sign = ""
 		for _, name in { "LeftLowerArm", "RightLowerArm", "LeftLowerLeg", "RightLowerLeg" } do
 			if wrap[name] then
