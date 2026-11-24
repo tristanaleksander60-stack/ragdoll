@@ -125,8 +125,12 @@ local shaped = false
 
 -- X-ray (23 Nov 2026, owner: "shot 3 times on the same limb you see through that limb only: its bone, broken where the
 -- bullets struck"). The piece's skin goes see-through and wears its bone inside, broken at its bullet holes.
-local XRAY_CLEAR = 0.74
-local XRAY_TINT = Color3.fromRGB(104, 138, 186)
+-- (24 Nov 2026, owner: on a phone it must be plain that it is an x-ray, not a limb gone: a bigger bone that is never
+-- shot away whole, in a limb that stays a clear x-ray blue.)
+local XRAY_PHONE = game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").KeyboardEnabled
+local XRAY_CLEAR = if XRAY_PHONE then 0.55 else 0.74
+local XRAY_TINT = if XRAY_PHONE then Color3.fromRGB(52, 96, 176) else Color3.fromRGB(104, 138, 186)
+local XRAY_BLUE = if XRAY_PHONE then 0.85 else 0.55
 local BONE = Color3.fromRGB(168, 152, 118)
 local BONE_END = Color3.fromRGB(180, 166, 134)
 local MARROW = Color3.fromRGB(96, 44, 40)
@@ -134,7 +138,7 @@ local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: s
 	local rng = Random.new(#limb.Name * 7 + 3) -- (the same bone every time it is drawn again)
 	local size = skin.Size
 	local len = size.Y * 0.94
-	local thick = math.min(size.X, size.Z) * 0.2
+	local thick = math.min(size.X, size.Z) * 0.2 * (if not XRAY_PHONE then 1 elseif key == "Hand" or key == "Foot" then 1.35 else 1.6)
 	local function bit(shape: Enum.PartType, s: Vector3, at: CFrame, colour: Color3, round: boolean?): Part
 		local p = Instance.new("Part")
 		p.Name = "XrayBone"
@@ -185,7 +189,7 @@ local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: s
 				sum += 0.42 * m.hard * share * (1 - d / 1.6)
 			end
 		end
-		return math.min(sum, 1)
+		return math.min(sum, if XRAY_PHONE then 0.7 else 1)
 	end
 	local SLICES = if key == "Hand" or key == "Foot" then 5 else 13
 	-- One long bone in slices: each slice thinner, crooked and darker the more of it is shot away, at last gone; splinters
@@ -448,7 +452,7 @@ local function dress(model: Model)
 				local clear = n >= XRAY_SHOTS
 				skin.Transparency = if clear then XRAY_CLEAR else 0
 				if clear then
-					skin.Color = skin.Color:Lerp(XRAY_TINT, 0.55)
+					skin.Color = skin.Color:Lerp(XRAY_TINT, XRAY_BLUE)
 				end
 				local was = skin:GetAttribute("Xray")
 				local now = if clear then math.min(n, 14) else nil
