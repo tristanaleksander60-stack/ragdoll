@@ -599,19 +599,62 @@ function VitalsService.burstHead(model: Model)
 			end
 		end
 	end)
-	for i = 1, 14 do
-		local p = Instance.new("Part")
-		p.Name = "HeadBit"
-		local s = rng:NextNumber(0.14, 0.42)
-		p.Size = Vector3.new(s, s * rng:NextNumber(0.5, 1), s * rng:NextNumber(0.5, 1))
-		p.Shape = if i % 3 == 0 then Enum.PartType.Ball else Enum.PartType.Block
-		p.Color = if i % 4 == 0 then head.Color elseif i % 4 == 1 then Color3.fromRGB(236, 228, 208) elseif i % 2 == 0 then Anatomy.BLOOD else Color3.fromRGB(150, 45, 60)
-		p.Material = Enum.Material.SmoothPlastic
-		p.CanQuery, p.CanTouch, p.CastShadow = false, false, false
-		p.CFrame = CFrame.new(at + rng:NextUnitVector() * 0.4) * CFrame.Angles(rng:NextNumber(0, 6), rng:NextNumber(0, 6), 0)
-		p.Parent = workspace
-		p.AssemblyLinearVelocity = rng:NextUnitVector() * rng:NextNumber(8, 24) + Vector3.new(0, 14, 0)
-		game:GetService("Debris"):AddItem(p, 7 + rng:NextNumber(0, 2))
+	-- (24 Nov 2026, owner: no blob of blood: pieces of the head fly about as they would, each drips a little on the ground,
+	-- and there is a short spray just as it bursts.) Flat shards of the head with the bone on their inside.
+	local size = head.Size
+	local PIECES = 13
+	for i = 1, PIECES do
+		-- (Spread evenly over the head's own round: each piece starts where it sat and flies straight out from there.)
+		local y = 1 - (i - 0.5) / PIECES * 2
+		local r = math.sqrt(math.max(0, 1 - y * y))
+		local turn = i * 2.39996
+		local out = Vector3.new(math.cos(turn) * r, y, math.sin(turn) * r)
+		local w, h = rng:NextNumber(0.24, 0.5), rng:NextNumber(0.22, 0.46)
+		local from = head.CFrame:PointToWorldSpace(out * size * 0.4)
+		local way = head.CFrame:VectorToWorldSpace(out)
+		local shard: BasePart
+		if i % 3 == 0 then
+			shard = Instance.new("WedgePart")
+		else
+			shard = Instance.new("Part")
+		end
+		shard.Name = "HeadBit"
+		shard.Size = Vector3.new(w, h, 0.09)
+		shard.Color = head.Color
+		shard.Material = Enum.Material.SmoothPlastic
+		shard.CanQuery, shard.CanTouch, shard.CastShadow = false, false, false
+		shard.CustomPhysicalProperties = PhysicalProperties.new(1.4, 0.7, 0.18)
+		shard.CFrame = CFrame.lookAt(from, from + way) * CFrame.Angles(0, 0, rng:NextNumber(0, 6))
+		local bone = Instance.new(shard.ClassName) :: BasePart
+		bone.Name = "HeadBit"
+		bone.Size = Vector3.new(w * 0.88, h * 0.88, 0.07)
+		bone.Color = Color3.fromRGB(214, 203, 178)
+		bone.Material = Enum.Material.SmoothPlastic
+		bone.CanCollide, bone.CanQuery, bone.CanTouch, bone.CastShadow, bone.Massless = false, false, false, false, true
+		bone.CFrame = shard.CFrame * CFrame.new(0, 0, 0.075)
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0, weld.Part1 = shard, bone
+		weld.Parent = bone
+		bone.Parent = shard
+		if Config.BLOOD ~= "off" then
+			local drip = Instance.new("ParticleEmitter")
+			drip.Color = ColorSequence.new(Anatomy.BLOOD_DARK)
+			drip.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.09), NumberSequenceKeypoint.new(1, 0.05) })
+			drip.Speed = NumberRange.new(0, 0.6)
+			drip.SpreadAngle = Vector2.new(25, 25)
+			drip.Lifetime = NumberRange.new(0.35, 0.6)
+			drip.Acceleration = Vector3.new(0, -32, 0)
+			drip.LightInfluence = 1
+			drip.Rate = 7
+			drip.Parent = shard
+			task.delay(rng:NextNumber(2.2, 3.6), function()
+				drip.Enabled = false
+			end)
+		end
+		shard.Parent = workspace
+		shard.AssemblyLinearVelocity = way * rng:NextNumber(9, 20) + Vector3.new(0, rng:NextNumber(5, 12), 0)
+		shard.AssemblyAngularVelocity = rng:NextUnitVector() * rng:NextNumber(6, 18)
+		game:GetService("Debris"):AddItem(shard, 8 + rng:NextNumber(0, 2))
 	end
 	if Config.BLOOD ~= "off" then
 		local a = Instance.new("Attachment")
@@ -619,20 +662,21 @@ function VitalsService.burstHead(model: Model)
 		a.Parent = workspace.Terrain
 		local e = Instance.new("ParticleEmitter")
 		e.Color = ColorSequence.new(Anatomy.BLOOD)
-		e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0.15) })
-		e.Speed = NumberRange.new(8, 22)
+		e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.13), NumberSequenceKeypoint.new(1, 0.04) })
+		e.Speed = NumberRange.new(7, 18)
 		e.SpreadAngle = Vector2.new(180, 180)
-		e.Lifetime = NumberRange.new(0.4, 0.9)
+		e.Lifetime = NumberRange.new(0.25, 0.5)
 		e.Acceleration = Vector3.new(0, -45, 0)
-		e.Rate = 500
+		e.LightInfluence = 1
+		e.Rate = 320
 		e.Parent = a
-		task.delay(0.15, function()
+		task.delay(0.1, function()
 			e.Enabled = false
 		end)
 		game:GetService("Debris"):AddItem(a, 2)
 	end
 	pcall(function()
-		FxService.hit(at, 90, "Punch")
+		FxService.hit(at, 30, "Punch")
 	end)
 end
 
