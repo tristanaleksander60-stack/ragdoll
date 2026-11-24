@@ -199,7 +199,7 @@ pageMain = function(data: any)
 			send("Bye")
 		end)
 	end
-	button("CLOSE", "neutral", 5, close)
+	button(if UserInputService.KeyboardEnabled then "CLOSE  [Q]" else "CLOSE", "neutral", 5, close)
 	focus()
 end
 
@@ -221,7 +221,7 @@ local function open(data: any)
 			close()
 		end
 		return Enum.ContextActionResult.Sink
-	end, false, Enum.ContextActionPriority.High.Value + 50, Enum.KeyCode.ButtonB, Enum.KeyCode.Escape)
+	end, false, Enum.ContextActionPriority.High.Value + 50, Enum.KeyCode.ButtonB, Enum.KeyCode.Escape, Enum.KeyCode.Q) -- (24 Nov 2026, owner: a key closes the card)
 end
 
 -- The Talk prompts show only where E is free (not in the lab view or Build), and (V9-0a,
