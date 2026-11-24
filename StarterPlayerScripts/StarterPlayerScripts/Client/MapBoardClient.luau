@@ -240,6 +240,7 @@ local function tile(parent: Instance, id: string, order: number, counts: BasePar
 	return b, redraw
 end
 
+MapBoardClient.CLICK_REACH = 18 -- studs (24 Nov 2026, owner: a shot from across the lab opened a map; it was 60)
 local function buildBoard(screen: BasePart)
 	if boards[screen] then
 		return
@@ -332,7 +333,7 @@ local function buildBoard(screen: BasePart)
 				end
 			end
 		end
-	end, 60)
+	end, MapBoardClient.CLICK_REACH)
 	gui.Parent = player:WaitForChild("PlayerGui")
 	boards[screen] = { gui = gui, redraw = redraw }
 end
