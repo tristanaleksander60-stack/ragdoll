@@ -115,7 +115,7 @@ local function cycleView()
 			LabCamera.toggleView()
 		end
 	else
-		FirstPerson.set(true)
+		FirstPerson.set(true, true)
 	end
 end
 

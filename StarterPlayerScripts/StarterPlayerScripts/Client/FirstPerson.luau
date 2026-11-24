@@ -29,12 +29,12 @@ function FirstPerson.onChanged(fn: (boolean) -> ())
 	table.insert(listeners, fn)
 end
 
-function FirstPerson.set(want: boolean)
+function FirstPerson.set(want: boolean, asked: boolean?)
 	if want and ViewMode.isLab() then
 		return -- (first person is the player's own eyes: from the player view)
 	end
-	-- (24 Nov 2026, owner: never first person with the mech arms on, whatever weapon is picked.)
-	if want and player:GetAttribute("MechArms") == true then
+	-- (24 Nov 2026, owner: never first person by itself with the mech arms on, whatever weapon is picked; V still does.)
+	if want and not asked and player:GetAttribute("MechArms") == true then
 		return
 	end
 	if want == on then
@@ -72,7 +72,7 @@ function FirstPerson.set(want: boolean)
 end
 
 function FirstPerson.toggle()
-	FirstPerson.set(not on)
+	FirstPerson.set(not on, true)
 end
 
 -- (22 Nov 2026, owner: "notices you have to close yourself vanish by themselves after a few seconds in
