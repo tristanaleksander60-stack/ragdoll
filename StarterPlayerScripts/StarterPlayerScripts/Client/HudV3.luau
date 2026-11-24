@@ -282,13 +282,9 @@ local function buildTop(onRewards: () -> ())
 	clock.Parent = gift
 	-- (V11 A1, owner: "a ! on the gift to claim eggs"): with an egg waiting the gift wears a red "!" and a tap opens
 	-- the egg; otherwise it opens Rewards. Its counter (IconCount "Rewards") is what waits there.
+	-- (24 Nov 2026, owner: the gift always opens Rewards; RewardsUI then opens a waiting egg over it.)
 	local function onGift()
-		local IconCount = require(script.Parent:WaitForChild("IconCount")) :: any
-		if IconCount.has("Rewards") then
-			(require(script.Parent:WaitForChild("ProgressUI")) :: any).openEggNow()
-		else
-			onRewards()
-		end
+		onRewards()
 	end
 	local giftCount = require(script.Parent:WaitForChild("IconCount")) :: any
 	giftCount.attach("Rewards", gift)

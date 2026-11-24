@@ -43,6 +43,9 @@ local hud: any = nil
 local rewards: { [string]: any } = { groupId = 0, inGroup = false, claimed = false, trophies = 0, trophiesTotal = 0 }
 local progress: any = nil
 
+RewardsUI.EGG_DELAY = 0.45 -- s from the window opening to the waiting egg over it
+local tomorrowText: TextLabel? = nil
+local eggButton: any = nil
 local days: { { frame: Frame, label: TextLabel } } = {}
 local playLabel: TextLabel? = nil
 local playBar: any = nil
@@ -78,6 +81,22 @@ local function redraw()
 	if s then
 		local streak = math.max(0, s.streak or 0)
 		local todayIndex = if s.dailyToday then ((math.max(1, streak) - 1) % 7) + 1 else (streak % 7) + 1
+		-- (24 Nov 2026, owner: a reason to come back: what tomorrow gives.)
+		if tomorrowText then
+			local nextIndex = if s.dailyToday then (todayIndex % 7) + 1 else todayIndex
+			local id = DailyGoals.STREAK_WEAPONS[nextIndex]
+			local eggs = DailyGoals.STREAK_EGGS[nextIndex]
+			local prize = string.format(if eggs == 1 then "%d FREE EGG" else "%d FREE EGGS", eggs)
+			if id and Toys.byId[id] then
+				prize = "a FREE " .. string.upper(Toys.byId[id].label) .. " + " .. prize
+			end
+			tomorrowText.Text = if s.dailyToday then "Come back TOMORROW for " .. prize .. "!" else "TODAY: " .. prize .. "!"
+		end
+		if eggButton then
+			local n = s.eggs or 0
+			eggButton.root.Visible = n > 0
+			eggButton.setText(string.format("\u{1F95A} OPEN EGG (%d)", n))
+		end
 		for i, pip in days do
 			local done = s.dailyToday and i <= todayIndex or (not s.dailyToday and i < todayIndex)
 			pip.frame.BackgroundColor3 = if i == todayIndex then Color3.fromRGB(255, 154, 205)
@@ -171,6 +190,9 @@ local function build()
 		f.Parent = row
 		days[i] = { frame = f, label = label }
 	end
+	tomorrowText = C.Text("title", "", { scaled = true, color = Color3.fromRGB(255, 210, 74), size = UDim2.new(1, 0, 0, 30), layoutOrder = -1, parent = window.body })
+	eggButton = C.Button({ text = "OPEN EGG", role = "go", size = UDim2.new(1, 0, 0, Theme.Size.buttonH), layoutOrder = 0, parent = window.body, onActivated = ProgressUI.openEggNow })
+	eggButton.root.Visible = false
 	-- Play gift.
 	C.SectionHeader("PLAY GIFT", "daily", 3, window.body)
 	local playCard = C.Card({ name = "PlayGift", gap = SP.xs, layoutOrder = 4, parent = window.body, size = UDim2.new(1, 0, 0, 84) })
@@ -253,6 +275,12 @@ function RewardsUI.start()
 	Controller.onChanged(function(name: string, isOpen: boolean)
 		if name == "Rewards" and isOpen then
 			remote:FireServer("Hello")
+			-- (24 Nov 2026, owner: a waiting egg opens over the window, and Rewards is what is left to see.)
+			task.delay(RewardsUI.EGG_DELAY, function()
+				if Controller.isOpen("Rewards") then
+					ProgressUI.openEggNow()
+				end
+			end)
 		end
 	end)
 	local function keyLabel()
@@ -264,12 +292,7 @@ function RewardsUI.start()
 	Keybinds.onChanged(keyLabel)
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if Keybinds.live(processed) and input.UserInputType == Enum.UserInputType.Keyboard and Keybinds.is("Rewards", input.KeyCode) then
-			local press = (require(script.Parent:WaitForChild("HudV3")) :: any).onGift
-			if press and not Controller.isOpen("Rewards") then
-				press() -- (as a click on the gift: a waiting egg first)
-			else
-				Controller.toggle("Rewards")
-			end
+			Controller.toggle("Rewards")
 		end
 	end)
 	task.spawn(function()
