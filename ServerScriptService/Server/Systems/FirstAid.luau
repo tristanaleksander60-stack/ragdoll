@@ -52,6 +52,12 @@ local function usable(m: Model): boolean
 		and m:GetAttribute("Frozen") ~= true and not panicking(m)
 end
 
+-- (A body nothing has hit yet has no Vital attribute at all: it is alive.)
+local function alive(m: Model): boolean
+	local v = m:GetAttribute("Vital")
+	return v == nil or v == "Alive"
+end
+
 local function upright(m: Model): boolean
 	local s = m:GetAttribute("RagdollState")
 	return s == "Standing" or s == "Walking"
@@ -157,7 +163,7 @@ local function tendJob(m: Model, job: Job, now: number, Vitals: any)
 	local mp = partOf(m, "LowerTorso")
 	local pp = if p.Parent then partOf(p, "LowerTorso") else nil
 	local vital = p:GetAttribute("Vital")
-	if not m.Parent or not mp or not upright(m) or m:GetAttribute("Vital") ~= "Alive" or m:GetAttribute("Held") == true or panicking(m)
+	if not m.Parent or not mp or not upright(m) or not alive(m) or m:GetAttribute("Held") == true or panicking(m)
 		or not pp or vital == "Dead" or p:GetAttribute("Held") == true or p:GetAttribute("InMachine") ~= nil or panicking(p)
 		or (mp.Position - pp.Position).Magnitude > FirstAid.SEE + 20 then
 		stop(m, false)
@@ -246,7 +252,7 @@ local function step()
 			local bestD = FirstAid.SEE
 			for _, m in dummies do
 				local mp = partOf(m, "LowerTorso")
-				if m ~= p and mp and not jobs[m] and not tended[m] and m:GetAttribute("Vital") == "Alive" and upright(m) and usable(m)
+				if m ~= p and mp and not jobs[m] and not tended[m] and alive(m) and upright(m) and usable(m)
 					and m:GetAttribute("Severed") == nil and not Vitals.aidNeed(m) then
 					local d = (mp.Position - pp.Position).Magnitude
 					if d < bestD then

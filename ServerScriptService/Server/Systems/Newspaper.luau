@@ -38,6 +38,12 @@ local function flat(v: Vector3): Vector3
 	return Vector3.new(v.X, 0, v.Z)
 end
 
+-- (A body nothing has hit yet has no Vital attribute at all: it is alive.)
+local function alive(m: Model): boolean
+	local v = m:GetAttribute("Vital")
+	return v == nil or v == "Alive"
+end
+
 local function upright(m: Model): boolean
 	local s = m:GetAttribute("RagdollState")
 	return s == "Standing" or s == "Walking"
@@ -50,7 +56,7 @@ end
 
 local function free(m: Model): boolean
 	local panic = m:GetAttribute("PanicUntil")
-	return m.Parent ~= nil and upright(m) and m:GetAttribute("Vital") == "Alive" and woundsOf(m) == "" and m:GetAttribute("Greeter") == nil
+	return m.Parent ~= nil and upright(m) and alive(m) and woundsOf(m) == "" and m:GetAttribute("Greeter") == nil
 		and m:GetAttribute("InMachine") == nil and m:GetAttribute("MachineHidden") ~= true and m:GetAttribute("Held") ~= true
 		and m:GetAttribute("CommandedBy") == nil and m:GetAttribute("Mood") == nil and m:GetAttribute("Frozen") ~= true
 		and m:GetAttribute("Severed") == nil and partOf(m, "RightHand") ~= nil
@@ -230,7 +236,7 @@ local function stepLab(owner: Player, lab: Lab_, dummies: { Model }, now: number
 		local state = m:GetAttribute("RagdollState")
 		if not m.Parent or not held then
 			drop(lab, now)
-		elseif #woundsOf(m) > #lab.wounds or m:GetAttribute("Vital") ~= "Alive" or m:GetAttribute("Held") == true or m:GetAttribute("InMachine") ~= nil
+		elseif #woundsOf(m) > #lab.wounds or not alive(m) or m:GetAttribute("Held") == true or m:GetAttribute("InMachine") ~= nil
 			or state == "Ragdoll" or state == "Out" or state == "Crawling" or state == "Flinch" or state == "Stumble" then
 			drop(lab, now)
 		else
@@ -295,7 +301,7 @@ local function stepLab(owner: Player, lab: Lab_, dummies: { Model }, now: number
 	end
 	local pelvis = partOf(f, "LowerTorso")
 	local panic = f:GetAttribute("PanicUntil")
-	if not pelvis or not upright(f) or f:GetAttribute("Vital") ~= "Alive" or f:GetAttribute("Held") == true or f:GetAttribute("CommandedBy") ~= MINE
+	if not pelvis or not upright(f) or not alive(f) or f:GetAttribute("Held") == true or f:GetAttribute("CommandedBy") ~= MINE
 		or (type(panic) == "number" and panic > Workspace:GetServerTimeNow()) or now - lab.since > Newspaper.WALK_MAX then
 		endFetch(lab)
 		lab.phase = "Ground"

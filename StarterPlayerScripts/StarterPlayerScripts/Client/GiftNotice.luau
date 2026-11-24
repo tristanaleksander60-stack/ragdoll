@@ -84,9 +84,12 @@ local function showOne(key: string)
 	fill.Color = ColorSequence.new(look.a, look.b)
 	fill.Rotation = 60
 	fill.Parent = badge
-	local pic = Icons.make(look.icon, UDim2.fromOffset(36, 36))
+	local pic = Icons.make(look.icon, UDim2.fromOffset(40, 40))
 	pic.AnchorPoint = Vector2.new(0.5, 0.5)
 	pic.Position = UDim2.fromScale(0.5, 0.5)
+	local picRound = Instance.new("UICorner")
+	picRound.CornerRadius = UDim.new(0.5, 0)
+	picRound.Parent = pic
 	pic.Parent = badge
 	badge.Parent = card
 	label(card, look.title, 9, 24, 21, look.a, true)
