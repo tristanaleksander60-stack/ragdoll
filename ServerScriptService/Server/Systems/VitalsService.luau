@@ -733,6 +733,14 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 		else zone.label
 	local line = string.format("%s \u{00B7} %d%% blood \u{00B7} %s", label, math.floor(v.blood + 0.5), if v.state == "Dead" then "no pulse" else "pulse " .. math.floor(v.pulse + 0.5))
 	local killedNow = not wasDead and v.state == "Dead"
+	-- (24 Nov 2026: it may get mad at who hit it, the more the nearer it is to dying: Mourning.provoke.)
+	if by and v.state == "Alive" and not severed and not quiet() then
+		local hp = (Config :: any).BODY_HP
+		local near = math.max(1 - v.blood / 100, if type(hp) == "number" and hp > 0 then (v.damage or 0) / hp else 0)
+		pcall(function()
+			(require(script.Parent:WaitForChild("Mourning")) :: any).provoke(model, by, near)
+		end)
+	end
 	-- (Round 4, M10: the line for the hit that killed is never held back by INFO_GAP.)
 	-- (A creature's bite on a body no player gave it: no card, LabCreatures "Fed".)
 	local unseen = o.zone == Anatomy.zones.Neck and model:GetAttribute("InMachine") ~= nil and model:GetAttribute("Fed") ~= true

@@ -206,6 +206,8 @@ DummyLines.ACT_GAP = 2.2 -- s between two such lines on this screen
 DummyLines.ACT_AGAIN = Vector2.new(7, 15) -- s before the same body says one again
 
 DummyLines.MOURN = {
+	Mad = { "That's IT!", "Okay, NOW I'm mad!", "You picked the wrong dummy!", "Come here, you!", "Enough is enough!", "I've had it with you!" },
+	MadBox = { "How do YOU like it?!", "Take THAT!", "Not so fun now, huh?!", "Who's the dummy now?!", "This one's for my arm!" },
 	PaperSeen = { "Ooh, a newspaper!", "Is that today's paper?", "Somebody dropped this!" },
 	PaperFound = { "Finders keepers!", "Free newspaper!", "Don't mind if I do!", "Now, where were we..." },
 	AidComing = { "Hold on, %s!", "I'm coming, %s!", "Oh no, you're hurt!", "Let me help!", "Medic coming through!" },

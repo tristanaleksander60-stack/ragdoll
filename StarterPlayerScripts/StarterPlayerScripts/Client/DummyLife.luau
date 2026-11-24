@@ -1132,7 +1132,7 @@ local function updateLine(life: Life, now: number)
 		if if furious then sinceSaid > 4.5 or (mood ~= moodLife.moodSaid and sinceSaid > 2.5) else mood ~= moodLife.moodSaid then
 			moodLife.moodSaid = mood
 			moodLife.moodAt = if furious then now else 0
-			local lines = if type(mood) == "string" then (DummyLines :: any).MOURN[mood] else nil
+			local lines = if type(mood) == "string" then (DummyLines :: any).MOURN[if life.model:GetAttribute("Provoked") == true and mood == "Angry" then "Mad" elseif life.model:GetAttribute("Provoked") == true and mood == "Box" then "MadBox" else mood] else nil
 			if lines then
 				showLine(life, "Mood", now, lines)
 				return

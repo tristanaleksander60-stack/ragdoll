@@ -83,6 +83,7 @@ local function stop(m: Model, say: string?)
 	end
 	m:SetAttribute("Pace", nil)
 	m:SetAttribute("MournedName", nil)
+	m:SetAttribute("Provoked", nil)
 	job.corpse:SetAttribute("BeingHelped", nil)
 	local angry: any = job
 	if angry.target then
@@ -185,6 +186,63 @@ local function failed(m: Model, job: Job)
 	m:SetAttribute("Pace", 1.8)
 end
 
+-- (24 Nov 2026, owner: "a small chance that the ragdoll you shoot gets mad, bigger the nearer it is to dying".) near:
+-- 0 whole .. 1 about to die. It comes for the one who hit it, boxing, PROVOKED_MAX s at most (phase "Attack").
+Mourning.PROVOKE_LOW = 0.03
+Mourning.PROVOKE_HIGH = 0.35
+Mourning.PROVOKE_GAP = 0.7 -- s between two rolls for one body (an automatic gun is not twenty chances)
+Mourning.PROVOKED_MAX = 25
+Mourning.PROVOKED_LAB = 2 -- mad at once in a lab
+local rolled: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+function Mourning.chanceOf(near: number): number
+	local n = math.clamp(near, 0, 1)
+	return Mourning.PROVOKE_LOW + (Mourning.PROVOKE_HIGH - Mourning.PROVOKE_LOW) * n * n
+end
+function Mourning.provoke(m: Model, by: Player, near: number): boolean
+	local now = os.clock()
+	if now - (rolled[m] or -math.huge) < Mourning.PROVOKE_GAP then
+		return false
+	end
+	rolled[m] = now
+	if not running or jobs[m] or math.random() >= Mourning.chanceOf(near) then
+		return false
+	end
+	local pelvis = pelvisOf(m)
+	local character = by.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not pelvis or not (root and root:IsA("BasePart")) or (root.Position - pelvis.Position).Magnitude > 70 then
+		return false
+	end
+	if m:GetAttribute("IsDummy") ~= true or m:GetAttribute("Greeter") ~= nil or m:GetAttribute("InMachine") ~= nil or m:GetAttribute("Held") == true
+		or m:GetAttribute("CommandedBy") ~= nil or m:GetAttribute("Mood") ~= nil or m:GetAttribute("Frozen") == true or m:GetAttribute("Severed") ~= nil
+		or m:GetAttribute("Chaser") ~= nil or m:GetAttribute("Horde") ~= nil or m:GetAttribute("Minigame") ~= nil then
+		return false
+	end
+	local owner = lazy("Lab").ownerAt(pelvis.Position)
+	if not owner or lazy("Lab").ownerAt(root.Position) ~= owner then
+		return false
+	end
+	local mad = 0
+	for _, j in jobs do
+		if j.owner == owner and j.phase == "Attack" then
+			mad += 1
+		end
+	end
+	if mad >= Mourning.PROVOKED_LAB then
+		return false
+	end
+	local job: any = { corpse = m, phase = "Attack", since = now, kind = "Provoked", homeWas = m:GetAttribute("Home"), lookWas = m:GetAttribute("HomeLook"), owner = owner, tried = false }
+	job.target, job.personWas, job.nextHit, job.max = by, m:GetAttribute("Personality"), now + 1.5, Mourning.PROVOKED_MAX
+	jobs[m] = job
+	m:SetAttribute("Provoked", true)
+	m:SetAttribute("CommandedBy", -2)
+	m:SetAttribute("PanicUntil", nil)
+	m:SetAttribute("Personality", "Brave")
+	m:SetAttribute("Mood", "Angry")
+	m:SetAttribute("Pace", 1.8)
+	return true
+end
+
 -- One angry body's turn: after its player, and punches in reach.
 local function attack(m: Model, job: Job, now: number)
 	local a: any = job
@@ -195,7 +253,7 @@ local function attack(m: Model, job: Job, now: number)
 	local hum = c and c:FindFirstChildOfClass("Humanoid")
 	if not m.Parent or not pelvis or m:GetAttribute("Vital") == "Dead" or m:GetAttribute("InMachine") ~= nil or m:GetAttribute("MachineHidden") == true
 		or not target.Parent or not (root and root:IsA("BasePart") and hum) or hum.Health <= 0
-		or now - job.since > Mourning.ATTACK_MAX or lazy("Lab").ownerAt(root.Position) ~= job.owner then
+		or now - job.since > (a.max or Mourning.ATTACK_MAX) or lazy("Lab").ownerAt(root.Position) ~= job.owner then
 		stop(m, nil)
 		return
 	end
