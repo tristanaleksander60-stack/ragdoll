@@ -219,6 +219,17 @@ local function buildPlayers(p: Frame)
 		end
 	end)
 	if Players.LocalPlayer:GetAttribute("IsOwner") == true then
+		header(p, "GIVE A PASS (ONLY YOU)")
+		local gv = grid(p, 2)
+		for _, e in { { "GIVE VIP", "VIP", true }, { "GIVE ULTRA", "Ultra", true }, { "TAKE VIP", "VIP", false }, { "TAKE ULTRA", "Ultra", false } } do
+			button(gv, e[1] :: string, if e[3] then "go" else "neutral", function()
+				local t = needTarget()
+				if t then
+					send("PassGive", { target = t, key = e[2], on = e[3] })
+				end
+			end)
+		end
+		caption(p, "Theirs for good until you take it. What they bought themselves is never taken")
 		header(p, "WATCH SINGLEPLAYER (ONLY YOU)")
 		local top = grid(p, 1)
 		button(top, "REFRESH THE LIST", "info", function()

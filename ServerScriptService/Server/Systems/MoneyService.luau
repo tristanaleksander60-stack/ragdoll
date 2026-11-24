@@ -63,10 +63,16 @@ local function allowed(player: Player): boolean
 	return w.count <= REQUESTS_PER_10S
 end
 
--- Whether a player owns a pass (as Roblox said at join or on purchase).
+-- (24 Nov 2026: VIP and ULTRA the owner gave, kept in PassGifts_v1 for every server.)
+MoneyService.GIFTS = table.freeze({ Ultra = true, VIP = true }) :: { [string]: boolean }
+local gifts: { [Player]: { [string]: boolean } } = {}
+local giftStore: DataStore? = nil
+
+-- Whether a player owns a pass (as Roblox said at join or on purchase), or was given it.
 function MoneyService.owns(player: Player, key: string): boolean
 	local o = owned[player]
-	return o ~= nil and o[key] == true
+	local g = gifts[player]
+	return (o ~= nil and o[key] == true) or (g ~= nil and g[key] == true)
 end
 
 -- Whether the free ULTRA minutes are running for a player.
@@ -158,6 +164,75 @@ local function grant(player: Player, key: string)
 	;(owned[player] :: { [string]: boolean })[key] = true
 	apply(player)
 	remote:FireClient(player, "Owned", { key = key })
+end
+
+local function giftsStore(): DataStore?
+	if not giftStore and ProgressService.usesDataStores() then
+		pcall(function()
+			giftStore = game:GetService("DataStoreService"):GetDataStore("PassGifts_v1")
+		end)
+	end
+	return giftStore
+end
+
+local function loadGifts(player: Player)
+	local store = giftsStore()
+	if not store then
+		return
+	end
+	for try = 1, 4 do
+		local ok, value = pcall(function()
+			return (store :: DataStore):GetAsync(tostring(player.UserId))
+		end)
+		if not player.Parent then
+			return
+		end
+		if ok then
+			if type(value) == "table" then
+				local mine = gifts[player] or {}
+				gifts[player] = mine
+				for key in MoneyService.GIFTS do
+					if mine[key] == nil then
+						mine[key] = (value :: any)[key] == true
+					end
+				end
+				apply(player)
+			end
+			return
+		end
+		task.wait(2 * try)
+	end
+end
+
+-- The owner gives or takes a pass (AdminService checks who asks). Whether it is kept for next time too.
+function MoneyService.giftPass(player: Player, key: string, on: boolean): (boolean, string)
+	if not MoneyService.GIFTS[key] then
+		return false, "No such pass"
+	end
+	local bought = owned[player] ~= nil and owned[player][key] == true
+	if bought then
+		return false, player.DisplayName .. (if on then " has already bought " else " bought it: you can't take ") .. string.upper(key)
+	end
+	local mine = gifts[player] or {}
+	gifts[player] = mine
+	if (mine[key] == true) == on then
+		return false, player.DisplayName .. (if on then " has " else " does not have ") .. string.upper(key) .. (if on then " already" else "")
+	end
+	mine[key] = on
+	apply(player)
+	if on then
+		remote:FireClient(player, "Gift", { key = key })
+	end
+	local store = giftsStore()
+	local id = tostring(player.UserId)
+	local kept = store ~= nil and pcall(function()
+		(store :: DataStore):UpdateAsync(id, function(old: any)
+			local t = if type(old) == "table" then old else {}
+			t[key] = if on then true else nil
+			return t
+		end)
+	end)
+	return true, player.DisplayName .. (if on then " got " else " lost ") .. string.upper(key) .. (if kept then "" else " (this visit only: it could not be saved)")
 end
 
 -- How Roblox is asked (tests swap it for a stub that fails first).
@@ -400,6 +475,7 @@ function MoneyService.start()
 	end)
 	local function join(player: Player)
 		task.spawn(checkOwnership, player)
+		task.spawn(loadGifts, player)
 		player.CharacterAdded:Connect(function()
 			task.wait(0.5)
 			apply(player)
@@ -450,6 +526,7 @@ function MoneyService.start()
 	Players.PlayerRemoving:Connect(function(player)
 		firstCheckDone[player] = nil
 		owned[player] = nil
+		gifts[player] = nil
 		freeUntil[player] = nil
 		window[player] = nil
 	end)

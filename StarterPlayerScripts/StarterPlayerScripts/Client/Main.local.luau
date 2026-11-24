@@ -155,6 +155,7 @@ safe("FirstShotFP", function() require(Client:WaitForChild("FirstShotFP")).start
 safe("TimeDial", function() require(Client:WaitForChild("TimeDial")).start() end) -- V9-2c: Z opens the time dial
 safe("Viewmodel", function() require(Client:WaitForChild("Viewmodel")).start() end)
 safe("FeelV2", function() require(Client:WaitForChild("FeelV2")).start() end) -- World/Feel v2: trails, casings, recoil, combo beat, world lamps (Config.FEEL_V2)
+safe("GiftNotice", function() require(Client:WaitForChild("GiftNotice")).start() end) -- 24 Nov 2026: VIP / ULTRA from the owner
 safe("ChaseHud", function() require(Client:WaitForChild("ChaseHud")).start() end)
 safe("StuntHud", function() require(Client:WaitForChild("StuntHud")).start() end) -- V8-1.1: the CRASH score, the cannon's slow-mo beat, AGAIN
 safe("SpawnKey", function() require(Client:WaitForChild("SpawnKey")).start() end) -- V8-2.5: H drops a dummy of a type where you aim

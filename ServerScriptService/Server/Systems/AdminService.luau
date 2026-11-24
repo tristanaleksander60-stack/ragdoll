@@ -466,7 +466,7 @@ end
 -- for every server, the director, and who is admin.)
 AdminService.OWNER_ONLY = table.freeze({
 	SoloList = true, SpectateSolo = true, FreePasses = true, Theme = true, AllWeapons = true, AdminSet = true,
-	LaunchDummy = true, Shot = true, DirectorSave = true, DirectorGet = true,
+	LaunchDummy = true, Shot = true, DirectorSave = true, DirectorGet = true, PassGive = true,
 }) :: { [string]: boolean }
 -- (What an admin may never do to the owner or another admin.)
 local AIMED = table.freeze({ Kick = true, Bring = true, Goto = true, Troll = true, Trial = true }) :: { [string]: boolean }
@@ -561,6 +561,20 @@ function AdminService.request(player: Player, kind: unknown, arg: unknown): bool
 		done = MoneyService.setLaunchFree(arg)
 		if done then
 			note(string.format("%s (%d) set free passes for everyone: %s days", player.Name, player.UserId, tostring(arg)), player.DisplayName .. (if arg == 0 then " ended the free passes" else " made the passes free for " .. tostring(arg) .. " days"))
+		end
+	elseif kind == "PassGive" then
+		-- (24 Nov 2026, the owner gives or takes VIP / ULTRA: { target, key, on }.)
+		local a = if type(arg) == "table" then arg :: any else {}
+		local who = if type(a.target) == "number" then Players:GetPlayerByUserId(a.target) else nil
+		if who and type(a.key) == "string" and type(a.on) == "boolean" then
+			local line
+			done, line = MoneyService.giftPass(who, a.key, a.on)
+			if done then
+				log.info(string.format("%s (%d) %s %s: %s (%d)", player.Name, player.UserId, if a.on then "gave" else "took", a.key, who.Name, who.UserId))
+			end
+			remote:FireClient(player, "Notice", line)
+		else
+			remote:FireClient(player, "Notice", "That player has left")
 		end
 	elseif kind == "AllWeapons" then
 		if type(arg) == "boolean" then
