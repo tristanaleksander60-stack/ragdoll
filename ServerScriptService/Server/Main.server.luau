@@ -165,6 +165,7 @@ safe("SandboxService", function() require(Systems:WaitForChild("SandboxService")
 safe("RewardsService", function() require(Systems:WaitForChild("RewardsService")).start() end) -- REWARDS: the group gift and trophies (round 5)
 safe("OfferService", function() require(Systems:WaitForChild("OfferService")).start() end) -- release 0.20.0: Shop.OFFERS products and passes (Shared\Offers)
 require(Systems:WaitForChild("BadgeAwards")).start() -- badges (ids in Shared/Badges; 0 = not made yet)
+safe("Funnels", function() require(Systems:WaitForChild("Funnels")).start() end) -- 24 Nov 2026: the dashboard funnels
 safe("Metrics", function() Metrics.start() end) -- counts for the Creator Dashboard (phase Å)
 safe("StreamerService", function() StreamerService.start() end) -- Streamer Mode: gift keys set off fun things (private servers, no lasting value)
 safe("Perf", function() require(Systems:WaitForChild("Perf")).start() end) -- 22 Nov 2026: small dressing casts no shadows (lag)

@@ -240,6 +240,11 @@ local function go(player: Player, how: string, target: Entry?, auto: boolean?)
 		return
 	end
 	remote:FireClient(player, "Going", { kind = if auto then "Join" else how })
+	if MULTI ~= 0 and game.PlaceId ~= MULTI then
+		pcall(function()
+			(require(script.Parent:WaitForChild("Funnels")) :: any).travelled(player)
+		end)
+	end
 	-- (23 Nov 2026: the profile is saved first, so the other place reads it as it is now; at most 4 s.)
 	local saved = false
 	task.spawn(function()

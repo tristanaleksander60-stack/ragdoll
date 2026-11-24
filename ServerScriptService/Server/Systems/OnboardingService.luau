@@ -25,6 +25,8 @@ local Toys = require(Shared.Toys)
 local GreeterService = require(script.Parent.GreeterService)
 local SessionStats = require(script.Parent.SessionStats)
 
+local Funnels = require(script.Parent:WaitForChild("Funnels")) :: any
+
 local log = Log.new("Onboarding")
 
 local STEP_NAMES = { "Joined", "Spawned", "FirstOwnToy", "ReplayEnded", "ThreeToys", "SixToys", "TenToys" }
@@ -234,9 +236,7 @@ local function reach(player: Player, step: number)
 		-- Log every step in order so the funnel has no holes.
 		for s = p.step + 1, step do
 			local name = STEP_NAMES[s]
-			pcall(function()
-				AnalyticsService:LogOnboardingFunnelStepEvent(player, s, name)
-			end)
+			-- (24 Nov 2026: the dashboard's funnels are Funnels' now; these steps are the game's own.)
 			local seconds = os.clock() - p.joinedAt
 			player:SetAttribute("Onboarding_" .. name, math.floor(seconds * 10) / 10)
 			log.info(string.format("%s step %d %s at %.1fs", player.Name, s, name, seconds))
@@ -421,6 +421,7 @@ function OnboardingService.onToyUsed(player: Player, toyId: string)
 	if p.step >= 2 then
 		reach(player, 3)
 	end
+	Funnels.tool(player, toyId)
 	if not p.tried[toyId] then
 		p.tried[toyId] = true
 		p.triedCount += 1
@@ -491,6 +492,7 @@ local function onJoin(player: Player)
 			player:SetAttribute("Returning", true)
 		else
 			reach(player, 1)
+			Funnels.newPlayer(player)
 		end
 		if p.modePicked then
 			-- A choice made before the record came in wins over the saved one, and is saved.

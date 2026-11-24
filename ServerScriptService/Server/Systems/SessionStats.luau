@@ -191,6 +191,9 @@ function SessionStats.used(player: Player, name: string)
 	if not r or type(name) ~= "string" or #name > 40 then
 		return
 	end
+	pcall(function()
+		(require(script.Parent:WaitForChild("Funnels")) :: any).used(player, name)
+	end)
 	local u = r.used or {}
 	r.used = u
 	if u[name] == nil then
@@ -274,6 +277,9 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 		-- (V10 phase 1: the load cover lifted: the funnel's "loaded" step, and whether it gave up waiting.)
 		local rr = r :: any
 		rr.loadedAt = since(player)
+		pcall(function()
+			(require(script.Parent:WaitForChild("Funnels")) :: any).loaded(player)
+		end)
 		rr.loadTimedOut = if type(data) == "table" and (data :: any).timedOut == true then true else nil
 	elseif kind == "FirstShot" and r.clientShot == nil then
 		r.clientShot = clean(data, 0, 36000)
@@ -310,6 +316,11 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 	elseif kind == "Shop" and type(data) == "string" then
 		-- (V8-5.5: the money funnel: the shop opened, a purchase prompt closed, bought or not.)
 		local rr = r :: any
+		if data == "open" or data == "prompt" or data == "bought" then
+			pcall(function()
+				(require(script.Parent:WaitForChild("Funnels")) :: any).shop(player, data)
+			end)
+		end
 		if data == "open" then
 			rr.shopOpen = math.min((rr.shopOpen or 0) + 1, 500)
 		elseif data == "prompt" or data == "bought" then
