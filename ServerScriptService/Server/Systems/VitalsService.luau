@@ -657,6 +657,9 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 	if v.state ~= "Dead" then
 		if BLOOD_KILLS then
 			local share = if blunt then BLOOD_PER_BLOW * (if o.strike then HitMath.STRIKE_DAMAGE else 1) else BLOOD_PER_WOUND * (if head then HEAD_MORE_BLOOD else 1)
+			if o.round and not blunt and power >= ((Config :: any).SHOT_ONE_KILL_POWER or math.huge) then
+				share *= power -- (a Sniper or Railgun round tears a great hole: most of the blood at once)
+			end
 			v.blood = math.max(0, v.blood - zone.loss * power * share * (o.boost or 1))
 		elseif blunt then
 			-- (A blow costs a little blood, never past BRUISE_FLOOR.)
