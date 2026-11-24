@@ -254,6 +254,18 @@ local function restingTop(color: Color3): number
 	return t
 end
 local function swatchFor(color: Color3, lit: boolean): Theme.Swatch
+	if Theme.Premium then
+		-- (24 Nov 2026: one graphite slot for every weapon with a breath of its own colour; the picked
+		-- one glows in the accent. The picture tells them apart.)
+		local accent = Theme.Hud.accent
+		return {
+			top = if lit then P.duskRaisedHi:Lerp(accent, 0.42) else P.duskRaisedHi:Lerp(color, 0.08),
+			bottom = if lit then P.dusk:Lerp(accent, 0.34) else P.dusk:Lerp(color, 0.04),
+			shade = if lit then accent:Lerp(INK, 0.4) else P.ink,
+			text = WHITE,
+			textStroke = nil,
+		}
+	end
 	local base = if lit and luminance(color) < 0.12 then color:Lerp(WHITE, 0.35) else color
 	local t = if lit then 0 else restingTop(color)
 	local bottom = if lit then base else color:Lerp(P.dusk, math.min(t + 0.15, 0.95))
@@ -282,6 +294,9 @@ end
 
 -- The selected tool's ring: gold on a dark face, ink on a light one (gold vanishes on yellow).
 local function ringFor(color: Color3): Color3
+	if Theme.Premium then
+		return Theme.Hud.accent
+	end
 	return if luminance(color:Lerp(WHITE, 0.15)) > 0.45 then INK else GOLD
 end
 
@@ -558,6 +573,11 @@ local function refresh()
 		live3D(slab, id, lit and Config.UI_3D == true)
 		slab.button.setSwatch(swatchFor(toy.color, lit))
 		-- Colour plus one more cue: the selected tool (or, while picking, every slot) has a ring.
+		if Theme.Premium and lit and not slab.ring.Enabled and not reducedMotion() then
+			-- (Just picked: the slot springs.)
+			slab.pop.Scale = 0.92
+			TweenService:Create(slab.pop, TweenInfo.new(0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+		end
 		slab.ring.Enabled = lit or picking
 		slab.ring.Color = if picking then GOLD else ringFor(toy.color)
 		if not picking then
@@ -1155,7 +1175,7 @@ local function makeSlab(id: string, text: string, swatch: Theme.Swatch, parent: 
 	ringCorner.CornerRadius = UDim.new(0, Theme.Radius.button + 2)
 	ringCorner.Parent = ringHolder
 	local ring = Instance.new("UIStroke")
-	ring.Thickness = 3
+	ring.Thickness = if Theme.Premium then 2.5 else 3
 	ring.Color = GOLD
 	ring.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	ring.Enabled = false
@@ -1194,7 +1214,7 @@ local function makeSlab(id: string, text: string, swatch: Theme.Swatch, parent: 
 	numberCorner.CornerRadius = UDim.new(0, 4)
 	numberCorner.Parent = number
 	local numberStroke = Instance.new("UIStroke")
-	numberStroke.Color = Color3.fromRGB(110, 116, 128)
+	numberStroke.Color = if Theme.Premium then Color3.fromRGB(70, 76, 92) else Color3.fromRGB(110, 116, 128)
 	numberStroke.Thickness = 1
 	numberStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	numberStroke.Parent = number

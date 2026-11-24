@@ -516,6 +516,65 @@ if Theme.Clean then
 end
 
 ---------------------------------------------------------------------------
+-- Premium (Config.UI_PREMIUM, 24 Nov 2026): graphite glass, hairline light edges, one hot accent
+-- (havoc orange: what is picked), a lively green for go and gold for Robux. Tokens only.
+---------------------------------------------------------------------------
+Theme.Premium = false
+if Theme.Clean then
+	pcall(function()
+		local shared = game:GetService("ReplicatedStorage"):FindFirstChild("Shared") :: any
+		Theme.Premium = (require(shared.Config) :: any).UI_PREMIUM == true
+	end)
+end
+-- The HUD's own surface (KitStyle.glass): face, how see-through, edge.
+Theme.Hud = {
+	face = hex("#12141B"),
+	alpha = 0.16,
+	edge = hex("#FFFFFF"),
+	edgeAlpha = 0.84,
+	radius = 14,
+	accent = hex("#FF7A2F"),
+}
+if Theme.Premium then
+	local Pa = Theme.Palette :: any
+	Pa.ink = hex("#07080C")
+	Pa.dusk = hex("#12141B")
+	Pa.duskRaised = hex("#1B1E28")
+	Pa.duskRaisedHi = hex("#262A37")
+	Pa.duskSunken = hex("#0B0C11")
+	Pa.line = hex("#343949")
+	Pa.slab = hex("#191C25")
+	Pa.accent = Theme.Hud.accent
+	Pa.accentHi = hex("#FFB070")
+	Pa.gold = hex("#FFCB45")
+	Pa.go = hex("#188A4A")
+	Pa.stageTop = hex("#2A2F3E")
+	Pa.stageBottom = hex("#14161E")
+	local function set(name: RoleName, top: string, bottom: string, shade: string, text: string)
+		ROLES[name] = { top = hex(top), bottom = hex(bottom), shade = hex(shade), text = hex(text), textStroke = nil }
+	end
+	set("go", "#2FB96A", "#168145", "#0B4525", "#FFFFFF")
+	set("neutral", "#343A49", "#232733", "#0E1016", "#FFFFFF")
+	set("premium", "#FFDE7D", "#F5B52E", "#8A5A08", "#1A1508")
+	set("danger", "#E9566A", "#B52B43", "#5F1322", "#FFFFFF")
+	set("info", "#4E9CF0", "#2468B8", "#143A69", "#FFFFFF")
+	set("locked", "#262A35", "#1B1E27", "#0B0C11", "#C9CDD8")
+	set("accent", "#FF9A57", "#C9501A", "#6E2808", "#FFFFFF")
+	Theme.Glass.panel = 0.05
+	Theme.Radius.panel = 18
+	Theme.Radius.header = 12
+	Theme.Radius.card = 14
+	Theme.Radius.button = 12
+	Theme.Radius.input = 12
+	local Mo = Theme.Motion :: any
+	Mo.hoverScale = 1.04
+	Mo.pressScale = 0.93
+	Mo.releaseTime = 0.22
+	Mo.openFrom = 0.9
+	Theme.Focus = { color = Pa.accentHi, thickness = 3, grow = 12 }
+end
+
+---------------------------------------------------------------------------
 -- Helpers
 ---------------------------------------------------------------------------
 local reducedMotionOverride: boolean? = nil

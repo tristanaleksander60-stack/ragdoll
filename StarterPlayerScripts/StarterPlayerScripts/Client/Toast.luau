@@ -135,7 +135,8 @@ function showNext()
 	label.TextStrokeColor3 = P.ink
 	label.TextStrokeTransparency = 0.3
 	local outline = Instance.new("UIStroke")
-	outline.Color = P.ink
+	outline.Color = if Theme.Premium then Theme.Hud.edge else P.ink
+	outline.Transparency = if Theme.Premium then Theme.Hud.edgeAlpha else 0
 	outline.Thickness = Theme.Stroke.card
 	outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	outline.Parent = label

@@ -71,6 +71,10 @@ function DoubleEventChip.start()
 	stroke.Thickness = 0
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = chip
+	local KitStyle = require(script.Parent:WaitForChild("KitStyle")) :: any
+	if KitStyle.glass(chip, 22) then
+		chip.FontFace = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.ExtraBold)
+	end
 	chip.Parent = gui
 	-- (22 Nov 2026: centred on the screen like the hotbar, not on the top bar layer: HudV3 recentre.)
 	local function recentre()

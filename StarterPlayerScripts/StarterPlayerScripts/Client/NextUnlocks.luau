@@ -23,7 +23,7 @@ NextUnlocks.SHOWN = 1 -- (23 Nov 2026, owner: only the next one; was 3)
 NextUnlocks.STACK_GAP = 4 -- px between the small cards in a column (a phone)
 
 local GOLD = Theme.Palette.gold
-local FACE = Color3.fromRGB(28, 30, 38)
+local FACE = if (Theme :: any).Premium then Theme.Hud.face else Color3.fromRGB(28, 30, 38)
 local EDGE = Color3.fromRGB(96, 100, 116)
 local TRACK = Color3.fromRGB(60, 58, 50)
 

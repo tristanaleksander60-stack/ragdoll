@@ -19,6 +19,7 @@ local Net = require(Shared:WaitForChild("Net"))
 local Toys = require(Shared:WaitForChild("Toys"))
 local Config = require(Shared:WaitForChild("Config"))
 local V2 = Config.UI_V2 == true
+local PREMIUM = (Config :: any).UI_PREMIUM == true -- (24 Nov 2026: rounded lines, a softer edge, a fuller dot)
 
 local Crosshair = {}
 
@@ -67,8 +68,13 @@ local function bar(parent: Instance, name: string, size: Vector2): Frame
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Color3.fromRGB(10, 10, 14)
 	stroke.Thickness = 1
-	stroke.Transparency = 0.2
+	stroke.Transparency = if PREMIUM then 0.45 else 0.2
 	stroke.Parent = f
+	if PREMIUM then
+		local round = Instance.new("UICorner")
+		round.CornerRadius = UDim.new(1, 0)
+		round.Parent = f
+	end
 	f.Parent = parent
 	return f
 end
@@ -103,7 +109,7 @@ local function build()
 		bar(f, "Left", Vector2.new(l, t)),
 		bar(f, "Right", Vector2.new(l, t)),
 	}
-	local dot = bar(f, "Dot", Vector2.new(t, t))
+	local dot = bar(f, "Dot", if PREMIUM then Vector2.new(3, 3) else Vector2.new(t, t))
 	dot.Position = UDim2.fromScale(0.5, 0.5)
 	-- The hit mark: four short diagonal lines round the middle.
 	marks = {}

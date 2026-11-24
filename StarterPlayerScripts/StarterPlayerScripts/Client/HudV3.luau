@@ -26,6 +26,10 @@ local HudGate = require(Client:WaitForChild("HudGate"))
 local HudPlus = require(Client:WaitForChild("HudPlus"))
 local ViewMode = require(Client:WaitForChild("ViewMode"))
 
+local KitStyle = require(Client:WaitForChild("KitStyle"))
+local PREMIUM = (Config :: any).UI_PREMIUM == true
+local ORANGE = Color3.fromRGB(255, 122, 47)
+
 local HudV3 = {}
 
 HudV3.CARD = Vector2.new(132, 120) -- px at a 1080 px tall screen
@@ -129,6 +133,11 @@ local function card(name: string, word: string, icon: string, parent: Instance, 
 	face.BorderSizePixel = 0
 	corner(face, 8)
 	face.Parent = b
+	KitStyle.hoverEdge(b, KitStyle.glass(face))
+	local shadowRound = shadow:FindFirstChildOfClass("UICorner")
+	if PREMIUM and shadowRound then
+		shadowRound.CornerRadius = UDim.new(0, 14)
+	end
 	local pic = Icons.make(icon, UDim2.fromOffset(56, 56), Color3.new(1, 1, 1))
 	pic.AnchorPoint = Vector2.new(0.5, 0)
 	pic.Position = UDim2.new(0.5, 0, 0, 16)
@@ -261,6 +270,7 @@ local function buildTop(onRewards: () -> ())
 	gift.BackgroundTransparency = 0.1
 	gift.AutoButtonColor = true
 	corner(gift, 22)
+	KitStyle.hoverEdge(gift, KitStyle.glass(gift, 22))
 	local gp = Icons.make(if Icons.has("present") then "present" else "gift", UDim2.fromOffset(28, 28), Color3.new(1, 1, 1))
 	gp.AnchorPoint = Vector2.new(0.5, 0.5)
 	gp.Position = UDim2.fromScale(0.5, 0.5)
@@ -274,7 +284,7 @@ local function buildTop(onRewards: () -> ())
 	clock.Size = UDim2.fromOffset(62, 16)
 	clock.BackgroundColor3 = Color3.fromRGB(255, 200, 60)
 	clock.TextColor3 = Color3.fromRGB(40, 28, 6)
-	clock.Font = Enum.Font.GothamBlack
+	clock.Font = if PREMIUM then Enum.Font.BuilderSansExtraBold else Enum.Font.GothamBlack
 	clock.TextSize = 12
 	clock.Text = ""
 	clock.Visible = false
@@ -320,6 +330,8 @@ local function buildTop(onRewards: () -> ())
 	giftScale.Scale = 1.2
 	giftScale.Parent = gift
 	gift.Parent = g
+	gift:SetAttribute("KitBase", 1.2) -- (its UIScale at rest)
+	KitStyle.press(gift)
 	-- (V10 phase 2, owner: "the gift wiggles back and forth now and then to catch the eye"): every 6-9 s its icon
 	-- shakes for a moment (a rotation on the icon only, so its place in the bar never moves).
 	task.spawn(function()
@@ -341,6 +353,7 @@ local function buildTop(onRewards: () -> ())
 	pill.BackgroundColor3 = HudV3.GLASS
 	pill.BackgroundTransparency = 0.1
 	corner(pill, 22)
+	local pillEdge = KitStyle.glass(pill, 22)
 	-- (22 Nov 2026, owner: "bigger and better placed"): its own layer, centred just under the top bar,
 	-- 1.4 times the size, so the next weapon is in view without covering the middle of the screen.
 	-- It shows and hides with the top bar.
@@ -375,6 +388,7 @@ local function buildTop(onRewards: () -> ())
 	tap.Size = UDim2.fromScale(1, 1)
 	tap.ZIndex = 5
 	tap.Parent = pill
+	KitStyle.hoverEdge(tap, pillEdge)
 	tap.Activated:Connect(function()
 		local open = (require(Client:WaitForChild("PokeController")) :: any).openCatalog
 		if type(open) == "function" then
@@ -414,7 +428,7 @@ local function buildTop(onRewards: () -> ())
 	local track = Instance.new("Frame")
 	track.Name = "Track"
 	track.Position = UDim2.new(0, 40, 1, -12)
-	track.Size = UDim2.new(1, -54, 0, 3)
+	track.Size = UDim2.new(1, -54, 0, if PREMIUM then 5 else 3)
 	track.BackgroundColor3 = Color3.fromRGB(70, 70, 78)
 	track.BorderSizePixel = 0
 	corner(track, 2)
@@ -422,7 +436,7 @@ local function buildTop(onRewards: () -> ())
 	local fill = Instance.new("Frame")
 	fill.Name = "Fill"
 	fill.Size = UDim2.fromScale(0, 1)
-	fill.BackgroundColor3 = Color3.fromRGB(80, 210, 110)
+	fill.BackgroundColor3 = if PREMIUM then ORANGE else Color3.fromRGB(80, 210, 110)
 	fill.BorderSizePixel = 0
 	corner(fill, 2)
 	fill.Parent = track
@@ -470,8 +484,8 @@ function HudV3.drawNext(takedowns: number)
 				pcall(function()
 					(require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIComponents")) :: any).playSound("tick", if mark >= 0.9 then 1.35 else 1.15)
 				end)
-				fill.BackgroundColor3 = Color3.fromRGB(190, 255, 200)
-				TweenService:Create(fill, TweenInfo.new(0.5), { BackgroundColor3 = Color3.fromRGB(80, 210, 110) }):Play()
+				fill.BackgroundColor3 = if PREMIUM then Color3.fromRGB(255, 225, 190) else Color3.fromRGB(190, 255, 200)
+				TweenService:Create(fill, TweenInfo.new(0.5), { BackgroundColor3 = if PREMIUM then ORANGE else Color3.fromRGB(80, 210, 110) }):Play()
 			end
 		end
 		nextGoalId, nextFrac = toy.id, frac
@@ -785,7 +799,7 @@ function HudV3.start()
 				chip.BackgroundColor3 = Color3.fromRGB(20, 22, 28)
 				chip.BackgroundTransparency = 0.15
 				chip.TextColor3 = Color3.new(1, 1, 1)
-				chip.Font = Enum.Font.GothamBlack
+				chip.Font = if PREMIUM then Enum.Font.BuilderSansExtraBold else Enum.Font.GothamBlack
 				chip.TextSize = 13
 				chip.ZIndex = 5
 				local ok, text = pcall(Keybinds.badgeOf, keyId) -- (the key, not the action's name)
@@ -821,6 +835,7 @@ function HudV3.start()
 	c.BackgroundColor3 = HudV3.GLASS
 	c.BackgroundTransparency = 0.35
 	corner(c, 8)
+	KitStyle.glass(c)
 	local pad = Instance.new("UIPadding")
 	pad.PaddingLeft = UDim.new(0, 8)
 	pad.PaddingRight = UDim.new(0, 14)

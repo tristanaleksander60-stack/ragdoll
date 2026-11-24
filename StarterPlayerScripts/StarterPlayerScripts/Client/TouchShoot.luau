@@ -174,6 +174,14 @@ local function build()
 	stroke.Color = Color3.fromRGB(10, 10, 14)
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	stroke.Parent = b
+	if Theme.Premium then
+		-- (24 Nov 2026: a light rim round the colour: a trigger, not a sticker.)
+		stroke.Thickness = 3
+		stroke.Color = Color3.new(1, 1, 1)
+		stroke.Transparency = 0.25
+		b.BackgroundTransparency = 0.06
+		b.AutoButtonColor = false
+	end
 	local pad = Instance.new("UIPadding")
 	pad.PaddingLeft = UDim.new(0.14, 0)
 	pad.PaddingRight = UDim.new(0.14, 0)
@@ -235,6 +243,14 @@ local function build()
 	zs.Color = Color3.fromRGB(10, 10, 14)
 	zs.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	zs.Parent = z
+	if Theme.Premium then
+		zs.Thickness = 1.5
+		zs.Color = Theme.Hud.edge
+		zs.Transparency = 0.75
+		zc.CornerRadius = UDim.new(0, Theme.Hud.radius)
+		z.BackgroundTransparency = 0.1
+		z.BackgroundColor3 = Theme.Hud.face
+	end
 	z.Activated:Connect(function()
 		local GunFeel = require(Client:WaitForChild("GunFeel")) :: any
 		local on = not GunFeel.zoomed()
@@ -248,6 +264,11 @@ local function build()
 	rl.Name = "Reload"
 	rl.Text = ""
 	rl.BackgroundColor3 = Color3.fromRGB(34, 38, 46)
+	if Theme.Premium then
+		rl.BackgroundColor3 = Theme.Hud.face
+		rl:SetAttribute("KitPress", nil) -- (the attribute came with the clone, its connections did not)
+		KitStyle.press(rl)
+	end
 	rl.Visible = false
 	rl.Activated:Connect(function()
 		AmmoClient.reload(nil)
@@ -382,7 +403,7 @@ function TouchShoot.start()
 				HudSlots.apply(zoom, slotName, HudSlots.context(true, false))
 				;(zoom :: TextButton).Text = if scope then "ZOOM" else "AIM"
 			end
-			local lit = if GunFeel.zoomed() then Color3.fromRGB(40, 150, 80) else Color3.fromRGB(40, 60, 90)
+			local lit = if Theme.Premium then (if GunFeel.zoomed() then Color3.fromRGB(201, 80, 26) else Theme.Hud.face) elseif GunFeel.zoomed() then Color3.fromRGB(40, 150, 80) else Color3.fromRGB(40, 60, 90)
 			if zoom.BackgroundColor3 ~= lit then
 				zoom.BackgroundColor3 = lit
 			end

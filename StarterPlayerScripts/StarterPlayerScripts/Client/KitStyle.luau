@@ -48,9 +48,9 @@ local function outline(object: GuiObject, thickness: number)
 		stroke.Parent = object
 	end
 	local s = stroke :: UIStroke
-	s.Color = INK
-	s.Thickness = thickness
-	s.Transparency = 0
+	s.Color = if Theme.Premium then Theme.Hud.edge else INK
+	s.Thickness = if Theme.Premium then 1.5 else thickness
+	s.Transparency = if Theme.Premium then Theme.Hud.edgeAlpha else 0
 	s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 end
 
@@ -133,7 +133,7 @@ local function text(object: TextButton | TextLabel, size: number)
 	else
 		o.TextColor3 = Color3.new(1, 1, 1)
 		o.TextStrokeColor3 = INK
-		o.TextStrokeTransparency = 0.2
+		o.TextStrokeTransparency = if Theme.Premium then 0.75 else 0.2
 	end
 	if KitStyle.V2 then
 		KitStyle.fit(object, size)
@@ -371,12 +371,55 @@ end
 
 ---------------------------------------------------------------------------------------------------
 
+
+-- Premium (24 Nov 2026): the one HUD surface: graphite glass and a hairline light edge. Safe to call
+-- again. Returns the edge (nil with UI_PREMIUM off: nothing is changed).
+function KitStyle.glass(object: GuiObject, radius: number?): UIStroke?
+	if not Theme.Premium then
+		return nil
+	end
+	object.BackgroundColor3 = Theme.Hud.face
+	object.BackgroundTransparency = Theme.Hud.alpha
+	local c = object:FindFirstChildOfClass("UICorner") or Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, radius or Theme.Hud.radius)
+	c.Parent = object
+	outline(object, 1.5)
+	return object:FindFirstChildOfClass("UIStroke")
+end
+
+-- The edge lights up in the accent under the pointer (and for a pad's selection).
+function KitStyle.hoverEdge(button: GuiButton, edge: UIStroke?)
+	if not edge then
+		return
+	end
+	local e = edge :: UIStroke
+	local info = TweenInfo.new(0.14, Enum.EasingStyle.Quad)
+	local function to(on: boolean)
+		TweenService:Create(e, info, {
+			Color = if on then Theme.Hud.accent else Theme.Hud.edge,
+			Transparency = if on then 0.1 else Theme.Hud.edgeAlpha,
+		}):Play()
+	end
+	button.MouseEnter:Connect(function()
+		to(true)
+	end)
+	button.MouseLeave:Connect(function()
+		to(false)
+	end)
+	button.SelectionGained:Connect(function()
+		to(true)
+	end)
+	button.SelectionLost:Connect(function()
+		to(false)
+	end)
+end
+
 -- A HUD button (call again after changing its colour, so the text stays readable).
 function KitStyle.button(object: GuiButton, round: boolean?)
 	if object:IsA("TextButton") then
 		text(object, 18)
 	end
-	object.BackgroundTransparency = 0
+	object.BackgroundTransparency = if Theme.Premium then 0.08 else 0
 	outline(object, Theme.Stroke.button)
 	corner(object, round)
 	shade(object)
