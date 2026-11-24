@@ -1657,7 +1657,7 @@ function FxController.start()
 	end
 	-- (V8-0.9: the start bar's guns first. The key was "G17", which is only the label: the G17's id is
 	-- "Blaster", so its bank was never loaded first.)
-	for _, gun in { "Blaster", "Deagle", "Shotgun", "Revolver" } do
+	for _, gun in if PHONE then { "Blaster" } else { "Blaster", "Deagle", "Shotgun", "Revolver" } do
 		local g = SoundManifest.GUNS[gun]
 		if g then
 			loadList(BANK[g.fire])
@@ -1670,9 +1670,40 @@ function FxController.start()
 	end
 	-- (21 Nov 2026: the 43 tool banks, "tool...", load in a second wave, so a phone's first shots and
 	-- hits are never behind them; a tool used before then grows its voice on demand.)
+	-- (24 Nov 2026, phones ran out of memory: a loaded sound lies unpacked, some 0.2 MB a second of it. A phone holds only
+	-- the banks of the weapons on its bar or in its hand; any other's come when it is put there, or first heard.)
+	local gunBanks: { [string]: boolean } = {}
+	local function banksOf(tool: string): { string }
+		local out = {}
+		local g: any = SoundManifest.GUNS[tool]
+		if g then
+			table.insert(out, g.fire)
+			if type(g.reload) == "string" then
+				table.insert(out, g.reload)
+			end
+		end
+		local t: any = SoundManifest.TOOLS[tool]
+		if t then
+			table.insert(out, t.bank)
+		end
+		return out
+	end
+	if PHONE then
+		for _, g in SoundManifest.GUNS :: any do
+			gunBanks[g.fire] = true
+			if type(g.reload) == "string" then
+				gunBanks[g.reload] = true
+			end
+		end
+		for _, g in SoundManifest.GUNS :: any do
+			if g.fallback then
+				gunBanks[g.fallback.bank] = nil -- (a fallback is always there)
+			end
+		end
+	end
 	local function loadRest()
 		for name, list in BANK do
-			if string.sub(name, 1, 4) ~= "tool" then
+			if string.sub(name, 1, 4) ~= "tool" and not gunBanks[name] then
 				loadList(list)
 			end
 		end
@@ -1723,6 +1754,20 @@ function FxController.start()
 			local character = Players.LocalPlayer.Character
 			local held = character and character:FindFirstChild("HeldTool")
 			local tool = held and held:GetAttribute("Tool")
+			if PHONE then
+				local ok, bar = pcall(function()
+					return (require(script.Parent:WaitForChild("PokeController")) :: any).getLoadout()
+				end)
+				local tools: { string } = if ok and type(bar) == "table" then bar else {}
+				if type(tool) == "string" then
+					table.insert(tools, tool)
+				end
+				for _, id in tools do
+					for _, bank in banksOf(id) do
+						loadList(BANK[bank])
+					end
+				end
+			end
 			if tool ~= last then
 				last = tool
 				local g = if type(tool) == "string" then SoundManifest.GUNS[tool] else nil
@@ -1737,6 +1782,9 @@ function FxController.start()
 		end
 	end)
 	task.delay(if PHONE then 14 else 6, function()
+		if PHONE then
+			return -- (only what is on the bar: above)
+		end
 		preload = {}
 		for name, list in BANK do
 			if string.sub(name, 1, 4) == "tool" then

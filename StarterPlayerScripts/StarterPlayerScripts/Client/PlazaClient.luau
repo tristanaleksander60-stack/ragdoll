@@ -197,7 +197,24 @@ local function sounds()
 			s.RollOffMaxDistance = spec.far
 			s.SoundGroup = group
 			s.Parent = source
-			s:Play()
+			-- (24 Nov 2026: 37 s long each, 7 MB unpacked: only there while you are near the plaza.)
+			s.SoundId = ""
+			task.spawn(function()
+				while s.Parent do
+					local camera = workspace.CurrentCamera
+					local at = source :: any
+					local pos = if at:IsA("Attachment") then at.WorldPosition else at.Position
+					local near = camera ~= nil and (camera.CFrame.Position - pos).Magnitude < spec.far + 40
+					if near and s.SoundId == "" then
+						s.SoundId = spec.id
+						s:Play()
+					elseif not near and s.SoundId ~= "" then
+						s:Stop()
+						s.SoundId = ""
+					end
+					task.wait(1)
+				end
+			end)
 		end
 	end)
 end
