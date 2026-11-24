@@ -344,6 +344,22 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 				clearBody(model)
 			end
 		end)
+		-- (24 Nov 2026, owner: a burst head took its holes along: hidden, the head keeps none hanging in the air.)
+		local head = model:FindFirstChild("Head")
+		if head and head:IsA("BasePart") then
+			head:GetPropertyChangedSignal("Transparency"):Connect(function()
+				local holes = bodies[model]
+				if head.Transparency < 1 or not holes then
+					return
+				end
+				for i = #holes, 1, -1 do
+					if holes[i].part:IsDescendantOf(head) then
+						release(holes[i].part)
+						table.remove(holes, i)
+					end
+				end
+			end)
+		end
 		model.Destroying:Once(function()
 			bodies[model] = nil
 			watched[model] = nil

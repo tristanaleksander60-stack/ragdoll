@@ -74,7 +74,7 @@ local function bad(s: Stand, m: Model): boolean
 	local state = m:GetAttribute("RagdollState")
 	local severed = m:GetAttribute("Severed")
 	return m:GetAttribute("Vital") == "Dead" or state == "Ragdoll" or state == "Out" or (type(severed) == "string" and severed ~= "")
-		or Vector3.new(off.X, 0, off.Z).Magnitude > ShootingRange.STRAY
+		or Vector3.new(off.X, 0, off.Z).Magnitude > ShootingRange.STRAY or math.abs(off.Y) > 8
 end
 
 -- Once a second: the targets out while someone is here, the spent ones swapped.
@@ -117,7 +117,8 @@ local function tend(model: Model, stands: { Stand }, middle: Vector3)
 					s.badSince = nil
 				end
 			elseif owner and i <= lanes and EventService.dummyRoom() > 2 then
-				local made = DummyFactory.spawn(s.at + Vector3.new(0, 3.5, 0), s.look, owner) :: Model
+				-- (The factory looks for the ground from 20 studs over the point: from under the roof, not from over it.)
+				local made = DummyFactory.spawn(s.at - Vector3.new(0, 8, 0), s.look, owner) :: Model
 				made.Name = "RangeTarget"
 				made:SetAttribute("RangeTarget", true)
 				made:SetAttribute("Personality", "Brave")
@@ -207,8 +208,8 @@ function ShootingRange.buildLab(folder: Instance, origin: Vector3): (Model, { St
 	local stands: { Stand } = {}
 	for i, deep in ShootingRange.TARGETS do
 		local x = -W / 2 + 1 + lane * (i - 0.5)
-		part("Counter", Vector3.new(lane - 4, 0.4, 1.8), Vector3.new(x, 3, line), STEEL, metal)
-		part("CounterEdge", Vector3.new(lane - 4, 0.12, 0.1), Vector3.new(x, 3.1, line - 0.95), ORANGE, paint, false)
+		part("Counter", Vector3.new(lane, 0.4, 1.8), Vector3.new(x, 3, line), STEEL, metal)
+		part("CounterEdge", Vector3.new(lane - 0.6, 0.12, 0.1), Vector3.new(x, 3.1, line - 0.95), ORANGE, paint, false)
 		local plate = part("Number", Vector3.new(3, 2, 0.2), Vector3.new(x, H - 2.4, line - 0.2), DARK, metal, false)
 		words(plate, Enum.NormalId.Front, tostring(i), Color3.fromRGB(255, 170, 84))
 		-- The stand: a steel disc with an orange rim, a post and a cross bar behind the ragdoll.
