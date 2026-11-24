@@ -273,7 +273,6 @@ local function begin(screen: Vector2, input: InputObject?, center: boolean): boo
 				Toast.show("Too far away. Walk closer to grab it")
 			elseif notOursAt ~= beforeOurs then
 				tooFarToldAt = os.clock()
-				Toast.show("Another player is moving this one. Hit it instead!")
 			end
 		end
 		return false
