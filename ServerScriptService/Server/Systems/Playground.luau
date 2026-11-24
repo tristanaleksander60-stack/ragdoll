@@ -1397,7 +1397,9 @@ function Playground.build(labOrigin: Vector3, name: string?)
 			buildSpikes() -- (owner, 20 Nov 2026: the red spike plates are gone: Config.SPIKE_BLOCKS)
 		end
 		buildStations() -- (round 5: PUT RAGDOLL HERE)
-		buildBigButton() -- (v3 Phase C)
+		if Config.BIG_BUTTON then
+			buildBigButton() -- (v3 Phase C)
+		end
 		pcall(buildLikePost) -- (V10 phase 4)
 		-- Round 5, phase 3: round pedestals under the things to try.
 		pedestal(48 * S, 6 * S, 7.5) -- the human cannon

@@ -127,6 +127,9 @@ function ShopArt.items(): { Item }
 		})
 	end
 	for _, o in Shop.OFFERS do
+		if o.key == "LabControls" and not (Config :: any).BIG_BUTTON then
+			continue -- (24 Nov 2026: the button it speeds up is gone: not sold)
+		end
 		table.insert(out, {
 			key = o.key,
 			kind = "offer",
