@@ -14,7 +14,7 @@ local LabOwnerMap = {}
 LabOwnerMap.S = 3.2 -- the R3.2 plan's distances are multiplied by this
 LabOwnerMap.SIZE = Vector2.new(950, 820)
 LabOwnerMap.CENTER = Vector2.new(-30, 24) -- (lab space: the plan runs x -150..130, z -105..120, times S)
-LabOwnerMap.WALK = 22 -- walkway width
+LabOwnerMap.WALK = 15 -- walkway width (map round 2: was 22)
 
 local GRASS = Color3.fromRGB(118, 168, 84)
 local WALK = Color3.fromRGB(212, 212, 206)
@@ -57,13 +57,87 @@ local function ground(into: Instance, o: Vector3)
 	local W = LabOwnerMap.WALK
 	local x0, x1 = c.X - size.X / 2 + 20, c.X + size.X / 2 - 20
 	local z0, z1 = c.Y - size.Y / 2 + 20, c.Y + size.Y / 2 - 20
-	-- The walkway grid (ref_10): rows between the plan's rows, columns between its zones.
+	-- The walkway grid (ref_10; map round 2, R2.2): large light-grey concrete slabs (a tile texture, not parts) with a low
+	-- kerb on both edges, 15 wide, straight rows and columns between the plots. They are laid a few seconds after the
+	-- lab stands, and only where nothing else stands: a run stops at an object and starts again after it, so nothing
+	-- is ever on a walkway (R2.1).
+	local lines: { { a: Vector3, b: Vector3 } } = {}
 	for _, z in { -82 * S, -18 * S, 58 * S, 104 * S } do
-		part(into, "OwnerWalk", Vector3.new(x1 - x0, 0.3, W), CFrame.new(o.X + (x0 + x1) / 2, top + 0.15, o.Z + z), WALK, Enum.Material.Pavement)
+		table.insert(lines, { a = Vector3.new(o.X + x0, top, o.Z + z), b = Vector3.new(o.X + x1, top, o.Z + z) })
 	end
 	for _, x in { -100 * S, -55 * S, 0, 28 * S, 68 * S, 112 * S } do
-		part(into, "OwnerWalk", Vector3.new(W, 0.3, z1 - z0), CFrame.new(o.X + x, top + 0.14, o.Z + (z0 + z1) / 2), WALK, Enum.Material.Pavement)
+		table.insert(lines, { a = Vector3.new(o.X + x, top, o.Z + z0), b = Vector3.new(o.X + x, top, o.Z + z1) })
 	end
+	task.delay(4, function()
+		local params = OverlapParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		local skip: { Instance } = {}
+		for _, n in { "Dummies", "Terrain" } do
+			local x = Workspace:FindFirstChild(n)
+			if x then
+				table.insert(skip, x)
+			end
+		end
+		for _, pl in game:GetService("Players"):GetPlayers() do
+			if pl.Character then
+				table.insert(skip, pl.Character)
+			end
+		end
+		for _, p in into:GetChildren() do
+			if p.Name == "OwnerGrass" or p.Name == "OwnerSpawnCircle" then
+				table.insert(skip, p)
+			end
+		end
+		params.FilterDescendantsInstances = skip
+		local CELL = 4
+		for _, l in lines do
+			local dir = (l.b - l.a).Unit
+			local len = (l.b - l.a).Magnitude
+			local runStart: number? = nil
+			local function lay(s0: number, s1: number)
+				if s1 - s0 < 10 then
+					return
+				end
+				local a = l.a + dir * s0
+				local b = l.a + dir * s1
+				local cf = CFrame.lookAt((a + b) / 2 + Vector3.new(0, 0.15, 0), b + Vector3.new(0, 0.15, 0))
+				local slab = part(into, "OwnerWalk", Vector3.new(W, 0.3, s1 - s0), cf, WALK, Enum.Material.SmoothPlastic)
+				local t = Instance.new("Texture")
+				t.Texture = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAYOUT_V3_FLOOR.texture
+				t.Face = Enum.NormalId.Top
+				t.StudsPerTileU = W / 2
+				t.StudsPerTileV = 12
+				t.Color3 = Color3.fromRGB(150, 150, 146)
+				t.Transparency = 0.55
+				t.Parent = slab
+				for _, side in { -1, 1 } do
+					part(into, "OwnerKerb", Vector3.new(0.8, 0.6, s1 - s0), cf * CFrame.new(side * (W / 2 + 0.4), 0.15, 0), Color3.fromRGB(190, 190, 186), Enum.Material.Concrete, true)
+				end
+			end
+			for s = 0, len, CELL do
+				local p = l.a + dir * (s + CELL / 2)
+				local hit = Workspace:GetPartBoundsInBox(CFrame.lookAt(p + Vector3.new(0, 3, 0), p + Vector3.new(0, 3, 0) + dir), Vector3.new(W + 4, 5.4, CELL), params)
+				local blocked = false
+				for _, h in hit do
+					if h.Transparency < 1 and (h.CanCollide or h.Transparency < 0.5) and h.Name ~= "OwnerWalk" and h.Name ~= "OwnerKerb" then
+						blocked = true
+						break
+					end
+				end
+				if blocked then
+					if runStart then
+						lay(runStart, s - 2)
+						runStart = nil
+					end
+				elseif not runStart then
+					runStart = s + 2
+				end
+			end
+			if runStart then
+				lay(runStart, len)
+			end
+		end
+	end)
 	-- The spawn circle (white, round) where the central walkway meets the tower row.
 	part(into, "OwnerSpawnCircle", Vector3.new(0.4, 26 * S, 26 * S), CFrame.new(o.X, top + 0.2, o.Z) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(226, 226, 222), Enum.Material.Pavement, false, Enum.PartType.Cylinder)
 	-- The raised leaderboard plaza (north, on the central walkway): granite wall, light cap, pipe railing, a stair down
@@ -732,6 +806,11 @@ local function hideOld(folder: Instance, o: Vector3)
 		if LabOwnerMap.HIDE_IN_LAB[c.Name] or LabOwnerMap.HIDE_OLD_TOWER[c.Name] then
 			hide(c)
 		end
+	end
+	local dressF = folder:FindFirstChild("Dress")
+	local arms = dressF and dressF:FindFirstChild("MechArmsStand")
+	if arms then
+		hide(arms) -- (map round 2: the 4 mech arms are gone)
 	end
 	local labs = Workspace:FindFirstChild("Labs")
 	for _, plot in if labs then labs:GetChildren() else {} do

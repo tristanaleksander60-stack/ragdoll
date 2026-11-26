@@ -319,6 +319,11 @@ function MapBoard.buildLab(folder: Instance, origin: Vector3)
 	if (Config :: any).TRAVEL_CORNER then
 		boardAt, boardFace = MapBoard.travelSpot(origin, "Board") -- (V9-NOW 22: on the rim with the portals)
 	end
+	if (Config :: any).LAB_OWNERMAP then
+		-- (Map round 2: the MAPS board stands on the raised plaza beside the leaderboards, facing the stair.)
+		boardAt = origin + Vector3.new(66, 5, -95 * 3.2 - 6)
+		boardFace = boardAt + Vector3.new(0, 0, 20)
+	end
 	MapBoard.board(holder, boardAt, boardFace)
 	-- (V9-NOW: Config.MAP_PORTAL false = no gold ring portal; the board is the one map place.)
 	if (Config :: any).MAP_PORTAL then

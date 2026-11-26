@@ -1420,9 +1420,16 @@ local function placeOnPlot(player: Player, plot: Plot)
 		return
 	end
 	local at = plot.origin + Vector3.new(math.random() * 4 - 2, 3.5, math.random() * 2 - 1)
+	local facing = Lab.SPAWN_FACING
+	if (Config :: any).LAB_OWNERMAP then
+		-- (Map round 2, owner: the spawn is on the raised leaderboard plaza, at its front edge, facing down the stair to the
+		-- tower: LabOwnerMap M1 builds the plaza 5 high at z -95 x 3.2, 83 deep.)
+		at = plot.origin + Vector3.new(math.random() * 6 - 3, 5 + 3.5, -95 * 3.2 + 26 * 3.2 / 2 - 7)
+		facing = Vector3.zAxis
+	end
 	-- (V8-0.4: turned 50 degrees towards the cannon, which sat 82-97 degrees right of the spawn camera:
 	-- the dummies in the middle and the cannon both in view on PC, tablet and a landscape phone; T112.)
-	character:PivotTo(CFrame.lookAt(at, at + Lab.SPAWN_FACING))
+	character:PivotTo(CFrame.lookAt(at, at + facing))
 	local root = character:FindFirstChild("HumanoidRootPart")
 	if root and root:IsA("BasePart") then
 		root.AssemblyLinearVelocity = Vector3.zero

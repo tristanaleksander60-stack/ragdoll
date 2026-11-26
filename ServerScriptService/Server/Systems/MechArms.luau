@@ -389,6 +389,9 @@ local function onTear(player: Player, kind: unknown, target: unknown, asked: unk
 end
 
 function MechArms.start()
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).MECH_ARMS == false then
+		return -- (map round 2, owner: "fjern de 4 arme, da de ikke virker længere")
+	end
 	-- (23 Nov 2026: never hold up the server's boot waiting for the Remotes folder: that stalled every lab ~10 s.)
 	task.spawn(function()
 		event().OnServerEvent:Connect(onTear)
