@@ -267,6 +267,32 @@ The ejected casings (since 0.43.1) look plain.
 
 **Check:** fire a pistol, a rifle and a shotgun in third and first person. Each casing looks different, glints, ejects to the right, bounces and tinks.
 
+## F24 The washing machine: in and out through the front door (owner's screenshot: "Fiks vaskemaskinen så ragdollen kommer ind og ud det rigtige sted")
+**What the screenshot shows** (the giant white front-loader next to the press):
+- The round glass DOOR floats ABOVE the machine's top, tilted, not on the front porthole.
+- A washing line with 4 towels (red, blue, yellow, green) hangs straight across the front of the porthole and blocks it.
+- The load zone is a cyan dashed square on the floor under the machine, not at the door.
+
+**Fix:**
+- **The door:**
+  - put it ON the front porthole: the same centre and size as the round opening, flush with the front face;
+  - hinge it on the left side of the porthole (a HingeConstraint or a tweened CFrame round the hinge);
+  - it opens outward about 100° and closes again.
+- **The washing line:** move it to the side or behind the machine (or raise it well above the door), so nothing crosses the porthole.
+- **IN:**
+  1. The load spot is the open porthole: a soft glow ring on the door opening (F7 / `docs/FIRST_2_MIN.md` style), at its real height.
+  2. When the player brings a ragdoll (or a TRY ragdoll walks up), the door swings open and the ragdoll is pulled IN through the porthole, head first, curling up into the drum.
+  3. The door closes.
+- **SPIN:** the drum turns with the ragdoll tumbling inside, clearly visible through the glass door, with suds and water (blue-white), the machine shaking and a washing sound. Calm, cartoon: no red water (gore is off); the water may get a light purple tint.
+- **OUT:**
+  1. The spin stops.
+  2. The door swings open.
+  3. The ragdoll slides OUT through the porthole onto the floor in front, dizzy (spiral eyes), soaked (a short drip effect), with a few soap bubbles floating up.
+  4. It gets up dizzy and wobbles away.
+  5. The door closes after 2 s.
+- **Fit:** the ragdoll must fit the drum without poking through the machine walls. Shrink the ragdoll's collision inside the drum while it spins, or scale the drum, and keep it inside the glass.
+- **Check:** load a ragdoll from the front and from the side. It always enters and leaves through the door. The door sits on the porthole, the line does not block it, and the tumbling shows through the glass.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
