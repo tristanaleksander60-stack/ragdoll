@@ -1373,6 +1373,9 @@ local function onFx(kind: string, position: Vector3, speed: number, toyId: strin
 		BloodFx.burst(position, 2.2) -- a limb snapping is the biggest splash
 	elseif kind == "Land" and speed >= 40 then
 		local power = math.clamp(speed / 50, 0.2, 1.5)
+		pcall(function()
+			(require(script.Parent:WaitForChild("ImpactDust")) :: any).burst(position, speed) -- (IMPACT_FX: dust by surface and speed)
+		end)
 		play("land", position, 0.3 + 0.4 * power, 1.1 - 0.15 * power)
 		sparks(position, math.floor(3 + 3 * power), 0.6 + 0.4 * power)
 		shakeAmount = math.max(shakeAmount, near * 0.25 * power)
@@ -1407,6 +1410,9 @@ local function onFx(kind: string, position: Vector3, speed: number, toyId: strin
 		sparks(position - Vector3.new(0, 2.5, 0), 4, 0.5)
 	elseif kind == "Land" then
 		local power = math.clamp(speed / 50, 0.2, 1.5)
+		pcall(function()
+			(require(script.Parent:WaitForChild("ImpactDust")) :: any).burst(position, speed) -- (IMPACT_FX: dust by surface and speed)
+		end)
 		play("land", position, 0.3 + 0.4 * power, 1.1 - 0.15 * power)
 		sparks(position, math.floor(3 + 3 * power), 0.6 + 0.4 * power)
 		shakeAmount = math.max(shakeAmount, near * 0.25 * power)

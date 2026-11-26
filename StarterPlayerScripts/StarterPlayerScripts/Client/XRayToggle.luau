@@ -1,6 +1,6 @@
 --!strict
 -- BODY_V2 1 (owner, 26 Nov 2026: "X-RAY 10/10"; Config.XRAY_V2): an X-RAY button on the HUD (every device; touch: a
--- round button on the right, 64 px) and the B key (V is first person, X takes the mech arms off). On: the nearest
+-- round button on the right, 64 px) and the I key (V is first person, X revive all, B build mode). On: the nearest
 -- bodies within 80 studs show their X-ray look with the whole skeleton (DummySkins.setXray); off: normal. The short
 -- automatic X-ray flash after 3 hits on one limb stays as it was.
 
@@ -81,7 +81,7 @@ function XRayToggle.start()
 			return Enum.ContextActionResult.Sink
 		end
 		return Enum.ContextActionResult.Pass
-	end, false, Enum.KeyCode.B)
+	end, false, Enum.KeyCode.I) -- (B is Build mode: Keybinds "Build"; I is the one free letter)
 end
 
 return XRayToggle

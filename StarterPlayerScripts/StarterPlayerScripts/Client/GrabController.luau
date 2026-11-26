@@ -49,6 +49,13 @@ local THROW_SHARE = 0.55 -- share of the drag speed added on release
 local MAX_THROW = 140 -- studs/s
 local THROW_SPEED = 95 -- studs/s for a deliberate throw (right button / THROW)
 local THROW_LIFT = 0.22
+-- IMPACT_FX 2 (owner, 26 Nov 2026: "grab-swing-SLAM"): while holding a dummy, SLAM (a touch button by THROW that shows
+-- only then; right click on a computer) swings it down hard in front of you: a big ground hit with the full dust
+-- (ImpactDust). Smashes within 2 s count up on the goal line: "SMASH x2", "x3"...
+local SLAM_SPEED = 110
+local slamButton: TextButton? = nil
+local slamCount, slamAt = 0, 0
+local IMPACT_ON = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).IMPACT_FX == true
 local GROUND_CLEARANCE = 1.2
 local GREEN = Color3.fromRGB(120, 230, 140)
 local SHOULDER_OFFSET = Vector3.new(2, 0.6, 0)
@@ -147,6 +154,9 @@ local function refreshPad()
 	if throwButton then
 		throwButton.Visible = holdingAny
 	end
+	if slamButton then
+		slamButton.Visible = current ~= nil
+	end
 end
 
 -- throwDirection: a deliberate throw that way; otherwise the body keeps the swing you gave it.
@@ -210,6 +220,31 @@ local function release(throw: boolean, throwDirection: Vector3?)
 		end
 	end
 	refreshPad()
+end
+
+local function slam()
+	local grab = current
+	if not grab or not IMPACT_ON then
+		return
+	end
+	local model, part = grab.model, grab.part
+	local cam = Workspace.CurrentCamera
+	local look = if cam then cam.CFrame.LookVector else Vector3.new(0, 0, -1)
+	local flat = Vector3.new(look.X, 0, look.Z)
+	flat = if flat.Magnitude > 0.01 then flat.Unit else Vector3.new(0, 0, -1)
+	release(false)
+	if model.Parent then
+		ActiveRagdoll.push(model, (flat * 0.35 + Vector3.new(0, -1, 0)).Unit * SLAM_SPEED)
+		FxController.localEvent("Hit", part.Position, SLAM_SPEED, "Throw")
+	end
+	local now = os.clock()
+	slamCount = if now - slamAt <= 2 then slamCount + 1 else 1
+	slamAt = now
+	if slamCount >= 2 then
+		pcall(function()
+			(require(script.Parent:WaitForChild("HudV3")) :: any).moment("SMASH x" .. slamCount, 1.5)
+		end)
+	end
 end
 
 local function throwForward()
@@ -637,6 +672,15 @@ local function buildPad()
 		throwForward()
 	end)
 	throwButton = t
+	if IMPACT_ON then
+		local s = roundButton("Slam", "SLAM", 60, KitStyle.SLAB)
+		s.Parent = holder
+		s.Activated:Connect(function()
+			pop(s)
+			slam()
+		end)
+		slamButton = s
+	end
 
 	gui.Parent = player:WaitForChild("PlayerGui")
 	buttons.Parent = player:WaitForChild("PlayerGui")
@@ -655,6 +699,12 @@ function placePad()
 	local ctx = HudSlots.context(true, false)
 	HudSlots.apply(g, "Grab", ctx)
 	HudSlots.apply(t, "Throw", ctx)
+	local s = slamButton
+	if s then
+		s.AnchorPoint = t.AnchorPoint
+		s.Size = t.Size
+		s.Position = t.Position - UDim2.fromOffset(t.AbsoluteSize.X + 10, 0)
+	end
 end
 
 local function updatePad()
@@ -808,6 +858,16 @@ function GrabController.padGrab()
 end
 
 function GrabController.start()
+	if IMPACT_ON then
+		-- (A computer: right click while holding a dummy slams it; otherwise the click goes on as before.)
+		ContextActionService:BindActionAtPriority("RagdollLabSlam", function(_, state)
+			if state == Enum.UserInputState.Begin and current then
+				slam()
+				return Enum.ContextActionResult.Sink
+			end
+			return Enum.ContextActionResult.Pass
+		end, false, Enum.ContextActionPriority.High.Value, Enum.UserInputType.MouseButton2)
+	end
 	buildPad()
 	buildMouseHelp()
 	ViewMode.onChanged(function()

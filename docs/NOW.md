@@ -22,7 +22,7 @@ Why this order:
 | 3 | **PERFECT PHYSICS:** the hard checks, then falls, landings, lying and get-ups | `docs/RAGDOLL_FEEL.md` ("PERFECT physics" first) | part 1 in 0.62.0 (place v1119): a round's turn and push scale with its force, 0.6x-3x (`SHOT_WEIGHT`, ActiveRagdoll shotReaction). Found already: the speed cap (client sim 180 studs/s, ActiveRagdoll) and the server watchdog (over 220: sent home, Lab). To do: hit impulse at the exact point by weapon force, tone per limb, rest-sleep, piles, buoyancy, get-ups, the 5 bench clips |
 | 4 | **PERFECT BULLET HOLES** + purple splatter on every hit | `docs/BODY_V2.md` 3 and 2b | checked: 2b exists already (BloodFx.wound: 3-12 purple droplets in the shot direction on every hit, landing; skipped only at the part cap); holes exist (BulletHoles, glued to the limb, sized by weapon).  0.63.0: `HOLE_VARIETY` (owner: "nye skudhuller, ikke det samme hver gang"): every hole its own size, oval by angle, tint, picture, stress ring and edge chip (no rings/chips on phones). Still parked: holes V2 (4 mesh variants, cracks, rim, exit holes, plastic chips) needs new hole art |
 | 5 | The body: X-ray 10/10 (bones can break by force), the blood look, injury stages, bandages, faces | `docs/BODY_V2.md` 1, 1b, 2, 4b | part 1 in 0.63.0 (place v1120): X-RAY button + B key (owner: B is fine) (`XRAY_V2`, Client/XRayToggle, DummySkins.setXray: the nearest 16 / phones 6 within 80 studs, whole skeleton). Left: glass shell + blue outline look, mesh skeleton, 1b breaks, 2 blood look, 4b stages/bandages/faces |
-| 6 | Impact smoke and dust, grab-swing-SLAM | `docs/IMPACT_FX.md` | |
+| 6 | Impact smoke and dust, grab-swing-SLAM | `docs/IMPACT_FX.md` | CODE DONE, NOT YET IN STUDIO (the owner was in Play): 0.64.0 `IMPACT_FX`: Client/ImpactDust (dust + bits by surface and speed, shock ring at 70+, 6 a second, 90 studs, half on phones), hooked in FxController "Land"; SLAM in GrabController (touch button by THROW while holding, right click on PC, "SMASH x2" on the goal line). FIRST next run: patch Config, FxController, GrabController, XRayToggle (key B -> I: B is Build mode) and the new ImpactDust into Studio, one Play, save. Left: smoke trail, scuff decals, props react, camera shake/hit-stop on own slams |
 | 7 | **The lab:** the owner's map 1:1, 10x bigger, faster running and sprint | `docs/LAB_TARGET.md` ROUND 3 | |
 | 8 | Lasso, breakable concrete walls, wooden crates | `docs/DESTRUCTION.md` | |
 | 9 | Burial + revenge | `docs/BODY_V2.md` 4 | |
@@ -320,6 +320,7 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - Not published yet: the owner presses Alt+P (no publish action over MCP; Open Cloud cannot upload .rbxl).
 
 ## Questions for the owner (filled in during the run)
+- X-RAY key: B is already Build mode, so X-RAY is on I now (default). OK, or another key?
 - Angry dummy: a harmless shove (now) or scolding only? (`ANGRY_SHOVE`)
 - Dummy colour: darker grey (92,95,102, now) or the old (112,114,118)?
 - Maturity: keep the gore (13+/17+) or switch it off for all ages? See docs/MATURITY.md.
