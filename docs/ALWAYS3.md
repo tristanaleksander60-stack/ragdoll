@@ -156,3 +156,26 @@ A hard safety net on top of the 3-near rule. It works EVERYWHERE on the map:
 - **Spawning:** never on top of another ragdoll (the `Spawn standing` clear-spot rule).
 - **Performance:** the avoidance runs at about 5 Hz on the server for walkers; stand-ins far away use simple spacing only.
 - **Check:** watch the plaza and a busy road for 2 minutes. No ragdoll may pass through another.
+
+## Ragdolls never walk INTO things (owner, 26 Nov 2026: "Fiks så at ragdolls ikke går ind i ting")
+**Today** walking ragdolls bump into and push through trees, benches, lamps, machines, walls, fences and the tree belts. They probably walk in straight lines (MoveTo to a target) without a path, or with collisions off on their walking body.
+
+**The fix (`RAGDOLL_NAV = true`):**
+1. **Real paths:**
+   - every walk uses PathfindingService, with agent parameters fitted to a ragdoll (radius about 2, height about 5.5, AgentCanJump false, AgentCanClimb false; stairs are walkable ramps or steps);
+   - recompute the path when blocked;
+   - walk waypoint to waypoint, smoothing the corners.
+2. **Costs and no-go areas:**
+   - `PathfindingModifier` labels on the map: Walkway (cheap), Grass (medium), and Water, Lava, MachineFloor, Belt (tree belts), Flowerbed, Track (the racetrack surface, except at crossings) and Rail (except at crossings) all not passable;
+   - machines, benches, lamps, trees, fences, the cars and props are obstacles (CanCollide parts, or invisible PathfindingModifier boxes round decoration that has CanCollide off).
+3. **Only valid targets:** the roam, chat and watch spots are picked from a pre-sampled list of free walkable points (paths, plazas, courtyards, lawns, the watcher spots in front of machines), never a random point inside an object.
+4. **Bodies collide with the world while walking:** the walking body has CanCollide on against the map, so even a bad path cannot push through a wall or a machine.
+5. **Stuck guard:** if a walker makes less than 1 stud of progress in 1.5 s, it steps back, sidesteps, and recomputes. After 3 failures it picks a new target. It never pushes on into the object.
+6. **Moving obstacles:**
+   - it waits for cars, the train, the cyclist and the player, or steps aside;
+   - it never walks into a running machine (except the demo walker climbing in on purpose, F31).
+7. **Performance:**
+   - paths are computed on the server, max about 6 per second in total, and cached for common routes (spawn to rooms);
+   - far stand-ins follow the same paths without physics.
+
+**Check:** follow 5 walkers each for 1 minute through busy rooms (Machine Hall, Fun Fair, the plaza). None may walk into or through a tree, bench, lamp, fence, machine, wall, water or flower bed.
