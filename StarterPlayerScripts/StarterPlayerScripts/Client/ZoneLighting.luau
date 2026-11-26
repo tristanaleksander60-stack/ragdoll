@@ -15,7 +15,7 @@ local THUMB = (Config :: any).LOOK_THUMB == true and (Config :: any).LOOK_THUMB_
 local V3 = if THUMB then (Config :: any).LOOK_THUMB_LIGHT else Config.LOOK_V3_LIGHT
 -- (V10, owner 22 Nov 2026: "remove the sun's harsh light, the exact vibe of the biggest ragdoll game"): a soft, bright,
 -- overcast day: high flat ambient, a weak sun, very soft shadows, little shine, a pale haze, colours a touch calmer.
-local SOFT = not (Config :: any).LAB_V10 -- (LAB10, owner 26 Nov 2026: a sunny afternoon replaces the overcast look; LAB_V10 false = overcast again)
+local SOFT = not (Config :: any).LAB_V10 and not (Config :: any).LAB_PARK -- (LAB10, owner 26 Nov 2026: a sunny afternoon replaces the overcast look; LAB_V10 false = overcast again)
 if SOFT and not THUMB then
 	local soft = table.clone(V3 :: any)
 	soft.ClockTime = 13
@@ -40,7 +40,8 @@ end
 -- LAB10 (owner, 26 Nov 2026: "Hele labbet skal tages fra 2/10 til 10/10"): a sunny cartoon afternoon. A warm sun
 -- about 40 degrees up, real shadows, raised outdoor ambient, no fog wall (density 0.25, haze 0), +0.15
 -- saturation, +0.05 contrast, soft bloom, a bright sky with clouds. The same on phones.
-local SUNNY = (Config :: any).LAB_V10 == true and not THUMB
+local PARK = (Config :: any).LAB_PARK == true and not THUMB
+local SUNNY = (Config :: any).LAB_V10 == true and not THUMB and not PARK
 if SUNNY then
 	local sun = table.clone(V3 :: any)
 	sun.ClockTime = 15.2
@@ -62,6 +63,30 @@ if SUNNY then
 	sun.airColor = Color3.fromRGB(196, 220, 245)
 	sun.airDecay = Color3.fromRGB(150, 186, 232)
 	V3 = sun
+end
+-- LAB TARGET (Config.LAB_PARK): calm natural daylight like the reference: soft sun, a light hazy distance, natural colours
+-- (no saturation boost, almost no bloom).
+if PARK then
+	local park = table.clone(V3 :: any)
+	park.ClockTime = 14
+	park.Brightness = 2
+	park.Ambient = Color3.fromRGB(112, 114, 120)
+	park.OutdoorAmbient = Color3.fromRGB(140, 142, 148)
+	park.ExposureCompensation = 0
+	park.EnvironmentDiffuseScale = 1
+	park.EnvironmentSpecularScale = 0.5
+	park.ShadowSoftness = 0.45
+	park.bloom = 0.05
+	park.bloomThreshold = 2
+	park.contrast = 0
+	park.saturation = 0
+	park.airDensity = 0.3
+	park.airOffset = 0
+	park.airHaze = 1
+	park.airGlare = 0
+	park.airColor = Color3.fromRGB(205, 215, 225)
+	park.airDecay = Color3.fromRGB(180, 192, 208)
+	V3 = park
 end
 
 local ZoneLighting = {}
@@ -429,6 +454,8 @@ local function finishV3()
 		overcastSky()
 	elseif SUNNY then
 		sunnySky()
+	elseif PARK then
+		overcastSky() -- (light clouds, no sun disc, like the reference)
 	end
 end
 

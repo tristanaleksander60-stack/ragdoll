@@ -11,6 +11,8 @@ Build `docs/LAB_TARGET.md`: the lab to the owner's reference screenshots (`art/s
 
 It replaces LAB10's cartoon look. Keep attract mode, the "try me" chain and harsh scoring from ROUND 2.
 
+**State (26 Nov 2026):** round 1 of LAB TARGET built and saved (0.56.0, place v1113, `LAB_PARK`). LAB10 R2 part 1 (attract mode, TRY!, zone pads) is in 0.55.0. Not published yet (owner: Alt+P). Next: see LAB_TARGET.md "State": the 50-stud steel scaffold tower, a true plot grid, the 5 reference captures.
+
 The rules are as before:
 - one run;
 - publish once;

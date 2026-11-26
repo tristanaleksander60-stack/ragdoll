@@ -147,3 +147,43 @@ Spawn plaza in the NORTH, facing south toward the tower. About 7 columns x 4 row
    - phone readability.
 3. Anything under 9: fix it and capture again (max 3 rounds). When unsure, score lower.
 4. One quick Play (no errors), publish ONCE through RELEASE.md, and give ONE Danish "Test selv" list with the 5 side-by-side captures named.
+
+## State (26 Nov 2026, release 0.56.0, place saved v1113, NOT published yet: the owner presses Alt+P)
+**Round 1 built** behind `Config.LAB_PARK = true`, on top of LAB_V10's spots. `false` gives the LAB10 cartoon look back.
+- **The park look** (`Systems/LabV10` `park()`):
+  - a light concrete field with tile joints;
+  - a grass plot with a concrete kerb under every attraction (worked out from each machine's own box);
+  - a test floor in plain concrete with one white ring.
+- **The raised spawn plaza** (1.4 high, so the spawn at +4 never lands inside it):
+  - a wooden railing and a wide ramp to the lab;
+  - **4 lab boards** in a row on its back edge (`LeaderboardService`; KOs, time and both VIP boards).
+- **A railway round the lab:** gravel bed, sleepers and rails; none of it collides.
+- **Outside:** tree groups and boulders; the tower and its heights re-skinned in galvanised steel, the slide grey-green; the crash wall in brick.
+- **Light** (`ZoneLighting` PARK): ClockTime 14, Brightness 2, haze 1, density 0.3, no saturation boost, light clouds.
+- **Kept from LAB10 round 2:**
+  - attract mode (`Client/LabShowcase`);
+  - the TRY! chain (`Tried_<kind>` from ExperimentService);
+  - 8 dummies roaming on the test floor.
+- **Captures:**
+  - `art/store/lab10/park_high.jpg` and `park_spawn_pc.jpg`;
+  - R2: `r2_spawn_pc.jpg`.
+
+**Harsh score against the references:**
+
+| | Score |
+|---|---|
+| style and materials | 7 |
+| density | 5 |
+| hero tower | 4 (it is the old stair tower in steel, not a 50-stud scaffold) |
+| plot grid and walkways | 6 (plots follow the machines, not a true grid) |
+| edge and landscape | 7 |
+| light | 7 (a little greenish-hazy) |
+| phone | not captured |
+
+**Left (next round):**
+- a real steel scaffold tower (4-5 floors, about 50 studs) with a long slide in the middle;
+- machines moved into a true plot grid (7x4), and the open concrete filled;
+- the 5 reference angles captured side by side;
+- the phone capture;
+- the haze a touch lighter.
+- **Known issue:** creatures that eat a dummy by themselves count as "tried" for the lab's owner (ExperimentService credits the owner).

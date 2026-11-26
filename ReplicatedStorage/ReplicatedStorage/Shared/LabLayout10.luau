@@ -80,6 +80,16 @@ LabLayout10.ZONE_PADS = {
 -- R2: car bay lines on the crash track (x of each line; from z1 to z2).
 LabLayout10.BAY_LINES = { x = { 38, 56, 73, 94 }, z1 = 32, z2 = 53 }
 
+-- LAB TARGET (owner, 26 Nov 2026; docs/LAB_TARGET.md): Config.LAB_PARK, the realistic park look over the same spots:
+-- grass plots round every machine in a light concrete field, a raised spawn plaza with 4 boards, a railway round it all.
+LabLayout10.PARK = LabLayout10.on and Config.LAB_PARK == true
+if LabLayout10.PARK then
+	LabLayout10.TEST_FLOOR = Vector2.new(0, -36) -- (clear of the plaza's stair)
+	LabLayout10.BUTTON = Vector2.new(0, -62)
+end
+LabLayout10.PLAZA = { min = Vector2.new(-30, -6), max = Vector2.new(30, 16), height = 1.4, stairWidth = 24, stairRun = 7 }
+LabLayout10.RAIL = { minX = -106, maxX = 106, minZ = -124, maxZ = 146 }
+
 -- LabDress roles that stay (everything else of the old dressing is hidden: scattered props).
 LabLayout10.DRESS_KEEP = { Rocket = true }
 

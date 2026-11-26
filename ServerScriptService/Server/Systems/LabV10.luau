@@ -196,6 +196,254 @@ local function controlTower(into: Instance, at: CFrame)
 	part(into, "ControlBand", Vector3.new(14.4, 1, 14.4), at * CFrame.new(0, 33.6, 0), C.orange)
 end
 
+---------------------------------------------------------------------------------------------------
+-- LAB TARGET (owner, 26 Nov 2026; docs/LAB_TARGET.md, Config.LAB_PARK): the realistic park look over the
+-- same spots. A light concrete field with tile joints; a GRASS PLOT with a concrete kerb under every
+-- attraction (so each one fills its own plot and the concrete between them is the walkway); a raised spawn
+-- plaza with a wooden railing, a wide ramp and the 4 boards (LeaderboardService); the tower in galvanised
+-- steel; a railway round it all; tree groups and boulders outside. Calm natural colours, no painted stripes.
+local GRASS = Color3.fromRGB(104, 146, 70)
+local KERB = Color3.fromRGB(188, 186, 180)
+local TILE = Color3.fromRGB(214, 212, 206)
+local STEEL = Color3.fromRGB(138, 143, 148)
+local WOOD = Color3.fromRGB(120, 86, 58)
+local GRAVEL = Color3.fromRGB(128, 124, 118)
+
+-- The axis-aligned XZ box (lab space) of everything visible in a list of instances.
+local function boxOf(list: { Instance }, origin: Vector3): (Vector2?, Vector2?)
+	local mn: Vector2? = nil
+	local mx: Vector2? = nil
+	for _, inst in list do
+		local parts = if inst:IsA("BasePart") then { inst } else inst:GetDescendants()
+		for _, p in parts do
+			if p:IsA("BasePart") and p.Transparency < 1 then
+				local cf, s = p.CFrame, p.Size
+				local hx = math.abs(cf.RightVector.X) * s.X / 2 + math.abs(cf.UpVector.X) * s.Y / 2 + math.abs(cf.LookVector.X) * s.Z / 2
+				local hz = math.abs(cf.RightVector.Z) * s.X / 2 + math.abs(cf.UpVector.Z) * s.Y / 2 + math.abs(cf.LookVector.Z) * s.Z / 2
+				local a = Vector2.new(p.Position.X - origin.X - hx, p.Position.Z - origin.Z - hz)
+				local b = Vector2.new(p.Position.X - origin.X + hx, p.Position.Z - origin.Z + hz)
+				mn = if mn then mn:Min(a) else a
+				mx = if mx then mx:Max(b) else b
+			end
+		end
+	end
+	return mn, mx
+end
+
+local LOOSE: { [string]: { [string]: boolean } } = {
+	Tower = { Stair = true, StairEdge = true, Tower = true, TowerBand = true, TowerStripe = true, Plank = true, TrampolineBase = true, TrampolinePad = true },
+	Wrecking = { Post = true, Beam = true, Walkway = true, SwingArm = true, SwingBall = true, BallBand = true, Lug = true, LugPin = true, Leg = true, Footing = true, Brace = true, BeamWeb = true, BeamFlange = true, Pulley = true, RunStripe = true },
+	Stations = { StationPad = true, StationRail = true, StationWall = true, CrashWallBadge = true },
+	Cannon = { CannonPad = true, CannonArrow = true, CannonBarrel = true, CannonStand = true },
+}
+
+local function park(into: Instance, folder: Instance, origin: Vector3, floorY: number, floorPart: BasePart?)
+	local V3Assets = require(script.Parent:WaitForChild("V3Assets")) :: any
+	local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
+	-- The field: light concrete with big tile joints.
+	if floorPart then
+		floorPart.Color = TILE
+		floorPart.Material = Enum.Material.SmoothPlastic
+		local tex = floorPart:FindFirstChildOfClass("Texture")
+		if not tex and Config.LAYOUT_V3_FLOOR then
+			local made = Instance.new("Texture")
+			made.Texture = Config.LAYOUT_V3_FLOOR.texture
+			made.Face = Enum.NormalId.Top
+			made.Parent = floorPart
+			tex = made
+		end
+		if tex then
+			tex.Color3 = Color3.new(1, 1, 1)
+			tex.Transparency = 0.25
+			tex.StudsPerTileU = 10
+			tex.StudsPerTileV = 10
+		end
+	end
+
+	-- A grass plot with a kerb under every attraction.
+	local groups: { { Instance } } = {}
+	local yard = folder:FindFirstChild("CreatureYard")
+	for _, c in if yard then yard:GetChildren() else {} do
+		if c.Name ~= "YardGrass" then
+			table.insert(groups, { c })
+		end
+	end
+	for _, n in { "Vehicles", "BoxingPit", "StretchMachine", "CannonModel", "MegaTrampoline", "GiantFan" } do
+		local c = folder:FindFirstChild(n)
+		if c then
+			table.insert(groups, { c })
+		end
+	end
+	local dress = folder:FindFirstChild("Dress")
+	for _, n in { "Rocket", "MechArmsStand" } do
+		local c = dress and dress:FindFirstChild(n)
+		if c then
+			table.insert(groups, { c })
+		end
+	end
+	for key, names in LOOSE do
+		local list: { Instance } = {}
+		for _, c in folder:GetChildren() do
+			if c:IsA("BasePart") and names[c.Name] then
+				table.insert(list, c)
+			end
+		end
+		if key == "Tower" then
+			local heights = folder:FindFirstChild("Heights")
+			if heights then
+				table.insert(list, heights)
+			end
+		end
+		if #list > 0 then
+			table.insert(groups, list)
+		end
+	end
+	for i, list in groups do
+		local mn, mx = boxOf(list, origin)
+		if mn and mx then
+			mn -= Vector2.new(4, 4)
+			mx += Vector2.new(4, 4)
+			local size = mx - mn
+			local mid = (mn + mx) / 2
+			local top = floorY + 0.1 + i * 0.004
+			local grass = paint(into, "GrassPlot", Vector3.new(size.X, 0.2, size.Y), CFrame.new(origin.X + mid.X, top - 0.1, origin.Z + mid.Y), GRASS)
+			grass.Material = Enum.Material.Grass
+			for _, e in {
+				{ Vector3.new(size.X + 1, 0.4, 1), Vector3.new(0, 0, -size.Y / 2) },
+				{ Vector3.new(size.X + 1, 0.4, 1), Vector3.new(0, 0, size.Y / 2) },
+				{ Vector3.new(1, 0.4, size.Y + 1), Vector3.new(-size.X / 2, 0, 0) },
+				{ Vector3.new(1, 0.4, size.Y + 1), Vector3.new(size.X / 2, 0, 0) },
+			} do
+				paint(into, "PlotKerb", e[1], CFrame.new(Vector3.new(origin.X + mid.X, top + 0.05, origin.Z + mid.Y) + e[2]), KERB)
+			end
+		end
+	end
+
+	-- The TEST FLOOR: a plain concrete circle with one painted white ring.
+	local tf = Vector3.new(origin.X + L.TEST_FLOOR.X, floorY, origin.Z + L.TEST_FLOOR.Y)
+	local r = L.TEST_RADIUS
+	disc(into, "TestFloor", tf + Vector3.new(0, 0.05, 0), r, 0.1, Color3.fromRGB(196, 194, 188))
+	disc(into, "TestRing", tf + Vector3.new(0, 0.08, 0), r - 1, 0.1, Color3.fromRGB(240, 240, 236))
+	disc(into, "TestRingInner", tf + Vector3.new(0, 0.11, 0), r - 1.8, 0.1, Color3.fromRGB(196, 194, 188))
+
+	-- The raised SPAWN PLAZA with a wooden railing (back and sides) and a wide ramp to the lab.
+	local P = L.PLAZA
+	local pSize = P.max - P.min
+	local pMid = (P.min + P.max) / 2
+	local slab = part(into, "SpawnPlaza", Vector3.new(pSize.X, P.height, pSize.Y), CFrame.new(origin.X + pMid.X, floorY + P.height / 2, origin.Z + pMid.Y), TILE, Enum.Material.SmoothPlastic)
+	if Config.LAYOUT_V3_FLOOR then
+		local t = Instance.new("Texture")
+		t.Texture = Config.LAYOUT_V3_FLOOR.texture
+		t.Face = Enum.NormalId.Top
+		t.StudsPerTileU = 8
+		t.StudsPerTileV = 8
+		t.Transparency = 0.2
+		t.Parent = slab
+	end
+	part(into, "SpawnPlazaEdge", Vector3.new(pSize.X + 0.4, 0.5, pSize.Y + 0.4), CFrame.new(origin.X + pMid.X, floorY + 0.25, origin.Z + pMid.Y), KERB, Enum.Material.Concrete).CanCollide = false
+	local ramp = Instance.new("WedgePart")
+	ramp.Name = "SpawnRamp"
+	ramp.Anchored = true
+	ramp.Size = Vector3.new(P.stairWidth, P.height, P.stairRun)
+	ramp.CFrame = CFrame.new(origin.X + pMid.X, floorY + P.height / 2, origin.Z + P.min.Y - P.stairRun / 2)
+	ramp.Color = TILE
+	ramp.Material = Enum.Material.SmoothPlastic
+	ramp.Parent = into
+	local railTop = floorY + P.height + 3
+	local function railRun(a: Vector3, b: Vector3)
+		local len = (b - a).Magnitude
+		local n = math.max(1, math.floor(len / 6))
+		for k = 0, n do
+			local p = a:Lerp(b, k / n)
+			part(into, "RailPost", Vector3.new(0.5, 3, 0.5), CFrame.new(p.X, floorY + P.height + 1.5, p.Z), WOOD, Enum.Material.Wood)
+		end
+		for _, h in { 1.4, 2.8 } do
+			local mid = (a + b) / 2
+			part(into, "RailBar", Vector3.new(0.35, 0.35, len), CFrame.lookAt(Vector3.new(mid.X, floorY + P.height + h, mid.Z), Vector3.new(b.X, floorY + P.height + h, b.Z)), WOOD, Enum.Material.Wood)
+		end
+	end
+	local function at(x: number, z: number): Vector3
+		return Vector3.new(origin.X + x, railTop, origin.Z + z)
+	end
+	railRun(at(P.min.X + 0.4, P.max.Y - 0.4), at(P.max.X - 0.4, P.max.Y - 0.4))
+	railRun(at(P.min.X + 0.4, P.min.Y + 0.4), at(P.min.X + 0.4, P.max.Y - 0.4))
+	railRun(at(P.max.X - 0.4, P.min.Y + 0.4), at(P.max.X - 0.4, P.max.Y - 0.4))
+	for _, side in { -1, 1 } do -- (the front, either side of the ramp)
+		railRun(at(pMid.X + side * (P.stairWidth / 2 + 0.4), P.min.Y + 0.4), at(if side < 0 then P.min.X + 0.4 else P.max.X - 0.4, P.min.Y + 0.4))
+	end
+
+	-- The RAILWAY round it all: gravel bed, sleepers, two steel rails (nothing on it trips you).
+	local R = L.RAIL
+	local corners = { Vector2.new(R.minX, R.minZ), Vector2.new(R.maxX, R.minZ), Vector2.new(R.maxX, R.maxZ), Vector2.new(R.minX, R.maxZ) }
+	for k = 1, 4 do
+		local a2, b2 = corners[k], corners[k % 4 + 1]
+		local a = Vector3.new(origin.X + a2.X, floorY, origin.Z + a2.Y)
+		local b = Vector3.new(origin.X + b2.X, floorY, origin.Z + b2.Y)
+		local len = (b - a).Magnitude
+		local base = CFrame.lookAt((a + b) / 2, b)
+		paint(into, "RailBed", Vector3.new(7, 0.3, len + 7), base * CFrame.new(0, 0.15, 0), GRAVEL).Material = Enum.Material.Pebble
+		for _, side in { -1, 1 } do
+			paint(into, "Rail", Vector3.new(0.35, 0.45, len + 7), base * CFrame.new(side * 2.4, 0.75, 0), STEEL).Material = Enum.Material.Metal
+		end
+		local n = math.floor(len / 6)
+		for s = 0, n do
+			paint(into, "Sleeper", Vector3.new(6.4, 0.3, 1.1), base * CFrame.new(0, 0.42, -len / 2 + s * len / n), WOOD).Material = Enum.Material.Wood
+		end
+	end
+
+	-- Tree groups and boulders outside the railway (round trees and pines, one style).
+	local rng = Random.new(26)
+	local outside = 18
+	for k = 1, 4 do
+		local a2, b2 = corners[k], corners[k % 4 + 1]
+		local along = (b2 - a2)
+		local len = along.Magnitude
+		local dir = along.Unit
+		local out = Vector2.new(dir.Y, -dir.X) -- (to the outside: the corners run clockwise seen from above)
+		local d = 10
+		while d < len - 10 do
+			local p = a2 + dir * d + out * (outside + rng:NextNumber(0, 22))
+			local role = if rng:NextNumber() < 0.5 then "TreePine" elseif rng:NextNumber() < 0.8 then "TreeRound" else "Rock"
+			if V3Assets.has(role) then
+				local placed = V3Assets.place(role, into, CFrame.new(origin.X + p.X, floorY, origin.Z + p.Y) * CFrame.Angles(0, rng:NextNumber(0, 6.28), 0), { height = if role == "Rock" then rng:NextNumber(4, 7) else rng:NextNumber(18, 28) })
+				if placed then
+					for _, q in placed:GetDescendants() do
+						if q:IsA("BasePart") then
+							q.CanCollide = false
+							q.CanQuery = false
+							q.CanTouch = false
+						end
+					end
+				end
+			end
+			d += rng:NextNumber(16, 30)
+		end
+	end
+
+	-- The tower in galvanised steel, the slide grey-green; the crash pads' hazard rims in plain concrete.
+	local function steel(p: Instance)
+		if p:IsA("BasePart") and p.Transparency < 1 then
+			p.Material = Enum.Material.Metal
+			p.Color = if string.find(p.Name, "Slide") then Color3.fromRGB(112, 124, 112) else STEEL
+		end
+	end
+	for _, c in folder:GetChildren() do
+		if c:IsA("BasePart") and LOOSE.Tower[c.Name] and not string.find(c.Name, "Trampoline") then
+			steel(c)
+		elseif c:IsA("BasePart") and c.Name == "HazardRim" then
+			c.Color = KERB
+			c.Material = Enum.Material.Concrete
+		elseif c:IsA("BasePart") and c.Name == "StationWall" then
+			c.Color = Color3.fromRGB(150, 70, 52)
+			c.Material = Enum.Material.Brick
+		end
+	end
+	local heights = folder:FindFirstChild("Heights")
+	for _, d in if heights then heights:GetDescendants() else {} do
+		steel(d)
+	end
+end
+
 function LabV10.build(folder: Instance, origin: Vector3)
 	local into = Instance.new("Folder")
 	into.Name = "LabV10"
@@ -233,6 +481,9 @@ function LabV10.build(folder: Instance, origin: Vector3)
 		end
 	end
 
+	if L.PARK then
+		park(into, folder, origin, floorY, if floorPart and floorPart:IsA("BasePart") then floorPart else nil)
+	else
 	-- The TEST FLOOR (its middle L.TEST_FLOOR): a yellow rim, a darker floor, a white ring and a target.
 	local tf = Vector3.new(origin.X + L.TEST_FLOOR.X, floorY, origin.Z + L.TEST_FLOOR.Y)
 	local r = L.TEST_RADIUS
@@ -324,6 +575,7 @@ function LabV10.build(folder: Instance, origin: Vector3)
 		end
 	end
 
+	end -- (LAB10 cartoon frame)
 	-- Trees, bushes and rocks of the landscape that stand inside the wall go (grass and trees only outside).
 	local land = Workspace:FindFirstChild("Landscape")
 	local w = L.WALL

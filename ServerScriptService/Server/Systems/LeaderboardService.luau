@@ -527,12 +527,18 @@ function LeaderboardService.buildLabBoards()
 	if not labs then
 		return
 	end
+	-- (LAB TARGET, Config.LAB_PARK: all four boards in one row on posts along the raised plaza's back edge, facing the
+	-- lab, like the reference: Shared/LabLayout10.PLAZA.)
+	local L10 = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("LabLayout10")) :: any
+	local park = L10.PARK == true
+	local ids = if park then { "Takedowns", "Time", "VipTakedowns", "VipTime" } else LAB_BOARD_IDS
+	local size = if park then Vector3.new(12, 10, 0.5) else LAB_BOARD
 	for _, folder in labs:GetChildren() do
 		local origin = folder:GetAttribute("Origin")
 		if typeof(origin) ~= "Vector3" then
 			continue
 		end
-		for i, id in LAB_BOARD_IDS do
+		for i, id in ids do
 			local board: Board? = nil
 			for _, b in LeaderboardService.BOARDS do
 				if b.id == id then
@@ -547,8 +553,14 @@ function LeaderboardService.buildLabBoards()
 			local center = Vector3.new(origin.X + side * 34, ground + 4 + LAB_BOARD.Y / 2, origin.Z - 86 * ((require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_SPREAD or 1)) -- (0.37.0: at the bigger lab's far end)
 			-- (Turned a little inwards, towards the spawn.)
 			local cf = CFrame.lookAt(center, Vector3.new(origin.X, center.Y, origin.Z + 10))
-			local model = buildBoard(board, cf, folder, LAB_BOARD)
-			trim(model, cf, LAB_BOARD, if board.vip then VIP_GOLD else FRAME_GLOW)
+			if park then
+				local P = L10.PLAZA
+				local x = (P.min.X + P.max.X) / 2 + (i - 2.5) * (size.X + 1.5)
+				center = Vector3.new(origin.X + x, ground + P.height + 3 + size.Y / 2, origin.Z + P.max.Y - 2)
+				cf = CFrame.lookAt(center, Vector3.new(center.X, center.Y, origin.Z - 60))
+			end
+			local model = buildBoard(board, cf, folder, size)
+			trim(model, cf, size, if board.vip then VIP_GOLD else FRAME_GLOW)
 		end
 	end
 	LeaderboardService.redraw()
