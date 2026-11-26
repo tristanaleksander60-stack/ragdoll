@@ -293,6 +293,13 @@ The ejected casings (since 0.43.1) look plain.
 - **Fit:** the ragdoll must fit the drum without poking through the machine walls. Shrink the ragdoll's collision inside the drum while it spins, or scale the drum, and keep it inside the glass.
 - **Check:** load a ragdoll from the front and from the side. It always enters and leaves through the door. The door sits on the porthole, the line does not block it, and the tumbling shows through the glass.
 
+## F25 No turning 3D pictures on the weapon bar (owner: "Fjern 3D roterende ikoner fra weaponsbar")
+- **What it is:** `Client/PokeController.luau` `live3D()` (UI audit, 21 Nov) puts the held weapon's real 3D model on its slot, turning slowly (Ui3D), over its drawn picture.
+- **Fix:** add `Config.BAR_LIVE3D = false`; `live3D` returns at once when it is false. The slots show only the flat drawn icons, the same style for every slot.
+- **Remove anything already made:** any existing "Live3D" child goes on the next refresh.
+- **Leave the rest alone:** the selected slot keeps its orange highlight and the ammo count. The shop and the catalog keep their 3D pictures.
+- **Check:** select each weapon on PC and phone. Nothing turns on the bar.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
