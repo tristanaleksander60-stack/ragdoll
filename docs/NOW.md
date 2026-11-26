@@ -26,6 +26,7 @@
 - Rebuild the owner's own map 1:1 from `art/store/look_target/lab_ref/ref_6` … `ref_10` (and `ref_1` … `ref_5`), as `docs/LAB_TARGET.md` ROUND 3 says.
 - Then publish once and give one Danish "Test selv" list.
 - In the same run, after the lab: `docs/IMPACT_FX.md` (smoke and dust on every impact, grab and SLAM).
+- Then `docs/DESTRUCTION.md`: the LASSO (rope a ragdoll, drag and swing it), concrete walls that break where a body hits, and wooden crates with bullet holes that break into planks.
 - Then `docs/BODY_V2.md` sections 1-4b: X-ray 10/10, purple blood look, hit marks instead of holes, burial + revenge, injury stages + real bandages + changing faces.
 - Then `docs/GUARD_DOG.md`: whistle the guard dog; tap a ragdoll's limb and it bites exactly that limb. The reaction fits the limb, the damage stays, and X-ray shows the bite.
 - Then `docs/WHEELCHAIRS.md`: drivable wheelchairs; put ragdolls in them, push, let go and crash.
