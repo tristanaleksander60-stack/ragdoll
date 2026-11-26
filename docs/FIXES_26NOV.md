@@ -838,6 +838,43 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 - **Lag-free:** pooled decals and parts; the fade is one client tween per mark.
 - **Check:** fire 10 single shots at a dummy. Only the last 4 are sharp, and the older ones visibly fade one by one.
 
+## F61 The owner is removed from ALL leaderboards (owner: "Fjern mig selv fra alle leaderboards")
+- **Who is excluded:**
+  - the game's owner: the group owner, rank 255 in the group (`Systems/Owner.isOwner`);
+  - every admin in `Systems/Admins`;
+  - the owner's known accounts (RolingStudios and any test accounts);
+  - all listed in `Config.LEADERBOARD_EXCLUDE` (userIds, so more can be added).
+- **Display:** they are skipped on every board (all 4 lab boards, any race or best-lap boards, the global, friends and "here" lists, the in-game player list ranks). The next players move up, so the top 20 is still 20 real players.
+- **The #1 gold statue** is never the owner or an admin.
+- **Stop submitting:** excluded players' scores are no longer sent to the OrderedDataStores. Do not delete old entries (no writes to live DataStores beyond the game's own saving); filtering them out at display time is enough.
+- **Check:** in Studio as the owner, the boards show no owner row and #1 is someone else (use a fake board list in Studio if needed).
+
+## F62 The other MAPS must not sit inside a mountain (owner: "Fiks alle de andre maps, så de ikke er inde i et bjerg")
+**The maps** (`Shared/Places`, built by WorldMaps / OutdoorMaps): Tropical Island, Downtown, Building Site, Old Farm and Army Base (the outdoor row at OUTDOOR_Z 1400, OUTDOOR_SPACING 1200), plus the rooms (ROOM_HEIGHT 4000). The Arena and the UFO stay hidden.
+
+**The problem:** in at least one map the player stands inside or right against a mountain or hill. Likely causes:
+- the new backdrop's terrain hills and the far mountain meshes (`LabOwnerMap` backdrop) reach out over the other maps' areas, or are placed relative to a shared origin;
+- the maps' own hill rings sit too close or too high;
+- the map spawn spots lie inside terrain.
+
+**Fix, for each map:**
+1. **Visit it** (MAPS board → each map) and capture its spawn view, plus a top view of its area.
+2. **Find any terrain or mesh from ANOTHER area** (the lab's backdrop, the hill ring, other maps) inside the map's bounds (`Places` size) plus a 150-stud margin.
+   - Terrain: use `Terrain:ReadVoxels` over the area.
+   - Meshes and parts: use a box query.
+3. **Fix the source:**
+   - keep the lab's backdrop (hills, forest, mountains) strictly round the LAB only (clip its terrain and remove its meshes outside the lab's backdrop ring);
+   - move a map further away if it is too close to the lab or another map;
+   - never cut into a map's own play area.
+4. **Give each map its own small, fitting backdrop** outside its bounds, so it never looks empty or clipped:
+   - Island: sea and a distant island;
+   - Downtown: a city skyline;
+   - Building Site: fences and a city edge;
+   - Old Farm: fields and hills;
+   - Army Base: desert hills.
+5. **Spawn spots:** each map's spawn is on its open ground, with clear space round it and facing into the map.
+6. **Check:** visit every map and stand at its spawn. Nothing is inside a mountain; the edges look finished.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
