@@ -1468,7 +1468,17 @@ local function lookWhileTalking(life: Life, state: string, now: number)
 	if life.lineKind ~= nil then
 		lf.talkSeen = now
 	end
+	local smooth = (Config :: any).SMOOTH_MOTION == true
 	if now - (lf.talkSeen or -10) > 1 then
+		if smooth and (lf.lookK or 0) > 0.01 and lf.lookYaw then
+			-- (F65: eased OUT over about 0.3 s, never a snap back)
+			lf.lookK = math.max(0, lf.lookK - 0.06)
+			local neck = life.joints.Neck
+			if neck then
+				neck.Transform = neck.Transform:Lerp(ang(lf.lookPitch, lf.lookYaw, 0), lf.lookK)
+			end
+			return
+		end
 		lf.lookK = 0
 		return
 	end
@@ -1511,6 +1521,22 @@ local function lookWhileTalking(life: Life, state: string, now: number)
 	local pitch = math.clamp(deg(math.asin(math.clamp(dir.Y, -1, 1))), -MAX_PITCH_DOWN, MAX_PITCH_UP)
 	local neckYaw = math.clamp(yaw, -70, 70)
 	local waistYaw = math.clamp(yaw - neckYaw, -35, 35)
+	if smooth then
+		-- (F65: walking, only the head turns (the waist twisting against the stepping legs made them jitter); the look
+		-- is laid OVER the walk or idle pose, not instead of it)
+		lf.lookYaw, lf.lookPitch = neckYaw, pitch
+		if state ~= "Walking" and not life.loose.Waist then
+			local waist = life.joints.Waist
+			if waist then
+				waist.Transform = waist.Transform:Lerp(ang(0, waistYaw, 0), k)
+			end
+		end
+		local neck = life.joints.Neck
+		if neck then
+			neck.Transform = neck.Transform:Lerp(ang(pitch, if state == "Walking" then math.clamp(neckYaw, -50, 50) else neckYaw, 0), k)
+		end
+		return
+	end
 	if not life.loose.Waist then
 		setJoint(life, "Waist", ang(0, waistYaw * k, 0))
 	end
