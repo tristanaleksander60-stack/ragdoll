@@ -935,6 +935,21 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 - **PC and console:** keep it as now.
 - **Check:** shoot and knock out ragdolls on the phone emulator. No hit card appears.
 
+## F67 The tower STAIRS must work indoors (owner: "Fiks trappen så man kan bruge den indendørs også")
+**The screenshot:** inside the steel tower, a flight of diamond-plate stairs runs straight up into the underside of the next flight or floor. There is no headroom, so you hit your head or get stuck. It is dark and cramped, and the camera is squeezed against the steps.
+
+**Fix (the 5-floor tower, `LabOwnerMap` hero):**
+- **Headroom:** at least 9 studs of clear headroom above EVERY step and landing. Cut openings in the floor or flight above wherever a flight rises under it (a proper open stairwell).
+- **Real switchback stairs:** flight → landing → turn → flight, between each floor. Steps sized for a Roblox character (about 1 stud rise, 2 studs deep), at least 8 studs wide.
+  - A smooth invisible ramp under the steps, so walking up never catches or bounces.
+  - Railings on the open sides.
+- **Floors:** each floor has a clear walkable landing at the stair top, with an opening out to the deck or balcony.
+- **Light inside:** a few cheap lights (client-only, near the player) or a lighter interior material, so it is not dark.
+- **The camera indoors:** when the player is inside the tower, the camera does not clip into steps or walls. Use CameraOcclusionMode "Invisicam" while inside (or a shorter max zoom inside the tower), so you always see your character.
+- **Ragdolls:** walkers and recruits can use the stairs (the pathfinding sees them as walkable); thrown ragdolls tumble down them with physics.
+- **Phones:** the stair turns are wide enough that the thumbstick steers through easily.
+- **Check:** walk from the ground to the top deck and back down on PC and phone, without hitting your head, getting stuck or losing the camera; and a ragdoll walks up.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
