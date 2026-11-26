@@ -183,6 +183,7 @@ safe("WatcherStandIns", function() require(Client:WaitForChild("WatcherStandIns"
 safe("GateMotion", function() require(Client:WaitForChild("GateMotion")).start() end) -- OVERVIEW 0.97: the spawn and gate moving parts, the first-join glide
 safe("SoloHide", function() require(Client:WaitForChild("SoloHide")).start() end) -- OVERVIEW 2 / F30: in the start place nobody else is seen
 safe("LagGuard", function() require(Client:WaitForChild("LagGuard")).start() end) -- OVERVIEW 0.1: no light shadows, far lights off, sign distances
+safe("LegJitter", function() require(Client:WaitForChild("LegJitter")).start() end) -- F65: the always-on leg jitter detector
 safe("PlazaClient", function() require(Client:WaitForChild("PlazaClient")).start() end) -- V9-0d: the town square (stage dance, photo spot, its sounds)
 safe("HudV3", function() require(Client:WaitForChild("HudV3")).start() end) -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)
 safe("RewardsUI", function() require(Client:WaitForChild("RewardsUI")).start() end) -- REWARDS: daily, play gift, dares, trophies, group (round 5)

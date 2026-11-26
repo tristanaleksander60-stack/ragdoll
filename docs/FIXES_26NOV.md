@@ -955,6 +955,12 @@ The owner sees it again: the legs jitter for 1-2 seconds at random moments. The 
    - a role switch (chatter ⇄ comer) or the start or stop of LOOK AT YOU fighting the walk;
    - a foot catching on a kerb edge.
 
+**Findings (Claude Code, v1155):**
+- Built the always-on detector (`LEG_JITTER_LOG`, Client/LegJitter): knee reversals per second for every ragdoll within 60 studs; an event logs state, role, watch job, pace, parked, Home changes in 2 s, who simulates it, speed, the surface under the feet and the fps.
+- A 100 s provoking run (10 jumps round the map) gave 29 events at 7 rev/s: all normal running (Pace 2-2.5, speed 7-17) at Studio's ~15 fps. The threshold is now 10 rev/s AND 70 % of the frame rate (real jitter flips almost every frame); a 60 s run after that: 0 events.
+- REAL CAUSE FOUND and fixed (in my own RagdollNav, 0.95): a system that sets Home many times a second (the Newspaper route, Pace 1.4: 7-10 Home changes in 2 s; FirstAid each tick) made RagdollNav start a path each time and put its own waypoint back, so Home flipped between two points several times a second: the legs stepped each way = the 1-2 s jitter. Now a system that changes Home more than once a second steers on its own (no path), and FirstAid's same-goal resets drop the path.
+- Still to build from the list: one pose blender for the legs, damped hip/knee motors, the turn-step cycle, the leg watchdog.
+
 ## F66 Remove the HIT CARD on phones (owner: "Fjern denne på telefon")
 **What it is:** the small dark hit card ("Chest · Belly · Left leg · Right leg +8 / 0% health · knocked out · KO") that shows the hit parts and the health of the ragdoll you hit (the body card / hit card / vitals text).
 

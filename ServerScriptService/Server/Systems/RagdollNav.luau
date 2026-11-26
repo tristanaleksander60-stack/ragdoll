@@ -25,6 +25,7 @@ type Nav = { goal: Vector3, look: any, points: { Vector3 }, idx: number, lastPos
 
 local navs: { [Model]: Nav } = setmetatable({}, { __mode = "k" }) :: any
 local mine: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any -- (we are setting Home ourselves)
+local lastOutside: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any -- (F65: when a system last set Home itself)
 local budget = RagdollNav.RATE
 local agent = { AgentRadius = 2, AgentHeight = 5.5, AgentCanJump = false, AgentCanClimb = false, WaypointSpacing = 5, Costs = { NoGo = math.huge } }
 
@@ -152,8 +153,19 @@ local function watchModel(m: Instance)
 			if n and (h - n.points[n.idx]).Magnitude < 0.05 then
 				return -- (our own waypoint, seen late when signals are deferred)
 			end
+			-- (F65: a system that moves Home more than once a second steers on its own (the newspaper route, a chase): pathing
+			-- each of those would make Home flip between its target and a waypoint, and the legs jitter.)
+			local now = os.clock()
+			local recent = now - (lastOutside[m] or -math.huge) < 1
+			lastOutside[m] = now
+			if recent then
+				navs[m] = nil
+				return
+			end
 			if n and (h - n.goal).Magnitude < 1.5 then
-				setHome(m, n.points[n.idx]) -- (the same goal again, e.g. FirstAid each tick: keep to the path)
+				-- (F65: the same goal set again every tick (FirstAid): the path is dropped and it walks straight there. Setting
+				-- the waypoint back each tick made Home flip between two points several times a second: legs jittering.)
+				navs[m] = nil
 				return
 			end
 			start(m, h)
