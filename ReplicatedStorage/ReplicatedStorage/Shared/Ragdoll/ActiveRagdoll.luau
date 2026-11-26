@@ -2341,13 +2341,16 @@ end
 ActiveRagdoll.SHOT_ARM_TURN = 5 -- rad/s of yaw an arm round gives the trunk (the struck shoulder goes back)
 ActiveRagdoll.SHOT_TORSO_PUSH = 2.5 -- studs/s a trunk round pushes the body back
 ActiveRagdoll.SHOT_HEAD_PUSH = 2.5 -- studs/s a head round pushes the head and chest back
-local function shotReaction(rig: any, impulse: Vector3)
+local function shotReaction(rig: any, impulse: Vector3, deltaV: number?)
+	-- (RAGDOLL_FEEL "weight is felt", owner 26 Nov 2026: a light pistol rocks the body, a sniper spins it: the turn and
+	-- the push grow with the round's force, 0.6x to 3x of the old fixed amounts. Config.SHOT_WEIGHT false = fixed.)
+	local k = if (GameConfig :: any).SHOT_WEIGHT ~= false and deltaV then math.clamp(deltaV / 6, 0.6, 3) else 1
 	local flat = Vector3.new(impulse.X, 0, impulse.Z)
 	local dir = if flat.Magnitude > 1e-3 then flat.Unit else -rig.chest.CFrame.LookVector
 	local region = rig.hitRegion
 	if region == "arm" then
 		-- (Every part is its own assembly (BallSocketConstraints): the trunk turns, the limbs follow on the joints.)
-		local w = Vector3.new(0, -rig.hitLimbSide * ActiveRagdoll.SHOT_ARM_TURN, 0)
+		local w = Vector3.new(0, -rig.hitLimbSide * ActiveRagdoll.SHOT_ARM_TURN * k, 0)
 		for _, p in { rig.pelvis, rig.chest } do
 			if p and not p.Anchored then
 				p.AssemblyAngularVelocity += w * 0.4
@@ -2356,14 +2359,14 @@ local function shotReaction(rig: any, impulse: Vector3)
 	elseif region == "torso" then
 		for _, p in rig.parts do
 			if not p.Anchored then
-				p:ApplyImpulse(dir * ActiveRagdoll.SHOT_TORSO_PUSH * p.Mass)
+				p:ApplyImpulse(dir * ActiveRagdoll.SHOT_TORSO_PUSH * k * p.Mass)
 			end
 		end
 	elseif region == "head" then
 		local head = rig.model:FindFirstChild("Head")
 		for _, p in { rig.chest, head } do
 			if p and p:IsA("BasePart") and not p.Anchored then
-				p:ApplyImpulse(dir * ActiveRagdoll.SHOT_HEAD_PUSH * p.Mass)
+				p:ApplyImpulse(dir * ActiveRagdoll.SHOT_HEAD_PUSH * k * p.Mass)
 			end
 		end
 	end
@@ -2491,7 +2494,7 @@ function ActiveRagdoll.hit(model: Model, part: BasePart, impulse: Vector3, posit
 	-- its part: an arm turns the trunk to that side (that shoulder goes back), the trunk is pushed back a step,
 	-- the head snaps back (Poses.flinch), a leg limps it (gunReaction). Small: a round never floors it.
 	if gun and gun > 0 and (GameConfig :: any).SHOT_FLINCH and rig.held == 0 and rig.state ~= "Ragdoll" and rig.state ~= "Out" then
-		shotReaction(rig, impulse)
+		shotReaction(rig, impulse, deltaV)
 	end
 	local localScale = if rig.state == "Flinch" then 0.35 else 1
 	local localImpulse = impulse * (1 - bodyShare) * localScale
