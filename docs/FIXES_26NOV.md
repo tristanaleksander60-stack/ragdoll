@@ -499,6 +499,42 @@ The owner still sees lamp posts standing in the middle of walkways.
 - **Check old leftovers:** no old hit-flash decals that never fade (F14).
 - **Check:** shoot a dummy 20 times with different guns, close up, on PC and phone. No white or pale circles anywhere on the body.
 
+## F42 An X-RAY button with its key on PC (owner: "Tilføj X-ray keybind-knap på computer")
+- **On PC (and tablets with the PC HUD):** a clear round **X-RAY button**, the same style as the phone's round X-RAY button.
+  - It sits on the right side of the screen above the hotbar's right end.
+  - It has a key chip "I" in its corner.
+  - It lights up blue while X-ray is on.
+  - A click toggles it; key I toggles it.
+- **The bottom-left chip "I X-ray" (F21) stays** if there is room. Otherwise the round button replaces it.
+- **Settings:** the X-RAY key can be rebound in Settings → Controls (`Keybinds`, one place).
+- **Console:** D-pad left, shown on the button as the controller glyph.
+- **Check:** PC at 1080p and 1440p. The button is visible, readable and not covering anything. Key I and a click both work.
+
+## F43 X-ray bullets look like REAL BULLETS pointing the way they went in (not peas)
+**Today:** the lodged slug in the bone is a small round ball, like a pea.
+
+**Fix (`XRAY_SLUGS` look):**
+- **A real bullet mesh:**
+  - a cylinder body with a pointed or rounded ogive nose and a flat base;
+  - a copper jacket (warm copper-brass, slightly shiny), with a little darker base ring.
+  - Make it as a small MeshPart, or 2-3 parts welded as one; it is shared, so it is instanced.
+- **Aligned with the shot:** the bullet's long axis lies along the real shot ray (F28). The NOSE points INTO the bone in the direction the bullet travelled. The base faces back toward the shooter.
+- **Embedded:** about 60 % inside the bone (the nose in, the tail sticking out). Never floating beside the bone or fully hidden in it.
+- **By weapon:**
+
+  | Weapon | Bullet |
+  |---|---|
+  | pistol / SMG | short, about 0.3 studs long |
+  | rifle | longer and slimmer, about 0.45 |
+  | sniper / railgun | the longest, about 0.6 (it often passes through: a slug only in the last bone it stopped in, plus a clean tunnel mark in the first) |
+  | shotgun | small round pellets: the only round ones, a cluster of 3-6 |
+  | bow | the arrowhead (a steel broadhead) with a short broken shaft end |
+  | revolver | a flat-nosed big slug |
+
+- **High force:** a pistol bullet at high force (point-blank) shows slightly mushroomed: a flattened nose, the tip squashed.
+- **A short dark crack line** starts at the entry point on the bone (as F4).
+- **Check:** in X-ray, shoot a dummy from the front, the side, from above and at an angle. Every bullet points along the line it was fired and sits partly in the bone. No round peas except shotgun pellets.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
