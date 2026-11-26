@@ -99,3 +99,29 @@ Behind `Config.MACHINE_WATCHERS = true`.
 6. **The same for every spawn:** recruits, walkers, watchers, TRY ragdolls and respawns.
 
 **Check:** join 5 times (solo place and multiplayer place, PC and phone emulator). All 3 stand up straight every time.
+
+## NEVER ZERO: if no ragdoll is near you, one comes RUNNING at once (owner, 26 Nov 2026: "Gør så hvis der er 0 ragdolls ved en så skal der altid minimum komme 1 løbende")
+A hard safety net on top of the 3-near rule. It works EVERYWHERE on the map:
+- in every room;
+- on the roads;
+- at the racetrack and the station;
+- on the plaza;
+- in solo and in multiplayer (for each player).
+
+**The trigger:** a check every 0.5 s. If a player has **0 living ragdolls within 35 studs for more than 1 s**, one comes RUNNING straight away:
+1. **The nearest free living ragdoll** sprints to the player (pace about 34) on a pathfinding route, starting within 0.5 s.
+2. **If none is free** (or all are more than 150 studs away): spawn a new one STANDING (`Spawn standing` rules), out of view about 50-80 studs away (behind trees, a building or a corner), and it sprints in.
+3. **While it runs,** the next ones follow, until the 3-near rule is met again.
+
+**Edge cases:**
+- **High places** (the tower top, the grandstand): it runs up the stairs; or, if that takes over 8 s, it waits at the foot and waves, and a second one spawns at the top stair's landing, out of view.
+- **The player is in a car, on the F1 car, on a bike or in a machine:** wait until they get out (no chasing cars).
+- **The first seconds after joining:** the 3 standing spawns cover it.
+- **The caps:** if the phone cap is full, the oldest knocked-out body far away is cleaned up first, so there is always room for this one.
+
+**Funnel:** count "NeverZero" triggers per session (Metrics). Many triggers in one area means more ragdolls should roam there; note it in State.
+
+**Check:**
+- walk to the far corners of every room, the racetrack and the station, and stand still;
+- knock out everyone near you;
+- within about 1.5 s one is always running toward you.
