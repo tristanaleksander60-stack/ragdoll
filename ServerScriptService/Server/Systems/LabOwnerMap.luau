@@ -298,6 +298,106 @@ end
 
 LabOwnerMap.HIDE_OLD_TOWER = { Tower = true, TowerBand = true, TowerStripe = true, Stair = true, StairEdge = true, Heights = true }
 
+-- M3: the north row (ref_6, ref_7, ref_10), west to east: the rock cave with its stone-ringed dirt yard (and the bear,
+-- V3Assets "Bear" when the place has it), the glass aquarium (the shark tank creature moves into it: LabLayout10), the
+-- leaderboard plaza (M1), the open pool, the fenced dirt pen.
+local ROCK = Color3.fromRGB(132, 130, 126)
+local DIRT = Color3.fromRGB(122, 98, 72)
+local GLASS = Color3.fromRGB(170, 210, 230)
+local WATER = Color3.fromRGB(70, 150, 200)
+local function northRow(into: Instance, o: Vector3, top: number)
+	local S = LabOwnerMap.S
+	local function at(x: number, z: number): Vector3
+		return Vector3.new(o.X + x * S, top, o.Z + z * S)
+	end
+	-- THE CAVE: a big rounded grey rock with a dark mouth, a dirt yard in front ringed with grey stones.
+	local cave = at(-92, -110)
+	part(into, "CaveRock", Vector3.new(110, 70, 90), CFrame.new(cave + Vector3.new(0, 18, 0)), ROCK, Enum.Material.Rock, false, Enum.PartType.Ball)
+	part(into, "CaveRock", Vector3.new(70, 52, 60), CFrame.new(cave + Vector3.new(-30, 14, -18)), ROCK:Lerp(Color3.new(0, 0, 0), 0.08), Enum.Material.Rock, false, Enum.PartType.Ball)
+	local mouth = part(into, "CaveMouth", Vector3.new(26, 22, 3), CFrame.new(cave + Vector3.new(14, 11, 43)), Color3.fromRGB(28, 26, 24), Enum.Material.Slate, true)
+	mouth.Shape = Enum.PartType.Block
+	local yard = at(-82, -82)
+	part(into, "CaveYard", Vector3.new(120, 0.3, 70), CFrame.new(yard + Vector3.new(0, 0.15, 0)), DIRT, Enum.Material.Ground)
+	local n = 26
+	for i = 1, n do
+		local a = i / n * math.pi * 2
+		local r = Vector3.new(math.cos(a) * 62, 0, math.sin(a) * 37)
+		local s = 4 + (i % 3) * 1.5
+		part(into, "YardStone", Vector3.new(s * 1.4, s, s * 1.2), CFrame.new(yard + r + Vector3.new(0, s * 0.35, 0)) * CFrame.Angles(0, a, 0), ROCK, Enum.Material.Rock, true, Enum.PartType.Ball)
+	end
+	-- THE AQUARIUM: a glass box on a concrete base with a steel frame, water inside.
+	local aq = at(-30, -95)
+	local AW, AD, AH = 80, 56, 26
+	part(into, "AquaBase", Vector3.new(AW + 4, 3, AD + 4), CFrame.new(aq + Vector3.new(0, 1.5, 0)), Color3.fromRGB(160, 160, 158), Enum.Material.Concrete)
+	local water = part(into, "AquaWater", Vector3.new(AW - 1, AH - 3, AD - 1), CFrame.new(aq + Vector3.new(0, 3 + (AH - 3) / 2, 0)), WATER, Enum.Material.Glass, true)
+	water.Transparency = 0.45
+	water.CanCollide = false
+	for _, side in { { Vector3.new(AW, AH, 0.6), Vector3.new(0, 0, AD / 2) }, { Vector3.new(AW, AH, 0.6), Vector3.new(0, 0, -AD / 2) }, { Vector3.new(0.6, AH, AD), Vector3.new(AW / 2, 0, 0) }, { Vector3.new(0.6, AH, AD), Vector3.new(-AW / 2, 0, 0) } } do
+		local g = part(into, "AquaGlass", side[1], CFrame.new(aq + side[2] + Vector3.new(0, 3 + AH / 2, 0)), GLASS, Enum.Material.Glass)
+		g.Transparency = 0.7
+	end
+	for _, x in { -AW / 2, -AW / 6, AW / 6, AW / 2 } do
+		for _, z in { -AD / 2, AD / 2 } do
+			part(into, "AquaFrame", Vector3.new(1, AH, 1), CFrame.new(aq + Vector3.new(x, 3 + AH / 2, z)), Color3.fromRGB(90, 96, 104), Enum.Material.Metal, true)
+		end
+	end
+	part(into, "AquaTopRim", Vector3.new(AW + 1, 1, 1.2), CFrame.new(aq + Vector3.new(0, 3 + AH, AD / 2)), Color3.fromRGB(90, 96, 104), Enum.Material.Metal, true)
+	part(into, "AquaTopRim", Vector3.new(AW + 1, 1, 1.2), CFrame.new(aq + Vector3.new(0, 3 + AH, -AD / 2)), Color3.fromRGB(90, 96, 104), Enum.Material.Metal, true)
+	-- THE POOL: open water in a light concrete rim.
+	local pool = at(40, -92)
+	local PW, PD = 90, 64
+	part(into, "PoolRim", Vector3.new(PW + 8, 1.2, 4), CFrame.new(pool + Vector3.new(0, 0.6, PD / 2 + 2)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
+	part(into, "PoolRim", Vector3.new(PW + 8, 1.2, 4), CFrame.new(pool + Vector3.new(0, 0.6, -PD / 2 - 2)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
+	part(into, "PoolRim", Vector3.new(4, 1.2, PD), CFrame.new(pool + Vector3.new(PW / 2 + 2, 0.6, 0)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
+	part(into, "PoolRim", Vector3.new(4, 1.2, PD), CFrame.new(pool + Vector3.new(-PW / 2 - 2, 0.6, 0)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
+	local pw = part(into, "PoolWater", Vector3.new(PW, 0.4, PD), CFrame.new(pool + Vector3.new(0, 0.5, 0)), Color3.fromRGB(110, 190, 225), Enum.Material.Glass)
+	pw.Transparency = 0.25
+	-- THE PEN: a dirt yard with a post-and-rail fence and a gate on its south side.
+	local pen = at(88, -96)
+	local EW, ED = 110, 76
+	part(into, "PenDirt", Vector3.new(EW, 0.3, ED), CFrame.new(pen + Vector3.new(0, 0.15, 0)), DIRT:Lerp(Color3.fromRGB(150, 130, 100), 0.3), Enum.Material.Ground)
+	local corners = { Vector3.new(-EW / 2, 0, -ED / 2), Vector3.new(EW / 2, 0, -ED / 2), Vector3.new(EW / 2, 0, ED / 2), Vector3.new(-EW / 2, 0, ED / 2) }
+	for i = 1, 4 do
+		local a, b = pen + corners[i], pen + corners[i % 4 + 1]
+		local len = (b - a).Magnitude
+		local posts = math.floor(len / 8)
+		for k = 0, posts do
+			local p = a:Lerp(b, k / posts)
+			local gate = i == 3 and math.abs((p - pen).X) < 8
+			if not gate then
+				part(into, "PenPost", Vector3.new(0.6, 5, 0.6), CFrame.new(p + Vector3.new(0, 2.5, 0)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
+			end
+		end
+		for _, y in { 2, 4.4 } do
+			if i == 3 then
+				for _, seg in { { a, pen + Vector3.new(8, 0, ED / 2) }, { pen + Vector3.new(-8, 0, ED / 2), b } } do
+					local l = (seg[2] - seg[1]).Magnitude
+					part(into, "PenRail", Vector3.new(0.3, 0.3, l), CFrame.lookAt((seg[1] + seg[2]) / 2 + Vector3.new(0, y, 0), seg[2] + Vector3.new(0, y, 0)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
+				end
+			else
+				part(into, "PenRail", Vector3.new(0.3, 0.3, len), CFrame.lookAt((a + b) / 2 + Vector3.new(0, y, 0), b + Vector3.new(0, y, 0)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
+			end
+		end
+	end
+	-- The bear (decoration) at the cave mouth, if the place has the model.
+	local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
+	local bear = assets and assets:FindFirstChild("Bear")
+	if bear and bear:IsA("Model") then
+		local b = bear:Clone()
+		for _, d in b:GetDescendants() do
+			if d:IsA("BasePart") then
+				d.Anchored = true
+				d.CanQuery = false
+			elseif d:IsA("LuaSourceContainer") then
+				d:Destroy()
+			end
+		end
+		local _, size = b:GetBoundingBox()
+		b:PivotTo(CFrame.lookAt(cave + Vector3.new(14, size.Y / 2, 56), cave + Vector3.new(14, size.Y / 2, 120)))
+		b.Parent = into
+	end
+end
+
 -- M7: the old lab frame goes (the LAB10 compound and park, the plot's floor, spawn disc, edges, barriers, cones, signs and
 -- the zone pads): invisible and walked through, the new ground is under it.
 LabOwnerMap.HIDE_IN_LAB = { LabV10 = true, LabZonePads = true, ZonePads = true, LabGarden = true, Paths = true }
@@ -383,6 +483,7 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	into.Parent = folder
 	ground(into, origin)
 	hero(into, origin, origin.Y - 0.05)
+	northRow(into, origin, origin.Y - 0.05)
 	hills(origin)
 end
 
