@@ -72,6 +72,7 @@ local Config = {
 	FOLIAGE_PASS = true, -- F54: trees, bushes and hedges have no collision (players, cars and bodies pass through); the belt walls are group RagdollBlock (ragdolls only)
 	TREE_CLEAR = true, -- F53: 4 s after the map stands, every tree/bush with its foot within 4 studs of a building, wall, machine or sign is removed (LabOwnerMap build)
 	CAR_STAY = true, -- F56: no automatic eject: a car is only "off" when it fell out of the world or is 700+ studs out (it goes home WITH the driver); OutOfBounds moves the whole car (VehicleService, OutOfBounds)
+	PAD_CARS = true, -- F57: the 3 launch pads launch cars (the server takes the car for 0.6 s and sets its speed; small/medium/BIG) and ragdolls; AIR TIME pop + NEW BEST (Systems/LaunchPads)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays
