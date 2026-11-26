@@ -31,6 +31,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Assets = require(Shared:WaitForChild("Assets"))
 local GunThreat = require(Shared:WaitForChild("GunThreat"))
 local Config = require(Shared:WaitForChild("Config"))
+local ClipGait = require(script.Parent:WaitForChild("ClipGait")) -- (S1: real walk and run clips)
 local DummyLines = require(Shared:WaitForChild("DummyLines"))
 local TalkLines = require(Shared:WaitForChild("TalkLines"))
 local Poses = require(Shared:WaitForChild("Ragdoll"):WaitForChild("Poses")) :: any
@@ -424,6 +425,37 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 		return
 	end
 
+	-- S1 SMOOTH MOTION (Config.SMOOTH_MOTION, Client/ClipGait): Roblox's real R15 walk and run clips, blended by the ground
+	-- speed with the phase tied to the distance walked (no foot sliding), eased into the joints (never a snap). The limp,
+	-- the crawl and the panic arms keep their own poses.
+	if (Config :: any).SMOOTH_MOTION and ClipGait.ready() then
+		local pu = life.model:GetAttribute("PanicUntil")
+		local panicking = fleeing and type(pu) == "number" and pu > Workspace:GetServerTimeNow()
+		if not (panicking and HANDS_UP) then
+			local L = life :: any
+			local speed = math.max(life.groundSpeed, if fleeing then 12 * amount else 0)
+			L.clipPhase = ClipGait.advance(L.clipPhase or 0, speed, dt)
+			local pose = ClipGait.blend(speed, L.clipPhase)
+			if pose then
+				local ease = math.min(1, dt * 14)
+				for jn, cf in pose do
+					local joint = life.joints[jn]
+					if joint and not life.loose[jn] then
+						joint.Transform = joint.Transform:Lerp(CFrame.identity:Lerp(cf, amount), ease)
+					end
+				end
+				if fleeing then
+					local back = if sin((now + life.seed) * 1.4) > 0.55 then 55 else 0
+					local neck = life.joints.Neck
+					if neck and not life.loose.Neck then
+						neck.Transform = neck.Transform * ang(0, back * amount, 0)
+					end
+				end
+				clutch(life, 1)
+				return
+			end
+		end
+	end
 	local swing = (if fleeing then 42 else 22) * amount
 	local knee = if fleeing then 62 else 34
 	setJoint(life, "RightHip", ang(swing * s, 0, 0))
@@ -1734,6 +1766,9 @@ local function onRender(dt: number)
 end
 
 function DummyLife.start()
+	if (Config :: any).SMOOTH_MOTION then
+		ClipGait.load()
+	end
 	-- Load every face up front so a swap never shows a blank head.
 	local list = {}
 	for _, id in Faces :: any do
