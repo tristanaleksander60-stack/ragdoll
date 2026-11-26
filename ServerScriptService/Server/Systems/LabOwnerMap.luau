@@ -613,6 +613,97 @@ local function east(into: Instance, o: Vector3, top: number)
 	spark.Parent = top2
 end
 
+-- M6: the south (ref_8, ref_9): the round sweeper pad with its turning beam, the shredder pit (a long sunken pit with
+-- two rollers, a steel railing round it, a lever and a red button).
+-- M8: the dressing: groves of round low-poly trees and pines, boulder fields and benches in the open grass, so no flat
+-- area is left empty (decoration: no collisions for the leaves, no shadows on the small things).
+local function south(into: Instance, o: Vector3, top: number)
+	local S = LabOwnerMap.S
+	local function at(x: number, z: number): Vector3
+		return Vector3.new(o.X + x * S, top, o.Z + z * S)
+	end
+	-- The sweeper: a round pad, a centre post and a long beam turning slowly at knee height.
+	local sw = at(0, 120)
+	part(into, "SweeperPad", Vector3.new(0.6, 90, 90), CFrame.new(sw + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 196, 186), Enum.Material.Concrete, false, Enum.PartType.Cylinder)
+	part(into, "SweeperRing", Vector3.new(0.65, 92, 92), CFrame.new(sw + Vector3.new(0, 0.28, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 200, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+	part(into, "SweeperPost", Vector3.new(6, 6, 6), CFrame.new(sw + Vector3.new(0, 3, 0)), Color3.fromRGB(70, 72, 78), Enum.Material.Metal)
+	local beamPart = part(into, "SweeperBeam", Vector3.new(84, 2.4, 2.4), CFrame.new(sw + Vector3.new(0, 2.4, 0)), Color3.fromRGB(230, 120, 30), Enum.Material.Metal)
+	beamPart.CanCollide = true
+	task.spawn(function()
+		local t0 = os.clock()
+		while into.Parent do
+			beamPart.CFrame = CFrame.new(sw + Vector3.new(0, 2.4, 0)) * CFrame.Angles(0, (os.clock() - t0) * 0.5, 0)
+			task.wait(0.05)
+		end
+	end)
+	-- The shredder pit: a sunken dark pit in a concrete frame, two rollers, a railing, a lever and a button.
+	local sp = at(-52, 120)
+	local PW, PD = 70, 26
+	part(into, "ShredderFrame", Vector3.new(PW + 8, 1, PD + 8), CFrame.new(sp + Vector3.new(0, 0.5, 0)), Color3.fromRGB(160, 160, 158), Enum.Material.Concrete)
+	local pit = part(into, "ShredderPit", Vector3.new(PW, 1.1, PD), CFrame.new(sp + Vector3.new(0, 0.55, 0)), Color3.fromRGB(26, 26, 28), Enum.Material.Slate)
+	pit.CanCollide = false
+	part(into, "ShredderFloor", Vector3.new(PW, 1, PD), CFrame.new(sp + Vector3.new(0, -8, 0)), Color3.fromRGB(40, 40, 44), Enum.Material.Metal)
+	for _, dz in { -5, 5 } do
+		part(into, "ShredderRoller", Vector3.new(PW - 4, 7, 7), CFrame.new(sp + Vector3.new(0, -4, dz)), Color3.fromRGB(120, 124, 130), Enum.Material.DiamondPlate, false, Enum.PartType.Cylinder)
+	end
+	local corners = { Vector3.new(-PW / 2 - 3, 0, -PD / 2 - 3), Vector3.new(PW / 2 + 3, 0, -PD / 2 - 3), Vector3.new(PW / 2 + 3, 0, PD / 2 + 3), Vector3.new(-PW / 2 - 3, 0, PD / 2 + 3) }
+	for i = 1, 4 do
+		local a, b = sp + corners[i] + Vector3.new(0, 1, 0), sp + corners[i % 4 + 1] + Vector3.new(0, 1, 0)
+		railing(into, a, b)
+	end
+	part(into, "ShredderLeverBox", Vector3.new(3, 4, 3), CFrame.new(sp + Vector3.new(PW / 2 + 8, 2, 0)), Color3.fromRGB(240, 200, 40), Enum.Material.Metal)
+	part(into, "ShredderLever", Vector3.new(0.5, 4, 0.5), CFrame.new(sp + Vector3.new(PW / 2 + 8, 5.5, 0)) * CFrame.Angles(math.rad(25), 0, 0), Color3.fromRGB(40, 40, 44), Enum.Material.Metal, true)
+	part(into, "ShredderButton", Vector3.new(0.8, 3, 3), CFrame.new(sp + Vector3.new(PW / 2 + 8, 1, 6)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(210, 40, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+end
+
+-- M8: trees, pines, boulders and benches in the open grass (plan coordinates; times S).
+LabOwnerMap.GROVES = {
+	Vector2.new(-110, -40), Vector2.new(-100, 25), Vector2.new(-60, -100), Vector2.new(-15, -70), Vector2.new(20, -15),
+	Vector2.new(60, -70), Vector2.new(115, -80), Vector2.new(130, 10), Vector2.new(100, 100), Vector2.new(40, 110),
+	Vector2.new(-20, 95), Vector2.new(-85, 100), Vector2.new(-140, 80), Vector2.new(-140, -90), Vector2.new(-30, 60),
+	Vector2.new(30, 55), Vector2.new(140, 55), Vector2.new(-60, 5),
+}
+local function tree(into: Instance, p: Vector3, size: number, pine: boolean, rng: Random)
+	local trunkH = size * (if pine then 0.5 else 0.6)
+	part(into, "TreeTrunk", Vector3.new(size * 0.12, trunkH, size * 0.12), CFrame.new(p + Vector3.new(0, trunkH / 2, 0)), Color3.fromRGB(110, 80, 56), Enum.Material.Wood, true)
+	local green = Color3.fromRGB(70, 130, 60):Lerp(Color3.fromRGB(110, 160, 70), rng:NextNumber())
+	if pine then
+		for k = 0, 2 do
+			local w = size * (0.7 - k * 0.18)
+			local leaf = part(into, "PineLayer", Vector3.new(w, size * 0.35, w), CFrame.new(p + Vector3.new(0, trunkH * 0.7 + k * size * 0.28, 0)) * CFrame.Angles(0, rng:NextNumber() * 6, 0), green:Lerp(Color3.fromRGB(40, 90, 50), 0.5), Enum.Material.Grass, true, Enum.PartType.Ball)
+			leaf.CanCollide = false
+		end
+	else
+		local leaf = part(into, "TreeCrown", Vector3.new(size, size * 0.85, size), CFrame.new(p + Vector3.new(0, trunkH + size * 0.3, 0)), green, Enum.Material.Grass, true, Enum.PartType.Ball)
+		leaf.CanCollide = false
+	end
+end
+local function dress(into: Instance, o: Vector3, top: number)
+	local S = LabOwnerMap.S
+	local rng = Random.new(7)
+	for gi, g in LabOwnerMap.GROVES do
+		local c = Vector3.new(o.X + g.X * S, top, o.Z + g.Y * S)
+		for _ = 1, rng:NextInteger(4, 7) do
+			local off = Vector3.new(rng:NextNumber(-22, 22), 0, rng:NextNumber(-22, 22))
+			tree(into, c + off, rng:NextNumber(12, 20), rng:NextNumber() < 0.35, rng)
+		end
+		if gi % 2 == 0 then
+			for _ = 1, 4 do
+				local s = rng:NextNumber(3, 7)
+				local off = Vector3.new(rng:NextNumber(-30, 30), s * 0.3, rng:NextNumber(-30, 30))
+				part(into, "Boulder", Vector3.new(s * 1.4, s, s * 1.1), CFrame.new(c + off) * CFrame.Angles(rng:NextNumber(), rng:NextNumber() * 6, 0), Color3.fromRGB(140, 138, 132), Enum.Material.Rock, true, Enum.PartType.Ball)
+			end
+		end
+		-- a bench at the grove's edge, facing the nearest walkway
+		local b = c + Vector3.new(26, 0, 0)
+		part(into, "BenchSeat", Vector3.new(7, 0.5, 2), CFrame.new(b + Vector3.new(0, 1.6, 0)), Color3.fromRGB(140, 100, 64), Enum.Material.WoodPlanks)
+		part(into, "BenchBack", Vector3.new(7, 1.6, 0.4), CFrame.new(b + Vector3.new(0, 2.6, 1)), Color3.fromRGB(140, 100, 64), Enum.Material.WoodPlanks, true)
+		for _, dx in { -3, 3 } do
+			part(into, "BenchLeg", Vector3.new(0.4, 1.4, 1.8), CFrame.new(b + Vector3.new(dx, 0.7, 0)), Color3.fromRGB(50, 52, 56), Enum.Material.Metal, true)
+		end
+	end
+end
+
 -- M7: the old lab frame goes (the LAB10 compound and park, the plot's floor, spawn disc, edges, barriers, cones, signs and
 -- the zone pads): invisible and walked through, the new ground is under it.
 LabOwnerMap.HIDE_IN_LAB = { LabV10 = true, LabZonePads = true, ZonePads = true, LabGarden = true, Paths = true }
@@ -701,6 +792,8 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	northRow(into, origin, origin.Y - 0.05)
 	west(into, origin, origin.Y - 0.05)
 	east(into, origin, origin.Y - 0.05)
+	south(into, origin, origin.Y - 0.05)
+	dress(into, origin, origin.Y - 0.05)
 	hills(origin)
 end
 
