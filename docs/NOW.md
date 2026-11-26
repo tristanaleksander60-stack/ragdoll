@@ -17,6 +17,7 @@
 - Then publish once and give one Danish "Test selv" list.
 - In the same run, after the lab: `docs/IMPACT_FX.md` (smoke and dust on every impact, grab and SLAM).
 - Then `docs/BODY_V2.md` sections 1-4b: X-ray 10/10, purple blood look, hit marks instead of holes, burial + revenge, injury stages + real bandages + changing faces.
+- Then `docs/WHEELCHAIRS.md`: drivable wheelchairs; put ragdolls in them, push, let go and crash.
 - Then `docs/RAGDOLL_FEEL.md`: realistic falls, landings, lying and get-ups like the top ragdoll games.
 - Then: `docs/STAY_LONGER.md`.
 
