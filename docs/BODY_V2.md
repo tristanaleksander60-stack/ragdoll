@@ -65,6 +65,14 @@ Exactly picture 2:
   - a cap per lab (pooled);
   - phones: half.
 
+## 2b. Purple splatter on EVERY hit (owner, 26 Nov 2026: "Der skal komme purple splatter hver gang et skud rammer en ragdoll")
+- **Every bullet, arrow, pellet and melee hit** that touches a ragdoll gives a purple splatter burst at the exact hit point:
+  - 4-8 glossy purple droplets fly out from the hit in the shot's direction, with a small cartoon star splash;
+  - they land on the ground or nearby walls as small splats that fade after about 10 s.
+- **Never skipped,** even on phones; only the droplet count drops (phones 3-4, far hits 2).
+- **The colour and look** of the section 2 blood (110,40,220, glossy). Pooled parts and emitters; a hard cap per lab.
+- **Shotguns:** one splatter per pellet that hits, capped at 4 per shot.
+
 ## 3. New hit marks (replace the bullet holes; `HIT_MARKS_V2 = true`)
 - **No holes into the body.** A hit leaves a small purple paint splat sticker (a star-edged blob, the same purple as the blood) on the body where it hit, about 0.6 studs.
 - **Fade:** it fades after 8 s.
