@@ -648,7 +648,7 @@ local function setLabThing(p: Player, fx: Fx, which: string, on: boolean)
 		end
 		local tramp10 = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("LabLayout10")) :: any)
 		local trampAt = if tramp10.on then Vector3.new(tramp10.TRAMPOLINE.X, 0, tramp10.TRAMPOLINE.Y) else Vector3.new(0, 0, 108) -- (LAB10: behind the spawn, inside the wall)
-		local at = if which == "tramp" then CFrame.new(origin + trampAt) else CFrame.new(origin + Vector3.new(86, 0, -104)) -- (0.37.18, owner: "the fan in front of the portals": the car area's back corner)
+		local at = if which == "tramp" then CFrame.new(origin + trampAt) else CFrame.new(origin + (if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_OWNERMAP then Vector3.new(45 * 3.2, 0, -40 * 3.2) else Vector3.new(86, 0, -104))) -- (0.37.18, owner: "the fan in front of the portals": the car area's back corner)
 		local _, s = m:GetBoundingBox()
 		m:ScaleTo(m:GetScale() * (if which == "tramp" then 16 else 14) / math.max(s.X, s.Y, s.Z))
 		m:PivotTo(at)

@@ -504,6 +504,115 @@ local function west(into: Instance, o: Vector3, top: number)
 	end
 end
 
+-- M5: the east (ref_7, ref_8, ref_10): the giant fan (MapShopService places it at the plan's (45, -40)), the beige
+-- sandcastle tower with crates, a picket fence and benches, the yellow sandbox, the round sand circle, the archery
+-- target on its stand, the wooden seesaw, the GYRO CAGE (three steel rings turning round each other on a pad, with its
+-- red button; the stretch machine stands beside it), the raised trampoline (LabLayout10.TRAMPOLINE), the long lava strip
+-- in its sunken stone trench, the turf square and the TESLA COIL.
+local SAND = Color3.fromRGB(226, 204, 150)
+local function east(into: Instance, o: Vector3, top: number)
+	local S = LabOwnerMap.S
+	local function at(x: number, z: number): Vector3
+		return Vector3.new(o.X + x * S, top, o.Z + z * S)
+	end
+	-- The sandcastle tower: a square beige tower with battlements, crates and a picket fence round its plot.
+	local sc = at(15, -52)
+	part(into, "SandcastleTower", Vector3.new(16, 34, 16), CFrame.new(sc + Vector3.new(0, 17, 0)), SAND, Enum.Material.Sandstone)
+	for _, d in { Vector3.new(-6, 0, -6), Vector3.new(6, 0, -6), Vector3.new(-6, 0, 6), Vector3.new(6, 0, 6), Vector3.new(0, 0, -6), Vector3.new(0, 0, 6), Vector3.new(-6, 0, 0), Vector3.new(6, 0, 0) } do
+		part(into, "SandcastleMerlon", Vector3.new(3.6, 3.6, 3.6), CFrame.new(sc + d + Vector3.new(0, 35.8, 0)), SAND, Enum.Material.Sandstone)
+	end
+	for k = 0, 5 do
+		part(into, "Crate", Vector3.new(4, 4, 4), CFrame.new(sc + Vector3.new(-16 + (k % 3) * 4.2, 2 + math.floor(k / 3) * 4, 12)) * CFrame.Angles(0, math.rad(k * 7), 0), Color3.fromRGB(160, 120, 76), Enum.Material.WoodPlanks)
+	end
+	for k = -6, 6 do
+		part(into, "Picket", Vector3.new(0.5, 3.4, 0.3), CFrame.new(sc + Vector3.new(k * 2.4, 1.7, -20)), Color3.fromRGB(240, 236, 226), Enum.Material.Wood, true)
+	end
+	part(into, "PicketRail", Vector3.new(31, 0.3, 0.3), CFrame.new(sc + Vector3.new(0, 2.6, -20)), Color3.fromRGB(240, 236, 226), Enum.Material.Wood, true)
+	-- The yellow sandbox with a wooden rim.
+	local sb = at(85, -45)
+	part(into, "SandboxSand", Vector3.new(60, 0.6, 50), CFrame.new(sb + Vector3.new(0, 0.3, 0)), Color3.fromRGB(240, 200, 70), Enum.Material.Sand)
+	for _, r in { { Vector3.new(62, 1.2, 1.2), Vector3.new(0, 0.6, 25.6) }, { Vector3.new(62, 1.2, 1.2), Vector3.new(0, 0.6, -25.6) }, { Vector3.new(1.2, 1.2, 52), Vector3.new(30.6, 0.6, 0) }, { Vector3.new(1.2, 1.2, 52), Vector3.new(-30.6, 0.6, 0) } } do
+		part(into, "SandboxRim", r[1], CFrame.new(sb + r[2]), Color3.fromRGB(150, 110, 70), Enum.Material.Wood)
+	end
+	-- The round sand circle.
+	part(into, "SandCircle", Vector3.new(0.4, 80, 80), CFrame.new(at(98, -5) + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, 0, math.rad(90)), SAND, Enum.Material.Sand, false, Enum.PartType.Cylinder)
+	-- The archery target on its wooden A-frame.
+	local tg = at(62, 8)
+	for _, s in { -1, 1 } do
+		part(into, "TargetLeg", Vector3.new(0.6, 12, 0.6), CFrame.new(tg + Vector3.new(s * 3, 5.5, 1.5)) * CFrame.Angles(math.rad(-12), 0, math.rad(s * 10)), Color3.fromRGB(130, 96, 62), Enum.Material.Wood)
+	end
+	for i, ring in { { 9, Color3.fromRGB(240, 240, 240) }, { 6.6, Color3.fromRGB(30, 30, 30) }, { 4.4, Color3.fromRGB(240, 240, 240) }, { 2.2, Color3.fromRGB(210, 40, 40) } } do
+		part(into, "TargetFace", Vector3.new(0.3 + i * 0.05, ring[1], ring[1]), CFrame.new(tg + Vector3.new(0, 8, -i * 0.06)) * CFrame.Angles(0, math.rad(90), 0), ring[2], Enum.Material.SmoothPlastic, i > 1, Enum.PartType.Cylinder)
+	end
+	-- The wooden seesaw.
+	local ss = at(54, 22)
+	part(into, "SeesawPivot", Vector3.new(3, 2.4, 2.4), CFrame.new(ss + Vector3.new(0, 1.2, 0)), Color3.fromRGB(70, 74, 80), Enum.Material.Metal, false, Enum.PartType.Cylinder)
+	part(into, "SeesawPlank", Vector3.new(26, 0.8, 3.4), CFrame.new(ss + Vector3.new(0, 2.6, 0)) * CFrame.Angles(0, 0, math.rad(9)), Color3.fromRGB(150, 110, 70), Enum.Material.WoodPlanks)
+	-- THE GYRO CAGE: three steel rings on a pad, turning round each other, with a red button.
+	local gc = at(78, 44)
+	part(into, "GyroPad", Vector3.new(0.6, 46, 46), CFrame.new(gc + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(150, 156, 150), Enum.Material.Concrete, false, Enum.PartType.Cylinder)
+	local hub = gc + Vector3.new(0, 20, 0)
+	part(into, "GyroStand", Vector3.new(2, 20, 2), CFrame.new(gc + Vector3.new(-19, 10, 0)), Color3.fromRGB(96, 110, 96), Enum.Material.Metal)
+	part(into, "GyroStand", Vector3.new(2, 20, 2), CFrame.new(gc + Vector3.new(19, 10, 0)), Color3.fromRGB(96, 110, 96), Enum.Material.Metal)
+	local rings: { { parts: { BasePart }, r: number, axis: Vector3, speed: number, base: { CFrame } } } = {}
+	for i, spec in { { 17, Vector3.xAxis, 0.6 }, { 14, Vector3.zAxis, -0.9 }, { 11, Vector3.xAxis, 1.3 } } do
+		local list, bases = {}, {}
+		local n = 24
+		for k = 1, n do
+			local a = k / n * math.pi * 2
+			local seg = 2 * math.pi * spec[1] / n + 0.3
+			local cf = CFrame.Angles(0, 0, a) * CFrame.new(spec[1], 0, 0)
+			local p = part(into, "GyroRing", Vector3.new(1.2, seg, 1.2), CFrame.new(hub) * cf, Color3.fromRGB(96, 116, 98), Enum.Material.Metal, true)
+			p.CanCollide = false
+			table.insert(list, p)
+			table.insert(bases, cf)
+		end
+		table.insert(rings, { parts = list, r = spec[1], axis = spec[2], speed = spec[3], base = bases })
+		local _ = i
+	end
+	part(into, "GyroButton", Vector3.new(0.8, 3, 3), CFrame.new(gc + Vector3.new(0, 1, 24)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(210, 40, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+	task.spawn(function()
+		local t0 = os.clock()
+		while into.Parent do
+			local t = os.clock() - t0
+			local outer = CFrame.fromAxisAngle(Vector3.yAxis, t * 0.4)
+			for i, ring in rings do
+				local spin = outer * CFrame.fromAxisAngle(ring.axis, t * ring.speed + i)
+				for k, p in ring.parts do
+					p.CFrame = CFrame.new(hub) * spin * ring.base[k]
+				end
+			end
+			task.wait(0.1)
+		end
+	end)
+	-- The long lava strip in a sunken stone trench.
+	local la, lb = at(72, 70), at(128, 70)
+	local ll = (lb - la).Magnitude
+	part(into, "TrenchStone", Vector3.new(ll + 12, 0.6, 46), CFrame.new((la + lb) / 2 + Vector3.new(0, 0.3, 0)), Color3.fromRGB(110, 106, 100), Enum.Material.Cobblestone)
+	local lava = part(into, "LavaStrip", Vector3.new(ll, 0.4, 26), CFrame.new((la + lb) / 2 + Vector3.new(0, 0.5, 0)), Color3.fromRGB(255, 110, 30), Enum.Material.CrackedLava)
+	lava.CanTouch = false
+	for _, s in { -1, 1 } do
+		part(into, "TrenchKerb", Vector3.new(ll + 12, 2, 3), CFrame.new((la + lb) / 2 + Vector3.new(0, 1, s * 22)), Color3.fromRGB(128, 124, 118), Enum.Material.Slate)
+	end
+	-- The turf square.
+	part(into, "TurfSquare", Vector3.new(70, 0.3, 70), CFrame.new(at(118, 26) + Vector3.new(0, 0.15, 0)), Color3.fromRGB(70, 140, 60), Enum.Material.Fabric)
+	-- THE TESLA COIL: a stepped column with a doughnut top and blue sparks.
+	local tc = at(122, -22)
+	part(into, "TeslaBase", Vector3.new(14, 4, 14), CFrame.new(tc + Vector3.new(0, 2, 0)), Color3.fromRGB(60, 62, 70), Enum.Material.Metal)
+	part(into, "TeslaColumn", Vector3.new(28, 6, 6), CFrame.new(tc + Vector3.new(0, 18, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(180, 120, 60), Enum.Material.Metal, false, Enum.PartType.Cylinder)
+	local top2 = part(into, "TeslaTop", Vector3.new(4, 16, 16), CFrame.new(tc + Vector3.new(0, 34, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 204, 210), Enum.Material.Metal, false, Enum.PartType.Cylinder)
+	local spark = Instance.new("ParticleEmitter")
+	spark.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	spark.Color = ColorSequence.new(Color3.fromRGB(150, 210, 255))
+	spark.LightEmission = 1
+	spark.Size = NumberSequence.new(1.2, 0)
+	spark.Speed = NumberRange.new(8, 16)
+	spark.Lifetime = NumberRange.new(0.15, 0.35)
+	spark.Rate = 12
+	spark.SpreadAngle = Vector2.new(180, 180)
+	spark.Parent = top2
+end
+
 -- M7: the old lab frame goes (the LAB10 compound and park, the plot's floor, spawn disc, edges, barriers, cones, signs and
 -- the zone pads): invisible and walked through, the new ground is under it.
 LabOwnerMap.HIDE_IN_LAB = { LabV10 = true, LabZonePads = true, ZonePads = true, LabGarden = true, Paths = true }
@@ -591,6 +700,7 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	hero(into, origin, origin.Y - 0.05)
 	northRow(into, origin, origin.Y - 0.05)
 	west(into, origin, origin.Y - 0.05)
+	east(into, origin, origin.Y - 0.05)
 	hills(origin)
 end
 

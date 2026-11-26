@@ -136,6 +136,8 @@ if Config.LAB_OWNERMAP then
 	LabLayout10.CARS.MuscleCar = Vector2.new(-62, -70) -- (the bays of the plan, west to east: the tank, the monster truck, the blue car)
 	LabLayout10.CARS.Truck = Vector2.new(-50, -70)
 	LabLayout10.CARS.Car = Vector2.new(-38, -70)
+	LabLayout10.TRAMPOLINE = Vector2.new(45, 80) -- (the raised trampoline, south-east of the tower)
+	LabLayout10.STRETCH = Vector2.new(64, 62) -- (the stretch machine beside the gyro cage)
 	local function v2(v: Vector2): Vector2
 		return v * K
 	end
