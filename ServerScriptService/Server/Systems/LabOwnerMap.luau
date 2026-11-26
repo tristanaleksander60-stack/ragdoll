@@ -244,6 +244,55 @@ local function disc(into: Instance, name: string, at: Vector3, radius: number, l
 	t.Parent = d
 	return d
 end
+-- (M4 path lint, F82 "never into an attraction": a path that would run INTO or THROUGH its own attraction's box (the
+-- brick wall, the boxing ring) stops 1 stud before the box's edge. Used for the slabs and for the yards at the path end.)
+local function clipTo(points: { Vector2 }, id: string): { Vector2 }
+	local it = Plan.ITEMS[id]
+	if not it then
+		return points
+	end
+	local mn, mx = it.at - it.size / 2, it.at + it.size / 2
+	local function inside(p: Vector2): boolean
+		return p.X > mn.X and p.X < mx.X and p.Y > mn.Y and p.Y < mx.Y
+	end
+	local out: { Vector2 } = { points[1] }
+	for i = 1, #points - 1 do
+		local a, b = points[i], points[i + 1]
+		if inside(a) then
+			break
+		end
+		-- (Liang-Barsky: where the leg enters the box, if it does)
+		local d = b - a
+		local t0, t1 = 0, 1
+		local hit = true
+		for _, pq in { { -d.X, a.X - mn.X }, { d.X, mx.X - a.X }, { -d.Y, a.Y - mn.Y }, { d.Y, mx.Y - a.Y } } do
+			local p, q = pq[1], pq[2]
+			if p == 0 then
+				if q < 0 then
+					hit = false
+				end
+			else
+				local r = q / p
+				if p < 0 then
+					t0 = math.max(t0, r)
+				else
+					t1 = math.min(t1, r)
+				end
+			end
+		end
+		if hit and t0 <= t1 and t0 < 1 and d.Magnitude > 0 then
+			local stop = a + d * math.max(0, t0 - 1 / d.Magnitude)
+			if (stop - a).Magnitude > 0.5 then
+				table.insert(out, stop)
+			end
+			return out
+		end
+		table.insert(out, b)
+	end
+	return out
+end
+LabOwnerMap.clipTo = clipTo
+
 local function ground(into: Instance, o: Vector3)
 	local c = LabOwnerMap.CENTER
 	local size = LabOwnerMap.SIZE
@@ -263,8 +312,9 @@ local function ground(into: Instance, o: Vector3)
 	end
 	-- Inner paths (12): entrance -> courtyard -> the front of every attraction.
 	for _, path in Plan.INNER do
-		for i = 1, #path.points - 1 do
-			slab(into, "OwnerPath", w(path.points[i]), w(path.points[i + 1]), Plan.INNER_W, 0.18, true) -- (M9: no kerbs on the inner paths)
+		local pts = if LabOwnerMap.S < 2 then clipTo(path.points, path.to) else path.points
+		for i = 1, #pts - 1 do
+			slab(into, "OwnerPath", w(pts[i]), w(pts[i + 1]), Plan.INNER_W, 0.18, true) -- (M9: no kerbs on the inner paths)
 		end
 	end
 	-- The courtyards of the rooms.
@@ -874,7 +924,7 @@ local function entranceRow(into: Instance, o: Vector3, top: number)
 	end
 	local signs: { { label: TextLabel, id: string } } = {}
 	for _, b in bays do
-		local front = Vector3.new(o.X + b.at.X - 5.5, top, o.Z + b.at.Y + 8.5)
+		local front = Vector3.new(o.X + b.at.X - 5.5, top, o.Z + b.at.Y + 6.5) -- (on the row's own slab, off the walkway)
 		local board = part(into, "EntrancePlaque", Vector3.new(math.max(4, b.w * 0.8), 1.5, 0.25), CFrame.new(front + Vector3.new(0, 0.95, 0)) * CFrame.Angles(math.rad(-25), math.rad(-45), 0), Color3.fromRGB(34, 36, 40), Enum.Material.SmoothPlastic, true)
 		for _, sx in { -1, 1 } do
 			part(into, "EntrancePlaqueLeg", Vector3.new(0.18, 0.8, 0.18), CFrame.new(front + Vector3.new(sx * 0.9, 0.4, 0)), PROP.iron, Enum.Material.Metal, true)
@@ -2284,7 +2334,7 @@ local function freeSpot(spots: { Vector3 }, size: Vector3, top: number): Vector3
 	end
 	params.FilterDescendantsInstances = ex
 	for _, at in spots do
-		if not onPath(at, 2) then
+		if not (if LabOwnerMap.S < 2 then onWalkable(at, 2) else onPath(at, 2)) then
 			local hits = Workspace:GetPartBoundsInBox(CFrame.new(at + Vector3.new(0, size.Y / 2 + 0.6, 0)), size + Vector3.new(6, 0, 6), params)
 			local blocked = false
 			for _, h in hits do
@@ -2312,12 +2362,13 @@ local function yards(into: Instance, o: Vector3, top: number)
 		local id = path.to
 		if id ~= "entrance" and not done[id] and #path.points >= 2 then
 			done[id] = true
-			local n = #path.points
-			local last, prev = path.points[n], path.points[n - 1]
+			local pts = if LabOwnerMap.S < 2 then clipTo(path.points, id) else path.points -- (M4: the clipped end, not inside the attraction)
+			local n = #pts
+			local last, prev = pts[n], pts[math.max(1, n - 1)]
 			local k = n - 1
 			while k > 1 and (last - prev).Magnitude < 4 do
 				k -= 1
-				prev = path.points[k]
+				prev = pts[k]
 			end
 			local dir = if (last - prev).Magnitude > 0.1 then (last - prev).Unit else Vector2.new(0, 1)
 			local side = Vector2.new(-dir.Y, dir.X)
@@ -2329,16 +2380,19 @@ local function yards(into: Instance, o: Vector3, top: number)
 			-- the name sign on the right, facing back along the path
 			local back3, side3 = Vector3.new(-dir.X, 0, -dir.Y), Vector3.new(side.X, 0, side.Y)
 			local signAt = w(endP + side * (Plan.INNER_W / 2 + 6) - dir * 6)
-			signAt = freeSpot({ signAt, signAt + back3 * 5, signAt + side3 * 4, signAt + back3 * 10, signAt + side3 * 4 + back3 * 5 }, Vector3.new(10, 8, 2), top) :: any
-			if signAt and not onPath(signAt, 0.5) then
+			signAt = freeSpot({ signAt, signAt + back3 * 5, signAt + side3 * 4, signAt + back3 * 10, signAt + side3 * 4 + back3 * 5, signAt + side3 * 8, signAt + side3 * 8 + back3 * 6, signAt + back3 * 16 }, Vector3.new(10, 8, 2), top) :: any
+			if signAt and not (if LabOwnerMap.S < 2 then onWalkable(signAt, 6) else onPath(signAt, 0.5)) then -- (M4: the sign is 10 wide on 2 side posts: keep the whole board off the walkway)
 				nameSign(into, signAt, Vector3.new(-dir.X, 0, -dir.Y), NAMES[id] or string.upper(id))
 			end
 			-- a bench on the left, facing the attraction
 			local benchAt = w(endP - side * (Plan.INNER_W / 2 + 6) - dir * 8)
 			benchAt = freeSpot({ benchAt, benchAt + back3 * 5, benchAt - side3 * 4, benchAt + back3 * 10, benchAt - side3 * 4 + back3 * 5, benchAt + back3 * 15 }, Vector3.new(7, 3, 3), top) :: any
-			if benchAt and not onPath(benchAt, 2) then
+			if benchAt and not (if LabOwnerMap.S < 2 then onWalkable(benchAt, 2) else onPath(benchAt, 2)) then
 				benchModel(into, CFrame.lookAt(benchAt, benchAt + Vector3.new(dir.X, 0, dir.Y)))
-				binModel(into, benchAt + CFrame.lookAt(benchAt, benchAt + Vector3.new(dir.X, 0, dir.Y)).RightVector * 4.4) -- (a bin by every bench)
+				local binAt = benchAt + CFrame.lookAt(benchAt, benchAt + Vector3.new(dir.X, 0, dir.Y)).RightVector * 4.4
+				if not onWalkable(binAt, 1) then
+					binModel(into, binAt) -- (a bin by every bench, never on a walkway)
+				end
 			end
 			-- a small cluster of props behind the sign
 			local propAt = endP + side * (Plan.INNER_W / 2 + 12) - dir * 12
@@ -2390,9 +2444,10 @@ local function extras(into: Instance, o: Vector3, top: number)
 	part(into, "BikeRackRail", Vector3.new(26, 0.3, 0.3), CFrame.new(br + Vector3.new(0, 2.4, 0)), Color3.fromRGB(150, 154, 160), Enum.Material.Metal, true)
 	-- The landing field's distance boards, west of the cannon.
 	local cn = planAt(o, top, "Cannon")
-	for _, d in { 50, 100, 150 } do
-		local at = cn + Vector3.new(-d, 0, -26)
-		if not onPath(at, 1) then
+	local compactField = LabOwnerMap.S < 2 -- (M4: the compact landing field is 60 long: boards at 25, 50 and 75, on its north edge)
+	for _, d in (if compactField then { 25, 50, 75 } else { 50, 100, 150 }) do
+		local at = cn + Vector3.new(-d, 0, if compactField then -13 else -26)
+		if not (if compactField then onWalkable(at, 6) else onPath(at, 1)) then
 			nameSign(into, at, Vector3.new(0, 0, 1), tostring(d))
 		end
 	end
