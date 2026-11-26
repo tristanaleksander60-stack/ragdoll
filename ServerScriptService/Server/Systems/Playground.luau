@@ -1530,6 +1530,15 @@ function Playground.build(labOrigin: Vector3, name: string?)
 			log.warn("LabV10 failed in " .. folder.Name .. ": " .. tostring(errV))
 		end
 	end
+	-- DESTRUCTION 2 (Config.BREAKABLES): crate stacks you can shoot to planks (Systems/Breakables).
+	if lab and (Config :: any).BREAKABLES then
+		local okB, errB = pcall(function()
+			require(script.Parent:WaitForChild("Breakables")).buildLab(folder, origin)
+		end)
+		if not okB then
+			log.warn("Breakables failed in " .. folder.Name .. ": " .. tostring(errB))
+		end
+	end
 	if lab and (Config :: any).PATHS then
 		local okU, errU = pcall(function()
 			local roots: { Instance } = { folder }
