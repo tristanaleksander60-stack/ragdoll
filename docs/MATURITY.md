@@ -39,3 +39,4 @@ Recommendation: option 2. The phone audience is young, and the label is the bigg
 - Purple cartoon blood stays.
 - The final answers are in `docs/BODY_V2.md` ("MATURITY: final answers"). The expected label is Mild (9+).
 - Submit only after the gore-off build is live.
+- **Update (26 Nov):** bones may break inside the cartoon X-ray view (`BODY_V2.md` 1b). Mention it honestly under violence and gore: cartoon X-ray, no exposed bones.

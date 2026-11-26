@@ -35,9 +35,10 @@ There is no guard-dog code in git, so the doghouse is a place-file model. Keep i
 6. **X-ray shows it** (`XRAY_V2`):
    - while it bites, the dog's jaws and teeth are seen clamped round that limb's bone;
    - afterwards the bone keeps cartoon tooth marks;
-   - at stage 3, a thin cartoon zig-zag crack line shows on the bone.
+   - at stage 3, a thin cartoon zig-zag crack line shows on the bone;
+   - one more bite at stage 3 BREAKS it (`docs/BODY_V2.md` 1b): in X-ray the bone snaps in two, offset, inside the glass shell.
 
-   Never a broken or missing bone, and nothing poking out. The marks stay until the limb heals or gets a bandage.
+   Nothing pokes out, and there is no blood from the break. The marks stay until the limb heals or gets a bandage.
 7. **Rhythm:**
    - one bite at a time; the next tap queues;
    - 1.5 s between bites;

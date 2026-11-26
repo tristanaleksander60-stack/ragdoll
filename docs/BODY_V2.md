@@ -24,7 +24,7 @@ The owner chose option 2 in `docs/MATURITY.md`.
   - `SEVERING = false`: no limbs off, no cutting in half, no bursting heads, no "head off at 2 rounds";
   - the mech-arms rip/tear (pull a limb off, strands of flesh, widening wound): the arms may still grab and throw;
   - stumps, flesh, meat, spine sticking up, exposed bones on a living body;
-  - the X-ray bone that is "shot away bit by bit" or broken: X-ray bones are always whole (section 1);
+  - the X-ray bone that is "shot away bit by bit": a bone may BREAK in X-ray (owner, 26 Nov 2026: "Knoglen må godt brække"), see section 1b;
   - creatures that tear, bleed, "spit bones with meat", red water (shark, washer), the frog's "slime and bones". Creatures now swallow and spit out the dummy dizzy with cartoon stars, or a puff;
   - the press pancake's "blood dripping" and "wet splat": it becomes a flat cartoon pancake that pops back up;
   - rot or decay on death;
@@ -49,6 +49,16 @@ The owner chose option 2 in `docs/MATURITY.md`.
 - **Performance:**
   - skeletons are made only while X-ray is on and pooled;
   - phones: max 6 X-rayed bodies at once (the nearest).
+
+## 1b. Bones may break, inside X-ray only (owner, 26 Nov 2026: "Knoglen må godt brække")
+- **When it breaks:** a limb at injury stage 3 that is hit again, a hard fall, or a dog bite at stage 3. That limb's bone breaks **in the X-ray view**:
+  - the bone snaps in two pieces with a clean cartoon zig-zag break;
+  - the pieces sit slightly offset and angled, still inside the glass shell;
+  - a small white "crack" flash and a CRACK sound.
+- **Outside X-ray:** nothing shows. The limb is limp (no tone) and the ragdoll holds it or limps.
+- **Never:** bone through the skin, flesh, splinters flying, or blood from the break.
+- **It stays** until a bandage (an arm sling or a splint on the leg) or a full heal; then the bone shows whole again.
+- **Maturity:** answer honestly. The game shows "cartoon X-ray skeletons that can show a bone breaking, inside a see-through body; no realistic gore, no exposed bones". Expect Mild; if Roblox rates it higher, the owner decides then.
 
 ## 2. Blood look (`BLOOD_V2 = true`, still `BLOOD = "purple"`)
 Exactly picture 2:
