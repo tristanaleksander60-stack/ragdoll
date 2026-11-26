@@ -2,16 +2,18 @@
 
 **URGENT, owner only:** the maturity questionnaire (item 5) must be resubmitted by Fri 27 Nov 2026 17:34 UTC.
 
-Status: **waiting for the owner's corrections** (plan sent 26 Nov 2026). Do not start before the owner says go. Then work top to bottom.
+Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run before the owner tests.
+
+> "Sørg for at den laver alt før jeg skal teste, så jeg ikke skal ind og teste flere gange i løbet af i dag"
 
 **Targets and order of levers:** `docs/STRATEGY.md`, the 1-week column. Every item is judged against those funnels.
 
-For each item:
-- build it;
-- do one quick Play (no errors);
-- publish through RELEASE.md;
-- write a Danish **"Test selv"** list;
-- mark the item done here.
+**How this run works (owner order, 26 Nov 2026; it overrides "publish and test after each item"):**
+- Build items 0-8 top to bottom in ONE session, without stopping to ask. Item 5 is the owner's (only prepare the answers).
+- After each item: one quick Play (no errors), commit and push, mark it done here. **Do not ask the owner to test in between.**
+- Anything that needs the owner (new product ids, a picture choice, a yes/no): pick the safe default behind a Config switch, write it in the "Questions for the owner" list at the end, and go on. Never wait.
+- **Publish ONCE at the end** through RELEASE.md (quick gate; never restart old servers).
+- Then give the owner **ONE combined Danish "Test selv" list** for everything, grouped by device (phone first, then PC, tablet, console), max about 15 lines, plus the "Questions for the owner" list.
 
 0. **WEAPONS list: no BUY, no TRY FREE, only the next weapon shows its KOs** (owner, 26 Nov 2026; do this first, it is small).
    > "Gør så man ikke kan se "Buy" ved hver ting i WEAPONS, men man kun kan se hvor mange KOs man mangler. Så man skal kun kunne se hvor mange KO's man mangler ved det våben man er kommet til, ikke hvor mange KO's det tager at få en sniper fx. og fjern try free ved alle våbene."
@@ -56,7 +58,12 @@ For each item:
    4. **One goal line instead of "Every weapon..."**: the top pill shows the next goal, short and live: "Next: Bow — 3 KOs" with a bar. When it is reached, a big unlock moment ("BOW UNLOCKED!", sound, buzz, auto-equip). This also carries item 4's minute moments ("Press the red button!", "Try the cannon!").
    5. **A clean left side and fewer badges.**
       - On a phone: Shop and Menu only, bigger (44 px+). REVIVE only shows when you are down.
-      - Red ! only when there is really something new to claim, max one at a time. GIFT shows its timer only in the last minute, then a big "CLAIM".
+      - **No notifications on a phone** (owner, 26 Nov: "fjern Free Gift notifikationer osv fra tlf"):
+        - the GIFT button with its timer and red ! is gone from the phone HUD; the free gift is claimed from Menu → REWARDS (a quiet dot there only when it is ready);
+        - no red ! badges on a phone at all (Menu, RANK & EGGS, …);
+        - no pop-up toasts or banners on a phone for gifts, rewards, eggs, codes, "free try", sales, What's New, server events or other players. Only things about YOUR play stay, small and short: a KO, an unlock, low ammo;
+        - What's New does not open by itself on a phone;
+        - one switch, `Config.PHONE_QUIET = true`; tablets follow phones; PC and console keep today's notices.
    6. **Phone menus.**
       - Every menu opens nearly full-screen on a phone (safe area kept), with big close X.
       - **Weapons:** 2-3 big cards per row, a big picture, name, the lock or EQUIP; no description and no stats on a phone (tap a card for details).
@@ -106,7 +113,7 @@ For each item:
 6. **The first dummy you hit twice gets angry**, unless the first shot kills it; then it is the next dummy hit twice.
    - Red face and a short tantrum; it runs at you and gives a harmless, funny shove or slap (no damage), then flees.
    - Once per player early on, then rarely.
-   - (Owner to confirm: shove allowed, or only scolding?)
+   - The owner has not answered shove or scold yet: build the harmless shove behind `Config.ANGRY_SHOVE = true` (one switch to turn it into scolding only) and put the question in the owner list.
 7. **A tutorial on every device** (PC, phone, tablet, console).
    - 3-4 short show-don't-tell steps: shoot a dummy, grab and throw, use a terminal, find the Map board.
    - The right input glyphs per device; skippable; newcomers only; no pop-ups on top.
@@ -130,3 +137,6 @@ For each item:
      - fair, with no pay-to-win.
    - Give the owner the product list to create.
    - **Measure:** the shop funnel with a "Bought" step.
+
+## Questions for the owner (filled in during the run)
+- (none yet)
