@@ -115,8 +115,8 @@ Its DEFINITION OF DONE (`MAP_MASTERPLAN.md` "Check") is the release gate. The or
 1. **M4 FIRST:** the map smaller like the references, with its paths, its lint, the OBJECT BY OBJECT table and THE LOOK 1:1 (every other map row is built on its new layout);
    - where an older row or doc asks for more trees, groves, belts, hedges, a forest edge, rooms or "fill the empty space", **M4 wins**: no trees between attractions, clean open grass, the references' look.
 2. the water (F78), the cave (F79), the T-rex and the bear (1.01b);
-4. the vehicles: the motorbike (F75 + F69; on the compact map it rides the outer walkway loop), the entrance row (F76);
-6. last, the DoD (row 1).
+3. the vehicles: the motorbike (F75 + F69; on the compact map it rides the outer walkway loop), the entrance row (F76);
+4. last, the DoD (row 1). (The cave and the T-rex/bear models and animals' looks: the terrain cave in F79; the animals' new Blender models and animations come in PHASE 5 row 3, once.)
 
 | # | What | Doc | State | LEFT |
 |---|---|---|---|---|
