@@ -84,6 +84,7 @@ safe("MapMachines", function() require(Systems:WaitForChild("MapMachines")).star
 safe("RoadWalkers", function() require(Systems:WaitForChild("RoadWalkers")).start() end) -- OVERVIEW 1c: groups walk the roads and chat
 safe("BrickWall", function() require(Systems:WaitForChild("BrickWall")).start() end) -- OVERVIEW 1d: the crash wall breaks brick by brick
 safe("RagdollNav", function() require(Systems:WaitForChild("RagdollNav")).start() end) -- OVERVIEW 0.95: ragdolls walk real paths round things
+safe("Unstick", function() require(Systems:WaitForChild("Unstick")).start() end) -- F32: belt walls + unstick ragdolls from trees and walls
 safe("MechArms", function() require(Systems:WaitForChild("MechArms")).start() end) -- mechanical arms to tear ragdolls apart
 -- V8-1.7 (phone diet): with the birds off, their models leave ReplicatedStorage (every client loaded
 -- them for nothing); Config.BIRDS on brings them back at the next server start.

@@ -63,6 +63,7 @@ local Config = {
 	PROP_CLEAR = true, -- F44: yard benches, signs and props only go where nothing stands within 3 studs (GetPartBoundsInBox; next spot if blocked) (LabOwnerMap freeSpot)
 	NO_WHITE_RINGS = true, -- F41: no pale stress ring and no white rim round the bullet holes (the hole picture tinted darker) (Client/BulletHoles)
 	WALK_SETTING = true, -- F38: Settings > Walk speed: NORMAL / FAST 34 / VERY FAST 40 / CALM 20, saved in the profile; sprint is 1.5x it (Client/Settings, Client/Sprint)
+	UNSTICK = true, -- F32: invisible solid walls along every tree belt (gaps at the entrances, NoGo for paths), and a ragdoll stuck inside anything solid for 1 s is moved to the nearest free spot (Systems/Unstick)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays
