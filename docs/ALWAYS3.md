@@ -252,3 +252,70 @@ This OVERRIDES the earlier refill details where they disagree: no parallel spawn
   - the knocked-out state must remove the ragdoll from the count immediately;
   - the cooldown and hysteresis from the other sections must not block priority 1 (sending an existing one).
 - **Check:** knock out ONE of the 3 near you. Within half a second another is visibly running toward you. Do the same with 2.
+
+## THE 2 NEARBY: there are always 2 more close by, and one WALKS over when one of the 3 dies (owner, 26 Nov 2026: "Sørg for at der hele tiden er 2 ragdolls i nærheden så hvis en af de 3 dør så kommer en af de andre 2 gående naturligt fra nærheden")
+This OVERRIDES the FINAL RULE's "no reserves" and the BUG section's "it RUNS over" for the first one to come. The reserves here are NOT extra ragdolls trailing you. They are 2 ordinary living ragdolls going about their own life close by.
+
+**Today:** there are 3 near you (within 35 studs). When one is knocked out, a ragdoll is sent RUNNING from further away, or one is spawned behind you.
+
+**The new rule** (behind `Config.NEARBY_TWO = true`; in Lab alwaysThree / the RagdollDirector):
+- **Two rings round each player:**
+  - **NEAR:** 3 living ragdolls within 35 studs (as now);
+  - **CLOSE BY:** 2 more living, free ragdolls 35-60 studs away.
+- **What the 2 close by do:** they live their own normal life there:
+  - walking, idle actions (LIFE_IDLE), chatting with each other, looking at a machine;
+  - not following you in a line, not staring at you, not standing still waiting.
+
+  When you move on, they drift along with you naturally: every 6-10 s each picks a new free spot in the 35-60 ring, ahead of the way you walk (`NavTarget.snap`, F72). They walk there at a normal pace. They are often in view, so the place feels alive.
+- **When one of the 3 dies** (is knocked out):
+  - within 0.5 s, the nearest of the 2 close by notices: it turns its head to you or the body;
+  - then it WALKS over naturally, at a brisk walk (Pace about 1.3), and joins the 3. It can say one line (TalkLines: "What happened here?", "Whoa, is he okay?") when it arrives.
+  - It jogs (Pace about 1.8) only if it is more than 45 studs away.
+  - If 2 of the 3 die, both of the 2 close by come, 0.5 s apart.
+- **Then the close-by ring is refilled, quietly:**
+  1. within 2 s, the nearest free existing ragdoll 60-150 studs away walks into the 35-60 ring (it walks; nobody sees a hurry);
+  2. if there is none, ONE is placed out of view, behind you, at about 55-70 studs (the FINAL RULE's spawn rules: standing, on walkable ground, never on screen, the 8 s cooldown), and walks into the ring.
+- **Priority order now:**
+  1. the close-by one WALKS in (this section);
+  2. if the close-by ring is empty: the FINAL RULE / BUG order (an existing one RUNS in from up to 150 studs);
+  3. else one spawn behind you (the 8 s cooldown).
+
+  NEVER ZERO still sends a runner if the near ring hits 0 and nobody close by can come.
+- **Limits:**
+  - 3 + 2 = 5 is under the nearby cap on every device (phone 7, tablet 9, PC 12, `RAGDOLL_DIRECTOR.md` Part C);
+  - on phones the 2 close by may be in light mode (the 60/75 border), which is cheap;
+  - the 2 close by are never machine watchers (those stay at their machine), never in your vehicle's way, and are paused while you drive, fly or ride (they reform 2 s after you stop);
+  - the "Do NOT spawn new ones when many are around" rule still holds: if AROUND already has enough free ones, use them, never spawn.
+- **Check:** stand still. There are 3 near you and you see 2 more pottering about a bit further away. Knock out one of the 3: one of the 2 looks over and walks in calmly, and a few seconds later a new one strolls into the ring further away. Walk across the map: the 2 come along naturally, never in a line behind you.
+
+## DRAWN TO YOU: every free ragdoll drifts toward you along the paths, but keeps a polite distance (owner, 26 Nov 2026: "Sørg for alle ragdolls generelt er tiltrukket af mig og går på de stier hen mod mig og nærheden af mig/brugeren uden at gå ind i mig/helt op til mit ansigt nødvendigvis")
+**Today** a free ragdoll (not one of the 3 near, not the 2 close by, not a watcher) roams to random spots in its room, so most of them are far away and walk anywhere.
+
+**The new rule** (behind `Config.DRAWN_TO_YOU = true`; server, in the RagdollDirector and the roam picker):
+- **Every free ragdoll is pulled toward its nearest player.** When it picks its next roam goal (every 8-15 s, as now), it picks a spot that is closer to the player than where it is now, in this band:
+  - the 3 NEAR: within 35 studs (as now);
+  - the 2 CLOSE BY: 35-60 studs (THE 2 NEARBY);
+  - everyone else: 60-120 studs, the AROUND band. They mill about there (idle actions, chatting, looking at a machine) and keep drifting along as you move. They never push into the near rings themselves: only the refill rules call them in.
+- **They walk ON THE PATHS:**
+  - the goal is a point on the map's path network (the walkways and plazas from `OwnerMapPlan`, the path nodes and legs), or a free spot right beside a path (a bench, a lawn edge, a machine's watcher spot);
+  - the route follows the paths: PathfindingModifier costs Walkway 1, Plaza 1, Grass 5, so the path is always the cheap way, and they only cross grass for the last few studs;
+  - they keep to the right half of a path when others come the other way (`avoidDummies` passing side, with F72's hysteresis);
+  - every goal goes through `NavTarget.snap` (F72).
+- **Spread out, not a column:**
+  - each one reserves its goal spot (no two within 4 studs);
+  - the spots are spread round the player by angle (a free ragdoll takes the emptiest direction), so they come from different paths and stand in small groups, never in a line behind you.
+- **A polite distance from you:**
+  - **never closer than 5 studs** to a player unless it has a reason: talking to you (stops at 5-6 studs, facing you; LOOK AT YOU), the TRY lesson, the angry dummy's shove (F-items with 1-3 shoves), CPR, the dog. Inside 3.5 studs it always steps back, like `avoidDummies`' personal space but for players;
+  - **never walks INTO you:** you are a moving obstacle for F72 step 6 (it stops, waits or steps aside; if you walk at it, it steps out of your way);
+  - **never in your face or in your view:**
+    - it never stops between your camera and your character within 12 studs;
+    - in first person, it never stands inside a cone 6 studs in front of your camera (60 degrees);
+    - one that ends up there steps aside within 1 s.
+- **Limits:**
+  - the nearby cap per device (`RAGDOLL_DIRECTOR.md` Part C: phone 7, tablet 9, PC 12 within 45 studs) always wins. The AROUND band starts at 60 studs, so the drifting ones never break the cap; extras over the cap walk away out of view as before;
+  - they pause while you drive, fly or ride, and drift again 2 s after you stop;
+  - machine watchers stay at their machine; demo walkers (F31) and event roles keep their jobs;
+  - in a shared lab each ragdoll is drawn to its nearest player;
+  - cost: one goal pick every 8-15 s per ragdoll; paths share the existing budget (about 6 a second); far stand-ins without physics follow the same paths.
+- **Check:** stand in the plaza for 1 minute. Ragdolls you could see far away come your way along the paths (not over the flower beds), spread out, and settle 60-120 studs off in small groups, with 2 closer and 3 near you. None walks into you or stops in front of your camera. Walk to another room: they follow along the paths, loosely.
+

@@ -1051,6 +1051,67 @@ The owner sees it again: the legs jitter for 1-2 seconds at random moments. The 
 - **LayoutCheck:** check both states on the phone sizes (small and open) for overlap with the stick, SHOOT/GRAB, jump and the safe area.
 - **Check:** in the Studio phone emulator (landscape and upright): the bar is small; one tap opens it; picking a weapon holds it and the bar shrinks; tapping the stick closes it and you walk at once; after 4 s it closes alone. iPad and PC: today's bar, unchanged.
 
+## F72 Ragdolls still WALK INTO THINGS all the time (owner: "Sørg for at ragdolls ikke går ind i ting hele tiden")
+**What is wrong now** (read in `Shared/Ragdoll/ActiveRagdoll.luau` `updateMoving`, `blocked`, `avoidDummies`, and Systems/RagdollNav):
+- **No path for most walks:** RagdollNav only paths a Home more than 8 studs away, and since the F65 fix (v1155) a system that changes Home more than once a second "steers on its own" with no path at all: the Newspaper route, FirstAid, the recruit runners, NEVER ZERO and anything following the player. These are exactly the walkers you see, so they walk straight into things.
+- **The obstacle check is one thin ray:** `blocked` casts ONE ray from the pelvis centre at knee height, 2.5 studs ahead. The body is about 2 studs wide, so a lamp post, a bench end, a fence post, a table corner or a machine edge off the centre line is never seen. At a run (speed 10-17) 2.5 studs is less than 0.25 s, so it sees things only when it is already touching them.
+- **The detour is random and late:** after 1.5 s without progress it turns a fixed 70 degrees to a RANDOM side for 1.2 s, and flips side when that fails. It walks into the thing first, then wiggles left and right (which also shakes the legs, see F73).
+- **Goals inside things:** roam, chat and watch spots can still be a point inside a bench, a bush, a machine or a wall (ALWAYS3 "only valid targets" is still in LEFT).
+
+**The fix** (behind `Config.NAV_V2 = true`; server, the same code for every walker):
+1. **A path for every walk, also to a moving goal.** No walker ever walks without a path when the line to its goal is not clear.
+   - A goal that moves (a player, a runner's target, the Newspaper route, FirstAid) keeps ONE path and re-plans only when the goal has moved more than 4 studs from the end of that path, at most once a second per walker. Between re-plans it follows the path it has; the last waypoint is the live goal only when the line to it is clear (step 2's cast).
+   - This keeps the F65 fix (Home never flips between two points), because the walker steers to its own waypoint and the systems keep setting Home as they like.
+   - A short walk (under 8 studs) does the clear-line cast first and paths only if it is blocked.
+2. **See the whole body, early:**
+   - replace the single ray with a `Workspace:Blockcast` the size of the walking body (about 2.4 wide x 3.5 high x 1 deep, from the shins to the chest) along the heading;
+   - look ahead `max(3, speed x 0.6)` studs, so a runner sees things in time;
+   - ignore other ragdolls (`avoidDummies` handles them), the ground, anything with CanCollide off and the Foliage group (people walk through leaves and bushes, F54; tree trunks are solid and avoided).
+3. **Choose the free side, not a random one:**
+   - when the cast hits, cast the same box at 25, 50, 75 and 100 degrees to each side and take the free direction nearest to the goal;
+   - keep that side for at least 0.8 s, and for as long as the thing is still beside it (hysteresis), so it never flips left and right;
+   - it starts turning as soon as it sees the thing (look-ahead), so it curves round it smoothly instead of bumping and backing off.
+4. **Only valid goals:** every Home goes through one function, `NavTarget.snap(point)`. If the point is inside or within 1.5 studs of a solid part, on water, lava, a belt, a flower bed or a machine floor, it moves to the nearest free walkable point: test a ring of 8 points at 2, 4 and 6 studs, using a Blockcast down plus the body-box overlap check. Cache the result per spot. The watcher spots in front of machines are checked once at map load.
+5. **Touching = react at once:** a walker that wants to walk but moves at less than 30 % of its wanted speed for 0.4 s (or whose body box overlaps a solid part) steps back about 1 stud, takes the free side (step 3) and re-plans. Do not wait 1.5 s. After 3 failures it picks a new goal (as today).
+6. **Moving things:** a car, the train, a bike or a player on the walker's line within 12 studs makes it stop and wait (or step aside if it is standing in the way). It goes on when the line is clear.
+7. **A count, like the leg detector:** `NAV_BUMP_LOG` (Studio and Metrics). A BUMP is a walker in Walking/Fleeing whose body touches a non-ground solid part that is not a ragdoll or a player. Print the part's full name and the walker's system (who set its Home). A 2-minute Studio watch with the player moving through the Machine Hall, the plaza, the Fun Fair and the roads: fix every part or system the log names, and write the count before and after in this section.
+8. **Cost:**
+   - the cast runs at 10 Hz per walker (not every frame); the side casts run only on a hit;
+   - paths stay under about 6 a second in total (as today), and the re-plans of moving goals share that budget;
+   - far stand-ins without physics follow the same paths.
+
+**Check:** follow 5 walkers each for 1 minute through busy rooms, plus 2 runners coming to you over the plaza and the roads. None walks into a tree trunk, bench, lamp, fence, machine, wall, car or kiosk. They curve round things before they reach them.
+
+## F73 = F65 part 2: the legs still JITTER sometimes WHEN THEY TURN (owner: "deres ben hakker stadig en gang imellem når de drejer sig")
+**The likely causes** (read in the code, v1155):
+- **The legs do not step when the body turns on the spot.**
+  - The step cycle (`Client/DummyLife.luau` `gaitPose`) is timed ONLY by how fast the pelvis moves over the ground. `amount = groundSpeed / 2.5`, so with no ground speed the legs stand still.
+  - Meanwhile the server's `balance` AlignOrientation turns the whole body (`ActiveRagdoll` `updateMoving`). The feet stay planted with friction and are twisted round, stick, then slip = a short burst of jitter.
+  - This happens on every turn on the spot: arriving home and turning to HomeLook (up to 5 s), a talker turning to you (LOOK AT YOU), a turn of 90 degrees or more at a corner.
+- **The speed drops during a turn.** `speed = wantSpeed x facing`, so a sharp turn drops the speed to about 0 and back. The client's `groundSpeed` then rises and falls, and the step cycle fades in and out several times = the legs flicker between walking and standing.
+- **The turn itself is uneven.** `rig.heading:Lerp(wantHeading, k)` on unit vectors turns slowly and then whips round near the end for a big turn, and SNAPS when the lerp passes near zero (a turn of about 180 degrees: `if heading.Magnitude < 0.05 then heading = wantHeading`). The AlignOrientation then yanks the body round in one go.
+- **The way it wants to go flips left and right:** `avoidDummies` and the random detour flip the wanted direction from side to side around another ragdoll or an obstacle. The body turns back and forth several times a second, and so do the legs (F72 step 3 fixes the detour side; add the same hysteresis to `avoidDummies`: keep the passing side for 0.8 s).
+- **The detector misses it:** since v1155 a jitter event needs 10 knee reversals a second AND 70 % of the frame rate. A turn twist is slower than that (a foot sticking and slipping 3-6 times a second).
+
+**The fix** (behind `Config.TURN_STEP = true`):
+1. **Turn-in-place steps** (DummyLife `gaitPose`): drive the step cycle by ground speed PLUS turning, so the legs step round when the body turns.
+   - `drive = groundSpeed + 1.4 x |yawRate|`, where yawRate is the pelvis's turn speed in rad/s from its LookVector, smoothed like groundSpeed;
+   - `phase += drive x dt / stride`; `amount = clamp(drive / 2.5, 0, 1)`;
+   - while the body turns with little ground speed (`yawRate > 0.8` and `groundSpeed < 1.5`), use a TURN pose instead of the forward swing: short steps with the knee lifting about 25 degrees, the hip turning toward the turn about 15 degrees on the stepping leg, and little forward and back swing. Blend between the walk and turn poses over 0.15 s, never switching in one frame.
+2. **Hysteresis on the cycle:** the step cycle fades in above `drive 0.6` and out only below `drive 0.3` (with a 0.2 s hold), so it never flickers on and off.
+3. **An even, capped turn** (ActiveRagdoll `updateMoving`): replace the unit-vector Lerp with a yaw angle and a critically damped spring:
+   - max turn speed 3.5 rad/s walking, 6 fleeing, 2.5 on the spot;
+   - for a turn bigger than 160 degrees, keep the side it was already turning to, never the snap;
+   - set the `balance` AlignOrientation's `MaxAngularVelocity` to the same cap, so the body never whips.
+4. **Keep moving through a turn:** `speed = wantSpeed x (0.35 + 0.65 x facing)` for turns up to 120 degrees, so a corner is walked round in an arc and not stopped at. A bigger turn slows to about a third and steps round (step 1).
+5. **No dragged feet:** while Standing/Walking upright, the feet have low friction (about 0.25, set once on entering those states, not every frame); back to the normal body friction on Ragdoll/Out. The pelvis is held up by `lift`, so the feet only need to touch, not grip.
+6. **Arriving and turning to HomeLook:** if the way it will face at home is more than 100 degrees from its heading, it starts turning in the last 2 studs of the walk (a curved arrival), so it seldom turns on the spot. `ARRIVE_TURN_MAX` stays the safety net.
+7. **LOOK AT YOU:** only the head and the chest turn up to 60 degrees; past that the whole body turns with the turn steps (step 1), at 2.5 rad/s, never a snap.
+8. **The detector sees turns too** (Client/LegJitter): a TURN TWIST event is the foot's speed crossing below 0.5 and above 3 studs/s more than 4 times a second while the pelvis's yawRate is over 0.8 rad/s, for 0.3 s; or a hip twist angle over 35 degrees. Log it with the same context as the F65 events plus the yawRate, the wanted-direction flips in the last 1 s and who set Home.
+9. **A short turn run in Studio** (1-2 minutes, not a long session): stand among 8 ragdolls and walk round them in circles, so they turn to look at you; let 3 arrive home; make 2 walk round a bench. The goal is 0 TURN TWIST events. Write the counts before and after in F65's findings.
+
+**Check:** watch ragdolls turn on the spot, turn to look at you and turn at corners. The feet step round, the legs never shake, and the body never whips round.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
