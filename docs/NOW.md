@@ -1,5 +1,7 @@
 # NOW: the current work list (read this first on every /klar)
 
+**All weak points, ranked:** `docs/WEAKNESSES.md` (26 Nov). After LAB10 round 2, take its "Order to fix" from item 3.
+
 ## CURRENT RUN: LAB 10/10 (owner, 26 Nov 2026)
 
 **ROUND 2 NOW** (owner scored round 1 at 3/10): build `docs/LAB10.md` section "ROUND 2". Main things:
