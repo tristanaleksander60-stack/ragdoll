@@ -17,7 +17,7 @@ Read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situat
 4. ONE quick Play for errors only (plus one capture if the row is about looks).
 5. Run the fast lints the doc asks for.
 6. Save the place, commit and push `release`, and update the row in OVERVIEW.
-7. Re-read THE ORDER (the cloud session adds the owner's new wishes there) and go straight on to the next row.
+7. `git pull --rebase` (the cloud session pushes the owner's new wishes and generated files, such as `OwnerMapPlan.luau`), re-read THE ORDER, and go straight on to the next row.
 
 ### Never
 - **Never end the turn after one row, one phase or a short while.** The only reasons to stop:

@@ -40,7 +40,7 @@ Keep it true: when you finish or start a row, update its State and LEFT here (th
 4. **ONE quick Play,** only to see that the output shows no error from your change, then stop it. For a row about how something LOOKS, take one capture in that same Play.
 5. Run the fast lints or scripts the doc asks for (no Play needed).
 6. Save the place. Commit and push `release`. Update the row here (State, LEFT).
-7. Go straight on to the next row. Never end the run after one row or one phase.
+7. `git pull --rebase` (the cloud session pushes new rows and generated files such as `OwnerMapPlan.luau`), re-read THE ORDER, and go straight on to the next row. Never end the run after one row or one phase.
 
 ### NO TESTING by Claude Code: that is the owner's job
 The owner: "sørg for den ikke tester alt selv dybt, men at det er min opgave".
