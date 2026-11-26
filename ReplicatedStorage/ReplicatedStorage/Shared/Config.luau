@@ -97,6 +97,7 @@ local Config = {
 	NAV_ALWAYS = true, -- F72: RagdollNav puts its waypoint in NavHome (followed before Home) and never overwrites Home, so every walk gets a path, moving goals too (re-planned when the goal moved 4 studs, max 1/s)
 	M4_CLEAN = true, -- M4 part 1: no tree belts, belt walls, bush rows, hedges, flower beds or room gates; trees only in a 50-stud edge band, at most 70 (LabOwnerMap m4Clean, Unstick)
 	REF_LOOK = true, -- M4 THE LOOK: the lab's light like the references (ClockTime 14, Brightness 2, grey ambient 70/128, Atmosphere 0.35 / 0.25 / (199,199,199), haze 1, no glow or tint) (Client/ZoneLighting)
+	REAL_WATER = true, -- F78 part 1: real Terrain water in the aquarium, both pools (raised basins) and the croc pond (mud bank); ragdolls in it cry out, float and climb out after 8 s (LabOwnerMap realWater, Systems/SwimService)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays

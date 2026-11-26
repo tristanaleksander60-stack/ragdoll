@@ -2507,6 +2507,70 @@ local function m4Clean(into: Instance, o: Vector3)
 	print(string.format("[OwnerMap] M4 clean: %d pieces removed, %d edge trees kept", removed, math.min(#keep, LabOwnerMap.M4_KEEP)))
 end
 
+-- F78 (owner: "det ligner ikke der er vand, ragdollen skal svømme eller drukne"; Config.REAL_WATER): every water body is
+-- REAL Terrain water: the aquarium filled inside its glass to 2 studs under the rim, the big pool and the lounge pool in
+-- raised basins, the croc pond a round pond with a muddy bank. The fake glass "water" parts go. Each body gets an
+-- invisible WaterVolume box (tag WaterVolume: Systems/SwimService; its name keeps paths out: RagdollNav NoGo).
+local function waterVolume(into: Instance, name: string, cf: CFrame, size: Vector3)
+	local v = Instance.new("Part")
+	v.Name = name .. "WaterVolume"
+	v.Anchored, v.CanCollide, v.CanQuery, v.CanTouch, v.CastShadow = true, false, false, false, false
+	v.Transparency = 1
+	v.Size = size
+	v.CFrame = cf
+	v.Parent = into
+	game:GetService("CollectionService"):AddTag(v, "WaterVolume")
+end
+local function realWater(into: Instance, o: Vector3, top: number)
+	local T = Workspace.Terrain
+	T.WaterColor = Color3.fromRGB(40, 130, 140)
+	T.WaterTransparency = 0.6
+	T.WaterWaveSize = 0.05
+	T.WaterWaveSpeed = 4
+	T.WaterReflectance = 0.4
+	for _, n in { "AquaWater", "PoolWater", "CrocWater", "SmallPoolWater" } do
+		for _, d in into:GetChildren() do
+			if d.Name == n then
+				d:Destroy()
+			end
+		end
+	end
+	-- the aquarium: inside the glass, from the base top to 2 under the rim
+	local aq = planAt(o, top, "Aquarium")
+	local AW, AD, AH = 80, 56, 26
+	local acf = CFrame.new(aq + Vector3.new(0, 3 + (AH - 2) / 2, 0))
+	local asz = Vector3.new(AW - 2, AH - 2, AD - 2)
+	T:FillBlock(acf, asz, Enum.Material.Water)
+	waterVolume(into, "Aqua", acf, asz)
+	-- the big pool: its rim raised to a basin wall, 3.5 studs of water
+	local pool = planAt(o, top, "BigPool")
+	local PW, PD = 90, 64
+	for _, s in { { Vector3.new(PW + 8, 4.4, 4), Vector3.new(0, 0, PD / 2 + 2) }, { Vector3.new(PW + 8, 4.4, 4), Vector3.new(0, 0, -PD / 2 - 2) }, { Vector3.new(4, 4.4, PD), Vector3.new(PW / 2 + 2, 0, 0) }, { Vector3.new(4, 4.4, PD), Vector3.new(-PW / 2 - 2, 0, 0) } } do
+		part(into, "PoolWall", s[1], CFrame.new(pool + s[2] + Vector3.new(0, 2.2, 0)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
+	end
+	local pcf = CFrame.new(pool + Vector3.new(0, 1.9, 0))
+	local psz = Vector3.new(PW, 3.6, PD)
+	T:FillBlock(pcf, psz, Enum.Material.Water)
+	waterVolume(into, "Pool", pcf, psz)
+	-- the lounge pool: the same, smaller
+	local pl = planAt(o, top, "LoungePool")
+	for _, s in { { Vector3.new(50, 3.4, 3), Vector3.new(0, 0, 15.5) }, { Vector3.new(50, 3.4, 3), Vector3.new(0, 0, -15.5) }, { Vector3.new(3, 3.4, 28), Vector3.new(23.5, 0, 0) }, { Vector3.new(3, 3.4, 28), Vector3.new(-23.5, 0, 0) } } do
+		part(into, "SmallPoolWall", s[1], CFrame.new(pl + s[2] + Vector3.new(0, 1.7, 0)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
+	end
+	local lcf = CFrame.new(pl + Vector3.new(0, 1.5, 0))
+	local lsz = Vector3.new(44, 2.8, 28)
+	T:FillBlock(lcf, lsz, Enum.Material.Water)
+	waterVolume(into, "SmallPool", lcf, lsz)
+	-- the croc pond: a muddy, sandy bank ring and water inside it
+	local pond = planAt(o, top, "CrocPond")
+	local axis = CFrame.Angles(0, 0, math.rad(90))
+	T:FillCylinder(CFrame.new(pond + Vector3.new(0, 1.2, 0)) * axis, 2.4, 38, Enum.Material.Mud)
+	T:FillCylinder(CFrame.new(pond + Vector3.new(0, 0.6, 0)) * axis, 1.2, 41, Enum.Material.Sand)
+	T:FillCylinder(CFrame.new(pond + Vector3.new(0, 1.3, 0)) * axis, 2.6, 34, Enum.Material.Water)
+	waterVolume(into, "Croc", CFrame.new(pond + Vector3.new(0, 1.3, 0)), Vector3.new(66, 2.6, 66))
+end
+
+
 function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	LabOwnerMap.origin = origin
 	-- (OVERVIEW 0.5, Config.SPAWN_UPRIGHT: the lab's ragdolls were laid out before the raised plaza stood, so the ones on its
@@ -2589,6 +2653,9 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	end
 	if M4 then
 		m4Clean(into, origin) -- (at once: nobody sees the trees go)
+	end
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).REAL_WATER then
+		realWater(into, origin, origin.Y - 0.05)
 	end
 	-- F53 (owner: "Man kan ikke komme ind i Weapons Testing, fordi træerne dækker"; Config.TREE_CLEAR): once everything has
 	-- stood a few seconds (other systems build their buildings too), every tree or bush whose foot stands within 4 studs
