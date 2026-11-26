@@ -104,6 +104,92 @@ function Poses.flinch(region: Region, side: number, limbSide: number, t: number)
 	return Poses.guard(side)
 end
 
+-- F2 (owner, 26 Nov 2026: "hænderne flyver bare op i luften når man skyder dem i benene"; Config.HIT_REACT_V2): the
+-- reaction is picked by the exact spot hit and where the shot came from, three variants a spot (the rig never plays
+-- the same one twice in a row), scaled by the weapon's force (strength 0.6 light to 3 heavy). The arms come up ONLY
+-- for a head or upper-chest hit (a protective flinch); a leg, hip, arm or back hit never lifts them.
+--   spot: "foot" (foot or shin), "thigh", "belly" (hip or belly), "chest", "back", "arm" (forearm or hand),
+--   "shoulder" (upper arm), "head", "side" (the trunk hit from the side).
+Poses.HIT_SPOTS = { "foot", "thigh", "belly", "chest", "back", "arm", "shoulder", "head", "side" }
+
+-- The spot for a struck part. front: the shot came from in front of the body; sideways: mostly from one side.
+function Poses.spotOf(partName: string, front: boolean, sideways: boolean): string
+	if partName == "Head" then
+		return "head"
+	elseif string.find(partName, "Foot", 1, true) or string.find(partName, "LowerLeg", 1, true) then
+		return "foot"
+	elseif string.find(partName, "UpperLeg", 1, true) then
+		return "thigh"
+	elseif string.find(partName, "UpperArm", 1, true) then
+		return "shoulder"
+	elseif string.find(partName, "LowerArm", 1, true) or string.find(partName, "Hand", 1, true) then
+		return "arm"
+	end
+	if sideways then
+		return "side"
+	elseif not front then
+		return "back"
+	elseif partName == "LowerTorso" then
+		return "belly"
+	end
+	return "chest"
+end
+
+function Poses.hitReact(spot: string, variant: number, side: number, limbSide: number, t: number, strength: number?): Pose
+	local a = math.clamp(0.55 + 0.25 * (strength or 1), 0.7, 1.35)
+	local function A(x: number, y: number, z: number): CFrame
+		return ang(x * a, y * a, z * a)
+	end
+	local s = if limbSide > 0 then "Right" else "Left"
+	local o = if limbSide > 0 then "Left" else "Right"
+	local l = limbSide
+	local v = variant
+	local shake = sin(t * 26) * 3
+	if spot == "foot" then
+		if v == 1 then -- the leg kicks out
+			return { [s .. "Hip"] = A(38, 0, 0), [s .. "Knee"] = A(-12, 0, 0), [o .. "Knee"] = A(-22, 0, 0), Waist = A(-6, 0, 4 * l), Neck = A(-12, 0, 0), [s .. "Shoulder"] = A(18, 0, 14 * l), [o .. "Shoulder"] = A(18, 0, -14 * l) }
+		elseif v == 2 then -- a hop on the other leg
+			return { [s .. "Hip"] = A(12, 0, 0), [s .. "Knee"] = A(-85, 0, 0), [o .. "Knee"] = A(-18 + shake, 0, 0), Waist = A(-4, 0, -6 * l), Neck = A(-10, 0, 0), [s .. "Shoulder"] = A(22, 0, 24 * l), [o .. "Shoulder"] = A(22, 0, -24 * l) }
+		end -- the knee buckles
+		return { [s .. "Hip"] = A(14, 0, 0), [s .. "Knee"] = A(-62, 0, 0), [o .. "Knee"] = A(-12, 0, 0), Waist = A(-10, 0, 9 * l), Neck = A(-18, 0, 0), [s .. "Shoulder"] = A(12, 0, 10 * l), [o .. "Shoulder"] = A(12, 0, -10 * l) }
+	elseif spot == "thigh" then
+		-- the knee buckles, the body dips to that side, a hand goes to the thigh
+		local dip = if v == 2 then 1.3 else if v == 3 then 0.8 else 1
+		return { [s .. "Hip"] = A(18 * dip, 0, 0), [s .. "Knee"] = A(-58 * dip, 0, 0), [o .. "Knee"] = A(if v == 3 then -30 else -10, 0, 0), Waist = A(-14, 0, 12 * l * dip), Neck = A(-22, 8 * l, 0), [s .. "Shoulder"] = A(28, 0, -4 * l), [s .. "Elbow"] = A(25, 0, 0), [o .. "Shoulder"] = A(if v == 2 then 14 else 6, 0, -12 * l) }
+	elseif spot == "belly" then
+		-- doubles over, a step back, both hands to the belly
+		local d = if v == 2 then 1.25 else if v == 3 then 0.85 else 1
+		return { Waist = A(-34 * d, if v == 3 then 10 * side else 0, 0), Neck = A(-22, 0, 0), RightShoulder = A(48, 0, -8), LeftShoulder = A(48, 0, 8), RightElbow = A(75, 0, 0), LeftElbow = A(75, 0, 0), RightHip = A(22 * d, 0, 0), LeftHip = A(22 * d, 0, 0), RightKnee = A(-24 * d, 0, 0), LeftKnee = A(-24 * d, 0, 0) }
+	elseif spot == "chest" then
+		-- jolts back, a step back, the shoulders curl (variant 3: the protective flinch, an upper-chest hit)
+		if v == 3 then
+			return { Waist = A(12, 0, 0), Neck = A(-16, -20 * side, 0), RightShoulder = A(78, 0, 18), LeftShoulder = A(78, 0, -18), RightElbow = A(105, 0, 0), LeftElbow = A(105, 0, 0) }
+		end
+		return { Waist = A(if v == 2 then 20 else 14, if v == 2 then -8 * side else 0, 0), Neck = A(-14, 0, 0), RightShoulder = A(22, 0, -6), LeftShoulder = A(22, 0, 6), RightElbow = A(35, 0, 0), LeftElbow = A(35, 0, 0), RightKnee = A(-10, 0, 0), LeftKnee = A(-10, 0, 0) }
+	elseif spot == "back" then
+		-- arches forward (the chest pushed out, the head back), stumbles a step forward
+		return { Waist = A(if v == 2 then 22 else 16, if v == 3 then 10 * side else 0, 0), Neck = A(20, 0, 0), RightShoulder = A(-22, 0, 14), LeftShoulder = A(-22, 0, -14), RightElbow = A(12, 0, 0), LeftElbow = A(12, 0, 0), RightHip = A(if v == 1 then 18 else 6, 0, 0), RightKnee = A(-14, 0, 0) }
+	elseif spot == "arm" then
+		-- that arm swings back with the shot and the other hand clutches it; the rest barely moves
+		return { [s .. "Shoulder"] = A(-38, 0, 26 * l), [s .. "Elbow"] = A(if v == 2 then 40 else 12, 0, 0), [o .. "Shoulder"] = A(52, 0, 22 * l), [o .. "Elbow"] = A(92, 0, 0), Neck = A(-14, -34 * l, 0), Waist = A(0, (if v == 3 then -14 else -6) * l, 0) }
+	elseif spot == "shoulder" then
+		-- the torso twists round with the shot
+		return { Waist = A(0, -36 * l, if v == 2 then 6 * l else 0), Neck = A(-8, -22 * l, 0), [s .. "Shoulder"] = A(-26, 0, 18 * l), [s .. "Elbow"] = A(14, 0, 0), [o .. "Shoulder"] = A(if v == 3 then 40 else 16, 0, -8 * l), [o .. "Elbow"] = A(if v == 3 then 70 else 20, 0, 0) }
+	elseif spot == "head" then
+		-- snaps back (variant 2: the hands come up to the face; variant 3: the head is knocked to one side)
+		if v == 2 then
+			return { Neck = A(36, -14 * side, 6 * side), Waist = A(12, 0, 0), RightShoulder = A(120, 0, 22), LeftShoulder = A(120, 0, -22), RightElbow = A(115, 0, 0), LeftElbow = A(115, 0, 0) }
+		elseif v == 3 then
+			return { Neck = A(18, -42 * side, 18 * side), Waist = A(6, -10 * side, 0), RightKnee = A(-14, 0, 0), LeftKnee = A(-14, 0, 0) }
+		end
+		return { Neck = A(44, 0, 0), Waist = A(16, 0, 0), RightKnee = A(-12, 0, 0), LeftKnee = A(-12, 0, 0) }
+	elseif spot == "side" then
+		-- the body turns away from the shot, leaning off it
+		return { Waist = A(-6, 30 * side, -10 * side), Neck = A(-10, 24 * side, 0), [if side > 0 then "LeftKnee" else "RightKnee"] = A(if v == 2 then -28 else -14, 0, 0), RightShoulder = A(10, 0, 8), LeftShoulder = A(10, 0, -8) }
+	end
+	return Poses.guard(side)
+end
+
 -- Losing balance: arms out in front to catch the fall, chin tucked, knees soft.
 local braceOut: Pose = {}
 function Poses.brace(t: number): Pose

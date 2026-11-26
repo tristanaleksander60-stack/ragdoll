@@ -63,6 +63,9 @@ type Rig = {
 	hitSide: number,
 	hitRegion: Poses.Region,
 	hitLimbSide: number, -- +1 right limb, -1 left limb (arm and leg hits)
+	hitSpot: string?, -- F2: Poses.spotOf
+	hitVariant: number?, -- F2: 1 to 3, never the same twice in a row
+	hitStrength: number?, -- F2: 0.6 (light) to 3 (heavy)
 	airborne: boolean,
 	groundY: number,
 	sinkCheckAt: number, -- stateTime of the last sunk-legs check (Standing)
@@ -1795,7 +1798,11 @@ local function update(dt: number)
 		elseif state == "Walking" or state == "Fleeing" or state == "Crawling" then
 			updateMoving(rig, dt)
 		elseif state == "Flinch" then
-			applyPose(rig, Poses.flinch(rig.hitRegion, rig.hitSide, rig.hitLimbSide, rig.stateTime))
+			if (GameConfig :: any).HIT_REACT_V2 and rig.hitSpot then
+				applyPose(rig, Poses.hitReact(rig.hitSpot, rig.hitVariant or 1, rig.hitSide, rig.hitLimbSide, rig.stateTime, rig.hitStrength))
+			else
+				applyPose(rig, Poses.flinch(rig.hitRegion, rig.hitSide, rig.hitLimbSide, rig.stateTime))
+			end
 			if rig.stateTime > 0.35 then
 				startRamp(rig, "Recovering", 0.3)
 			end
@@ -2347,6 +2354,23 @@ local function shotReaction(rig: any, impulse: Vector3, deltaV: number?)
 	local k = if (GameConfig :: any).SHOT_WEIGHT ~= false and deltaV then math.clamp(deltaV / 6, 0.6, 3) else 1
 	local flat = Vector3.new(impulse.X, 0, impulse.Z)
 	local dir = if flat.Magnitude > 1e-3 then flat.Unit else -rig.chest.CFrame.LookVector
+	-- (F2: a small random extra, a turn of the trunk, so no two hits look the same; a hit in the back sends it a step
+	-- forward.)
+	if (GameConfig :: any).HIT_REACT_V2 then
+		local twist = (math.random() - 0.5) * 2.4 * k
+		for _, p in { rig.pelvis, rig.chest } do
+			if p and not p.Anchored then
+				p.AssemblyAngularVelocity += Vector3.new(0, twist, 0)
+			end
+		end
+		if rig.hitSpot == "back" then
+			for _, p in rig.parts do
+				if not p.Anchored then
+					p:ApplyImpulse(dir * 2 * k * p.Mass)
+				end
+			end
+		end
+	end
 	local region = rig.hitRegion
 	if region == "arm" then
 		-- (Every part is its own assembly (BallSocketConstraints): the trunk turns, the limbs follow on the joints.)
@@ -2405,6 +2429,21 @@ function ActiveRagdoll.hit(model: Model, part: BasePart, impulse: Vector3, posit
 	rig.hitSide = if impulse:Dot(rig.chest.CFrame.RightVector) < 0 then 1 else -1
 	rig.hitRegion = Poses.regionOf(part.Name)
 	rig.hitLimbSide = if string.sub(part.Name, 1, 5) == "Right" then 1 else -1
+	-- (F2: the exact spot, a fresh variant (never the same twice in a row) and the force, for Poses.hitReact.)
+	if (GameConfig :: any).HIT_REACT_V2 then
+		local look = rig.chest.CFrame.LookVector
+		local flatI = Vector3.new(impulse.X, 0, impulse.Z)
+		local u = if flatI.Magnitude > 1e-3 then flatI.Unit else -look
+		local front = u:Dot(look) < 0
+		local sideways = math.abs(u:Dot(rig.chest.CFrame.RightVector)) > 0.8
+		rig.hitSpot = Poses.spotOf(part.Name, front, sideways)
+		local pick = math.random(1, 3)
+		if pick == rig.hitVariant then
+			pick = pick % 3 + 1
+		end
+		rig.hitVariant = pick
+		rig.hitStrength = math.clamp(deltaV / 6, 0.6, 3)
+	end
 
 	if deltaV >= FLINCH_MAX * 0.5 then
 		rig.lastHitAt = now -- it remembers who hurts it (and runs from people for a while)
