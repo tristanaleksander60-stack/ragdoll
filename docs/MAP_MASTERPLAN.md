@@ -1,3 +1,77 @@
+# MAP ROUND 4: SMALLER, like the owner's references; far fewer trees; the references' quality (owner, 26 Nov 2026 late). THIS IS THE MAP JOB NOW.
+> "Mappet skal være mindre som du kan se på mine reference screenshots jeg har vedhæftet, desuden er der alt for mange træer buske osv, og det ligner slet ikke samme kvalitet, sørg for det gør det."
+
+**This replaces** the round 3 ideas below: the 10x size (`LabOwnerMap.S = 3.2`, `Config.LAB_SPREAD x 3.2`), the hidden ROOMS, the TREE BELTS and the room gates. The owner also takes back "the map size stays as it is now". Round 3's good parts stay where they fit: the paths rules, the lints, the signs, the yards, the spawn.
+
+**The references** (the owner's own old map; open them and keep them open):
+- `art/store/look_target/lab_ref/ref_6.webp` … `ref_10.webp`: the main views (from the tower top, north-west, north-east, east, west, straight down);
+- `ref_1` … `ref_5`: extra angles (`ref_1` is the spawn plaza with the 4 leaderboards);
+- `docs/LAB_TARGET.md` R3.1 (everything in it) and R3.2 (the 1:1 positions, in studs).
+
+**What the references look like, and the map must look like this:**
+- **Compact and open:**
+  - every attraction sits close to its neighbours along wide light-grey tile walkways (about 12-14 studs wide, 6-stud tiles, thin joint lines);
+  - from the tower top you see nearly the whole lab;
+  - nothing is walled off.
+- **Lots of clean, bright green flat grass** between things, with no clutter.
+- **FEW trees,** in two simple clean kinds:
+  - round broadleaf trees (a lumpy round canopy on a brown trunk);
+  - slim conifers (stacked cones).
+
+  They stand mostly in loose groups of 2-4 round the OUTER EDGE, plus a few single trees inside next to benches or between attractions. There are NO belts, NO hedges and almost no bushes.
+- **Smooth rolling green hills** all round, close behind the edge, soft in the haze (Terrain, as in the shots). There is no dense forest wall.
+- **Clean, simple, solid attractions:**
+  - grey concrete and steel;
+  - glass tanks with blue water;
+  - the steel tower with its stairs and slide in the middle;
+  - the cars on painted bays;
+  - the boxing ring, the cave, the pools, the fan, the lava strip in its trench, the railway along the west edge.
+- **Sparse props:** a few benches, red barrels, a bin. Lamps only along the main walkways, not many.
+- **Soft daylight** with a little haze.
+
+**The size:**
+- **Use R3.2's layout and density, with its distances x 1.0-1.4** (the SMALLEST factor where every attraction fits with about 10-20 studs between neighbours; never more than 1.4). That is about 300-400 studs across inside the railway, instead of about 950 x 820 now.
+- **The big set pieces go back to about their reference size:** the tower about 50-55 studs high (5 floors); the slide, fan, gyro cage, cave, tanks, T-rex and rocket to match.
+- **The attractions added since the references** (the Machine Hall machines: tesla, gyro, press, washer, stretcher; the launch pads, the wrecking ball, the lounge pool, the spider pen, the garage, the car park, the entrance vehicle row F76) go into the free spots of the reference layout, in the same style, keeping the density.
+
+**Build steps:**
+1. **The plan:** rewrite the data in `tools/masterplan.py` to this compact layout:
+   - keep its OUTPUT FORMAT (ROADS, INNER, PLAZAS, ITEMS in `Shared/OwnerMapPlan.luau`), so every system that reads it keeps working: watch spots, nav no-go areas, the path walkers' lanes, the vehicle pads, the bike route, events, the spawn;
+   - drop the rooms, belts and gates from the data;
+   - the walkways connect every attraction's front directly, as in the shots;
+   - the lint must report 0; regenerate `OwnerMapPlan.luau` and `masterplan.png`.
+2. **The scale:**
+   - set `LabOwnerMap.S` (and `LAB_SPREAD`) to the chosen factor;
+   - make `Shared/LabLayout10.luau` READ every position from `OwnerMapPlan` ITEMS instead of hard-coding them (`V(245, -48)`, `CARS`, `CREATURES`, `STRETCH`…), so the machines, creatures and vehicles always stand where the map puts them (this also stops bugs like F74 and F75).
+3. **Remove:**
+   - the tree belts and their 46 invisible belt walls (`Unstick`);
+   - the room gates (`themedGate`) and the "IN HERE" boards;
+   - the extra groves, boulder fields, hedges, bush rows and most flower beds;
+   - the dense forest edge of the backdrop.
+
+   Delete them; do not hide them (no see-through leftovers, F82).
+4. **Trees and bushes:**
+   - about 50-80 trees in all, in the two kinds above (pick the cleanest matching set in `V3Assets` or the Creator Store: simple, solid colours, low-poly like the shots; a malware pass);
+   - mostly in loose edge groups, 6-10 single trees inside;
+   - never on or within 4 studs of a walkway, never in front of an attraction, entrance or sign;
+   - at most about 15 bushes (beside benches only); at most 6 flower beds.
+5. **The backdrop:** smooth rolling Terrain hills close round the edge (as in the shots), the railway at the west edge, light haze.
+6. **Everything that reads distances follows the smaller map** (a short code pass):
+   - the streaming radius can go down;
+   - the event areas (`EVENTS_NEWMAP.md`) and the bands in ALWAYS3 / DRAWN TO YOU stay as written (they still fit);
+   - the PATH WALKERS keep their per-device numbers;
+   - vehicle speed caps as before.
+   - **Walk speed:** keep the owner's chosen numbers (NORMAL 30); put a question in NOW.md: "Gangfart: kortet er mindre nu; skal NORMAL ned fra 30 til ca. 22?" (default: keep 30).
+7. **Performance:** far fewer parts (the belts alone were about 1,900 trees and bushes), so phones get faster.
+8. **The DoD captures:** from the same 5 angles as `ref_6` … `ref_10` (the tower top and straight down), one capture each, no score. Then the lints: 0 things on walkways, 0 paths ending in grass, 0 old paving, 0 overlapping slabs or see-through parts (F82).
+
+**Check (the owner):**
+- from the tower top the lab looks like `ref_6` / `ref_7`: compact, open, clean, with the attractions close together;
+- few trees, mostly round the edge; hills behind;
+- the spawn plaza with the 4 leaderboards like `ref_1`.
+
+---
+
 # MAP ROUND 3: the master plan (owner, 26 Nov 2026: "Det her map er 1/10, sørg for det bliver 10/10")
 > "Stierne connecter ikke med tingene ordentligt. Sørg for alle de stier er meget større og pænere, put flere træer ind og skift dem ud med de grimme træer vi har nu. Meningen er man ikke skal se alt på en gang så man får lyst til at gå ud og udforske. Gør så akvariet ikke står halvt inde i spawn. Fjern lygtepælen fra vandet og fra spawn."
 
