@@ -203,3 +203,17 @@ A hard safety net on top of the 3-near rule. It works EVERYWHERE on the map:
 - each time, the missing ones are visibly on their way within 0.5 s and arrive within about 2-3 s;
 - count the time and write it in State;
 - check on the phone emulator, with no lag.
+
+## Do NOT spawn new ones when there are already many around (owner, 26 Nov 2026: "når der er mange i nærheden, så skal der ikke spawne 1 ny ragdoll bare fordi der ikke er 3 lige ved siden af en")
+**Two different counts:**
+- **NEAR:** living within 35 studs (the "3 near you" goal).
+- **AROUND:** living within 70 studs, OR visible on the player's screen within 100 studs (the camera direction from the client).
+
+**The rule:**
+1. **If NEAR < 3 but AROUND ≥ 3:** do NOT spawn and do NOT bring reserves. Instead, call the nearest free living ragdolls from AROUND to walk (or jog) closer, until NEAR is 3. Use the comer and chatter roles; never pull watchers away from their machines unless there is nothing else.
+2. **Only if AROUND < 3:** spawn or bring reserves (the fast refill above, NEVER ZERO), for the missing number up to 3 AROUND.
+3. **Knocked-out, busy, pinned and in-machine ragdolls** count for neither.
+4. **Hysteresis against flicker:** a new spawn needs AROUND < 3 for at least 0.5 s. A ragdoll just called closer is not called again for 6 s.
+5. **Events and crowds** (event extras, the plaza at the start, road walkers passing): they count in AROUND, so a busy area never gets extra spawns.
+
+**Check:** stand in a busy spot (the plaza, an event, near walkers) and knock out one ragdoll next to you. No new ragdoll appears; one of the nearby ones walks over instead. In an empty spot, the fast refill still happens.
