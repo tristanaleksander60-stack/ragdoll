@@ -55,6 +55,7 @@ local Config = {
 	TREES_V2 = true, -- OVERVIEW 1a: trees and bushes from V3Assets/YTrees (textured bark + leaf canopies, mixed species, 5 greens, rare autumn, lean) instead of the flat green meshes (LabOwnerMap yTree)
 	ROAD_WALKERS = true, -- OVERVIEW 1c: 3 groups of 2-3 ragdolls walk the outer ring / boulevard side by side, stop to chat every 20-40 s, say "Hi!" (Systems/RoadWalkers)
 	BRICK_WALL = true, -- OVERVIEW 1d: the crash wall breaks one brick at a time with gravity (hybrid panels, sleeping debris, cap 50; Systems/BrickWall)
+	SOLO_HIDE = true, -- OVERVIEW 2 / F30: in the START place, other players (characters, name tags, sounds, effects) are hidden on this screen if a server ever holds 2+ (Client/SoloHide)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays
