@@ -506,7 +506,7 @@ local function buildRecenterButton()
 	KitStyle.button(view)
 	KitStyle.icon(view, KitStyle.HUD_ICONS.View) -- (UI v2: the drawn eye beside the word)
 	-- The key for it, in the corner of the button (keyboards only; V unless changed in Controls).
-	if UserInputService.KeyboardEnabled and not ViewMode.isTouch() then
+	if ViewMode.showKeys() then -- (F70)
 		local key = Instance.new("TextLabel")
 		key.Name = "Key"
 		key.AnchorPoint = Vector2.new(1, 0.5)

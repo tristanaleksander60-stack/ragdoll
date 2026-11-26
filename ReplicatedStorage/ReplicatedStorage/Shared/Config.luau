@@ -86,6 +86,7 @@ local Config = {
 	XRAY_TORSO = true, -- F59: X-ray torso skeleton (spine, sternum, 6 ribs a side, shoulder blades, collarbones, pelvis); each torso hole puts a slug on the bone it reaches first, cracks by force (Client/DummySkins)
 	NEARBY_TWO = true, -- 0.1566 THE 2 NEARBY: 2 more living ragdolls live their own life 35-60 studs from each player; when one of the 3 dies, a close-by one WALKS over first (Systems/NearbyTwo, Lab alwaysThree)
 	DRAWN_TO_YOU = true, -- 0.1567 DRAWN TO YOU: a free ragdoll's next roam goal is a path spot 60-120 studs from its nearest player, in the emptiest direction, 4 studs from other goals (Lab roam)
+	PHONE_NO_KEYS = true, -- F70: one rule for HUD key letters (ViewMode.showKeys: a keyboard and no touch screen); none on any touch screen, the gift's J included
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays

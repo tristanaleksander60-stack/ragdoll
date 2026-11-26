@@ -48,4 +48,14 @@ function ViewMode.isTouch(): boolean
 	return UserInputService.TouchEnabled and not UserInputService.MouseEnabled
 end
 
+-- F70 (owner: "Fjern keybind (J) fra gaven på tlf"; Config.PHONE_NO_KEYS): ONE rule for every key letter on the HUD: a
+-- keyboard and no touch screen. Any touch screen (a phone, an iPad with a keyboard, the Studio emulator) shows none.
+function ViewMode.showKeys(): boolean
+	local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
+	if Config.PHONE_NO_KEYS then
+		return UserInputService.KeyboardEnabled and not UserInputService.TouchEnabled and not ViewMode.isTouch()
+	end
+	return UserInputService.KeyboardEnabled and not ViewMode.isTouch()
+end
+
 return ViewMode

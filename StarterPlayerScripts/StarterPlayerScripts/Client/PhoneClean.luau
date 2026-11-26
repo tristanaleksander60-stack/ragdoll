@@ -14,6 +14,7 @@ local PhoneClean = {}
 
 PhoneClean.HIDE_GUIS = { "BodyCardArrow", "FirstPersonTouch" }
 PhoneClean.HIDE_NAMES = { KeyChip = true, Number = true }
+PhoneClean.HIDE_EVERYWHERE = { KeyChip = true, Key = true } -- (F70: no key letter on any HUD button on a touch screen)
 
 function PhoneClean.start()
 	if not Config.PHONE_CLEAN then
@@ -42,6 +43,22 @@ function PhoneClean.start()
 			task.wait(1)
 		end
 	end)
+	-- (F70, Config.PHONE_NO_KEYS: on any touch screen no key letter anywhere on the HUD; every 3 s, cheap)
+	if Config.PHONE_NO_KEYS then
+		local UserInputService = game:GetService("UserInputService")
+		task.spawn(function()
+			while true do
+				if UserInputService.TouchEnabled then
+					for _, d in pg:GetDescendants() do
+						if PhoneClean.HIDE_EVERYWHERE[d.Name] and d:IsA("TextLabel") and d.Visible then
+							d.Visible = false
+						end
+					end
+				end
+				task.wait(3)
+			end
+		end)
+	end
 end
 
 return PhoneClean

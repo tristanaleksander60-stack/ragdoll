@@ -377,9 +377,12 @@ local function buildTop(onRewards: () -> ())
 	local KeybindsG = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Keybinds")) :: any
 	local function drawGiftKey()
 		giftKey.Text = KeybindsG.labelOf("Rewards")
-		giftKey.Visible = game:GetService("UserInputService").KeyboardEnabled and not ViewMode.isTouch()
+		giftKey.Visible = ViewMode.showKeys() -- (F70)
 	end
 	KeybindsG.onChanged(drawGiftKey)
+	ViewMode.onChanged(drawGiftKey) -- (F70: redrawn when the device or the view changes)
+	game:GetService("UserInputService"):GetPropertyChangedSignal("KeyboardEnabled"):Connect(drawGiftKey)
+	game:GetService("UserInputService"):GetPropertyChangedSignal("TouchEnabled"):Connect(drawGiftKey)
 	drawGiftKey()
 	tapActions[gift] = onGift
 	tapWindows[gift] = "Rewards"
@@ -707,7 +710,7 @@ local function step()
 	if c then
 		-- (V8-0.2: no keyboard keys on screen while a pad is the last input.)
 		local padLast = Config.V8_FIRST_HIT and string.sub(UserInputService:GetLastInputType().Name, 1, 7) == "Gamepad"
-		c.Visible = on and UserInputService.KeyboardEnabled and not ViewMode.isTouch() and not held.Chips and not padLast
+		c.Visible = on and ViewMode.showKeys() and not held.Chips and not padLast
 	end
 	if leftCol then
 		-- (Audit area 1: a newcomer keeps WEAPONS from the first second, research spec 0-5 s; Shop

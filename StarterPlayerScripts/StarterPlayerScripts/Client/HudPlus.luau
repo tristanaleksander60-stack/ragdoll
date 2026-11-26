@@ -125,7 +125,7 @@ local function keyChip(parent: GuiObject, text: string?, at: UDim2?)
 end
 
 local function keyboard(): boolean
-	return UserInputService.KeyboardEnabled and not ViewMode.isTouch()
+	return ViewMode.showKeys() -- (F70)
 end
 
 local function keyText(id: string): string?
