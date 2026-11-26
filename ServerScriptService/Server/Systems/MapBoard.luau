@@ -321,8 +321,8 @@ function MapBoard.buildLab(folder: Instance, origin: Vector3)
 	end
 	if (Config :: any).LAB_OWNERMAP then
 		-- (Map round 2: the MAPS board stands on the raised plaza beside the leaderboards, facing the stair.)
-		boardAt = origin + Vector3.new(66, 5, -95 * 3.2 - 6)
-		boardFace = boardAt + Vector3.new(0, 0, 20)
+		boardAt = origin + Vector3.new(25, 4, -320) -- (map round 3: OwnerMapPlan MapsBoard, facing west across the plaza)
+		boardFace = boardAt + Vector3.new(-20, 0, 0)
 	end
 	MapBoard.board(holder, boardAt, boardFace)
 	-- (V9-NOW: Config.MAP_PORTAL false = no gold ring portal; the board is the one map place.)

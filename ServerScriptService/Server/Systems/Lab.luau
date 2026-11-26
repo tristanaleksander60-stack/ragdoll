@@ -1424,7 +1424,7 @@ local function placeOnPlot(player: Player, plot: Plot)
 	if (Config :: any).LAB_OWNERMAP then
 		-- (Map round 2, owner: the spawn is on the raised leaderboard plaza, at its front edge, facing down the stair to the
 		-- tower: LabOwnerMap M1 builds the plaza 5 high at z -95 x 3.2, 83 deep.)
-		at = plot.origin + Vector3.new(math.random() * 6 - 3, 5 + 3.5, -95 * 3.2 + 26 * 3.2 / 2 - 7)
+		at = plot.origin + Vector3.new(-30 + math.random() * 6 - 3, 4 + 3.5, -300) -- (map round 3: OwnerMapPlan Spawn, the plaza is 4 high)
 		facing = Vector3.zAxis
 	end
 	-- (V8-0.4: turned 50 degrees towards the cannon, which sat 82-97 degrees right of the spawn camera:

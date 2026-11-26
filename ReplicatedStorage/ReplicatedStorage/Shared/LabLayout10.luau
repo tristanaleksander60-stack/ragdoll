@@ -175,7 +175,7 @@ if Config.LAB_OWNERMAP then
 	-- (the boxing ring: buildLava keeps its own spot (-111, -28) unscaled; this moves it to the plan's (-35, -40) x 3.2)
 	LabLayout10.MOVES.Lava = Vector3.new(-35 * K + 111, 0, -40 * K + 28)
 	-- (map round 2: the 3-near ragdolls walk about on the raised plaza by the spawn)
-	LabLayout10.TEST_FLOOR = Vector2.new(0, -95 * K + 6)
+	LabLayout10.TEST_FLOOR = Vector2.new(-30, -310) -- (map round 3: the spawn plaza of OwnerMapPlan)
 end
 
 return LabLayout10
