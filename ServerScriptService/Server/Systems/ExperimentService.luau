@@ -242,6 +242,12 @@ function ExperimentService.event(player: Player, kind: string, n: number?, what:
 				end
 			end
 			player:SetAttribute("TriedCount", n)
+			-- (FIRST_2_MIN: a small pop for every new machine: "+25 BOLTS 1/6".)
+			if reward.each and n < reward.count then
+				pcall(function()
+					(require(script.Parent:WaitForChild("EconomyService")) :: any).give(player, reward.each, string.format("+%d BOLTS  %d/%d", reward.each, n, reward.count))
+				end)
+			end
 			if n >= reward.count and player:GetAttribute("TryRewardDone") ~= true then
 				player:SetAttribute("TryRewardDone", true)
 				pcall(function()

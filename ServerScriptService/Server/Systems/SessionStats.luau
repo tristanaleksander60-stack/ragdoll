@@ -234,6 +234,9 @@ local function clean(n: unknown, lo: number, hi: number): number?
 end
 
 -- What the client says about itself (once; later messages only add the egg card or its first shot).
+-- FIRST_2_MIN: the machines TRY may be pressed at (ExperimentService kinds), and when each player last pressed it.
+local TRY_KINDS = { Cannon = true, Wrecking = true, Spider = true, Plant = true, Frog = true, Whale = true, Chicken = true, Washer = true, Slingshot = true, Mole = true, Vacuum = true, Tower = true }
+local lastTry: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
 function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 	local r = recordOf(player)
 	if not r or type(kind) ~= "string" then
@@ -268,6 +271,26 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 		-- (NOW 4: which minute moments a newcomer was shown, for the dashboard.)
 		pcall(function()
 			(require(script.Parent:WaitForChild("Funnels")) :: any).used(player, "Moment" .. tostring(data))
+		end)
+	elseif kind == "Try" and type(data) == "string" and TRY_KINDS[data] then
+		-- (FIRST_2_MIN: TRY pressed at a machine: the nearest free ragdoll runs to the player. At most one every 3 s.)
+		if os.clock() - (lastTry[player] or -math.huge) >= 3 then
+			lastTry[player] = os.clock()
+			local character = player.Character
+			local root = character and character:FindFirstChild("HumanoidRootPart")
+			if root and root:IsA("BasePart") then
+				local at = root.Position + root.CFrame.LookVector * 4
+				pcall(function()
+					(require(script.Parent:WaitForChild("Lab")) :: any).callTo(player, at, root.Position)
+				end)
+			end
+			pcall(function()
+				(require(script.Parent:WaitForChild("Funnels")) :: any).used(player, "TryPressed")
+			end)
+		end
+	elseif kind == "TryStep" and (data == "Grabbed" or data == "Put") then
+		pcall(function()
+			(require(script.Parent:WaitForChild("Funnels")) :: any).used(player, "Try" .. tostring(data))
 		end)
 	elseif kind == "MapBoard" then
 		SessionStats.used(player, "mapBoard") -- (V9-0e: a trip chosen on the Map Board)

@@ -722,6 +722,9 @@ local function roam(plot: Plot, slot: Slot, now: number)
 	if model:GetAttribute("Vital") == "Dead" then
 		return
 	end
+	if model:GetAttribute("TryFor") ~= nil then
+		return -- (FIRST_2_MIN: called by TRY, it waits by the player)
+	end
 	local state = model:GetAttribute("RagdollState")
 	if state and state ~= "Standing" and state ~= "Walking" and state ~= "Fleeing" then
 		return -- (down, getting up, in the air: no wandering)
@@ -843,6 +846,48 @@ local function alwaysThree(plot: Plot, now: number)
 		pick.model:SetAttribute("Home", spot)
 		pick.model:SetAttribute("HomeLook", Vector3.new(root.Position.X, spot.Y, root.Position.Z))
 	end
+end
+
+-- FIRST_2_MIN (owner, 26 Nov 2026: "trykke TRY ... så kommer der en ragdoll"): the nearest free ragdoll of the player's lab runs
+-- (fast) to `at`, faces `look`, and is marked TryFor = the player's UserId for 20 s. Returns it, or nil when none is free.
+function Lab.callTo(player: Player, at: Vector3, look: Vector3): Model?
+	local plot = plotOf[player]
+	if not plot then
+		return nil
+	end
+	local now = os.clock()
+	local best: Slot? = nil
+	local bestD = math.huge
+	for _, slot in plot.slots do
+		local model = slot.model
+		local pelvis = model and model:FindFirstChild("LowerTorso")
+		if model and model.Parent and pelvis and pelvis:IsA("BasePart") and freeToCall(model) and model:GetAttribute("TryFor") == nil then
+			local d = (pelvis.Position - at).Magnitude
+			if d < bestD then
+				best, bestD = slot, d
+			end
+		end
+	end
+	local slot = best
+	local model = slot and slot.model
+	if not slot or not model then
+		return nil
+	end
+	local spot = Vector3.new(at.X, if slot.homeY ~= 0 then slot.homeY else slot.position.Y, at.Z)
+	recruits[model] = { slot = slot, untilAt = now + 20, walked = false, player = player }
+	slot.target, slot.socialKind = nil, nil
+	slot.roamHome = spot
+	slot.nextRoamAt = now + 25
+	model:SetAttribute("Pace", 2)
+	model:SetAttribute("Home", spot)
+	model:SetAttribute("HomeLook", Vector3.new(look.X, spot.Y, look.Z))
+	model:SetAttribute("TryFor", player.UserId)
+	task.delay(20, function()
+		if model.Parent and model:GetAttribute("TryFor") == player.UserId then
+			model:SetAttribute("TryFor", nil)
+		end
+	end)
+	return model
 end
 
 local function watch(dt: number)

@@ -457,6 +457,12 @@ local function tryMe()
 	end
 end
 
+-- (FIRST_2_MIN: Client/FirstTwo uses the same list, the lab finder and the short names.)
+LabShowcase.myLab = myLab
+LabShowcase.find = find
+LabShowcase.where = where
+LabShowcase.SHORT = SHORT
+
 function LabShowcase.start()
 	if Config.ATTRACT_MODE then
 		task.spawn(attract)

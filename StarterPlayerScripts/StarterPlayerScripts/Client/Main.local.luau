@@ -173,6 +173,7 @@ safe("Speedometer", function() require(Client:WaitForChild("Speedometer")).start
 safe("TargetArrow", function() require(Client:WaitForChild("TargetArrow")).start() end) -- NOW 1.3: an arrow over the nearest dummy for a new player
 safe("MinuteMoments", function() require(Client:WaitForChild("MinuteMoments")).start() end) -- NOW 4: the 2, 3 and 4 minute moments for a newcomer
 safe("LabShowcase", function() require(Client:WaitForChild("LabShowcase")).start() end) -- LAB10 R2: machines show off (attract mode) and the "TRY!" chain
+safe("FirstTwo", function() require(Client:WaitForChild("FirstTwo")).start() end) -- FIRST_2_MIN: TRY at the machine, a ragdoll comes, the grab lesson once
 safe("PlazaClient", function() require(Client:WaitForChild("PlazaClient")).start() end) -- V9-0d: the town square (stage dance, photo spot, its sounds)
 safe("HudV3", function() require(Client:WaitForChild("HudV3")).start() end) -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)
 safe("RewardsUI", function() require(Client:WaitForChild("RewardsUI")).start() end) -- REWARDS: daily, play gift, dares, trophies, group (round 5)

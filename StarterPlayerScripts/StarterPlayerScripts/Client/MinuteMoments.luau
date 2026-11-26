@@ -89,7 +89,7 @@ end
 local function show(m: { at: number, text: string, key: string })
 	local Controller = require(ReplicatedStorage:WaitForChild("LihFolkUI"):WaitForChild("LihFolkUIController")) :: any
 	local giveUp = os.clock() + MinuteMoments.WAIT_MAX
-	while Controller.getCurrent() ~= nil and os.clock() < giveUp do
+	while (Controller.getCurrent() ~= nil or player:GetAttribute("TryBusy") == true) and os.clock() < giveUp do -- (FIRST_2_MIN: never during a TRY)
 		task.wait(1)
 	end
 	if Controller.getCurrent() ~= nil then

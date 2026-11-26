@@ -52,6 +52,16 @@ FirstVisit.STEPS = table.freeze({
 	{ id = "Weapons", text = "Open WEAPONS for more", pad = "Open WEAPONS for more (Y)" },
 	{ id = "Maps", text = "Walk to the MAPS board", pad = "Walk to the MAPS board" },
 })
+-- (FIRST_2_MIN, Config.FIRST_TWO: the grab, the cannon and the wrecking ball are taught by TRY at the machines now: Client/FirstTwo.)
+if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).FIRST_TWO then
+	local kept = {}
+	for _, s in FirstVisit.STEPS do
+		if s.id ~= "Throw" and s.id ~= "Cannon" and s.id ~= "Wrecking" then
+			table.insert(kept, s)
+		end
+	end
+	FirstVisit.STEPS = table.freeze(kept) :: any
+end
 
 local player = Players.LocalPlayer
 
