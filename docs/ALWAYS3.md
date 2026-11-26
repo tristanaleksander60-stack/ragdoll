@@ -179,3 +179,27 @@ A hard safety net on top of the 3-near rule. It works EVERYWHERE on the map:
    - far stand-ins follow the same paths without physics.
 
 **Check:** follow 5 walkers each for 1 minute through busy rooms (Machine Hall, Fun Fair, the plaza). None may walk into or through a tree, bench, lamp, fence, machine, wall, water or flower bed.
+
+## ALWAYS 3 ALIVE, refilled FAST (owner, 26 Nov 2026: "Gør så de 3 ragdolls kommer meget hurtigere hvis der kun er 1 eller 2, der skal altid være 3 til stede i live ved en")
+**Today:** the refill takes too long when 1 or 2 are left.
+
+**The rule:** within 35 studs there are ALWAYS 3 LIVING ragdolls (standing or walking; not knocked out, not busy in a machine, a burial, CPR or being carried). The moment the count drops below 3, the missing ones are on their way.
+
+**Fast refill:**
+1. **No waiting:**
+   - check every 0.25 s (not 0.5);
+   - start a recruit at once for EACH missing one (2 missing = 2 recruits in parallel);
+   - no 1 s delay (that is only for NEVER ZERO's "0 near" fallback).
+2. **Reserves already close:** the `RagdollDirector` keeps 2 RESERVE ragdolls trailing the player, out of view about 40-60 studs away (behind belts, trees or buildings, walking along the paths with the player), so a refill arrives in about 1-2 s.
+   - When a reserve is used, the director sends a new reserve from the pool, out of view.
+   - The reserves count toward the device pool (phone 10, tablet 14, PC 20).
+3. **They come FAST:** recruits SPRINT at about 40 (faster than the player's walk of 30) on the shortest path, then slow to a walk for the last 6 studs and stop 8-14 studs away (the chatters and comer roles).
+4. **Spawn closer if needed:** if no reserve or free ragdoll can arrive within 3 s, place one out of view at 25-40 studs (behind the nearest cover) and sprint it in.
+5. **Knocked out does not count as alive:** a knocked-out ragdoll near you does NOT count toward the 3, so the refill starts the moment one is knocked out, even while its body is still there (CPR or burial may run beside the new ones).
+6. **Caps:** if the pool is full, the oldest knocked-out body out of view returns to the pool first; never the 3 alive near you, never a pinned one.
+
+**Check:**
+- knock out 1, then 2, then all 3 near you, in a room, on a road and on the plaza;
+- each time, the missing ones are visibly on their way within 0.5 s and arrive within about 2-3 s;
+- count the time and write it in State;
+- check on the phone emulator, with no lag.
