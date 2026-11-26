@@ -1352,6 +1352,76 @@ Also, `BikeService.nextSpot` still drives circles 40-84 studs round the LAB ORIG
 
 **Check:** walk up the path to the cave. A natural rock hill with a dark opening you can walk into; the bear in its yard; no ball, no floating black panel, no round stones.
 
+## F80 A BACK TO SPAWN button in MORE (owner: "Lav en back to spawn knap i more")
+- **Where:** the MORE menu (the gear, F63; `Client/HudMenu.luau` entries), near the top, with a home icon (DrawnIcons) and the text "BACK TO SPAWN". It is in the menu on every device; on a phone it is one of the first rows.
+- **What it does:**
+  1. the screen fades to black for 0.25 s;
+  2. you stand at the spawn, on a free spot (a random spot in a small ring on the spawn plaza, so two players never land on each other), facing down the boulevard;
+  3. the screen fades back in.
+- **Safe:**
+  - one `Net` remote `Teleport.Spawn` (no arguments), validated on the server: a 5 s cooldown;
+  - not while you are being carried, in a machine, or in a ragdolled fall (it waits until you stand, then goes);
+  - out of a vehicle first (the vehicle stays where it was and goes home only out of view);
+  - a held ragdoll is dropped where you stood;
+  - the server chooses the spot.
+- **Both places:** in the multiplayer place it takes you to that place's spawn.
+- **Check:** phone and PC: walk far away, open MORE, tap BACK TO SPAWN. A short fade, and you stand at the spawn. Tapping it twice fast does not teleport twice.
+
+## F81 TRY: a ragdoll comes and JUMPS INTO the machine by itself (owner: "Gør så når man trykker TRY ved en kanon fx. at dukken automatisk spawn og hopper ind i kanonen")
+**Today:** TRY (`Lab.luau` ~1018, FIRST_2_MIN) calls the nearest free ragdoll, which runs to you and waits (`TryFor` for 20 s), so you must grab it and carry it to the machine yourself.
+
+**New** (behind `Config.TRY_AUTO = true`, every machine):
+1. **TRY = it happens by itself.** Within 1-2 s of the tap, a ragdoll is at the machine and gets in.
+   - First choice: the machine's watcher, or the nearest free ragdoll within 15 studs of the machine. It runs straight to the machine.
+   - Else: one POPS OUT of a small **RAGDOLL DISPENSER** next to the machine:
+     - a short metal tube or hatch, the same at every machine, beside its plinth;
+     - a hiss, a puff of smoke, and a pooled ragdoll pops up out of it, standing;
+     - this is the one place a ragdoll may appear in view on purpose, because the tube makes it a show, not a pop-in.
+2. **It gets in, by the machine's own move** (one `hopIn(machine, ragdoll)` per machine kind, from a list):
+   - **the cannon:** a run-up, a big jump in an arc into the muzzle, and it slides in (F7's muzzle load); then a 3-2-1 on the barrel and BOOM;
+   - **the washer:** in through the door (the owner's earlier wish), the door shuts, the spin;
+   - **the shredder or sweeper pit:** it jumps in;
+   - **the press, the stretcher, the gyro cage:** it climbs on or lies down on its spot, and the machine starts;
+   - **the trampoline and the launch pads:** it jumps on;
+   - **the tesla coil:** it walks into the zap ring;
+   - **the boxing ring:** two climb in;
+   - **the aquarium:** it runs up the platform and dives in (F78);
+   - **the croc pond:** it wades in;
+   - **the bear cave:** it walks up to the bear;
+   - **the wrecking ball and the crash wall:** it stands on the X.
+   - A machine with no move yet uses "walk to the machine's load spot, then the machine's normal start".
+3. **The machine runs by itself** once the ragdoll is in. You just watch, and the camera does not move.
+4. **Rules kept:**
+   - TRY only once per machine (F1);
+   - the TRY reward and `Tried_<kind>` as now;
+   - the try ragdoll is marked `TryFor` while it does this, so no other system takes it;
+   - a second TRY tap while one is on its way does nothing.
+5. **Grabbing:** TRY no longer teaches grabbing. The first time a player has tried a machine, one small tip shows once: "Tip: you can grab ragdolls and throw them in yourself". On a phone it is a short toast with no key letters.
+6. **Check:** phone and PC: at the cannon, tap TRY. A ragdoll runs (or pops out of the tube), jumps into the cannon, 3-2-1, BOOM. The same at the washer (through the door), the shredder and the trampoline.
+
+## F82 RANDOM THINGS ON THE PATHS and OVERLAPPING "SHADOWS" in the paths (owner: "Sådan noget som en random grøn kasse på stien og flere forskellige skygger der overlapper hinanden eller jeg ved ikke hvad det er i stien"; screenshots: a plain green cube standing on a path tile (it takes bullet holes); the path floor with lighter and darker rectangles overlapping)
+**The green box:**
+- **Find out what it is:** its full name and parent (a hedge cut down by a clear step, a leftover crate or bin, a test part, a FoliagePass block?). Write it here.
+- Remove it, and every other thing standing on a walkable surface that is not allowed there.
+- **A PATH LINT** (`tools`/Studio command, also run by the map build), which lists every part whose box overlaps a road, path or plaza footprint (from `OwnerMapPlan`) above the walking surface:
+  - **allowed:** the slabs, kerbs, junction pads, fountains placed by the plan, and benches, bins and lamps beside the path (2 studs outside, F40);
+  - **not allowed:** everything else (boxes, crates, bushes, hedges, rocks, signs, leftover parts).
+- The count must be 0.
+
+**The "shadows" (light and dark rectangles in the path):**
+- **Likely causes:**
+  - several walkable slabs on top of each other at almost the same height (the old LAB10 walkways and Paths hidden only by transparency, plan legs AND junction pads overlapping, the old grid paths, the zone pads), which z-fight and show as patches of different shades;
+  - half-transparent parts lying on the path (hidden-but-not-removed parts at Transparency 0.7-0.95, guide rings, zone pads, `HIDE_IN_LAB` parts made see-through);
+  - decals or SurfaceGuis on the path;
+  - overlapping tree-canopy shadows (normal, and not a bug).
+- **Fix:**
+  - exactly ONE walkable slab per spot: one part per leg and one pad per junction (F50's rule), never two at the same height;
+  - the old hidden walkways and pads are DELETED (the backup of the place is the saved version), not made transparent; or, if code needs them, moved under the ground with CanCollide off;
+  - no half-transparent parts on or just above any path;
+  - add both to the PATH LINT: overlapping walkable slabs within 0.3 studs of height = an error, and any part with 0 < Transparency < 1 within 1 stud above a path = an error.
+- This is part of F50 (PATHS to 9/10). Do it at the same time.
+- **Check:** walk the boulevard and 3 inner paths, and look at the floor from above. One clean even surface, no patches or flickering squares, nothing standing on it. The lint reports 0.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
