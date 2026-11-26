@@ -358,6 +358,39 @@ The ejected casings (since 0.43.1) look plain.
 - 2 test clients in the start place: they do not see each other or each other's labs.
 - 2 test clients in the multiplayer place: one lab, both see each other.
 
+## F31 Machine demos must not happen "out of the blue": a ragdoll walks there and climbs in (owner, 26 Nov 2026: "Gør så test ikke bare sker ud af det blå, men der en ragdoll der løber derhen og går ind i fælden så man ikke tror det er en bug")
+**Today (F19, `DEMO_REAL`, Systems/MachineDemos):** a real lab ragdoll is SET at a machine and thrown at once. To the player it looks like a body appearing and flying for no reason, like a bug.
+
+**Fix: the demo is a little story you can follow:**
+1. **The pick:** a free ragdoll that is visible to the player, or that can walk into view, is picked. Never one teleported into place; never one the player cannot see start.
+2. **On its way:** it says one line as it sets off ("I wonder what this does…", "Hold my juice.", "Science!", "Watch this!", "Don't tell my mum."); it looks at the machine (`LOOK AT YOU` style, at the machine); it walks or jogs there on a pathfinding route (pace by distance, max about 12 s).
+3. **The watchers notice:** they turn, point at it, and one says "Oh no, he's doing it again."
+4. **Into the trap, the way a person would:**
+   - it climbs the steps;
+   - it crawls into the cannon's muzzle;
+   - it opens the washer door and climbs in;
+   - it lies down on the press bed;
+   - it sits on the rocket seat and buckles up;
+   - it steps into the gyro cage, and the straps close;
+   - it walks onto the fan's pad and leans into the wind;
+   - it walks to the plank end on the tower;
+   - and so on for every machine. Use the machine's real load spot (`FIRST_2_MIN.md` per-machine load spots).
+
+   A short animation of 1-2 s, with a little hesitation (looks down, shrugs, goes).
+5. **Then the machine runs** with its full show (`MACHINES_10.md`). The ragdoll lands, gets up dizzy, and sometimes says "Again!" or "Never again."
+
+**Rules:**
+- only when the player is within about 80 studs and can see the machine (otherwise skip it; no off-screen demos);
+- one demo at a time in the lab, about every 45-60 s, each machine once per visit (as F19);
+- never during the TRY lesson or while the player uses that machine;
+- if the walker is knocked or grabbed on the way, the demo is cancelled quietly.
+
+**The same rule for EVERY automatic event that moves a ragdoll** (surprises, the train, the T-rex gate, the whale spout):
+- a visible cause first (someone walks there, a warning, a countdown);
+- never a body that suddenly flies.
+
+**Check:** stand near 3 machines for 3 minutes. Every demo starts with a ragdoll you see walking there and climbing in; nothing flies without a reason.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.

@@ -23,7 +23,7 @@
 | 7 | **Score and reward** | A number pop that fits the item (distance, height, spins, G-force, "FLAT x3"), NEW BEST, and a small leaderboard on its sign. First use +25 BOLTS (exists); a KO counts. |
 | 8 | **Variety** | 2-3 outcomes by input (charge, timing, where you drop it) or by chance, plus a rare golden result (1 in 20) with a gold flash and a bonus. |
 | 9 | **Social** | Watchers react (cheer, wince, cover eyes, a line about it). In multiplayer everyone sees it, and the name of whoever started it shows on its sign for 5 s. |
-| 10 | **Flow and reset** | Ready again in 5 s or less, with a ring showing the cooldown. Nothing gets stuck (the machine ejects the ragdoll after 15 s at most). The attract demo runs once per visit with a real ragdoll (F19). It works in the solo and multiplayer places. |
+| 10 | **Flow and reset** | Ready again in 5 s or less, with a ring showing the cooldown. Nothing gets stuck (the machine ejects the ragdoll after 15 s at most). The attract demo runs once per visit with a real ragdoll that you SEE walk there and climb in (F19 + F31); never a body flying out of the blue. It works in the solo and multiplayer places. |
 
 **Tech for every item:**
 - The server decides; remotes go through Net with validators.
