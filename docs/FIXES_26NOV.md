@@ -547,6 +547,16 @@ The owner still sees lamp posts standing in the middle of walkways.
 - **This bench model** is also replaced by a real bench mesh (`DETAILS_10.md`).
 - **Check:** walk round every attraction. No prop touches or sticks into any of them.
 
+## F45 Remove the yellow "random dummies" (owner, 26 Nov 2026: "fjern de gule random dukker")
+**What they are:** most likely the light-yellow watcher stand-ins (`Client/WatcherStandIns`, OVERVIEW 0.7: "light yellow stand-ins … at every other spot within 220 studs"). They look like odd yellow figures standing about (the owner's screenshot: by the launch pads and the walkway).
+
+**Fix:**
+- **Turn the yellow stand-ins OFF** (`WATCHER_STANDINS = false`).
+- **Watchers stay REAL grey lab ragdolls only.** As the player comes within about 90 studs of a machine, a real ragdoll WALKS to its watch spot (never pops in), so the machines near you always have their watcher. The tree belts hide the rooms further away anyway.
+- **If light stand-ins are ever needed for performance,** they must look IDENTICAL to the real grey ragdolls (the same body, colour, skin and face), never yellow or any other colour.
+- **Find every other yellow or gold dummy source too** (old GOD-mode spawns, test dummies, the "gold dummies" offer) and remove them. The only exception: a player who BOUGHT a gold-dummy cosmetic sees theirs.
+- **Check:** walk round the whole map. No yellow dummies anywhere; every machine you walk up to has its grey watcher.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
