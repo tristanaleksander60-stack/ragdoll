@@ -4,6 +4,15 @@
 
 **Next after the lab:** `docs/STAY_LONGER.md` (session length). Build items 1-8 in one run. Item 1, the quiet gift timer on phones, goes first.
 
+## CURRENT RUN: `/klar` = LAB_TARGET ROUND 3. Do it now, all of it, without asking.
+**Not blocked any more** (owner, 26 Nov 2026): "1:1 10/10 … jeg skal bare skrive /klar".
+- Do not search for the old file.
+- Rebuild the owner's own map 1:1 from `art/store/look_target/lab_ref/ref_6` … `ref_10` (and `ref_1` … `ref_5`), as `docs/LAB_TARGET.md` ROUND 3 says.
+- Then publish once and give one Danish "Test selv" list.
+- After it: `docs/STAY_LONGER.md`.
+
+(Older notes below.)
+
 ## CURRENT RUN: LAB TARGET (owner, 26 Nov 2026)
 
 **NOW: `docs/LAB_TARGET.md` ROUND 2.** The references are the owner's OWN old map. Find that version (version history, backups), copy its lab 1:1 into `ServerStorage.OldLabMap`, use it at full size behind `LAB_OLDMAP`, and put every machine where it stood. No rebuilding by eye.

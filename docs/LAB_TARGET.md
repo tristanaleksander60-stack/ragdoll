@@ -18,6 +18,161 @@
 
 **These are the OWNER'S OWN OLD MAP, not another game** (owner, 26 Nov 2026: "Det skal ligne mit gamle map, det ikke en anden brugers"). Copy it EXACTLY: same plots, same order, same size, same props. See ROUND 2 below. Sections 1-4 are kept only as background.
 
+## ROUND 3: rebuild the owner's map 1:1 from the screenshots (owner, 26 Nov 2026). THIS IS THE JOB NOW.
+> "Nej den skal ikke lave det gamle map, den skal lave mit eget gamle map fra et par siden, som jeg vedhæfter screenshots af nu. 1:1 10/10 første prompt jeg skal bare skrive /klar"
+
+**Stop searching for the old file.** Round 2 step 0 found nothing: git has no code for the cave, T-rex, crocodiles or steel tower, so it was stored geometry that is gone. **Rebuild it 1:1 from the screenshots.** Do not ask the owner anything; build, then report.
+
+**The references:**
+- **Main** (the owner's own lab, a few days old): `art/store/look_target/lab_ref/`:
+  - `ref_6.webp`: from the tower top, looking north-west over the cars to the cave;
+  - `ref_7.webp`: looking north-east over the fan, pool, plaza and lava;
+  - `ref_8.webp`: looking east/south-east over the lava, target and trampoline;
+  - `ref_9.webp`: looking west over the rocket, crocodile pond and T-rex pen;
+  - `ref_10.webp`: straight down/north over the whole lab.
+- **Extra angles of the same map:** `ref_1` … `ref_5`.
+- **Scale:**
+  - the tower is about 50-55 studs high (5 floors);
+  - the walkways are about 12 studs wide with 6-stud tiles;
+  - cars are real size;
+  - the spawn circle is about 45 studs across.
+
+  Measure everything else from these.
+
+### R3.1 Everything in the map (each must be there, as in the shots)
+**Centre**
+- **The steel scaffold stair tower:**
+  - grey galvanised steel, about 32 x 32 studs, 5 floors;
+  - zig-zag stairs in an open central well, diamond-plate floors, railings on every edge;
+  - a flat roof deck with a railing.
+- **The slide:** a long green-grey steel chute from the tower's top west side, curving down to the south-west, on a steel truss; a round button at its top.
+- **A wooden plank bridge** from the tower top going east, and brown wooden bleacher steps on the tower's west side.
+- **The spawn plaza:** a round light-concrete circle just north of the tower, with 2 benches on its north rim.
+
+**North (row 1, left to right)**
+- **A big grey rock cave** with a bear in the opening, on a dirt yard ringed by grey stones (north-west).
+- **A tall glass-walled aquarium** (glass sides, blue water on top, benches in front).
+- **The raised leaderboard plaza:**
+  - light concrete with tile joints;
+  - 4 tall black boards on posts along its back edge;
+  - a railing;
+  - a wide walkway down to the spawn circle.
+- **An open sunken pool** (blue water, concrete rim, no glass).
+- **A fenced dirt pen** (north-east).
+
+**West side**
+- **Car bays** in a row with painted lines: a green tank, a green monster truck, a blue sedan.
+- **Red-and-white barrels** in small groups.
+- **A boxing ring** on its own pad, with dummies standing in it.
+- **A long red brick crash wall** running north-south, with barrels at its ends and an old brown sedan beside it.
+- **A garage building** (pink-brown roof) that the railway runs into, with a small white car/train on the track.
+- **The rocket** on a round pad with a tall steel launch gantry, a wooden crate and red buttons. A free-standing grey concrete slab near it.
+- **The railway** (rails on sleepers) along the west edge and on to the south-west.
+- **A long walled enclosure with a big wooden gate** beside the railway, with a T-REX inside.
+- **A fenced pond with crocodiles,** next to a tall grey wall panel with a grid of round holes (a speaker wall).
+
+**East side**
+- **The giant fan machine** (a green-grey frame with a huge round fan and chimneys) on a concrete pad, with red buttons in front.
+- **A beige sandcastle tower** with wooden crates, a picket fence, a tree and benches.
+- **A square yellow sandbox.**
+- **A big round sand circle.**
+- **An archery target** on a wooden stand.
+- **A wooden seesaw/plank** and a small black box machine.
+- **A round green-grey ring machine** with a dial face on a pad, with a red button (east of the tower).
+- **A round trampoline** (south-east of the tower).
+- **A long lava strip** with a rock edge, running diagonally, with a sunken stone trench beside it behind a low fence.
+- **Further south-east:** a green turf square, and a white pad with a mushroom-shaped steel thing (a Tesla coil) on it.
+
+**South**
+- **A round concrete pad** with a long white sweeper beam on a pivot.
+- **A square sunken pit** with grey steel rollers/teeth and a red button (the shredder pit).
+
+**Ground and edge**
+- **The ground:**
+  - green grass plots, cut into a grid by light-grey concrete walkways (6-stud tiles, thin joints, slight colour variation);
+  - every attraction on its own plot or pad;
+  - dummies (white/grey) standing about in small groups.
+- **The trees:**
+  - low-poly round trees (light green) and dark pines, in loose groups on the edges and some inside;
+  - grey boulders.
+- **Around it all:** big soft green hills in a ring.
+- **Light:**
+  - soft daylight;
+  - light green-grey haze on the hills (keep the haze as in the shots, it is part of the look);
+  - gentle shadows;
+  - no saturation boost.
+
+### R3.2 Starting plan (studs; the screenshots WIN when they disagree)
+- North = -Z. The spawn circle middle is (0, 0); the tower middle is about (5, 40).
+- **The leaderboard plaza** is at z about -95. The central walkway runs from the circle to it.
+
+| Where | x | z | What |
+|---|---|---|---|
+| North row | -85 | -105 | cave |
+| | -30 | -95 | glass aquarium |
+| | 0 | -95 | leaderboard plaza |
+| | 40 | -90 | pool |
+| | 85 | -95 | fenced pen |
+| Row 2, west | -60 to -35 | -70 | car bays |
+| | -35 | -40 | boxing ring |
+| | -75 | -40 to +10 | brick wall |
+| | -115 | -70 | garage on the rail |
+| Row 2, east | 15 | -50 | sandcastle tower |
+| | 45 | -40 | fan |
+| | 85 | -45 | sandbox |
+| | 95 | -5 | sand circle |
+| Row 3 (tower row) | -40 | 30 | rocket |
+| | -40 to -10 | 40 to 95 | slide |
+| | 60 | 10 | target |
+| | 50 | 30 | plank |
+| | 75 | 45 | ring machine |
+| | 45 | 80 | trampoline |
+| | 70 to 130 | 50 to 90 | lava strip + trench |
+| South and edge | 0 | 120 | sweeper pad |
+| | -50 | 120 | shredder pit |
+| | -120 | 60 | crocodile pond + speaker wall |
+| | -150 | 0 | T-rex pen |
+| | about -125 | | railway along the west, bending south-east |
+
+- **The whole map is about 300 x 260 studs** (much bigger than the 0.56 lab). Keep it that size.
+
+### R3.3 How to build
+- **The switch:** `Config.LAB_OWNERMAP = true` (supersedes `LAB_PARK` and `LAB_OLDMAP`; false = 0.56).
+- **Positions:** in `LabLayout10.OWNER`. Every existing machine goes on its spot from R3.2: tower, slide, rocket, cars, boxing ring, fan, trampoline, lava, target/slingshot, ring machine (stretch), red buttons, 4 boards, MAPS board, portals near the plaza. The shark goes in the glass aquarium, the whale in the pool, the spider on its own plot near the pen.
+- **New decoration** (Creator Store, one realistic low-poly style, malware pass on each, scripts removed):
+  - the rock cave with a bear;
+  - the T-rex;
+  - crocodiles;
+  - the steel scaffold tower;
+  - the green steel slide;
+  - the railway pieces;
+  - the garage;
+  - the sandcastle tower;
+  - the sweeper;
+  - the shredder rollers;
+  - the Tesla coil;
+  - the speaker wall;
+  - trees, pines and boulders.
+
+  The animals are static or idle-animated decoration (no new gameplay needed). Save them in `V3Assets` (place file).
+- **Hills:** Terrain (smooth grass hills in a ring at about 150-300 studs out) or big smooth meshes; cheap.
+- **Remove** the 0.56 park frame and the LAB10 leftovers behind the switch.
+- **Keep:**
+  - the TRY! ring and goal line;
+  - attract mode where it does not change the look.
+- **Performance:**
+  - one lab at most about 5,000 parts;
+  - decoration CanCollide off, CanQuery off and CastShadow off when small;
+  - check FPS on the phone emulator.
+- **Never shrink the map to save parts.**
+
+### R3.4 Check, harsh, 10/10
+1. Take the same 5 camera angles as `ref_6` … `ref_10` (camera on the tower top, same direction and height). Save them as `art/store/lab10/own_6.jpg` … `own_10.jpg`.
+2. Put each beside its reference. List every difference: a missing prop, a wrong place, wrong size, wrong colour, wrong light.
+3. Fix and capture again until there are **no differences you can see** (max 4 rounds).
+4. Score "same map", 0-10. The bar is **9.5**.
+5. Then one quick Play, publish once, and give ONE Danish "Test selv" list with the 5 side-by-side pairs named.
+
 ## ROUND 2: bring back the owner's old map EXACTLY (do this, not a rebuild by eye)
 > "Mappet er stadig lille og ligner slet ikke det samme. Det skal ligne mit gamle map, det ikke en anden brugers."
 
