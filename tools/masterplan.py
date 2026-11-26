@@ -104,7 +104,9 @@ ITEMS += [
     ("Playground",     "Lab",          40,  195, 26, 18, "N", "slide and swings where ragdolls play"),
     ("Seesaw",         "Lab",         -35,  200, 16, 8,  "N", "the wooden seesaw"),
     ("Mole",           "Lab",         -25,  -22, 12, 12, "E", "the mole"),
-    ("PicnicGrill",    "Lab",         -60, -100, 22, 14, "S", "picnic tables + grill"),
+    ("RagdollBowling", "Lab",         -58, -103, 46, 12, "E", "THE HOOK by the spawn (owner: replace the chicken): a short bowling lane, 10 giant pins at the west end, a scoreboard; TRY rolls a ragdoll down it (F88)"),
+    ("PicnicGrill",    "Lab",         -195, -95, 22, 14, "E", "picnic tables + grill"),
+    ("ChickenCoop",    "Lab",         -30, 160, 16, 14, "W", "the chicken's coop and little fenced run (moved away from the spawn, F88)"),
     ("DuckPond",       "Lab",         -75,  200, 22, 12, "N", "the small duck pond"),
     ("TrainingYard",   "Lab",        -100,  -98, 1, 1,  "S", "PLACEHOLDER"),
 ]

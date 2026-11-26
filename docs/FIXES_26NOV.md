@@ -1494,6 +1494,54 @@ This replaces F51 (NORMAL 30, sprint about 50), F38 (the Walk speed setting) and
 4. **The leg detector** (`LEG_JITTER_LOG`) also logs the Mood, so any jitter left in a mood is named in the log for the next session.
 5. **Check (the owner):** watch a ragdoll give CPR and one mourn: kneeling still, the legs calm, only the arms and head move.
 
+## F87 The AQUARIUM: the water pokes THROUGH the glass, and the tank looks empty (owner, 26 Nov late: "Fiks så det ikke ligner vandet er igennem ruden og at man stadig kan se der er vand"; screenshot: curved slabs of terrain water bulge out through the glass sides, the inside looks empty, only a thin surface at the top)
+**The cause:** Terrain water snaps to a 4-stud voxel grid and is drawn rounded at its edges, so in a glass box above the ground it bulges through the panes and leaves gaps inside. Terrain water is fine in dug-in basins (the pools, the croc pond), but not in a glass tank.
+
+**The fix** (`Config.AQUA_PARTS = true`; the aquarium only, F78 stays for the pools and the pond):
+1. **Remove the terrain water from the aquarium** (fill that box with Air again).
+2. **Build the water from parts, exactly inside the glass:**
+   - a water volume part 0.3 studs inside every pane, from the sand floor to 1.5 studs under the rim: SmoothPlastic or Glass, blue-teal (60,150,190), Transparency about 0.55, CanCollide off, CanQuery off, CastShadow off;
+   - a surface plane on top with a moving water texture (two offset scrolling textures on the client), slightly lighter;
+   - soft light shafts (a few faint Beams) from the surface down;
+   - bubbles rising from the air stone.
+
+   The tank then reads as FULL of clear blue water from every side, and the shark, the fish and the seaweed show through it.
+3. **The glass:**
+   - the panes about 0.4 thick, Glass, Transparency about 0.3, with a faint reflection;
+   - the frame posts outside the panes, so nothing sticks through;
+   - the water part never touches or crosses a pane.
+4. **Swimming stays:**
+   - the SWIM state uses the tank's `WaterVolume` box (F78 step 4), not the terrain, so ragdolls float, swim, drown and climb out as before;
+   - players inside the box get a swim assist: buoyancy by code and a blue screen tint with a muffled sound while the camera is inside.
+5. **The splash:** a ragdoll thrown in makes a splash and ripples on the surface plane.
+6. **Check (the owner):** walk round the aquarium. Clear blue water fills it to the top on every side, nothing pokes out through the glass, and the shark swims inside.
+
+## F88 The CHICKEN goes away from the spawn; a HOOK takes its place (owner, 26 Nov late: "Flyt kylling væk fra spawn og erstat med noget som hooker folk"; screenshot: the chicken on a little fenced sand yard with a hut and picnic tables right by the spawn stair)
+**The plan is regenerated** (cloud, lint 0):
+- `RagdollBowling` takes the spot by the spawn (-58, -103);
+- the chicken gets a `ChickenCoop` in the south (-30, 160);
+- the picnic tables move to the west edge (-195, -95).
+- Move `LabLayout10.CREATURES.Chicken` to the coop (read it from the plan).
+
+**THE HOOK: RAGDOLL BOWLING** (`Config.RAGDOLL_BOWLING = true`), the first thing a new player sees from the spawn stair. Why: it is instantly clear, a 5-second payoff, a score to beat, and it is fun to watch others.
+- **The lane:** about 40 long and 8 wide, along x, starting near the spine and running west:
+  - polished wood with arrows and gutters on both sides;
+  - 10 GIANT white pins with red stripes at the west end (each about 5 high, real physics, light);
+  - a back pad and a pin-setter bar;
+  - a big retro scoreboard on posts behind the pins (the session best, "TODAY'S BEST" with the top 3 names, no free text).
+- **Play:**
+  - tap TRY or the big lever by the lane (F81): a ragdoll runs up, curls into a ball (a hugging-knees pose), and ROLLS down the lane;
+  - or carry and throw any ragdoll down it yourself;
+  - the score counts the fallen pins;
+  - STRIKE = a confetti burst, a "STRIKE!" pop, a crowd cheer from the watchers and a bell; SPARE and GUTTER ("Gutter ball…" with a sad trombone) too;
+  - after 3 s the pin-setter bar sweeps and resets the pins;
+  - the rolled ragdoll gets up dizzy at the end and walks back.
+- **Watchers:** 2-3 ragdolls stand by the lane and react (CURIOUS ones come to watch; the persona rules).
+- **The phone:** the TRY and the lever prompt are big and clear; the score shows on the board, not as a HUD popup.
+- **Looks:** the CREATURES_ANIM 4 style (bevels, baked AO), the M4 colours.
+- **Cost:** 10 light pins asleep until hit; reset by tween; the scoreboard is one SurfaceGui with a MaxDistance.
+- **Check (the owner):** from the spawn you see the lane first. Tap TRY: a ragdoll rolls, pins fly, STRIKE, confetti. The chicken lives in its coop in the south.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
