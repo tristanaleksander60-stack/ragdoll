@@ -557,6 +557,27 @@ The owner still sees lamp posts standing in the middle of walkways.
 - **Find every other yellow or gold dummy source too** (old GOD-mode spawns, test dummies, the "gold dummies" offer) and remove them. The only exception: a player who BOUGHT a gold-dummy cosmetic sees theirs.
 - **Check:** walk round the whole map. No yellow dummies anywhere; every machine you walk up to has its grey watcher.
 
+## F46 The ragdoll FREEZES when it dies (owner, 26 Nov 2026: "Fiks så ragdollen ikke fryser når den dør")
+**The bug:** when a ragdoll is killed or knocked out, it freezes stiff, mid-pose or even mid-air, instead of collapsing and lying loose.
+
+**Find the cause.** Check each of these and fix all that apply:
+1. **A death or knockout handler anchors the parts or the root** (VitalsService death, DummyControl, Mourning, burial prep, BLOOD_KILLS, or a "rest-sleep" / performance sleep anchoring bodies too early).
+2. **The motors stay at full strength:** the active-ragdoll pose freezes the last pose with tone 1 instead of going limp.
+3. **The network owner changes on death** (owner set to nil or to another player while the body moves), so the body hitches or stops on screen.
+4. **The Humanoid state goes to Dead or Physics in a way that stops the joints** (constraints disabled or Motor6Ds re-enabled).
+5. **On the client, StreamingEnabled or the LOD swaps to a stand-in at the moment of death.**
+6. **The X-ray, purple splatter or wound code welds or anchors something to the body.**
+
+**The right death:**
+- **Limp, at once:** the tone of every limb drops to about 0.05 over 0.2-0.3 s (`RAGDOLL_FEEL.md`). The body sags and collapses naturally with its momentum, and the limbs fall into place. It is never stiff and never stops in the air.
+- **It lands with the impact effects,** slides or rolls a little, and settles.
+- **It stays fully physical while dead:** you can shoot it (it reacts), push it, grab and drag it, throw it, lasso it, and see it in X-ray.
+- **Rest-sleep only when really resting:** speed under about 0.5 studs/s for 1.5 s AND touching the ground. Even then, any touch, hit, grab or nearby blast wakes it instantly (unanchor and impulse in the same frame). Never anchor a body that is in the air or touching nothing.
+- **Network ownership stays with the player who killed it** (or the nearest player) until it rests; then the server. No change in mid-fall.
+- **CPR, burial and wake-up** start from the body's real lying pose; nothing freezes it before.
+
+**Check:** kill 10 ragdolls in different ways (shots, melee, explosion, a fall from the tower, the cannon, a car, the dog, in water), on PC and phone. Each collapses loose, lands, settles and stays pushable and grabbable. None freezes.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
