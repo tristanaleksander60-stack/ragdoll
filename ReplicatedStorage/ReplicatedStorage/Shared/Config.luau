@@ -377,6 +377,8 @@ local Config = {
 	GOAL_LINE = true, -- the top pill reads "Next: Bow  3 KOs" (HudV3.drawNext)
 	PHONE_QUIET = true, -- phones and tablets: no gift button, no red badges, no pop-ups about gifts/eggs/codes/sales/events, no auto What's New (Client/PhoneQuiet)
 	PHONE_MENUS = true, -- phones: near full-screen windows, 2-3 big weapon cards a row without descriptions, FEATURED never shows what you own
+	GROUND_RESCUE = true, -- NOW 2: a body with nothing under it is put back on top; a sunk head or chest is lifted (GroundGuard)
+	LAZY_SHELVES = true, -- NOW 3: WEAPONS builds a shelf's cards the first time it is shown (was 8,700 UI objects at the start)
 	-- The lab guide (21 Nov 2026, the owner: "a 9-year-old must understand everything in the lab"): a
 	-- sign, a glowing drop ring and a FEED button at every creature and station (Server/Systems/LabGuide,
 	-- Client/LabGuideClient). false = none.

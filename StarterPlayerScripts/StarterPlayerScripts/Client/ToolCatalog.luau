@@ -197,10 +197,9 @@ local function refreshEquip()
 	-- (Owner, 26 Nov 2026: only the next weapon to earn shows its KOs; the rest just read Locked.)
 	local nextId: string? = nil
 	local nextAt = math.huge
-	for id in equipButtons do
-		local t = Toys.byId[id]
-		if t and t.unlockAt < nextAt and (stateOf(t, owned)) == "locked" then
-			nextId, nextAt = id, t.unlockAt
+	for _, t in Toys.list do
+		if t.unlockAt < nextAt and (stateOf(t, owned)) == "locked" then
+			nextId, nextAt = t.id, t.unlockAt
 		end
 	end
 	for id, button in equipButtons do
@@ -299,10 +298,17 @@ local function refreshEquip()
 	end
 end
 
+-- (NOW 3, 26 Nov 2026: the WEAPONS cards were 8,700 UI objects built at the start; a shelf's cards are
+-- built the first time it is shown. Config.LAZY_SHELVES.)
+local buildShelf: ((string) -> ())? = nil
 local pictureMakers: { [string]: () -> () } = {} -- cards whose 3D picture is not drawn yet
 local hovered3d: GuiObject? = nil -- (UI_3D: the one turning model, on the card under the pointer)
 local function showShelf(category: string)
 	current = category
+	local make = buildShelf
+	if make then
+		make(category)
+	end
 	for name, tab in tabs do
 		tab.setRole(if name == category then (if KitStyle.V2 then "accent" else "info") else "neutral") -- (UI v2: the shelf you are on in the game's colour)
 	end
@@ -523,7 +529,7 @@ local function build()
 		end
 		return (table.find(Toys.list, x) or 0) < (table.find(Toys.list, y) or 0)
 	end)
-	for index, toy in order do
+	local function buildCard(index: number, toy: Toys.Toy)
 		local card = C.Card({ name = toy.id, gap = SP.xs, layoutOrder = index, parent = grid })
 		local rarity = UiRarity.of(toy)
 		card.root:SetAttribute("Rarity", rarity.key)
@@ -850,6 +856,32 @@ local function build()
 		})
 		equipButtons[id] = equip
 		table.insert(cardParts, { title = title, blurb = blurb, stats = stats, equip = equip.root, icon = iconSlot, progress = progressRow })
+	end
+	local builtShelves: { [string]: boolean } = {}
+	local lazy = Config.LAZY_SHELVES == true
+	buildShelf = function(category: string)
+		if builtShelves[category] then
+			return
+		end
+		builtShelves[category] = true
+		for index, toy in order do
+			if toy.category == category then
+				buildCard(index, toy)
+			end
+		end
+		if compactNow then
+			ToolCatalog.setCompact(true)
+		end
+		if next(equipButtons) ~= nil then
+			refreshEquip()
+		end
+	end
+	if lazy then
+		(buildShelf :: any)(current)
+	else
+		for _, category in Toys.categories do
+			(buildShelf :: any)(category)
+		end
 	end
 	-- The phone layout follows the window's Compact attribute (set here from the screen; LayoutCheck
 	-- sets it on a PC to measure the phone layout).
