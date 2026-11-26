@@ -165,6 +165,21 @@ On PC, every shot shows a white blotch round the hit or the crosshair. Likely so
 - The fire rate cap stays per weapon.
 - **The data:** put an `auto = true/false` field on every weapon in `Shared/Toys` and use it in the client fire loop. The server also refuses shots faster than the weapon's rate.
 
+## F17 Remove the hint strip under the hotbar on phones
+On phones a small dark strip under the weapons shows input hints (a mouse icon, a gun, a grab hand). Remove it on phones and tablets. PC may keep a slimmer version only if it helps.
+
+## F18 Fewer ragdolls at the spawn (PC and all devices)
+Too many ragdolls spawn right where the player spawns.
+- **At the spawn:** only the 3 of the "3 near you" rule within about 25 studs (`docs/ALWAYS3.md`).
+- **All other lab ragdolls start spread out:** at the machines as watchers, on walkways and on benches, never piled on the spawn.
+
+## F19 Machine demos: once each, far apart, with REAL ragdolls
+Today the attract mode sends test dummies flying out of machines in turn, often.
+- **Each machine shows its demo ONCE per visit.**
+- **Only one demo in the whole lab at a time, about every 45-60 s** (not every 2-3 s).
+- **Real ragdolls, no extra test dummies:** the machine's watcher walks in, gets launched or spun, lands, and gets up again (with the normal ragdoll physics and impact effects). No extra demo dummies are spawned.
+- **No demo** at a machine the player is using or standing at, and never during the first-2-minutes TRY lesson.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
