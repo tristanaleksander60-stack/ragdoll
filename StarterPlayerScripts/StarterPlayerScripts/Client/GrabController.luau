@@ -798,6 +798,15 @@ end
 -- turns the camera.
 local TAP_RINGS = { 14, 28, 42 } -- px
 function GrabController.tapAt(at: Vector2): boolean
+	-- (GUARD_DOG: while your dog is out, a tap on a ragdoll sends the dog to bite that limb instead of grabbing.)
+	if player:GetAttribute("DogOut") == true then
+		local ok, sent = pcall(function()
+			return (require(script.Parent:WaitForChild("GuardDogClient")) :: any).order(at)
+		end)
+		if ok and sent then
+			return true
+		end
+	end
 	if not padWanted() or current or PlayerGrabClient.busy() or PlayerGrabClient.isHolding() then
 		return false
 	end

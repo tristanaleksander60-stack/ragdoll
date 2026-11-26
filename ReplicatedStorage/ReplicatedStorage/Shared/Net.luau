@@ -49,6 +49,7 @@ Net.Names = table.freeze({
 	Sandbox = "Sandbox", -- client -> server: SlowMo / Revive / Reset (round 5, SandboxService; own lab only); V9-2c: Time (speed, size, on) for the time bubble (SandboxService.setTime: listed speeds and sizes, paced, own or party lab)
 	Rewards = "Rewards", -- both ways: client Hello / ClaimGroup; server State (round 5, RewardsService)
 	Session = "Session", -- client -> server: Hello (device, screen, boot time) / EggCard / FirstShot (round 5, SessionStats)
+	GuardDog = "GuardDog", -- client -> server: Bite (ragdoll, limb) / Home; server -> client: GoodBoy (GUARD_DOG, Systems/GuardDog)
 	Stunt = "Stunt", -- server -> client: Begin / Live (score) / Land (score, tricks, best); client -> server: Again (V8-1.1, StuntScore)
 	Spawn = "Spawn", -- client -> server: Spawn (type, at), V9-0l SpawnMany (type, at, pattern, count, spacing, yaw), Clear, Claim, Seen, Try; server -> client: Refused (why), Granted (first | asked | chip) (V8-2.5, DummySpawn)
 	Aim = "Aim", -- client -> server (unreliable, ~10/s): where your gun points (pitch, yaw); the server shares it as the character's Aim attribute

@@ -1530,6 +1530,15 @@ function Playground.build(labOrigin: Vector3, name: string?)
 			log.warn("LabV10 failed in " .. folder.Name .. ": " .. tostring(errV))
 		end
 	end
+	-- GUARD_DOG: the doghouse with its Whistle prompt (Systems/GuardDog).
+	if lab and (Config :: any).GUARD_DOG then
+		local okD, errD = pcall(function()
+			require(script.Parent:WaitForChild("GuardDog")).buildLab(folder, origin)
+		end)
+		if not okD then
+			log.warn("GuardDog failed in " .. folder.Name .. ": " .. tostring(errD))
+		end
+	end
 	-- DESTRUCTION 2 (Config.BREAKABLES): crate stacks you can shoot to planks (Systems/Breakables).
 	if lab and (Config :: any).BREAKABLES then
 		local okB, errB = pcall(function()

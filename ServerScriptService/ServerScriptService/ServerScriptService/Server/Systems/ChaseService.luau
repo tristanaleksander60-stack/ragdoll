@@ -1,0 +1,324 @@
+--!strict
+-- Round 5 (the owner: "NPC Chase" for new players, often): CHASE_MIN..CHASE_MAX dummies in red run
+-- into your own lab and go for you. You get a health bar (attributes ChaseHP / ChaseMax on the
+-- player, drawn by Client/ChaseHud); every punch takes HIT_DAMAGE, so it takes a lot before you go
+-- down. At 0 you ragdoll, and after RESPAWN s you are back at full health. Knock them down with
+-- anything: each is a takedown as usual, and clearing them all gives BONUS takedowns. It ends when
+-- they are all down, after DURATION s, or when you leave your lab.
+--   When: a newer player (under NEW_TAKEDOWNS takedowns) FIRST_AFTER s into a visit, then every
+--   EVERY_MIN..EVERY_MAX s; never while a horde, a server event or an arena game runs, never
+--   outside your own lab. Your client simulates them (instant reactions, no server cost).
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Dummies = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Dummies"))
+
+local DummyFactory = require(script.Parent.DummyFactory)
+local Lab = require(script.Parent.Lab)
+local ProgressService = require(script.Parent.ProgressService)
+local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
+local EventService = require(script.Parent.EventService)
+local MinigameService = require(script.Parent.MinigameService)
+local Metrics = require(script.Parent.Metrics)
+local FxService = require(script.Parent.FxService) -- (V8-1.6: the punch sound and the cleared burst)
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local SessionStats = require(script.Parent.SessionStats)
+local DeviceTier = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("DeviceTier"))
+
+local ChaseService = {}
+
+ChaseService.CHASE_MIN = 4
+ChaseService.CHASE_MAX = 10
+ChaseService.MAX_HP = 100
+ChaseService.HIT_DAMAGE = 4
+ChaseService.HIT_GAP = 0.9 -- s between two punches of one chaser
+ChaseService.REACH = 4.5
+ChaseService.RESPAWN = 1
+ChaseService.DURATION = 50
+ChaseService.BONUS = 3
+ChaseService.FIRST_AFTER = 100 -- (20 Nov, Session_v1: was 150, after most visits had ended; phase 0 had 90)
+ChaseService.EVERY_MIN = 360
+ChaseService.EVERY_MAX = 480
+ChaseService.NEW_TAKEDOWNS = 300
+
+type Chaser = { model: Model, down: boolean, lastHit: number }
+type Chase = { player: Player, chasers: { Chaser }, endsAt: number, done: boolean, punches: number? }
+
+local chases: { [Player]: Chase } = {}
+local nextAt: { [Player]: number } = {}
+
+-- V8-0.6 (Config.V8_CALM_START): no chase for a newcomer before CALM_CHASE_AFTER s in the game and
+-- CALM_CHASE_KOS takedowns this visit, both (the simulated players called the chase at 100 s "an
+-- ambush"; with the first hits landing, "or 15 KOs" alone would bring it back at 60-90 s).
+local startTakedowns: { [Player]: number } = {}
+function ChaseService.calmAllows(player: Player, takedowns: number): boolean
+	local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
+	if not Config.V8_CALM_START or (player:GetAttribute("Newcomer") ~= true and not Config.CHASE_V8) then -- (V8-1.6: for everyone)
+		return true
+	end
+	-- (This visit's KOs from the visit record, counted from the join: blind review, 21 Nov. The first
+	-- reading of the profile's count is the fallback when there is no record.)
+	local record = (require(script.Parent:WaitForChild("SessionStats")) :: any).recordFor(player)
+	local visitKOs: number
+	if record and type(record.takedowns) == "number" then
+		visitKOs = record.takedowns
+	else
+		local first = startTakedowns[player]
+		if first == nil then
+			first = takedowns
+			startTakedowns[player] = first
+		end
+		visitKOs = takedowns - first
+	end
+	local joined = (player:GetAttribute("V8JoinedAt") :: number?) or Workspace:GetServerTimeNow()
+	return Workspace:GetServerTimeNow() - joined >= Config.CALM_CHASE_AFTER and visitKOs >= Config.CALM_CHASE_KOS
+end
+
+local function rootOf(player: Player): BasePart?
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	return if root and root:IsA("BasePart") then root else nil
+end
+
+local function inOwnLab(player: Player): boolean
+	local root = rootOf(player)
+	local index = Lab.plotIndex(player)
+	if not root or not index then
+		return false
+	end
+	local zone, at = Lab.zoneAt(root.Position)
+	return zone == "Lab" and at == index
+end
+
+local function standing(model: Model): boolean
+	local s = model:GetAttribute("RagdollState")
+	return s == nil or s == "Standing" or s == "Walking" or s == "Fleeing" or s == "Recovering"
+end
+
+local function finish(c: Chase, why: string)
+	if c.done then
+		return
+	end
+	c.done = true
+	chases[c.player] = nil
+	local player = c.player
+	player:SetAttribute("ChaseHP", nil)
+	player:SetAttribute("ChaseMax", nil)
+	player:SetAttribute("ChaseLeft", nil)
+	if why == "Cleared" and player.Parent then
+		ProgressService.addTakedowns(player, ChaseService.BONUS)
+		ProgressService.notice(player, string.format("\u{1F389} CHASE CLEARED! +%d takedowns", ChaseService.BONUS))
+		-- (V8-1.6: a celebration where you stand.)
+		local r = rootOf(player)
+		if (Config :: any).CHASE_V8 and r then
+			FxService.hit(r.Position + Vector3.new(0, 3, 0), 130, "CannonPad")
+		end
+	elseif player.Parent then
+		ProgressService.notice(player, "They gave up the chase!")
+	end
+	Metrics.event(player, "Chase_" .. why)
+	task.delay(3, function()
+		for _, ch in c.chasers do
+			if ch.model.Parent and ch.model:GetAttribute("Vital") ~= "Dead" then
+				ch.model:Destroy()
+			end
+		end
+	end)
+end
+
+local function knockedOut(c: Chase)
+	local player = c.player
+	player:SetAttribute("ChaseHP", 0)
+	local root = rootOf(player)
+	if root then
+		PlayerRagdoll.knock(player, Vector3.new(0, 30, 0))
+	end
+	ProgressService.notice(player, "KNOCKED OUT! Back in 1 second...")
+	task.delay(ChaseService.RESPAWN, function()
+		if player.Parent and not c.done then -- (a chase already over: no respawn, no stale health: review fix)
+			player:LoadCharacter()
+			player:SetAttribute("ChaseHP", ChaseService.MAX_HP)
+		end
+	end)
+end
+
+-- Starts a chase on a player now. Returns it (nil: not now).
+function ChaseService.start(player: Player, count: number?): Chase?
+	if chases[player] or not inOwnLab(player) then
+		return nil
+	end
+	-- (Phase 1: at most the device tier's chasers; DeviceTier.)
+	local record = SessionStats.recordFor(player)
+	local most = math.max(ChaseService.CHASE_MIN, math.min(ChaseService.CHASE_MAX, DeviceTier.caps(DeviceTier.of(record and record.plat)).chasers))
+	local fair = (Config :: any).CHASE_V8 == true
+	local n = math.min(count or (if fair then (Config :: any).CHASE_V8_COUNT else math.random(ChaseService.CHASE_MIN, most)), EventService.dummyRoom())
+	if n < (if fair then 1 else ChaseService.CHASE_MIN) and not count then
+		return nil
+	end
+	local root = rootOf(player) :: BasePart
+	local c: Chase = { player = player, chasers = {}, endsAt = os.clock() + ChaseService.DURATION, done = false }
+	chases[player] = c
+	-- (V8-1.6: no HP bar in a fair chase: every 3rd punch throws you instead.)
+	if not fair then
+		player:SetAttribute("ChaseMax", ChaseService.MAX_HP)
+		player:SetAttribute("ChaseHP", ChaseService.MAX_HP)
+	end
+	player:SetAttribute("ChaseLeft", n)
+	ProgressService.notice(player, if fair then "\u{26A0}\u{FE0F} THEY'RE COMING! Knock them both down!" else "\u{26A0}\u{FE0F} NPC CHASE! They're coming for you. Knock them down!")
+	local center = Lab.focusFor(player)
+	for i = 1, n do
+		local angle = (i / n) * math.pi * 2
+		local at = center + Vector3.new(math.cos(angle) * 34, 3, math.sin(angle) * 34)
+		local model = DummyFactory.spawn(at, root.Position, player)
+		model.Name = "Chaser"
+		model:SetAttribute("Chaser", player.UserId)
+		model:SetAttribute("Role", "Charging")
+		model:SetAttribute("Pace", 1.35)
+		model:SetAttribute("Personality", "Brave") -- (never runs from a gun)
+		for _, d in model:GetChildren() do
+			if d:IsA("BasePart") and (string.find(d.Name, "Torso") or string.find(d.Name, "Arm")) then
+				d.Color = Color3.fromRGB(210, 40, 50)
+			end
+		end
+		local ch: Chaser = { model = model, down = false, lastHit = 0 }
+		table.insert(c.chasers, ch)
+		model:GetAttributeChangedSignal("RagdollState"):Connect(function()
+			local state = model:GetAttribute("RagdollState")
+			if not ch.down and (state == "Ragdoll" or state == "Out") and Dummies.blame(model) == player.UserId then
+				ch.down = true
+				local left = 0
+				for _, other in c.chasers do
+					if not other.down then
+						left += 1
+					end
+				end
+				player:SetAttribute("ChaseLeft", left)
+				if left == 0 then
+					finish(c, "Cleared")
+				end
+			end
+		end)
+	end
+	-- The chase: they keep coming for you, and hit when they reach you.
+	task.spawn(function()
+		while not c.done do
+			task.wait(0.25)
+			if not player.Parent then
+				finish(c, "Left")
+				break
+			end
+			if os.clock() > c.endsAt then
+				finish(c, "Time")
+				break
+			end
+			local r = rootOf(player)
+			if not r or not inOwnLab(player) then
+				if r and Lab.plotIndex(player) then
+					finish(c, "Escaped")
+					break
+				end
+				continue
+			end
+			local now = os.clock()
+			for _, ch in c.chasers do
+				local pelvis = ch.model:FindFirstChild("LowerTorso")
+				if ch.model.Parent and pelvis and pelvis:IsA("BasePart") then
+					local fair = (Config :: any).CHASE_V8 == true
+					if ch.down and standing(ch.model) and not fair then
+						ch.down = false -- (got up again: still in the chase)
+					end
+					if fair and ch.down then
+						-- (V8-1.6: knocked down once, out for good: it sits where it fell, dizzy; the
+						-- counter only ever counts down.)
+						if not ch.model:GetAttribute("ChaseOut") then
+							ch.model:SetAttribute("ChaseOut", true)
+							ch.model:SetAttribute("Home", pelvis.Position)
+						end
+						continue
+					end
+					ch.model:SetAttribute("Home", Vector3.new(r.Position.X, pelvis.Position.Y, r.Position.Z))
+					ch.model:SetAttribute("HomeLook", Vector3.new(r.Position.X, pelvis.Position.Y, r.Position.Z))
+					local close = (pelvis.Position - r.Position).Magnitude <= ChaseService.REACH
+					local hp = if fair then 1 else (player:GetAttribute("ChaseHP") :: number?) or 0
+					if fair and close and standing(ch.model) and now - ch.lastHit >= ChaseService.HIT_GAP and not PlayerRagdoll.isDown(player) then
+						-- (V8-1.6: a punch is heard; every 3rd one throws you. No HP, no knock-out.)
+						ch.lastHit = now
+						c.punches = (c.punches or 0) + 1
+						FxService.hit(r.Position, 40, "Punch", nil, true)
+						if c.punches % 3 == 0 then
+							PlayerRagdoll.knock(player, (r.Position - pelvis.Position).Unit * 40 + Vector3.new(0, 22, 0))
+						end
+						continue
+					end
+					if close and standing(ch.model) and now - ch.lastHit >= ChaseService.HIT_GAP and hp > 0 and not PlayerRagdoll.isDown(player) then
+						ch.lastHit = now
+						hp = math.max(0, hp - ChaseService.HIT_DAMAGE)
+						player:SetAttribute("ChaseHP", hp)
+						if hp <= 0 then
+							knockedOut(c)
+						elseif hp % 20 == 0 then
+							-- (Now and then a punch throws you: it is a ragdoll game.)
+							PlayerRagdoll.knock(player, (r.Position - pelvis.Position).Unit * 35 + Vector3.new(0, 18, 0))
+						end
+					end
+				end
+			end
+		end
+	end)
+	return c
+end
+
+function ChaseService.current(player: Player): Chase?
+	return chases[player]
+end
+function ChaseService.stopForTest(player: Player)
+	local c = chases[player]
+	if c then
+		finish(c, "Stopped")
+	end
+end
+
+function ChaseService.start_()
+	-- (Never in the self-tests: they set their own scenes.)
+	local function testing(): boolean
+		return game:GetService("RunService"):IsStudio() and game:GetService("ServerStorage"):GetAttribute("RunSelfTest") == true
+	end
+	Players.PlayerAdded:Connect(function(player)
+		nextAt[player] = os.clock() + ChaseService.FIRST_AFTER
+	end)
+	for _, player in Players:GetPlayers() do
+		nextAt[player] = os.clock() + ChaseService.FIRST_AFTER
+	end
+	Players.PlayerRemoving:Connect(function(player)
+		nextAt[player] = nil
+		startTakedowns[player] = nil
+		local c = chases[player]
+		if c then
+			finish(c, "Left")
+		end
+	end)
+	task.spawn(function()
+		while true do
+			task.wait(5)
+			if testing() then
+				continue
+			end
+			local busy = Workspace:GetAttribute("HordeOn") == true or EventService.current() ~= nil or MinigameService.current() ~= nil
+			for _, player in Players:GetPlayers() do
+				local due = nextAt[player]
+				local td = ProgressService.takedownsOf(player)
+				if due and os.clock() >= due and not busy and not chases[player] and td ~= nil and td < ChaseService.NEW_TAKEDOWNS and ChaseService.calmAllows(player, td) then
+					if ChaseService.start(player) then
+						nextAt[player] = os.clock() + math.random(ChaseService.EVERY_MIN, ChaseService.EVERY_MAX)
+					else
+						nextAt[player] = os.clock() + 20 -- (not in the lab, or no room: soon again)
+					end
+				end
+			end
+		end
+	end)
+end
+
+return ChaseService

@@ -77,6 +77,7 @@ safe("BikeService", function() require(Systems:WaitForChild("BikeService")).star
 safe("Newspaper", function() require(Systems:WaitForChild("Newspaper")).start() end) -- 24 Nov 2026: one ragdoll carries a newspaper
 safe("FirstAid", function() require(Systems:WaitForChild("FirstAid")).start() end) -- 24 Nov 2026: ragdolls help the hurt ones
 safe("Mourning", function() require(Systems:WaitForChild("Mourning")).start() end) -- (V11 item 13) ragdolls mourn the dead and try CPR
+safe("GuardDog", function() require(Systems:WaitForChild("GuardDog")).start() end) -- GUARD_DOG: whistle the dog, tap a limb, it bites
 safe("MechArms", function() require(Systems:WaitForChild("MechArms")).start() end) -- mechanical arms to tear ragdolls apart
 -- V8-1.7 (phone diet): with the birds off, their models leave ReplicatedStorage (every client loaded
 -- them for nothing); Config.BIRDS on brings them back at the next server start.
