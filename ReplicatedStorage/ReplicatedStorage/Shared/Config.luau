@@ -96,6 +96,7 @@ local Config = {
 	CAVE_V2 = true, -- F79: the bear cave is a Terrain rock hill with a carved arched opening, a tunnel, a dark chamber with blinking eyes, a Ground yard with half-buried rocks, a log and a stump (LabOwnerMap caveV2); no ball parts, no black slab
 	ENTRANCE_ROW = true, -- F76: the herringbone vehicle row north of the CrossN walkway by the spawn (LabLayout10.ENTRANCE_ROW, LabOwnerMap entranceRow): Silvia, Ford and Panzer moved there; plaques with FREE, the price, or SOON; the Ford uses its pass when it is for sale
 	VIEW_REPORT = true, -- 0.158: every screen reports its camera twice a second (Net CameraView, unreliable, validated, 4/s); RagdollDirector.inView(point) sends extras away out of view first
+	PATH_WALKERS = true, -- 0.1568: client-only walkers that look like our ragdolls walk every walkway (phone 14, tablet 20, PC 30; anchored, BulkMoveTo, banded rates, fade within 26 studs of the camera; Client/PathWalkers)
 	HOME_CLEAR = true, -- F75: once the map stands every vehicle home is checked with the vehicle's box and moved to the nearest clear spot when something solid is inside it ([Vehicles] homes moved: n)
 	BIKE_ROUTE = true, -- F69: on the compact map the motorbike rider follows the walkway loop's centre line point to point (a point not reached in 14 s is skipped)
 	REAL_HANDS = true, -- S2 plan B: real hands from rounded parts (palm, 4 fingers of 3 segments, a thumb of 2), posed by state, on this screen only; the hook hand skin is shrunk away (Client/RealHands)
