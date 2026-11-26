@@ -672,25 +672,39 @@ local function east(into: Instance, o: Vector3, top: number)
 	part(into, "GyroStand", Vector3.new(2, 20, 2), CFrame.new(gc + Vector3.new(-19, 10, 0)), Color3.fromRGB(96, 110, 96), Enum.Material.Metal)
 	part(into, "GyroStand", Vector3.new(2, 20, 2), CFrame.new(gc + Vector3.new(19, 10, 0)), Color3.fromRGB(96, 110, 96), Enum.Material.Metal)
 	local rings: { { parts: { BasePart }, r: number, axis: Vector3, speed: number, base: { CFrame } } } = {}
+	-- (MAP_MACHINES_LIVE: the rings turn on each screen (Client/GateMotion "Spin"), not by the server 10 times a second)
+	local gyroClient = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).MAP_MACHINES_LIVE == true
 	for i, spec in { { 17, Vector3.xAxis, 0.6 }, { 14, Vector3.zAxis, -0.9 }, { 11, Vector3.xAxis, 1.3 } } do
 		local list, bases = {}, {}
 		local n = 24
+		local ringModel = Instance.new("Model")
+		ringModel.Name = "GyroRingSet"
+		ringModel.Parent = into
 		for k = 1, n do
 			local a = k / n * math.pi * 2
 			local seg = 2 * math.pi * spec[1] / n + 0.3
 			local cf = CFrame.Angles(0, 0, a) * CFrame.new(spec[1], 0, 0)
 			local p = part(into, "GyroRing", Vector3.new(1.2, seg, 1.2), CFrame.new(hub) * cf, Color3.fromRGB(96, 116, 98), Enum.Material.Metal, true)
 			p.CanCollide = false
+			if gyroClient then
+				p.Parent = ringModel
+			end
 			table.insert(list, p)
 			table.insert(bases, cf)
 		end
 		table.insert(rings, { parts = list, r = spec[1], axis = spec[2], speed = spec[3], base = bases })
+		if gyroClient then
+			ringModel.WorldPivot = CFrame.new(hub)
+			game:GetService("CollectionService"):AddTag(ringModel, "Spin")
+			ringModel:SetAttribute("Axis", if i == 3 then Vector3.yAxis else spec[2])
+			ringModel:SetAttribute("Speed", spec[3])
+		end
 		local _ = i
 	end
 	part(into, "GyroButton", Vector3.new(0.8, 3, 3), CFrame.new(gc + Vector3.new(0, 1, 24)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(210, 40, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
 	task.spawn(function()
 		local t0 = os.clock()
-		while into.Parent do
+		while into.Parent and not gyroClient do
 			local t = os.clock() - t0
 			local outer = CFrame.fromAxisAngle(Vector3.yAxis, t * 0.4)
 			for i, ring in rings do
