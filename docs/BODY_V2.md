@@ -51,7 +51,15 @@ The owner chose option 2 in `docs/MATURITY.md`.
   - phones: max 6 X-rayed bodies at once (the nearest).
 
 ## 1b. Bones may break, inside X-ray only (owner, 26 Nov 2026: "Knoglen må godt brække")
-- **When it breaks:** a limb at injury stage 3 that is hit again, a hard fall, or a dog bite at stage 3. That limb's bone breaks **in the X-ray view**:
+- **When it breaks** (owner: "Også når man skyder, slår med våben osv"): any hit on a limb at injury stage 3 breaks its bone. That covers:
+  - every gun shot (bullet, arrow, pellet);
+  - every melee weapon hit (bat, axe, sword, hammer, fist);
+  - explosions;
+  - hard impacts (falls, crashes, the cannon, a SLAM);
+  - machines;
+  - dog bites.
+- **Heavy weapons break faster:** sniper, railgun, big hammer and explosives can break a bone at stage 2.
+- **Where it breaks:** the break is on the limb part that was hit (upper or lower arm or leg, hand, foot, ribs on the torso). That limb's bone breaks **in the X-ray view**:
   - the bone snaps in two pieces with a clean cartoon zig-zag break;
   - the pieces sit slightly offset and angled, still inside the glass shell;
   - a small white "crack" flash and a CRACK sound.
