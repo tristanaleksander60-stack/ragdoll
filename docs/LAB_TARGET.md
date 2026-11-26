@@ -102,6 +102,38 @@
   - gentle shadows;
   - no saturation boost.
 
+### R3.1b Close-ups the owner sent (26 Nov; described here, the images were not saved)
+1. **GYRO CAGE** (the "round ring machine" east of the tower; a NEW machine, build it as a real one):
+   - two big upright rings (outer silver, inner dark green-grey) that spin on two axes;
+   - mounted between two tall green-grey pillars on a long grey steel base;
+   - a dummy strapped spread-eagle in the middle with brown leather straps on its wrists and ankles, and wooden poles.
+   - **It is used like this:**
+     - a big red button on a round white plinth in front of it, with the prompt "Gyro Cage — Spin" (E);
+     - pressing it spins the rings fast with the strapped dummy, then flings or drops it.
+   - The dummy turns purple where it is hurt (`BLOOD = "purple"`).
+   - An archery target and the giant fan stand right behind it.
+2. **The TESLA COIL:**
+   - a tall orange copper column with grey rings;
+   - a silver disc on top with a small antenna;
+   - on a round dark-green base with white ceramic insulator feet and an orange copper coil ring.
+   - Make it a real machine if cheap: a button zaps a dummy with a lightning arc, and it flies, cartoon-style. Otherwise decoration.
+3. **The GRANDSTAND** beside the tower:
+   - long grey concrete stepped stands with brown wooden bench seats on each step;
+   - a railing on top, on its own plot;
+   - grey concrete walls with dark vertical panels at the back.
+4. **The SHREDDER PIT:**
+   - a long sunken rectangular pit with a steel railing round it;
+   - inside, grey crossed steel scaffolding/rollers with dummies caught in it;
+   - a lever on a small grey base and a black button box on a concrete block next to it;
+   - a small red warning sign.
+5. **The TRAMPOLINE:** big, round, dark, with a thick green-grey padded rim, raised on white steel legs.
+6. **The raised spawn/leaderboard plaza edge:** a tall wall faced with a dark speckled granite texture, a light concrete cap and a steel pipe railing (2 rails) on top.
+7. **The ground detail:**
+   - grass with a soft noise texture;
+   - walkways in big light-concrete slabs (about 12 x 6 studs) with thin dark joints;
+   - white/grey dummies walking about and waving.
+   - **Ambient lines on screen** like "Do not push the button, they said. So I don't." (the existing dummy talk) stay.
+
 ### R3.2 Starting plan (studs; the screenshots WIN when they disagree)
 - North = -Z. The spawn circle middle is (0, 0); the tower middle is about (5, 40).
 - **The leaderboard plaza** is at z about -95. The central walkway runs from the circle to it.
