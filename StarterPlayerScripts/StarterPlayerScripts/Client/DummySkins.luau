@@ -129,6 +129,12 @@ local shaped = false
 -- (24 Nov 2026, owner: on a phone it must be plain that it is an x-ray, not a limb gone: a bigger bone that is never
 -- shot away whole, in a limb that stays a clear x-ray blue.)
 local XRAY_PHONE = game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").KeyboardEnabled
+-- BODY_V2 1 (owner, 26 Nov 2026: X-ray 10/10): the X-RAY toggle (Client/XRayToggle) shows every near body in X-ray, whole
+-- skeleton, until it is switched off; the nearest XRAY_ALL_MAX only (phones fewer), within XRAY_ALL_REACH studs.
+local xrayAll: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+local refreshers: { [Model]: () -> () } = setmetatable({}, { __mode = "k" }) :: any
+local XRAY_ALL_REACH = 80
+local XRAY_ALL_MAX = if XRAY_PHONE then 6 else 16
 local XRAY_CLEAR = if XRAY_PHONE then 0.55 else 0.74
 local XRAY_TINT = if XRAY_PHONE then Color3.fromRGB(52, 96, 176) else Color3.fromRGB(104, 138, 186)
 local XRAY_BLUE = if XRAY_PHONE then 0.85 else 0.55
@@ -514,7 +520,7 @@ local function dress(model: Model)
 						showHurt()
 					end)
 				end
-				local clear = x.till > 0 and n > 0
+				local clear = (x.till > 0 and n > 0) or xrayAll[model] == true
 				skin.Transparency = if clear then XRAY_CLEAR else 0
 				if clear then
 					skin.Color = skin.Color:Lerp(XRAY_TINT, XRAY_BLUE)
@@ -591,6 +597,7 @@ local function dress(model: Model)
 			end
 		end
 	end
+	refreshers[model] = showHurt
 	model:GetAttributeChangedSignal("Wounds"):Connect(showHurt)
 	model:GetAttributeChangedSignal("Vital"):Connect(showHurt)
 	showHurt()
@@ -653,6 +660,61 @@ local function follow(model: Instance)
 	model:GetAttributeChangedSignal("Mannequin"):Connect(update)
 	-- (The limbs arrive with the model; a beat later is enough for all of them.)
 	task.defer(update)
+end
+
+-- The X-RAY toggle: on = the nearest bodies in X-ray (looked at again every second), off = back to normal.
+local xrayOn = false
+function DummySkins.setXray(on: boolean)
+	if on == xrayOn then
+		return
+	end
+	xrayOn = on
+	if not on then
+		for model in xrayAll do
+			xrayAll[model] = nil
+			local fn = refreshers[model]
+			if fn and model.Parent then
+				pcall(fn)
+			end
+		end
+		return
+	end
+	task.spawn(function()
+		while xrayOn do
+			local camera = Workspace.CurrentCamera
+			local eye = if camera then camera.CFrame.Position else Vector3.zero
+			local list: { { model: Model, d: number } } = {}
+			for model in refreshers do
+				local pelvis = model.Parent and model:FindFirstChild("LowerTorso")
+				if pelvis and pelvis:IsA("BasePart") then
+					local d = (pelvis.Position - eye).Magnitude
+					if d <= XRAY_ALL_REACH then
+						table.insert(list, { model = model, d = d })
+					end
+				end
+			end
+			table.sort(list, function(a, b)
+				return a.d < b.d
+			end)
+			local want: { [Model]: boolean } = {}
+			for i = 1, math.min(#list, XRAY_ALL_MAX) do
+				want[list[i].model] = true
+			end
+			for model, fn in refreshers do
+				local should = want[model] == true
+				if (xrayAll[model] == true) ~= should then
+					xrayAll[model] = if should then true else nil
+					if model.Parent then
+						pcall(fn)
+					end
+				end
+			end
+			task.wait(1)
+		end
+	end)
+end
+function DummySkins.xrayIsOn(): boolean
+	return xrayOn
 end
 
 function DummySkins.start()
