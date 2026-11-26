@@ -16,14 +16,14 @@ LabOwnerMap.SIZE = Vector2.new(980, 850) -- (M4: set from Plan.BOUNDS below, plu
 LabOwnerMap.CENTER = Vector2.new(-22, 22) -- (M4: the middle of Plan.BOUNDS, below)
 LabOwnerMap.WALK = 15 -- walkway width (map round 2: was 22)
 
-local GRASS = Color3.fromRGB(118, 168, 84)
-local WALK = Color3.fromRGB(212, 212, 206)
+local GRASS = Color3.fromRGB(110, 140, 85) -- (M4 OBJECT BY OBJECT: the table's grass; was 118, 168, 84)
+local WALK = Color3.fromRGB(205, 205, 200) -- (M4 OBJECT BY OBJECT: the table's walkway; was 212, 212, 206)
 local GRANITE = Color3.fromRGB(128, 128, 132)
 local CAP = Color3.fromRGB(196, 196, 192)
 local STEEL = Color3.fromRGB(170, 174, 180)
-local RAIL = Color3.fromRGB(96, 92, 88)
-local SLEEPER = Color3.fromRGB(110, 84, 60)
-local BALLAST = Color3.fromRGB(150, 146, 140)
+local RAIL = Color3.fromRGB(70, 70, 72)
+local SLEEPER = Color3.fromRGB(100, 72, 48)
+local BALLAST = Color3.fromRGB(120, 118, 115)
 
 local function part(into: Instance, name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, deco: boolean?, shape: Enum.PartType?): Part
 	local p = Instance.new("Part")
@@ -45,6 +45,76 @@ local function part(into: Instance, name: string, size: Vector3, cf: CFrame, col
 	end
 	p.Parent = into
 	return p
+end
+
+-- M4 OBJECT BY OBJECT (docs/MAP_MASTERPLAN.md, owner: "Vær ultra specifik med alt kvalitet bænke osv"): one builder per
+-- object kind, real-world size to a 5.2-stud player, from several clean parts, plain materials, the table's colours.
+-- Small parts cast no shadow; decoration is not queried.
+local PROP = {
+	slat = Color3.fromRGB(124, 92, 61), iron = Color3.fromRGB(40, 40, 44),
+	barrel = Color3.fromRGB(190, 40, 30), band = Color3.fromRGB(235, 235, 235), lid = Color3.fromRGB(150, 30, 25),
+	crate = Color3.fromRGB(150, 110, 68), crateFrame = Color3.fromRGB(105, 74, 44), bin = Color3.fromRGB(70, 74, 78),
+}
+-- A park bench: 6 long, seat 1.6 high and 1.6 deep, back to 3.2; 3 seat slats and 2 back slats with gaps, 2 cast-iron
+-- side frames (leg, seat support, back post). `cf` = the ground point under the seat's middle, facing the way one sits.
+local function benchModel(into: Instance, cf: CFrame)
+	local m = Instance.new("Model")
+	m.Name = "Bench"
+	for i = 0, 2 do
+		local p = part(m, "BenchSeat", Vector3.new(6, 0.18, 0.46), cf * CFrame.new(0, 1.6, -0.55 + i * 0.52), PROP.slat, Enum.Material.Wood)
+		p.CastShadow = false
+	end
+	for i = 0, 1 do
+		part(m, "BenchBack", Vector3.new(6, 0.46, 0.14), cf * CFrame.new(0, 2.25 + i * 0.6, 0.86) * CFrame.Angles(math.rad(-12), 0, 0), PROP.slat, Enum.Material.Wood, true)
+	end
+	for _, x in { -2.6, 2.6 } do
+		part(m, "BenchLeg", Vector3.new(0.18, 1.5, 0.18), cf * CFrame.new(x, 0.75, -0.6), PROP.iron, Enum.Material.Metal, true)
+		part(m, "BenchLeg", Vector3.new(0.18, 1.5, 0.18), cf * CFrame.new(x, 0.75, 0.6), PROP.iron, Enum.Material.Metal, true)
+		part(m, "BenchSupport", Vector3.new(0.18, 0.18, 1.6), cf * CFrame.new(x, 1.45, 0), PROP.iron, Enum.Material.Metal, true)
+		part(m, "BenchPost", Vector3.new(0.18, 1.8, 0.18), cf * CFrame.new(x, 2.4, 0.9) * CFrame.Angles(math.rad(-12), 0, 0), PROP.iron, Enum.Material.Metal, true)
+	end
+	m.Parent = into
+	return m
+end
+-- A red barrel: 2 wide, 2.8 high, a white band, a darker lid; `tipped` lies it on its side.
+local function barrelModel(into: Instance, at: Vector3, yaw: number, tipped: boolean?)
+	local m = Instance.new("Model")
+	m.Name = "Barrel"
+	local base = if tipped then CFrame.new(at + Vector3.new(0, 1, 0)) * CFrame.Angles(0, yaw, math.rad(90)) else CFrame.new(at + Vector3.new(0, 1.4, 0)) * CFrame.Angles(0, yaw, 0)
+	local up = CFrame.Angles(0, 0, math.rad(90)) -- (a Cylinder part runs along X: turn it up)
+	part(m, "Barrel", Vector3.new(2.8, 2, 2), base * up, PROP.barrel, Enum.Material.SmoothPlastic, false, Enum.PartType.Cylinder)
+	part(m, "BarrelBand", Vector3.new(0.35, 2.06, 2.06), base * CFrame.new(0, 0.35, 0) * up, PROP.band, Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+	part(m, "BarrelLid", Vector3.new(0.08, 1.7, 1.7), base * CFrame.new(0, 1.41, 0) * up, PROP.lid, Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+	m.Parent = into
+	return m
+end
+-- A wooden crate: side panels of horizontal planks, a darker frame on every edge, a plank lid. `cf` = its middle.
+local function crateModel(into: Instance, cf: CFrame, s: number)
+	local m = Instance.new("Model")
+	m.Name = "Crate"
+	local core = part(m, "Crate", Vector3.new(s - 0.3, s - 0.3, s - 0.3), cf, PROP.crate, Enum.Material.WoodPlanks)
+	core.CastShadow = true
+	local e = 0.32
+	for _, a in { -1, 1 } do
+		for _, b in { -1, 1 } do
+			part(m, "CrateFrame", Vector3.new(e, s, e), cf * CFrame.new(a * (s / 2 - e / 2), 0, b * (s / 2 - e / 2)), PROP.crateFrame, Enum.Material.Wood, true)
+			part(m, "CrateFrame", Vector3.new(s, e, e), cf * CFrame.new(0, a * (s / 2 - e / 2), b * (s / 2 - e / 2)), PROP.crateFrame, Enum.Material.Wood, true)
+			part(m, "CrateFrame", Vector3.new(e, e, s), cf * CFrame.new(a * (s / 2 - e / 2), b * (s / 2 - e / 2), 0), PROP.crateFrame, Enum.Material.Wood, true)
+		end
+	end
+	m.Parent = into
+	return m
+end
+-- A bin: 1.4 wide, 2.4 high, a cylinder, a rim, a lid.
+local function binModel(into: Instance, at: Vector3)
+	local m = Instance.new("Model")
+	m.Name = "Bin"
+	local up = CFrame.Angles(0, 0, math.rad(90))
+	part(m, "Bin", Vector3.new(2.2, 1.4, 1.4), CFrame.new(at + Vector3.new(0, 1.1, 0)) * up, PROP.bin, Enum.Material.Metal, false, Enum.PartType.Cylinder)
+	part(m, "BinRim", Vector3.new(0.15, 1.5, 1.5), CFrame.new(at + Vector3.new(0, 2.2, 0)) * up, PROP.iron, Enum.Material.Metal, true, Enum.PartType.Cylinder)
+	part(m, "BinLid", Vector3.new(0.2, 1.3, 1.3), CFrame.new(at + Vector3.new(0, 2.35, 0)) * up, PROP.bin, Enum.Material.Metal, true, Enum.PartType.Cylinder)
+	m.Parent = into
+	return m
 end
 
 -- MAP ROUND 3 (owner: "Det her map er 1/10"; docs/MAP_MASTERPLAN.md): the ground is built FROM the master plan
@@ -296,11 +366,11 @@ local function ground(into: Instance, o: Vector3)
 		local a, b = w(pts[i]), w(pts[i + 1])
 		local len = (b - a).Magnitude
 		local along = CFrame.lookAt((a + b) / 2, b)
-		part(into, "OwnerBallast", Vector3.new(9, 0.5, len + 4), along * CFrame.new(0, 0.25, 0), BALLAST, Enum.Material.Pebble, true)
+		part(into, "OwnerBallast", Vector3.new(9, 0.5, len + 4), along * CFrame.new(0, 0.25, 0), BALLAST, Enum.Material.Slate, true)
 		for _, side in { -1, 1 } do
 			part(into, "OwnerRail", Vector3.new(0.4, 0.5, len + 4), along * CFrame.new(side * 2.4, 1, 0), RAIL, Enum.Material.Metal, true)
 		end
-		local n = math.floor(len / 10) -- (M9: a sleeper every 10)
+		local n = math.floor(len / (if LabOwnerMap.S < 2 then 4 else 10)) -- (M9: a sleeper every 10; M4 OBJECT BY OBJECT: every 4 on the compact map)
 		for k = 0, n do
 			part(into, "OwnerSleeper", Vector3.new(7, 0.35, 1.2), along * CFrame.new(0, 0.6, -len / 2 + k * (len / math.max(n, 1))), SLEEPER, Enum.Material.Wood, true)
 		end
@@ -332,9 +402,9 @@ LabOwnerMap.TOWER_AT = Vector2.new(5, 40) -- (plan; x S)
 LabOwnerMap.TOWER_SIZE = 26 -- (M4: the plan's tower footprint, as in the references; was 56)
 LabOwnerMap.FLOOR_H = 10.5 -- (M4: 5 storeys = 52.5 high, the references' 50-55; was 19)
 LabOwnerMap.FLOORS = 5
-local GALV = Color3.fromRGB(150, 154, 160)
-local PLATE = Color3.fromRGB(128, 132, 138)
-local SLIDE = Color3.fromRGB(86, 118, 92)
+local GALV = Color3.fromRGB(75, 80, 86) -- (OBJECT BY OBJECT: the steel tower Metal; was 150, 154, 160)
+local PLATE = Color3.fromRGB(130, 134, 140)
+local SLIDE = Color3.fromRGB(110, 125, 110) -- (OBJECT BY OBJECT: grey-green; was 86, 118, 92)
 local WOOD = Color3.fromRGB(132, 96, 62)
 local CONCRETE = Color3.fromRGB(150, 150, 152)
 
@@ -818,9 +888,9 @@ local function west(into: Instance, o: Vector3, top: number)
 	-- Red barrels in two groups (a white band round each).
 	for _, g in { planAt(o, top, "BrickWall", 6, -26), planAt(o, top, "BrickWall", 6, 22) } do
 		for k = 0, 4 do
-			local p = g + Vector3.new((k % 3) * 3.4, 0, math.floor(k / 3) * 3.4)
-			part(into, "Barrel", Vector3.new(4.4, 3, 3), CFrame.new(p + Vector3.new(0, 2.2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(196, 36, 36), Enum.Material.Metal, false, Enum.PartType.Cylinder)
-			part(into, "BarrelBand", Vector3.new(0.5, 3.05, 3.05), CFrame.new(p + Vector3.new(0, 2.6, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(235, 235, 235), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+			-- (OBJECT BY OBJECT: groups of 5 touching, one tipped)
+			local p = g + Vector3.new((k % 3) * 2.1, 0, math.floor(k / 3) * 2.1)
+			barrelModel(into, p, k * 0.7, k == 4)
 		end
 	end
 	-- The long brick crash wall (north-south).
@@ -842,16 +912,16 @@ local function west(into: Instance, o: Vector3, top: number)
 	local gx = rk + Vector3.new(11, 0, 0)
 	for _, dx in { -3, 3 } do
 		for _, dz in { -3, 3 } do
-			part(into, "GantryLeg", Vector3.new(0.9, 34, 0.9), CFrame.new(gx + Vector3.new(dx, 17, dz)), Color3.fromRGB(200, 200, 204), Enum.Material.Metal)
+			part(into, "GantryLeg", Vector3.new(0.9, 34, 0.9), CFrame.new(gx + Vector3.new(dx, 17, dz)), Color3.fromRGB(95, 100, 106), Enum.Material.Metal)
 		end
 	end
 	for y = 4, 30, 6 do
 		for _, e in { { Vector3.new(-3, y, -3), Vector3.new(3, y + 6, -3) }, { Vector3.new(3, y, 3), Vector3.new(-3, y + 6, 3) }, { Vector3.new(-3, y, 3), Vector3.new(-3, y + 6, -3) }, { Vector3.new(3, y, -3), Vector3.new(3, y + 6, 3) } } do
 			local a, b = gx + e[1], gx + e[2]
-			part(into, "GantryBrace", Vector3.new(0.35, 0.35, (b - a).Magnitude), CFrame.lookAt((a + b) / 2, b), Color3.fromRGB(200, 200, 204), Enum.Material.Metal, true)
+			part(into, "GantryBrace", Vector3.new(0.35, 0.35, (b - a).Magnitude), CFrame.lookAt((a + b) / 2, b), Color3.fromRGB(95, 100, 106), Enum.Material.Metal, true)
 		end
 	end
-	part(into, "GantryArm", Vector3.new(10, 1.2, 2), CFrame.new(gx + Vector3.new(-6, 26, 0)), Color3.fromRGB(200, 200, 204), Enum.Material.Metal)
+	part(into, "GantryArm", Vector3.new(10, 1.2, 2), CFrame.new(gx + Vector3.new(-6, 26, 0)), Color3.fromRGB(95, 100, 106), Enum.Material.Metal)
 	-- The concrete slab south of the rocket.
 	part(into, "ConcreteSlab", Vector3.new(60, 1, 44), CFrame.new(planAt(o, top, "LandingField") + Vector3.new(0, 0.5, 0)), Color3.fromRGB(170, 170, 168), Enum.Material.Concrete)
 	-- The walled T-rex pen with its gate (east side) and the T-rex.
@@ -922,7 +992,7 @@ local function east(into: Instance, o: Vector3, top: number)
 		part(into, "SandcastleMerlon", Vector3.new(2.6, 2.6, 2.6), CFrame.new(sc + d + Vector3.new(0, 23.3, 0)), SAND, Enum.Material.Sandstone)
 	end
 	for k = 0, 5 do
-		part(into, "Crate", Vector3.new(4, 4, 4), CFrame.new(sc + Vector3.new(-8.5 + (k % 3) * 4.2, 2 + math.floor(k / 3) * 4, 7)) * CFrame.Angles(0, math.rad(k * 7), 0), Color3.fromRGB(160, 120, 76), Enum.Material.WoodPlanks)
+		crateModel(into, CFrame.new(sc + Vector3.new(-8.5 + (k % 3) * 4.2, 2 + math.floor(k / 3) * 4, 7)) * CFrame.Angles(0, math.rad(k * 7), 0), 4)
 	end
 	for k = -3, 3 do
 		part(into, "Picket", Vector3.new(0.5, 3.4, 0.3), CFrame.new(sc + Vector3.new(k * 2.4, 1.7, -8.5)), Color3.fromRGB(240, 236, 226), Enum.Material.Wood, true)
@@ -1007,7 +1077,19 @@ local function east(into: Instance, o: Vector3, top: number)
 	local lava = part(into, "LavaStrip", Vector3.new(8, 0.4, ll), CFrame.new((la + lb) / 2 + Vector3.new(0, 0.5, 0)), Color3.fromRGB(255, 110, 30), Enum.Material.CrackedLava)
 	lava.CanTouch = false
 	for _, s in { -1, 1 } do
-		part(into, "TrenchKerb", Vector3.new(2, 2, ll + 6), CFrame.new((la + lb) / 2 + Vector3.new(s * 6, 1, 0)), Color3.fromRGB(128, 124, 118), Enum.Material.Slate)
+		part(into, "TrenchKerb", Vector3.new(2, 2, ll + 6), CFrame.new((la + lb) / 2 + Vector3.new(s * 6, 1, 0)), Color3.fromRGB(90, 88, 86), Enum.Material.Slate)
+		-- (OBJECT BY OBJECT: a dark fence along the trench: posts every 8, two rails; a gap in the middle of the west side
+		-- where the path arrives)
+		local fx = (la + lb) / 2 + Vector3.new(s * 7.4, 0, 0)
+		for _, seg in (if s < 0 then { { -ll / 2 - 3, -5 }, { 5, ll / 2 + 3 } } else { { -ll / 2 - 3, ll / 2 + 3 } }) do
+			local z0, z1 = seg[1], seg[2]
+			for z = z0, z1, 8 do
+				part(into, "LavaFencePost", Vector3.new(0.3, 3.4, 0.3), CFrame.new(fx + Vector3.new(0, 1.7, z)), PROP.iron, Enum.Material.Metal, true)
+			end
+			for _, y in { 1.6, 3.2 } do
+				part(into, "LavaFenceRail", Vector3.new(0.18, 0.18, z1 - z0), CFrame.new(fx + Vector3.new(0, y, (z0 + z1) / 2)), PROP.iron, Enum.Material.Metal, true)
+			end
+		end
 	end
 	-- The turf square.
 	if inPlan("Gazebo") then part(into, "TurfSquare", Vector3.new(70, 0.3, 70), CFrame.new(planAt(o, top, "Gazebo") + Vector3.new(0, 0.15, 0)), Color3.fromRGB(70, 140, 60), Enum.Material.Fabric) end
@@ -1140,9 +1222,18 @@ local function lamp(into: Instance, at: Vector3)
 	if (if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAMP_LINT then onWalkable(at, 2) else onPath(at, 1)) then
 		return -- (rule 3: never on a path)
 	end
-	box(into, "LampPost", Vector3.new(0.5, 12, 0.5), CFrame.new(at + Vector3.new(0, 6, 0)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
-	local head = box(into, "LampHead", Vector3.new(1.4, 0.6, 1.4), CFrame.new(at + Vector3.new(0, 12.2, 0)), Color3.fromRGB(250, 240, 200), Enum.Material.Neon, true)
+	-- (OBJECT BY OBJECT: 10 high, a thin dark post, a small square head with a warm light, no shadows)
+	box(into, "LampPost", Vector3.new(0.4, 10, 0.4), CFrame.new(at + Vector3.new(0, 5, 0)), PROP.iron, Enum.Material.Metal, true)
+	box(into, "LampFoot", Vector3.new(0.9, 0.5, 0.9), CFrame.new(at + Vector3.new(0, 0.25, 0)), PROP.iron, Enum.Material.Metal, true)
+	box(into, "LampCap", Vector3.new(1.3, 0.25, 1.3), CFrame.new(at + Vector3.new(0, 10.55, 0)), PROP.iron, Enum.Material.Metal, true)
+	local head = box(into, "LampHead", Vector3.new(1, 0.6, 1), CFrame.new(at + Vector3.new(0, 10.15, 0)), Color3.fromRGB(255, 232, 190), Enum.Material.Neon, true)
 	head.CanCollide = false
+	local glow = Instance.new("PointLight")
+	glow.Range = 16
+	glow.Brightness = 0.8
+	glow.Color = Color3.fromRGB(255, 226, 180)
+	glow.Shadows = false
+	glow.Parent = head
 end
 local function fill(into: Instance, o: Vector3, top: number)
 	local S = LabOwnerMap.S
@@ -2076,8 +2167,8 @@ local function yards(into: Instance, o: Vector3, top: number)
 			local benchAt = w(endP - side * (Plan.INNER_W / 2 + 6) - dir * 8)
 			benchAt = freeSpot({ benchAt, benchAt + back3 * 5, benchAt - side3 * 4, benchAt + back3 * 10, benchAt - side3 * 4 + back3 * 5, benchAt + back3 * 15 }, Vector3.new(7, 3, 3), top) :: any
 			if benchAt and not onPath(benchAt, 2) then
-				part(into, "BenchSeat", Vector3.new(7, 0.5, 2), CFrame.lookAt(benchAt + Vector3.new(0, 1.6, 0), benchAt + Vector3.new(dir.X, 1.6, dir.Y)), Color3.fromRGB(140, 100, 64), Enum.Material.WoodPlanks)
-				part(into, "BenchBack", Vector3.new(7, 1.6, 0.4), CFrame.lookAt(benchAt + Vector3.new(0, 2.6, 0), benchAt + Vector3.new(dir.X, 2.6, dir.Y)) * CFrame.new(0, 0, 1), Color3.fromRGB(140, 100, 64), Enum.Material.WoodPlanks, true)
+				benchModel(into, CFrame.lookAt(benchAt, benchAt + Vector3.new(dir.X, 0, dir.Y)))
+				binModel(into, benchAt + CFrame.lookAt(benchAt, benchAt + Vector3.new(dir.X, 0, dir.Y)).RightVector * 4.4) -- (a bin by every bench)
 			end
 			-- a small cluster of props behind the sign
 			local propAt = endP + side * (Plan.INNER_W / 2 + 12) - dir * 12
@@ -2086,11 +2177,11 @@ local function yards(into: Instance, o: Vector3, top: number)
 				local p = freeSpot({ p0, p0 + back3 * 4, p0 + Vector3.new(side.X, 0, side.Y) * 4 }, Vector3.new(3, 3, 3), top) :: any
 				if p and not onPath(p, 2) then
 					if q == 1 then
-						part(into, "YardCrate", Vector3.new(3, 3, 3), CFrame.new(p + Vector3.new(0, 1.5, 0)) * CFrame.Angles(0, rng:NextNumber() * 6, 0), Color3.fromRGB(160, 120, 76), Enum.Material.WoodPlanks)
+						crateModel(into, CFrame.new(p + Vector3.new(0, 1.5, 0)) * CFrame.Angles(0, rng:NextNumber() * 6, 0), 3)
 					elseif q == 2 then
 						part(into, "YardCone", Vector3.new(1.4, 2.4, 1.4), CFrame.new(p + Vector3.new(0, 1.2, 0)), Color3.fromRGB(255, 120, 40), Enum.Material.Plastic, true)
 					else
-						part(into, "YardBarrel", Vector3.new(3.4, 2.4, 2.4), CFrame.new(p + Vector3.new(0, 1.7, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(60, 110, 170), Enum.Material.Metal, false, Enum.PartType.Cylinder)
+						barrelModel(into, p, rng:NextNumber() * 6, false)
 					end
 				end
 			end
@@ -2101,7 +2192,7 @@ local function yards(into: Instance, o: Vector3, top: number)
 		if room.courtyard then
 			local c = room.courtyard
 			lamp(into, w(c + Vector2.new(13, 13)))
-			part(into, "Bin", Vector3.new(2, 3, 2), CFrame.new(w(c + Vector2.new(-13, 13)) + Vector3.new(0, 1.5, 0)), Color3.fromRGB(60, 110, 70), Enum.Material.Metal)
+			binModel(into, w(c + Vector2.new(-13, 13)))
 			local sp = w(c + Vector2.new(13, -13))
 			if not onPath(sp, 0.5) then
 				nameSign(into, sp, Vector3.new(0, 0, 1), string.upper(room.name or ""))
