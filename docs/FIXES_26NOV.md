@@ -903,6 +903,28 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 - **Weapons keep working in third person:** the crosshair, aiming and recoil all work in third person (the shoulder cam on phones, PHONE_SHOULDER_CAM).
 - **Check:** hold each weapon class, press V several times, shoot, switch weapons. V always switches, and nothing forces you back.
 
+## F65 Ragdolls' LEGS jitter wildly when they turn, walk or animate (owner: "Flere af ragdollsne bugger når de vender sig, helt random når de går eller laver animationer, deres ben bugger helt vildt hurtigt")
+**The bug:** at random moments, while turning, walking or doing an idle or gesture, a ragdoll's legs shake extremely fast (vibration or flicker).
+
+**Find the cause first.** Record one in Studio (a slow-motion capture), and log the legs' joint targets and the root's network owner each frame for a jittering ragdoll. Likely causes; check each:
+1. **Two systems drive the legs at once:** the walk animation, the active-ragdoll pose (Poses / tone), the new turn-in-place and look-at (F0.9 LOOK_AT_TALK turns the waist and body), the idle actions, and RagdollNav steering all set targets in the same frames, so the targets fight.
+2. **Motor gains too stiff with too little damping:** the AnimationConstraint or AlignOrientation (or the Motor6D) on the hips and knees overshoots and oscillates, worse at low frame rates.
+3. **Network ownership flapping:** the owner of the body switches between the server and a client (or between 2 clients) many times a second as the player moves near and far, so each switch snaps the legs.
+4. **Steering flips the facing direction:** each path waypoint or avoidance tick sets a new facing, so the root's orientation target flips back and forth, and the legs try to step each way.
+5. **Feet touching or colliding with the ground, kerbs or each other:** the legs get pushed up and down (collisions between the legs or the feet and the kerbs).
+6. **The light (stand-in) mode switching on and off** at the 60-stud border every frame.
+
+**Fix:**
+- **ONE pose blender owns all leg targets:** walk, idle, gesture, turn, look-at and hit reactions are layered in one place with weights. Each target changes smoothly (a capped speed per frame). The upper-body layers (look-at, gestures) never touch the legs.
+- **Joints:** critically damped joint motors (raise the damping, lower the max torque or angular speed on the hips, knees and ankles while standing or walking), so there is no overshoot. Tune at 30 and 60 fps.
+- **Turning in place:** a real turn-step cycle (small alternating steps at a calm turn rate, about 180°/s max). The facing target is smoothed (it never flips). The steering updates the facing at most 10 times a second, with a dead zone of ±10°.
+- **Ownership with hysteresis:** a body changes its network owner only when it is 15+ studs nearer to the new player, and not more than once every 3 s. A walking ragdoll nobody touches stays with the server.
+- **Collisions:** no collisions between a ragdoll's own legs and feet; the feet's collision is a smooth box; the kerbs are not climbable steps for the feet (or the walkers keep off them).
+- **The light-mode border has hysteresis:** switch at 60 studs going in and 75 going out, never back and forth.
+- **A watchdog:** if a leg joint's angular speed stays very high for 0.3 s while the ragdoll is standing or walking, drop that leg's tone to 0.5 for 0.5 s (it settles), and log it with Metrics, so new causes show up.
+
+**Check:** watch 10 walkers and chatters for 2 minutes (turning, walking, gestures, LOOK AT YOU) at 60 fps and in the phone emulator. No leg jitters.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
