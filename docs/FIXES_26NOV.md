@@ -535,6 +535,18 @@ The owner still sees lamp posts standing in the middle of walkways.
 - **A short dark crack line** starts at the entry point on the bone (as F4).
 - **Check:** in X-ray, shoot a dummy from the front, the side, from above and at an angle. Every bullet points along the line it was fired and sits partly in the bone. No round peas except shotgun pellets.
 
+## F44 A bench stuck in the boxing ring (owner's screenshot), and every prop clear of the attractions
+**The picture:** a blocky wooden bench (an L of 2 planks) sticks into the boxing ring's corner post and apron.
+
+**Fix:**
+- **Move that bench** out to the ring's yard, facing the ring, at least 3 studs clear of the ring's apron and ropes.
+- **Check EVERY placed prop** (benches, bins, crates, barrels, lamps, signs, flower beds, trees, rocks) against EVERY attraction's full bounding box, including ropes, aprons, stairs, gates, rails and moving parts' sweep areas (the wrecking ball's swing, the sweeper's beam, the gyro rings, the fan cone).
+  - Keep 3 studs clear.
+  - The map lint reports 0 overlaps (extends F33).
+- **The yard-dressing placer** must place props only on free yard spots: try a spot, test it with GetPartBoundsInBox (and the sweep areas), and if it is blocked take the next spot. Never place blind.
+- **This bench model** is also replaced by a real bench mesh (`DETAILS_10.md`).
+- **Check:** walk round every attraction. No prop touches or sticks into any of them.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
