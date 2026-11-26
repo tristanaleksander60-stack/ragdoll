@@ -514,6 +514,8 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - (27 Nov) Script Sync: after turning it on, a change to a file on disk still did not reach Studio. Check the 3 folders show the sync icon and point at DocumentsRagdollLab (ServerScriptServiceServer, ReplicatedStorageReplicatedStorageShared, StarterPlayerScriptsStarterPlayerScriptsClient).
 - (26 Nov, F13) REVIVE ALL kept its key X (R and Z are taken). OK?
 - (26 Nov, F10) The German Shepherd is one rigid mesh (no free rigged one found), moved by code (trot bob, wiggle, bite shake). For real leg animations: buy or send a rigged German Shepherd (Creator Store id), or keep this?
+- (26 Nov, 1b RACETRACK, parked) There is no free room in the south: the railway ends at z 437, the south forest belt fills z 440-510, then the hills rise. Default: no track yet. Choose: (a) remove the south forest belt rows and put the track there (about 900 x 70, only a drag strip or a very thin oval fits), (b) flatten the hill foot south of the forest (keeps the forest, track about 900 x 150), or (c) put the track in its own place reached by a portal?
+- (26 Nov, 0.97) The welcome arch says "RAGDOLL HAVOC" (the game's name). SPAWN_11.md said "RAGDOLL ANATOMY". Default: RAGDOLL HAVOC (`Config.SPAWN_TITLE`). Change?
 
 ## Phone button map (checked 26 Nov 2026, 0.63.0, iPhone landscape 750x381 in the emulator with DevTouch)
 - **Left:** Shop and Menu in row 1, then Multiplayer (`HudMenu.PHONE_KEEP`, `PortalUI` launcher). The move stick is under them.
