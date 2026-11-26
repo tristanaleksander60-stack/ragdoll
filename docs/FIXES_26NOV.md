@@ -925,6 +925,16 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 
 **Check:** watch 10 walkers and chatters for 2 minutes (turning, walking, gestures, LOOK AT YOU) at 60 fps and in the phone emulator. No leg jitters.
 
+## F66 Remove the HIT CARD on phones (owner: "Fjern denne på telefon")
+**What it is:** the small dark hit card ("Chest · Belly · Left leg · Right leg +8 / 0% health · knocked out · KO") that shows the hit parts and the health of the ragdoll you hit (the body card / hit card / vitals text).
+
+**Fix:**
+- **On PHONES:** it never shows (`PHONE_HIT_CARD = false`), and neither does any tap target or arrow that belonged to it.
+- **What phone players still get:** the KO pop, the hit sounds, the splatter, the reactions and the goal line.
+- **Tablets:** follow phones if they use the phone HUD.
+- **PC and console:** keep it as now.
+- **Check:** shoot and knock out ragdolls on the phone emulator. No hit card appears.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
