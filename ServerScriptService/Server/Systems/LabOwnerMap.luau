@@ -1752,6 +1752,42 @@ local function nameSign(into: Instance, at: Vector3, face: Vector3, text: string
 		g.Parent = board
 	end
 end
+-- F44 (owner's screenshot: a bench stuck in the boxing ring; Config.PROP_CLEAR): a yard prop only goes where nothing stands
+-- within 3 studs of it (any part that is not flat ground; the ragdolls ignored). The first of the given spots that is
+-- free wins; none free: no prop.
+local function freeSpot(spots: { Vector3 }, size: Vector3, top: number): Vector3?
+	if not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).PROP_CLEAR then
+		return spots[1]
+	end
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ex = {}
+	for _, n in { "Dummies", "Terrain" } do
+		local x = Workspace:FindFirstChild(n)
+		if x then
+			table.insert(ex, x)
+		end
+	end
+	params.FilterDescendantsInstances = ex
+	for _, at in spots do
+		if not onPath(at, 2) then
+			local hits = Workspace:GetPartBoundsInBox(CFrame.new(at + Vector3.new(0, size.Y / 2 + 0.6, 0)), size + Vector3.new(6, 0, 6), params)
+			local blocked = false
+			for _, h in hits do
+				local flat = h.Size.Y < 1.3 and h.Position.Y - h.Size.Y / 2 < top + 0.9 and math.abs(h.CFrame.UpVector.Y) > 0.95
+				if not flat and h.Transparency < 1 then
+					blocked = true
+					break
+				end
+			end
+			if not blocked then
+				return at
+			end
+		end
+	end
+	return nil
+end
+
 local function yards(into: Instance, o: Vector3, top: number)
 	local rng = Random.new(31)
 	local function w(v: Vector2): Vector3
@@ -1777,21 +1813,25 @@ local function yards(into: Instance, o: Vector3, top: number)
 				lamp(into, w(endP + side * s * (Plan.INNER_W / 2 + 2.5)))
 			end
 			-- the name sign on the right, facing back along the path
+			local back3, side3 = Vector3.new(-dir.X, 0, -dir.Y), Vector3.new(side.X, 0, side.Y)
 			local signAt = w(endP + side * (Plan.INNER_W / 2 + 6) - dir * 6)
-			if not onPath(signAt, 0.5) then
+			signAt = freeSpot({ signAt, signAt + back3 * 5, signAt + side3 * 4, signAt + back3 * 10, signAt + side3 * 4 + back3 * 5 }, Vector3.new(10, 8, 2), top) :: any
+			if signAt and not onPath(signAt, 0.5) then
 				nameSign(into, signAt, Vector3.new(-dir.X, 0, -dir.Y), NAMES[id] or string.upper(id))
 			end
 			-- a bench on the left, facing the attraction
 			local benchAt = w(endP - side * (Plan.INNER_W / 2 + 6) - dir * 8)
-			if not onPath(benchAt, 2) then
+			benchAt = freeSpot({ benchAt, benchAt + back3 * 5, benchAt - side3 * 4, benchAt + back3 * 10, benchAt - side3 * 4 + back3 * 5, benchAt + back3 * 15 }, Vector3.new(7, 3, 3), top) :: any
+			if benchAt and not onPath(benchAt, 2) then
 				part(into, "BenchSeat", Vector3.new(7, 0.5, 2), CFrame.lookAt(benchAt + Vector3.new(0, 1.6, 0), benchAt + Vector3.new(dir.X, 1.6, dir.Y)), Color3.fromRGB(140, 100, 64), Enum.Material.WoodPlanks)
 				part(into, "BenchBack", Vector3.new(7, 1.6, 0.4), CFrame.lookAt(benchAt + Vector3.new(0, 2.6, 0), benchAt + Vector3.new(dir.X, 2.6, dir.Y)) * CFrame.new(0, 0, 1), Color3.fromRGB(140, 100, 64), Enum.Material.WoodPlanks, true)
 			end
 			-- a small cluster of props behind the sign
 			local propAt = endP + side * (Plan.INNER_W / 2 + 12) - dir * 12
 			for q = 1, 3 do
-				local p = w(propAt + Vector2.new(rng:NextNumber(-3, 3), rng:NextNumber(-3, 3)))
-				if not onPath(p, 2) then
+				local p0 = w(propAt + Vector2.new(rng:NextNumber(-3, 3), rng:NextNumber(-3, 3)))
+				local p = freeSpot({ p0, p0 + back3 * 4, p0 + Vector3.new(side.X, 0, side.Y) * 4 }, Vector3.new(3, 3, 3), top) :: any
+				if p and not onPath(p, 2) then
 					if q == 1 then
 						part(into, "YardCrate", Vector3.new(3, 3, 3), CFrame.new(p + Vector3.new(0, 1.5, 0)) * CFrame.Angles(0, rng:NextNumber() * 6, 0), Color3.fromRGB(160, 120, 76), Enum.Material.WoodPlanks)
 					elseif q == 2 then

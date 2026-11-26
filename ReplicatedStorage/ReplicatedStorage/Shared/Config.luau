@@ -60,6 +60,7 @@ local Config = {
 	RAGDOLL_NAV = true, -- OVERVIEW 0.95: every walk longer than 8 studs follows a PathfindingService path (radius 2, no-go lava/water/beds/rails), with a stuck guard (Systems/RagdollNav)
 	SIGNS_V2 = true, -- F39: every name sign is a framed board on 2 side posts (nothing across the text), in its room's material and colour, with bolts, an outlined chunky text and the room pictogram (LabOwnerMap signV2)
 	LAMP_LINT = true, -- F40: no lamp within 2 studs of ANY walkable surface (roads, paths, plazas, Tower Square, station, courtyards) (LabOwnerMap onWalkable)
+	PROP_CLEAR = true, -- F44: yard benches, signs and props only go where nothing stands within 3 studs (GetPartBoundsInBox; next spot if blocked) (LabOwnerMap freeSpot)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays
