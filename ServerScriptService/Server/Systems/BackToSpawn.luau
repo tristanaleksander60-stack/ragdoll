@@ -14,7 +14,13 @@ local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Net")
 local BackToSpawn = {}
 
 BackToSpawn.COOLDOWN = 5
-BackToSpawn.PLAZA = Vector2.new(-30, -300) -- (lab space: the spawn plaza's south half, by the stair to the boulevard)
+BackToSpawn.PLAZA = (function(): Vector2 -- (M4: the compact plan's Spawn item; round 3 was (-30, -300))
+	local ok, P = pcall(function()
+		return require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("OwnerMapPlan")) :: any
+	end)
+	local it = ok and P and P.ITEMS and P.ITEMS.Spawn
+	return if it then it.at else Vector2.new(-30, -300)
+end)() -- (lab space: the spawn plaza's south half, by the stair to the boulevard)
 
 local last: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
 

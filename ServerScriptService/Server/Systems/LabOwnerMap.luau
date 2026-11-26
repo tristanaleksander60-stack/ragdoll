@@ -11,9 +11,9 @@ local Workspace = game:GetService("Workspace")
 
 local LabOwnerMap = {}
 
-LabOwnerMap.S = 3.2 -- the R3.2 plan's distances are multiplied by this
-LabOwnerMap.SIZE = Vector2.new(980, 850) -- (map round 3: the master plan plus the railway round it)
-LabOwnerMap.CENTER = Vector2.new(-22, 22) -- (lab space; the master plan runs x -472..425, z -372..425)
+LabOwnerMap.S = 1.3 -- (M4: Plan.K) the R3.2 plan's distances are multiplied by this (was 3.2 on the big round-3 map)
+LabOwnerMap.SIZE = Vector2.new(980, 850) -- (M4: set from Plan.BOUNDS below, plus the edge band)
+LabOwnerMap.CENTER = Vector2.new(-22, 22) -- (M4: the middle of Plan.BOUNDS, below)
 LabOwnerMap.WALK = 15 -- walkway width (map round 2: was 22)
 
 local GRASS = Color3.fromRGB(118, 168, 84)
@@ -54,12 +54,45 @@ end
 -- east with a station at the south end. The old grid walkways are gone.
 local Plan = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("OwnerMapPlan")) :: any
 LabOwnerMap.Plan = Plan
+-- (M4: the compact plan sets the scale, the ground's size and its middle: Plan.BOUNDS plus a 60-stud grass band for
+-- the edge trees and the railway.)
+if Plan.K then
+	LabOwnerMap.S = Plan.K
+end
+if Plan.BOUNDS then
+	local b = Plan.BOUNDS
+	LabOwnerMap.CENTER = (b.min + b.max) / 2
+	LabOwnerMap.SIZE = (b.max - b.min) + Vector2.new(120, 120)
+end
 -- A plan item's spot on the floor (lab space + the lab origin), with an optional nudge.
 local function planAt(o: Vector3, top: number, id: string, dx: number?, dz: number?): Vector3
 	local it = Plan.ITEMS[id]
 	local v = if it then it.at else Vector2.zero
 	return Vector3.new(o.X + v.X + (dx or 0), top, o.Z + v.Y + (dz or 0))
 end
+-- (M4) A plan item's footprint (w x d studs), or the fallback when the plan has none; and whether the plan has it at all
+-- (things gone from the compact plan are not built).
+local function itemSize(id: string, fallback: Vector2): Vector2
+	local it = Plan.ITEMS[id]
+	return if it and it.size then it.size else fallback
+end
+local function inPlan(id: string): boolean
+	return Plan.ITEMS[id] ~= nil
+end
+-- (M4) The water basins and the pen, sized from their plan footprints (the round-3 sizes were for the 3.2x map):
+-- AQUA = the aquarium glass box (w, d, h), POOL = the big pool's water (w, d), PEN = the spider pen (w, d).
+local function fit(id: string, fallback: Vector2, inset: number): Vector2
+	local s = itemSize(id, fallback)
+	return Vector2.new(math.max(8, s.X - inset), math.max(8, s.Y - inset))
+end
+local AQUA = (function()
+	local s = fit("Aquarium", Vector2.new(84, 60), 4)
+	return Vector3.new(s.X, s.Y, if s.X < 60 then 14 else 26)
+end)()
+local POOL = fit("BigPool", Vector2.new(98, 72), 8)
+local PEN = fit("SpiderPen", Vector2.new(110, 76), 4)
+local LOUNGE = fit("LoungePool", Vector2.new(30, 22), 0)
+local CROC_R = math.min(itemSize("CrocPond", Vector2.new(80, 80)).X, itemSize("CrocPond", Vector2.new(80, 80)).Y) / 2 -- (the pond's outer radius)
 -- (Map round 3, rule 3) Is a world point on a road or path of the plan? Small things are never put there.
 LabOwnerMap.origin = Vector3.zero
 local function onPath(p: Vector3, margin: number?): boolean
@@ -244,6 +277,21 @@ local function ground(into: Instance, o: Vector3)
 	local x0, x1 = c.X - size.X / 2 + 12, c.X + size.X / 2 - 12
 	local zN, zS = c.Y - size.Y / 2 + 14, c.Y + size.Y / 2 - 12
 	local pts = { Vector2.new(x0, zN), Vector2.new(x0, zS - 20), Vector2.new(x0 + 20, zS), Vector2.new(x1 - 20, zS), Vector2.new(x1, zS - 20), Vector2.new(x1, zN) }
+	if Plan.RAILWAY then
+		-- (M4: the railway runs where the compact plan puts it: up the west edge and along the south, corners rounded)
+		pts = {}
+		local R = Plan.RAILWAY
+		for i, p in R do
+			if i > 1 and i < #R then
+				local a, b = (R[i - 1] - p).Unit, (R[i + 1] - p).Unit
+				table.insert(pts, p + a * 14)
+				table.insert(pts, p + (a + b).Unit * 4)
+				table.insert(pts, p + b * 14)
+			else
+				table.insert(pts, p)
+			end
+		end
+	end
 	for i = 1, #pts - 1 do
 		local a, b = w(pts[i]), w(pts[i + 1])
 		local len = (b - a).Magnitude
@@ -264,13 +312,13 @@ local function hills(o: Vector3)
 	local terrain = Workspace.Terrain
 	local c = LabOwnerMap.CENTER
 	local mid = Vector3.new(o.X + c.X, o.Y, o.Z + c.Y)
-	local n = 22
+	local n = 30
 	for i = 1, n do
 		local a = (i / n) * math.pi * 2
-		local rx, rz = LabOwnerMap.SIZE.X / 2 + 260, LabOwnerMap.SIZE.Y / 2 + 260 -- (map round 3: outside the rim and the forest)
-		local at = mid + Vector3.new(math.cos(a) * rx, -40 + (i % 3) * 6, math.sin(a) * rz)
+		local rx, rz = LabOwnerMap.SIZE.X / 2 + 75, LabOwnerMap.SIZE.Y / 2 + 75 -- (M4: smooth hills close round the edge, as in the references)
+		local at = mid + Vector3.new(math.cos(a) * rx, -34 + (i % 3) * 6, math.sin(a) * rz)
 		pcall(function()
-			terrain:FillBall(at, 95 + (i % 4) * 18, Enum.Material.Grass)
+			terrain:FillBall(at, 62 + (i % 4) * 12, Enum.Material.Grass)
 		end)
 	end
 end
@@ -281,8 +329,8 @@ end
 -- its top; the wooden plank bridge from the second floor down to the east; the grey grandstand with wooden seats on
 -- its own plot south of the tower. Today's code tower and the Heights set go (hidden).
 LabOwnerMap.TOWER_AT = Vector2.new(5, 40) -- (plan; x S)
-LabOwnerMap.TOWER_SIZE = 56
-LabOwnerMap.FLOOR_H = 19
+LabOwnerMap.TOWER_SIZE = 26 -- (M4: the plan's tower footprint, as in the references; was 56)
+LabOwnerMap.FLOOR_H = 10.5 -- (M4: 5 storeys = 52.5 high, the references' 50-55; was 19)
 LabOwnerMap.FLOORS = 5
 local GALV = Color3.fromRGB(150, 154, 160)
 local PLATE = Color3.fromRGB(128, 132, 138)
@@ -319,9 +367,10 @@ end
 local function stairsV2(into: Instance, c: Vector3, top: number, wellX: number, wellZ: number, H: number, T: number, full: number)
 	local half = wellX / 2
 	local laneW = half - 0.5
-	local STEPS = 10
+	local compact = H < 14 -- (M4: the low compact tower: shorter flights)
+	local STEPS = if compact then 6 else 10
 	local RISE = (H / 2) / STEPS
-	local RUN = 2
+	local RUN = if compact then 1.7 else 2
 	local southZ = wellZ / 2 - 6 -- (the south landing: z from here to the well's end)
 	local northZ = southZ - STEPS * RUN -- (the half landing: from the well's north end to here)
 	local function lane(x: number, y0: number, fromZ: number, dir: number)
@@ -354,7 +403,7 @@ local function stairsV2(into: Instance, c: Vector3, top: number, wellX: number, 
 		lane(half / 2 + 0.25, mid, northZ, 1) -- east lane, south
 		part(into, "TowerLanding", Vector3.new(wellX - 0.2, 0.8, wellZ / 2 - southZ), CFrame.new(c + Vector3.new(0, y0 + H - 0.4, (southZ + wellZ / 2) / 2)), PLATE, Enum.Material.DiamondPlate)
 		-- a warm light over the half landing
-		local lamp = part(into, "TowerLamp", Vector3.new(1.6, 0.4, 1.6), CFrame.new(c + Vector3.new(0, mid + 8.6, (northZ - wellZ / 2) / 2)), Color3.fromRGB(255, 226, 170), Enum.Material.Neon, true)
+		local lamp = part(into, "TowerLamp", Vector3.new(1.6, 0.4, 1.6), CFrame.new(c + Vector3.new(0, mid + math.min(8.6, H * 0.42), (northZ - wellZ / 2) / 2)), Color3.fromRGB(255, 226, 170), Enum.Material.Neon, true)
 		local light = Instance.new("PointLight")
 		light.Range = 26
 		light.Brightness = 1.3
@@ -388,6 +437,9 @@ local function hero(into: Instance, o: Vector3, top: number)
 	local c = planAt(o, top, "Tower")
 	local h = T / 2
 	local wellX, wellZ = 14, 34 -- the open middle well (stairs run along Z)
+	if T < 40 then
+		wellZ = 22 -- (M4: the compact tower: 6-step flights of 1.7 + the landings)
+	end
 	local STAIRS_V2 = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TOWER_STAIRS_V2 == true
 	if STAIRS_V2 then
 		wellX = 18 -- (F67: two 8.5-stud lanes side by side and a divider)
@@ -460,6 +512,20 @@ local function hero(into: Instance, o: Vector3, top: number)
 		c + Vector3.new(-h - 42, 2.5, 36),
 		c + Vector3.new(-h - 42, 0.6, 48), -- (the plan's slide run-out, south-west of the tower)
 	}
+	if T < 40 then
+		-- (M4: the compact tower: the slide curves from the roof's west edge down to the plan's SlideRunout)
+		local ro = planAt(o, top, "SlideRunout") - c
+		local R = roofY - top
+		local ex, ez = ro.X, ro.Z
+		pts = {
+			c + Vector3.new(-h, R + 0.5, -6),
+			c + Vector3.new(-h + (ex + h) * 0.3, R * 0.68, -6 + (ez + 6) * 0.22),
+			c + Vector3.new(-h + (ex + h) * 0.62, R * 0.38, -6 + (ez + 6) * 0.48),
+			c + Vector3.new(-h + (ex + h) * 0.88, R * 0.14, -6 + (ez + 6) * 0.72),
+			c + Vector3.new(ex, 2.5, ez - 8),
+			c + Vector3.new(ex, 0.6, ez),
+		}
+	end
 	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SLIDE_V2 then
 		-- F58 (owner's screenshot: loose green blocks, gaps, a piece sticking up, no opening in the railing): ONE smooth
 		-- chute. A Catmull-Rom curve through the same points, cut into short pieces (about SEG studs) that meet end to end
@@ -564,7 +630,7 @@ local function hero(into: Instance, o: Vector3, top: number)
 
 	-- THE PLANK BRIDGE: from the second floor's east edge down to the ground in the east.
 	local from = c + Vector3.new(h, H * 2 + 0.4, 6)
-	local to = Vector3.new(c.X + h + 50, top + 0.4, c.Z - 30) -- (map round 3: down into the Tower Square)
+	local to = if T < 40 then Vector3.new(c.X + h + 26, top + 0.4, c.Z - 12) else Vector3.new(c.X + h + 50, top + 0.4, c.Z - 30) -- (map round 3: down into the Tower Square; M4: the compact square)
 	local len = (to - from).Magnitude
 	local cf = CFrame.lookAt((from + to) / 2, to)
 	local n = math.floor(len / 2.2)
@@ -579,19 +645,32 @@ local function hero(into: Instance, o: Vector3, top: number)
 	-- THE GRANDSTAND: south of the tower on its own plot, facing north.
 	local g = c + Vector3.new(58, 0, -40) -- (map round 3: the plan's spot north-east of the tower; the rows rise to the north, the seats face south to the tower and the square)
 	local W, rows = 60, 6
+	local back = -1 -- (the rows rise this way along z)
+	if inPlan("Grandstand") and T < 40 then
+		-- (M4: the brown wooden grandstand on the plan's spot, its size; it faces the plan's way (N = the seats look north
+		-- to the tower square, so the rows rise to the south))
+		local it = Plan.ITEMS.Grandstand
+		W, rows = it.size.X, 4
+		back = if it.face == "N" then 1 else -1
+		g = planAt(o, top, "Grandstand") - Vector3.new(0, 0, back * (rows - 1) * 3.2 / 2)
+	end
 	for r = 1, rows do
 		local stepH = r * 2
-		local z = g.Z - (r - 1) * 3.2
+		local z = g.Z + back * (r - 1) * 3.2
 		part(into, "StandStep", Vector3.new(W, stepH, 3.2), CFrame.new(g.X, top + stepH / 2, z), CONCRETE, Enum.Material.Concrete)
-		part(into, "StandSeat", Vector3.new(W - 4, 0.5, 1.4), CFrame.new(g.X, top + stepH + 0.25, z + 0.4), WOOD, Enum.Material.WoodPlanks, true)
+		part(into, "StandSeat", Vector3.new(W - 4, 0.5, 1.4), CFrame.new(g.X, top + stepH + 0.25, z - back * 0.4), WOOD, Enum.Material.WoodPlanks, true)
 	end
-	local backZ = g.Z - rows * 3.2
+	local backZ = g.Z + back * rows * 3.2
 	part(into, "StandBack", Vector3.new(W, rows * 2 + 6, 1.2), CFrame.new(g.X, top + (rows * 2 + 6) / 2, backZ), CONCRETE, Enum.Material.Concrete)
 	for k = -3, 3 do
-		part(into, "StandPanel", Vector3.new(4, rows * 2 + 2, 0.2), CFrame.new(g.X + k * 11, top + (rows * 2 + 2) / 2 + 1, backZ - 0.7), Color3.fromRGB(70, 72, 78), Enum.Material.SmoothPlastic, true)
+		if math.abs(k * 11) < W / 2 - 2 then
+			part(into, "StandPanel", Vector3.new(4, rows * 2 + 2, 0.2), CFrame.new(g.X + k * 11, top + (rows * 2 + 2) / 2 + 1, backZ + back * 0.7), Color3.fromRGB(70, 72, 78), Enum.Material.SmoothPlastic, true)
+		end
 	end
-	railing(into, Vector3.new(g.X - W / 2, top + rows * 2, backZ + 1.5), Vector3.new(g.X + W / 2, top + rows * 2, backZ + 1.5))
-	part(into, "StandPlot", Vector3.new(W + 20, 0.3, 40), CFrame.new(g.X, top + 0.15, g.Z - 8), Color3.fromRGB(196, 196, 190), Enum.Material.Pavement)
+	railing(into, Vector3.new(g.X - W / 2, top + rows * 2, backZ - back * 1.5), Vector3.new(g.X + W / 2, top + rows * 2, backZ - back * 1.5))
+	if T >= 40 then
+		part(into, "StandPlot", Vector3.new(W + 20, 0.3, 40), CFrame.new(g.X, top + 0.15, g.Z - 8), Color3.fromRGB(196, 196, 190), Enum.Material.Pavement)
+	end
 end
 
 LabOwnerMap.HIDE_OLD_TOWER = { Tower = true, TowerBand = true, TowerStripe = true, Stair = true, StairEdge = true, Heights = true }
@@ -609,17 +688,17 @@ local function northRow(into: Instance, o: Vector3, top: number)
 		return Vector3.new(o.X + x * S, top, o.Z + z * S)
 	end
 	-- THE CAVE: a big rounded grey rock with a dark mouth, a dirt yard in front ringed with grey stones.
-	local cave = planAt(o, top, "CaveBear", 0, -10)
-	part(into, "CaveRock", Vector3.new(110, 70, 90), CFrame.new(cave + Vector3.new(0, 18, 0)), ROCK, Enum.Material.Rock, false, Enum.PartType.Ball)
-	part(into, "CaveRock", Vector3.new(70, 52, 60), CFrame.new(cave + Vector3.new(-30, 14, -18)), ROCK:Lerp(Color3.new(0, 0, 0), 0.08), Enum.Material.Rock, false, Enum.PartType.Ball)
-	local mouth = part(into, "CaveMouth", Vector3.new(26, 22, 3), CFrame.new(cave + Vector3.new(14, 11, 43)), Color3.fromRGB(28, 26, 24), Enum.Material.Slate, true)
+	local cave = planAt(o, top, "CaveBear", 0, -6) -- (M4: the compact cave, the plan's 50 x 40; F79 rebuilds it as a terrain hill)
+	part(into, "CaveRock", Vector3.new(44, 30, 36), CFrame.new(cave + Vector3.new(0, 8, 0)), ROCK, Enum.Material.Rock, false, Enum.PartType.Ball)
+	part(into, "CaveRock", Vector3.new(28, 22, 24), CFrame.new(cave + Vector3.new(-12, 6, -8)), ROCK:Lerp(Color3.new(0, 0, 0), 0.08), Enum.Material.Rock, false, Enum.PartType.Ball)
+	local mouth = part(into, "CaveMouth", Vector3.new(11, 10, 3), CFrame.new(cave + Vector3.new(6, 5, 17)), Color3.fromRGB(28, 26, 24), Enum.Material.Slate, true)
 	mouth.Shape = Enum.PartType.Block
-	local yard = planAt(o, top, "CaveBear", 10, 40)
-	part(into, "CaveYard", Vector3.new(120, 0.3, 70), CFrame.new(yard + Vector3.new(0, 0.15, 0)), DIRT, Enum.Material.Ground)
-	local n = 26
+	local yard = planAt(o, top, "CaveBear", 4, 14)
+	part(into, "CaveYard", Vector3.new(36, 0.3, 14), CFrame.new(yard + Vector3.new(0, 0.15, 0)), DIRT, Enum.Material.Ground)
+	local n = 12
 	for i = 1, n do
 		local a = i / n * math.pi * 2
-		local r = Vector3.new(math.cos(a) * 62, 0, math.sin(a) * 37)
+		local r = Vector3.new(math.cos(a) * 18, 0, math.sin(a) * 7)
 		local s = 4 + (i % 3) * 1.5
 		if not onPath(yard + r, s) then
 			part(into, "YardStone", Vector3.new(s * 1.4, s, s * 1.2), CFrame.new(yard + r + Vector3.new(0, s * 0.35, 0)) * CFrame.Angles(0, a, 0), ROCK, Enum.Material.Rock, true, Enum.PartType.Ball)
@@ -627,7 +706,7 @@ local function northRow(into: Instance, o: Vector3, top: number)
 	end
 	-- THE AQUARIUM: a glass box on a concrete base with a steel frame, water inside.
 	local aq = planAt(o, top, "Aquarium")
-	local AW, AD, AH = 80, 56, 26
+	local AW, AD, AH = AQUA.X, AQUA.Y, AQUA.Z
 	part(into, "AquaBase", Vector3.new(AW + 4, 3, AD + 4), CFrame.new(aq + Vector3.new(0, 1.5, 0)), Color3.fromRGB(160, 160, 158), Enum.Material.Concrete)
 	local water = part(into, "AquaWater", Vector3.new(AW - 1, AH - 3, AD - 1), CFrame.new(aq + Vector3.new(0, 3 + (AH - 3) / 2, 0)), WATER, Enum.Material.Glass, true)
 	water.Transparency = 0.45
@@ -645,7 +724,7 @@ local function northRow(into: Instance, o: Vector3, top: number)
 	part(into, "AquaTopRim", Vector3.new(AW + 1, 1, 1.2), CFrame.new(aq + Vector3.new(0, 3 + AH, -AD / 2)), Color3.fromRGB(90, 96, 104), Enum.Material.Metal, true)
 	-- THE POOL: open water in a light concrete rim.
 	local pool = planAt(o, top, "BigPool")
-	local PW, PD = 90, 64
+	local PW, PD = POOL.X, POOL.Y
 	part(into, "PoolRim", Vector3.new(PW + 8, 1.2, 4), CFrame.new(pool + Vector3.new(0, 0.6, PD / 2 + 2)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
 	part(into, "PoolRim", Vector3.new(PW + 8, 1.2, 4), CFrame.new(pool + Vector3.new(0, 0.6, -PD / 2 - 2)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
 	part(into, "PoolRim", Vector3.new(4, 1.2, PD), CFrame.new(pool + Vector3.new(PW / 2 + 2, 0.6, 0)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
@@ -654,7 +733,7 @@ local function northRow(into: Instance, o: Vector3, top: number)
 	pw.Transparency = 0.25
 	-- THE PEN: a dirt yard with a post-and-rail fence and a gate on its south side.
 	local pen = planAt(o, top, "SpiderPen")
-	local EW, ED = 110, 76
+	local EW, ED = PEN.X, PEN.Y
 	part(into, "PenDirt", Vector3.new(EW, 0.3, ED), CFrame.new(pen + Vector3.new(0, 0.15, 0)), DIRT:Lerp(Color3.fromRGB(150, 130, 100), 0.3), Enum.Material.Ground)
 	local corners = { Vector3.new(-EW / 2, 0, -ED / 2), Vector3.new(EW / 2, 0, -ED / 2), Vector3.new(EW / 2, 0, ED / 2), Vector3.new(-EW / 2, 0, ED / 2) }
 	for i = 1, 4 do
@@ -693,7 +772,7 @@ local function northRow(into: Instance, o: Vector3, top: number)
 			end
 		end
 		local _, size = b:GetBoundingBox()
-		b:PivotTo(CFrame.lookAt(cave + Vector3.new(14, size.Y / 2, 56), cave + Vector3.new(14, size.Y / 2, 120)))
+		b:PivotTo(CFrame.lookAt(cave + Vector3.new(6, size.Y / 2, 22), cave + Vector3.new(6, size.Y / 2, 60)))
 		b.Parent = into
 	end
 end
@@ -731,13 +810,13 @@ local function west(into: Instance, o: Vector3, top: number)
 	end
 	-- The car bays: a concrete slab with white bay lines and a low kerb at the back.
 	local bays = planAt(o, top, "CarBays")
-	part(into, "BaySlab", Vector3.new(130, 0.3, 50), CFrame.new(bays + Vector3.new(0, 0.15, 0)), Color3.fromRGB(176, 176, 172), Enum.Material.Concrete)
-	for k = -2, 2 do
-		part(into, "BayLine", Vector3.new(0.6, 0.05, 44), CFrame.new(bays + Vector3.new(k * 32 + (if k > 0 then -16 else 16) * 0, 0.33, 0)), Color3.fromRGB(240, 240, 236), Enum.Material.SmoothPlastic, true)
+	part(into, "BaySlab", Vector3.new(44, 0.3, 18), CFrame.new(bays + Vector3.new(0, 0.15, 0)), Color3.fromRGB(176, 176, 172), Enum.Material.Concrete)
+	for _, k in { -1.5, -0.5, 0.5, 1.5 } do
+		part(into, "BayLine", Vector3.new(0.6, 0.05, 15), CFrame.new(bays + Vector3.new(k * 14.6, 0.33, 0.6)), Color3.fromRGB(240, 240, 236), Enum.Material.SmoothPlastic, true)
 	end
-	part(into, "BayKerb", Vector3.new(130, 1, 1.6), CFrame.new(bays + Vector3.new(0, 0.5, -24)), Color3.fromRGB(200, 200, 196), Enum.Material.Concrete)
+	part(into, "BayKerb", Vector3.new(44, 1, 1.2), CFrame.new(bays + Vector3.new(0, 0.5, -8.4)), Color3.fromRGB(200, 200, 196), Enum.Material.Concrete)
 	-- Red barrels in two groups (a white band round each).
-	for _, g in { planAt(o, top, "BrickWall", 14, -56), planAt(o, top, "BrickWall", 14, 50) } do
+	for _, g in { planAt(o, top, "BrickWall", 6, -26), planAt(o, top, "BrickWall", 6, 22) } do
 		for k = 0, 4 do
 			local p = g + Vector3.new((k % 3) * 3.4, 0, math.floor(k / 3) * 3.4)
 			part(into, "Barrel", Vector3.new(4.4, 3, 3), CFrame.new(p + Vector3.new(0, 2.2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(196, 36, 36), Enum.Material.Metal, false, Enum.PartType.Cylinder)
@@ -745,34 +824,34 @@ local function west(into: Instance, o: Vector3, top: number)
 		end
 	end
 	-- The long brick crash wall (north-south).
-	local wa, wb = planAt(o, top, "BrickWall", 0, -50), planAt(o, top, "BrickWall", 0, 50)
+	local wa, wb = planAt(o, top, "BrickWall", 0, -20), planAt(o, top, "BrickWall", 0, 20)
 	local wl = (wb - wa).Magnitude
-	part(into, "CrashBrickWall", Vector3.new(4, 22, wl), CFrame.new((wa + wb) / 2 + Vector3.new(0, 11, 0)), BRICK, Enum.Material.Brick)
-	part(into, "CrashBrickCap", Vector3.new(4.6, 0.8, wl + 0.6), CFrame.new((wa + wb) / 2 + Vector3.new(0, 22.4, 0)), Color3.fromRGB(170, 166, 160), Enum.Material.Concrete, true)
+	part(into, "CrashBrickWall", Vector3.new(4, 12, wl), CFrame.new((wa + wb) / 2 + Vector3.new(0, 6, 0)), BRICK, Enum.Material.Brick)
+	part(into, "CrashBrickCap", Vector3.new(4.6, 0.8, wl + 0.6), CFrame.new((wa + wb) / 2 + Vector3.new(0, 12.4, 0)), Color3.fromRGB(170, 166, 160), Enum.Material.Concrete, true)
 	-- The garage on the railway (the rail runs into it).
 	local gar = planAt(o, top, "Garage")
-	part(into, "GarageFloor", Vector3.new(56, 0.4, 70), CFrame.new(gar + Vector3.new(0, 0.2, 0)), Color3.fromRGB(150, 150, 150), Enum.Material.Concrete)
+	part(into, "GarageFloor", Vector3.new(30, 0.4, 26), CFrame.new(gar + Vector3.new(0, 0.2, 0)), Color3.fromRGB(150, 150, 150), Enum.Material.Concrete)
 	for _, side in { -1, 1 } do
-		part(into, "GarageWall", Vector3.new(1.5, 24, 70), CFrame.new(gar + Vector3.new(side * 27.5, 12, 0)), Color3.fromRGB(196, 190, 180), Enum.Material.Concrete)
+		part(into, "GarageWall", Vector3.new(1.5, 14, 26), CFrame.new(gar + Vector3.new(side * 14.25, 7, 0)), Color3.fromRGB(196, 190, 180), Enum.Material.Concrete)
 	end
-	part(into, "GarageBack", Vector3.new(56, 24, 1.5), CFrame.new(gar + Vector3.new(0, 12, -34.5)), Color3.fromRGB(196, 190, 180), Enum.Material.Concrete)
-	part(into, "GarageRoof", Vector3.new(60, 1.5, 74), CFrame.new(gar + Vector3.new(0, 24.75, 0)), Color3.fromRGB(196, 130, 110), Enum.Material.Slate)
+	part(into, "GarageBack", Vector3.new(30, 14, 1.5), CFrame.new(gar + Vector3.new(0, 7, 12.25)), Color3.fromRGB(196, 190, 180), Enum.Material.Concrete)
+	part(into, "GarageRoof", Vector3.new(32, 1.5, 28), CFrame.new(gar + Vector3.new(0, 14.75, 0)), Color3.fromRGB(196, 130, 110), Enum.Material.Slate)
 	-- The rocket's round pad and its steel gantry (the rocket itself is LabDress "Rocket", moved here).
 	local rk = planAt(o, top, "Rocket")
-	part(into, "RocketPad", Vector3.new(1, 46, 46), CFrame.new(rk + Vector3.new(0, 0.5, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(160, 160, 158), Enum.Material.Concrete, false, Enum.PartType.Cylinder)
-	local gx = rk + Vector3.new(16, 0, 0)
+	part(into, "RocketPad", Vector3.new(1, 16, 16), CFrame.new(rk + Vector3.new(0, 0.5, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(160, 160, 158), Enum.Material.Concrete, false, Enum.PartType.Cylinder)
+	local gx = rk + Vector3.new(11, 0, 0)
 	for _, dx in { -3, 3 } do
 		for _, dz in { -3, 3 } do
-			part(into, "GantryLeg", Vector3.new(0.9, 60, 0.9), CFrame.new(gx + Vector3.new(dx, 30, dz)), Color3.fromRGB(200, 200, 204), Enum.Material.Metal)
+			part(into, "GantryLeg", Vector3.new(0.9, 34, 0.9), CFrame.new(gx + Vector3.new(dx, 17, dz)), Color3.fromRGB(200, 200, 204), Enum.Material.Metal)
 		end
 	end
-	for y = 6, 58, 6 do
+	for y = 4, 30, 6 do
 		for _, e in { { Vector3.new(-3, y, -3), Vector3.new(3, y + 6, -3) }, { Vector3.new(3, y, 3), Vector3.new(-3, y + 6, 3) }, { Vector3.new(-3, y, 3), Vector3.new(-3, y + 6, -3) }, { Vector3.new(3, y, -3), Vector3.new(3, y + 6, 3) } } do
 			local a, b = gx + e[1], gx + e[2]
 			part(into, "GantryBrace", Vector3.new(0.35, 0.35, (b - a).Magnitude), CFrame.lookAt((a + b) / 2, b), Color3.fromRGB(200, 200, 204), Enum.Material.Metal, true)
 		end
 	end
-	part(into, "GantryArm", Vector3.new(14, 1.2, 2), CFrame.new(gx + Vector3.new(-8, 44, 0)), Color3.fromRGB(200, 200, 204), Enum.Material.Metal)
+	part(into, "GantryArm", Vector3.new(10, 1.2, 2), CFrame.new(gx + Vector3.new(-6, 26, 0)), Color3.fromRGB(200, 200, 204), Enum.Material.Metal)
 	-- The concrete slab south of the rocket.
 	part(into, "ConcreteSlab", Vector3.new(60, 1, 44), CFrame.new(planAt(o, top, "LandingField") + Vector3.new(0, 0.5, 0)), Color3.fromRGB(170, 170, 168), Enum.Material.Concrete)
 	-- The walled T-rex pen with its gate (east side) and the T-rex.
@@ -783,15 +862,19 @@ local function west(into: Instance, o: Vector3, top: number)
 		-- its plan footprint (100 x 46), so its walls stood across the Animal Cove path by the aquarium. Now it is the plan's
 		-- size, closed on the east, with its gate in the WEST wall where the courtyard path arrives.)
 		local PW, PD = 100, 46
+		local gx = -1 -- (the gate's side: -1 west (round 3), 1 east (M4: the plan's face E))
+		if Plan.ITEMS.TRexPen and Plan.ITEMS.TRexPen.size.X < 60 then
+			PW, PD, gx = Plan.ITEMS.TRexPen.size.X, Plan.ITEMS.TRexPen.size.Y, 1
+		end
 		local WALL = Color3.fromRGB(150, 146, 138)
 		for _, sz in { -1, 1 } do
-			part(into, "TRexWall", Vector3.new(PW, 18, 3), CFrame.new(tr + Vector3.new(0, 9, sz * PD / 2)), WALL, Enum.Material.Concrete)
+			part(into, "TRexWall", Vector3.new(PW, 12, 3), CFrame.new(tr + Vector3.new(0, 6, sz * PD / 2)), WALL, Enum.Material.Concrete)
 		end
-		part(into, "TRexWall", Vector3.new(3, 18, PD), CFrame.new(tr + Vector3.new(PW / 2, 9, 0)), WALL, Enum.Material.Concrete)
+		part(into, "TRexWall", Vector3.new(3, 12, PD), CFrame.new(tr + Vector3.new(-gx * PW / 2, 6, 0)), WALL, Enum.Material.Concrete)
 		for _, dz in { -1, 1 } do
-			part(into, "TRexWall", Vector3.new(3, 18, PD / 2 - 12), CFrame.new(tr + Vector3.new(-PW / 2, 9, dz * (PD / 4 + 6))), WALL, Enum.Material.Concrete)
+			part(into, "TRexWall", Vector3.new(3, 12, PD / 2 - 8), CFrame.new(tr + Vector3.new(gx * PW / 2, 6, dz * (PD / 4 + 4))), WALL, Enum.Material.Concrete)
 		end
-		part(into, "TRexGate", Vector3.new(1, 16, 24), CFrame.new(tr + Vector3.new(-PW / 2 - 0.6, 8, 0)), Color3.fromRGB(70, 70, 74), Enum.Material.DiamondPlate)
+		part(into, "TRexGate", Vector3.new(1, 11, 16), CFrame.new(tr + Vector3.new(gx * (PW / 2 + 0.6), 5.5, 0)), Color3.fromRGB(70, 70, 74), Enum.Material.DiamondPlate)
 		part(into, "TRexGround", Vector3.new(PW - 3, 0.3, PD - 3), CFrame.new(tr + Vector3.new(0, 0.15, 0)), Color3.fromRGB(120, 104, 80), Enum.Material.Ground)
 	else
 	for _, w in { { Vector3.new(TW, 18, 3), Vector3.new(0, 9, -TW / 2) }, { Vector3.new(TW, 18, 3), Vector3.new(0, 9, TW / 2) }, { Vector3.new(3, 18, TW), Vector3.new(-TW / 2, 9, 0) } } do
@@ -806,15 +889,15 @@ local function west(into: Instance, o: Vector3, top: number)
 	placeModel(into, "TRex", tr, Vector3.new(1, 0, 0.3))
 	-- The crocodile pond with its speaker wall.
 	local pond = planAt(o, top, "CrocPond")
-	local water = part(into, "CrocWater", Vector3.new(0.6, 70, 70), CFrame.new(pond + Vector3.new(0, 0.25, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(70, 110, 80), Enum.Material.Glass, false, Enum.PartType.Cylinder)
+	local water = part(into, "CrocWater", Vector3.new(0.6, CROC_R * 2 - 8, CROC_R * 2 - 8), CFrame.new(pond + Vector3.new(0, 0.25, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(70, 110, 80), Enum.Material.Glass, false, Enum.PartType.Cylinder)
 	water.Transparency = 0.2
 	for i = 1, 3 do
 		local a = i * 2.1
-		placeModel(into, "Crocodile", pond + Vector3.new(math.cos(a) * 18, 0.3, math.sin(a) * 18), Vector3.new(math.sin(a), 0, -math.cos(a)))
+		placeModel(into, "Crocodile", pond + Vector3.new(math.cos(a) * CROC_R * 0.45, 0.3, math.sin(a) * CROC_R * 0.45), Vector3.new(math.sin(a), 0, -math.cos(a)))
 	end
-	local sw = pond + Vector3.new(0, 0, 30) -- (map round 3: south of the pond, off the cave path; the cones face the pond)
-	for k = -3, 3 do
-		for y = 0, 2 do
+	local sw = pond + Vector3.new(0, 0, CROC_R + 5) -- (south of the pond; the cones face the pond; M4: a smaller wall)
+	for k = -2, 2 do
+		for y = 0, 1 do
 			part(into, "Speaker", Vector3.new(8, 7, 5), CFrame.new(sw + Vector3.new(k * 8.4, 3.5 + y * 7.2, 0)), Color3.fromRGB(32, 32, 36), Enum.Material.SmoothPlastic)
 			part(into, "SpeakerCone", Vector3.new(0.4, 4.6, 4.6), CFrame.new(sw + Vector3.new(k * 8.4, 3.5 + y * 7.2, -2.6)) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(70, 70, 76), Enum.Material.Metal, true, Enum.PartType.Cylinder)
 		end
@@ -834,25 +917,25 @@ local function east(into: Instance, o: Vector3, top: number)
 	end
 	-- The sandcastle tower: a square beige tower with battlements, crates and a picket fence round its plot.
 	local sc = planAt(o, top, "Sandcastle")
-	part(into, "SandcastleTower", Vector3.new(16, 34, 16), CFrame.new(sc + Vector3.new(0, 17, 0)), SAND, Enum.Material.Sandstone)
-	for _, d in { Vector3.new(-6, 0, -6), Vector3.new(6, 0, -6), Vector3.new(-6, 0, 6), Vector3.new(6, 0, 6), Vector3.new(0, 0, -6), Vector3.new(0, 0, 6), Vector3.new(-6, 0, 0), Vector3.new(6, 0, 0) } do
-		part(into, "SandcastleMerlon", Vector3.new(3.6, 3.6, 3.6), CFrame.new(sc + d + Vector3.new(0, 35.8, 0)), SAND, Enum.Material.Sandstone)
+	part(into, "SandcastleTower", Vector3.new(10, 22, 10), CFrame.new(sc + Vector3.new(0, 11, 0)), SAND, Enum.Material.Sandstone)
+	for _, d in { Vector3.new(-4, 0, -4), Vector3.new(4, 0, -4), Vector3.new(-4, 0, 4), Vector3.new(4, 0, 4) } do
+		part(into, "SandcastleMerlon", Vector3.new(2.6, 2.6, 2.6), CFrame.new(sc + d + Vector3.new(0, 23.3, 0)), SAND, Enum.Material.Sandstone)
 	end
 	for k = 0, 5 do
-		part(into, "Crate", Vector3.new(4, 4, 4), CFrame.new(sc + Vector3.new(-16 + (k % 3) * 4.2, 2 + math.floor(k / 3) * 4, 12)) * CFrame.Angles(0, math.rad(k * 7), 0), Color3.fromRGB(160, 120, 76), Enum.Material.WoodPlanks)
+		part(into, "Crate", Vector3.new(4, 4, 4), CFrame.new(sc + Vector3.new(-8.5 + (k % 3) * 4.2, 2 + math.floor(k / 3) * 4, 7)) * CFrame.Angles(0, math.rad(k * 7), 0), Color3.fromRGB(160, 120, 76), Enum.Material.WoodPlanks)
 	end
-	for k = -6, 6 do
-		part(into, "Picket", Vector3.new(0.5, 3.4, 0.3), CFrame.new(sc + Vector3.new(k * 2.4, 1.7, -20)), Color3.fromRGB(240, 236, 226), Enum.Material.Wood, true)
+	for k = -3, 3 do
+		part(into, "Picket", Vector3.new(0.5, 3.4, 0.3), CFrame.new(sc + Vector3.new(k * 2.4, 1.7, -8.5)), Color3.fromRGB(240, 236, 226), Enum.Material.Wood, true)
 	end
-	part(into, "PicketRail", Vector3.new(31, 0.3, 0.3), CFrame.new(sc + Vector3.new(0, 2.6, -20)), Color3.fromRGB(240, 236, 226), Enum.Material.Wood, true)
+	part(into, "PicketRail", Vector3.new(15, 0.3, 0.3), CFrame.new(sc + Vector3.new(0, 2.6, -8.5)), Color3.fromRGB(240, 236, 226), Enum.Material.Wood, true)
 	-- The yellow sandbox with a wooden rim.
 	local sb = planAt(o, top, "Sandbox")
-	part(into, "SandboxSand", Vector3.new(60, 0.6, 50), CFrame.new(sb + Vector3.new(0, 0.3, 0)), Color3.fromRGB(240, 200, 70), Enum.Material.Sand)
-	for _, r in { { Vector3.new(62, 1.2, 1.2), Vector3.new(0, 0.6, 25.6) }, { Vector3.new(62, 1.2, 1.2), Vector3.new(0, 0.6, -25.6) }, { Vector3.new(1.2, 1.2, 52), Vector3.new(30.6, 0.6, 0) }, { Vector3.new(1.2, 1.2, 52), Vector3.new(-30.6, 0.6, 0) } } do
+	part(into, "SandboxSand", Vector3.new(24, 0.6, 20), CFrame.new(sb + Vector3.new(0, 0.3, 0)), Color3.fromRGB(240, 200, 70), Enum.Material.Sand)
+	for _, r in { { Vector3.new(26, 1.2, 1.2), Vector3.new(0, 0.6, 10.6) }, { Vector3.new(26, 1.2, 1.2), Vector3.new(0, 0.6, -10.6) }, { Vector3.new(1.2, 1.2, 22), Vector3.new(12.6, 0.6, 0) }, { Vector3.new(1.2, 1.2, 22), Vector3.new(-12.6, 0.6, 0) } } do
 		part(into, "SandboxRim", r[1], CFrame.new(sb + r[2]), Color3.fromRGB(150, 110, 70), Enum.Material.Wood)
 	end
 	-- The round sand circle.
-	part(into, "SandCircle", Vector3.new(0.4, 80, 80), CFrame.new(planAt(o, top, "SandCircle") + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, 0, math.rad(90)), SAND, Enum.Material.Sand, false, Enum.PartType.Cylinder)
+	part(into, "SandCircle", Vector3.new(0.4, 32, 32), CFrame.new(planAt(o, top, "SandCircle") + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, 0, math.rad(90)), SAND, Enum.Material.Sand, false, Enum.PartType.Cylinder)
 	-- The archery target on its wooden A-frame.
 	local tg = planAt(o, top, "Archery")
 	for _, s in { -1, 1 } do
@@ -864,19 +947,19 @@ local function east(into: Instance, o: Vector3, top: number)
 	-- The wooden seesaw.
 	local ss = planAt(o, top, "Seesaw")
 	part(into, "SeesawPivot", Vector3.new(3, 2.4, 2.4), CFrame.new(ss + Vector3.new(0, 1.2, 0)), Color3.fromRGB(70, 74, 80), Enum.Material.Metal, false, Enum.PartType.Cylinder)
-	part(into, "SeesawPlank", Vector3.new(26, 0.8, 3.4), CFrame.new(ss + Vector3.new(0, 2.6, 0)) * CFrame.Angles(0, 0, math.rad(9)), Color3.fromRGB(150, 110, 70), Enum.Material.WoodPlanks)
+	part(into, "SeesawPlank", Vector3.new(14, 0.8, 3), CFrame.new(ss + Vector3.new(0, 2.6, 0)) * CFrame.Angles(0, 0, math.rad(9)), Color3.fromRGB(150, 110, 70), Enum.Material.WoodPlanks)
 	-- THE GYRO CAGE: three steel rings on a pad, turning round each other, with a red button.
 	local gc = planAt(o, top, "GyroCage")
-	part(into, "GyroPad", Vector3.new(0.6, 46, 46), CFrame.new(gc + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(150, 156, 150), Enum.Material.Concrete, false, Enum.PartType.Cylinder)
-	local hub = gc + Vector3.new(0, 20, 0)
-	part(into, "GyroStand", Vector3.new(2, 20, 2), CFrame.new(gc + Vector3.new(-19, 10, 0)), Color3.fromRGB(96, 110, 96), Enum.Material.Metal)
-	part(into, "GyroStand", Vector3.new(2, 20, 2), CFrame.new(gc + Vector3.new(19, 10, 0)), Color3.fromRGB(96, 110, 96), Enum.Material.Metal)
+	part(into, "GyroPad", Vector3.new(0.6, 20, 20), CFrame.new(gc + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(150, 156, 150), Enum.Material.Concrete, false, Enum.PartType.Cylinder)
+	local hub = gc + Vector3.new(0, 10, 0)
+	part(into, "GyroStand", Vector3.new(1.6, 10, 1.6), CFrame.new(gc + Vector3.new(-9.5, 5, 0)), Color3.fromRGB(96, 110, 96), Enum.Material.Metal)
+	part(into, "GyroStand", Vector3.new(1.6, 10, 1.6), CFrame.new(gc + Vector3.new(9.5, 5, 0)), Color3.fromRGB(96, 110, 96), Enum.Material.Metal)
 	local rings: { { parts: { BasePart }, r: number, axis: Vector3, speed: number, base: { CFrame } } } = {}
 	-- (MAP_MACHINES_LIVE: the rings turn on each screen (Client/GateMotion "Spin"), not by the server 10 times a second)
 	local gyroClient = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).MAP_MACHINES_LIVE == true
-	for i, spec in { { 17, Vector3.xAxis, 0.6 }, { 14, Vector3.zAxis, -0.9 }, { 11, Vector3.xAxis, 1.3 } } do
+	for i, spec in { { 8.5, Vector3.xAxis, 0.6 }, { 7, Vector3.zAxis, -0.9 }, { 5.5, Vector3.xAxis, 1.3 } } do
 		local list, bases = {}, {}
-		local n = 24
+		local n = 16
 		local ringModel = Instance.new("Model")
 		ringModel.Name = "GyroRingSet"
 		ringModel.Parent = into
@@ -901,7 +984,7 @@ local function east(into: Instance, o: Vector3, top: number)
 		end
 		local _ = i
 	end
-	part(into, "GyroButton", Vector3.new(0.8, 3, 3), CFrame.new(gc + Vector3.new(0, 1, 24)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(210, 40, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+	part(into, "GyroButton", Vector3.new(0.8, 3, 3), CFrame.new(gc + Vector3.new(0, 1, -12)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(210, 40, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
 	task.spawn(function()
 		local t0 = os.clock()
 		while into.Parent and not gyroClient do
@@ -917,21 +1000,22 @@ local function east(into: Instance, o: Vector3, top: number)
 		end
 	end)
 	-- The long lava strip in a sunken stone trench.
-	local la, lb = planAt(o, top, "LavaStrip", -66, 0), planAt(o, top, "LavaStrip", 66, 0)
+	-- (M4: the plan's strip runs north-south, 14 wide and 80 long)
+	local la, lb = planAt(o, top, "LavaStrip", 0, -34), planAt(o, top, "LavaStrip", 0, 34)
 	local ll = (lb - la).Magnitude
-	part(into, "TrenchStone", Vector3.new(ll + 12, 0.6, 46), CFrame.new((la + lb) / 2 + Vector3.new(0, 0.3, 0)), Color3.fromRGB(110, 106, 100), Enum.Material.Cobblestone)
-	local lava = part(into, "LavaStrip", Vector3.new(ll, 0.4, 26), CFrame.new((la + lb) / 2 + Vector3.new(0, 0.5, 0)), Color3.fromRGB(255, 110, 30), Enum.Material.CrackedLava)
+	part(into, "TrenchStone", Vector3.new(14, 0.6, ll + 6), CFrame.new((la + lb) / 2 + Vector3.new(0, 0.3, 0)), Color3.fromRGB(110, 106, 100), Enum.Material.Cobblestone)
+	local lava = part(into, "LavaStrip", Vector3.new(8, 0.4, ll), CFrame.new((la + lb) / 2 + Vector3.new(0, 0.5, 0)), Color3.fromRGB(255, 110, 30), Enum.Material.CrackedLava)
 	lava.CanTouch = false
 	for _, s in { -1, 1 } do
-		part(into, "TrenchKerb", Vector3.new(ll + 12, 2, 3), CFrame.new((la + lb) / 2 + Vector3.new(0, 1, s * 22)), Color3.fromRGB(128, 124, 118), Enum.Material.Slate)
+		part(into, "TrenchKerb", Vector3.new(2, 2, ll + 6), CFrame.new((la + lb) / 2 + Vector3.new(s * 6, 1, 0)), Color3.fromRGB(128, 124, 118), Enum.Material.Slate)
 	end
 	-- The turf square.
-	part(into, "TurfSquare", Vector3.new(70, 0.3, 70), CFrame.new(planAt(o, top, "Gazebo") + Vector3.new(0, 0.15, 0)), Color3.fromRGB(70, 140, 60), Enum.Material.Fabric)
+	if inPlan("Gazebo") then part(into, "TurfSquare", Vector3.new(70, 0.3, 70), CFrame.new(planAt(o, top, "Gazebo") + Vector3.new(0, 0.15, 0)), Color3.fromRGB(70, 140, 60), Enum.Material.Fabric) end
 	-- THE TESLA COIL: a stepped column with a doughnut top and blue sparks.
 	local tc = planAt(o, top, "TeslaCoil")
-	part(into, "TeslaBase", Vector3.new(14, 4, 14), CFrame.new(tc + Vector3.new(0, 2, 0)), Color3.fromRGB(60, 62, 70), Enum.Material.Metal)
-	part(into, "TeslaColumn", Vector3.new(28, 6, 6), CFrame.new(tc + Vector3.new(0, 18, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(180, 120, 60), Enum.Material.Metal, false, Enum.PartType.Cylinder)
-	local top2 = part(into, "TeslaTop", Vector3.new(4, 16, 16), CFrame.new(tc + Vector3.new(0, 34, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 204, 210), Enum.Material.Metal, false, Enum.PartType.Cylinder)
+	part(into, "TeslaBase", Vector3.new(10, 3, 10), CFrame.new(tc + Vector3.new(0, 1.5, 0)), Color3.fromRGB(60, 62, 70), Enum.Material.Metal)
+	part(into, "TeslaColumn", Vector3.new(18, 4.4, 4.4), CFrame.new(tc + Vector3.new(0, 12, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(180, 120, 60), Enum.Material.Metal, false, Enum.PartType.Cylinder)
+	local top2 = part(into, "TeslaTop", Vector3.new(3, 11, 11), CFrame.new(tc + Vector3.new(0, 22.5, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 204, 210), Enum.Material.Metal, false, Enum.PartType.Cylinder)
 	local spark = Instance.new("ParticleEmitter")
 	spark.Texture = "rbxasset://textures/particles/sparkles_main.dds"
 	spark.Color = ColorSequence.new(Color3.fromRGB(150, 210, 255))
@@ -955,10 +1039,10 @@ local function south(into: Instance, o: Vector3, top: number)
 	end
 	-- The sweeper: a round pad, a centre post and a long beam turning slowly at knee height.
 	local sw = planAt(o, top, "Sweeper")
-	part(into, "SweeperPad", Vector3.new(0.6, 90, 90), CFrame.new(sw + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 196, 186), Enum.Material.Concrete, false, Enum.PartType.Cylinder)
-	part(into, "SweeperRing", Vector3.new(0.65, 92, 92), CFrame.new(sw + Vector3.new(0, 0.28, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 200, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+	part(into, "SweeperPad", Vector3.new(0.6, 28, 28), CFrame.new(sw + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 196, 186), Enum.Material.Concrete, false, Enum.PartType.Cylinder)
+	part(into, "SweeperRing", Vector3.new(0.65, 29.5, 29.5), CFrame.new(sw + Vector3.new(0, 0.28, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 200, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
 	part(into, "SweeperPost", Vector3.new(6, 6, 6), CFrame.new(sw + Vector3.new(0, 3, 0)), Color3.fromRGB(70, 72, 78), Enum.Material.Metal)
-	local beamPart = part(into, "SweeperBeam", Vector3.new(84, 2.4, 2.4), CFrame.new(sw + Vector3.new(0, 2.4, 0)), Color3.fromRGB(230, 120, 30), Enum.Material.Metal)
+	local beamPart = part(into, "SweeperBeam", Vector3.new(26, 2.4, 2.4), CFrame.new(sw + Vector3.new(0, 2.4, 0)), Color3.fromRGB(230, 120, 30), Enum.Material.Metal)
 	beamPart.CanCollide = true
 	task.spawn(function()
 		local t0 = os.clock()
@@ -969,22 +1053,22 @@ local function south(into: Instance, o: Vector3, top: number)
 	end)
 	-- The shredder pit: a sunken dark pit in a concrete frame, two rollers, a railing, a lever and a button.
 	local sp = planAt(o, top, "Shredder")
-	local PW, PD = 70, 26
+	local PW, PD = 20, 10 -- (M4: inside the plan's 28 x 18)
 	part(into, "ShredderFrame", Vector3.new(PW + 8, 1, PD + 8), CFrame.new(sp + Vector3.new(0, 0.5, 0)), Color3.fromRGB(160, 160, 158), Enum.Material.Concrete)
 	local pit = part(into, "ShredderPit", Vector3.new(PW, 1.1, PD), CFrame.new(sp + Vector3.new(0, 0.55, 0)), Color3.fromRGB(26, 26, 28), Enum.Material.Slate)
 	pit.CanCollide = false
 	part(into, "ShredderFloor", Vector3.new(PW, 1, PD), CFrame.new(sp + Vector3.new(0, -8, 0)), Color3.fromRGB(40, 40, 44), Enum.Material.Metal)
-	for _, dz in { -5, 5 } do
-		part(into, "ShredderRoller", Vector3.new(PW - 4, 7, 7), CFrame.new(sp + Vector3.new(0, -4, dz)), Color3.fromRGB(120, 124, 130), Enum.Material.DiamondPlate, false, Enum.PartType.Cylinder)
+	for _, dz in { -2.4, 2.4 } do
+		part(into, "ShredderRoller", Vector3.new(PW - 2, 4.6, 4.6), CFrame.new(sp + Vector3.new(0, -3, dz)), Color3.fromRGB(120, 124, 130), Enum.Material.DiamondPlate, false, Enum.PartType.Cylinder)
 	end
 	local corners = { Vector3.new(-PW / 2 - 3, 0, -PD / 2 - 3), Vector3.new(PW / 2 + 3, 0, -PD / 2 - 3), Vector3.new(PW / 2 + 3, 0, PD / 2 + 3), Vector3.new(-PW / 2 - 3, 0, PD / 2 + 3) }
 	for i = 1, 4 do
 		local a, b = sp + corners[i] + Vector3.new(0, 1, 0), sp + corners[i % 4 + 1] + Vector3.new(0, 1, 0)
 		railing(into, a, b)
 	end
-	part(into, "ShredderLeverBox", Vector3.new(3, 4, 3), CFrame.new(sp + Vector3.new(PW / 2 + 8, 2, 0)), Color3.fromRGB(240, 200, 40), Enum.Material.Metal)
-	part(into, "ShredderLever", Vector3.new(0.5, 4, 0.5), CFrame.new(sp + Vector3.new(PW / 2 + 8, 5.5, 0)) * CFrame.Angles(math.rad(25), 0, 0), Color3.fromRGB(40, 40, 44), Enum.Material.Metal, true)
-	part(into, "ShredderButton", Vector3.new(0.8, 3, 3), CFrame.new(sp + Vector3.new(PW / 2 + 8, 1, 6)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(210, 40, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+	part(into, "ShredderLeverBox", Vector3.new(3, 4, 3), CFrame.new(sp + Vector3.new(PW / 2 + 5, 2, 0)), Color3.fromRGB(240, 200, 40), Enum.Material.Metal)
+	part(into, "ShredderLever", Vector3.new(0.5, 4, 0.5), CFrame.new(sp + Vector3.new(PW / 2 + 5, 5.5, 0)) * CFrame.Angles(math.rad(25), 0, 0), Color3.fromRGB(40, 40, 44), Enum.Material.Metal, true)
+	part(into, "ShredderButton", Vector3.new(0.8, 3, 3), CFrame.new(sp + Vector3.new(PW / 2 + 5, 1, 4)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(210, 40, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
 end
 
 -- M8: trees, pines, boulders and benches in the open grass (plan coordinates; times S).
@@ -1065,108 +1149,88 @@ local function fill(into: Instance, o: Vector3, top: number)
 	local function at(x: number, z: number): Vector3
 		return Vector3.new(o.X + x * S, top, o.Z + z * S)
 	end
-	-- The car park: an asphalt pad with bay lines and 6 parked cars.
+	-- The car park: an asphalt pad the plan's size with bay lines and a parked car in each bay (M4: plan sizes).
 	local cp = planAt(o, top, "CarPark")
-	box(into, "CarParkPad", Vector3.new(86, 0.3, 46), CFrame.new(cp + Vector3.new(0, 0.15, 0)), Color3.fromRGB(70, 72, 76), Enum.Material.Asphalt)
+	local cps = itemSize("CarPark", Vector2.new(40, 24))
+	box(into, "CarParkPad", Vector3.new(cps.X, 0.3, cps.Y), CFrame.new(cp + Vector3.new(0, 0.15, 0)), Color3.fromRGB(70, 72, 76), Enum.Material.Asphalt)
 	local colours = { Color3.fromRGB(200, 40, 40), Color3.fromRGB(40, 90, 180), Color3.fromRGB(230, 230, 230), Color3.fromRGB(30, 30, 34), Color3.fromRGB(220, 180, 40), Color3.fromRGB(120, 130, 140) }
-	for k = 0, 5 do
-		local x = -36 + k * 14.4
-		box(into, "CarParkLine", Vector3.new(0.4, 0.05, 18), CFrame.new(cp + Vector3.new(x - 7.2, 0.33, -10)), Color3.fromRGB(235, 235, 230), Enum.Material.SmoothPlastic, true)
-		car(into, cp + Vector3.new(x, 0.3, -10), 0, colours[k + 1])
+	local bays = math.max(1, math.floor(cps.X / 12))
+	for k = 0, bays - 1 do
+		local x = -cps.X / 2 + (k + 0.5) * (cps.X / bays)
+		box(into, "CarParkLine", Vector3.new(0.4, 0.05, cps.Y * 0.7), CFrame.new(cp + Vector3.new(x - cps.X / bays / 2, 0.33, 0)), Color3.fromRGB(235, 235, 230), Enum.Material.SmoothPlastic, true)
+		car(into, cp + Vector3.new(x, 0.3, 0), 0, colours[k % #colours + 1])
 	end
-	-- A second, smaller pool with sun loungers and umbrellas.
+	-- A second, smaller pool with sun loungers and umbrellas (its rim the plan's footprint).
 	local pl = planAt(o, top, "LoungePool")
-	box(into, "SmallPoolRim", Vector3.new(50, 1, 34), CFrame.new(pl + Vector3.new(0, 0.5, 0)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
-	local w = box(into, "SmallPoolWater", Vector3.new(44, 0.4, 28), CFrame.new(pl + Vector3.new(0, 1.05, 0)), Color3.fromRGB(110, 190, 225), Enum.Material.Glass)
+	local pls = itemSize("LoungePool", Vector2.new(30, 22))
+	box(into, "SmallPoolRim", Vector3.new(pls.X, 1, pls.Y - 8), CFrame.new(pl + Vector3.new(0, 0.5, 4)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
+	local w = box(into, "SmallPoolWater", Vector3.new(pls.X - 5, 0.4, pls.Y - 13), CFrame.new(pl + Vector3.new(0, 1.05, 4)), Color3.fromRGB(110, 190, 225), Enum.Material.Glass)
 	w.Transparency = 0.2
-	for k = -2, 2 do
-		local l = pl + Vector3.new(k * 9, 0, -24) -- (map round 3: on the pool's north side, off the path that comes from the south)
+	for k = -1, 1 do
+		local l = pl + Vector3.new(k * 9, 0, -pls.Y / 2 + 2.5) -- (on the pool's north side, off the path that comes from the south)
 		box(into, "Lounger", Vector3.new(3, 0.6, 7), CFrame.new(l + Vector3.new(0, 1.2, 0)), Color3.fromRGB(240, 240, 236), Enum.Material.Plastic)
 		box(into, "LoungerBack", Vector3.new(3, 0.5, 3), CFrame.new(l + Vector3.new(0, 2, -3)) * CFrame.Angles(math.rad(-50), 0, 0), Color3.fromRGB(240, 240, 236), Enum.Material.Plastic, true)
-		if k % 2 == 0 then
+		if k ~= 0 then
 			box(into, "UmbrellaPole", Vector3.new(0.3, 8, 0.3), CFrame.new(l + Vector3.new(4.5, 4, 0)), Color3.fromRGB(200, 200, 200), Enum.Material.Metal, true)
-			part(into, "Umbrella", Vector3.new(7, 1.2, 7), CFrame.new(l + Vector3.new(4.5, 8, 0)), if k == 0 then Color3.fromRGB(230, 70, 60) else Color3.fromRGB(60, 140, 220), Enum.Material.Fabric, true, Enum.PartType.Ball)
+			part(into, "Umbrella", Vector3.new(7, 1.2, 7), CFrame.new(l + Vector3.new(4.5, 8, 0)), if k < 0 then Color3.fromRGB(230, 70, 60) else Color3.fromRGB(60, 140, 220), Enum.Material.Fabric, true, Enum.PartType.Ball)
 		end
 	end
-	-- The picnic and grill corner.
+	-- The picnic and grill corner: 2 tables and a grill inside the plan's footprint.
 	local pc = planAt(o, top, "PicnicGrill")
-	for k = 0, 3 do
-		local t = pc + Vector3.new((k % 2) * 16 - 8, 0, math.floor(k / 2) * 14 - 7)
+	for k = 0, 1 do
+		local t = pc + Vector3.new(k * 11 - 8, 0, 0)
 		box(into, "PicnicTable", Vector3.new(8, 0.5, 3.2), CFrame.new(t + Vector3.new(0, 2.6, 0)), Color3.fromRGB(150, 110, 70), Enum.Material.WoodPlanks)
 		for _, s in { -1, 1 } do
 			box(into, "PicnicBench", Vector3.new(8, 0.4, 1.2), CFrame.new(t + Vector3.new(0, 1.6, s * 2.6)), Color3.fromRGB(150, 110, 70), Enum.Material.WoodPlanks)
 		end
 	end
-	box(into, "Grill", Vector3.new(4, 3, 2.4), CFrame.new(pc + Vector3.new(20, 1.5, 0)), Color3.fromRGB(40, 40, 44), Enum.Material.Metal)
-	-- The small playground: a slide, swings and a sandpit.
+	box(into, "Grill", Vector3.new(4, 3, 2.4), CFrame.new(pc + Vector3.new(8.5, 1.5, 0)), Color3.fromRGB(40, 40, 44), Enum.Material.Metal)
+	-- The small playground: a slide and swings on a rubber mat the plan's size.
 	local pg = planAt(o, top, "Playground")
-	box(into, "PlaygroundMat", Vector3.new(50, 0.3, 40), CFrame.new(pg + Vector3.new(0, 0.15, 0)), Color3.fromRGB(200, 90, 70), Enum.Material.Rubber)
-	box(into, "PlaySlideTower", Vector3.new(5, 7, 5), CFrame.new(pg + Vector3.new(-14, 3.5, 0)), Color3.fromRGB(60, 140, 220), Enum.Material.Plastic)
-	box(into, "PlaySlide", Vector3.new(3.4, 0.5, 12), CFrame.new(pg + Vector3.new(-14, 3.6, 8.6)) * CFrame.Angles(math.rad(-30), 0, 0), Color3.fromRGB(250, 200, 40), Enum.Material.Plastic)
-	box(into, "SwingFrame", Vector3.new(16, 0.6, 0.6), CFrame.new(pg + Vector3.new(10, 9, 0)), Color3.fromRGB(200, 60, 60), Enum.Material.Metal)
-	for _, sx in { 2.5, 17.5 } do
+	local pgs = itemSize("Playground", Vector2.new(26, 18))
+	box(into, "PlaygroundMat", Vector3.new(pgs.X, 0.3, pgs.Y), CFrame.new(pg + Vector3.new(0, 0.15, 0)), Color3.fromRGB(200, 90, 70), Enum.Material.Rubber)
+	box(into, "PlaySlideTower", Vector3.new(5, 7, 5), CFrame.new(pg + Vector3.new(-7, 3.5, -3)), Color3.fromRGB(60, 140, 220), Enum.Material.Plastic)
+	box(into, "PlaySlide", Vector3.new(3.4, 0.5, 10), CFrame.new(pg + Vector3.new(-7, 3.3, 4)) * CFrame.Angles(math.rad(-30), 0, 0), Color3.fromRGB(250, 200, 40), Enum.Material.Plastic)
+	box(into, "SwingFrame", Vector3.new(11, 0.6, 0.6), CFrame.new(pg + Vector3.new(6, 9, 0)), Color3.fromRGB(200, 60, 60), Enum.Material.Metal)
+	for _, sx in { 0.8, 11.2 } do
 		box(into, "SwingLeg", Vector3.new(0.6, 9, 0.6), CFrame.new(pg + Vector3.new(sx, 4.5, 0)), Color3.fromRGB(200, 60, 60), Enum.Material.Metal)
 	end
-	for _, sx in { 7, 13 } do
+	for _, sx in { 4, 8 } do
 		box(into, "SwingRope", Vector3.new(0.15, 6, 0.15), CFrame.new(pg + Vector3.new(sx, 6, 0)), Color3.fromRGB(90, 70, 50), Enum.Material.Fabric, true)
 		box(into, "SwingSeat", Vector3.new(2, 0.3, 1), CFrame.new(pg + Vector3.new(sx, 3, 0)), Color3.fromRGB(30, 30, 30), Enum.Material.Rubber)
 	end
-	-- The training yard: tyres in two rows and hurdles.
-	local ty = planAt(o, top, "TrainingYard")
-	box(into, "TrainingDirt", Vector3.new(44, 0.3, 40), CFrame.new(ty + Vector3.new(0, 0.15, 0)), Color3.fromRGB(150, 120, 90), Enum.Material.Ground)
-	for k = 0, 9 do
-		part(into, "Tyre", Vector3.new(1.4, 4, 4), CFrame.new(ty + Vector3.new(-15 + (k % 5) * 5, 0.7, -8 + math.floor(k / 5) * 6)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(28, 28, 30), Enum.Material.Rubber, false, Enum.PartType.Cylinder)
-	end
-	for k = 0, 2 do
-		box(into, "Hurdle", Vector3.new(8, 0.4, 0.4), CFrame.new(ty + Vector3.new(0, 2.4, 6 + k * 4)), Color3.fromRGB(240, 240, 240), Enum.Material.Plastic)
-	end
-	-- The parked train on the railway (west side).
-	local tr = Vector3.new(o.X + LabOwnerMap.CENTER.X - LabOwnerMap.SIZE.X / 2 + 12, top, o.Z - 300) -- (on the west railway)
+	-- (M4: the training yard, the water tower, the control tower, the snack kiosk and the toilets are gone from the plan.)
+	-- The parked train on the west railway (M4: on Plan.RAILWAY, north of the hangar).
+	local rw = Plan.RAILWAY and Plan.RAILWAY[1]
+	local tr = if rw then Vector3.new(o.X + rw.X, top, o.Z + 20) else Vector3.new(o.X + LabOwnerMap.CENTER.X - LabOwnerMap.SIZE.X / 2 + 12, top, o.Z - 300)
 	for k = 0, 2 do
 		local c = tr + Vector3.new(0, 0, k * 18)
 		box(into, if k == 0 then "Locomotive" else "Wagon", Vector3.new(7, 7, 16), CFrame.new(c + Vector3.new(0, 4.6, 0)), if k == 0 then Color3.fromRGB(180, 40, 40) else Color3.fromRGB(70, 90, 120), Enum.Material.Metal)
 		box(into, "WagonRoof", Vector3.new(7.4, 0.6, 16.4), CFrame.new(c + Vector3.new(0, 8.4, 0)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
 	end
-	-- The hangar with open doors and a forklift (north-east corner).
+	-- The train garage on the rail (ref_11-13: grey, brown doors), the plan's footprint.
 	local hg = planAt(o, top, "Hangar")
-	box(into, "HangarFloor", Vector3.new(60, 0.4, 44), CFrame.new(hg + Vector3.new(0, 0.2, 0)), Color3.fromRGB(150, 150, 150), Enum.Material.Concrete)
+	local hgs = itemSize("Hangar", Vector2.new(30, 24))
+	box(into, "HangarFloor", Vector3.new(hgs.X, 0.4, hgs.Y), CFrame.new(hg + Vector3.new(0, 0.2, 0)), Color3.fromRGB(150, 150, 150), Enum.Material.Concrete)
 	for _, s in { -1, 1 } do
-		box(into, "HangarWall", Vector3.new(1.5, 22, 44), CFrame.new(hg + Vector3.new(s * 30, 11, 0)), Color3.fromRGB(170, 176, 180), Enum.Material.CorrodedMetal)
+		box(into, "HangarWall", Vector3.new(hgs.X, 14, 1.2), CFrame.new(hg + Vector3.new(0, 7, s * hgs.Y / 2)), Color3.fromRGB(150, 154, 158), Enum.Material.Concrete)
 	end
-	box(into, "HangarBack", Vector3.new(60, 22, 1.5), CFrame.new(hg + Vector3.new(0, 11, -22)), Color3.fromRGB(170, 176, 180), Enum.Material.CorrodedMetal)
-	box(into, "HangarRoof", Vector3.new(63, 1.5, 47), CFrame.new(hg + Vector3.new(0, 22.75, 0)), Color3.fromRGB(140, 146, 150), Enum.Material.CorrodedMetal)
-	box(into, "ForkliftBody", Vector3.new(4, 4, 6), CFrame.new(hg + Vector3.new(10, 2.4, 8)), Color3.fromRGB(240, 180, 30), Enum.Material.Metal)
-	box(into, "ForkliftMast", Vector3.new(4, 8, 0.6), CFrame.new(hg + Vector3.new(10, 4.4, 11.4)), Color3.fromRGB(50, 50, 54), Enum.Material.Metal)
-	-- The water tower (north-west) and the control tower (south-east).
-	local wt = planAt(o, top, "WaterTower")
-	for _, d in { Vector3.new(-5, 0, -5), Vector3.new(5, 0, -5), Vector3.new(-5, 0, 5), Vector3.new(5, 0, 5) } do
-		box(into, "WaterTowerLeg", Vector3.new(1, 34, 1), CFrame.new(wt + d + Vector3.new(0, 17, 0)), Color3.fromRGB(110, 110, 114), Enum.Material.Metal)
+	box(into, "HangarBack", Vector3.new(1.2, 14, hgs.Y), CFrame.new(hg + Vector3.new(-hgs.X / 2, 7, 0)), Color3.fromRGB(150, 154, 158), Enum.Material.Concrete)
+	for _, s in { -1, 1 } do
+		box(into, "HangarDoor", Vector3.new(0.6, 11, hgs.Y / 2 - 1.5), CFrame.new(hg + Vector3.new(hgs.X / 2 + 0.3, 5.5, s * (hgs.Y / 4 + 0.2))), Color3.fromRGB(120, 78, 48), Enum.Material.WoodPlanks)
 	end
-	part(into, "WaterTowerTank", Vector3.new(14, 16, 16), CFrame.new(wt + Vector3.new(0, 40, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(196, 196, 190), Enum.Material.Metal, false, Enum.PartType.Cylinder)
-	local ct = planAt(o, top, "ControlTower")
-	box(into, "ControlTowerShaft", Vector3.new(10, 40, 10), CFrame.new(ct + Vector3.new(0, 20, 0)), Color3.fromRGB(220, 220, 216), Enum.Material.Concrete)
-	local cab = box(into, "ControlTowerCab", Vector3.new(16, 7, 16), CFrame.new(ct + Vector3.new(0, 43.5, 0)), Color3.fromRGB(80, 110, 130), Enum.Material.Glass)
-	cab.Transparency = 0.25
-	box(into, "ControlTowerRoof", Vector3.new(18, 1, 18), CFrame.new(ct + Vector3.new(0, 47.5, 0)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal)
-	-- Portable toilets and a snack kiosk (north, by the aquarium).
-	local wc = planAt(o, top, "SnackKiosk", 4, 12)
-	for k = 0, 2 do
-		box(into, "Toilet", Vector3.new(4, 8, 4), CFrame.new(wc + Vector3.new(k * 4.6, 4, 0)), Color3.fromRGB(60, 140, 210), Enum.Material.Plastic)
-	end
-	local ki = planAt(o, top, "SnackKiosk", 0, -4)
-	box(into, "Kiosk", Vector3.new(12, 8, 8), CFrame.new(ki + Vector3.new(0, 4, 0)), Color3.fromRGB(240, 220, 170), Enum.Material.WoodPlanks)
-	box(into, "KioskAwning", Vector3.new(13, 0.4, 4), CFrame.new(ki + Vector3.new(0, 8, 5)) * CFrame.Angles(math.rad(-15), 0, 0), Color3.fromRGB(220, 60, 60), Enum.Material.Fabric, true)
-	-- (Map round 3, rule 4) Lamps only along the road edges: 2 studs outside the kerb, every 32 studs, alternating
-	-- sides; none within 10 studs of a plaza or junction (the spawn, the fountain, the squares).
+	box(into, "HangarRoof", Vector3.new(hgs.X + 2, 1.2, hgs.Y + 2), CFrame.new(hg + Vector3.new(0, 14.6, 0)), Color3.fromRGB(110, 114, 120), Enum.Material.Metal)
+	-- (Map round 3, rule 4; M4: the walkways are 12-14 wide) Lamps only along the main walkways, few: 2 studs outside the
+	-- edge, every 48 studs, alternating sides; none within 10 studs of a plaza or junction.
 	for _, r in Plan.ROADS do
-		if r.width >= 16 then
+		if r.width >= 14 then
 			for i = 1, #r.points - 1 do
 				local a, b = r.points[i], r.points[i + 1]
 				local len = (b - a).Magnitude
 				local dir = (b - a).Unit
 				local side = Vector2.new(-dir.Y, dir.X)
 				local k = 0
-				for s = 24, len - 24, 32 do
+				for s = 24, len - 24, 48 do
 					k += 1
 					local p = a + dir * s + side * ((r.width / 2 + 2.8) * (if k % 2 == 0 then 1 else -1))
 					local clear = true
@@ -1795,8 +1859,11 @@ local function parks(into: Instance, o: Vector3, top: number)
 	local function w(x: number, z: number): Vector3
 		return Vector3.new(o.X + x, top, o.Z + z)
 	end
+	-- (M4: the compact map has no boulevard trees and no garden rooms: only the duck pond, the dog yard and the backdrop
+	-- below are built there)
+	local bigMap = LabOwnerMap.S > 2
 	-- Boulevard trees, both sides, outside the lamps.
-	for z = -262, -78, 26 do
+	for z = (if bigMap then -262 else 1), (if bigMap then -78 else 0), 26 do
 		for _, sx in { -1, 1 } do
 			plantTree(into, if (z // 26) % 2 == 0 then "TreePoplar" else "TreeOak", w(-30 + sx * 30, z), rng:NextNumber(20, 26), rng, false)
 		end
@@ -1804,6 +1871,9 @@ local function parks(into: Instance, o: Vector3, top: number)
 	-- The open areas: hedges along their road sides, flower beds, trees, benches.
 	for _, id in { "GardensN", "LawnsMid", "PicnicPark" } do
 		local room = Plan.ROOMS[id]
+		if not room then
+			continue -- (M4: no such room in the compact plan)
+		end
 		local mn, mx = room.min, room.max
 		-- hedges along the west and east sides (the long roads), leaving gaps for the side paths
 		for _, x in { mn.X + 4, mx.X - 4 } do
@@ -1825,14 +1895,14 @@ local function parks(into: Instance, o: Vector3, top: number)
 		end
 	end
 	-- Flower beds along the front of the spawn plaza.
-	for _, sx in { -1, 1 } do
+	for _, sx in (if bigMap then { -1, 1 } else {}) do
 		flowerBed(into, w(-30 + sx * 50, -274), 30, 6, rng)
 	end
 	-- THE DUCK POND (Picnic Park).
 	local dp = planAt(o, top, "DuckPond")
-	local water = part(into, "DuckPondWater", Vector3.new(0.4, 40, 40), CFrame.new(dp + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(90, 150, 190), Enum.Material.Glass, false, Enum.PartType.Cylinder)
+	local water = part(into, "DuckPondWater", Vector3.new(0.4, 11, 11), CFrame.new(dp + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(90, 150, 190), Enum.Material.Glass, false, Enum.PartType.Cylinder)
 	water.Transparency = 0.15
-	part(into, "DuckPondRim", Vector3.new(0.6, 43, 43), CFrame.new(dp + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(150, 140, 120), Enum.Material.Cobblestone, true, Enum.PartType.Cylinder)
+	part(into, "DuckPondRim", Vector3.new(0.6, 12.5, 12.5), CFrame.new(dp + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(150, 140, 120), Enum.Material.Cobblestone, true, Enum.PartType.Cylinder)
 	for k = 1, 4 do
 		local a = k * 1.6
 		local p = dp + Vector3.new(math.cos(a) * 10, 0.8, math.sin(a) * 10)
@@ -1842,6 +1912,7 @@ local function parks(into: Instance, o: Vector3, top: number)
 	end
 	-- THE GAZEBO in its flower garden.
 	local gz = planAt(o, top, "Gazebo")
+	if inPlan("Gazebo") then -- (M4: gone from the compact plan)
 	part(into, "GazeboFloor", Vector3.new(1, 20, 20), CFrame.new(gz + Vector3.new(0, 0.5, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(230, 226, 216), Enum.Material.WoodPlanks, false, Enum.PartType.Cylinder)
 	for k = 0, 5 do
 		local a = k / 6 * math.pi * 2
@@ -1852,9 +1923,10 @@ local function parks(into: Instance, o: Vector3, top: number)
 		local a = k / 6 * math.pi * 2 + 0.5
 		flowerBed(into, gz + Vector3.new(math.cos(a) * 17, 0, math.sin(a) * 17), 6, 6, rng)
 	end
+	end
 	-- THE DOG YARD fence round the doghouse.
 	local dy = planAt(o, top, "DogYard")
-	local half = 15
+	local half = 9 -- (M4: the plan's 18 x 18)
 	local corners = { Vector3.new(-half, 0, -half), Vector3.new(half, 0, -half), Vector3.new(half, 0, half), Vector3.new(-half, 0, half) }
 	for i = 1, 4 do
 		local a, b = dy + corners[i], dy + corners[i % 4 + 1]
@@ -1862,7 +1934,7 @@ local function parks(into: Instance, o: Vector3, top: number)
 			part(into, "DogFence", Vector3.new(0.4, 3, (b - a).Magnitude), CFrame.lookAt((a + b) / 2 + Vector3.new(0, 1.5, 0), b + Vector3.new(0, 1.5, 0)), Color3.fromRGB(240, 236, 226), Enum.Material.Wood)
 		end
 	end
-	part(into, "DogYardGrass", Vector3.new(30, 0.2, 30), CFrame.new(dy + Vector3.new(0, 0.1, 0)), Color3.fromRGB(100, 160, 80), Enum.Material.Grass, true)
+	part(into, "DogYardGrass", Vector3.new(18, 0.2, 18), CFrame.new(dy + Vector3.new(0, 0.1, 0)), Color3.fromRGB(100, 160, 80), Enum.Material.Grass, true)
 	-- THE BACKDROP: a wider grass rim and a forest belt outside the railway, all the way round.
 	local c = LabOwnerMap.CENTER
 	local size = LabOwnerMap.SIZE
@@ -1890,9 +1962,10 @@ local function parks(into: Instance, o: Vector3, top: number)
 	local mid = Vector3.new(o.X + c.X, top, o.Z + c.Y)
 	for i = 1, 16 do
 		local a = i / 16 * math.pi * 2
-		local at = mid + Vector3.new(math.cos(a) * (size.X / 2 + 650), 40 + (i % 3) * 30, math.sin(a) * (size.Y / 2 + 650))
+		local at = mid + Vector3.new(math.cos(a) * (size.X / 2 + (if bigMap then 650 else 300)), (if bigMap then 40 else -10) + (i % 3) * 30, math.sin(a) * (size.Y / 2 + (if bigMap then 650 else 300)))
 		pcall(function()
-			terrain:FillBall(at, 210 + (i % 4) * 40, Enum.Material.Rock)
+			-- (M4: the references show smooth rolling GREEN hills on the horizon, not rock mountains)
+			terrain:FillBall(at, (if bigMap then 210 else 150) + (i % 4) * 40, if bigMap then Enum.Material.Rock else Enum.Material.Grass)
 			terrain:FillBall(at - Vector3.new(0, 90, 0), 260, Enum.Material.Grass)
 		end)
 	end
@@ -2537,14 +2610,14 @@ local function realWater(into: Instance, o: Vector3, top: number)
 	end
 	-- the aquarium: inside the glass, from the base top to 2 under the rim
 	local aq = planAt(o, top, "Aquarium")
-	local AW, AD, AH = 80, 56, 26
+	local AW, AD, AH = AQUA.X, AQUA.Y, AQUA.Z
 	local acf = CFrame.new(aq + Vector3.new(0, 3 + (AH - 2) / 2, 0))
 	local asz = Vector3.new(AW - 2, AH - 2, AD - 2)
 	T:FillBlock(acf, asz, Enum.Material.Water)
 	waterVolume(into, "Aqua", acf, asz)
 	-- the big pool: its rim raised to a basin wall, 3.5 studs of water
 	local pool = planAt(o, top, "BigPool")
-	local PW, PD = 90, 64
+	local PW, PD = POOL.X, POOL.Y
 	for _, s in { { Vector3.new(PW + 8, 4.4, 4), Vector3.new(0, 0, PD / 2 + 2) }, { Vector3.new(PW + 8, 4.4, 4), Vector3.new(0, 0, -PD / 2 - 2) }, { Vector3.new(4, 4.4, PD), Vector3.new(PW / 2 + 2, 0, 0) }, { Vector3.new(4, 4.4, PD), Vector3.new(-PW / 2 - 2, 0, 0) } } do
 		part(into, "PoolWall", s[1], CFrame.new(pool + s[2] + Vector3.new(0, 2.2, 0)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
 	end
@@ -2554,20 +2627,24 @@ local function realWater(into: Instance, o: Vector3, top: number)
 	waterVolume(into, "Pool", pcf, psz)
 	-- the lounge pool: the same, smaller
 	local pl = planAt(o, top, "LoungePool")
-	for _, s in { { Vector3.new(50, 3.4, 3), Vector3.new(0, 0, 15.5) }, { Vector3.new(50, 3.4, 3), Vector3.new(0, 0, -15.5) }, { Vector3.new(3, 3.4, 28), Vector3.new(23.5, 0, 0) }, { Vector3.new(3, 3.4, 28), Vector3.new(-23.5, 0, 0) } } do
-		part(into, "SmallPoolWall", s[1], CFrame.new(pl + s[2] + Vector3.new(0, 1.7, 0)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
+	-- (M4: the basin the plan's footprint minus the loungers' strip on the north: LOUNGE.X x (LOUNGE.Y - 8), centred 4 south)
+	local LW, LD = LOUNGE.X, LOUNGE.Y - 8
+	local lc = pl + Vector3.new(0, 0, 4)
+	for _, s in { { Vector3.new(LW, 3.4, 1.5), Vector3.new(0, 0, LD / 2 - 0.75) }, { Vector3.new(LW, 3.4, 1.5), Vector3.new(0, 0, -LD / 2 + 0.75) }, { Vector3.new(1.5, 3.4, LD), Vector3.new(LW / 2 - 0.75, 0, 0) }, { Vector3.new(1.5, 3.4, LD), Vector3.new(-LW / 2 + 0.75, 0, 0) } } do
+		part(into, "SmallPoolWall", s[1], CFrame.new(lc + s[2] + Vector3.new(0, 1.7, 0)), Color3.fromRGB(214, 212, 206), Enum.Material.Concrete)
 	end
-	local lcf = CFrame.new(pl + Vector3.new(0, 1.5, 0))
-	local lsz = Vector3.new(44, 2.8, 28)
+	local lcf = CFrame.new(lc + Vector3.new(0, 1.5, 0))
+	local lsz = Vector3.new(LW - 3, 2.8, LD - 3)
 	T:FillBlock(lcf, lsz, Enum.Material.Water)
 	waterVolume(into, "SmallPool", lcf, lsz)
 	-- the croc pond: a muddy, sandy bank ring and water inside it
 	local pond = planAt(o, top, "CrocPond")
 	local axis = CFrame.Angles(0, 0, math.rad(90))
-	T:FillCylinder(CFrame.new(pond + Vector3.new(0, 1.2, 0)) * axis, 2.4, 38, Enum.Material.Mud)
-	T:FillCylinder(CFrame.new(pond + Vector3.new(0, 0.6, 0)) * axis, 1.2, 41, Enum.Material.Sand)
-	T:FillCylinder(CFrame.new(pond + Vector3.new(0, 1.3, 0)) * axis, 2.6, 34, Enum.Material.Water)
-	waterVolume(into, "Croc", CFrame.new(pond + Vector3.new(0, 1.3, 0)), Vector3.new(66, 2.6, 66))
+	-- (M4: sized from the plan's footprint: water to CROC_R - 4, the mud bank to CROC_R - 1, the sand to CROC_R)
+	T:FillCylinder(CFrame.new(pond + Vector3.new(0, 1.2, 0)) * axis, 2.4, CROC_R - 1, Enum.Material.Mud)
+	T:FillCylinder(CFrame.new(pond + Vector3.new(0, 0.6, 0)) * axis, 1.2, CROC_R, Enum.Material.Sand)
+	T:FillCylinder(CFrame.new(pond + Vector3.new(0, 1.3, 0)) * axis, 2.6, CROC_R - 4, Enum.Material.Water)
+	waterVolume(into, "Croc", CFrame.new(pond + Vector3.new(0, 1.3, 0)), Vector3.new((CROC_R - 4) * 2, 2.6, (CROC_R - 4) * 2))
 end
 
 
@@ -2598,7 +2675,10 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	-- later, so this waits for them.)
 	task.spawn(function()
 		local S = LabOwnerMap.S
-		local pz = -360 -- (map round 3: OwnerMapPlan Leaderboards, the back of the spawn plaza)
+		local lb = Plan.ITEMS.Leaderboards
+		local pz = if lb then lb.at.Y else -360 -- (map round 3: OwnerMapPlan Leaderboards, the back of the spawn plaza)
+		local px = if lb then lb.at.X else -30
+		local gapX = if lb then math.min(30, lb.size.X / 3) else 30 -- (M4: the compact plaza)
 		for _ = 1, 40 do
 			task.wait(0.5)
 			local boards: { Model } = {}
@@ -2619,8 +2699,8 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 				end)
 				for i, b in boards do
 					local _, size = b:GetBoundingBox()
-					local x = (i - (#boards + 1) / 2) * 30
-					local at = Vector3.new(origin.X - 30 + x, origin.Y + 4 + size.Y / 2, origin.Z + pz)
+					local x = (i - (#boards + 1) / 2) * gapX
+					local at = Vector3.new(origin.X + px + x, origin.Y + 4 + size.Y / 2, origin.Z + pz)
 					b:PivotTo(CFrame.lookAt(at, at + Vector3.new(0, 0, 1))) -- (OVERVIEW 0.6: measured, the screens then face +Z: south, to the spawn and the stair)
 					local _, newSize = b:GetBoundingBox()
 					local cf2 = b:GetBoundingBox()

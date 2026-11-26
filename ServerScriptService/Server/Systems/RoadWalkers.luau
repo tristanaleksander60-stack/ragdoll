@@ -28,7 +28,15 @@ type Group = { members: { Model }, route: { Vector2 }, idx: number, dir: number,
 
 local RING = { Vector2.new(-30, -150), Vector2.new(190, -150), Vector2.new(412, -150), Vector2.new(412, 55), Vector2.new(412, 260), Vector2.new(190, 260),
 	Vector2.new(-30, 260), Vector2.new(-250, 260), Vector2.new(-472, 260), Vector2.new(-472, 55), Vector2.new(-472, -150), Vector2.new(-250, -150) }
+-- (M4: the compact plan's walkway ring and spine, when the plan is compact)
+local PS = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any
+if PS.compact then
+	RING = { Vector2.new(-150, -80), Vector2.new(0, -80), Vector2.new(150, -80), Vector2.new(150, 20), Vector2.new(150, 120), Vector2.new(0, 120), Vector2.new(-150, 120), Vector2.new(-150, 20) }
+end
 local BOULEVARD = { Vector2.new(-30, -262), Vector2.new(-30, -200), Vector2.new(-30, -150), Vector2.new(-30, -100), Vector2.new(-30, -62) }
+if PS.compact then
+	BOULEVARD = { Vector2.new(0, -115), Vector2.new(0, -80), Vector2.new(0, -45), Vector2.new(0, -10) }
+end
 
 local groups: { [Player]: { Group } } = setmetatable({}, { __mode = "k" }) :: any
 local lastHi: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any

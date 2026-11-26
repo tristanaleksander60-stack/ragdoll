@@ -643,7 +643,8 @@ local function setLabThing(p: Player, fx: Fx, which: string, on: boolean)
 		local sp = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_SPREAD or 1
 		local origin = pad.Position - Vector3.new(48 * sp, 0.5, 6 * sp) -- (the lab's origin, from its cannon pad; 0.37.18: the spread lab)
 		if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_OWNERMAP then
-			origin = pad.Position - Vector3.new(-235, 0.5, 335) -- (map round 3: the cannon stands at OwnerMapPlan Cannon)
+			local cn = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any).at("Cannon", Vector2.new(-235, 335))
+			origin = pad.Position - Vector3.new(cn.X, 0.5, cn.Y) -- (the cannon stands at OwnerMapPlan Cannon; M4: from the plan)
 		end
 		local m = clone(if which == "tramp" then "Trampoline" else "BigFan")
 		if not m then
@@ -651,7 +652,7 @@ local function setLabThing(p: Player, fx: Fx, which: string, on: boolean)
 		end
 		local tramp10 = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("LabLayout10")) :: any)
 		local trampAt = if tramp10.on then Vector3.new(tramp10.TRAMPOLINE.X, 0, tramp10.TRAMPOLINE.Y) else Vector3.new(0, 0, 108) -- (LAB10: behind the spawn, inside the wall)
-		local at = if which == "tramp" then CFrame.new(origin + trampAt) else CFrame.new(origin + (if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_OWNERMAP then Vector3.new(150, 0, -85) else Vector3.new(86, 0, -104))) -- (0.37.18, owner: "the fan in front of the portals": the car area's back corner)
+		local at = if which == "tramp" then CFrame.new(origin + trampAt) else CFrame.new(origin + (if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_OWNERMAP then (function() local f = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any).at("GiantFan", Vector2.new(150, -85)) return Vector3.new(f.X, 0, f.Y) end)() else Vector3.new(86, 0, -104))) -- (0.37.18, owner: "the fan in front of the portals": the car area's back corner)
 		local _, s = m:GetBoundingBox()
 		m:ScaleTo(m:GetScale() * (if which == "tramp" then 16 else 14) / math.max(s.X, s.Y, s.Z))
 		m:PivotTo(at)

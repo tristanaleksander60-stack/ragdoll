@@ -321,7 +321,8 @@ function MapBoard.buildLab(folder: Instance, origin: Vector3)
 	end
 	if (Config :: any).LAB_OWNERMAP then
 		-- (Map round 2: the MAPS board stands on the raised plaza beside the leaderboards, facing the stair.)
-		boardAt = origin + Vector3.new(25, 4, -320) -- (map round 3: OwnerMapPlan MapsBoard, facing west across the plaza)
+		local mb = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any).at("MapsBoard", (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any).at("Spawn", Vector2.new(25, -320), 38, -6))
+		boardAt = origin + Vector3.new(mb.X, 4, mb.Y) -- (OwnerMapPlan MapsBoard, facing west across the plaza; M4: the east end of the compact spawn plaza)
 		boardFace = boardAt + Vector3.new(-20, 0, 0)
 	end
 	MapBoard.board(holder, boardAt, boardFace)

@@ -245,7 +245,8 @@ local function buildCannon()
 	local mine = folder
 	local x, z = 48 * S, 6 * S
 	if (Config :: any).LAB_OWNERMAP then
-		x, z = -235, 335 -- (map round 3: OwnerMapPlan Cannon, in the Launch Field)
+		local cn = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any).at("Cannon", Vector2.new(-235, 335))
+		x, z = cn.X, cn.Y -- (OwnerMapPlan Cannon, by the Launch Field; M4: from the plan)
 	end
 	local padPart = part("CannonPad", Vector3.new(8, 1, 8), at(x, 0.5, z), ORANGE, Enum.Material.Neon)
 	-- Clients launch the dummies they simulate with the same velocity.
@@ -546,7 +547,8 @@ end
 local function buildWreckingBall()
 	local x, z = 40 * S, -38 * S
 	if (Config :: any).LAB_OWNERMAP then
-		x, z = -215, -25 -- (map round 3: OwnerMapPlan WreckingBall, in the Crash Yard)
+		local wb = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any).at("WreckingBall", Vector2.new(-215, -25))
+		x, z = wb.X, wb.Y -- (OwnerMapPlan WreckingBall; M4: from the plan)
 	end
 	local height = 24
 	local postA = part("Post", Vector3.new(2, height, 2), at(x - 8, height / 2, z), DARK, Enum.Material.Metal)

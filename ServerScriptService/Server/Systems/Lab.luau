@@ -663,6 +663,14 @@ if (Config :: any).SPAWN_FEW then
 	Lab.PLAZA_SLOTS = 3
 end
 local PLAZA_AT = if L10.on then L10.TEST_FLOOR else Vector2.zero
+-- (M4: the player's spawn spot on the raised plaza, from the compact plan's Spawn item; round 3 was (-30, -300))
+local SPAWN_AT: Vector2 = (function()
+	local ok, P = pcall(function()
+		return require(ReplicatedStorage.Shared:WaitForChild("OwnerMapPlan")) :: any
+	end)
+	local it = ok and P and P.ITEMS and P.ITEMS.Spawn
+	return if it then it.at else Vector2.new(-30, -300)
+end)()
 pickRoamSpot = function(plot: Plot, slot: Slot): Vector3
 	local PathPlan = require(ReplicatedStorage.Shared:WaitForChild("PathPlan")) :: any
 	local Visitors = require(script.Parent:WaitForChild("VisitorService")) :: any
@@ -1572,7 +1580,7 @@ local function placeOnPlot(player: Player, plot: Plot)
 	if (Config :: any).LAB_OWNERMAP then
 		-- (Map round 2, owner: the spawn is on the raised leaderboard plaza, at its front edge, facing down the stair to the
 		-- tower: LabOwnerMap M1 builds the plaza 5 high at z -95 x 3.2, 83 deep.)
-		at = plot.origin + Vector3.new(-30 + math.random() * 6 - 3, 4 + 3.5, -300) -- (map round 3: OwnerMapPlan Spawn, the plaza is 4 high)
+		at = plot.origin + Vector3.new(SPAWN_AT.X + math.random() * 6 - 3, 4 + 3.5, SPAWN_AT.Y) -- (map round 3: OwnerMapPlan Spawn, the plaza is 4 high)
 		facing = Vector3.zAxis
 	end
 	-- (V8-0.4: turned 50 degrees towards the cannon, which sat 82-97 degrees right of the spawn camera:

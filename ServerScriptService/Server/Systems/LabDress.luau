@@ -142,7 +142,8 @@ function LabDress.dress(into: Instance, origin: Vector3)
 		if keep and V3Assets.has(s.role) then
 			local px, pz = s.x * SPREAD, s.z * SPREAD
 			if s.role == "Rocket" and (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_OWNERMAP then
-				px, pz = -185, 358 -- (map round 3: OwnerMapPlan Rocket, on its round pad by the gantry)
+				local r = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any).at("Rocket", Vector2.new(-185, 358))
+				px, pz = r.X, r.Y -- (OwnerMapPlan Rocket, on its round pad by the gantry; M4: from the plan)
 			end
 			local at = CFrame.new(origin + Vector3.new(px, 0, pz)) * CFrame.Angles(0, math.rad(s.yaw), 0)
 			local placed = V3Assets.place(s.role, folder, at, { size = s.size, height = s.height, collide = s.collide == true })

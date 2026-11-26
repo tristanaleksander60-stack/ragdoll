@@ -130,7 +130,10 @@ end
 
 -- (GO NOW: THE MAP, Config.LAB_OWNERMAP: every spot here 3.2 times further from the spawn, like Config.LAB_SPREAD; sizes stay.)
 if Config.LAB_OWNERMAP then
-	local K = 3.2
+	local K = (function(): number -- (M4: the compact plan's K, 1.3; was 3.2)
+		local ok, P = pcall(function() return require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("OwnerMapPlan")) :: any end)
+		return if ok and P and P.K then P.K else 3.2
+	end)()
 	LabLayout10.CREATURES.Spider = Vector2.new(70, -70) -- (the plan: on its own plot by the fenced pen, not on the leaderboard plaza; x3.2 below)
 	LabLayout10.CREATURES.Whale = Vector2.new(-30, -95) -- (the shark tank: in the glass aquarium of the north row)
 	LabLayout10.CARS.MuscleCar = Vector2.new(-62, -70) -- (the bays of the plan, west to east: the tank, the monster truck, the blue car)
@@ -195,6 +198,52 @@ if Config.LAB_OWNERMAP then
 	LabLayout10.STRETCH = V(245, -48)
 	LabLayout10.MOVES.Lava = Vector3.new(-215 + 111, 0, -85 + 28) -- the boxing ring at (-215, -85)
 	LabLayout10.MOVES.ShootingRange = Vector3.new(150, 0, 151) -- the weapon range in the Danger Zone at (150, 305) (its own spot is (0, 154))
+	-- MAP ROUND 4 (OVERVIEW M4, the compact plan, Plan.K = 1.3): every code machine, creature and car on its compact
+	-- OwnerMapPlan spot (lab-space studs), read from Plan.ITEMS so a plan change moves them too.
+	local okPlan, Plan = pcall(function()
+		return require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("OwnerMapPlan")) :: any
+	end)
+	if okPlan and Plan and Plan.K and Plan.K < 2 then
+		local function item(id: string, dx: number?, dz: number?): Vector2?
+			local it = Plan.ITEMS[id]
+			return if it then it.at + Vector2.new(dx or 0, dz or 0) else nil
+		end
+		local function set(t: { [string]: any }, key: string, v: Vector2?)
+			if v then
+				t[key] = v
+			end
+		end
+		local C = LabLayout10.CREATURES
+		set(C, "Spider", item("SpiderPen"))
+		set(C, "Whale", item("Aquarium"))
+		set(C, "Washer", item("Washer"))
+		set(C, "Vacuum", item("Press")) -- (the compressor stands on the press)
+		set(C, "Mole", item("Mole"))
+		set(C, "Slingshot", item("Archery", 0, 9)) -- (beside the target, off its line)
+		set(C, "Frog", item("DuckPond", 14, 0))
+		C.Plant = Vector2.new(-120, -140) -- (the open spot between the cave and the aquarium; no garden in the compact plan)
+		set(C, "Chicken", item("PicnicGrill", 22, 0))
+		local bays = item("CarBays")
+		if bays then
+			LabLayout10.CARS.MuscleCar = bays + Vector2.new(-14.6, 0) -- the bays: tank, monster truck, blue car
+			LabLayout10.CARS.Truck = bays
+			LabLayout10.CARS.Car = bays + Vector2.new(14.6, 0)
+		end
+		set(LabLayout10.CARS, "Bike", item("BikeRack", 16, 0)) -- (F75: the motorbike's bay BESIDE the rack, never in it)
+		LabLayout10.TRAMPOLINE = item("Trampoline") or LabLayout10.TRAMPOLINE
+		LabLayout10.STRETCH = item("StretchMachine") or LabLayout10.STRETCH
+		local ring = item("BoxingRing")
+		if ring then
+			LabLayout10.MOVES.Lava = Vector3.new(ring.X + 111, 0, ring.Y + 28) -- (buildLava's own spot is (-111, -28))
+		end
+		local sp = item("Spawn")
+		if sp then
+			LabLayout10.TEST_FLOOR = sp -- (the 3 near walk about on the spawn plaza)
+			LabLayout10.BUTTON = sp + Vector2.new(0, -14)
+		end
+		-- The weapon range is not in the compact plan: it stands just outside the south edge (its own spot is (0, 154)).
+		LabLayout10.MOVES.ShootingRange = Vector3.new(150, 0, 255 - 154)
+	end
 end
 
 return LabLayout10
