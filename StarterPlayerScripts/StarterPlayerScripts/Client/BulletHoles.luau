@@ -337,6 +337,13 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 		local g = 0.82 + math.random() * 0.18
 		art.Color3 = Color3.new(g, g * (0.96 + math.random() * 0.04), g)
 	end
+	-- (F41, owner's picture: "white stickers" round every hole; Config.NO_WHITE_RINGS): the picture's pale rim is tinted to a
+	-- slightly darker grey plastic, so a hole is only its dark centre with a thin darker rim.
+	local noWhite = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).NO_WHITE_RINGS == true
+	if noWhite then
+		local g = 0.42 + math.random() * 0.08
+		art.Color3 = Color3.new(g, g, g * 1.04)
+	end
 	art.Face = Enum.NormalId.Right
 	art.Parent = hole
 	hole.Name = "BulletHole"
@@ -347,7 +354,7 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 	weld.Part1 = hole
 	weld.Parent = hole
 	hole.Parent = part
-	if vary and skin and not PHONE then
+	if vary and skin and not PHONE and not noWhite then
 		-- The pale stress ring round it (plastic goes white where it bends), its own size and strength.
 		local ringSize = math.max(tall, across) * (1.35 + math.random() * 0.4)
 		local ring = disc(ringSize, Color3.fromRGB(196, 198, 202), flatOn(worldAt, worldNormal, 0.012), 0.55 + math.random() * 0.25)
