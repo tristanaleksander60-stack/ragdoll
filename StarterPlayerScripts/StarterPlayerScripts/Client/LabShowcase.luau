@@ -463,7 +463,28 @@ LabShowcase.find = find
 LabShowcase.where = where
 LabShowcase.SHORT = SHORT
 
+-- (STAY_LONGER 3: 10 s before a lab surprise the goal line says so: EventService sets SurpriseAt.)
+local function surpriseWarning()
+	local warnedFor = 0
+	while true do
+		task.wait(0.5)
+		local at = player:GetAttribute("SurpriseAt")
+		if type(at) == "number" and at ~= warnedFor then
+			local left = at - Workspace:GetServerTimeNow()
+			if left <= 10 and left > 3 then
+				warnedFor = at
+				pcall(function()
+					(require(script.Parent:WaitForChild("HudV3")) :: any).moment("Surprise in " .. math.floor(left + 0.5) .. " s!", 4)
+				end)
+			end
+		end
+	end
+end
+
 function LabShowcase.start()
+	if Config.LAB_SURPRISES then
+		task.spawn(surpriseWarning)
+	end
 	if Config.ATTRACT_MODE then
 		task.spawn(attract)
 	end

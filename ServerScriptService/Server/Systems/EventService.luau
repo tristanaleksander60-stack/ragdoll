@@ -709,6 +709,7 @@ local function surpriseLoop()
 				-- (Each player's first one falls at a random time, so a fresh server never fires them all at once.)
 				local first = ((Config :: any).LAB_SURPRISE_FIRST or gap) :: Vector2
 				nextSurprise[player] = now + math.max(Config.QUIET_START, math.random(math.floor(first.X), math.floor(first.Y)))
+				player:SetAttribute("SurpriseAt", workspace:GetServerTimeNow() + ((nextSurprise[player] :: number) - now))
 				continue
 			end
 			local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
@@ -716,6 +717,7 @@ local function surpriseLoop()
 			if now >= due and not busy and current == nil and #queue == 0 and root and root:IsA("BasePart") and Lab.ownerAt(root.Position) == player then
 				nextSurprise[player] = now + math.random(math.floor(gap.X), math.floor(gap.Y))
 				pcall(EventService.surpriseNow, player)
+				player:SetAttribute("SurpriseAt", workspace:GetServerTimeNow() + ((nextSurprise[player] :: number) - now)) -- (STAY_LONGER 3: the goal line warns 10 s before)
 			end
 		end
 	end
