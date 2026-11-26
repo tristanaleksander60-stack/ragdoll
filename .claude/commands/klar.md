@@ -2,7 +2,7 @@
 description: Work through docs/NOW.md for Ragdoll Havoc (cheap and fast; the owner tests)
 argument-hint: "[optional: what the owner wants first]"
 ---
-Read `CLAUDE.md`, then `docs/NOW.md`. **If NOW.md has a ">>> GO NOW" section, do that first and keep going until it is finished** (across several sessions, from its STATE list); then work through the RUN ORDER table top to bottom. If the owner wrote something after /klar, do that first.
+Read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page map of the whole plan: order, docs, done, left), then the doc of the item you work on (and `docs/NOW.md` for details). **If NOW.md has a ">>> GO NOW" section, do that first and keep going until it is finished** (across several sessions, from its STATE list); then work through the RUN ORDER table top to bottom. If the owner wrote something after /klar, do that first.
 
 **0. THE MAP comes before everything** (owner, 26 Nov late: "Siger det ikke igen, gør det godt nu"). Do NOTHING else until NOW.md's map "DEFINITION OF DONE" is fully true. Never call the map done before it is.
 
@@ -35,3 +35,5 @@ Then start working at once. Do not wait for an answer. When the owner says it is
 - **Talk to the owner** in Danish, short and plain.
 
 The owner's wish for this session: $ARGUMENTS
+
+**Keep `docs/OVERVIEW.md` true:** update an item's State and LEFT there whenever you finish or start it.

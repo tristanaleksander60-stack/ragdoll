@@ -1,5 +1,7 @@
 # NOW: the current work list (read this first on every /klar)
 
+**READ `docs/OVERVIEW.md` FIRST:** it is the one-page map of the whole plan (order, docs, done, left). This file holds the details and history.
+
 **All weak points, ranked:** `docs/WEAKNESSES.md` (26 Nov). After LAB10 round 2, take its "Order to fix" from item 3.
 
 **Next after the lab:** `docs/STAY_LONGER.md` (session length). Build items 1-8 in one run. Item 1, the quiet gift timer on phones, goes first.

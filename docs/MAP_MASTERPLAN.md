@@ -71,3 +71,43 @@ Rebuild `Systems/LabOwnerMap` FROM `OwnerMapPlan`. Do not hand-place anything th
    - the spawn view (you see the boulevard, the fountain and the tower; the rooms are hidden);
    - one view inside each room.
 4. **Harsh score:** 9.5+ on clean, connected, explore-worthy, full and beautiful.
+
+## The BACKDROP: hills and mountains that look made by hand (owner, 26 Nov 2026: "Fiks den basic baggrund af bjerge, uden at det ligner AI slop eller noget som er lavet på 2 sekunder")
+**Today** (the owner's phone screenshot): a ring of identical smooth green blobs in a grey-green fog behind the plaza. It looks generated and cheap.
+
+**The 10/10 backdrop: 3 layers, designed like a landscape painting.**
+1. **NEAR (just outside the railway): a forest edge.**
+   - A dense, uneven tree line of mixed pines and broadleaf trees (the same new tree set as the lab), with bushes, a few fallen logs and rocks.
+   - It hides where the map ends.
+   - Gaps here and there show the hills behind.
+2. **MID (about 300-900 studs out): real rolling hills in Roblox SMOOTH TERRAIN** (not part spheres).
+   - Sculpt them from a height field: layered noise (several octaves) plus a couple of hand-placed big shapes, so the silhouettes differ. No repeated bumps and no perfect ring.
+   - **Materials by slope and height:** grass on gentle slopes, ground/mud on paths, rock on steep faces, a little leafy grass in the valleys.
+   - **Details:**
+     - tree clusters on the hills (cheap meshes, denser in the valleys);
+     - a winding dirt road;
+     - a small farm with a red barn and a windmill;
+     - fences across a field;
+     - a power-line row;
+     - a few rock outcrops.
+
+     These give it scale and make it feel lived-in.
+   - **A valley gap** lines up with the boulevard's view south, so the tower stands against a deep view.
+3. **FAR (the horizon): a mountain range.**
+   - Low-poly mountain meshes (Creator Store, malware pass, one style) in 2-3 rows of different heights, with snowy peaks on the tallest.
+   - Varied ridges: no two the same, never a uniform ring.
+
+**Atmosphere and sky:**
+- Tune the Atmosphere so the far mountains turn soft blue-grey (atmospheric perspective) while the lab and the near forest stay crisp and colourful. That means density low and the haze light, the colour a pale blue, and no flat grey-green fog over everything.
+- Use a good skybox with soft clouds matching the sun's direction, and a gentle sun glare.
+- On phones the far layer may be a single mesh band (cheap).
+
+**Performance:**
+- Terrain only for the mid hills, with a modest resolution.
+- The trees on the hills are simple meshes with no collisions and no shadows.
+- Mountains are a few big meshes.
+- Check the phone FPS and memory.
+
+**Check:** capture the view from the spawn, from the tower top, and from 2 room openings, on PC and on a phone. Nothing may look repeated or blobby. The layers must read clearly (forest, hills, mountains). Harsh score 9.5+.
+
+**Also seen in the same screenshot: the 4 leaderboards show as plain black panels on the phone.** Check that the scrolling top-20 lists render on phones (SurfaceGui pixels per stud, LightInfluence 0, AlwaysOnTop false, MaxDistance).
