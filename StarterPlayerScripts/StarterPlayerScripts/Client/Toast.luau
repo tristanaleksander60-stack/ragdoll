@@ -384,6 +384,16 @@ end
 function Toast.show(text: string, color: Color3?, top: (() -> number)?, icon: string?, onTap: (() -> ())?)
 	-- (21 Nov 2026: a big moment, SURPRISE!, BULLSEYE!, a chase, gets the centre banner instead:
 	-- Shared/BannerRules, Client/Banner.)
+	-- (NOW 1.5, owner 26 Nov 2026: on a phone no notices about gifts, eggs, codes, free tries, sales or
+	-- ULTRA; only what is about your own play.)
+	if (require(script.Parent:WaitForChild("PhoneQuiet")) :: any).on() then
+		local low = string.lower(text)
+		for _, word in { "gift", "egg", "code", "free", "sale", "ultra", "offer", "deal", "robux", "bought", "what's new" } do
+			if string.find(low, word, 1, true) then
+				return
+			end
+		end
+	end
 	if Banner.tryLine(text) then
 		return
 	end

@@ -59,6 +59,18 @@ local function draw(key: string)
 			if label then
 				label.Text = if bang then "!" elseif n > 9 then "9+" else tostring(n)
 			end
+			-- (NOW 1.5, owner 26 Nov 2026: no red badges on a phone; only a small quiet dot that something waits.)
+			if (require(script.Parent:WaitForChild("PhoneQuiet")) :: any).on() then
+				d.Size = UDim2.fromOffset(10, 10)
+				d.BackgroundColor3 = Color3.fromRGB(255, 214, 120)
+				local stroke = d:FindFirstChildOfClass("UIStroke")
+				if stroke then
+					stroke.Enabled = false
+				end
+				if label then
+					label.Text = ""
+				end
+			end
 		end
 	end
 end

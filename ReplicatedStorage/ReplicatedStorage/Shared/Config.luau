@@ -290,9 +290,9 @@ local Config = {
 	-- Reflectance 0) on the body and the client skins. The crash-test details keep their colours; the
 	-- crowd in clothes is not touched. false = the white of LOOK_V3.
 	DUMMY_TONE = {
-		shell = Color3.fromRGB(112, 114, 118), -- (23 Nov 2026, owner: they shone far too much: 245 blew out in the light; 22 Nov 2026, owner: white, so they stand out from the lab floor; was 138, 140, 145)
-		low = Color3.fromRGB(112, 114, 118), -- forearms and shins, a shade darker
-		ends = Color3.fromRGB(112, 114, 118), -- hands and feet
+		shell = Color3.fromRGB(92, 95, 102), -- (NOW 1.3, 26 Nov 2026: a shade darker so they stand out on the light hub floor and the white sky; was 112, 114, 118) -- (23 Nov 2026, owner: they shone far too much: 245 blew out in the light; 22 Nov 2026, owner: white, so they stand out from the lab floor; was 138, 140, 145)
+		low = Color3.fromRGB(92, 95, 102), -- forearms and shins, a shade darker
+		ends = Color3.fromRGB(92, 95, 102), -- hands and feet
 		material = Enum.Material.SmoothPlastic, -- (0.47.37: glossy again, in the overcast light) -- (23 Nov 2026: matte again; head and body alike; was SmoothPlastic)
 		reflectance = 0.17, -- (V10, owner: "they shine a little too much, it hurts to look at"; was 0.06)
 	} :: any,
@@ -368,6 +368,15 @@ local Config = {
 	-- KOs; every later locked one reads "Locked".
 	WEAPONS_NO_BUY = true,
 	WEAPONS_NO_TRY = true,
+	-- Phone first (NOW item 1, owner 26 Nov 2026: most players are on a phone in landscape).
+	HIDE_OWN_TAGS = true, -- your own FOUNDER/VIP tags are hidden from you (others see them, smaller)
+	PHONE_SHOULDER_CAM = true, -- a phone holding a gun looks over the right shoulder (GrabController)
+	PHONE_AIM_ASSIST = true, -- a wider touch aim pull (PokeController.ASSIST_PHONE) and a buzz on every hit
+	PHONE_CLEAR_AIR = true, -- half the fog and a little more colour on phones (ZoneLighting)
+	TARGET_ARROW = true, -- a bobbing arrow over the nearest dummy for a new player, first 2 min (Client/TargetArrow)
+	GOAL_LINE = true, -- the top pill reads "Next: Bow  3 KOs" (HudV3.drawNext)
+	PHONE_QUIET = true, -- phones and tablets: no gift button, no red badges, no pop-ups about gifts/eggs/codes/sales/events, no auto What's New (Client/PhoneQuiet)
+	PHONE_MENUS = true, -- phones: near full-screen windows, 2-3 big weapon cards a row without descriptions, FEATURED never shows what you own
 	-- The lab guide (21 Nov 2026, the owner: "a 9-year-old must understand everything in the lab"): a
 	-- sign, a glowing drop ring and a FEED button at every creature and station (Server/Systems/LabGuide,
 	-- Client/LabGuideClient). false = none.
@@ -428,7 +437,7 @@ local Config = {
 	-- V9-0k (owner, 21 Nov 2026: "the floor looks like white tiles, it should look like 3D cushions"): the hub floor
 	-- wears a PBR MaterialVariant of soft padded pads (MaterialService "HubPads", place file; 2 x 2 pads a
 	-- 28-stud tile = 14-stud pads), still one flat floor part. nil = the V9-0h tile texture.
-	HUB_FLOOR_PADS = table.freeze({ variant = "HubPads", material = Enum.Material.Rubber, color = Color3.fromRGB(216, 206, 190) }), -- (a light warm grey: the white dummies still read brighter)
+	HUB_FLOOR_PADS = table.freeze({ variant = "HubPads", material = Enum.Material.Rubber, color = Color3.fromRGB(198, 182, 156) }), -- (NOW 1.3: warmer and a step darker, was 216, 206, 190) (a light warm grey: the white dummies still read brighter)
 	-- V9-0l (owner, 21 Nov 2026: "give everyone GOD MODE free because we are still in beta"): everyone gets GOD MODE at
 	-- a moment that fits (DummySpawn.grantBeta: attribute GodBeta); the SHOP shows it FREE · BETA; who bought it
 	-- is a FOUNDER (gold tag and beam) and keeps it. false = the trial + BUY again (pass owners keep it).

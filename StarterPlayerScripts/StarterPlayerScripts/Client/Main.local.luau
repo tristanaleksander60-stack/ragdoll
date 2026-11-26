@@ -170,6 +170,7 @@ safe("Cockpit", function() require(Client:WaitForChild("Cockpit")).start() end) 
 safe("BowClient", function() require(Client:WaitForChild("BowClient")).start() end) -- V9-NOW 23: hold to draw, let go to shoot
 safe("PromptGate", function() if (require(Shared:WaitForChild("Config")) :: any).NO_HOLD_E then require(Client:WaitForChild("PromptGate")).start() end end) -- V9-NOW 24: no hold E; press the thing itself
 safe("Speedometer", function() require(Client:WaitForChild("Speedometer")).start() end) -- V9-0c: the round gauge while you drive
+safe("TargetArrow", function() require(Client:WaitForChild("TargetArrow")).start() end) -- NOW 1.3: an arrow over the nearest dummy for a new player
 safe("PlazaClient", function() require(Client:WaitForChild("PlazaClient")).start() end) -- V9-0d: the town square (stage dance, photo spot, its sounds)
 safe("HudV3", function() require(Client:WaitForChild("HudV3")).start() end) -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)
 safe("RewardsUI", function() require(Client:WaitForChild("RewardsUI")).start() end) -- REWARDS: daily, play gift, dares, trophies, group (round 5)

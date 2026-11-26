@@ -496,7 +496,8 @@ function HudV3.drawNext(takedowns: number)
 		local need = math.max(1, toy.unlockAt - from)
 		local have = math.clamp(takedowns - from, 0, need)
 		t.Text = if upright then toy.short else "Next: " .. toy.short
-		n.Text = string.format("%d / %d", have, need)
+		-- (NOW 1.4, 26 Nov 2026: one short live goal, "Next: Bow  3 KOs", the bar shows how far.)
+		n.Text = if (Config :: any).GOAL_LINE then string.format("%d KO%s", need - have, if need - have == 1 then "" else "s") else string.format("%d / %d", have, need)
 		TweenService:Create(fill, TweenInfo.new(0.3, Enum.EasingStyle.Quad), { Size = UDim2.fromScale(have / need, 1) }):Play()
 		-- (V9-3b: the longer gaps never feel empty: a soft tick and a glint when the bar passes half
 		-- way and 90 %, for the same goal, going up.)
@@ -520,8 +521,8 @@ function HudV3.drawNext(takedowns: number)
 		end
 		nextGoalId, nextFrac = toy.id, frac
 	else
-		t.Text = "Every weapon is yours"
-		n.Text = ""
+		t.Text = if (Config :: any).GOAL_LINE then "All weapons!" else "Every weapon is yours"
+		n.Text = if (Config :: any).GOAL_LINE then string.format("%d KOs", takedowns) else ""
 		fill.Size = UDim2.fromScale(1, 1)
 	end
 end
@@ -606,7 +607,8 @@ local function step()
 		tg.Enabled = (on and not held.Top) or phonePill
 		local giftButton = tg:FindFirstChild("Gift", true)
 		if giftButton and giftButton:IsA("GuiObject") then
-			giftButton.Visible = true -- (V11 A1: a phone sees the gift while an egg waits)
+			-- (NOW 1.5: no gift on a phone at all: it is claimed from MENU > REWARDS. PhoneQuiet.)
+			giftButton.Visible = not (require(Client:WaitForChild("PhoneQuiet")) :: any).on() -- (V11 A1: a phone sees the gift while an egg waits)
 		end
 	end
 	local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
@@ -944,8 +946,23 @@ function HudV3.start()
 		local HudSlots = require(Client:WaitForChild("HudSlots")) :: any
 		while true do
 			local touch = ViewMode.isTouch()
+			-- (NOW 1.5: under PhoneQuiet REVIVE shows only while some of your dummies are down.)
+			local needed = true
+			if (require(Client:WaitForChild("PhoneQuiet")) :: any).on() then
+				needed = false
+				local folder = workspace:FindFirstChild("Dummies")
+				if folder then
+					for _, m in folder:GetChildren() do
+						if m:GetAttribute("Vital") == "Dead" then
+							needed = true
+							break
+						end
+					end
+				end
+			end
 			rg.Enabled = touch and HudSlots.context(touch, ViewMode.isLab()).phone == true and not held.Left
 				and player:GetAttribute("Building") ~= true and Controller.getCurrent() == nil
+				and needed
 			task.wait(0.25)
 		end
 	end)

@@ -762,6 +762,12 @@ function ProgressUI.start()
 					ProgressUI.reveal(toy.id, toy.label)
 				end
 			end
+			-- (NOW 1.4: an unlock is a moment you feel too: a long buzz on a phone or pad.)
+			if toy and (Config :: any).GOAL_LINE then
+				pcall(function()
+					(require(script.Parent:WaitForChild("Haptics")) :: any).pulse(0.9, 0.25)
+				end)
+			end
 			local onBar = false
 			local deferred = false
 			-- (Round 5: the first rungs too, whatever they are: Bat, Crowbar and Shove come at 2, 4 and 6.)

@@ -1038,6 +1038,9 @@ local function showBannerV7()
 	end
 	local id = state.id
 	local event = if id then Events.byId[id] else nil
+	if (require(Client:WaitForChild("PhoneQuiet")) :: any).on() then
+		event = nil -- (NOW 1.5: no server event card on a phone)
+	end
 	if not event then
 		if shownId then
 			shownId = nil
@@ -1685,6 +1688,8 @@ function EventShop.start()
 			Notify.say("info", "Your free ULTRA is over. Get it to keep the speed!", Color3.fromRGB(255, 160, 60))
 		elseif kind == "Notice" and type(d.text) == "string" then
 			Toast.show(d.text)
+		elseif kind == "WhatsNew" and (require(Client:WaitForChild("PhoneQuiet")) :: any).on() then
+			-- (NOW 1.5: What's New never opens by itself on a phone; it is in MENU.)
 		elseif kind == "WhatsNew" then
 			-- (V6-1: What's New waits its turn like every big pop-up.)
 			task.spawn(function()

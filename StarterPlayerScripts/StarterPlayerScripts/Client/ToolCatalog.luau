@@ -900,6 +900,18 @@ function ToolCatalog.setCompact(on: boolean)
 		parts.blurb.LayoutOrder = if on then 5 else 3
 		parts.stats.LayoutOrder = if on then 6 else 4
 	end
+	-- (NOW 1.6, owner 26 Nov 2026: on a phone 3 big cards a row: a big picture, the name, the lock or
+	-- EQUIP; no description and no stats. Config.PHONE_MENUS.)
+	if Config.PHONE_MENUS then
+		if grid then
+			grid.CellSize = if on then UDim2.fromOffset(240, CARD.Y - 128) else UDim2.fromOffset(CARD.X, CARD.Y)
+		end
+		for _, parts in cardParts do
+			parts.blurb.Visible = not on
+			parts.stats.Visible = not on
+			parts.icon.Size = UDim2.new(1, 0, 0, ToolCatalog.ICON)
+		end
+	end
 	if next(rarityTags) ~= nil then
 		table.clear(shownAs)
 		refreshEquip()

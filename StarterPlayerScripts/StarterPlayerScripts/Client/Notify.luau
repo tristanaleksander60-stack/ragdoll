@@ -196,6 +196,11 @@ end
 
 function Notify.push(text: string, kind: string?, opts: { key: string?, color: Color3?, icon: string? }?)
 	local k = if kind and NotifyRules.PRIORITY[kind] then kind else "info"
+	-- (NOW 1.5, owner 26 Nov 2026: no pop-ups on a phone; a reward still counts on its icon in MENU, the
+	-- rest is dropped. Things about your own play (a KO, an unlock, ammo) use their own small marks.)
+	if k ~= "reward" and (require(Client:WaitForChild("PhoneQuiet")) :: any).on() then
+		return
+	end
 	local o = opts or {}
 	-- (V11 A2, owner: "no pop-ups, only (1),(2) on the icons; only events tell you"): only critical lines (the
 	-- events) still show; a reward adds to the counter on its icon (weapons on WEAPONS, the rest on the gift);

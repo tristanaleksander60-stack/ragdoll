@@ -200,6 +200,10 @@ end
 local function refreshAll()
 	for _, card in cards do
 		refreshCard(card)
+		-- (NOW 1.6, owner 26 Nov 2026: FEATURED never shows what you own; the next best unowned shows instead.)
+		if Config.PHONE_MENUS and pages.FEATURED and card.root:IsDescendantOf(pages.FEATURED) then
+			card.root.Visible = not owned(card.item)
+		end
 	end
 	if detail and detail.Visible and detailItem and detailBuy then
 		local mine = owned(detailItem)
@@ -867,6 +871,15 @@ function ShopV9.build(win: any, given: Api)
 		Controller.open("Codes")
 	end })
 	code.setIcon("present")
+	-- (NOW 1.6: "CODES" broke into "CO DES" on a phone: one line, shrunk to fit.)
+	pcall(function()
+		for _, d in code.root:GetDescendants() do
+			if d:IsA("TextLabel") then
+				d.TextWrapped = false
+				d.TextScaled = true
+			end
+		end
+	end)
 	-- The pages, one scrolling list under the tabs.
 	local s = Instance.new("ScrollingFrame")
 	s.Name = "Pages"
@@ -917,7 +930,18 @@ function ShopV9.build(win: any, given: Api)
 		end
 	end
 	-- FEATURED: the hero and a row of picks (their own cards, the same buying).
-	local heroItem = ShopArt.byKey(ShopArt.HERO)
+	-- (NOW 1.6: the hero is the first of these you do not own yet.)
+	local heroKey = ShopArt.HERO
+	if Config.PHONE_MENUS then
+		for _, key in { ShopArt.HERO, "Ultra", "VIP", "AllGuns", "RobotDog" } do
+			local it = ShopArt.byKey(key)
+			if it and not owned(it) then
+				heroKey = key
+				break
+			end
+		end
+	end
+	local heroItem = ShopArt.byKey(heroKey)
 	if heroItem and (heroItem.id ~= 0 or studio) then
 		hero(pages.FEATURED, heroItem)
 	end

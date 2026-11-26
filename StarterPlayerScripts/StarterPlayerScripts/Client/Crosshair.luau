@@ -220,6 +220,12 @@ function Crosshair.hit(head: boolean, killed: boolean)
 		tw:Cancel()
 	end
 	table.clear(markTweens)
+	-- (NOW 1.2, 26 Nov 2026: a short buzz on a phone for every hit; the KO has its own: PokeController.)
+	if (Config :: any).PHONE_AIM_ASSIST and not killed then
+		pcall(function()
+			(require(script.Parent:WaitForChild("Haptics")) :: any).pulse(0.25, 0.04)
+		end)
+	end
 	shapeMarks(if killed then KILL_MARK else MARK)
 	local hold = if killed then Crosshair.KILL_HOLD else Crosshair.MARK_HOLD
 	for _, m in marks do

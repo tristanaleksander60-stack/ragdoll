@@ -108,14 +108,20 @@ local function applyAir(key: string, instant: boolean?)
 		t:Cancel()
 	end
 	table.clear(airTween)
+	-- (NOW 1.3, 26 Nov 2026: a phone gets clearer, livelier air: the maps were fog-white on a small screen.)
+	local UIS = game:GetService("UserInputService")
+	local clear = (Config :: any).PHONE_CLEAR_AIR and UIS.TouchEnabled and not UIS.KeyboardEnabled
 	local info = TweenInfo.new(if instant then 0 else 0.9, Enum.EasingStyle.Sine)
 	if atmosphere then
-		local t = TweenService:Create(atmosphere, info, { Density = air.density, Color = air.color, Decay = air.decay })
+		local t = TweenService:Create(atmosphere, info, { Density = (if clear then air.density * 0.5 else air.density), Color = air.color, Decay = air.decay })
+		if clear then
+			atmosphere.Haze = math.min(atmosphere.Haze, 0.8)
+		end
 		t:Play()
 		table.insert(airTween, t)
 	end
 	if cc then
-		local t = TweenService:Create(cc, info, { Saturation = air.saturation, TintColor = air.tint })
+		local t = TweenService:Create(cc, info, { Saturation = air.saturation + (if clear then 0.08 else 0), TintColor = air.tint })
 		t:Play()
 		table.insert(airTween, t)
 	end

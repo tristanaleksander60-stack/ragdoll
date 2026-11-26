@@ -689,7 +689,16 @@ local function updatePad()
 		-- shoulder for a pad too, in the player view.)
 		local padShoulder = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).V8_FIRST_HIT
 			and not ViewMode.isLab() and string.sub(game:GetService("UserInputService"):GetLastInputType().Name, 1, 7) == "Gamepad"
-		local offset = if padShoulder and not (require(Client:WaitForChild("FirstPerson")) :: any).isOn() then SHOULDER_OFFSET else Vector3.zero
+		-- (NOW 1.1, 26 Nov 2026: on a phone holding a gun, over the right shoulder too, so your own
+		-- body never covers the dummy you aim at. Config.PHONE_SHOULDER_CAM.)
+		local phoneShoulder = false
+		if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).PHONE_SHOULDER_CAM
+			and not ViewMode.isLab() and ViewMode.isTouch() then
+			local held = character and character:FindFirstChild("HeldTool")
+			local toolId = held and held:GetAttribute("Tool")
+			phoneShoulder = type(toolId) == "string" and (require(game:GetService("ReplicatedStorage").Shared:WaitForChild("Ammo")) :: any).spec(toolId) ~= nil
+		end
+		local offset = if (padShoulder or phoneShoulder) and not (require(Client:WaitForChild("FirstPerson")) :: any).isOn() then SHOULDER_OFFSET else Vector3.zero
 		if humanoid.CameraOffset ~= offset then
 			humanoid.CameraOffset = offset
 		end

@@ -110,8 +110,11 @@ local function apply(player: Player)
 	if founder and head and not founderTag then
 		local gui = Instance.new("BillboardGui")
 		gui.Name = "FounderTag"
-		gui.Size = UDim2.fromOffset(104, 26)
-		gui.StudsOffsetWorldSpace = Vector3.new(0, 3.9, 0) -- (over the VIP tag when both)
+		gui.Size = if (Config :: any).HIDE_OWN_TAGS then UDim2.fromOffset(84, 20) else UDim2.fromOffset(104, 26)
+		gui.StudsOffsetWorldSpace = Vector3.new(0, if (Config :: any).HIDE_OWN_TAGS then 4.4 else 3.9, 0) -- (over the VIP tag when both)
+		if (Config :: any).HIDE_OWN_TAGS then
+			gui.PlayerToHideFrom = player -- (NOW 1.1: never over your own crosshair; others still see it)
+		end
 		gui.MaxDistance = 80
 		gui.LightInfluence = 0
 		local label = Instance.new("TextLabel")
@@ -138,8 +141,11 @@ local function apply(player: Player)
 	if vip and head and not tag then
 		local gui = Instance.new("BillboardGui")
 		gui.Name = "VipTag"
-		gui.Size = UDim2.fromOffset(64, 26)
-		gui.StudsOffsetWorldSpace = Vector3.new(0, 2.6, 0)
+		gui.Size = if (Config :: any).HIDE_OWN_TAGS then UDim2.fromOffset(50, 20) else UDim2.fromOffset(64, 26)
+		gui.StudsOffsetWorldSpace = Vector3.new(0, if (Config :: any).HIDE_OWN_TAGS then 3.2 else 2.6, 0)
+		if (Config :: any).HIDE_OWN_TAGS then
+			gui.PlayerToHideFrom = player
+		end
 		gui.MaxDistance = 80
 		gui.LightInfluence = 0
 		local label = Instance.new("TextLabel")

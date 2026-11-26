@@ -1463,6 +1463,7 @@ end
 -- short side), goes to the nearest body's middle instead. Touch only, tools aimed at a dummy only,
 -- and never into a lab this player may not reach.
 PokeController.ASSIST = 0.12
+PokeController.ASSIST_PHONE = 0.17 -- (NOW 1.2: a wider pull on a phone, like the big mobile shooters)
 local ASSIST_PARTS = { "UpperTorso", "Head", "LowerTorso" }
 -- (V8-0.2: the torso only, never the head: a help that lands headshots reads as a cheat.)
 local ASSIST_TORSO = { "UpperTorso", "LowerTorso" }
@@ -1481,7 +1482,7 @@ local function assisted(camera: Camera, at: Vector2): Vector2
 		return at
 	end
 	local view = camera.ViewportSize
-	local best, bestDistance = at, math.max(56, math.min(view.X, view.Y) * PokeController.ASSIST)
+	local best, bestDistance = at, math.max(56, math.min(view.X, view.Y) * (if (Config :: any).PHONE_AIM_ASSIST and ViewMode.isTouch() then PokeController.ASSIST_PHONE else PokeController.ASSIST))
 	for _, model in dummies:GetChildren() do
 		if model:GetAttribute("IsDummy") ~= true then
 			continue

@@ -35,6 +35,7 @@ MapBoardClient.PIXELS = 50 -- per stud on the screen
 MapBoardClient.SPIN = 0.6 -- rad/s of a portal's swirl arms
 MapBoardClient.SPIN_RANGE = 160 -- studs: farther swirls rest
 MapBoardClient.HINT_AFTER = 180 -- s
+MapBoardClient.PHONE_OPEN_RANGE = 18 -- studs: a phone walking this close to the board gets the MAPS window (NOW 1.7)
 
 local player = Players.LocalPlayer
 local visited: { [string]: boolean } = {}
@@ -416,6 +417,33 @@ function MapBoardClient.start()
 			Controller.open("Maps")
 		end
 	end)
+	-- (NOW 1.7, owner 26 Nov 2026: the board's tiles are unreadable on a phone: walking up to it opens the
+	-- big MAPS window instead, once per approach.)
+	if (Config :: any).PHONE_MENUS then
+		task.spawn(function()
+			local PhoneQuiet = require(script.Parent:WaitForChild("PhoneQuiet")) :: any
+			local near = false
+			while true do
+				task.wait(0.3)
+				local character = player.Character
+				local root = character and character:FindFirstChild("HumanoidRootPart")
+				if not (root and root:IsA("BasePart")) or not PhoneQuiet.on() then
+					continue
+				end
+				local close = false
+				for _, screen in CollectionService:GetTagged("MapBoardScreen") do
+					if screen:IsA("BasePart") and (screen.Position - root.Position).Magnitude < MapBoardClient.PHONE_OPEN_RANGE then
+						close = true
+						break
+					end
+				end
+				if close and not near and Controller.getCurrent() == nil then
+					Controller.open("Maps")
+				end
+				near = close
+			end
+		end)
+	end
 	for _, arms in CollectionService:GetTagged("PortalSwirl") do
 		watchSwirl(arms)
 	end

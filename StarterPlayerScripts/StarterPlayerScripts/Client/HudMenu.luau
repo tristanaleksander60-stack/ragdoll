@@ -93,17 +93,19 @@ local buttons: { [string]: any } = {}
 
 local function refresh()
 	local any = false
+	-- (NOW 1.5: no red "!" on a phone: MENU and its entries stay plain; IconCount keeps a quiet dot.)
+	local quiet = (require(script.Parent:WaitForChild("PhoneQuiet")) :: any).on()
 	for window, on in badges do
 		if on then
 			any = true
 		end
 		local b = buttons[window]
 		if b then
-			b.badge.Visible = on
+			b.badge.Visible = on and not quiet
 		end
 	end
 	if hud then
-		hud.setBadge(any)
+		hud.setBadge(any and not quiet)
 	end
 end
 
