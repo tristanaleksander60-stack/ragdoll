@@ -52,6 +52,7 @@ local Config = {
 	SPAWN_TITLE = "RAGDOLL HAVOC", -- the welcome arch's 3D title
 	DEMO_WALK = true, -- F31 / OVERVIEW 0.98: a machine demo starts with a ragdoll saying a line and WALKING to the machine, then hopping in (Systems/MachineDemos); only within 80 studs of the player
 	MAP_MACHINES_LIVE = true, -- map round 3: the gyro cage catches, tumbles and flings; the shredder hides, confettis and spits out (Systems/MapMachines); the gyro rings turn on the client
+	TREES_V2 = true, -- OVERVIEW 1a: trees and bushes from V3Assets/YTrees (textured bark + leaf canopies, mixed species, 5 greens, rare autumn, lean) instead of the flat green meshes (LabOwnerMap yTree)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays

@@ -991,9 +991,65 @@ end
 -- belt is broken only at the room's entrances (GAP wide), where an arch with the room's name stands. Leaves never
 -- collide; trees vary in size (+-25 %) and turn.
 local LEAF = { TreeOak = Color3.fromRGB(96, 150, 70), TreeFir = Color3.fromRGB(58, 112, 70), TreePoplar = Color3.fromRGB(120, 160, 70) }
+-- OVERVIEW 1a (MAP_MASTERPLAN rule 5b, owner: "træerne er HELT grønne og ligner noget AI-lavet"; Config.TREES_V2): real
+-- trees from V3Assets/YTrees ("Yasu's Stylized Tree Pack" by mvyasu, Creator Store 79689531752352, no scripts): each a
+-- textured bark trunk + a leaf canopy with gaps. Mixed species per kind, 5 greens, a rare yellow-green or autumn tree,
+-- a small lean, random size; the trunk is solid, the leaves are not.
+local Y_KINDS: { [string]: { string } } = {
+	TreeOak = { "Tree_01", "Tree_02", "Tree_03", "Tree_04", "Tree_05", "Tree_06", "Tree_09", "Tree_11", "Tree_15", "Tree_17", "Tree_18", "Tree_19" },
+	TreeFir = { "Tree_07", "Tree_08", "Tree_10", "Tree_16" },
+	TreePoplar = { "Tree_12", "Tree_13", "Tree_14", "Tree_16" },
+	Bush = { "Bush_01", "Bush_02", "Bush_03" },
+}
+local GREENS = { Color3.fromRGB(93, 107, 28), Color3.fromRGB(52, 86, 40), Color3.fromRGB(112, 140, 44), Color3.fromRGB(60, 98, 78), Color3.fromRGB(84, 96, 40) }
+local function yTree(into: Instance, kind: string, at: Vector3, height: number, rng: Random): boolean
+	local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
+	local lib = assets and assets:FindFirstChild("YTrees")
+	if not lib or not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TREES_V2 then
+		return false
+	end
+	local list = Y_KINDS[kind] or Y_KINDS.TreeOak
+	local src = lib:FindFirstChild(list[rng:NextInteger(1, #list)])
+	if not (src and src:IsA("Model")) then
+		return false
+	end
+	local t = src:Clone()
+	local _, size = t:GetBoundingBox()
+	t:ScaleTo(math.max(0.05, height * rng:NextNumber(0.85, 1.15) / size.Y))
+	local roll = rng:NextNumber()
+	local leaf = if roll < 0.03 then Color3.fromRGB(196, 110, 44) elseif roll < 0.05 then Color3.fromRGB(170, 66, 44) elseif roll < 0.11 then Color3.fromRGB(150, 160, 52)
+		else GREENS[rng:NextInteger(1, #GREENS)]:Lerp(Color3.fromRGB(120, 140, 60), rng:NextNumber() * 0.2)
+	for _, d in t:GetDescendants() do
+		if d:IsA("BasePart") then
+			local trunk = string.find(d.Name, "Trunk") ~= nil
+			d.Anchored = true
+			d.CanCollide = trunk and kind ~= "Bush"
+			d.CanQuery = trunk
+			d.CanTouch = false
+			d.CastShadow = height > 14
+			local sa = d:FindFirstChildOfClass("SurfaceAppearance")
+			if sa and not trunk then
+				sa.Color = leaf
+			end
+		end
+	end
+	local cf, sz = t:GetBoundingBox()
+	local lean = CFrame.Angles(rng:NextNumber(-0.06, 0.06), 0, rng:NextNumber(-0.06, 0.06))
+	local yaw = CFrame.Angles(0, rng:NextNumber() * math.pi * 2, 0)
+	local offset = t:GetPivot().Position - cf.Position -- (the pivot from the box's middle)
+	local base = at + Vector3.new(0, sz.Y / 2 - 0.6, 0) -- (roots a little in the ground)
+	t:PivotTo(CFrame.new(base) * yaw * lean * CFrame.new(offset))
+	t.Name = kind
+	t.Parent = into
+	return true
+end
+
 local function plantTree(into: Instance, kind: string, at: Vector3, height: number, rng: Random, noTrunk: boolean?)
 	if onPath(at, 3) then
 		return -- (rule 3: never on a path)
+	end
+	if yTree(into, kind, at, height, rng) then
+		return -- (1a: a real tree)
 	end
 	local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
 	local trees = assets and assets:FindFirstChild("Trees")
@@ -1019,6 +1075,9 @@ end
 local function bush(into: Instance, at: Vector3, rng: Random)
 	if onPath(at, 3) then
 		return
+	end
+	if yTree(into, "Bush", at, rng:NextNumber(5, 8), rng) then
+		return -- (1a: a real bush)
 	end
 	local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
 	local src = assets and assets:FindFirstChild("Trees") and assets.Trees:FindFirstChild("TreeOak")
