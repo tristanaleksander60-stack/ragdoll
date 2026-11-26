@@ -45,9 +45,12 @@ Why this order:
    - walk between 2 untried machines, climb the tower, jump, ride a car: the sign stays on ONE machine, steady, and never flickers;
    - on the phone emulator it is small and clean.
 
-**How to work through it:**
+**How to work through it** (owner, 26 Nov 2026: "Sørg for den minder mig om punkt 0 og gør så den ikke stopper og beder mig teste undervejs"):
+- **Start:** every /klar run starts with the Danish step 0 reminder, until step 0 is marked done.
+- **Never stop to ask the owner to test,** and never wait mid-run. When only the owner can publish, save the place and ask for Alt+P only in the final message.
+- **Questions** go into the owner list with a safe default.
 - One quick Play after each step, and commit and push.
-- **Publish** after steps 3-6 together (the feel update), and again at the end. That makes 2 publishes, each with ONE Danish "Test selv" list.
+- **Publish** after steps 3-6 if the tools can do it without the owner; otherwise once at the end. Give ONE Danish "Test selv" list, in the final message only.
 - Never ask the owner to test in between. Park questions with a safe default.
 
 ## RULE FOR EVERYTHING IN THIS PLAN (owner, 26 Nov 2026): mobile first, simple enough for a 10-year-old on an iPad
