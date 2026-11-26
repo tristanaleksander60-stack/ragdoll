@@ -1330,6 +1330,8 @@ end
 -- goes) is passed on the side away from it with room to spare; one right next to it pushes it
 -- off. Returns the new direction and whether it had to steer.
 local PASS_CLEARANCE = 3.2 -- studs between the two pelvises when passing (arms swing wide)
+local GAME_NO_OVERLAP = (require(script.Parent.Parent:WaitForChild("Config")) :: any).NO_OVERLAP == true
+local PERSONAL_SPACE = if GAME_NO_OVERLAP then 2.6 else 2.4 -- (OVERVIEW 0.95: never inside each other)
 local function avoidDummies(rig: Rig, here: Vector3, direction: Vector3, goalDistance: number): (Vector3, boolean)
 	local folder = rig.model.Parent
 	if not folder then
@@ -1349,8 +1351,8 @@ local function avoidDummies(rig: Rig, here: Vector3, direction: Vector3, goalDis
 				local away = if lateral > 0 then -side else side
 				steer += away * (PASS_CLEARANCE - math.abs(lateral)) / PASS_CLEARANCE * 1.6
 			end
-			if d > 0.05 and d < 2.4 then
-				steer += -offset.Unit * (2.4 - d) -- too close already: step off
+			if d > 0.05 and d < PERSONAL_SPACE then
+				steer += -offset.Unit * (PERSONAL_SPACE - d) * (if GAME_NO_OVERLAP then 1.6 else 1) -- too close already: step off
 			end
 		end
 	end
@@ -1537,7 +1539,7 @@ local function updateMoving(rig: Rig, dt: number)
 				else WALK_SPEED
 			-- A game can hurry its runners along (Pace: a multiplier, MinigameService).
 			local pace = rig.model:GetAttribute("Pace")
-			if type(pace) == "number" and pace > 0 and pace <= 2 then
+			if type(pace) == "number" and pace > 0 and pace <= 2.5 then -- (2.5: the NEVER ZERO runner sprints)
 				base *= pace
 			end
 			base *= 1 - 0.45 * hurtOf(rig) -- (V9-P3: hurt, it goes slower)
