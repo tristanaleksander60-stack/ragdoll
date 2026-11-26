@@ -62,6 +62,50 @@ local function step()
 	end
 end
 
+-- OVERVIEW 0.158 "in view" (Config.VIEW_REPORT): every screen reports its camera (position + look) twice a second over an
+-- unreliable remote; the server keeps the latest per player. RagdollDirector.inView(point) = some player's camera, fresh
+-- (under 3 s old), sees the point: within 260 studs and inside a 60-degree cone round the look, or within 14 studs at
+-- all. Systems that send ragdolls away or set them down ask this, so nothing appears or vanishes in view.
+RagdollDirector.VIEW_RANGE = 260
+RagdollDirector.VIEW_COS = math.cos(math.rad(60))
+local views: { [Player]: { pos: Vector3, look: Vector3, at: number } } = setmetatable({}, { __mode = "k" }) :: any
+local lastView: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
+local function finite(v: Vector3): boolean
+	return v.X == v.X and v.Y == v.Y and v.Z == v.Z and math.abs(v.X) < 1e6 and math.abs(v.Y) < 1e6 and math.abs(v.Z) < 1e6
+end
+function RagdollDirector.onView(player: Player, pos: unknown, look: unknown)
+	if typeof(pos) ~= "Vector3" or typeof(look) ~= "Vector3" then
+		return
+	end
+	local p, l = pos :: Vector3, look :: Vector3
+	if not finite(p) or not finite(l) or l.Magnitude < 0.5 or l.Magnitude > 1.5 then
+		return
+	end
+	local now = os.clock()
+	if now - (lastView[player] or -math.huge) < 0.25 then
+		return -- (at most 4 a second)
+	end
+	lastView[player] = now
+	local r = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if not (r and r:IsA("BasePart")) or (r.Position - p).Magnitude > 400 then
+		return
+	end
+	views[player] = { pos = p, look = l.Unit, at = now }
+end
+function RagdollDirector.inView(point: Vector3): boolean
+	local now = os.clock()
+	for _, v in views do
+		if now - v.at < 3 then
+			local d = point - v.pos
+			local m = d.Magnitude
+			if m < 14 or (m < RagdollDirector.VIEW_RANGE and d.Unit:Dot(v.look) > RagdollDirector.VIEW_COS) then
+				return true
+			end
+		end
+	end
+	return false
+end
+
 -- OVERVIEW 0.158 / docs/RAGDOLL_DIRECTOR.md Part C (owner: "Hvis der er mere end 6-7 i nærheden af en telefonspiller, så skal alle
 -- over 6-7 gå væk, medmindre de er blevet ramt af et skud"; Config.NEARBY_CAP): living ragdolls within 45 studs of a
 -- player, capped by the player's device (phone 7, tablet 9, PC 12). Over it, the extras WALK AWAY (never removed in
@@ -94,14 +138,21 @@ local function capStep()
 					local shot = type(hitAt) == "number" and workspace:GetServerTimeNow() - hitAt < 60
 					if not shot and not inUse(m, pe) and m:GetAttribute("Role3") == nil and m:GetAttribute("Watch") == nil
 						and now - (sentAway[m] or -math.huge) > 15 then
-						table.insert(extras, { m = m, d = d, at = pe.Position })
+						table.insert(extras, { m = m, d = d, at = pe.Position, seen = false })
 					end
 				end
 			end
 		end
 		local over = living - cap
 		if over > 0 then
+			-- (0.158: the ones out of every camera first, then the farthest)
+			for _, e in extras do
+				e.seen = RagdollDirector.inView(e.at)
+			end
 			table.sort(extras, function(a, b)
+				if a.seen ~= b.seen then
+					return not a.seen
+				end
 				return a.d > b.d
 			end)
 			for i = 1, math.min(over, #extras) do
@@ -118,6 +169,10 @@ end
 
 function RagdollDirector.start()
 	local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
+	if Config.VIEW_REPORT then
+		local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Net")) :: any
+		Net.unreliable(Net.Names.CameraView).OnServerEvent:Connect(RagdollDirector.onView)
+	end
 	if not Config.RAGDOLL_DIRECTOR then
 		return
 	end

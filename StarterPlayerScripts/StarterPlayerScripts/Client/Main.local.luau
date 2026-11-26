@@ -186,6 +186,7 @@ safe("LagGuard", function() require(Client:WaitForChild("LagGuard")).start() end
 safe("LegJitter", function() require(Client:WaitForChild("LegJitter")).start() end) -- F65: the always-on leg jitter detector
 safe("MiniBar", function() require(Client:WaitForChild("MiniBar")).start() end) -- F71: the phone hotbar is small until tapped
 safe("RealHands", function() require(Client:WaitForChild("RealHands")).start() end) -- S2: real hands with fingers, not hooks
+safe("ViewReport", function() require(Client:WaitForChild("ViewReport")).start() end) -- 0.158: the camera report for "in view"
 safe("PlazaClient", function() require(Client:WaitForChild("PlazaClient")).start() end) -- V9-0d: the town square (stage dance, photo spot, its sounds)
 safe("HudV3", function() require(Client:WaitForChild("HudV3")).start() end) -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)
 safe("RewardsUI", function() require(Client:WaitForChild("RewardsUI")).start() end) -- REWARDS: daily, play gift, dares, trophies, group (round 5)
