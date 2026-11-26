@@ -2447,6 +2447,55 @@ local function spawnSet(into: Instance, o: Vector3, top: number)
 	end)
 end
 
+-- M4 (owner: "alt for mange træer buske osv ... ikke træer imellem"; Config.M4_CLEAN; docs/MAP_MASTERPLAN.md "MAP ROUND 4"): once the
+-- map stands, everything that is not in the references goes: every hedge, flower bed, flower, bush, room gate and arch,
+-- and every tree BETWEEN the attractions. Trees are kept only in the edge band (within EDGE studs of the map's rim or
+-- outside it), at most KEEP of them, spread evenly; the rest of the rim stays clean open grass before the hills.
+LabOwnerMap.M4_EDGE = 50
+LabOwnerMap.M4_KEEP = 70
+local function m4Clean(into: Instance, o: Vector3)
+	local c, size = LabOwnerMap.CENTER, LabOwnerMap.SIZE
+	local function inEdgeBand(p: Vector3): boolean
+		local l = Vector2.new(p.X - o.X - c.X, p.Z - o.Z - c.Y)
+		local fromEdge = math.min(size.X / 2 - math.abs(l.X), size.Y / 2 - math.abs(l.Y))
+		return fromEdge < LabOwnerMap.M4_EDGE
+	end
+	local TREE = { TreeOak = true, TreeFir = true, TreePoplar = true }
+	local GONE = { Hedge = true, FlowerBedSoil = true, FlowerBedEdge = true, Flower = true, Bush = true, ArchPost = true, ArchSign = true }
+	local keep: { Instance } = {}
+	local removed = 0
+	for _, t in into:GetChildren() do
+		local n = t.Name
+		if GONE[n] or string.sub(n, 1, 5) == "Gate_" or string.find(n, "Bush") or string.find(n, "Flower") or string.find(n, "Hedge") then
+			t:Destroy()
+			removed += 1
+		elseif TREE[n] or string.sub(n, 1, 4) == "Tree" then
+			local at = if t:IsA("Model") then t:GetPivot().Position elseif t:IsA("BasePart") then t.Position else nil
+			if at and inEdgeBand(at) then
+				table.insert(keep, t)
+			else
+				t:Destroy()
+				removed += 1
+			end
+		end
+	end
+	-- at most KEEP trees in the band, every n-th one (spread round the whole rim)
+	if #keep > LabOwnerMap.M4_KEEP then
+		local step = #keep / LabOwnerMap.M4_KEEP
+		local chosen: { [Instance]: boolean } = {}
+		for i = 0, LabOwnerMap.M4_KEEP - 1 do
+			chosen[keep[math.floor(i * step) + 1]] = true
+		end
+		for _, t in keep do
+			if not chosen[t] then
+				t:Destroy()
+				removed += 1
+			end
+		end
+	end
+	print(string.format("[OwnerMap] M4 clean: %d pieces removed, %d edge trees kept", removed, math.min(#keep, LabOwnerMap.M4_KEEP)))
+end
+
 function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	LabOwnerMap.origin = origin
 	-- (OVERVIEW 0.5, Config.SPAWN_UPRIGHT: the lab's ragdolls were laid out before the raised plaza stood, so the ones on its
@@ -2517,12 +2566,20 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	south(into, origin, origin.Y - 0.05)
 	-- (map round 3: the ball-on-a-stick groves are gone; the tree belts come next)
 	fill(into, origin, origin.Y - 0.05)
-	belts(into, origin, origin.Y - 0.05)
+	local M4 = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).M4_CLEAN == true
+	if not M4 then
+		belts(into, origin, origin.Y - 0.05) -- (M4: no tree belts, bush rows or room gates)
+	end
 	parks(into, origin, origin.Y - 0.05)
 	yards(into, origin, origin.Y - 0.05)
 	extras(into, origin, origin.Y - 0.05)
 	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SPAWN_11 then
 		spawnSet(into, origin, origin.Y - 0.05) -- (OVERVIEW 0.97: the spawn to 11/10)
+	end
+	if M4 then
+		task.delay(5, function()
+			m4Clean(into, origin)
+		end)
 	end
 	-- F53 (owner: "Man kan ikke komme ind i Weapons Testing, fordi træerne dækker"; Config.TREE_CLEAR): once everything has
 	-- stood a few seconds (other systems build their buildings too), every tree or bush whose foot stands within 4 studs

@@ -209,7 +209,7 @@ function Unstick.start()
 				for _, lab in if root then root:GetChildren() else {} do
 					local om = lab:FindFirstChild("OwnerMap")
 					local grass = om and om:FindFirstChild("OwnerGrass")
-					if om and grass and grass:IsA("BasePart") and not built[om] then
+					if om and grass and grass:IsA("BasePart") and not built[om] and not Config.M4_CLEAN then -- (M4: no belts, no belt walls)
 						built[om] = true
 						local c = (require(script.Parent:WaitForChild("LabOwnerMap")) :: any).CENTER :: Vector2
 						pcall(beltWalls, om, Vector3.new(grass.Position.X - c.X, grass.Position.Y + 1.05, grass.Position.Z - c.Y))

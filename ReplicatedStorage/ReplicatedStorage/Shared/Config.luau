@@ -95,6 +95,7 @@ local Config = {
 	TURN_EVEN = true, -- F73: the heading rotates at a capped even rate (220 deg/s walking, 360 fleeing), never a lerp whip or 180 degree snap; turning on the spot steps the feet (ActiveRagdoll, DummyLife)
 	NAV_BLOCKCAST = true, -- F72: obstacles are seen with a body-sized Blockcast whose look-ahead grows with speed (2.5-7 studs), and the detour takes the more open side (ActiveRagdoll blocked/clearAhead)
 	NAV_ALWAYS = true, -- F72: RagdollNav puts its waypoint in NavHome (followed before Home) and never overwrites Home, so every walk gets a path, moving goals too (re-planned when the goal moved 4 studs, max 1/s)
+	M4_CLEAN = true, -- M4 part 1: no tree belts, belt walls, bush rows, hedges, flower beds or room gates; trees only in a 50-stud edge band, at most 70 (LabOwnerMap m4Clean, Unstick)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays

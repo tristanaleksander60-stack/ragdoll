@@ -526,3 +526,4 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - Picture: `art/store/phone_hud_0.63.jpg`.
 - **F68 water button:** I found no button that turns water on in the start place (0 prompts, click detectors or scripts near water). Which place is it in, and where (a screenshot)? Default: parked until you say.
 - **S2 smooth body:** it needs one skinned mannequin mesh (one MeshPart with bones named LowerTorso, UpperTorso, LeftUpperArm ... like R15) made in Blender, or a Creator Store asset id you like. Default: parked; the R15 body with its current skins stays.
+- **M4 smaller map:** the layout generator tools/masterplan.py needs Python, which is not installed on this PC. Install Python 3 (python.org, tick "Add to PATH") and I rewrite the plan to the compact 300-400 stud layout. Default: the trees and clutter are gone now (M4 part 1); the size stays until Python is there.
