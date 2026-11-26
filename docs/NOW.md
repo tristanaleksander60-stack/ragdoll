@@ -2,6 +2,8 @@
 
 **All weak points, ranked:** `docs/WEAKNESSES.md` (26 Nov). After LAB10 round 2, take its "Order to fix" from item 3.
 
+**Next after the lab:** `docs/STAY_LONGER.md` (session length). Build items 1-8 in one run. Item 1, the quiet gift timer on phones, goes first.
+
 ## CURRENT RUN: LAB TARGET (owner, 26 Nov 2026)
 
 **NOW: `docs/LAB_TARGET.md` ROUND 2.** The references are the owner's OWN old map. Find that version (version history, backups), copy its lab 1:1 into `ServerStorage.OldLabMap`, use it at full size behind `LAB_OLDMAP`, and put every machine where it stood. No rebuilding by eye.
