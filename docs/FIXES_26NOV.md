@@ -1170,6 +1170,106 @@ In the game it is the **STRETCHER** (the sign in `LabOwnerMap` NAMES; the prompt
 - in X-ray the bone is long too;
 - after 30 s the limbs shrink back slowly; no limb ever comes off.
 
+## F75 The MOTORBIKE is stuck IN THE BIKE RACK (owner: "Fiks så motorcyklen ikke er stuck", screenshot: the rider sits on the dirt bike between the rack's bars, the rail across its front, by the "P BIKES" sign)
+**The cause (found in the code):** the motorbike's home pad is the bike rack itself:
+- `LabLayout10.CARS.Bike = V(-235, 95) -- the BikeRack` is the exact middle of `OwnerMapPlan` ITEMS `BikeRack` (-235, 95);
+- `LabOwnerMap` builds the rack there: 7 solid `BikeRackBar`s 3.6 studs apart and a solid `BikeRackRail` 26 long at 2.4 high;
+- so the bike (2.4 x 1.6 x 6.4) is placed among the bars under the rail. The ragdoll gets on there (BikeService takes the bike only when it stands within 6 studs of its home) and can never ride out.
+
+Also, `BikeService.nextSpot` still drives circles 40-84 studs round the LAB ORIGIN (the spawn circle, with the old lab's limits `|lx| > 92`, `lz > 44`, `lz < -84`). On the new map that is across the grass and through the tree belts, far from the car park: it gets stuck again as soon as it is out.
+
+**The fix** (do it together with F69, which is the same machine; `Config.BIKE_FIX = true`):
+1. **A free parking bay for the motorbike next to the rack, never in it:**
+   - a painted bay on the paved apron in front of the rack (south side), beside where the inner path lands, about 12 studs east of the rack's middle;
+   - facing the path, with nothing solid within 4 studs;
+   - set `LabLayout10.CARS.Bike` there.
+2. **A guard for every vehicle home** (Bike, Car, Truck, MuscleCar and the new ones in F76): at build, `VehicleService.homeClear(kind)` does a `GetPartBoundsInBox` with the vehicle's body plus 1.5 studs.
+   - If anything solid is there (except the floor), it slides the pad along the bay row to the nearest clear spot and warns in the output.
+   - Add the same check to the masterplan lint: no vehicle pad inside an ITEM.
+3. **The rack holds bicycles:** the cyclist's pedal bicycle (`LIFE_IDLE.md` 2) and decorative ones. A rider takes a bicycle out by walking it backward 3 studs out of its slot before getting on, never riding out through the rail.
+4. **The motorbike rides the roads (F69):** replace `nextSpot`'s spawn-circle with F69's route on the road centre lines from `OwnerMapPlan` ROADS, starting from the car-park road. Add F69's stuck guard: back up, re-route; get off and walk away after 6 s; the bike goes home only out of view.
+5. **Check:** watch the car park from the start. The rider gets on in the bay, rides out onto the road and does full loops of the map without stopping in a rack, a fence or a tree belt.
+
+## F76 VEHICLES IN FRONT OF THE ENTRANCE: one FREE bicycle and cool PAID vehicles from the Creator Store, with cool features (owner: "Tilføj køretøjer herud foran indgangen, en gratis cykel og så ellers betalte fede køretøjer fra creator store, gerne med fede scripts", screenshot: the welcome arch and the wide path out to the fountain junction, grass with flower beds on both sides)
+**Where:**
+- a VEHICLE ROW just outside the welcome arch, on the grass beside the path between the arch and the fountain junction (the side with more room; both sides if 8 bays do not fit on one);
+- the bays are angled about 45 degrees toward the path (a herringbone), so every vehicle is seen as you walk out of the spawn;
+- the bays are paved (the same slab as the paths), with painted lines; the flower beds in that strip move or go;
+- clear of the arch (12 studs, F53's clear zones), of the path itself and of the fountain;
+- add it to `tools/masterplan.py` as an ITEM (`EntranceVehicles`, zone SpawnPlaza approach) with its bays, re-run the plan and the lint (0), and take the pads (`LabLayout10.CARS`) from it.
+
+**What stands there (8 bays):**
+1. **FREE: a BICYCLE** (a pedal bike; "cykel"):
+   - a real rigged bicycle from the Creator Store;
+   - your legs pedal (a pedal animation tied to the speed), with a bell on the horn button;
+   - anyone can ride it;
+   - a new kind `Bicycle` in VehicleService, free (`FREE = { Bicycle = true, Bike = true }`: the dirt bike the ragdoll rides stays free, as the owner said on 24 Nov).
+2. **The paid vehicles we have:** the Silvia drift car (pass 2092302232), the Panzer tank (pass 2093220108) and the Ford truck.
+   - The code notes its pass 2092632252, but it is set to free today. The owner now wants only the bicycle free, so use that pass if `MarketplaceService:GetProductInfo(id, Enum.InfoType.GamePass)` says it is for sale; else keep it free and ask.
+   - They move here from the Crash Yard's CarBays (the CarBays stay painted, as parking).
+3. **NEW cool paid vehicles from the Creator Store** (5, each with its own feature, fitting a ragdoll game, kid-friendly):
+   - **Monster truck:** huge wheels, drives over ragdolls and bounces, a JUMP button;
+   - **Go-kart:** low and fast, a BOOST button with exhaust flames;
+   - **Police car:** a SIREN button with flashing lights and the siren sound; ragdolls near it put their hands up;
+   - **Fire truck:** a WATER CANNON button that sprays a water jet, pushing ragdolls over and making them wet (water drips; no harm, the purple rule);
+   - **Bulldozer:** the blade pushes ragdolls and crates in a heap; a BLADE up/down button.
+
+   Find them yourself (rigged, good-looking, one matching realistic-cartoon style, wheels named or easy to map). Keep only the model (the malware pass).
+4. **The features ("fede scripts"), safely:**
+   - Build every feature in OUR code: VehicleService / VehicleFeel plus one `Net` remote `VehicleAction` with a whitelist (`Horn`, `Lights`, `Siren`, `Boost`, `Jump`, `Spray`, `Blade`, `Bell`), validated (the player is the driver of that vehicle, the action exists for that kind) and rate-limited.
+   - Do NOT run the model's own scripts. Read them for ideas (sounds, lights, particle effects, numbers) and copy the look.
+   - **If a model's chassis script is truly needed**, it must pass the security check before it may run. It must NOT contain:
+     - `require(<number>)`, `loadstring`, `getfenv`/`setfenv`, or obfuscated or encoded strings;
+     - HttpService, InsertService, TeleportService, MarketplaceService, DataStore, chat or `Kick` calls;
+     - a remote that takes a CFrame, a force or a player from the client without checks.
+
+     Write the result per vehicle in this section. (The owner allowed this for the F1 car earlier, with the same check.)
+5. **Buying:**
+   - each bay has a low plaque on the ground at its front (the no-billboard rule) with the vehicle's name and FREE, the price with the Robux icon, or OWNED;
+   - tap the vehicle or its prompt (big on a phone): owned or free = DRIVE; not owned = the game-pass prompt;
+   - after a purchase you drive at once.
+6. **Game passes:** the owner creates them on the Creator Hub and sends the ids (CLAUDE.md "Money").
+   - **Until an id arrives,** that vehicle stands in its bay with a "SOON" plaque and cannot be driven. It is never free by mistake: change the rule "0 = free" to "0 = SOON" for every kind not in `FREE`.
+   - Suggested prices (questions for the owner): go-kart 49, police car 99, monster truck 149, bulldozer 149, fire truck 199 Robux.
+7. **Phone first:**
+   - while you drive, the vehicle's feature is ONE extra big touch button next to the drive controls (max 2 extra buttons: BOOST or JUMP, and the special); no key letters on a phone (F70);
+   - PC keys: Shift boost, Space jump, H horn or siren, F the special; gamepad: the face buttons.
+8. **No lag:**
+   - each vehicle under about 500 parts and 40k triangles;
+   - the body details CollisionFidelity Box or Hull, small parts CastShadow off;
+   - lights only while driven and only within 140 studs (lamp lint);
+   - sounds pooled; particle effects capped on phones.
+
+   The parked vehicles in the row are anchored and do nothing until someone drives one.
+9. **Return:** a vehicle left alone goes back to its bay only when no player can see it (never vanish in view); a vehicle in use leaves its bay empty, with the painted lines.
+
+**Check:** walk out of the spawn. The row of vehicles is right there by the path.
+- **Phone:** tap the bicycle and ride it (the legs pedal, the bell rings). Tap a paid one: the pass prompt (or SOON).
+- **PC:** the same with keys.
+- **Every feature:** jump, boost, siren, water cannon (ragdolls go over) and blade (pushes ragdolls).
+- The FPS at the spawn does not drop.
+
+## F77 The #1 STATUES at the leaderboards FLOAT in the air and are all GOLD (owner: "Fiks så de ikke flyver i luften og de ikke bare er guld men man kan se deres skin ordentligt", screenshot: VIP TAKEDOWNS and VIP TIME PLAYED, a gold figure hanging in front of each board's list, above its plinth "#1 axelinin1920")
+**The causes (found in `LabOwnerMap.luau` `statueOf` and the #1 loop):**
+- **It floats:** `statueOf` pivots the rig to `at + size.Y / 2`. The pivot is the HumanoidRootPart (at the hips), not the bounding box's middle, and the box is taller than the body because of the raised VICTORY arms and the accessories (hats, hair, wings). So the feet end up several studs above the plinth.
+- **It is gold:** `statueOf` paints every part GOLD with Foil, removes every texture, decal, Shirt, Pants, ShirtGraphic and SurfaceAppearance, so no skin, face or clothes show.
+- **It hides the list:** the plinth stands at the board's middle 7 studs in front, so the statue stands in front of the names.
+
+**The fix** (`Config.STATUE_SKIN = true`):
+1. **The real avatar:**
+   - for the #1 statues, keep the player's real look: colours, face, clothes (Shirt, Pants, ShirtGraphic, layered clothing), textures, SurfaceAppearance and accessories;
+   - remove only scripts (and the Animate script, as now);
+   - the stone statues at the stair foot keep their stone look (`statueOf` takes a `keepSkin` flag).
+2. **Feet on the plinth:**
+   - after posing, find the lowest point of the rig's feet (LeftFoot and RightFoot: their CFrame and size, the bottom face), and move the rig down or up by exactly that much, so the soles touch the plinth top;
+   - never use the bounding box to place it;
+   - anchor the root, keep the joints (as now).
+3. **Size:** if the avatar (with accessories) is taller than 7 studs or wider than 5, `Model:ScaleTo` it down to fit.
+4. **Beside the board, not in front of the names:** move each plinth to the board's side (its right edge + 3 studs), with the statue facing south like the boards and turned about 15 degrees toward the path. The name plaque stays on the plinth's front.
+5. **Still special:** the plinth gets a gold top edge (a thin gold trim, Metal) and the plaque "#1 name" in gold, so it reads as the winner without painting the player gold. The board itself stays as is.
+6. **The empty case:** no #1 yet = the plain grey lab ragdoll on the plinth, the plaque "#1 COULD BE YOU" (as now). The owner and admins never stand there (F61).
+7. **Check:** both VIP boards and the normal boards: each #1 stands ON its plinth beside the board, in their own skin and clothes, and no statue covers a board's names.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
