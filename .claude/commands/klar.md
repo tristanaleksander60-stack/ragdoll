@@ -53,11 +53,13 @@ Read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situat
 1. **Step 0 reminder** (only if it is not done): "Husk punkt 0: tryk Alt+P i Studio for at udgive gore-off, og send aldersspørgeskemaet med svarene i docs/MATURITY.md."
 2. **What was built,** phase by phase, one line per row, and what is parked and why.
 3. **How to publish BOTH places** after testing (OVERVIEW PHASE 8).
-4. **ONE "Test selv" list:**
+4. **ONE LONG "Test selv" list covering EVERYTHING built in the run** (owner, 26 Nov late: "send en lang test liste med alt, så sender jeg hvis der er noget som skal ændres"):
+   - grouped by area (the first minutes, ragdolls, the body and bones, the map, life, the machines and animals, vehicles, phone UI, PC);
    - phone first, then PC;
-   - about 25 lines at most;
-   - from the rows' Check lines;
-   - each line says where to go and what should happen.
+   - one line per thing to try, saying where to go and what should happen;
+   - taken from every row's Check lines;
+   - no length limit;
+   - numbered, so the owner can answer "12: ...".
 5. **The "Questions for the owner" list:** each with the default you chose.
 
 **Keep `docs/OVERVIEW.md` true:** update a row's State and LEFT whenever you finish or start it.
