@@ -875,6 +875,21 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 5. **Spawn spots:** each map's spawn is on its open ground, with clear space round it and facing into the map.
 6. **Check:** visit every map and stand at its spawn. Nothing is inside a mountain; the edges look finished.
 
+## F63 The left nav: MORE becomes WEAPONS (owner: "Skift More til Våben-menuen, altså den røde mappe med T keybinded")
+**Today** (PC screenshot), the left nav shows Shop (Y), More (9), Lab (8) and Multiplayer (0). The WEAPONS menu is the red toolbox slot "T" at the start of the hotbar.
+
+**Change:**
+- **The left nav becomes:** Shop (Y), **WEAPONS** (the red toolbox icon, key **T**), Lab (8), Multiplayer (0). The same tile size, style and key chip as the others; it opens the WEAPONS menu exactly as the toolbox did.
+- **The hotbar:** the red toolbox slot is REMOVED, so the hotbar holds only the weapons (1, 2, 3…). There is no duplicate.
+- **MORE moves:** a round gear button in the top bar next to the Roblox buttons (key 9 stays; console: a menu button glyph). Everything in More (MAPS, GOD MODE, REWARDS, RANK & EGGS, FRIENDS, SETTINGS, FAVORITE…) is still one tap away there.
+- **Phones and tablets:** the same idea.
+  - **Left stack:** Shop, WEAPONS (red toolbox), and Multiplayer (if it fits; otherwise inside the gear menu).
+  - **The gear** (More) goes top-left.
+  - **The hotbar** has no toolbox slot.
+  - Keep the phone HUD clean (F6).
+- **Hints:** the first-time hints and the TRY lesson that pointed at the toolbox slot now point at the WEAPONS tile.
+- **Check:** PC, tablet and phone. T opens WEAPONS from the nav; the gear opens More; there is no toolbox on the hotbar; nothing overlaps.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
