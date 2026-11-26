@@ -133,6 +133,9 @@ if Config.LAB_OWNERMAP then
 	local K = 3.2
 	LabLayout10.CREATURES.Spider = Vector2.new(70, -70) -- (the plan: on its own plot by the fenced pen, not on the leaderboard plaza; x3.2 below)
 	LabLayout10.CREATURES.Whale = Vector2.new(-30, -95) -- (the shark tank: in the glass aquarium of the north row)
+	LabLayout10.CARS.MuscleCar = Vector2.new(-62, -70) -- (the bays of the plan, west to east: the tank, the monster truck, the blue car)
+	LabLayout10.CARS.Truck = Vector2.new(-50, -70)
+	LabLayout10.CARS.Car = Vector2.new(-38, -70)
 	local function v2(v: Vector2): Vector2
 		return v * K
 	end
@@ -167,6 +170,8 @@ if Config.LAB_OWNERMAP then
 	for _, g in LabLayout10.GATES do
 		g.at *= K
 	end
+	-- (the boxing ring: buildLava keeps its own spot (-111, -28) unscaled; this moves it to the plan's (-35, -40) x 3.2)
+	LabLayout10.MOVES.Lava = Vector3.new(-35 * K + 111, 0, -40 * K + 28)
 end
 
 return LabLayout10

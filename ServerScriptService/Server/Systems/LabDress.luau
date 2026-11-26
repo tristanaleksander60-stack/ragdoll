@@ -140,7 +140,11 @@ function LabDress.dress(into: Instance, origin: Vector3)
 		-- lamps are gone from the crash-test lab: LabLayout10.DRESS_KEEP.)
 		local keep = not LabLayout10.on or LabLayout10.DRESS_KEEP[s.role] == true
 		if keep and V3Assets.has(s.role) then
-			local at = CFrame.new(origin + Vector3.new(s.x * SPREAD, 0, s.z * SPREAD)) * CFrame.Angles(0, math.rad(s.yaw), 0)
+			local px, pz = s.x * SPREAD, s.z * SPREAD
+			if s.role == "Rocket" and (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_OWNERMAP then
+				px, pz = -40 * 3.2, 30 * 3.2 -- (GO NOW map: on its round pad by the gantry, LabOwnerMap M4)
+			end
+			local at = CFrame.new(origin + Vector3.new(px, 0, pz)) * CFrame.Angles(0, math.rad(s.yaw), 0)
 			local placed = V3Assets.place(s.role, folder, at, { size = s.size, height = s.height, collide = s.collide == true })
 			-- (UI audit 21 Nov 2026: barrels, crates and cones are things you can knock over, not scenery.)
 			if placed and Knockables.ROLES[s.role] then
