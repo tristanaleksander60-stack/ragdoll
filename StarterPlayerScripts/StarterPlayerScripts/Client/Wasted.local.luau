@@ -21,7 +21,7 @@ remote.OnClientEvent:Connect(function(seconds: number, by: string?, how: string?
 	local grade = Instance.new("ColorCorrectionEffect")
 	grade.Name = "WastedGrade"
 	grade.Parent = Lighting
-	TweenService:Create(grade, TweenInfo.new(0.6), { Saturation = -1, Contrast = 0.15, Brightness = -0.08 }):Play()
+	TweenService:Create(grade, TweenInfo.new(0.6), { Saturation = -1, Contrast = 0.15, Brightness = if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).NO_BLACK_SCREEN then 0 else -0.08 }):Play() -- (F3: never darker)
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "Wasted"
 	gui.IgnoreGuiInset = true

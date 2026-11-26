@@ -32,6 +32,7 @@ local Assets = require(Shared:WaitForChild("Assets"))
 local GunThreat = require(Shared:WaitForChild("GunThreat"))
 local Config = require(Shared:WaitForChild("Config"))
 local DummyLines = require(Shared:WaitForChild("DummyLines"))
+local TalkLines = require(Shared:WaitForChild("TalkLines"))
 local Poses = require(Shared:WaitForChild("Ragdoll"):WaitForChild("Poses")) :: any
 local Anatomy = require(Shared:WaitForChild("Anatomy"))
 
@@ -1115,6 +1116,80 @@ end
 
 local lastHitLine = -math.huge
 local lastActLine = -math.huge
+-- (F8: what is near a body, for the context lines. The machine parts of the lab nearest the camera are looked up again
+-- every 8 s.)
+local lastCtxLine, lastCtxText = -99, ""
+local machineSpots: { { at: Vector3, group: string } } = {}
+local machinesAt = -99
+local function refreshMachines(now: number)
+	if now - machinesAt < 8 then
+		return
+	end
+	machinesAt = now
+	table.clear(machineSpots)
+	local root = workspace:FindFirstChild("Playground")
+	local camera = workspace.CurrentCamera
+	if not root or not camera then
+		return
+	end
+	local best, bestD = nil :: Instance?, math.huge
+	for _, lab in root:GetChildren() do
+		local pad = lab:FindFirstChild("CannonPad")
+		if pad and pad:IsA("BasePart") then
+			local d = (pad.Position - camera.CFrame.Position).Magnitude
+			if d < bestD then
+				best, bestD = lab, d
+			end
+		end
+	end
+	if not best then
+		return
+	end
+	for _, d in best:GetDescendants() do
+		local group = TalkLines.MACHINE_PARTS[d.Name]
+		if group and (d:IsA("BasePart") or d:IsA("Model")) then
+			local at = if d:IsA("BasePart") then d.Position else (d :: Model):GetPivot().Position
+			table.insert(machineSpots, { at = at, group = group })
+		end
+	end
+end
+local function contextLines(at: Vector3): { string }?
+	local now = os.clock()
+	refreshMachines(now)
+	local options: { { string } } = {}
+	local dog = workspace:FindFirstChild("GuardDog")
+	if dog and dog:IsA("Model") and (dog:GetPivot().Position - at).Magnitude <= TalkLines.THING_NEAR then
+		table.insert(options, TalkLines.DOG)
+	end
+	for _, g in workspace:GetChildren() do
+		if g.Name == "Grave" and g:IsA("Model") and (g:GetPivot().Position - at).Magnitude <= TalkLines.THING_NEAR then
+			table.insert(options, TalkLines.GRAVE)
+			break
+		end
+	end
+	local me = game:GetService("Players").LocalPlayer.Character
+	local root = me and me:FindFirstChild("HumanoidRootPart")
+	if me and root and root:IsA("BasePart") and (root.Position - at).Magnitude <= TalkLines.PLAYER_NEAR then
+		for _, m in me:GetChildren() do
+			local group = TalkLines.weaponGroup(m:GetAttribute("Tool") :: string?)
+			if group then
+				table.insert(options, TalkLines.WEAPON[group])
+				break
+			end
+		end
+	end
+	for _, s in machineSpots do
+		if (s.at - at).Magnitude <= TalkLines.MACHINE_NEAR then
+			table.insert(options, TalkLines.MACHINE[s.group])
+			break
+		end
+	end
+	if #options == 0 then
+		return nil
+	end
+	return options[rng:NextInteger(1, #options)]
+end
+
 local function updateLine(life: Life, now: number)
 	-- (22 Nov 2026, owner: "no ragdoll talks when it is dead"): a dead body says nothing, and a line it had goes.
 	if life.model:GetAttribute("Vital") == "Dead" then
@@ -1178,6 +1253,28 @@ local function updateLine(life: Life, now: number)
 	end
 	if life.lineKind and now >= life.lineUntil then
 		hideLine(life)
+	end
+	-- (F8, owner 26 Nov 2026: "ragdolls snakker om præcis det de kigger på"): now and then a line about what is right in
+	-- front of it: the guard dog, a grave, the weapon the player holds, a machine close by (Shared/TalkLines). One such
+	-- line every TalkLines.GAP s on this screen, never the same line twice in a row.
+	if (Config :: any).TALK_CONTEXT and not life.lineKind and (life.state == "Standing" or life.state == "Walking") then
+		local own: any = life
+		if now >= (own.ctxAt or 0) then
+			own.ctxAt = now + rng:NextNumber(2, 5)
+			local pelvis = life.model:FindFirstChild("LowerTorso")
+			if pelvis and pelvis:IsA("BasePart") and now - lastCtxLine >= TalkLines.GAP and time() >= ((game:GetService("Players").LocalPlayer:GetAttribute("NewcomerUntil") :: number?) or 0) then
+				local list = contextLines(pelvis.Position)
+				if list then
+					local pick = list[rng:NextInteger(1, #list)]
+					if pick == lastCtxText then
+						pick = list[(table.find(list, pick) or 0) % #list + 1]
+					end
+					lastCtxLine, lastCtxText = now, pick
+					showLine(life, "Context", now, { pick })
+					return
+				end
+			end
+		end
 	end
 	-- (24 Nov 2026: what it does right now, DummyLines.ACT.)
 	do
