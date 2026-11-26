@@ -730,6 +730,31 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 - **The lint** (part of F50): every path leg against every wall, fence or railing piece. Any intersection without an opening counts, and it must be 0.
 - **Check:** walk every path in Animal Cove and the other rooms to its end. Each one leads somewhere you can enter, or to a viewing spot. Nothing dead-ends at a wall.
 
+## F56 Players get kicked out of cars while driving (owner: "Fiks så man ikke bliver kicked fra bilerne, når man kører")
+**The bug:** while driving, the player is thrown or dropped out of the car without pressing exit.
+
+**Find the cause.** Check each of these and fix all that apply:
+1. **The crash-eject rule** (high-speed crashes throw the driver out; F48's wall crash; MACHINES_10 3.17).
+2. **The player-ragdoll system** (PlayerRagdoll, knockback, blasts, being hit by flying bricks, ragdolls or debris): it switches the driver's Humanoid to Physics or Ragdoll, which breaks the SeatWeld.
+3. **Speed and anti-cheat checks** (F51 / MOVE_FAST / the server watchdog) seeing a driver at car speed and resetting or teleporting the character.
+4. **OutOfBounds, GroundGuard or the unstick rule** (F32) moving the CHARACTER instead of the car.
+5. **StreamingEnabled** streaming out or re-anchoring a car part, or the vehicle respawn/"take home" logic running while someone sits in it.
+6. **NO_BLACK_SCREEN, the camera code or the X-ray** changing the Humanoid state.
+7. **The seat being set Disabled** or the car being re-parented while it is used.
+
+**Fix:**
+- **The driver stays in the seat until THEY choose to leave** (jump or the exit button).
+- **Automatic eject is OFF by default** (`CAR_EJECT = false`; owner). A big crash shakes the camera, dents the car and makes a crash sound, and the driver stays in.
+- **While seated, the player is immune** to the player-ragdoll knockback, blasts and debris (the CAR takes the push instead), and to the speed and unstick checks for the character.
+- **Out of bounds:** OutOfBounds or GroundGuard moves the whole CAR with the driver, never the driver alone.
+- **Never touch a used car:** no respawn, re-parent, re-anchor or streaming-out of a car that has a driver or a passenger (persistent while used).
+- **Passenger ragdolls** may still fly out on big crashes (the fun part), but the player never does.
+- **Check:**
+  - drive every car, the tank, the monster truck and the bike for 2 minutes each, at full speed;
+  - crash into the brick wall, other cars and ragdolls; jump off the plaza stairs; drive through an event;
+  - the player is never thrown or dropped out; only the exit button gets you out;
+  - check PC and phone.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
