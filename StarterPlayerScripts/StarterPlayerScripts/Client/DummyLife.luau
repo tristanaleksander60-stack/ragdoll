@@ -1415,6 +1415,68 @@ local function moodPose(life: Life, now: number, dt: number, moving: boolean): b
 	return true
 end
 
+-- OVERVIEW 0.9 (owner, 26 Nov 2026: "Gør så ragdolls kigger på en når de snakker til dig"; docs/ALWAYS3.md "LOOK AT YOU";
+-- Config.LOOK_AT_TALK): while a dummy has a line up (and 1 s after), its head turns to whoever it talks to, smoothly, and
+-- the waist takes what the neck cannot (no owl heads). A chatter (Role3 "Chat") looks at the other chatter next to it;
+-- everyone else looks at you. Only within LOOK_RANGE studs, and never when it is down, loose or in a machine.
+local LOOK_RANGE = 40
+local function lookWhileTalking(life: Life, state: string, now: number)
+	if not Config.LOOK_AT_TALK or not (state == "Standing" or state == "Walking") or life.loose.Neck then
+		return
+	end
+	local lf: any = life
+	if life.lineKind ~= nil then
+		lf.talkSeen = now
+	end
+	if now - (lf.talkSeen or -10) > 1 then
+		lf.lookK = 0
+		return
+	end
+	local model = life.model
+	local target: Vector3? = nil
+	if model:GetAttribute("Role3") == "Chat" then
+		local dummies = model.Parent
+		local best = 16
+		for _, d in if dummies then dummies:GetChildren() else {} do
+			local h = d ~= model and d:GetAttribute("Role3") == "Chat" and d:FindFirstChild("Head")
+			if h and h:IsA("BasePart") then
+				local dist = (h.Position - life.head.Position).Magnitude
+				if dist < best then
+					best, target = dist, h.Position
+				end
+			end
+		end
+	end
+	if not target then
+		local me = Players.LocalPlayer.Character
+		local myHead = me and me:FindFirstChild("Head")
+		if myHead and myHead:IsA("BasePart") and (myHead.Position - life.head.Position).Magnitude < LOOK_RANGE then
+			target = myHead.Position
+		end
+	end
+	if not target then
+		return
+	end
+	-- eased in over about 0.2 s
+	lf.lookK = math.min(1, (lf.lookK or 0) + 0.12)
+	local k = lf.lookK
+	local offset = target - life.head.Position
+	if offset.Magnitude < 0.5 then
+		return
+	end
+	local pelvis = model:FindFirstChild("LowerTorso")
+	local basis = if pelvis and pelvis:IsA("BasePart") then pelvis.CFrame else life.chest.CFrame
+	local dir = basis:VectorToObjectSpace(offset.Unit)
+	local yaw = deg(math.atan2(-dir.X, -dir.Z))
+	local pitch = math.clamp(deg(math.asin(math.clamp(dir.Y, -1, 1))), -MAX_PITCH_DOWN, MAX_PITCH_UP)
+	local neckYaw = math.clamp(yaw, -70, 70)
+	local waistYaw = math.clamp(yaw - neckYaw, -35, 35)
+	if not life.loose.Waist then
+		setJoint(life, "Waist", ang(0, waistYaw * k, 0))
+	end
+	setJoint(life, "Neck", ang(pitch * k, neckYaw * k, 0))
+end
+
 -- (F5, owner 26 Nov 2026: "talebobler står inde i hovedet"): a bubble or line sits above the HIGHEST point of the body
 -- in world space (lying, upside down or in a machine), its bottom edge on that point (SizeOffset), so it never sinks
 -- into the head however far the camera is.
@@ -1546,6 +1608,7 @@ local function step(life: Life, now: number, dt: number)
 	else
 		updateBubble(life, now, BUBBLES)
 	end
+	lookWhileTalking(life, state, now)
 	liftTalk(life)
 end
 
