@@ -538,6 +538,51 @@ function VehicleService.damageAt(point: Vector3, amount: number, reach: number?)
 end
 
 -- The cars of one lab (Playground.build calls this for every lab, never the plaza).
+-- F75 (Config.HOME_CLEAR): a vehicle's home must be clear: the motorbike stood IN the bike rack (its pad was the rack's
+-- middle, among the solid bars). Once the map stands, every home is checked with the vehicle's own box; when anything
+-- solid that is not the ground, a walkway or another vehicle is inside it, the home moves to the nearest clear spot (rings
+-- of 6 studs out to 36) and the vehicle is set there. A count is printed ([Vehicles] homes moved: n) as the lint.
+local function homeBlocked(car: any, cf: CFrame): boolean
+	local size = car.body.Size
+	local _, msize = car.model:GetBoundingBox()
+	local box = Vector3.new(math.max(size.X, msize.X) + 1, math.max(3, msize.Y - 1), math.max(size.Z, msize.Z) + 1)
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local skip: { Instance } = { car.model }
+	for _, n in { "Dummies", "Terrain" } do
+		local x = Workspace:FindFirstChild(n)
+		if x then
+			table.insert(skip, x)
+		end
+	end
+	params.FilterDescendantsInstances = skip
+	for _, p in Workspace:GetPartBoundsInBox(cf + Vector3.new(0, 0.6, 0), box, params) do
+		if p.CanCollide and p.Transparency < 1 and not (p.Size.Y < 1.3 and math.abs(p.CFrame.UpVector.Y) > 0.95) then
+			return true
+		end
+	end
+	return false
+end
+function VehicleService.homeClear(car: any): boolean
+	if not homeBlocked(car, car.home) then
+		return false
+	end
+	for r = 6, 36, 6 do
+		for k = 0, 11 do
+			local a = k / 12 * math.pi * 2
+			local cf = car.home + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r)
+			if not homeBlocked(car, cf) then
+				car.home = cf
+				if car.seat.Occupant == nil then
+					car.model:PivotTo(cf * car.body.CFrame:ToObjectSpace(car.model:GetPivot()))
+				end
+				return true
+			end
+		end
+	end
+	return false
+end
+
 function VehicleService.build(into: Folder, origin: Vector3)
 	if not (Config.VEHICLES and Config.VEHICLES.enabled) then
 		return
@@ -568,6 +613,18 @@ function VehicleService.build(into: Folder, origin: Vector3)
 			setOwner(car)
 		end)
 		setOwner(car)
+	end
+	if (Config :: any).HOME_CLEAR then
+		-- (F75: once the map and its machines stand, no home is inside anything)
+		task.delay(6, function()
+			local moved = 0
+			for _, car in cars do
+				if car.origin == origin and car.model.Parent and VehicleService.homeClear(car) then
+					moved += 1
+				end
+			end
+			print(string.format("[Vehicles] homes moved: %d", moved))
+		end)
 	end
 	VehicleService.start()
 end

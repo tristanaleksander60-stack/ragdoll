@@ -83,6 +83,32 @@ local function nextSpot(owner: Player, origin: Vector3, at: Vector3, skip: { Ins
 	return nil
 end
 
+-- F69 (Config.BIKE_ROUTE): on the compact map the rider keeps to the walkway loop's centre line (Plan.ROADS ring:
+-- CrossN, RingE, CrossS, RingW), corner to corner with the middles between, one way round. The first point is the ring
+-- point nearest the bike; from its bay it rides straight to it. A point it cannot reach in 14 s is skipped (the stuck
+-- guard; the dodge in clearOf steers round people and ragdolls).
+local function ringRoute(origin: Vector3): { Vector3 }?
+	local PS = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any
+	if not PS.compact then
+		return nil
+	end
+	local n, e, s, w = PS.road("CrossN"), PS.road("RingE"), PS.road("CrossS"), PS.road("RingW")
+	if not (n and e and s and w) then
+		return nil
+	end
+	local corners = { n[1], n[2], s[2], s[1] } -- NW, NE, SE, SW (clockwise seen from above with north up)
+	local out: { Vector3 } = {}
+	for i, c in corners do
+		local nxt = corners[i % #corners + 1]
+		for k = 0, 3 do
+			local p = c:Lerp(nxt, k / 4)
+			table.insert(out, Vector3.new(origin.X + p.X, origin.Y, origin.Z + p.Y))
+		end
+	end
+	local _ = e and w
+	return out
+end
+
 -- How to lean the way to keep clear of people and ragdolls ahead: radians to turn (+ left), and how near the nearest is.
 BikeService.SEE = 13 -- studs
 local function clearOf(body: BasePart, rider: Model, heading: number): (number, number)
@@ -174,6 +200,17 @@ local function ride(car: any, owner: Player, rider: Model)
 	local goal: Vector3? = nil
 	local goalAt = os.clock()
 	local started = os.clock()
+	local route = if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).BIKE_ROUTE then ringRoute(car.origin) else nil
+	local leg = 0
+	if route then
+		local best = math.huge
+		for i, p in route do
+			local d = Vector3.new(p.X - body.Position.X, 0, p.Z - body.Position.Z).Magnitude
+			if d < best then
+				best, leg = d, i
+			end
+		end
+	end
 	while true do
 		local dt = task.wait(0.1)
 		local state = rider:GetAttribute("RagdollState")
@@ -197,7 +234,18 @@ local function ride(car: any, owner: Player, rider: Model)
 		end
 		local here = body.Position
 		local to = goal
-		if not to or Vector3.new(to.X - here.X, 0, to.Z - here.Z).Magnitude < 7 or os.clock() - goalAt > 20 then
+		if route then
+			-- (F69: the walkway loop's centre line, point to point; skip one not reached in 14 s)
+			local p = route[leg]
+			if not to or Vector3.new(p.X - here.X, 0, p.Z - here.Z).Magnitude < 6 or os.clock() - goalAt > 14 then
+				if to then
+					leg = leg % #route + 1
+				end
+				p = route[leg]
+				to = Vector3.new(p.X, floorY, p.Z)
+				goal, goalAt = to, os.clock()
+			end
+		elseif not to or Vector3.new(to.X - here.X, 0, to.Z - here.Z).Magnitude < 7 or os.clock() - goalAt > 20 then
 			local skip: { Instance } = { car.model }
 			local dummies = Workspace:FindFirstChild("Dummies")
 			if dummies then
