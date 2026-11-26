@@ -195,6 +195,42 @@ Today the attract mode sends test dummies flying out of machines in turn, often.
 - The keys in the row: F (run), V (eye), I (X-RAY), X (REVIVE ALL). If the owner wants X for X-ray later, swap them in one place (Config keybinds), not in many files.
 - Console: a button for X-ray (D-pad left if free). Phone: the small X-RAY toggle button (F6).
 
+## F22 The dog moves like a real dog and faces the right way when it bites (owner: "Hunden skal bevæge sig meget mere realistisk, modellen ser godt ud, hunden vender den forkerte vej når den bider en")
+Keep the German Shepherd model. Fix the movement and the bite.
+
+**Facing the bite (the bug).** The model's front is probably not its LookVector; the mesh or rig faces another axis.
+- Find the model's real forward: the head direction.
+- Add a fixed rotation offset in ONE place (e.g. `DOG_FORWARD_OFFSET`) used by every move, turn and bite.
+- **When it bites:** the head and jaw point AT the bitten limb. The body lines up behind the head, along the line from the dog to the limb.
+- **During the tug:** it keeps facing the limb, leaning back and pulling with its legs braced.
+
+**Realistic movement:**
+- **Real gaits:**
+  - walk (4-beat, head bobbing);
+  - trot (diagonal legs);
+  - gallop (bounding, the back stretching);
+  - the animation speed matched to the ground speed (no foot sliding).
+- **Smooth speed changes:**
+  - it accelerates and decelerates (no instant start or stop);
+  - it turns in an arc with its body bending, never spinning on the spot.
+- **Following:** it stays on your side, 4-6 studs back. It slows to a walk near you, stops and sits or stands when you stop, and looks up at you.
+- **Head and ears:**
+  - the head turns to look at what is near (ragdolls, you, noises) before the body turns;
+  - the ears twitch;
+  - the tail position shows its mood (up and wagging when happy, level when focused, low when coming back slowly).
+- **The ground:**
+  - its feet stay on the ground on slopes and steps (raycast foot or body height, tilt with the slope);
+  - it jumps small obstacles and goes round big ones (PathfindingService, re-planned every 0.5 s);
+  - it never walks through walls or ragdolls.
+- **The run-up to a bite:** it fixes its eyes on the target, crouches a moment, sprints, slows in the last 2 studs, and bites from the right angle. Not a straight-line snap.
+- **After the bite:**
+  - it shakes its head with the limb for 2-3 s, then lets go;
+  - it shakes its own body like a wet dog (fun detail);
+  - it trots back wagging.
+- **Idle at you:** it sniffs the ground, sits, scratches its ear, and lies down after 20 s of no action.
+- **Sounds** fit each action: panting while running, a short bark, a growl before the bite, happy whines.
+- **Check:** one quick Play. Follow, stop, turn sharply, go up stairs and a slope, then bite an arm, a leg and the bottom from different sides. The dog always faces the bitten limb, and its feet never slide.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
