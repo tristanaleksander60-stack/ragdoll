@@ -50,6 +50,7 @@ local Config = {
 	ROOM_GATES = true, -- OVERVIEW 0.97: a themed gate with 3D letters and a moving part at every room entrance instead of the flat banner (LabOwnerMap themedGate)
 	SPAWN_GLIDE = true, -- OVERVIEW 0.97: a newcomer's first join starts with a 2.5 s camera glide down to the player (any key skips; Client/GateMotion)
 	SPAWN_TITLE = "RAGDOLL HAVOC", -- the welcome arch's 3D title
+	DEMO_WALK = true, -- F31 / OVERVIEW 0.98: a machine demo starts with a ragdoll saying a line and WALKING to the machine, then hopping in (Systems/MachineDemos); only within 80 studs of the player
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays
