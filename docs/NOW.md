@@ -43,7 +43,7 @@
 | M10 | The side-by-side check: the same 5 camera spots as ref_6-ref_10, list every difference, fix, recapture (max 4 rounds). Bar 9.5 "same map". Then publish (or ask for Alt+P in the final message) | ref_6-ref_10 |
 
 ### MAP RUN STATE
-- (none yet: start at M1)
+- M1 part 1 DONE 0.78.0 (multiplayer place v55): `LAB_OWNERMAP` on, Systems/LabOwnerMap (330 parts): 950x820 grass base at CENTER (-30,24), walkway grid 22 wide (rows z -82/-18/58/104 x S, columns x -100/-55/0/28/68/112 x S, S=3.2), spawn circle, raised granite leaderboard plaza at z -304 with cap, pipe railing and stair, railway loop west+south (ballast, rails, sleepers), Terrain hill ring. Zones.PLOT_SPACING 1100 under the switch. Capture ScreenCapture_M1 vs ref_10: grid and hills match; the old lab still sits in the middle until M7. Left in M1: walkway tile seams, grass plot edges, the 4 boards on the new plaza (M7).
 
 ## THE RUN ORDER (owner, 26 Nov 2026: "sørg for planen bliver lavet i den rette rækkefølge"). `/klar` follows this list top to bottom.
 Why this order:

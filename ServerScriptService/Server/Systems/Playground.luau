@@ -1598,6 +1598,15 @@ function Playground.build(labOrigin: Vector3, name: string?)
 			log.warn("LabV10 failed in " .. folder.Name .. ": " .. tostring(errV))
 		end
 	end
+	-- (GO NOW: THE MAP, Config.LAB_OWNERMAP: the owner's map, 10x the area, phase by phase: Systems/LabOwnerMap.)
+	if lab and (Config :: any).LAB_OWNERMAP then
+		local okM, errM = pcall(function()
+			require(script.Parent:WaitForChild("LabOwnerMap")).build(folder, origin)
+		end)
+		if not okM then
+			log.warn("LabOwnerMap failed in " .. folder.Name .. ": " .. tostring(errM))
+		end
+	end
 	-- GUARD_DOG: the doghouse with its Whistle prompt (Systems/GuardDog).
 	if lab and (Config :: any).GUARD_DOG then
 		local okD, errD = pcall(function()
