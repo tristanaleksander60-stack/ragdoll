@@ -713,6 +713,94 @@ pickRoamSpot = function(plot: Plot, slot: Slot): Vector3
 	return slot.homeAttr or slot.position
 end
 
+-- OVERVIEW 0.1567 DRAWN TO YOU (owner: "Sørg for alle ragdolls generelt er tiltrukket af mig og går på de stier hen mod
+-- mig"; docs/ALWAYS3.md; Config.DRAWN_TO_YOU): a free ragdoll's next roam goal is a spot ON A PATH 60-120 studs from its
+-- nearest player (the AROUND band; the 3 near and the 2 close by have their own rules), in the emptiest of 8 directions
+-- round that player (so they come from different paths and stand in small groups, never a column), at least 4 studs
+-- from any other goal. RagdollNav takes them there along the paths. Not while the player drives or rides; nil = the
+-- old random pick.
+local DRAWN_PATHS = { "Path", "Walk", "Plaza", "Junction", "Courtyard", "Kerb", "Square", "Avenue", "Boulevard", "Cross" }
+local drawnParams = RaycastParams.new()
+drawnParams.FilterType = Enum.RaycastFilterType.Exclude
+local function drawnSpot(plot: Plot, slot: Slot, model: Model): Vector3?
+	local pelvis = model:FindFirstChild("LowerTorso")
+	if not (pelvis and pelvis:IsA("BasePart")) then
+		return nil
+	end
+	local best: BasePart?, bestD = nil, math.huge
+	local chars = {}
+	for _, p in Players:GetPlayers() do
+		local r = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+		if r and r:IsA("BasePart") then
+			table.insert(chars, p.Character :: Instance)
+			local d = (r.Position - pelvis.Position).Magnitude
+			if d < bestD and d < 400 then
+				local hum = (p.Character :: Model):FindFirstChildOfClass("Humanoid")
+				if not (hum and hum.SeatPart) then
+					best, bestD = r, d
+				end
+			end
+		end
+	end
+	if not best then
+		return nil
+	end
+	local root = best :: BasePart
+	table.insert(chars, Workspace:FindFirstChild("Dummies") :: Instance)
+	drawnParams.FilterDescendantsInstances = chars
+	-- the emptiest of 8 directions
+	local load = { 0, 0, 0, 0, 0, 0, 0, 0 }
+	for _, other in plot.slots do
+		local h = other.roamHome
+		if other ~= slot and h then
+			local v = Vector3.new(h.X - root.Position.X, 0, h.Z - root.Position.Z)
+			if v.Magnitude > 50 and v.Magnitude < 130 then
+				local k = math.floor(((math.atan2(v.Z, v.X) + math.pi) / (math.pi * 2)) * 8) % 8 + 1
+				load[k] += 1
+			end
+		end
+	end
+	local order = { 1, 2, 3, 4, 5, 6, 7, 8 }
+	table.sort(order, function(a, b)
+		if load[a] ~= load[b] then
+			return load[a] < load[b]
+		end
+		return a < b
+	end)
+	local fallback: Vector3? = nil
+	for try = 1, 12 do
+		local k = order[((try - 1) % 3) + 1] -- (the three emptiest directions)
+		local a = (k - 0.5) / 8 * math.pi * 2 - math.pi + math.rad(math.random(-20, 20))
+		local r = math.random(65, 115)
+		local at = root.Position + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r)
+		local hit = Workspace:Raycast(at + Vector3.new(0, 60, 0), Vector3.new(0, -140, 0), drawnParams)
+		if hit and hit.Normal.Y > 0.8 and hit.Material ~= Enum.Material.Water then
+			local name = hit.Instance.Name
+			if string.find(name, "Water") or string.find(name, "Pool") or string.find(name, "Lava") or string.find(name, "Pond") or string.find(name, "Flower") then
+				continue
+			end
+			local spot = hit.Position + Vector3.new(0, 3, 0)
+			local taken = false
+			for _, other in plot.slots do
+				local h = other.roamHome
+				if other ~= slot and h and Vector3.new(h.X - spot.X, 0, h.Z - spot.Z).Magnitude < 4 then
+					taken = true
+					break
+				end
+			end
+			if not taken then
+				for _, word in DRAWN_PATHS do
+					if string.find(name, word) then
+						return spot
+					end
+				end
+				fallback = fallback or spot
+			end
+		end
+	end
+	return fallback
+end
+
 -- (session v850: a slot that has no social trip, is not commanded, is not in a machine and is up
 -- picks a new wander Home every ROAM_EVERY s. We only overwrite Home, not homeAttr — endSocial
 -- and returnHome still reset to the row's slot.)
@@ -753,7 +841,7 @@ local function roam(plot: Plot, slot: Slot, now: number)
 		end
 		return
 	end
-	local spot = pickRoamSpot(plot, slot)
+	local spot = (if (Config :: any).DRAWN_TO_YOU then drawnSpot(plot, slot, model) else nil) or pickRoamSpot(plot, slot)
 	slot.roamHome = spot
 	slot.nextRoamAt = now + math.random(ROAM_EVERY_MIN, ROAM_EVERY_MAX)
 	model:SetAttribute("Home", spot)
