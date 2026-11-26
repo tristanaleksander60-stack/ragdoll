@@ -603,6 +603,42 @@ The owner still sees lamp posts standing in the middle of walkways.
 
 **Check:** shoot a dummy 10 times, kill it, and let it wake. A helper comes and pulls the bullets one by one, the holes close, and X-ray shows no slugs after. No body walks round still covered in holes.
 
+## F48 The brick wall reacts to CARS, and resets 10-15 s after it has fallen (owner, 26 Nov 2026: "Fiks så at muren reagerer hvis man kører ind i den med en bil, og den resetter efter 10-15 sekunder efter den er faldet ned")
+**Cars do nothing to the wall today.** The likely cause: the driver's client owns the car, so the server's Touched or velocity checks see no speed (or never fire) for the car's parts.
+
+**Fix (`Systems/BrickWall`):**
+- **Detect car impacts on the server reliably:**
+  - every 0.1 s, check each vehicle near the wall (within 40 studs) with a box query along the wall's panels;
+  - measure the car's speed from its position change between checks (this works whoever owns it), or read AssemblyLinearVelocity on the server.
+  - A vehicle part inside or touching a panel's box at more than about 20 studs/s is an impact.
+- **The force** comes from the speed × the car's weight class:
+
+  | Vehicle | Force |
+  |---|---|
+  | bike | ×0.5 |
+  | car | ×1 |
+  | drift car | ×1 |
+  | monster truck | ×1.8 |
+  | tank | ×2.5 |
+
+  It knocks out a CAR-SIZED hole at the contact point: 6-20 bricks by force. A tank at speed goes right through, and unsupported bricks above then fall in their cascade.
+- **The car reacts too:**
+  - a hard stop or bounce back (it loses most of its speed, unless it is a tank that ploughs through);
+  - a dent on the car and a crunch sound;
+  - bricks falling on the bonnet and roof with physics;
+  - a dust cloud;
+  - a camera shake for the driver;
+  - at high speed, the driver may fly out (the existing car-crash eject).
+- **Also from the car's own crash system:** if VehicleService already detects crashes, call BrickWall.hit from there too, so both paths work.
+
+**Reset 10-15 s after it has fallen** (it was 45 s):
+- **The rule:** 12 s (10-15) after the LAST brick has come to rest or fallen, the wall rebuilds brick by brick from the bottom up (about 3 s in total).
+- **The fallen bricks** fade away as the new ones slide in.
+- **Not on top of anyone:** if a player, a ragdoll or a car stands where bricks would go, those bricks wait until the spot is free (no rebuilding through someone).
+- **The concrete walls** use the same 12 s rule (`DESTRUCTION.md` 2c). The crates keep 20 s.
+
+**Check:** drive the car, the monster truck and the tank into the wall at low and high speed. The wall breaks round the hit, the bricks cascade, the car reacts, and the wall is back 10-15 s after the last brick fell. Check on PC and the phone emulator, with no lag.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.

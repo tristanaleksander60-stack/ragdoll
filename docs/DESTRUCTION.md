@@ -78,7 +78,7 @@ This replaces the "chunks" idea for the BRICK crash wall. The concrete walls get
 - **The server decides** which bricks break and fall (gameplay); the changes go out in one batched update per tick.
 - **Measure:** frame time on the phone emulator while 10 shots and a car crash hit the wall. There must be no hitch over 30 ms.
 
-**Rebuild:** after 45 s with no hits, the wall rebuilds brick by brick from the bottom up (each brick slides into place with a small "clack"). Holes heal over about 6 s.
+**Rebuild:** (changed by F48: 10-15 s after the last brick has fallen) the wall rebuilds brick by brick from the bottom up (each brick slides into place with a small "clack"). Holes heal over about 6 s.
 
 **Check:** shoot single bricks out (one at a time, see the bricks above drop in a trickle), drive a car into it (a hole round the impact, the bricks above cascading), SLAM a ragdoll through it, then wait for the rebuild. Do it on PC and the phone emulator, with no lag.
 
@@ -89,7 +89,7 @@ This replaces the "chunks" idea for the BRICK crash wall. The concrete walls get
   - support and gravity: blocks above a gap trickle down, never the whole wall at once;
   - hybrid panels far from damage; resting blocks anchored after 2 s;
   - the same caps (PC 80, tablet 50, phone 30, shared with the bricks);
-  - rebuilt block by block after 45 s.
+  - rebuilt block by block 10-15 s after the last block has fallen (F48).
 - **Concrete feel:**
   - grey dust and small gravel chips;
   - a heavier, duller crunch than the bricks;
