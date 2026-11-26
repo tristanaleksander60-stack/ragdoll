@@ -477,9 +477,15 @@ end
 
 local nextGoalId: string? = nil -- (V9-3b: the goal the bar showed last, and how full)
 local nextFrac = 0
+local momentUntil = 0 -- (NOW 4: a minute moment holds the pill until then)
+local lastTakedowns_: number = 0
 
 -- The pill's numbers: kills since the last exciting unlock, out of the step to the next one.
 function HudV3.drawNext(takedowns: number)
+	lastTakedowns_ = takedowns
+	if os.clock() < momentUntil then
+		return
+	end
 	local owned: { [string]: boolean } = {}
 	local raw = player:GetAttribute("Owned")
 	if type(raw) == "string" then
@@ -525,6 +531,23 @@ function HudV3.drawNext(takedowns: number)
 		n.Text = if (Config :: any).GOAL_LINE then string.format("%d KOs", takedowns) else ""
 		fill.Size = UDim2.fromScale(1, 1)
 	end
+end
+
+-- NOW 4 (owner, 26 Nov 2026: one goal line carries the minute moments): the pill says `text` for
+-- `seconds`, then the next weapon again. Client/MinuteMoments.
+function HudV3.moment(text: string, seconds: number)
+	local t, n = nextLabel, nextCount
+	if not (t and n) then
+		return
+	end
+	momentUntil = os.clock() + seconds
+	t.Text = text
+	n.Text = ""
+	task.delay(seconds + 0.05, function()
+		if os.clock() >= momentUntil then
+			HudV3.drawNext(lastTakedowns_)
+		end
+	end)
 end
 
 -- The LAB window: the sandbox controls as rows (a picture, a name, a line, a button on the right).

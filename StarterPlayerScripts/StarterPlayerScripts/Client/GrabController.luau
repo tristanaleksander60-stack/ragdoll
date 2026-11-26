@@ -196,6 +196,8 @@ local function release(throw: boolean, throwDirection: Vector3?)
 			local dir = (throwDirection.Unit + Vector3.new(0, THROW_LIFT, 0)).Unit
 			ActiveRagdoll.push(grab.model, dir * THROW_SPEED)
 			FxController.localEvent("Hit", grab.part.Position, THROW_SPEED, "Throw")
+			-- (NOW 7: the tutorial's throw step reads this, on this screen only.)
+			player:SetAttribute("ClientThrows", ((player:GetAttribute("ClientThrows") :: number?) or 0) + 1)
 		elseif velocity.Magnitude > 1 then
 			local boost = velocity * THROW_SHARE
 			if boost.Magnitude > MAX_THROW then

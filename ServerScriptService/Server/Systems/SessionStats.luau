@@ -258,6 +258,17 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 		r.plat = if r.touch and not r.keys then (if short > 0 and short <= 500 then "phone" else "tablet")
 			elseif r.pad and not r.keys then "console"
 			else "pc"
+		player:SetAttribute("Device", r.plat) -- (NOW 1/4: Funnels splits new players by device)
+	elseif kind == "Tutorial" and type(data) == "string" then
+		-- (NOW 7: a tutorial step done: Funnels "Tutorial".)
+		pcall(function()
+			(require(script.Parent:WaitForChild("Funnels")) :: any).tutorial(player, data)
+		end)
+	elseif kind == "Moment" and (data == "Cannon" or data == "Creature" or data == "Maps") then
+		-- (NOW 4: which minute moments a newcomer was shown, for the dashboard.)
+		pcall(function()
+			(require(script.Parent:WaitForChild("Funnels")) :: any).used(player, "Moment" .. tostring(data))
+		end)
 	elseif kind == "MapBoard" then
 		SessionStats.used(player, "mapBoard") -- (V9-0e: a trip chosen on the Map Board)
 	elseif kind == "Used" and type(data) == "string" then

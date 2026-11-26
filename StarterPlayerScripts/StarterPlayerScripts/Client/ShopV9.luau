@@ -933,7 +933,8 @@ function ShopV9.build(win: any, given: Api)
 	-- (NOW 1.6: the hero is the first of these you do not own yet.)
 	local heroKey = ShopArt.HERO
 	if Config.PHONE_MENUS then
-		for _, key in { ShopArt.HERO, "Ultra", "VIP", "AllGuns", "RobotDog" } do
+		-- (NOW 8: a cheap starter offer first, with clear big value; the big passes after it.)
+		for _, key in (if (Config :: any).SHOP_CHEAP_FIRST then { "EntryPack", ShopArt.HERO, "Ultra", "VIP" } else { ShopArt.HERO, "Ultra", "VIP", "AllGuns", "RobotDog" }) do
 			local it = ShopArt.byKey(key)
 			if it and not owned(it) then
 				heroKey = key

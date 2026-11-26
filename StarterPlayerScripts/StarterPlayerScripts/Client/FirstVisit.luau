@@ -45,9 +45,12 @@ FirstVisit.ANSWER_WAIT = 20 -- s: no server answer by then = treated as a return
 FirstVisit.PHONE_HELD = { "Shop", "Menu" } -- the phone's launchers held with the rest
 FirstVisit.STEPS = table.freeze({
 	{ id = "Takedown", text = "Knock a dummy over!", pad = "Knock a dummy over! (R2)" },
+	-- (NOW 7, owner 26 Nov 2026: grab and throw, and the MAPS board, are tutorial steps too.)
+	{ id = "Throw", text = "GRAB a dummy and THROW it!", pad = "GRAB a dummy (X) and THROW it!", attr = "ClientThrows" },
 	{ id = "Cannon", text = "Fire yourself from the CANNON", target = "CannonPad", glow2 = "CannonModel", attr = "CannonShots" },
 	{ id = "Wrecking", text = "Get hit by the WRECKING BALL", target = "SwingBall", attr = "ThrownBy_SwingBall" },
 	{ id = "Weapons", text = "Open WEAPONS for more", pad = "Open WEAPONS for more (Y)" },
+	{ id = "Maps", text = "Walk to the MAPS board", pad = "Walk to the MAPS board" },
 })
 
 local player = Players.LocalPlayer
@@ -295,6 +298,18 @@ function FirstVisit.start()
 			-- (The lab streams in: look again for a while before giving a machine up; the line hides
 			-- while it looks.)
 			local target: Instance? = nil
+			if step.id == "Maps" then
+				local me = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+				local bestD = 400
+				for _, sc in game:GetService("CollectionService"):GetTagged("MapBoardScreen") do
+					if sc:IsA("BasePart") and me and me:IsA("BasePart") and (sc.Position - me.Position).Magnitude < bestD then
+						target, bestD = sc.Parent or sc, (sc.Position - me.Position).Magnitude
+					end
+				end
+				if not target then
+					continue
+				end
+			end
 			if step.target then
 				local waitUntil = os.clock() + 15
 				repeat
@@ -336,6 +351,10 @@ function FirstVisit.start()
 					done = ((player:GetAttribute("Takedowns") :: number?) or 0) > startTakedowns
 				elseif step.attr then
 					done = ((player:GetAttribute(step.attr) :: number?) or 0) > startCount
+				elseif step.id == "Maps" then
+					local me = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+					local at = if target and target:IsA("Model") then target:GetPivot().Position elseif target and target:IsA("BasePart") then target.Position else nil
+					done = (me and me:IsA("BasePart") and at and (at - me.Position).Magnitude < 22) == true
 				elseif step.id == "Weapons" then
 					local okCat, ToolCatalog = pcall(function()
 						return require(Client:WaitForChild("ToolCatalog")) :: any
@@ -359,6 +378,10 @@ function FirstVisit.start()
 			if not done then
 				break
 			end
+			-- (NOW 7: the dashboard sees how far the tutorial gets: Funnels "Tutorial".)
+			pcall(function()
+				(require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Net")) :: any).event("Session"):FireServer("Tutorial", step.id)
+			end)
 			-- A short "done" beat before the next line.
 			say("\u{2713} Nice!")
 			task.wait(1.4)

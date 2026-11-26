@@ -77,7 +77,10 @@ ShopArt.MODELS = table.freeze({ "Crate", "BigButton", "PetRobotDog", "PetParrot"
 
 -- FEATURED: the hero first (BEST VALUE), then a hand-picked row.
 ShopArt.HERO = "Everything"
-ShopArt.FEATURED = table.freeze({ "God", "Ultra", "VIP", "RobotDog", "GorillaRampage", "MegaTrampoline" })
+-- (NOW 8, 26 Nov 2026: a few strong, cheaper picks first instead of a wall of big passes.)
+ShopArt.FEATURED = if Config.SHOP_CHEAP_FIRST
+	then table.freeze({ "RainbowTrail", "AllMelee", "Ultra", "RobotDog", "AllGuns", "VIP" })
+	else table.freeze({ "God", "Ultra", "VIP", "RobotDog", "GorillaRampage", "MegaTrampoline" })
 
 -- The rarity frame by planned price (Robux).
 export type Rarity = { name: string, color: Color3 }

@@ -13,6 +13,7 @@
 -- up and boxes the player until they die, it dies, or ATTACK_MAX s: phase "Attack", Moods "Angry" and "Box".)
 
 local Players = game:GetService("Players")
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 
 local Mourning = {}
 
@@ -194,17 +195,37 @@ Mourning.PROVOKE_GAP = 0.7 -- s between two rolls for one body (an automatic gun
 Mourning.PROVOKED_MAX = 25
 Mourning.PROVOKED_LAB = 2 -- mad at once in a lab
 local rolled: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+-- NOW 6 (owner, 26 Nov 2026): the first dummy a newcomer hits twice gets angry (unless the first shot killed it:
+-- then the next one hit twice). A red face and a short tantrum, it runs at you, one harmless funny shove
+-- (Config.ANGRY_SHOVE; false = it only scolds), then it runs off. Once a visit; after that only the rare
+-- chance above. Player attribute FirstAngryDone.
+Mourning.FIRST_ANGRY_MAX = 14 -- s it has to reach you
+Mourning.FIRST_ANGRY_UNDER = 60 -- only a player with fewer takedowns than this gets the planned one
+Mourning.FUNNY_SHOVE = 34 -- studs/s away from it
+Mourning.FUNNY_LIFT = 18 -- studs/s up
+local firstHits: { [Player]: { [Model]: number } } = setmetatable({}, { __mode = "k" }) :: any
 function Mourning.chanceOf(near: number): number
 	local n = math.clamp(near, 0, 1)
 	return Mourning.PROVOKE_LOW + (Mourning.PROVOKE_HIGH - Mourning.PROVOKE_LOW) * n * n
 end
 function Mourning.provoke(m: Model, by: Player, near: number): boolean
 	local now = os.clock()
-	if now - (rolled[m] or -math.huge) < Mourning.PROVOKE_GAP then
+	-- (NOW 6: the planned first anger, counted before the roll gap so two quick shots count.)
+	local planned = false
+	if (Config :: any).ANGRY_FIRST and by:GetAttribute("FirstAngryDone") ~= true then
+		local td = by:GetAttribute("Takedowns")
+		if type(td) ~= "number" or td < Mourning.FIRST_ANGRY_UNDER then
+			local hits = firstHits[by] or {}
+			firstHits[by] = hits
+			hits[m] = (hits[m] or 0) + 1
+			planned = hits[m] >= 2
+		end
+	end
+	if not planned and now - (rolled[m] or -math.huge) < Mourning.PROVOKE_GAP then
 		return false
 	end
 	rolled[m] = now
-	if not running or jobs[m] or math.random() >= Mourning.chanceOf(near) then
+	if not running or jobs[m] or (not planned and math.random() >= Mourning.chanceOf(near)) then
 		return false
 	end
 	local pelvis = pelvisOf(m)
@@ -233,12 +254,17 @@ function Mourning.provoke(m: Model, by: Player, near: number): boolean
 	end
 	local job: any = { corpse = m, phase = "Attack", since = now, kind = "Provoked", homeWas = m:GetAttribute("Home"), lookWas = m:GetAttribute("HomeLook"), owner = owner, tried = false }
 	job.target, job.personWas, job.nextHit, job.max = by, m:GetAttribute("Personality"), now + 1.5, Mourning.PROVOKED_MAX
+	if planned then
+		job.harmless, job.max = true, Mourning.FIRST_ANGRY_MAX
+		by:SetAttribute("FirstAngryDone", true)
+		firstHits[by] = nil
+	end
 	jobs[m] = job
 	m:SetAttribute("Provoked", true)
 	m:SetAttribute("CommandedBy", -2)
 	m:SetAttribute("PanicUntil", nil)
 	m:SetAttribute("Personality", "Brave")
-	m:SetAttribute("Mood", "Angry")
+	m:SetAttribute("Mood", if planned then "Rage" else "Angry") -- (Rage: the red face and the tantrum)
 	m:SetAttribute("Pace", 1.8)
 	return true
 end
@@ -276,6 +302,32 @@ local function attack(m: Model, job: Job, now: number)
 	local mood = if inReach then "Box" else "Angry"
 	if m:GetAttribute("Mood") ~= mood then
 		m:SetAttribute("Mood", mood)
+	end
+	-- (NOW 6: the planned first anger: one funny shove, or only a scolding, then it runs off.)
+	if a.harmless and inReach and facing and (state == "Standing" or state == "Walking") and m:GetAttribute("Held") ~= true and now >= a.nextHit then
+		a.nextHit = math.huge
+		local shove = (Config :: any).ANGRY_SHOVE ~= false
+		if shove then
+			m:SetAttribute("Punch", ((m:GetAttribute("Punch") :: number?) or 0) + 1)
+		end
+		task.delay(if shove then Mourning.HIT_LANDS else 1.6, function()
+			if jobs[m] ~= job then
+				return
+			end
+			if shove and root.Parent and flat(root.Position - pelvis.Position).Magnitude <= Mourning.REACH + 1 then
+				root.AssemblyLinearVelocity += dir * Mourning.FUNNY_SHOVE + Vector3.new(0, Mourning.FUNNY_LIFT, 0)
+				pcall(function()
+					lazy("FxService").hit(root.Position, 30, "Punch")
+				end)
+			end
+			stop(m, nil)
+			m:SetAttribute("PanicFrom", root.Position)
+			m:SetAttribute("PanicUntil", workspace:GetServerTimeNow() + 4)
+		end)
+		return
+	end
+	if a.harmless then
+		return
 	end
 	if inReach and facing and (state == "Standing" or state == "Walking") and m:GetAttribute("Held") ~= true and now >= a.nextHit then
 		a.nextHit = now + Mourning.HIT_GAP

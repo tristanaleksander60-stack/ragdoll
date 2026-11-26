@@ -22,6 +22,7 @@ local Funnels = {}
 
 Funnels.ONBOARDING = { "Joined", "Loaded", "FirstTool", "FirstTakedown", "SecondTool", "FiveTakedowns", "ThirdTool" }
 Funnels.PLAYTIME = { { 30, "30s" }, { 60, "1min" }, { 120, "2min" }, { 300, "5min" }, { 600, "10min" }, { 1200, "20min" } }
+Funnels.DEVICE_FUNNEL = { phone = "NewPhone", tablet = "NewTablet", pc = "NewPC", console = "NewConsole" } :: { [string]: string }
 Funnels.TAKEDOWNS = { 1, 5, 10, 25, 50, 100 }
 Funnels.SHOP_WINDOW = 300 -- s after the shop opened that a prompt still belongs to it
 
@@ -174,6 +175,24 @@ function Funnels.shop(player: Player, what: string)
 	end
 end
 
+-- NOW 7 (owner, 26 Nov 2026): the tutorial's steps (Client/FirstVisit), each logged once, in order, on
+-- the "Tutorial" funnel. Unknown step names are ignored.
+Funnels.TUTORIAL = { "Takedown", "Throw", "Cannon", "Wrecking", "Weapons", "Maps" }
+local tutorialDone: { [Player]: { [string]: boolean } } = setmetatable({}, { __mode = "k" }) :: any
+function Funnels.tutorial(player: Player, id: string)
+	local index = table.find(Funnels.TUTORIAL, id)
+	if not index then
+		return
+	end
+	local done = tutorialDone[player] or {}
+	tutorialDone[player] = done
+	if done[id] then
+		return
+	end
+	done[id] = true
+	funnel(player, "Tutorial", tostring(player.UserId), index, id)
+end
+
 -- On the way to the multiplayer place.
 function Funnels.travelled(player: Player)
 	funnel(player, "Multiplayer", day(player), 2, "Travelled")
@@ -208,6 +227,13 @@ local function join(player: Player)
 		return
 	end
 	funnel(player, "PlaytimeAll", s.visit, 1, "Joined")
+	-- (The device and whether the player is new are known a moment after the join.)
+	task.delay(8, function()
+		local device = player:GetAttribute("Device")
+		if s.new and player.Parent and type(device) == "string" and Funnels.DEVICE_FUNNEL[device] then
+			funnel(player, Funnels.DEVICE_FUNNEL[device], s.visit, 1, "Joined")
+		end
+	end)
 	local began = os.clock()
 	for i, mark_ in Funnels.PLAYTIME do
 		task.delay(math.max(0, (mark_[1] :: number) - (os.clock() - began)), function()
@@ -215,6 +241,11 @@ local function join(player: Player)
 				funnel(player, "PlaytimeAll", s.visit, i + 1, mark_[2] :: string)
 				if s.new then
 					funnel(player, "PlaytimeNew", s.visit, i + 1, mark_[2] :: string)
+					-- (NOW 1/4, 26 Nov 2026: the same steps per device, so the phone gap shows: NewPhone, NewTablet, NewPC, NewConsole.)
+					local device = player:GetAttribute("Device")
+					if type(device) == "string" and Funnels.DEVICE_FUNNEL[device] then
+						funnel(player, Funnels.DEVICE_FUNNEL[device], s.visit, i + 1, mark_[2] :: string)
+					end
 				end
 			end
 		end)

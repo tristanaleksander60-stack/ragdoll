@@ -379,6 +379,10 @@ local Config = {
 	PHONE_MENUS = true, -- phones: near full-screen windows, 2-3 big weapon cards a row without descriptions, FEATURED never shows what you own
 	GROUND_RESCUE = true, -- NOW 2: a body with nothing under it is put back on top; a sunk head or chest is lifted (GroundGuard)
 	LAZY_SHELVES = true, -- NOW 3: WEAPONS builds a shelf's cards the first time it is shown (was 8,700 UI objects at the start)
+	MINUTE_MOMENTS = true, -- NOW 4: a newcomer's goal pill says "Try the cannon!" (2 min), "Feed a creature!" (3), "New place: Island!" (4) with a white outline (Client/MinuteMoments)
+	ANGRY_FIRST = true, -- NOW 6: the first dummy a newcomer hits twice gets angry, runs at them, then runs off (Mourning.provoke)
+	ANGRY_SHOVE = true, -- NOW 6: that angry dummy gives one harmless funny shove; false = it only scolds (owner to choose)
+	SHOP_CHEAP_FIRST = true, -- NOW 8: the shop opens on the R$ 49 Starter Crate and cheaper picks (ShopV9 hero, ShopArt.FEATURED)
 	-- The lab guide (21 Nov 2026, the owner: "a 9-year-old must understand everything in the lab"): a
 	-- sign, a glowing drop ring and a FEED button at every creature and station (Server/Systems/LabGuide,
 	-- Client/LabGuideClient). false = none.
