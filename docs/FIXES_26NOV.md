@@ -231,6 +231,42 @@ Keep the German Shepherd model. Fix the movement and the bite.
 - **Sounds** fit each action: panting while running, a short bark, a growl before the bite, happy whines.
 - **Check:** one quick Play. Follow, stop, turn sharply, go up stairs and a slope, then bite an arm, a leg and the bottom from different sides. The dog always faces the bitten limb, and its feet never slide.
 
+## F23 Nicer shell casings (owner: "Gør patronerne flottere")
+The ejected casings (since 0.43.1) look plain.
+
+**Real meshes by weapon:**
+
+| Weapon | Casing |
+|---|---|
+| pistol, SMG | a short straight brass casing (9 mm style) |
+| revolver | no ejection: the casings drop out on reload, all at once |
+| rifle, sniper, minigun | a longer bottleneck brass casing |
+| shotgun | a red plastic shell with a brass base |
+| bow, lasso, melee | none |
+
+- **Detail:** a rim and a primer dot at the base, a darker open mouth.
+- **Material:** polished brass (metal, a warm gold 200,160,70, with a little reflectance) so it glints in the sun. The shotgun shells are glossy red plastic.
+
+**Ejection like a real gun:**
+- out of the ejection port on the right side of the gun, up and to the right;
+- spinning end over end, with a little random speed and angle;
+- a thin wisp of smoke from the mouth for 0.3 s.
+- In first person, clearly visible as it flies past the edge of the view.
+
+**Landing:**
+- it bounces 1-2 times (elasticity about 0.3) and rolls a little on hard floors, settling on its side;
+- a high metallic "tink" on concrete and metal, a dull tick on grass and wood, never the same pitch twice;
+- the shotgun shells land with a plastic clack.
+
+**Clean-up:**
+- casings stay 8 s, then fade;
+- pooled;
+- max 20 per player on PC and 8 on phones (the oldest goes first);
+- no collisions with players;
+- CastShadow on only for the nearest few.
+
+**Check:** fire a pistol, a rifle and a shotgun in third and first person. Each casing looks different, glints, ejects to the right, bounces and tinks.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
