@@ -131,6 +131,7 @@ end
 -- (GO NOW: THE MAP, Config.LAB_OWNERMAP: every spot here 3.2 times further from the spawn, like Config.LAB_SPREAD; sizes stay.)
 if Config.LAB_OWNERMAP then
 	local K = 3.2
+	LabLayout10.CREATURES.Spider = Vector2.new(70, -70) -- (the plan: on its own plot by the fenced pen, not on the leaderboard plaza; x3.2 below)
 	local function v2(v: Vector2): Vector2
 		return v * K
 	end

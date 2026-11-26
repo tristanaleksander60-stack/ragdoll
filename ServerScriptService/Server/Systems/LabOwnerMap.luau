@@ -182,6 +182,42 @@ end
 
 function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	hideOld(folder, origin)
+	-- (M7: the 4 leaderboards stand in a row on the raised plaza, facing the stair; LeaderboardService makes them a little
+	-- later, so this waits for them.)
+	task.spawn(function()
+		local S = LabOwnerMap.S
+		local pz = -95 * S
+		for _ = 1, 40 do
+			task.wait(0.5)
+			local boards: { Model } = {}
+			local labs = Workspace:FindFirstChild("Labs")
+			for _, plot in if labs then labs:GetChildren() else {} do
+				local fl = plot:FindFirstChild("LabFloor", true)
+				if fl and fl:IsA("BasePart") and math.abs(fl.Position.X - origin.X) < 200 and math.abs(fl.Position.Z - origin.Z) < 200 then
+					for _, c in plot:GetChildren() do
+						if c:IsA("Model") and string.sub(c.Name, 1, 6) == "Board_" then
+							table.insert(boards, c)
+						end
+					end
+				end
+			end
+			if #boards >= 4 then
+				table.sort(boards, function(a, b)
+					return a.Name < b.Name
+				end)
+				for i, b in boards do
+					local _, size = b:GetBoundingBox()
+					local x = (i - (#boards + 1) / 2) * 30
+					local at = Vector3.new(origin.X + x, origin.Y + 5 + size.Y / 2, origin.Z + pz - 18)
+					b:PivotTo(CFrame.lookAt(at, at - Vector3.new(0, 0, 1))) -- (their faces to the stair, south)
+					local _, newSize = b:GetBoundingBox()
+					local cf2 = b:GetBoundingBox()
+					b:PivotTo(b:GetPivot() + Vector3.new(0, (origin.Y + 5.3) - (cf2.Position.Y - newSize.Y / 2), 0))
+				end
+				return
+			end
+		end
+	end)
 	local into = Instance.new("Folder")
 	into.Name = "OwnerMap"
 	into.Parent = folder
