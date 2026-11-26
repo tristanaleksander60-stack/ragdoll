@@ -16,7 +16,8 @@ Why this order:
 | Step | What | Plan | State |
 |---|---|---|---|
 | 0 | **Owner:** press Alt+P to publish 0.58.0 (gore off), then send the maturity questionnaire, before Fri 27 Nov 17:34 UTC | `docs/MATURITY.md`, `docs/BODY_V2.md` "final answers" | BUILT, waiting for Alt+P |
-| 1 | Always 3 living ragdolls near you + a watcher at every machine | `docs/ALWAYS3.md` | |
+| 0.5 | **BUG: the TRY! sign jumps all over the screen and flips back and forth** (owner, 26 Nov). Fix it first, see below | `Client/LabShowcase.luau` tryMe() | |
+| 1 | Always 3 near you (update: not afraid of weapons; 2 chat, 1 comes all the way, rotating; they come very fast) + a watcher at every machine | `docs/ALWAYS3.md` (read the "Update" at the end) | 3-near built in 0.59.0; the update and the watchers are not |
 | 2 | The MULTIPLAYER icon instead of the portal | the section below | |
 | 3 | **PERFECT PHYSICS:** the hard checks, then falls, landings, lying and get-ups | `docs/RAGDOLL_FEEL.md` ("PERFECT physics" first) | |
 | 4 | **PERFECT BULLET HOLES** + purple splatter on every hit | `docs/BODY_V2.md` 3 and 2b | |
@@ -28,6 +29,21 @@ Why this order:
 | 10 | The guard dog (tap a limb, it bites) | `docs/GUARD_DOG.md` | |
 | 11 | Wheelchairs | `docs/WHEELCHAIRS.md` | |
 | 12 | Session length, the rest (item 1 is done in 0.57.0) | `docs/STAY_LONGER.md` 2-8 | |
+
+**The TRY! bug: causes found in `StarterPlayerScripts/.../Client/LabShowcase.luau` `tryMe()`. Fix all of them:**
+1. **It flickers every second.** Every second the loop sets `sign.Adornee = nil`, `StudsOffsetWorldSpace = Vector3.zero`, sets `Adornee` again and re-parents the ring and sign, even when nothing changed. For a frame the sign jumps to the ring or the screen origin.
+   - **Fix:** create, parent and adorn once. Only move the anchor when the target machine changes.
+2. **It flips between machines.** The nearest untried machine is re-picked every second, so walking between two machines swaps the target back and forth.
+   - **Fix:** keep the current target until it is tried, or until another machine is at least 40 % closer for 3 s in a row (hysteresis). Also never re-pick while the player moves faster than walking (flying, falling, in a car).
+3. **It jumps up and down.** `floorY = hrp.Position.Y - 3` uses the PLAYER's height, so on the tower, when jumping or falling, the ring and sign jump.
+   - **Fix:** use the machine's own floor (raycast down from the machine's centre once, when the target is picked).
+4. **It shows through everything, from far away.** `AlwaysOnTop = true` with `MaxDistance = 220` shows the sign over walls and the HUD from across the lab.
+   - **Fix:** `AlwaysOnTop = false`; `MaxDistance` about 90; hide it while a menu is open, in a car or in first-person aiming; and `ClipsDescendants` so it never sits off-screen as a big shape.
+5. **It is too big on phones.** `Size` is 120x54 px fixed.
+   - **Fix:** use a scale size that shrinks with distance (`Size = UDim2.fromScale(4, 1.8)`, studs-based), clamped. Max one TRY! at a time.
+6. **Check:**
+   - walk between 2 untried machines, climb the tower, jump, ride a car: the sign stays on ONE machine, steady, and never flickers;
+   - on the phone emulator it is small and clean.
 
 **How to work through it:**
 - One quick Play after each step, and commit and push.

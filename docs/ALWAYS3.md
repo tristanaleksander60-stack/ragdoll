@@ -59,3 +59,26 @@ Behind `Config.MACHINE_WATCHERS = true`.
   - One Play: walk round the whole lab; every machine has at least 1 watcher.
   - Knock one out; within about 10 s a new one stands there.
   - Phone emulator: the physics ragdoll count stays within the cap.
+
+## Update (owner, 26 Nov 2026): not afraid of weapons; 2 chat, 1 comes all the way; they come FAST
+> "Dummies skal ikke være bange for våben i sig selv, de 3 skal komme hen meget hurtigt, de 2 andre skal bare stå og snakke, 1 skal gå helt hen, og det skal skifte lidt."
+
+- **Not afraid of weapons as such.** No fleeing, no hands up and no scared face just because a gun is held, pointed or fired near them:
+  - set `FLEE_MAX = 0` (or a new `FEAR_WEAPONS = false`);
+  - no "Is that a gun?" hands-up.
+  They react only when actually hit (flinch, pain face, injury stages) or when hurt badly (stage 3 may limp away).
+- **They come VERY fast:** a recruit sprints at about 34 (the player walks 28, `LAB_TARGET` RUN FASTER) and starts within 0.5 s of the knockout.
+- **Roles of the 3 near you:**
+  - **2 CHATTERS:** they stand together 8-14 studs from you, facing each other, and talk. Short bubble lines in turn, with gestures (nodding, shrugging, pointing at you), max one bubble every 4 s. Lines:
+    - "Did you see that?"
+    - "Nope. Didn't see a thing."
+    - "Nice weather for it."
+    - "I'm on my break."
+    - "He looks friendly."
+    - "Is this a test?"
+  - **1 COMER:**
+    - walks all the way up to you (stops about 4 studs away, facing you);
+    - waves, leans in or pokes your shoulder (cartoon, no harm);
+    - says one line: "Hi!", "Can I help you?", "You dropped something.", "Are you new here?"
+  - **It changes a little:** every 15-25 s (random) the comer walks back to the chatters and one of the chatters becomes the comer. Sometimes (1 in 4) nobody comes for a while and all 3 chat.
+- When one is knocked out, the rule refills to 3. The new arrival takes the free role.
