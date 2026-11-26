@@ -54,7 +54,7 @@ local SPIKE_MESH = "rbxassetid://1033714" -- (Roblox's classic cone mesh)
 
 -- The human cannon: launch velocity and how long before the same player can be fired again.
 local CANNON_SPEED = 120
-local CANNON_DIRECTION = Vector3.new(-0.45, 0.8, -0.4).Unit
+local CANNON_DIRECTION = if (Config :: any).LAB_OWNERMAP then Vector3.new(-0.86, 0.5, 0).Unit else Vector3.new(-0.45, 0.8, -0.4).Unit -- (map round 3: west, over the Launch Field's landing field)
 local CANNON_COOLDOWN = 2
 local SWING_ANGLE = 55 -- degrees each way
 local SWING_PERIOD = 1.9 -- s per side

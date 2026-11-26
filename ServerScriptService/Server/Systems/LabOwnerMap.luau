@@ -1321,6 +1321,37 @@ local function yards(into: Instance, o: Vector3, top: number)
 	end
 end
 
+-- MAP ROUND 3, the plan items that had nothing built yet: the shop kiosk on the spawn plaza, the 3 launch pads aimed at
+-- the brick wall, the bike rack, and the landing field's distance boards (50 / 100 / 150 from the cannon).
+local function extras(into: Instance, o: Vector3, top: number)
+	-- The shop kiosk (on the raised plaza, 4 high): a small striped stall with a SHOP sign.
+	local sk = planAt(o, top + 4, "ShopKiosk")
+	part(into, "ShopKiosk", Vector3.new(10, 7, 8), CFrame.new(sk + Vector3.new(0, 3.5, 0)), Color3.fromRGB(250, 240, 220), Enum.Material.WoodPlanks)
+	part(into, "ShopAwning", Vector3.new(11, 0.4, 4), CFrame.new(sk + Vector3.new(4, 7.2, 0)) * CFrame.Angles(0, math.rad(90), math.rad(-15)), Color3.fromRGB(60, 140, 220), Enum.Material.Fabric, true)
+	nameSign(into, sk + Vector3.new(6.5, 0, -5), Vector3.new(1, 0, 0), "SHOP")
+	-- The 3 launch pads, side by side, aimed west at the brick wall.
+	local lp = planAt(o, top, "LaunchPads")
+	for k = -1, 1 do
+		local p = lp + Vector3.new(0, 0, k * 16)
+		part(into, "LaunchPad", Vector3.new(12, 0.6, 12), CFrame.new(p + Vector3.new(0, 0.3, 0)), Color3.fromRGB(78, 82, 90), Enum.Material.DiamondPlate)
+		part(into, "LaunchPadArrow", Vector3.new(6, 0.05, 1.4), CFrame.new(p + Vector3.new(0, 0.65, 0)), Color3.fromRGB(255, 200, 40), Enum.Material.SmoothPlastic, true)
+	end
+	-- The bike rack.
+	local br = planAt(o, top, "BikeRack")
+	for k = -3, 3 do
+		part(into, "BikeRackBar", Vector3.new(0.3, 2.4, 3), CFrame.new(br + Vector3.new(k * 3.6, 1.2, 0)), Color3.fromRGB(150, 154, 160), Enum.Material.Metal, true)
+	end
+	part(into, "BikeRackRail", Vector3.new(26, 0.3, 0.3), CFrame.new(br + Vector3.new(0, 2.4, 0)), Color3.fromRGB(150, 154, 160), Enum.Material.Metal, true)
+	-- The landing field's distance boards, west of the cannon.
+	local cn = planAt(o, top, "Cannon")
+	for _, d in { 50, 100, 150 } do
+		local at = cn + Vector3.new(-d, 0, -26)
+		if not onPath(at, 1) then
+			nameSign(into, at, Vector3.new(0, 0, 1), tostring(d))
+		end
+	end
+end
+
 -- M7: the old lab frame goes (the LAB10 compound and park, the plot's floor, spawn disc, edges, barriers, cones, signs and
 -- the zone pads): invisible and walked through, the new ground is under it.
 LabOwnerMap.HIDE_IN_LAB = { LabV10 = true, LabZonePads = true, ZonePads = true, LabGarden = true, Paths = true }
@@ -1425,6 +1456,7 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	belts(into, origin, origin.Y - 0.05)
 	parks(into, origin, origin.Y - 0.05)
 	yards(into, origin, origin.Y - 0.05)
+	extras(into, origin, origin.Y - 0.05)
 	hills(origin)
 end
 

@@ -190,6 +190,7 @@ if Config.LAB_OWNERMAP then
 	LabLayout10.CARS.MuscleCar = V(-394, -95) -- the bays: tank, monster truck, blue car
 	LabLayout10.CARS.Truck = V(-370, -95)
 	LabLayout10.CARS.Car = V(-346, -95)
+	LabLayout10.CARS.Bike = V(-235, 95) -- the BikeRack
 	LabLayout10.TRAMPOLINE = V(30, 90)
 	LabLayout10.STRETCH = V(245, -48)
 	LabLayout10.MOVES.Lava = Vector3.new(-215 + 111, 0, -85 + 28) -- the boxing ring at (-215, -85)
