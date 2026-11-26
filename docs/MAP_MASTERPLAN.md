@@ -7,6 +7,20 @@
 - `art/store/look_target/lab_ref/ref_6.webp` … `ref_10.webp`: the main views (from the tower top, north-west, north-east, east, west, straight down);
 - `ref_1` … `ref_5`: extra angles (`ref_1` is the spawn plaza with the 4 leaderboards);
 - `docs/LAB_TARGET.md` R3.1 (everything in it) and R3.2 (the 1:1 positions, in studs).
+- **NEW, the owner's phone screenshots of the old map (26 Nov late): THE MAIN SIZE AND DENSITY REFERENCE:** `ref_11_phone.png`, `ref_12_phone.png`, `ref_13_phone.png` (ground level, from near the tower). Ignore the old HUD in them; they are about the MAP. What they show:
+  - **everything is a few steps apart:**
+    - the tower with its stairs and slide, the rocket gantry, the doghouse and the round light-grey plaza with benches right beside the tower;
+    - the boxing ring, the brick wall, the red barrel groups, the monster truck and the blue car on painted bays just past it;
+    - the glass aquarium (a raised concrete tank with blue water) and the leaderboard plaza (wooden fence, 4 boards) next to them;
+    - the cave dome behind;
+    - on the other side the sandcastle tower with crates and a wooden fence, the beige car, the press/gantry, the fan, the sandbox, the pool, the lava strip with its fence, the wooden grandstand, and the train garage on the rail;
+  - **walkways:** about 12-14 studs wide, light grey tiles, straight, with simple corners;
+  - **grass:** wide open flat bright grass between them, no clutter;
+  - **trees:** only a FEW: thin conifer rows far at the edge in front of the hills, and 3-4 round trees inside;
+  - **the cave:** a grey rock DOME with a dark arched opening cut INTO it (the F79 cave must read like this, never a ball plus a separate black slab);
+  - **the hills:** smooth rolling green hills fill the horizon all round.
+
+  Build the map so the same three views look like these.
 
 **What the references look like, and the map must look like this:**
 - **Compact and open:**
