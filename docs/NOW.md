@@ -11,6 +11,17 @@ For each item:
 - write a Danish **"Test selv"** list;
 - mark the item done here.
 
+0. **WEAPONS list: no BUY, no TRY FREE, only the next weapon shows its KOs** (owner, 26 Nov 2026; do this first, it is small).
+   > "Gør så man ikke kan se "Buy" ved hver ting i WEAPONS, men man kun kan se hvor mange KOs man mangler. Så man skal kun kunne se hvor mange KO's man mangler ved det våben man er kommet til, ikke hvor mange KO's det tager at få en sniper fx. og fjern try free ved alle våbene."
+   - **File:** `StarterPlayerScripts/.../Client/ToolCatalog.luau` (BUY around line 200-225, TRY FREE around 650-690, the count line at 288, the intro at 427).
+   - **Remove BUY** from every weapon card in WEAPONS. Behind a Config switch (`WEAPONS_NO_BUY = true`); the weapon products stay live in the shop, only the cards lose the button.
+   - **Remove TRY FREE** from every weapon card (`WEAPONS_NO_TRY = true`). Also stop the "free try is over … or BUY it" toast and any other TRY FREE prompt (TrialService, ProgressService). Do not delete TrialService; just switch it off.
+   - **The KO bar shows only on the next weapon to earn** (the first locked one in unlock order): "12 KOs to go" plus its bar. Every later locked weapon shows a lock and "Locked" only, with no number and no bar.
+   - **Unlocked weapons:** EQUIP as now.
+   - **Texts:** the line "Locked: earn KOs, BUY, or TRY FREE for 2 min" becomes "Earn KOs to unlock the next weapon". The intro loses "or BUY".
+   - **Test selv:** open WEAPONS on PC and on a phone. There are no BUY or TRY FREE buttons, only one card shows "X KOs to go", and the rest say Locked.
+   - This overrides item 8's "TRY before buy" and "Get it now" for weapons.
+
 1. **Ragdolls fall through or half into the ground.**
    - Find the cause: a thin floor for fast bodies, the pad floor, new dummy masses, the time bubble, or spawning half inside the floor.
    - Fix: an invisible thick safety floor under the lab and every map; bodies always created above the floor; any body below the floor put back.
@@ -65,12 +76,12 @@ For each item:
    - **The shop opens more:**
      - a clear SHOP button;
      - the booths in the lab show a real, cheap, cool item;
-     - the "Next weapon" bar offers "Get it now".
+     - (not on weapons: item 0 removes BUY there).
    - **More presses buy:**
      - one cheap starter offer first (R$ 25-49, clear big value);
      - a few strong items up front instead of a wall of passes;
      - "Popular" and "Best value" tags from the real sales;
-     - TRY before buy on everything that can be tried;
+     - TRY before buy on things that can be tried (not weapons, see item 0);
      - pictures and 3D that show what you get.
    - **Move the best sellers forward** in the lab and the shop, and rework or move the weak ones. Change what is shown in the lab.
    - **New items:**
