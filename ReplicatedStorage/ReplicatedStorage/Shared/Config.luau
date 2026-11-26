@@ -57,6 +57,7 @@ local Config = {
 	BRICK_WALL = true, -- OVERVIEW 1d: the crash wall breaks one brick at a time with gravity (hybrid panels, sleeping debris, cap 50; Systems/BrickWall)
 	SOLO_HIDE = true, -- OVERVIEW 2 / F30: in the START place, other players (characters, name tags, sounds, effects) are hidden on this screen if a server ever holds 2+ (Client/SoloHide)
 	M10_CANNON = true, -- MACHINES_10 3.1: the cannon's fuse spark + "Cover your ears!", then the landing distance pops ("123 studs!", NEW BEST, 1 in 20 GOLDEN) (Playground cannonWindUp/cannonScore)
+	RAGDOLL_NAV = true, -- OVERVIEW 0.95: every walk longer than 8 studs follows a PathfindingService path (radius 2, no-go lava/water/beds/rails), with a stuck guard (Systems/RagdollNav)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays

@@ -2055,26 +2055,25 @@ local function spawnSet(into: Instance, o: Vector3, top: number)
 					end)
 					if okDesc and desc then
 						fr.statue = statueOf(set, desc, fr.at, Vector3.new(0, 0, 1), GOLD, Enum.Material.Foil, VICTORY)
-						if fr.statue then
-							local head = fr.statue:FindFirstChild("Head")
-							if head and head:IsA("BasePart") then
-								local bb = Instance.new("BillboardGui")
-								bb.Size = UDim2.fromOffset(160, 30)
-								bb.StudsOffsetWorldSpace = Vector3.new(0, 2.2, 0)
-								bb.MaxDistance = 90
-								bb.Adornee = head
-								local l = Instance.new("TextLabel")
-								l.BackgroundTransparency = 1
-								l.Size = UDim2.fromScale(1, 1)
-								l.Font = Enum.Font.FredokaOne
-								l.TextScaled = true
-								l.TextColor3 = GOLD
-								l.TextStrokeTransparency = 0.3
-								l.Text = if first then "#1 " .. tostring(first.name) else "#1 COULD BE YOU"
-								l.Parent = bb
-								bb.Parent = fr.statue
-							end
+						-- (OVERVIEW 0.99: no floating text; the name sits on a small plaque on the plinth's front)
+						if fr.plaque then
+							fr.plaque:Destroy()
 						end
+						local plaque = part(set, "StatuePlaque", Vector3.new(3.4, 0.9, 0.1), CFrame.new(fr.at + Vector3.new(0, -1, 2.05)), Color3.fromRGB(40, 36, 28), Enum.Material.Metal, true)
+						local sg = Instance.new("SurfaceGui")
+						sg.Face = Enum.NormalId.Back
+						sg.CanvasSize = Vector2.new(200, 52)
+						sg.LightInfluence = 0.3
+						local l = Instance.new("TextLabel")
+						l.BackgroundTransparency = 1
+						l.Size = UDim2.fromScale(1, 1)
+						l.Font = Enum.Font.FredokaOne
+						l.TextScaled = true
+						l.TextColor3 = GOLD
+						l.Text = if first then "#1 " .. tostring(first.name) else "#1 COULD BE YOU"
+						l.Parent = sg
+						sg.Parent = plaque
+						fr.plaque = plaque
 					end
 				end
 			end
