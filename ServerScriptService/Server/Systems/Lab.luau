@@ -538,6 +538,9 @@ end
 
 -- A bang: the cowards near it run away from whoever made it.
 local function heard(kind: string, position: Vector3, speed: number, toyId: string, sourceUserId: number?)
+	if (Config :: any).FEAR_WEAPONS == false then
+		return -- (ALWAYS3 update: not afraid of a shot as such; a real hit still knocks them about)
+	end
 	if (kind ~= "Hit" and kind ~= "Shot") or toyId == "Heal" or toyId == "Balloon" or (quietInTests and testing()) then
 		return
 	end
@@ -725,6 +728,9 @@ local function roam(plot: Plot, slot: Slot, now: number)
 	if model:GetAttribute("TryFor") ~= nil then
 		return -- (FIRST_2_MIN: called by TRY, it waits by the player)
 	end
+	if model:GetAttribute("Role3") ~= nil then
+		return -- (ALWAYS3 update: a chatter or the comer stays in its role)
+	end
 	local state = model:GetAttribute("RagdollState")
 	if state and state ~= "Standing" and state ~= "Walking" and state ~= "Fleeing" then
 		return -- (down, getting up, in the air: no wandering)
@@ -769,6 +775,112 @@ local threeAt = 0
 local threeLineAt: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
 local recruits: { [Model]: { slot: Slot, untilAt: number, walked: boolean, player: Player } } = setmetatable({}, { __mode = "k" }) :: any
 
+-- ALWAYS3 update (owner, 26 Nov 2026: "de 2 andre skal bare stå og snakke, 1 skal gå helt hen, og det skal skifte lidt"):
+-- of the ragdolls near the player, 2 CHATTERS stand together 8-14 studs off, facing each other, taking turns with a
+-- bubble line; 1 COMER walks right up (about 4 studs, facing the player) and says hello. Every 15-25 s the roles
+-- swap; 1 time in 4 nobody comes and all chat. A model with a role (Role3) is left alone by the roaming.
+local CHAT_LINES = { "Did you see that?", "Nope. Didn't see a thing.", "Nice weather for it.", "I'm on my break.", "He looks friendly.", "Is this a test?" }
+local COMER_LINES = { "Hi!", "Can I help you?", "You dropped something.", "Are you new here?" }
+type Roles = { comer: Model?, chatters: { Model }, swapAt: number, chatAt: number, turn: number, comerFrom: Vector3? }
+local roles: { [Player]: Roles } = setmetatable({}, { __mode = "k" }) :: any
+
+local function bubble(model: Model, line: string)
+	model:SetAttribute("MoodSay", line)
+	task.delay(3, function()
+		if model.Parent and model:GetAttribute("MoodSay") == line then
+			model:SetAttribute("MoodSay", nil)
+		end
+	end)
+end
+
+local function setRole(model: Model, role: string?, home: Vector3?, look: Vector3?)
+	model:SetAttribute("Role3", role)
+	if home then
+		model:SetAttribute("Home", home)
+	end
+	if look then
+		model:SetAttribute("HomeLook", look)
+	end
+end
+
+local function assignRoles(player: Player, root: BasePart, near: { Model }, now: number)
+	local r = roles[player]
+	local isNear: { [Model]: boolean } = {}
+	for _, m in near do
+		isNear[m] = true
+	end
+	-- (Anyone with a role who is no longer near and free loses it.)
+	if r then
+		local keep = true
+		if r.comer and not isNear[r.comer] then
+			keep = false
+		end
+		for _, c in r.chatters do
+			if not isNear[c] then
+				keep = false
+			end
+		end
+		if not keep or now >= r.swapAt then
+			if r.comer then
+				setRole(r.comer, nil)
+			end
+			for _, c in r.chatters do
+				setRole(c, nil)
+			end
+			roles[player] = nil
+			r = nil
+		end
+	end
+	if not r then
+		if #near < 2 then
+			return
+		end
+		-- New roles: shuffle, then 1 comer (or none, 1 in 4) and 2 chatters.
+		local list = table.clone(near)
+		for i = #list, 2, -1 do
+			local j = math.random(1, i)
+			list[i], list[j] = list[j], list[i]
+		end
+		local comer: Model? = nil
+		if #list >= 3 and math.random() >= 0.25 then
+			comer = table.remove(list, 1)
+		end
+		local chatters = { list[1], list[2] }
+		local fresh: Roles = { comer = comer, chatters = chatters, swapAt = now + 15 + math.random() * 10, chatAt = now + 2, turn = 1, comerFrom = nil }
+		roles[player] = fresh
+		r = fresh
+		-- The chatters: a spot 8-14 studs off, side by side, facing each other.
+		local a = math.random() * math.pi * 2
+		local d = 8 + math.random() * 6
+		local mid = root.Position + Vector3.new(math.cos(a) * d, 0, math.sin(a) * d)
+		local side = Vector3.new(-math.sin(a), 0, math.cos(a)) * 1.7
+		for k, c in chatters do
+			local pelvis = c:FindFirstChild("LowerTorso")
+			local y = if pelvis and pelvis:IsA("BasePart") then pelvis.Position.Y else root.Position.Y
+			local at = mid + side * (if k == 1 then 1 else -1)
+			setRole(c, "Chat", Vector3.new(at.X, y, at.Z), Vector3.new((mid - side * (if k == 1 then 1 else -1)).X, y, (mid - side * (if k == 1 then 1 else -1)).Z))
+		end
+		if comer then
+			bubble(comer, COMER_LINES[math.random(1, #COMER_LINES)])
+		end
+	end
+	-- The comer stays about 4 studs in front of the player (follows when they walk off).
+	local comer = r.comer
+	if comer and (not r.comerFrom or (r.comerFrom - root.Position).Magnitude > 6) then
+		r.comerFrom = root.Position
+		local pelvis = comer:FindFirstChild("LowerTorso")
+		local y = if pelvis and pelvis:IsA("BasePart") then pelvis.Position.Y else root.Position.Y
+		local front = root.Position + root.CFrame.LookVector * 4
+		setRole(comer, "Come", Vector3.new(front.X, y, front.Z), Vector3.new(root.Position.X, y, root.Position.Z))
+	end
+	-- The chatters take turns: one line every 4-6 s.
+	if now >= r.chatAt and #r.chatters == 2 then
+		r.chatAt = now + 4 + math.random() * 2
+		r.turn = 3 - r.turn
+		bubble(r.chatters[r.turn], CHAT_LINES[math.random(1, #CHAT_LINES)])
+	end
+end
+
 local function freeToCall(model: Model): boolean
 	if model:GetAttribute("Vital") == "Dead" or model:GetAttribute("CommandedBy") ~= nil or model:GetAttribute("InMachine") ~= nil then
 		return false
@@ -789,6 +901,7 @@ local function alwaysThree(plot: Plot, now: number)
 		return -- (on another map, or far outside the lab)
 	end
 	local near, onWay = 0, 0
+	local nearList: { Model } = {}
 	local far: { { slot: Slot, model: Model, d: number } } = {}
 	for _, slot in plot.slots do
 		local model = slot.model
@@ -820,12 +933,16 @@ local function alwaysThree(plot: Plot, now: number)
 				local d = (pelvis.Position - root.Position).Magnitude
 				if d <= THREE_NEAR then
 					near += 1
+					if model:GetAttribute("TryFor") == nil then
+						table.insert(nearList, model)
+					end
 				elseif not slot.target and not slot.socialKind then
 					table.insert(far, { slot = slot, model = model, d = d })
 				end
 			end
 		end
 	end
+	assignRoles(player, root, nearList, now)
 	local missing = 3 - near - onWay
 	if missing <= 0 or onWay >= THREE_MAX_WAY then
 		return
@@ -842,7 +959,7 @@ local function alwaysThree(plot: Plot, now: number)
 		recruits[pick.model] = { slot = pick.slot, untilAt = now + THREE_GIVE_UP, walked = walked, player = player }
 		pick.slot.roamHome = spot
 		pick.slot.nextRoamAt = now + THREE_GIVE_UP + 1
-		pick.model:SetAttribute("Pace", if walked then nil else 1.6)
+		pick.model:SetAttribute("Pace", if walked then 1.4 else 2.2) -- (ALWAYS3 update: they come FAST)
 		pick.model:SetAttribute("Home", spot)
 		pick.model:SetAttribute("HomeLook", Vector3.new(root.Position.X, spot.Y, root.Position.Z))
 	end

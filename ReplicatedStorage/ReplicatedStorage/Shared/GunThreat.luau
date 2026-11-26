@@ -16,6 +16,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Toys = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Toys"))
+-- (ALWAYS3 update, owner 26 Nov 2026: "Dummies skal ikke være bange for våben i sig selv": Config.FEAR_WEAPONS false = no
+-- fleeing, hands up or scared face from a gun held, pointed or fired; they react only when really hit.)
+local FEARLESS = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).FEAR_WEAPONS == false
 
 local GunThreat = {}
 
@@ -77,6 +80,9 @@ end
 -- and whether ANY gun pointed at it within that reach is raised (several players: one fires, the
 -- fright is back, whoever is nearest); or nil.
 function GunThreat.near(position: Vector3, reach: number): (Vector3?, Player?, number, boolean)
+	if FEARLESS then
+		return nil, nil, reach, false
+	end
 	local best: Vector3? = nil
 	local bestPlayer: Player? = nil
 	local bestDistance = reach
@@ -93,6 +99,9 @@ end
 -- Where a coward at `position` runs from: the nearest gun pointed at it that is raised (within
 -- RUN_REACH) or pushed right up to it (within CLOSE_RUN), whoever holds it; or nil.
 function GunThreat.cowardRunsFrom(position: Vector3): Vector3?
+	if FEARLESS then
+		return nil
+	end
 	local best: Vector3? = nil
 	local bestDistance = math.huge
 	eachAimed(position, GunThreat.RUN_REACH, function(head, _, d, raised)
