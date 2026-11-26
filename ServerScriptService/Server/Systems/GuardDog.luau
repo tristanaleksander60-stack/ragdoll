@@ -82,6 +82,7 @@ local function whistle(player: Player, house: Vector3)
 	m:PivotTo(CFrame.new(house + Vector3.new(0, lift, 3)))
 	m.Parent = Workspace
 	dogs[player] = { model = m, lift = lift, state = "Follow", target = nil, limb = nil, biteAt = 0, lastBite = 0, lastOrder = os.clock(), house = house }
+	;(dogs[player] :: any).yaw = (template:GetAttribute("ForwardYaw") :: number?) or 0 -- (F22: the head is not on the LookVector)
 	player:SetAttribute("DogOut", true)
 	pcall(function()
 		lazy("Funnels").used(player, "DogWhistled")
@@ -194,9 +195,55 @@ local function bite(player: Player, d: Dog)
 	end)
 end
 
+-- F22 (owner, 26 Nov 2026: "hunden skal bevæge sig meget mere realistisk ... vender den forkerte vej når den bider"):
+--   * Facing: the model's head is not on its LookVector; every placement goes through place() with the template's
+--     ForwardYaw attribute (the German Shepherd: pi), the one place the forward offset lives.
+--   * It moves along its heading, which turns toward where it wants to go at TURN rad/s (arcs, never a spin on the
+--     spot); its speed eases up and down (ACCEL, BRAKE); the gait follows the speed (walk: a small head bob; trot;
+--     gallop: a big bound and the back stretching), its beat driven by the distance covered, so nothing slides.
+--   * The body tilts with the slope under it (front and back feet).
+--   * Following: on your right, about 5 studs back; slows to a walk near you; standing by you it turns to look at you,
+--     sits after SIT_AFTER s and lies down after LIE_AFTER s.
+--   * The bite: eyes on the target, a short crouch, a sprint, slowing in the last few studs, then it stops with its
+--     head (HEAD_REACH studs ahead of the body) on the limb, facing it, leaning back as it tugs and shakes; then a
+--     wet-dog shake of the whole body and it trots back.
+GuardDog.TURN = 5
+GuardDog.ACCEL = 34
+GuardDog.BRAKE = 50
+GuardDog.HEAD_REACH = 3
+GuardDog.CROUCH = 0.35
+GuardDog.SHAKE = 0.8
+GuardDog.SIT_AFTER = 6
+GuardDog.LIE_AFTER = 20
+
+local function flatOf(v: Vector3): Vector3
+	return Vector3.new(v.X, 0, v.Z)
+end
+
+local function turnToward(heading: Vector3, want: Vector3, rate: number, dt: number): Vector3
+	if want.Magnitude < 1e-3 then
+		return heading
+	end
+	local t = want.Unit
+	local dot = math.clamp(heading:Dot(t), -1, 1)
+	local a = math.acos(dot)
+	if a < 1e-3 then
+		return t
+	end
+	local turn = math.min(a, rate * dt)
+	local side = if heading:Cross(t).Y >= 0 then 1 else -1
+	return (CFrame.Angles(0, turn * side, 0) * heading).Unit
+end
+
+local function place(d: any, pos: Vector3, heading: Vector3, extra: CFrame?)
+	local h = if heading.Magnitude > 1e-3 then heading.Unit else Vector3.zAxis
+	d.model:PivotTo(CFrame.lookAt(pos, pos + h) * (extra or CFrame.identity) * CFrame.Angles(0, d.yaw or 0, 0)) -- (the pose in the heading's own frame: +X tips the nose up)
+end
+
 local function step(dt: number)
 	local now = os.clock()
-	for player, d in dogs do
+	for player, d0 in dogs do
+		local d: any = d0
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		if not player.Parent or not d.model.Parent or not root or not root:IsA("BasePart") then
@@ -207,30 +254,61 @@ local function step(dt: number)
 			sendHome(player)
 			continue
 		end
+		local skip = { d.model, character :: Instance }
 		local here = d.model:GetPivot().Position
-		local goal: Vector3
-		local speed = GuardDog.FOLLOW_SPEED
+		d.heading = d.heading or flatOf(root.Position - here)
+		if d.heading.Magnitude < 1e-3 then
+			d.heading = Vector3.zAxis
+		end
+		d.v = d.v or 0
+		d.phase = d.phase or 0
+		local function ground(at: Vector3): number
+			return floorUnder(at, skip) + d.lift
+		end
+		local function tilt(at: Vector3, heading: Vector3): number
+			local f = floorUnder(at + heading * 2, skip)
+			local b = floorUnder(at - heading * 2, skip)
+			return math.clamp(math.atan2(f - b, 4), -0.5, 0.5)
+		end
 		if d.state == "Run" or d.state == "Bite" then
 			local limb = d.limb
-			if not limb or not limb.Parent or not d.target or d.target:GetAttribute("Vital") == "Dead" and d.state == "Run" then
-				d.state = "Follow"
+			if not limb or not limb.Parent or not d.target or (d.target:GetAttribute("Vital") == "Dead" and d.state == "Run") then
+				d.state, d.crouchUntil = "Follow", nil
 				continue
 			end
-			goal = limb.Position
-			speed = GuardDog.RUN_SPEED
-			local flatGap = Vector3.new(goal.X - here.X, 0, goal.Z - here.Z).Magnitude
-			if d.state == "Run" and flatGap < 2.5 then
-				d.state, d.biteAt = "Bite", now
-				bite(player, d)
+			local toLimb = flatOf(limb.Position - here)
+			local gap = toLimb.Magnitude
+			if d.state == "Run" then
+				-- Eyes on it, a short crouch, then the sprint.
+				if not d.crouchUntil then
+					d.crouchUntil = now + GuardDog.CROUCH
+					d.v = 0
+				end
+				if now < d.crouchUntil then
+					d.heading = turnToward(d.heading, toLimb, GuardDog.TURN * 1.5, dt)
+					place(d, Vector3.new(here.X, ground(here) - 0.3, here.Z), d.heading, CFrame.Angles(-0.06, 0, 0))
+					continue
+				end
+				if gap < GuardDog.HEAD_REACH + 0.4 then
+					d.state, d.biteAt, d.crouchUntil, d.biteSpot = "Bite", now, nil, here
+					d.v = 0
+					bite(player, d)
+				else
+					local want = if gap < GuardDog.HEAD_REACH + 3 then GuardDog.RUN_SPEED * 0.3 else GuardDog.RUN_SPEED
+					d.v += math.clamp(want - d.v, -GuardDog.BRAKE * dt, GuardDog.ACCEL * 1.5 * dt)
+					d.heading = turnToward(d.heading, toLimb, GuardDog.TURN * 1.4, dt)
+				end
 			end
 			if d.state == "Bite" then
-				-- The shake: the head goes side to side on the limb, then it lets go.
-				local wag = math.sin((now - d.biteAt) * 22) * 0.5
-				local look = Vector3.new(goal.X - here.X, 0, goal.Z - here.Z)
-				local face = if look.Magnitude > 0.05 then look.Unit else Vector3.zAxis
-				d.model:PivotTo(CFrame.lookAt(here, here + face) * CFrame.Angles(0, wag, 0))
-				if now - d.biteAt > GuardDog.BITE_TIME then
-					d.state, d.lastBite = "Follow", now
+				-- Facing the limb, leaning back and tugging, the head shaking it.
+				d.heading = turnToward(d.heading, toLimb, GuardDog.TURN * 2, dt)
+				local t = now - d.biteAt
+				local tug = math.sin(t * 9) * 0.25
+				local spot = d.biteSpot or here
+				local pos = Vector3.new(spot.X, ground(spot), spot.Z) - d.heading * (0.15 + tug * 0.2)
+				place(d, pos, d.heading, CFrame.Angles(-0.12, math.sin(t * 22) * 0.18, math.sin(t * 22) * 0.06))
+				if t > GuardDog.BITE_TIME then
+					d.state, d.lastBite, d.shakeUntil = "Shake", now, now + GuardDog.SHAKE
 					local r = remote
 					if r then
 						r:FireClient(player, "GoodBoy")
@@ -238,28 +316,58 @@ local function step(dt: number)
 				end
 				continue
 			end
+		elseif d.state == "Shake" then
+			-- The wet-dog shake: the whole body twists fast side to side.
+			local pos = Vector3.new(here.X, ground(here), here.Z)
+			place(d, pos, d.heading, CFrame.Angles(0, 0, math.sin(now * 42) * 0.28))
+			if now >= (d.shakeUntil or 0) then
+				d.state = "Follow"
+			end
+			continue
 		else
-			goal = root.Position + root.CFrame.RightVector * 3 - root.CFrame.LookVector * 3
+			-- Following: on your right, about 5 studs back; slower close to you.
+			local goal = root.Position + root.CFrame.RightVector * 3 - root.CFrame.LookVector * 4
+			local move = flatOf(goal - here)
+			local dist = move.Magnitude
+			local want = if dist < 1.2 then 0 else GuardDog.FOLLOW_SPEED * math.clamp((dist - 1) / 8, 0.25, 1)
+			if dist > 24 then
+				want = GuardDog.RUN_SPEED -- (left far behind: it gallops to catch up)
+			end
+			d.v += math.clamp(want - d.v, -GuardDog.BRAKE * dt, GuardDog.ACCEL * dt)
+			if d.v > 0.3 then
+				d.heading = turnToward(d.heading, move, GuardDog.TURN, dt)
+				d.idleSince = nil
+			else
+				-- Standing by you: it turns to look at you, sits, and lies down after a while.
+				d.v = 0
+				d.idleSince = d.idleSince or now
+				d.heading = turnToward(d.heading, flatOf(root.Position - here), GuardDog.TURN * 0.6, dt)
+				local idle = now - d.idleSince
+				local pos = Vector3.new(here.X, ground(here), here.Z)
+				local pose: CFrame
+				if idle > GuardDog.LIE_AFTER then
+					pos -= Vector3.new(0, 0.55, 0)
+					pose = CFrame.Angles(0, math.sin(now * 0.7) * 0.03, 0)
+				elseif idle > GuardDog.SIT_AFTER then
+					pos -= Vector3.new(0, 0.25, 0)
+					pose = CFrame.Angles(0.22, 0, 0) -- (the front up, sitting)
+				else
+					pose = CFrame.Angles(math.sin(now * 3) * 0.015, math.sin(now * 9) * 0.05, 0) -- (breathing, a happy wiggle)
+				end
+				place(d, pos + Vector3.new(0, math.sin(now * 3) * 0.03, 0), d.heading, pose)
+				continue
+			end
 		end
-		local move = Vector3.new(goal.X - here.X, 0, goal.Z - here.Z)
-		local dist = move.Magnitude
-		if dist > 0.4 then
-			local stepLen = math.min(dist, speed * dt)
-			local next = here + move.Unit * stepLen
-			local y = floorUnder(next, { d.model, character :: Instance }) + d.lift
-			-- (F10: a trot: the body bobs and rocks with the step, faster and higher at a run.)
-			local fast = speed >= GuardDog.RUN_SPEED
-			local beat = now * (if fast then 16 else 11)
-			local bob = math.abs(math.sin(beat)) * (if fast then 0.35 else 0.18)
-			local pos = Vector3.new(next.X, y + bob, next.Z)
-			d.model:PivotTo(CFrame.lookAt(pos, pos + move.Unit) * CFrame.Angles(math.sin(beat) * 0.04, 0, math.sin(beat * 0.5) * 0.05))
-		else
-			-- (F10: standing by you: it breathes and wags, the body wiggling a little.)
-			local flat = Vector3.new(here.X, floorUnder(here, { d.model, character :: Instance }) + d.lift, here.Z)
-			local look = Vector3.new(root.Position.X - here.X, 0, root.Position.Z - here.Z)
-			local face = if look.Magnitude > 0.05 then look.Unit else d.model:GetPivot().LookVector
-			d.model:PivotTo(CFrame.lookAt(flat + Vector3.new(0, math.sin(now * 3) * 0.04, 0), flat + face) * CFrame.Angles(0, math.sin(now * 9) * 0.06, 0))
-		end
+		-- Moving: along its heading (so it turns in arcs), the gait by speed, its beat by the distance covered.
+		local pos = here + d.heading * d.v * dt
+		d.phase += d.v * dt * 0.55
+		local gallop = d.v > 30
+		local trot = d.v > 12
+		local beat = d.phase * math.pi
+		local bob = if gallop then math.abs(math.sin(beat)) * 0.4 elseif trot then math.abs(math.sin(beat * 2)) * 0.16 else math.abs(math.sin(beat * 2)) * 0.06
+		local pitch = tilt(pos, d.heading) + (if gallop then math.sin(beat) * 0.12 elseif trot then math.sin(beat * 2) * 0.03 else math.sin(beat * 2) * 0.02)
+		local roll = if trot and not gallop then math.sin(beat) * 0.05 else 0
+		place(d, Vector3.new(pos.X, ground(pos) + bob, pos.Z), d.heading, CFrame.Angles(pitch, 0, roll))
 	end
 end
 
