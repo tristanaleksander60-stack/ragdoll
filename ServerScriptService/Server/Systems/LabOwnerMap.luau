@@ -1324,11 +1324,7 @@ end
 -- MAP ROUND 3, the plan items that had nothing built yet: the shop kiosk on the spawn plaza, the 3 launch pads aimed at
 -- the brick wall, the bike rack, and the landing field's distance boards (50 / 100 / 150 from the cannon).
 local function extras(into: Instance, o: Vector3, top: number)
-	-- The shop kiosk (on the raised plaza, 4 high): a small striped stall with a SHOP sign.
-	local sk = planAt(o, top + 4, "ShopKiosk")
-	part(into, "ShopKiosk", Vector3.new(10, 7, 8), CFrame.new(sk + Vector3.new(0, 3.5, 0)), Color3.fromRGB(250, 240, 220), Enum.Material.WoodPlanks)
-	part(into, "ShopAwning", Vector3.new(11, 0.4, 4), CFrame.new(sk + Vector3.new(4, 7.2, 0)) * CFrame.Angles(0, math.rad(90), math.rad(-15)), Color3.fromRGB(60, 140, 220), Enum.Material.Fabric, true)
-	nameSign(into, sk + Vector3.new(6.5, 0, -5), Vector3.new(1, 0, 0), "SHOP")
+	-- (Owner, 26 Nov: the shop kiosk is gone; the SHOP button stays.)
 	-- The 3 launch pads, side by side, aimed west at the brick wall.
 	local lp = planAt(o, top, "LaunchPads")
 	for k = -1, 1 do
@@ -1405,6 +1401,26 @@ end
 
 function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	LabOwnerMap.origin = origin
+	-- (OVERVIEW 0.5, Config.SPAWN_UPRIGHT: the lab's ragdolls were laid out before the raised plaza stood, so the ones on its
+	-- spot were inside it and fell over. Once the map stands, every ragdoll inside the plaza is set on top of it, upright.)
+	task.delay(1.5, function()
+		if not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SPAWN_UPRIGHT then
+			return
+		end
+		local pz = Plan.PLAZAS.SpawnPlaza
+		local dummies = Workspace:FindFirstChild("Dummies")
+		local DummyControl = require(script.Parent:WaitForChild("DummyControl")) :: any
+		for _, m in if dummies then dummies:GetChildren() else {} do
+			local pelvis = m:FindFirstChild("LowerTorso")
+			if m:IsA("Model") and pelvis and pelvis:IsA("BasePart") then
+				local l = Vector2.new(pelvis.Position.X - origin.X, pelvis.Position.Z - origin.Z) - pz.at
+				if math.abs(l.X) < pz.size.X / 2 + 2 and math.abs(l.Y) < pz.size.Y / 2 + 2 and pelvis.Position.Y < origin.Y + 6 then
+					local at = Vector3.new(pelvis.Position.X, origin.Y + 4 + 3.2, pelvis.Position.Z)
+					pcall(DummyControl.move, m, CFrame.lookAt(at, at + Vector3.zAxis))
+				end
+			end
+		end
+	end)
 	hideOld(folder, origin)
 	-- (M7: the 4 leaderboards stand in a row on the raised plaza, facing the stair; LeaderboardService makes them a little
 	-- later, so this waits for them.)
@@ -1433,7 +1449,7 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 					local _, size = b:GetBoundingBox()
 					local x = (i - (#boards + 1) / 2) * 30
 					local at = Vector3.new(origin.X - 30 + x, origin.Y + 4 + size.Y / 2, origin.Z + pz)
-					b:PivotTo(CFrame.lookAt(at, at - Vector3.new(0, 0, 1))) -- (their faces to the stair, south)
+					b:PivotTo(CFrame.lookAt(at, at + Vector3.new(0, 0, 1))) -- (OVERVIEW 0.6: measured, the screens then face +Z: south, to the spawn and the stair)
 					local _, newSize = b:GetBoundingBox()
 					local cf2 = b:GetBoundingBox()
 					b:PivotTo(b:GetPivot() + Vector3.new(0, (origin.Y + 4.3) - (cf2.Position.Y - newSize.Y / 2), 0))
