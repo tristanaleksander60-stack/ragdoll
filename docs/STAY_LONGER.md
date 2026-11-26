@@ -55,3 +55,8 @@ The median visit is about 2 minutes. Good Roblox games of this kind hold 10-20+ 
 - **Custom funnel steps:** gift claimed (per step), machines tried, surprise seen, best score, chest claimed. Split by device.
 - **Compare against the 26 Nov funnel after 2 days.**
 - **Success:** 5 min from 23 % → 40 %+, 10 min from 10 % → 25 %+.
+
+## State (26 Nov 2026, release 0.57.0, place v1114, NOT published: the owner presses Alt+P)
+- **1 done:** `PHONE_GIFT_TIMER`: the gift with its clock is shown on phones again (no red !, gold dot only, gift toasts still filtered); gifts at 1, 3, 5, 8, 12, 16 and 20 min (`PlaytimeGifts.AT`). **Left:** better rewards per step (a rare item at 20 min).
+- **2 done:** `TRY_REWARD` {6, 150 BOLTS}: ExperimentService counts the machines tried (`TriedCount`); the goal line says "Try CANNON 2/6"; at 6, +150 BOLTS once a visit (`TryRewardDone`). **Known issue:** a creature that eats a dummy on its own counts as tried.
+- **Left:** items 3-8 (a 2-min surprise, pacing check, a long goal, best scores, A/B shared servers, a daily chest).

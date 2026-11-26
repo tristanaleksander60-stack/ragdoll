@@ -217,6 +217,9 @@ ExperimentService.tossComboForTest = tossCombo
 
 -- Something a card may count happened (kind: Shared\Experiments.KINDS). `what` names the place for
 -- a TOSS COMBO pop ("the LAVA"; release 0.20).
+-- STAY_LONGER 2: the machines and creatures that count for the TRY reward.
+local TRY_MACHINES = { Cannon = true, Wrecking = true, Spider = true, Plant = true, Frog = true, Whale = true, Chicken = true, Washer = true, Slingshot = true, Mole = true, Vacuum = true, Tower = true }
+
 function ExperimentService.event(player: Player, kind: string, n: number?, what: string?)
 	-- (V8-0.8: the first use of each machine and creature this visit, for the visit record.)
 	pcall(function()
@@ -229,6 +232,23 @@ function ExperimentService.event(player: Player, kind: string, n: number?, what:
 	-- (LAB10 R2: the client's TRY ME chain moves on to the next untried machine: Client/LabShowcase.)
 	if Experiments.KINDS[kind] and player:GetAttribute("Tried_" .. kind) ~= true then
 		player:SetAttribute("Tried_" .. kind, true)
+		-- (STAY_LONGER 2: machines tried this visit, shown as "2/6" on the goal line; BOLTS at Config.TRY_REWARD.count.)
+		local reward = (Config :: any).TRY_REWARD
+		if reward and TRY_MACHINES[kind] then
+			local n = 0
+			for k in TRY_MACHINES do
+				if player:GetAttribute("Tried_" .. k) == true then
+					n += 1
+				end
+			end
+			player:SetAttribute("TriedCount", n)
+			if n >= reward.count and player:GetAttribute("TryRewardDone") ~= true then
+				player:SetAttribute("TryRewardDone", true)
+				pcall(function()
+					(require(script.Parent:WaitForChild("EconomyService")) :: any).give(player, reward.bolts, string.format("%d machines tried! +%d BOLTS", reward.count, reward.bolts))
+				end)
+			end
+		end
 	end
 	-- (V8-0.4: the hazard tip is never shown for a hazard already tried.)
 	if kind == "Hazard" and player:GetAttribute("HazardDone") ~= true then

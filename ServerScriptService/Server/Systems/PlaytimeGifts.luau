@@ -28,7 +28,7 @@ local log = Log.new("Gifts")
 
 local PlaytimeGifts = {}
 
-PlaytimeGifts.AT = { 120, 300, 600, 900 } -- s of play today for each gift (one weapon egg each)
+PlaytimeGifts.AT = if (Config :: any).PHONE_GIFT_TIMER then { 60, 180, 300, 480, 720, 960, 1200 } else { 120, 300, 600, 900 } -- s of play today for each gift (STAY_LONGER 1: the first one early, then about every 3-4 min up to 20)
 -- Phase 2 (Config.EGG_RATION): the gifts are BOLTS, not eggs (tests may turn it off).
 PlaytimeGifts.RATION = Config.EGG_RATION and Config.ECONOMY
 PlaytimeGifts.TEXT = "FREE GIFT for playing! A weapon egg is yours."

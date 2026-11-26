@@ -372,6 +372,16 @@ local SHORT: { [string]: string } = {
 	["the FROG"] = "FROG", ["the CHICKEN"] = "CHICKEN", ["the MOLE"] = "MOLE",
 }
 
+-- (STAY_LONGER 2: machines tried this visit, " 2/6", until the reward is given: ExperimentService.)
+local function countText(): string
+	local reward = Config.TRY_REWARD
+	if not reward or player:GetAttribute("TryRewardDone") == true then
+		return ""
+	end
+	local n = player:GetAttribute("TriedCount")
+	return string.format(" %d/%d", if type(n) == "number" then n else 0, reward.count)
+end
+
 local function tryMe()
 	local ring, sign = makeMarker()
 	local current: Machine? = nil
@@ -434,7 +444,7 @@ local function tryMe()
 				if os.clock() - lastSaid > 20 then
 					lastSaid = os.clock()
 					pcall(function()
-						(require(script.Parent:WaitForChild("HudV3")) :: any).moment("Try: " .. (SHORT[best.label] or "IT") .. "!", 6) -- (short: the goal pill cuts long lines)
+						(require(script.Parent:WaitForChild("HudV3")) :: any).moment("Try " .. (SHORT[best.label] or "IT") .. countText(), 6) -- (short: the goal pill cuts long lines)
 					end)
 				end
 			end

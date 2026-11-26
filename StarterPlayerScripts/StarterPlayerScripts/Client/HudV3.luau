@@ -631,7 +631,7 @@ local function step()
 		local giftButton = tg:FindFirstChild("Gift", true)
 		if giftButton and giftButton:IsA("GuiObject") then
 			-- (NOW 1.5: no gift on a phone at all: it is claimed from MENU > REWARDS. PhoneQuiet.)
-			giftButton.Visible = not (require(Client:WaitForChild("PhoneQuiet")) :: any).on() -- (V11 A1: a phone sees the gift while an egg waits)
+			giftButton.Visible = Config.PHONE_GIFT_TIMER or not (require(Client:WaitForChild("PhoneQuiet")) :: any).on() -- (STAY_LONGER 1: back on phones, quietly: its clock, a gold dot, no red !) (V11 A1: a phone sees the gift while an egg waits)
 		end
 	end
 	local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
