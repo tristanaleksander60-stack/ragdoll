@@ -2131,7 +2131,8 @@ local function poseRig(rig: Model, poses: { [string]: CFrame })
 		end
 	end
 end
-local function statueOf(into: Instance, desc: HumanoidDescription, at: Vector3, look: Vector3, color: Color3, mat: Enum.Material, poses: { [string]: CFrame }): Model?
+local function statueOf(into: Instance, desc: HumanoidDescription, at: Vector3, look: Vector3, color: Color3, mat: Enum.Material, poses: { [string]: CFrame }, keepSkin: boolean?): Model?
+	local SKIN = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).STATUE_SKIN == true
 	local ok, rig = pcall(function()
 		return game:GetService("Players"):CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R15)
 	end)
@@ -2150,18 +2151,24 @@ local function statueOf(into: Instance, desc: HumanoidDescription, at: Vector3, 
 	end
 	for _, d in rig:GetDescendants() do
 		if d:IsA("BasePart") then
-			d.Color = color
-			d.Material = mat
+			if not (SKIN and keepSkin) then -- (F77: a #1 statue keeps the player's own colours, face, clothes and accessories)
+				d.Color = color
+				d.Material = mat
+			end
 			d.CanCollide = false
 			d.CanTouch = false
 			d.CastShadow = true
 			d.Massless = true
-			if d:IsA("MeshPart") then
+			if d:IsA("MeshPart") and not (SKIN and keepSkin) then
 				d.TextureID = ""
 			end
+		elseif d:IsA("Script") or d:IsA("LocalScript") then
+			d:Destroy()
+		elseif SKIN and keepSkin then
+			continue
 		elseif d:IsA("SpecialMesh") then
 			d.TextureId = ""
-		elseif d:IsA("Decal") or d:IsA("Shirt") or d:IsA("Pants") or d:IsA("ShirtGraphic") or d:IsA("Script") or d:IsA("LocalScript") then
+		elseif d:IsA("Decal") or d:IsA("Shirt") or d:IsA("Pants") or d:IsA("ShirtGraphic") then
 			d:Destroy()
 		elseif d:IsA("SurfaceAppearance") then
 			d:Destroy()
@@ -2176,6 +2183,34 @@ local function statueOf(into: Instance, desc: HumanoidDescription, at: Vector3, 
 	local _, size = rig:GetBoundingBox()
 	local up = at + Vector3.new(0, size.Y / 2, 0)
 	rig:PivotTo(CFrame.lookAt(up, up + Vector3.new(look.X, 0, look.Z)))
+	if SKIN then
+		-- (F77: too big with its hat or wings: scaled down to 7 tall, 5 wide; then the soles set ON the plinth top, from the
+		-- feet themselves, never the bounding box: the raised arms and the hats made it float)
+		local _, ext = rig:GetBoundingBox()
+		local k = math.min(1, 7 / math.max(ext.Y, 0.1), 5 / math.max(math.max(ext.X, ext.Z), 0.1))
+		if k < 0.99 then
+			pcall(function()
+				rig:ScaleTo(rig:GetScale() * k)
+			end)
+		end
+		local low = math.huge
+		for _, name in { "LeftFoot", "RightFoot" } do
+			local foot = rig:FindFirstChild(name)
+			if foot and foot:IsA("BasePart") then
+				local h = foot.Size / 2
+				for _, sx in { -1, 1 } do
+					for _, sy in { -1, 1 } do
+						for _, sz in { -1, 1 } do
+							low = math.min(low, foot.CFrame:PointToWorldSpace(Vector3.new(sx * h.X, sy * h.Y, sz * h.Z)).Y)
+						end
+					end
+				end
+			end
+		end
+		if low < math.huge then
+			rig:PivotTo(rig:GetPivot() + Vector3.new(0, at.Y - low, 0))
+		end
+	end
 	rig.Parent = into
 	return rig
 end
@@ -2341,8 +2376,16 @@ local function spawnSet(into: Instance, o: Vector3, top: number)
 								end
 							end
 							letters(set, titleText, base + Vector3.new(0, size.Y + 4.2, 0), Vector3.new(0, 0, 1), 1.9, Color3.fromRGB(40, 44, 52), GOLD)
+							if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).STATUE_SKIN then
+								-- (F77: the plinth BESIDE the board (its right edge + 3), not in front of the names, with a gold top trim)
+								local side = base + Vector3.new(w / 2 + 5, 0, 2)
+								part(set, "StatuePlinth", Vector3.new(4, 2, 4), CFrame.new(side + Vector3.new(0, 1, 0)), Color3.fromRGB(46, 48, 54), Enum.Material.Granite)
+								part(set, "StatueTrim", Vector3.new(4.3, 0.22, 4.3), CFrame.new(side + Vector3.new(0, 2, 0)), GOLD, Enum.Material.Metal, true)
+								frames[b.Name] = { at = side + Vector3.new(0, 2.1, 0) }
+							else
 							part(set, "StatuePlinth", Vector3.new(4, 2, 4), CFrame.new(base + Vector3.new(0, 1, 7)), Color3.fromRGB(46, 48, 54), Enum.Material.Granite)
 							frames[b.Name] = { at = base + Vector3.new(0, 2, 7) }
+							end
 							frames[b.Name].id = id
 						end
 						found += 1
@@ -2373,7 +2416,10 @@ local function spawnSet(into: Instance, o: Vector3, top: number)
 						return Instance.new("HumanoidDescription")
 					end)
 					if okDesc and desc then
-						fr.statue = statueOf(set, desc, fr.at, Vector3.new(0, 0, 1), GOLD, Enum.Material.Foil, VICTORY)
+						local skin = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).STATUE_SKIN == true
+						-- (F77: in its own skin, facing south, turned 15 degrees toward the path)
+						local face = if skin then Vector3.new(-math.sin(math.rad(15)), 0, math.cos(math.rad(15))) else Vector3.new(0, 0, 1)
+						fr.statue = statueOf(set, desc, fr.at, face, if who > 0 or not skin then GOLD else Color3.fromRGB(160, 160, 165), if who > 0 or not skin then Enum.Material.Foil else Enum.Material.SmoothPlastic, VICTORY, skin and who > 0)
 						-- (OVERVIEW 0.99: no floating text; the name sits on a small plaque on the plinth's front)
 						if fr.plaque then
 							fr.plaque:Destroy()
