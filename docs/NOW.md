@@ -2,9 +2,22 @@
 
 **All weak points, ranked:** `docs/WEAKNESSES.md` (26 Nov). After LAB10 round 2, take its "Order to fix" from item 3.
 
-**Lab map from a separate chat** (owner, 26 Nov): `docs/MAP_PROMPT.md`. A new chat builds only the map (`LabMap.rbxmx` with an `Anchors` folder). When it arrives on branch `labmap` or from the owner, hook every machine to the anchors instead of LabLayout10's spots (behind `Config.LAB_MAP`). Do not start ROUND 2's frame or floor work before the owner says which way.
+## CURRENT RUN: LAB TARGET (owner, 26 Nov 2026)
+Build `docs/LAB_TARGET.md`: the lab to the owner's reference screenshots (`art/store/look_target/lab_ref/`).
+- A realistic plot grid.
+- The steel tower and slide in the centre.
+- A raised spawn plaza with 4 leaderboards.
+- Railway, hills and trees.
 
-## CURRENT RUN: LAB 10/10 (owner, 26 Nov 2026)
+It replaces LAB10's cartoon look. Keep attract mode, the "try me" chain and harsh scoring from ROUND 2.
+
+The rules are as before:
+- one run;
+- publish once;
+- one Danish "Test selv" list;
+- never ask the owner to test in between.
+
+(Older:) ## CURRENT RUN: LAB 10/10 (owner, 26 Nov 2026)
 
 **ROUND 2 NOW** (owner scored round 1 at 3/10): build `docs/LAB10.md` section "ROUND 2". Main things:
 - attract mode on every machine;
