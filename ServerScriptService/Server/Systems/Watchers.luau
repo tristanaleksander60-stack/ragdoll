@@ -136,15 +136,97 @@ local function step()
 	end
 end
 
+-- OVERVIEW 0.8 NEVER ZERO (docs/ALWAYS3.md, Config.NEVER_ZERO): if a player has no living ragdoll within ZERO_RANGE studs for
+-- ZERO_WAIT s, the nearest free one comes RUNNING (Pace 2.4) to a spot beside the player; it is let go to roam once it is
+-- there (or after 15 s). Not while the player sits (a car, the bike, a seat).
+Watchers.ZERO_RANGE = 35
+Watchers.ZERO_WAIT = 1
+local emptySince: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
+local runner: { [Player]: { m: Model, since: number } } = setmetatable({}, { __mode = "k" }) :: any
+local function neverZero()
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if not dummies then
+		return
+	end
+	local now = os.clock()
+	for _, player in Players:GetPlayers() do
+		local char = player.Character
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if not (root and root:IsA("BasePart") and hum) or hum.SeatPart ~= nil then
+			emptySince[player] = nil
+			continue
+		end
+		-- the runner on its way: let it go when it is there
+		local r = runner[player]
+		if r then
+			local pe = r.m:FindFirstChild("LowerTorso")
+			if not r.m.Parent or not pe or not pe:IsA("BasePart") or (pe.Position - root.Position).Magnitude < 8 or (pe.Position - root.Position).Magnitude > 160 or now - r.since > 15 then
+				if r.m.Parent and r.m:GetAttribute("Watch") == "NeverZero" then
+					release(r.m)
+				end
+				runner[player] = nil
+			end
+		end
+		local near = 0
+		local best, bestD = nil :: Model?, math.huge
+		for _, d in dummies:GetChildren() do
+			local pe = d:FindFirstChild("LowerTorso")
+			if d:IsA("Model") and pe and pe:IsA("BasePart") and d:GetAttribute("Vital") ~= "Dead" then
+				local dist = (pe.Position - root.Position).Magnitude
+				if dist < Watchers.ZERO_RANGE then
+					near += 1
+				elseif free(d) and dist < bestD then
+					best, bestD = d, dist
+				end
+			end
+		end
+		if near > 0 then
+			emptySince[player] = nil
+		else
+			emptySince[player] = emptySince[player] or now
+			if now - (emptySince[player] :: number) >= Watchers.ZERO_WAIT and not runner[player] and best then
+				best:SetAttribute("Watch", "NeverZero")
+				-- (Too far to run: over 150 studs it is not even streamed in on the player's screen. It is set down out of view,
+				-- about 55 studs behind the player, and runs in from there.)
+				if bestD > 150 then
+					local back = -root.CFrame.LookVector * Vector3.new(1, 0, 1)
+					local at = root.Position + (if back.Magnitude > 0.1 then back.Unit else Vector3.zAxis) * 55
+					local params = RaycastParams.new()
+					params.FilterType = Enum.RaycastFilterType.Exclude
+					params.FilterDescendantsInstances = { dummies, char :: Instance }
+					local hit = Workspace:Raycast(at + Vector3.new(0, 40, 0), Vector3.new(0, -120, 0), params)
+					if hit then
+						local DummyControl = require(script.Parent:WaitForChild("DummyControl")) :: any
+						local p = hit.Position + Vector3.new(0, 3.2, 0)
+						pcall(DummyControl.move, best, CFrame.lookAt(p, Vector3.new(root.Position.X, p.Y, root.Position.Z)))
+					end
+				end
+				best:SetAttribute("Home", root.Position + root.CFrame.RightVector * 4 + root.CFrame.LookVector * 3)
+				best:SetAttribute("HomeLook", root.Position)
+				best:SetAttribute("Pace", 2.4)
+				runner[player] = { m = best, since = now }
+			end
+		end
+	end
+end
+
 function Watchers.start()
 	local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
 	if not Config.MACHINE_WATCHERS or not Config.LAB_OWNERMAP then
 		return
 	end
 	task.spawn(function()
+		local tick = 0
 		while true do
-			task.wait(1)
-			pcall(step)
+			task.wait(0.5)
+			tick += 1
+			if Config.NEVER_ZERO then
+				pcall(neverZero)
+			end
+			if tick % 2 == 0 then
+				pcall(step)
+			end
 		end
 	end)
 	Players.PlayerRemoving:Connect(function(p)

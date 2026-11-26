@@ -43,6 +43,7 @@ local Config = {
 	BOARD_TOP20 = true, -- map round 2 (owner): the 4 leaderboards show the top 20 in a scrolling list, 5 rows in view (LeaderboardService)
 	SPAWN_UPRIGHT = true, -- OVERVIEW 0.5: ragdolls on the raised spawn plaza are set on top of it, upright, once the map stands (LabOwnerMap)
 	MACHINE_WATCHERS = true, -- OVERVIEW 0.7: a real ragdoll watching at the 4 machines nearest you (Systems/Watchers), light stand-ins at the rest (Client/WatcherStandIns); spots: Shared/WatchSpots
+	NEVER_ZERO = true, -- OVERVIEW 0.8: no living ragdoll within 35 studs for 1 s: the nearest free one comes running (Systems/Watchers)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays
