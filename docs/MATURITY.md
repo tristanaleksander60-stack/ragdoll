@@ -34,3 +34,8 @@
    Then answer: violence "mild/unrealistic", no blood, no gore.
 
 Recommendation: option 2. The phone audience is young, and the label is the biggest single lever on discovery.
+
+## Owner's choice (26 Nov 2026): option 2, gore OFF
+- Purple cartoon blood stays.
+- The final answers are in `docs/BODY_V2.md` ("MATURITY: final answers"). The expected label is Mild (9+).
+- Submit only after the gore-off build is live.

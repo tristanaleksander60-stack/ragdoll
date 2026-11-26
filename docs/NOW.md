@@ -4,12 +4,19 @@
 
 **Next after the lab:** `docs/STAY_LONGER.md` (session length). Build items 1-8 in one run. Item 1, the quiet gift timer on phones, goes first.
 
+## FIRST, URGENT: `docs/BODY_V2.md` section 0, gore OFF (owner chose it, 26 Nov)
+- Build it, then **publish at once** (quick gate). The maturity questionnaire is due **Fri 27 Nov 2026 17:34 UTC** and must match the live game.
+- Then tell the owner in Danish: "Gore er slået fra og live — send spørgeskemaet nu med svarene i docs/MATURITY.md".
+- Only then the rest of the run.
+
 ## CURRENT RUN: `/klar` = LAB_TARGET ROUND 3. Do it now, all of it, without asking.
 **Not blocked any more** (owner, 26 Nov 2026): "1:1 10/10 … jeg skal bare skrive /klar".
 - Do not search for the old file.
 - Rebuild the owner's own map 1:1 from `art/store/look_target/lab_ref/ref_6` … `ref_10` (and `ref_1` … `ref_5`), as `docs/LAB_TARGET.md` ROUND 3 says.
 - Then publish once and give one Danish "Test selv" list.
 - In the same run, after the lab: `docs/IMPACT_FX.md` (smoke and dust on every impact, grab and SLAM).
+- Then `docs/BODY_V2.md` sections 1-4: X-ray 10/10, purple blood look, hit marks instead of holes, burial + revenge.
+- Then `docs/RAGDOLL_FEEL.md`: realistic falls, landings, lying and get-ups like the top ragdoll games.
 - Then: `docs/STAY_LONGER.md`.
 
 (Older notes below.)
