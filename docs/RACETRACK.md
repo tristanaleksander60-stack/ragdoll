@@ -1,3 +1,5 @@
+> **DROPPED (owner, 26 Nov 2026: "Drop racerbanen").** It did not fit without growing the map. Do not build it.
+
 # The big RACETRACK south of the lab + the F1 car to buy (owner, 26 Nov 2026)
 > "Tilføj en racerbane der udfylder resten af det stykke hvor der ikke er noget i hele bunden, det skal altså være en kæmpe racerbane, så skal man kunne købe adgang til en F1 bil derfra Creator Store med scripts og det hele, det er fint, så længe den er god og har mange reviews."
 
