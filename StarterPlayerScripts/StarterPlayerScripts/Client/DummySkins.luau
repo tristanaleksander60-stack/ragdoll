@@ -169,6 +169,111 @@ local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: s
 		return p
 	end
 	local turn = CFrame.Angles(0, 0, math.rad(90)) -- (a cylinder's axis is X: along the limb)
+	-- F59 (owner: "Gør så man kan se skud på knoglen i maven/ryggen"; Config.XRAY_TORSO): the torso gets a real cartoon
+	-- skeleton instead of one straight bone, built in the limb's own frame (front = -Z): in the chest the spine (7
+	-- vertebrae at the back), the sternum, 6 curved ribs a side, 2 shoulder blades and 2 collarbones; in the belly the
+	-- lower spine and the pelvis. Every bullet hole on the piece puts a slug on the bone the round would reach first
+	-- (a rib or the sternum from the front, the spine or a shoulder blade from the back, the ribs from the side, the
+	-- pelvis or the lower spine in the belly; a heavy round goes on to the spine), nose pointing the way it travelled,
+	-- with crack lines by force.
+	local torsoCfg = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any)
+	if (key == "UpperTorso" or key == "LowerTorso") and torsoCfg.XRAY_TORSO then
+		local sz = limb.Size
+		local W, Hh, D = sz.X, sz.Y, sz.Z
+		local function at(cf: CFrame): CFrame
+			return skin.CFrame:ToObjectSpace(limb.CFrame * cf)
+		end
+		local function knob(s: Vector3, p: Vector3, colour: Color3?): Part
+			return bit(Enum.PartType.Block, s, at(CFrame.new(p)), colour or BONE, true)
+		end
+		local function rod(a: Vector3, b: Vector3, r: number, colour: Color3?): Part
+			local len = (b - a).Magnitude
+			return bit(Enum.PartType.Cylinder, Vector3.new(len + r * 0.6, r, r), at(CFrame.lookAt((a + b) / 2, b) * CFrame.Angles(0, math.rad(90), 0)), colour or BONE)
+		end
+		local spineZ = if key == "UpperTorso" then D * 0.26 else D * 0.2
+		if key == "UpperTorso" then
+			for k = 0, 6 do
+				local y = Hh * (0.46 - k * 0.153)
+				knob(Vector3.new(W * 0.11, Hh * 0.1, D * 0.15), Vector3.new(0, y, spineZ), if k % 2 == 0 then BONE else BONE_END)
+			end
+			knob(Vector3.new(W * 0.09, Hh * 0.5, D * 0.07), Vector3.new(0, Hh * 0.1, -D * 0.36)) -- (the sternum)
+			local r = math.min(D * 0.07, Hh * 0.05)
+			for side = -1, 1, 2 do
+				for i = 0, 5 do
+					local y = Hh * (0.3 - i * 0.12)
+					local drop = Hh * 0.05 -- (ribs slope down towards the front)
+					local p1 = Vector3.new(side * W * 0.06, y, spineZ)
+					local p2 = Vector3.new(side * W * 0.34, y - drop * 0.2, D * 0.2)
+					local p3 = Vector3.new(side * W * 0.43, y - drop * 0.5, -D * 0.06)
+					local w4 = if i < 4 then 0.07 else 0.2 -- (the low ribs stop short of the sternum)
+					local p4 = Vector3.new(side * W * w4, y - drop, -D * 0.33)
+					rod(p1, p2, r)
+					rod(p2, p3, r)
+					rod(p3, p4, r * 0.9, if i < 4 then BONE else BONE_END)
+				end
+				-- the shoulder blade and the collarbone
+				knob(Vector3.new(W * 0.24, Hh * 0.38, D * 0.05), Vector3.new(side * W * 0.26, Hh * 0.2, D * 0.41), BONE_END)
+				rod(Vector3.new(side * W * 0.06, Hh * 0.38, -D * 0.32), Vector3.new(side * W * 0.45, Hh * 0.44, -D * 0.02), r * 1.1)
+			end
+		else
+			for k = 0, 3 do
+				knob(Vector3.new(W * 0.12, Hh * 0.2, D * 0.17), Vector3.new(0, Hh * (0.4 - k * 0.22), spineZ), if k % 2 == 0 then BONE else BONE_END)
+			end
+			for side = -1, 1, 2 do
+				knob(Vector3.new(W * 0.3, Hh * 0.6, D * 0.5), Vector3.new(side * W * 0.27, -Hh * 0.05, D * 0.02)) -- (the hip wing)
+			end
+			knob(Vector3.new(W * 0.2, Hh * 0.55, D * 0.13), Vector3.new(0, -Hh * 0.15, D * 0.3), BONE_END) -- (the sacrum)
+			knob(Vector3.new(W * 0.42, Hh * 0.16, D * 0.1), Vector3.new(0, -Hh * 0.35, -D * 0.3), BONE_END) -- (the front of the pelvis)
+		end
+		-- the slugs, on the bone the round reaches first
+		local slugs = 0
+		for _, hole in limb:GetChildren() do
+			if hole.Name == "BulletHole" and hole:IsA("BasePart") and slugs < 15 then
+				slugs += 1
+				local l = limb.CFrame:PointToObjectSpace(hole.Position)
+				local scale = hole:GetAttribute("Scale")
+				local force = if type(scale) == "number" then scale else 1
+				local y = math.clamp(l.Y, -Hh * 0.45, Hh * 0.45)
+				local spot: Vector3
+				if math.abs(l.X) > W * 0.38 and math.abs(l.X) / W > math.abs(l.Z) / D then
+					spot = Vector3.new(math.sign(l.X) * W * 0.41, y, l.Z * 0.3) -- (from the side: the ribs or the hip wing)
+				elseif l.Z < 0 then -- (from the front)
+					if force >= 1.6 then
+						spot = Vector3.new(0, y, spineZ - D * 0.06) -- (a heavy round goes on to the spine)
+					elseif key == "UpperTorso" and math.abs(l.X) < W * 0.1 then
+						spot = Vector3.new(l.X, math.max(y, -Hh * 0.12), -D * 0.37) -- (the sternum)
+					elseif key == "UpperTorso" then
+						spot = Vector3.new(math.clamp(l.X, -W * 0.42, W * 0.42), y, -D * 0.27) -- (a rib)
+					else
+						spot = Vector3.new(math.clamp(l.X * 0.8, -W * 0.34, W * 0.34), y, -D * 0.16) -- (the pelvis)
+					end
+				else -- (from the back)
+					if math.abs(l.X) < W * 0.12 then
+						spot = Vector3.new(l.X * 0.5, y, spineZ + D * 0.05) -- (the spine)
+					elseif key == "UpperTorso" and l.Y > -Hh * 0.05 then
+						spot = Vector3.new(math.clamp(l.X, -W * 0.36, W * 0.36), y, D * 0.39) -- (a shoulder blade)
+					else
+						spot = Vector3.new(math.clamp(l.X, -W * 0.4, W * 0.4), y, D * 0.22) -- (a rib or the hip wing)
+					end
+				end
+				local dir = Vector3.new(-l.X, 0, -l.Z)
+				dir = if dir.Magnitude > 0.01 then dir.Unit else Vector3.new(0, 0, 1)
+				local rs = if XRAY_PHONE then 0.2 else 0.15
+				local slug = bit(Enum.PartType.Cylinder, Vector3.new(rs * 2.2, rs, rs), at(CFrame.lookAt(spot, spot + dir) * CFrame.Angles(0, math.rad(90), 0)), Color3.fromRGB(196, 172, 112))
+				slug.Material = Enum.Material.Metal
+				slug.Name = "XraySlug"
+				if force >= 1.35 then
+					local crack = Color3.fromRGB(70, 60, 54)
+					local t = math.min(W, D) * 0.12
+					bit(Enum.PartType.Block, Vector3.new(t * 2.4, t * 0.16, t * 0.5), at(CFrame.new(spot) * CFrame.Angles(0, 0, math.rad(20))), crack)
+					if force >= 1.6 then
+						bit(Enum.PartType.Block, Vector3.new(t * 2, t * 0.16, t * 0.5), at(CFrame.new(spot) * CFrame.Angles(0, 0, math.rad(-35))), crack)
+					end
+				end
+			end
+		end
+		return
+	end
 	-- (23 Nov 2026, owner: no holes and cracks: the bone itself is shot away bit by bit, where it is hit.) Where it was
 	-- struck: its bullet holes, else spread over the bone for blows.
 	local marks: { { y: number, x: number, hard: number } } = {}
@@ -535,6 +640,15 @@ local function dress(model: Model)
 			if skin and d:IsA("BasePart") then
 				skin.Color = shade(d.Color, tint[d.Name])
 				local n = shots[d.Name] or 0
+				if (d.Name == "UpperTorso" or d.Name == "LowerTorso") and (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).XRAY_TORSO then
+					-- (F59: the torso's wounds are not counted per piece: its bullet holes are)
+					n = 0
+					for _, h in d:GetChildren() do
+						if h.Name == "BulletHole" then
+							n += 1
+						end
+					end
+				end
 				-- (24 Nov 2026, owner: after three hits the x-ray shows for 3 s and goes again, until three more hits.)
 				local x = xrays[d.Name]
 				if not x then
@@ -638,6 +752,19 @@ local function dress(model: Model)
 	refreshers[model] = showHurt
 	model:GetAttributeChangedSignal("Wounds"):Connect(showHurt)
 	model:GetAttributeChangedSignal("Vital"):Connect(showHurt)
+	-- (F59: a hole landing on or leaving the torso redraws its X-ray)
+	for _, name in { "UpperTorso", "LowerTorso" } do
+		local t = model:FindFirstChild(name)
+		if t then
+			local function changed(c: Instance)
+				if c.Name == "BulletHole" then
+					task.delay(0.05, showHurt)
+				end
+			end
+			t.ChildAdded:Connect(changed)
+			t.ChildRemoved:Connect(changed)
+		end
+	end
 	showHurt()
 	-- (V6-5: a body inside a lab creature (the plant, the egg, the washer, the vacuum) is hidden on
 	-- every screen through its skins too: the server sets MachineHidden on the model.)
