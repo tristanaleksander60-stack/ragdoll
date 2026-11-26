@@ -62,6 +62,9 @@ Keep it short. When you finish or start something, update its line here (and the
 - Map round 3 P1-P3.
 
 ## Owner decisions in force
+- **Build EVERYTHING in one run without stopping; the owner tests only at the end** (26 Nov 2026).
+- Script Sync: do not wait; use the MCP.
+- The dog: find a rigged German Shepherd in the Creator Store yourself.
 - Purple blood; gore off; X-ray bone breaks and shatters allowed.
 - Spawn on the raised leaderboard plaza.
 - The map is the owner's own layout made 10x bigger, now as explorable rooms (round 3 master plan).
