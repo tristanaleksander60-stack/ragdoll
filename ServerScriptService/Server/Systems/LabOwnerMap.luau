@@ -618,6 +618,22 @@ local function west(into: Instance, o: Vector3, top: number)
 	-- The walled T-rex pen with its gate (east side) and the T-rex.
 	local tr = planAt(o, top, "TRexPen")
 	local TW = 110
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).PEN_TO_PLAN then
+		-- (F55, owner: "Man kan ikke gå denne sti, fordi muren ikke har en dør": the pen was a 110 x 110 square, far bigger than
+		-- its plan footprint (100 x 46), so its walls stood across the Animal Cove path by the aquarium. Now it is the plan's
+		-- size, closed on the east, with its gate in the WEST wall where the courtyard path arrives.)
+		local PW, PD = 100, 46
+		local WALL = Color3.fromRGB(150, 146, 138)
+		for _, sz in { -1, 1 } do
+			part(into, "TRexWall", Vector3.new(PW, 18, 3), CFrame.new(tr + Vector3.new(0, 9, sz * PD / 2)), WALL, Enum.Material.Concrete)
+		end
+		part(into, "TRexWall", Vector3.new(3, 18, PD), CFrame.new(tr + Vector3.new(PW / 2, 9, 0)), WALL, Enum.Material.Concrete)
+		for _, dz in { -1, 1 } do
+			part(into, "TRexWall", Vector3.new(3, 18, PD / 2 - 12), CFrame.new(tr + Vector3.new(-PW / 2, 9, dz * (PD / 4 + 6))), WALL, Enum.Material.Concrete)
+		end
+		part(into, "TRexGate", Vector3.new(1, 16, 24), CFrame.new(tr + Vector3.new(-PW / 2 - 0.6, 8, 0)), Color3.fromRGB(70, 70, 74), Enum.Material.DiamondPlate)
+		part(into, "TRexGround", Vector3.new(PW - 3, 0.3, PD - 3), CFrame.new(tr + Vector3.new(0, 0.15, 0)), Color3.fromRGB(120, 104, 80), Enum.Material.Ground)
+	else
 	for _, w in { { Vector3.new(TW, 18, 3), Vector3.new(0, 9, -TW / 2) }, { Vector3.new(TW, 18, 3), Vector3.new(0, 9, TW / 2) }, { Vector3.new(3, 18, TW), Vector3.new(-TW / 2, 9, 0) } } do
 		part(into, "TRexWall", w[1], CFrame.new(tr + w[2]), Color3.fromRGB(150, 146, 138), Enum.Material.Concrete)
 	end
@@ -626,6 +642,7 @@ local function west(into: Instance, o: Vector3, top: number)
 	end
 	part(into, "TRexGate", Vector3.new(1, 16, 24), CFrame.new(tr + Vector3.new(TW / 2 + 0.6, 8, 0)), Color3.fromRGB(70, 70, 74), Enum.Material.DiamondPlate)
 	part(into, "TRexGround", Vector3.new(TW - 3, 0.3, TW - 3), CFrame.new(tr + Vector3.new(0, 0.15, 0)), Color3.fromRGB(120, 104, 80), Enum.Material.Ground)
+	end
 	placeModel(into, "TRex", tr, Vector3.new(1, 0, 0.3))
 	-- The crocodile pond with its speaker wall.
 	local pond = planAt(o, top, "CrocPond")
