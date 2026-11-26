@@ -166,7 +166,29 @@
 | | -150 | 0 | T-rex pen |
 | | about -125 | | railway along the west, bending south-east |
 
-- **The whole map is about 300 x 260 studs** (much bigger than the 0.56 lab). Keep it that size.
+- **SIZE: the lab is 10x bigger** (owner, 26 Nov 2026: "Labbet skal altså være 10x større, gør derfor også så man løber hurtigere"). 10x the area: about **950 x 820 studs**, so every distance in R3.2 is multiplied by about 3.2.
+  - **The big set pieces grow about 1.5-2x:** the tower (about 90-100 studs high), the slide, the fan, the gyro cage, the cave, the tanks, the T-rex and the rocket gantry. The player still feels small next to them.
+  - **The plots and walkways grow with the layout:** walkways about 20-24 studs wide.
+  - **The extra space is filled, never empty** (the density rule still holds). Use:
+    - wider plots;
+    - tree groves and boulder fields between the zones;
+    - a longer railway loop;
+    - more benches and lamps along the walkways;
+    - small resting spots;
+    - more watcher ragdolls (light stand-ins far away, `docs/ALWAYS3.md`).
+  - **Performance with a big lab:**
+    - StreamingEnabled-safe (the far parts stream out);
+    - trees, hills and far decoration as cheap meshes;
+    - CastShadow off on small things;
+    - one lab must stay at or under about 8,000 parts;
+    - check the FPS and memory on the phone emulator.
+- **RUN FASTER** (`Config.MOVE_FAST = true`):
+  - the player walks at about 28 (Roblox default 16), with a faster run animation (AnimationSpeed scaled) so the feet do not slide;
+  - **SPRINT** at about 42: on a phone, a big round sprint button by the jump button (hold); on PC, Shift; on console, the left stick press;
+  - a light dust puff from the feet and a slight camera FOV widening (70 → 78) while sprinting;
+  - ragdolls that run to the player (`docs/ALWAYS3.md`) run at about 30;
+  - the jump stays the same height;
+  - vehicles (cars, bike, wheelchairs) get speed caps scaled for the bigger lab.
 
 ### R3.3 How to build
 - **The switch:** `Config.LAB_OWNERMAP = true` (supersedes `LAB_PARK` and `LAB_OLDMAP`; false = 0.56).

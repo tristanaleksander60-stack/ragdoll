@@ -22,6 +22,7 @@
 ## CURRENT RUN: `/klar` = LAB_TARGET ROUND 3. Do it now, all of it, without asking.
 **Not blocked any more** (owner, 26 Nov 2026): "1:1 10/10 … jeg skal bare skrive /klar".
 - Do not search for the old file.
+- **The lab is 10x bigger (area) and the player runs faster:** see LAB_TARGET R3.2 "SIZE" and "RUN FASTER".
 - Rebuild the owner's own map 1:1 from `art/store/look_target/lab_ref/ref_6` … `ref_10` (and `ref_1` … `ref_5`), as `docs/LAB_TARGET.md` ROUND 3 says.
 - Then publish once and give one Danish "Test selv" list.
 - In the same run, after the lab: `docs/IMPACT_FX.md` (smoke and dust on every impact, grab and SLAM).
