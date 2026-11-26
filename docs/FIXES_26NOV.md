@@ -578,6 +578,31 @@ The owner still sees lamp posts standing in the middle of walkways.
 
 **Check:** kill 10 ragdolls in different ways (shots, melee, explosion, a fall from the tower, the cannon, a car, the dog, in water), on PC and phone. Each collapses loose, lands, settles and stays pushable and grabbable. None freezes.
 
+## F47 After being dead, ragdolls pick the bullets out of each other (owner, 26 Nov 2026: "Gør så ragdolls piller skuddene ud fra hinanden efter de har været døde, så de ikke sidder overalt på alle")
+**The goal:** bullet holes and lodged bullets do not pile up on everyone forever. Clearing them is a little scene, not a silent fade.
+
+**When:** a ragdoll that was dead or knocked out wakes up (by itself, by CPR, or by REVIVE ALL) with bullet holes or lodged bullets.
+
+**What happens:**
+1. **A helper comes.** A nearby free ragdoll comes over (`FirstAid` / the helper logic; the CPR helper if there was one). If none is free within 30 studs, the woken ragdoll does it itself, sitting down.
+2. **It picks the bullets out.** The helper kneels at the patient, which is sitting up, holding a pair of tweezers (a small prop). For EACH hole, up to 8, about 0.4 s each:
+   - it leans to that hole and pulls the bullet out with a little tug;
+   - a small "plink" sound and a tiny purple fleck;
+   - the bullet (the same mesh as the X-ray slug, F43) drops to the ground and tinks, then fades after 5 s;
+   - the hole closes with a small skin-coloured plaster (`BODY_V2.md` 4b) or simply fades out;
+   - in X-ray, that slug disappears from the bone at the same moment.
+3. **They react.** The patient winces at each pull ("Ow!", "Careful!", "Is that all of them?"). The helper says "Hold still." / "Almost done." (`LOOK AT YOU` rules: they look at each other).
+4. **After the last bullet,** the patient gets up, thanks the helper ("Thanks, doc!"), and both go on.
+
+**Limits:**
+- **More than 8 holes:** the rest fade out quietly at the end.
+- **Breaks:** broken bones (1b) stay until a bandage or sling (that is the injury system); only the bullets and holes are cleared here.
+- **Interruptions:** if the scene is interrupted (shot, grabbed), it stops; the rest of the holes fade after 60 s as a fallback, so bodies never stay covered.
+- **One scene at a time** within 40 studs of the player; others clear quietly off-screen.
+- **Phones:** the same, with the effects pooled.
+
+**Check:** shoot a dummy 10 times, kill it, and let it wake. A helper comes and pulls the bullets one by one, the holes close, and X-ray shows no slugs after. No body walks round still covered in holes.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
