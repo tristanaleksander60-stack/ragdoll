@@ -60,6 +60,32 @@ local function planAt(o: Vector3, top: number, id: string, dx: number?, dz: numb
 	local v = if it then it.at else Vector2.zero
 	return Vector3.new(o.X + v.X + (dx or 0), top, o.Z + v.Y + (dz or 0))
 end
+-- (Map round 3, rule 3) Is a world point on a road or path of the plan? Small things are never put there.
+LabOwnerMap.origin = Vector3.zero
+local function onPath(p: Vector3, margin: number?): boolean
+	local v = Vector2.new(p.X - LabOwnerMap.origin.X, p.Z - LabOwnerMap.origin.Z)
+	local m = margin or 2
+	local function near(a: Vector2, b: Vector2, half: number): boolean
+		local ab = b - a
+		local t = if ab.Magnitude > 0 then math.clamp((v - a):Dot(ab) / ab:Dot(ab), 0, 1) else 0
+		return (a + ab * t - v).Magnitude < half + m
+	end
+	for _, r in Plan.ROADS do
+		for i = 1, #r.points - 1 do
+			if near(r.points[i], r.points[i + 1], r.width / 2) then
+				return true
+			end
+		end
+	end
+	for _, path in Plan.INNER do
+		for i = 1, #path.points - 1 do
+			if near(path.points[i], path.points[i + 1], Plan.INNER_W / 2) then
+				return true
+			end
+		end
+	end
+	return false
+end
 local SLAB_TEX = "rbxassetid://91579008413917"
 local function slab(into: Instance, name: string, a: Vector3, b: Vector3, width: number, lift: number, noKerb: boolean?)
 	local len = (b - a).Magnitude
@@ -412,7 +438,9 @@ local function northRow(into: Instance, o: Vector3, top: number)
 		local a = i / n * math.pi * 2
 		local r = Vector3.new(math.cos(a) * 62, 0, math.sin(a) * 37)
 		local s = 4 + (i % 3) * 1.5
-		part(into, "YardStone", Vector3.new(s * 1.4, s, s * 1.2), CFrame.new(yard + r + Vector3.new(0, s * 0.35, 0)) * CFrame.Angles(0, a, 0), ROCK, Enum.Material.Rock, true, Enum.PartType.Ball)
+		if not onPath(yard + r, s) then
+			part(into, "YardStone", Vector3.new(s * 1.4, s, s * 1.2), CFrame.new(yard + r + Vector3.new(0, s * 0.35, 0)) * CFrame.Angles(0, a, 0), ROCK, Enum.Material.Rock, true, Enum.PartType.Ball)
+		end
 	end
 	-- THE AQUARIUM: a glass box on a concrete base with a steel frame, water inside.
 	local aq = planAt(o, top, "Aquarium")
@@ -453,7 +481,7 @@ local function northRow(into: Instance, o: Vector3, top: number)
 		for k = 0, posts do
 			local p = a:Lerp(b, k / posts)
 			local gate = i == 3 and math.abs((p - pen).X) < 8
-			if not gate then
+			if not gate and not onPath(p, 1) then
 				part(into, "PenPost", Vector3.new(0.6, 5, 0.6), CFrame.new(p + Vector3.new(0, 2.5, 0)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
 			end
 		end
@@ -584,11 +612,11 @@ local function west(into: Instance, o: Vector3, top: number)
 		local a = i * 2.1
 		placeModel(into, "Crocodile", pond + Vector3.new(math.cos(a) * 18, 0.3, math.sin(a) * 18), Vector3.new(math.sin(a), 0, -math.cos(a)))
 	end
-	local sw = pond + Vector3.new(0, 0, -44)
+	local sw = pond + Vector3.new(0, 0, 30) -- (map round 3: south of the pond, off the cave path; the cones face the pond)
 	for k = -3, 3 do
 		for y = 0, 2 do
 			part(into, "Speaker", Vector3.new(8, 7, 5), CFrame.new(sw + Vector3.new(k * 8.4, 3.5 + y * 7.2, 0)), Color3.fromRGB(32, 32, 36), Enum.Material.SmoothPlastic)
-			part(into, "SpeakerCone", Vector3.new(0.4, 4.6, 4.6), CFrame.new(sw + Vector3.new(k * 8.4, 3.5 + y * 7.2, 2.6)) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(70, 70, 76), Enum.Material.Metal, true, Enum.PartType.Cylinder)
+			part(into, "SpeakerCone", Vector3.new(0.4, 4.6, 4.6), CFrame.new(sw + Vector3.new(k * 8.4, 3.5 + y * 7.2, -2.6)) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(70, 70, 76), Enum.Material.Metal, true, Enum.PartType.Cylinder)
 		end
 	end
 end
@@ -811,6 +839,9 @@ local function car(into: Instance, at: Vector3, yaw: number, color: Color3)
 	end
 end
 local function lamp(into: Instance, at: Vector3)
+	if onPath(at, 1) then
+		return -- (rule 3: never on a path)
+	end
 	box(into, "LampPost", Vector3.new(0.5, 12, 0.5), CFrame.new(at + Vector3.new(0, 6, 0)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
 	local head = box(into, "LampHead", Vector3.new(1.4, 0.6, 1.4), CFrame.new(at + Vector3.new(0, 12.2, 0)), Color3.fromRGB(250, 240, 200), Enum.Material.Neon, true)
 	head.CanCollide = false
@@ -835,7 +866,7 @@ local function fill(into: Instance, o: Vector3, top: number)
 	local w = box(into, "SmallPoolWater", Vector3.new(44, 0.4, 28), CFrame.new(pl + Vector3.new(0, 1.05, 0)), Color3.fromRGB(110, 190, 225), Enum.Material.Glass)
 	w.Transparency = 0.2
 	for k = -2, 2 do
-		local l = pl + Vector3.new(k * 9, 0, 24)
+		local l = pl + Vector3.new(k * 9, 0, -24) -- (map round 3: on the pool's north side, off the path that comes from the south)
 		box(into, "Lounger", Vector3.new(3, 0.6, 7), CFrame.new(l + Vector3.new(0, 1.2, 0)), Color3.fromRGB(240, 240, 236), Enum.Material.Plastic)
 		box(into, "LoungerBack", Vector3.new(3, 0.5, 3), CFrame.new(l + Vector3.new(0, 2, -3)) * CFrame.Angles(math.rad(-50), 0, 0), Color3.fromRGB(240, 240, 236), Enum.Material.Plastic, true)
 		if k % 2 == 0 then
@@ -947,6 +978,9 @@ end
 -- collide; trees vary in size (+-25 %) and turn.
 local LEAF = { TreeOak = Color3.fromRGB(96, 150, 70), TreeFir = Color3.fromRGB(58, 112, 70), TreePoplar = Color3.fromRGB(120, 160, 70) }
 local function plantTree(into: Instance, kind: string, at: Vector3, height: number, rng: Random, noTrunk: boolean?)
+	if onPath(at, 3) then
+		return -- (rule 3: never on a path)
+	end
 	local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
 	local trees = assets and assets:FindFirstChild("Trees")
 	local src = trees and trees:FindFirstChild(kind)
@@ -969,6 +1003,9 @@ local function plantTree(into: Instance, kind: string, at: Vector3, height: numb
 	end
 end
 local function bush(into: Instance, at: Vector3, rng: Random)
+	if onPath(at, 3) then
+		return
+	end
 	local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
 	local src = assets and assets:FindFirstChild("Trees") and assets.Trees:FindFirstChild("TreeOak")
 	if not (src and src:IsA("BasePart")) then
@@ -1069,6 +1106,9 @@ local function hedge(into: Instance, a: Vector3, b: Vector3)
 	h.CastShadow = false
 end
 local function flowerBed(into: Instance, at: Vector3, w: number, d: number, rng: Random)
+	if onPath(at, math.max(w, d) / 2 + 1) then
+		return -- (rule 3: never on a path)
+	end
 	part(into, "FlowerBedSoil", Vector3.new(w, 0.6, d), CFrame.new(at + Vector3.new(0, 0.3, 0)), Color3.fromRGB(96, 70, 50), Enum.Material.Ground, true)
 	part(into, "FlowerBedEdge", Vector3.new(w + 1, 0.8, d + 1), CFrame.new(at + Vector3.new(0, 0.2, 0)), Color3.fromRGB(190, 190, 186), Enum.Material.Concrete, true)
 	for k = 1, math.floor(w * d / 18) do
@@ -1105,7 +1145,9 @@ local function parks(into: Instance, o: Vector3, top: number)
 				flowerBed(into, w(x, z), 16, 10, rng)
 				plantTree(into, if rng:NextNumber() < 0.5 then "TreeOak" else "TreePoplar", w(x + sx * 22, z + 12), rng:NextNumber(18, 26), rng, false)
 				-- a bench facing the road
-				part(into, "BenchSeat", Vector3.new(7, 0.5, 2), CFrame.new(w(x - sx * 14, z) + Vector3.new(0, 1.6, 0)), Color3.fromRGB(140, 100, 64), Enum.Material.WoodPlanks)
+				if not onPath(w(x - sx * 14, z), 4) then
+					part(into, "BenchSeat", Vector3.new(7, 0.5, 2), CFrame.new(w(x - sx * 14, z) + Vector3.new(0, 1.6, 0)), Color3.fromRGB(140, 100, 64), Enum.Material.WoodPlanks)
+				end
 			end
 		end
 	end
@@ -1235,6 +1277,7 @@ local function hideOld(folder: Instance, o: Vector3)
 end
 
 function LabOwnerMap.build(folder: Instance, origin: Vector3)
+	LabOwnerMap.origin = origin
 	hideOld(folder, origin)
 	-- (M7: the 4 leaderboards stand in a row on the raised plaza, facing the stair; LeaderboardService makes them a little
 	-- later, so this waits for them.)
