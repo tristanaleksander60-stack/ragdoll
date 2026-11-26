@@ -93,6 +93,7 @@ Keep it short. When you finish or start something, update its line here (and the
 - Map round 3 P1-P3.
 
 ## Owner decisions in force
+- **The owner tests.** Build each item as well as possible the first time; the docs' "Check" sections are what must work, not test sessions to run (one quick Play, a capture for looks, the fast lints).
 - **The racetrack is dropped** (no space without growing the map; the owner chose to drop it). Spend the time on the machines and the rest of the plan.
 - **The map size stays as it is now, mountains included.** Do not make it bigger.
 - **Build EVERYTHING in one run without stopping; the owner tests only at the end** (26 Nov 2026).

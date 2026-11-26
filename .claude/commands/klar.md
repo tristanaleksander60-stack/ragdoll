@@ -33,6 +33,14 @@ Read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page map of the whole plan: O
   - until then, save the place after every item;
   - at the end, tell the owner exactly how to publish BOTH places (start + multiplayer; see OVERVIEW's two-places warning).
 
+## The OWNER tests (owner, 26 Nov 2026: "Husk jeg tester, den skal bare lave det bedste muligt")
+- **Spend the time on BUILDING it as well as possible the first time,** not on testing.
+- **The "Check" sections in the docs** describe what must work. Do NOT run them as long test sessions. Per item:
+  1. one quick Play (no errors in the output);
+  2. a quick look or capture only when it is about how something looks;
+  3. a lint or script check where the doc asks for one (they are fast).
+- **No long play-throughs,** no repeated test rounds, no test suites, no reviewers. The owner tests everything at the end with the ONE "Test selv" list.
+
 ## Every item
 - Phone and iPad first; simple enough for a 10-year-old.
 - Gore off (purple cartoon; X-ray bones may break).
