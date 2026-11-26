@@ -206,7 +206,7 @@ For each item: **today's problems** (what makes it 2/10), then the **10/10 build
 
 ### 3.19 STRETCH MACHINE (Machine Hall)
 - **10/10:** strap the hands and feet, crank the wheel (hold); the ragdoll stretches like rubber (a cartoon, a long neck), with a creaking-rubber sound.
-- **Release:** it snaps back with a SPROING and bounces around the room.
+- **Release:** it bounces off with a SPROING and KEEPS its long limbs for 30 s, then they shrink back slowly over 10 s (owner, 26 Nov 2026: `FIXES_26NOV.md` F74; it never tears a limb off).
 - **Score:** the stretch percentage.
 
 ### 3.20 TESLA COIL (Machine Hall)

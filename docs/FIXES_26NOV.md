@@ -1112,6 +1112,64 @@ The owner sees it again: the legs jitter for 1-2 seconds at random moments. The 
 
 **Check:** watch ragdolls turn on the spot, turn to look at you and turn at corners. The feet step round, the legs never shake, and the body never whips round.
 
+## F74 The STRETCH MACHINE works again, and it STRETCHES limbs long instead of pulling them off (owner: "Fiks så at tortur maskinen som trækker ragdolls lemmer af virker igen, den skal bare ikke trække dem af, bare strække dem og så give slip på ragdollen så man kan se lemmer man har forlænget er mega lange, fx. 1 ben er så langt som det er blevet strukket - det går væk igen efter 30 sekunder langsomt")
+In the game it is the **STRETCHER** (the sign in `LabOwnerMap` NAMES; the prompts say "Stretch machine"). Never call it a torture machine anywhere in the game.
+
+**Why it does not work now** (read in the code; confirm in Studio first):
+- `Playground.buildRamp` builds it at `PathPlan.RAMP_AT` (the old ramp spot). `LabLayout10.STRETCH` = the plan's Machine Hall spot (245, -48, `OwnerMapPlan` ITEMS `StretchMachine`) is defined but never used.
+- `StretchMachine.build` keeps the `floor` CFrame it was built at as `mc.middle` and uses it for everything:
+  - `onPlatform` (is a body on the platform?);
+  - `someone` (is a player within NEAR?);
+  - `may` (the buttons answer only within REACH 16 of that point, and only if `Zones.mayEnter(player, Zones.plotAt(floor.Position))` passes);
+  - `Lab.ownerAt`.
+
+  If the model stands anywhere else than that point (moved by a map step, or built at an old spot under the new map), it never sees a body and none of its buttons do anything.
+- **Check in Studio:** where the StretchMachine model stands vs `mc.middle`; does `Zones.plotAt` at the new spot give the player's own plot.
+
+**The fix: it works** (behind the existing `Config.STRETCH_MACHINE`; new numbers in Config):
+1. Under the owner map, build it at `LabLayout10.STRETCH`, facing the plan's `face`, with a clear platform (no trees or props on it, F53).
+2. Never use the build CFrame afterwards. `mc.middle` is read from the live `mc.platform` CFrame each time (one function `middleOf(mc)`), so a later move can never break it. The same goes for `may`'s distance and plot checks.
+3. Every prompt (green "Pull all four", red "Release", each claw) works on a phone (ProximityPrompt, `RequiresLineOfSight` false, a clear tap target) and on a PC (E).
+4. Its watcher (the ragdoll at every machine) and the TRY lesson put a ragdoll on the platform, as at the other machines.
+
+**The fix: it STRETCHES, it never tears** (behind `Config.STRETCH_LONG = true`):
+1. **Remove the tear:**
+   - no `tear()`, no `VitalsService.sever`, no BREAK / BREAK_TIME;
+   - a joint never gives way here (severing stays off in the whole game).
+2. **The limb grows while it is pulled** (like rubber, the MACHINES_10 3.19 idea):
+   - each claw's limb chain (arm: UpperArm + LowerArm; leg: UpperLeg + LowerLeg; the hand or foot keeps its size) gets the length the claw has pulled it to: `factor = distance(shoulder or hip joint, claw) / the limb's rest length`, clamped 1 to `STRETCH_MAX = 3.2`;
+   - raise `TRAVEL` so a leg can reach 3x (about 9 studs);
+   - the tension stays small, because the limb follows the claw. At the max the winch stops with a "MAX!" pop and the creak sound peaks;
+   - the stretch % on the panel and in the words is the score (MACHINES_10 3.19).
+3. **How to make a limb long** (server, one function `Stretch.setLimb(model, limb, factor)` in a new module `Shared/Ragdoll/Stretch.luau`):
+   - **grow the parts:** multiply the part's Size on its long axis (Y for R15 limbs);
+   - **keep the joints joined:** multiply on the same axis every Attachment position on that part (the BallSocket, AnimationConstraint and rig attachments), and the C0 (Part0 = the part) or C1 (Part1 = the part) position of every Motor6D on it. Always scale from the ORIGINAL values, stored once per part, never from the current ones, so nothing creeps;
+   - **keep the weight:** divide the density by the factor (the same mass, so the body does not tip or sink);
+   - **step it:** change the size in steps of at least 0.04 and at most 10 times a second, so the solver never jolts;
+   - **the X-ray bones of that limb stretch too** (their parts or meshes follow the limb's factor), so in X-ray you see a long thin bone.
+4. **Release** (the red button, or all claws at max, or `MAX_TIME`):
+   - the claws open and the body drops with a SPROING and a small bounce (MACHINES_10 3.19), lands, lies a moment, then gets up and walks away with its long limbs;
+   - **one long leg:** the ragdoll stands on its normal leg (the stand height of the shortest leg). The long leg is floppy (its tone about 0.25) and drags along like a noodle, with low foot friction;
+   - **both legs long:** it walks tall on stilts (the stand height of the shorter long leg), slowly, wobbling;
+   - **long arms:** they hang down to the ground and drag along;
+   - the tilt guard (`TRIP_DEG`) must not knock it down just because a leg is long: measure the tilt from the trunk.
+5. **It goes back slowly:**
+   - **full length for `STRETCH_HOLD = 30` s after the release;**
+   - then it shrinks back to normal smoothly over `STRETCH_SHRINK = 10` s (eased out), at 10 Hz in steps.
+
+   The timer keeps running through a knockout and a revive. The doctor's heal (L) shrinks it back over 2 s. Stretching it again starts from the length it has now. A pooled ragdoll is always reset to normal before it is reused (`RAGDOLL_DIRECTOR.md`).
+6. **The same everywhere:**
+   - the sizes are set on the server and replicate, so every player sees the long limbs;
+   - the client's DummyLife walk animation keeps working, because the joints stay joined (step 3);
+   - only one stretched body is resized at a time per machine. It costs nothing when nobody uses it.
+7. **Kid-friendly:** cartoon rubber, a boing sound, the purple-cartoon rule; no pain sounds and no tearing.
+
+**Check:** on the phone and on the PC:
+- put a ragdoll on the STRETCHER and press the green button: the arms and legs grow long as the claws go out, and stop at MAX;
+- press release: it bounces off, gets up and walks away with a long noodle leg (or on stilts);
+- in X-ray the bone is long too;
+- after 30 s the limbs shrink back slowly; no limb ever comes off.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
