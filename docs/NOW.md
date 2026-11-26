@@ -1,5 +1,15 @@
 # NOW: the current work list (read this first on every /klar)
 
+## CURRENT RUN: LAB 10/10 (owner, 26 Nov 2026)
+> "Hele labbet skal tages fra 2/10 til 10/10, ikke vær bange for at ændre ALT"
+
+Build `docs/LAB10.md` in one run: everything, then publish ONCE, then ONE Danish "Test selv" list. Do not ask the owner to test in between. Questions go into the owner list with a safe default.
+Then finish what is "Left" from item 1 (More window, bigger hotbar, portrait check) in the same run.
+
+---
+
+## Earlier run (0.53.0, done 26 Nov; kept for reference)
+
 **URGENT, owner only:** the maturity questionnaire (item 5) must be resubmitted by Fri 27 Nov 2026 17:34 UTC.
 
 Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run before the owner tests.
