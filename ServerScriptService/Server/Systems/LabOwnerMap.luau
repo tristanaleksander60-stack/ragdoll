@@ -752,13 +752,114 @@ local ROCK = Color3.fromRGB(132, 130, 126)
 local DIRT = Color3.fromRGB(122, 98, 72)
 local GLASS = Color3.fromRGB(170, 210, 230)
 local WATER = Color3.fromRGB(70, 150, 200)
+
+-- F79 (owner: "Hulen er også bare en cirkel med en masse og en sort flad væk der ikke hænger sammen"; Config.CAVE_V2):
+-- the bear cave is a rock HILL of Terrain grown out of the ground (overlapping Rock/Slate/Basalt shapes, a Grass and
+-- Ground skin on top and its foot), with a real arched opening carved INTO it (Air): an arch about 11 wide and 10 high,
+-- a short tunnel that bends, a dark chamber, two glinting eyes at the back. The yard in front is Ground with
+-- half-buried rocks, a fallen log and a stump; a low natural rock line round it with a gap where the path comes in.
+-- No ball parts, no black slab, no round stones. Runs once at build; the terrain never covers a path (onPath).
+local function caveV2(into: Instance, o: Vector3, top: number): Vector3
+	local T = Workspace.Terrain
+	local it = Plan.ITEMS.CaveBear
+	local size = if it then it.size else Vector2.new(50, 40)
+	local c = planAt(o, top, "CaveBear", 0, -size.Y * 0.2) -- (the hill's middle: the back of the plan box)
+	local R = math.min(size.X * 0.42, size.Y * 0.52, 22) -- (the hill's radius: inside the plan box)
+	local function fill(cf: CFrame, s: Vector3, mat: Enum.Material)
+		pcall(function()
+			T:FillBlock(cf, s, mat)
+		end)
+	end
+	local function ball(at: Vector3, r: number, mat: Enum.Material)
+		pcall(function()
+			T:FillBall(at, r, mat)
+		end)
+	end
+	-- 1. The hill: a grass skin first, then the rock body just inside it, so only the top and the foot stay green.
+	ball(c + Vector3.new(0, R * 0.18, 0), R + 1.2, Enum.Material.Grass)
+	ball(c + Vector3.new(-R * 0.45, R * 0.05, -R * 0.25), R * 0.72 + 1, Enum.Material.Grass)
+	ball(c + Vector3.new(R * 0.5, -R * 0.05, -R * 0.2), R * 0.62 + 1, Enum.Material.Ground)
+	ball(c + Vector3.new(0, R * 0.1, 0), R, Enum.Material.Rock)
+	ball(c + Vector3.new(-R * 0.45, R * 0.0, -R * 0.25), R * 0.72, Enum.Material.Slate)
+	ball(c + Vector3.new(R * 0.5, -R * 0.1, -R * 0.2), R * 0.62, Enum.Material.Rock)
+	fill(CFrame.new(c + Vector3.new(R * 0.15, R * 0.35, R * 0.35)) * CFrame.Angles(0.3, 0.6, 0.2), Vector3.new(R * 0.7, R * 0.5, R * 0.6), Enum.Material.Basalt)
+	-- (the hill must not fall below the walk level inside: no terrain under the ground plate is visible anyway)
+	-- 2. The opening: an arch (a box + a round top) going in from the front, bending a little west, into a chamber.
+	local front = c.Z + R * 0.95
+	local W, H = math.min(11, R * 0.55), math.min(10, R * 0.5)
+	local depth = R * 0.9
+	local mouth = Vector3.new(c.X + R * 0.12, top, front)
+	fill(CFrame.new(mouth + Vector3.new(0, H * 0.35, -depth / 2 + 4)), Vector3.new(W, H * 0.7, depth + 8), Enum.Material.Air) -- (through the front skin: terrain is 4-stud voxels)
+	pcall(function()
+		T:FillCylinder(CFrame.new(mouth + Vector3.new(0, H * 0.68, -depth / 2 + 4)) * CFrame.Angles(math.rad(90), 0, 0), depth + 8, W / 2, Enum.Material.Air)
+	end)
+	local chamber = Vector3.new(c.X - R * 0.12, top + H * 0.55, c.Z - R * 0.05)
+	ball(chamber, R * 0.42, Enum.Material.Air)
+	-- the floor stays flat and walkable: fill back a thin ground layer under the tunnel and the chamber
+	fill(CFrame.new(Vector3.new((mouth.X + chamber.X) / 2, top - 0.6, (mouth.Z + chamber.Z) / 2)), Vector3.new(W + R * 0.5, 1.2, depth + R * 0.5), Enum.Material.Ground)
+	-- roots hanging over the mouth and two glinting eyes at the back of the chamber
+	for k = -2, 2 do
+		local r = part(into, "CaveRoot", Vector3.new(0.25, 2 + (k % 2) * 1.2, 0.25), CFrame.new(mouth + Vector3.new(k * W / 6, H - 1.2, 0.2)) * CFrame.Angles(0, 0, math.rad(k * 6)), Color3.fromRGB(92, 70, 48), Enum.Material.Wood, true)
+		r.CanCollide = false
+	end
+	local eyesAt = chamber + Vector3.new(0, -H * 0.2, -R * 0.3)
+	for _, s in { -1, 1 } do
+		local e = part(into, "CaveEye", Vector3.new(0.35, 0.35, 0.1), CFrame.lookAt(eyesAt + Vector3.new(s * 0.6, 0, 0), eyesAt + Vector3.new(s * 0.6, 0, 10)), Color3.fromRGB(255, 220, 90), Enum.Material.Neon, true)
+		e.CanCollide = false
+		game:GetService("CollectionService"):AddTag(e, "CaveEye")
+	end
+	-- (the eyes blink every few seconds: 2 parts, a cheap loop)
+	task.spawn(function()
+		local r = Random.new(36)
+		while into.Parent do
+			task.wait(r:NextNumber(2.5, 5))
+			for _, e in into:GetChildren() do
+				if e.Name == "CaveEye" and e:IsA("BasePart") then
+					e.Transparency = 1
+				end
+			end
+			task.wait(0.15)
+			for _, e in into:GetChildren() do
+				if e.Name == "CaveEye" and e:IsA("BasePart") then
+					e.Transparency = 0
+				end
+			end
+		end
+	end)
+	local shade = part(into, "CaveDark", Vector3.new(W + 4, H + 2, 0.2), CFrame.lookAt(chamber + Vector3.new(0, 0, -R * 0.36), chamber + Vector3.new(0, 0, 10)), Color3.new(0, 0, 0), Enum.Material.SmoothPlastic, true)
+	shade.Transparency = 0.25
+	shade.CanCollide = false
+	-- 3. The yard: Ground in front of the mouth, half-buried rocks, a fallen log, a stump, a low rock line with a gap.
+	local yard = Vector3.new(mouth.X, top, front + 9)
+	local yw, yd = math.min(size.X - 6, 34), 14
+	fill(CFrame.new(yard + Vector3.new(0, -0.45, 0)), Vector3.new(yw, 1, yd), Enum.Material.Ground)
+	local rng = Random.new(79)
+	for i = 0, 10 do
+		local a = i / 11 * math.pi -- (the front half of an ellipse: the hill closes the back)
+		local p = yard + Vector3.new(math.cos(a) * (yw / 2), 0, math.sin(a) * (yd / 2 + 1))
+		if not onPath(p, 3) and math.abs(p.X - mouth.X) > 5 then
+			ball(p + Vector3.new(0, -0.6, 0), rng:NextNumber(1.6, 2.6), if i % 3 == 0 then Enum.Material.Slate else Enum.Material.Rock)
+		end
+	end
+	for _, d in { Vector3.new(-yw * 0.32, 0, -2), Vector3.new(yw * 0.3, 0, 1) } do
+		ball(yard + d + Vector3.new(0, -0.9, 0), rng:NextNumber(1.8, 2.4), Enum.Material.Rock) -- (half-buried rocks in the yard)
+	end
+	local log = part(into, "CaveLog", Vector3.new(7, 1.4, 1.4), CFrame.new(yard + Vector3.new(-yw * 0.18, 0.6, 3)) * CFrame.Angles(0, math.rad(25), 0), Color3.fromRGB(110, 80, 52), Enum.Material.Wood, false, Enum.PartType.Cylinder)
+	log.CastShadow = true
+	part(into, "CaveStump", Vector3.new(1.6, 2, 2), CFrame.new(yard + Vector3.new(yw * 0.2, 0.8, -1)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(104, 76, 50), Enum.Material.Wood, false, Enum.PartType.Cylinder)
+	return mouth
+end
+
 local function northRow(into: Instance, o: Vector3, top: number)
 	local S = LabOwnerMap.S
 	local function at(x: number, z: number): Vector3
 		return Vector3.new(o.X + x * S, top, o.Z + z * S)
 	end
+	local CAVE_V2 = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).CAVE_V2 == true
+	local caveMouth: Vector3? = if CAVE_V2 then caveV2(into, o, top) else nil -- (F79: the terrain hill with a carved opening)
 	-- THE CAVE: a big rounded grey rock with a dark mouth, a dirt yard in front ringed with grey stones.
 	local cave = planAt(o, top, "CaveBear", 0, -6) -- (M4: the compact cave, the plan's 50 x 40; F79 rebuilds it as a terrain hill)
+	if not CAVE_V2 then
 	part(into, "CaveRock", Vector3.new(44, 30, 36), CFrame.new(cave + Vector3.new(0, 8, 0)), ROCK, Enum.Material.Rock, false, Enum.PartType.Ball)
 	part(into, "CaveRock", Vector3.new(28, 22, 24), CFrame.new(cave + Vector3.new(-12, 6, -8)), ROCK:Lerp(Color3.new(0, 0, 0), 0.08), Enum.Material.Rock, false, Enum.PartType.Ball)
 	local mouth = part(into, "CaveMouth", Vector3.new(11, 10, 3), CFrame.new(cave + Vector3.new(6, 5, 17)), Color3.fromRGB(28, 26, 24), Enum.Material.Slate, true)
@@ -774,6 +875,7 @@ local function northRow(into: Instance, o: Vector3, top: number)
 			part(into, "YardStone", Vector3.new(s * 1.4, s, s * 1.2), CFrame.new(yard + r + Vector3.new(0, s * 0.35, 0)) * CFrame.Angles(0, a, 0), ROCK, Enum.Material.Rock, true, Enum.PartType.Ball)
 		end
 	end
+	end -- (CAVE_V2)
 	-- THE AQUARIUM: a glass box on a concrete base with a steel frame, water inside.
 	local aq = planAt(o, top, "Aquarium")
 	local AW, AD, AH = AQUA.X, AQUA.Y, AQUA.Z
@@ -842,7 +944,8 @@ local function northRow(into: Instance, o: Vector3, top: number)
 			end
 		end
 		local _, size = b:GetBoundingBox()
-		b:PivotTo(CFrame.lookAt(cave + Vector3.new(6, size.Y / 2, 22), cave + Vector3.new(6, size.Y / 2, 60)))
+		local bearAt = if caveMouth then caveMouth + Vector3.new(7, 0, 9) else cave + Vector3.new(6, 0, 22)
+		b:PivotTo(CFrame.lookAt(bearAt + Vector3.new(0, size.Y / 2, 0), bearAt + Vector3.new(0, size.Y / 2, 40)))
 		b.Parent = into
 	end
 end
