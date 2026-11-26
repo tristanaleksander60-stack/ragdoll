@@ -20,6 +20,11 @@ local on = false
 local leftAt = -10
 local kept: { mode: Enum.CameraMode, minZoom: number, maxZoom: number }? = nil
 local listeners: { (boolean) -> () } = {}
+-- (F64, owner: "V putter en ud af first person, også hvis man holder et våben"; Config.V_TOGGLE_WINS): once the player leaves
+-- first person with V (or the eye button), nothing automatic (a weapon pick, a first strike, a shot) puts them back,
+-- until they choose it again (V, the eye button, scrolling all the way in).
+local choseThird = false
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
 
 function FirstPerson.isOn(): boolean
 	return on
@@ -36,6 +41,12 @@ function FirstPerson.set(want: boolean, asked: boolean?)
 	-- (24 Nov 2026, owner: never first person by itself with the mech arms on, whatever weapon is picked; V still does.)
 	if want and not asked and player:GetAttribute("MechArms") == true then
 		return
+	end
+	if want and not asked and choseThird and Config.V_TOGGLE_WINS then
+		return
+	end
+	if asked then
+		choseThird = not want
 	end
 	if want == on then
 		return
@@ -222,6 +233,7 @@ function FirstPerson.start()
 			return
 		end
 		if (camera.CFrame.Position - head.Position).Magnitude < FirstPerson.ENTER_AT then
+			choseThird = false -- (scrolled in: the player chose it)
 			FirstPerson.set(true)
 		end
 	end)
