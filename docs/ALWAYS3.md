@@ -217,3 +217,21 @@ A hard safety net on top of the 3-near rule. It works EVERYWHERE on the map:
 5. **Events and crowds** (event extras, the plaza at the start, road walkers passing): they count in AROUND, so a busy area never gets extra spawns.
 
 **Check:** stand in a busy spot (the plaza, an event, near walkers) and knock out one ragdoll next to you. No new ragdoll appears; one of the nearby ones walks over instead. In an empty spot, the fast refill still happens.
+
+## FINAL RULE for getting ragdolls to you (owner, 26 Nov 2026: "Den skal kun spawne 1 om bag ved med en cooldown, hvis der ikke er nogen i nærheden, og første prioritet er at sende en løbende")
+This OVERRIDES the earlier refill details where they disagree: no parallel spawns, and no pre-spawned reserves.
+
+**Priority 1, always first: SEND ONE RUNNING.**
+- When the player needs ragdolls (NEAR < 3 and AROUND < 3, or NEVER ZERO), take the nearest FREE living ragdoll that already exists, up to about 150 studs away (walkers, idle ones; watchers only if nothing else), and send it SPRINTING to the player (pace about 40).
+- More are missing? Send the next nearest existing one, one by one, every 0.5 s.
+
+**Priority 2, only if nobody can be sent:** that is, no free living ragdoll exists within about 150 studs.
+- **Spawn ONE** ragdoll **BEHIND the player**, out of view: about 30-50 studs behind the camera, on walkable ground, hidden (out of the camera's view, or behind cover), standing (the spawn-standing rules). It runs to the player.
+- **Cooldown:** after a spawn, no other spawn for this player for 8 s. During the cooldown only Priority 1 is used.
+- **Never more than 1 spawn at a time,** and never in front of the player or on screen.
+
+**Removed:** the 2 "reserves" trailing the player (they were extra spawned ragdolls). The pool (`RAGDOLL_DIRECTOR.md`) still reuses parked ragdolls for the Priority 2 spawn, so it costs nothing extra.
+
+**Check:**
+- in an empty spot, knock out everyone near: one existing ragdoll comes running first; if none exist, exactly one appears from behind you, then the cooldown;
+- in a busy spot, nothing spawns; nearby ones come over.
