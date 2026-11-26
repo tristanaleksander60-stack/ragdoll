@@ -336,6 +336,28 @@ The ejected casings (since 0.43.1) look plain.
 - **Maturity (honest):** cartoon X-ray bones breaking and shattering inside a see-through body, no exposed bones, no blood from it. Update the answer in `docs/MATURITY.md`.
 - **Caps:** max 40 bone pieces per body; phones 20 (the smallest merge).
 
+## F30 Every lab is singleplayer; the multiplayer place has ONE lab with everyone (owner, 26 Nov late)
+> "Fiks så at alle labs er singleplayer så man skal ikke kunne se andre, multiplayer versionen åbner et lab med alle i."
+
+**Start place (126037745825106): solo.**
+- A player never sees other players or other labs.
+- **Server size 1:** after the move to the group, the owner sets it in the Creator Hub (Places → the start place → Settings → server size 1). Tell the owner in the final message.
+- **Safety net in code** (if a server ever holds 2+ players, e.g. a friend joins):
+  - each client hides the other labs (do not stream or show them; parent them out locally);
+  - hide the other players' characters, name tags, ragdolls, effects and sounds;
+  - the server never builds two labs next to each other in view (plots stay 1100+ apart), and no shared plaza is shown in the solo place.
+- **Joining a friend in the start place:** the friend is taken to the MULTIPLAYER place instead (PLAY WITH FRIENDS), not into a solo server.
+
+**Multiplayer place (`Config.MULTI_PLACE`):**
+- ONE shared lab for everyone on the server (the existing "shared lab": no own labs built);
+- everyone spawns in it and sees everyone;
+- the server size is set in the Creator Hub (10);
+- the same new big map (`LAB_OWNERMAP`) is used there too.
+
+**Check:**
+- 2 test clients in the start place: they do not see each other or each other's labs.
+- 2 test clients in the multiplayer place: one lab, both see each other.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
