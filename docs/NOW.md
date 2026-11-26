@@ -4,6 +4,47 @@
 
 **Next after the lab:** `docs/STAY_LONGER.md` (session length). Build items 1-8 in one run. Item 1, the quiet gift timer on phones, goes first.
 
+## >>> GO NOW: THE MAP (owner, 26 Nov 2026, late). Do this FIRST in every /klar until it is finished. It is NOT parked. <<<
+> "Mappet har stadig ikke fået den store opdatering hvor det er blevet præcis som det jeg viste, sørg lige for den forstår planen korrekt og den kører nu indtil den er helt færdig"
+
+**What the owner wants, in plain words:**
+1. **The lab looks EXACTLY like the owner's own screenshots:**
+   - `art/store/look_target/lab_ref/ref_6` … `ref_10` (the main ones), plus `ref_1` … `ref_5` and the close-ups described in `docs/LAB_TARGET.md` R3.1b.
+   - The same zones, in the same places relative to each other, with the same objects, look, materials, light, hills and railway.
+   - It is NOT "inspired by". It is that map.
+2. **It is BIGGER: 10x the area,** about 950 x 820 studs.
+   - "1:1" and "10x bigger" do not conflict. Keep the SAME arrangement and proportions as the screenshots; stretch all distances by about 3.2.
+   - Make the big set pieces 1.5-2x (`docs/LAB_TARGET.md` R3.2 SIZE).
+   - Fill the extra space with the same kinds of things (tree groups, boulders, benches, lamps, ragdolls). Never leave empty flat areas.
+3. **Every existing machine and system works in the new map,** on its spot.
+4. **The player walks faster** (28) and can SPRINT (42); this is already in R3.2 RUN FASTER.
+
+**How to run it (several sessions are fine; never park it, never stop to ask):**
+- Work through the phases below in order. After EACH phase:
+  - one quick Play;
+  - a capture compared with its reference;
+  - commit and push;
+  - write one line in "MAP RUN STATE" below.
+- **A new /klar continues** from the first phase not marked done.
+- **Behind `Config.LAB_OWNERMAP = true`;** false brings back today's lab.
+- **Save the place after every phase** (the models live in the place file).
+
+| Phase | What | Compare with |
+|---|---|---|
+| M1 | The ground: 950 x 820 base; grass plots cut by the light-concrete walkway grid (6-stud tile look, 20-24 wide walkways); the raised spawn/leaderboard plaza with its granite wall, cap and pipe railing, its stair and 4 boards; the railway loop; the ring of soft green hills (terrain or cheap meshes) | ref_10 (top), ref_1 |
+| M2 | The hero: the 5-floor steel scaffold stair tower (about 90-100 high), the green steel slide on its truss, the wooden plank bridge, the grey grandstand with wooden seats | ref_5, ref_8, ref_10, ref_14 close-ups |
+| M3 | North row: the rock cave with the bear and its stone-ringed yard, the glass aquarium (shark), the leaderboard plaza (from M1), the open pool (whale), the fenced dirt pen | ref_6, ref_7, ref_10 |
+| M4 | West: car bays with the tank, monster truck and blue car; red barrels; the boxing ring; the long brick crash wall; the garage with the rail car; the rocket on its round pad and gantry; the concrete slab; the walled T-rex pen with its gate; the crocodile pond with the speaker wall | ref_6, ref_9, ref_10 |
+| M5 | East: the giant fan, the sandcastle tower with crates and fence, the yellow sandbox, the round sand circle, the archery target, the wooden seesaw, the GYRO CAGE (with its red button), the raised trampoline, the long lava strip with the sunken stone trench, the turf square, the TESLA COIL | ref_7, ref_8, ref_10, close-ups |
+| M6 | South: the round sweeper pad with its beam; the shredder pit with the railing, lever and button | ref_8, ref_9 |
+| M7 | Hook up EVERYTHING to the new spots (`LabLayout10.OWNER`): every machine, the cannon load, the creatures, cars, bike and cyclist route, the doghouse, spawns, the 3-near ragdolls and the watchers, TRY and the first machine (FIRST_2_MIN), the MAPS board, the portals (hidden ones stay hidden), benches, the weapon range | a Play through every machine |
+| M8 | Dressing and light: tree groups (round low-poly trees + pines), boulders, the soft daylight with the light green-grey haze on the hills (as in the shots); the extra space filled | ref_6-ref_10 |
+| M9 | Performance: StreamingEnabled tuned for the big lab, decoration cheap, the part budget (`docs/PERF_MOBILE.md`), phone FPS checked | the phone emulator |
+| M10 | The side-by-side check: the same 5 camera spots as ref_6-ref_10, list every difference, fix, recapture (max 4 rounds). Bar 9.5 "same map". Then publish (or ask for Alt+P in the final message) | ref_6-ref_10 |
+
+### MAP RUN STATE
+- (none yet: start at M1)
+
 ## THE RUN ORDER (owner, 26 Nov 2026: "sørg for planen bliver lavet i den rette rækkefølge"). `/klar` follows this list top to bottom.
 Why this order:
 - the owner's deadline first;
@@ -25,7 +66,7 @@ Why this order:
 | 4 | **PERFECT BULLET HOLES** + purple splatter on every hit | `docs/BODY_V2.md` 3 and 2b | checked: 2b exists already (BloodFx.wound: 3-12 purple droplets in the shot direction on every hit, landing; skipped only at the part cap); holes exist (BulletHoles, glued to the limb, sized by weapon).  0.63.0: `HOLE_VARIETY` (owner: "nye skudhuller, ikke det samme hver gang"): every hole its own size, oval by angle, tint, picture, stress ring and edge chip (no rings/chips on phones). Still parked: holes V2 (4 mesh variants, cracks, rim, exit holes, plastic chips) needs new hole art |
 | 5 | The body: X-ray 10/10 (bones can break by force), the blood look, injury stages, bandages, faces | `docs/BODY_V2.md` 1, 1b, 2, 4b | part 1 in 0.63.0 (place v1120): X-RAY button + B key (owner: B is fine) (`XRAY_V2`, Client/XRayToggle, DummySkins.setXray: the nearest 16 / phones 6 within 80 studs, whole skeleton). Left: glass shell + blue outline look, mesh skeleton, 1b breaks, 2 blood look, 4b stages/bandages/faces |
 | 6 | Impact smoke and dust, grab-swing-SLAM | `docs/IMPACT_FX.md` | part 1 in Studio, 0.64.0 (place v1121): `IMPACT_FX`: Client/ImpactDust (dust + bits by surface and speed, shock ring at 70+, 6 a second, 90 studs, half on phones), hooked in FxController "Land"; SLAM in GrabController (touch button by THROW while holding, right click on PC, "SMASH x2" on the goal line). Left: smoke trail, scuff decals, props react, camera shake/hit-stop on own slams |
-| 7 | **The lab:** the owner's map 1:1, 10x bigger, faster running and sprint | `docs/LAB_TARGET.md` ROUND 3 | PARKED for its own long run: a full new map at about 950x820 studs with new set pieces (cave, aquarium, pool, pen, sandcastle, shredder pit, crocodile pond, T-rex pen, garage, railway). It needs several sessions of building and side-by-side captures; done after steps 8-12 unless the owner says go now |
+| 7 | **The lab:** the owner's map 1:1, 10x bigger, faster running and sprint | `docs/LAB_TARGET.md` ROUND 3 | **GO NOW (owner, 26 Nov late): see "GO NOW: THE MAP" above; was parked for its own long run: a full new map at about 950x820 studs with new set pieces (cave, aquarium, pool, pen, sandcastle, shredder pit, crocodile pond, T-rex pen, garage, railway). It needs several sessions of building and side-by-side captures; done after steps 8-12 unless the owner says go now |
 | 8 | Lasso, breakable concrete walls, wooden crates | `docs/DESTRUCTION.md` | part 1 in 0.65.0 (place v1122): `BREAKABLES` wooden crates (Systems/Breakables: 3 stacks a lab, shot holes, 4 rounds or a blast or a flying body break them to planks, back in 20 s). Left: the lasso, breakable concrete walls and brick wall |
 | 9 | Burial + revenge | `docs/BODY_V2.md` 4 | built 0.66.0 (place v1123): `BURIAL` (Mourning bury(): shovel, 3 s dig with dirt, body hidden until it wakes, mound + R.I.P. stone 60 s, max 3, 1 burial at a time, not in a newcomer's first 2 min; then one cringe line and a 10 s revenge attack). Left: the funnel steps |
 | 10 | The guard dog (tap a limb, it bites) | `docs/GUARD_DOG.md` | built 0.67.0 (place v1124): `GUARD_DOG` (Systems/GuardDog + Client/GuardDogClient): a code-built doghouse at lab (40,22) with Whistle (E); the robot dog follows; tap or click a limb (head picks an arm) and it runs there, bites that part (DummyControl.hit + VitalsService.wound), shakes, GOOD BOY!; dog button sends it home; home after 3 min idle. Tested: whistle + a leg bite. Left: tooth marks, X-ray jaws, a real dog model, limb-specific reactions |

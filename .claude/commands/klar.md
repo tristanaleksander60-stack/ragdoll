@@ -2,7 +2,7 @@
 description: Work through docs/NOW.md for Ragdoll Havoc (cheap and fast; the owner tests)
 argument-hint: "[optional: what the owner wants first]"
 ---
-Read `CLAUDE.md`, then `docs/NOW.md`, and work through its RUN ORDER table top to bottom. If the owner wrote something after /klar, do that first.
+Read `CLAUDE.md`, then `docs/NOW.md`. **If NOW.md has a ">>> GO NOW" section, do that first and keep going until it is finished** (across several sessions, from its STATE list); then work through the RUN ORDER table top to bottom. If the owner wrote something after /klar, do that first.
 
 **1. Remind the owner of step 0 first.** Your FIRST message in every /klar run is this one Danish line, as long as step 0 in NOW.md is not marked done:
 "Husk punkt 0: tryk Alt+P i Studio for at udgive gore-off, og send aldersspørgeskemaet med svarene i docs/MATURITY.md før fre 27/11 kl. 18.34."
