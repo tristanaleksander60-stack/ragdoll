@@ -772,6 +772,28 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 - **The pads look the part:** arrows painted on each pad pointing at the wall, a strength label (1, 2, 3) and lights that flash when something is launched.
 - **Check:** drive the car, the drift car, the monster truck and the tank over each pad at 2 speeds, on PC and phone. Each launches in the arrow direction by strength, the driver stays in, the landing works, and the wall breaks on a hit.
 
+## F58 The SLIDE at the top of the tower is broken (owner's screenshot)
+**What the picture shows** (the tower's top deck, the green slide's start):
+- the chute is made of separate green blocks that do not join: gaps, a piece sticking up at an angle, side walls that stop and start, and blocks overlapping;
+- the slide's start pokes through the tower's edge or railing with no proper opening, so it is unclear how to get in;
+- the supports do not meet the chute.
+
+**Fix: rebuild the slide as ONE smooth, continuous chute:**
+- **The chute:** a constant cross-section (a rounded or U-shaped trough with side walls about 2 studs high), following a smooth curve from the deck to the runout. Two ways to build it:
+  - (a) a proper slide or chute mesh set from the Creator Store (straight and curve pieces that join cleanly, one style, malware pass);
+  - (b) many short segments along a spline, each joined edge to edge with matching angles: no gaps, no overlaps, no steps.
+
+  The inside surface is smooth and slippery (low friction CustomPhysicalProperties), with a slight bank in the curve.
+- **The start:** a proper start platform built into the tower deck.
+  - An OPENING in the railing (posts both sides, a top bar with a "SLIDE" sign and the slide pictogram).
+  - A small sit-down step, and handrails into the chute.
+  - Players walk in, sit and go; ragdolls are dropped or pushed in.
+- **Supports:** steel truss legs that actually meet the chute's underside at regular spacing and stand on the ground (or on the tower), with bolted brackets.
+- **The end:** a smooth run-out curve that levels out onto the landing in Tower Square (`OwnerMapPlan` SlideRunout), with a soft mat.
+- **Ride feel:** players and ragdolls speed up, follow the curve and shoot off the end (`MACHINES_10.md` 3.2: sparks on the bends, the launch distance score). Nobody gets stuck on a joint.
+- **Lag-free:** a few meshes, and the collision as a simple smooth surface (CollisionFidelity PreciseConvexDecomposition only on the trough, or invisible smooth collision parts).
+- **Check:** a quick look from above and from the side (no gaps, nothing sticking out), plus one ride down as a player and one ragdoll pushed in.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
