@@ -2458,7 +2458,18 @@ local function m4Clean(into: Instance, o: Vector3)
 	local function inEdgeBand(p: Vector3): boolean
 		local l = Vector2.new(p.X - o.X - c.X, p.Z - o.Z - c.Y)
 		local fromEdge = math.min(size.X / 2 - math.abs(l.X), size.Y / 2 - math.abs(l.Y))
-		return fromEdge < LabOwnerMap.M4_EDGE
+		if fromEdge >= LabOwnerMap.M4_EDGE then
+			return false
+		end
+		-- (never by a plaza: the spawn plaza sits near the north rim)
+		local q = Vector2.new(p.X - o.X, p.Z - o.Z)
+		for _, pz in Plan.PLAZAS do
+			local half = (if pz.size then pz.size / 2 else Vector2.new(pz.radius or 0, pz.radius or 0)) + Vector2.new(20, 20)
+			if pz.at and math.abs(q.X - pz.at.X) < half.X and math.abs(q.Y - pz.at.Y) < half.Y then
+				return false
+			end
+		end
+		return true
 	end
 	local TREE = { TreeOak = true, TreeFir = true, TreePoplar = true }
 	local GONE = { Hedge = true, FlowerBedSoil = true, FlowerBedEdge = true, Flower = true, Bush = true, ArchPost = true, ArchSign = true }
@@ -2577,9 +2588,7 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 		spawnSet(into, origin, origin.Y - 0.05) -- (OVERVIEW 0.97: the spawn to 11/10)
 	end
 	if M4 then
-		task.delay(5, function()
-			m4Clean(into, origin)
-		end)
+		m4Clean(into, origin) -- (at once: nobody sees the trees go)
 	end
 	-- F53 (owner: "Man kan ikke komme ind i Weapons Testing, fordi træerne dækker"; Config.TREE_CLEAR): once everything has
 	-- stood a few seconds (other systems build their buildings too), every tree or bush whose foot stands within 4 studs

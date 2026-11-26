@@ -471,6 +471,33 @@ function ZoneLighting.start()
 	for _, prop in PROPS do
 		(Lighting :: any)[prop] = (PROFILES.Day :: any)[prop]
 	end
+	if (Config :: any).REF_LOOK then
+		-- M4 THE LOOK 1:1 (owner: "vi skal matche den vibe 1:1 også med luften"; Config.REF_LOOK; MAP_MASTERPLAN.md "THE LOOK"):
+		-- ONE look for the lab, Roblox's own new-place light like the references: an afternoon sun, neutral grey ambient,
+		-- a soft pale haze, no glow, no tint. The other maps keep their moods.
+		local key = ZoneLighting.profileFor("Lab")
+		local ref = { ClockTime = 14, Brightness = 2, Ambient = Color3.fromRGB(70, 70, 70), OutdoorAmbient = Color3.fromRGB(128, 128, 128),
+			ExposureCompensation = 0, EnvironmentDiffuseScale = 1, EnvironmentSpecularScale = 1 }
+		PROFILES[key] = ref :: any
+		PROFILES.Lab = ref :: any
+		AIR[key] = { density = 0.35, color = Color3.fromRGB(199, 199, 199), decay = Color3.fromRGB(106, 112, 125), saturation = 0, tint = Color3.new(1, 1, 1) } :: any
+		AIR.Lab = AIR[key]
+		for _, prop in PROPS do
+			(Lighting :: any)[prop] = (ref :: any)[prop]
+		end
+		Lighting.ShadowSoftness = 0.2
+		local air = Lighting:FindFirstChildOfClass("Atmosphere")
+		if air then
+			air.Offset, air.Glare, air.Haze = 0.25, 0, 1
+		end
+		for _, d in Lighting:GetChildren() do
+			if d:IsA("BloomEffect") or d:IsA("SunRaysEffect") then
+				d.Enabled = false
+			elseif d:IsA("ColorCorrectionEffect") then
+				d.Contrast, d.Brightness, d.Saturation, d.TintColor = 0, 0, 0, Color3.new(1, 1, 1)
+			end
+		end
+	end
 	local player = Players.LocalPlayer
 	local function update()
 		local place = player:GetAttribute("Place")
