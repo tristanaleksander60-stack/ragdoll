@@ -1,6 +1,17 @@
 # NOW: the current work list (read this first on every /klar)
 
 ## CURRENT RUN: LAB 10/10 (owner, 26 Nov 2026)
+
+**ROUND 2 NOW** (owner scored round 1 at 3/10): build `docs/LAB10.md` section "ROUND 2". Main things:
+- attract mode on every machine;
+- the "try me" chain;
+- replacing the weak machines;
+- 3 new ones;
+- the hero tower;
+- a denser lab with a floor that has life.
+
+Score harshly.
+
 > "Hele labbet skal tages fra 2/10 til 10/10, ikke vær bange for at ændre ALT"
 
 Build `docs/LAB10.md` in one run: everything, then publish ONCE, then ONE Danish "Test selv" list. Do not ask the owner to test in between. Questions go into the owner list with a safe default.

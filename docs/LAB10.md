@@ -199,3 +199,125 @@ Each point scores 0-10 on the captures; all must be 9+.
 - the shop row with booths;
 - the black leaderboard slabs dressed as screens on a frame;
 - a PC capture.
+
+## ROUND 2: from 3/10 to 10/10 (owner, 26 Nov 2026)
+> "Er du tilfreds med dette resultat? Jeg vurder overall til 3/10, du må gerne udskifte maskiner, tilføje animation som gør folk ikke kan vente med at prøve den næste, og er alt opstillet med det abselut bedste design på alle parametre?"
+
+**Round 1 self-score (7s) was far too kind; the owner says 3/10.** From now on, score like a harsh critic. Put each capture side by side with `art/store/look_target/leader_hub.webp` and the top ragdoll games. When in doubt, score lower. A zone is not done until its capture passes the zone checklist (section R5).
+
+### R1 Why it is 3/10 (the owner's screenshot of round 1)
+- **A blank white parking lot.** Most of the screen is empty, bright white floor. Tidy, but sterile; nothing to look at, no depth, no texture, no shadows that read.
+- **Attractions are still small and scattered on the slab.** They are not set pieces:
+  - a big tree blob in the middle-left;
+  - a black cube;
+  - a grey box;
+  - a brown dirt square with a dashed ring;
+  - a trampoline in the middle of a walkway;
+  - a slingshot frame standing alone;
+  - the three ring pads with the yellow strip, still there;
+  - big orange wedges at the corners.
+- **Vehicles parked diagonally** across the yard, not in bays.
+- **The test floor is a small grey helipad** with tiny dummies. The heart of the lab is the weakest thing in it.
+- **The drop tower is the same stairs, slide and floating yellow steps,** recoloured. It is not a hero.
+- **Nothing moves.** There is no action to see from the spawn, so there is no pull to walk anywhere.
+- **The lab sign is cut off** ("INGSTUDIOS' LAB").
+- **Outside is still flat empty grass.**
+
+### R2 The big changes
+1. **Denser and smaller.**
+   - Shrink the compound by about 40 %, or grow every attraction about 2x; no stretch of empty floor wider than about 20 studs.
+   - The phone view from the spawn is full of things happening.
+2. **A floor with life.**
+   - No plain white:
+     - a warm mid-grey concrete texture;
+     - each zone on its own coloured pad;
+     - painted markings and decals (arrows, numbers, skid marks, hazard corners).
+   - **Height changes:**
+     - raised platforms with steps;
+     - a sunken crash pit;
+     - ramps.
+3. **Every zone is a set piece:**
+   - its own frame (a gantry, a fence or a glass wall);
+   - its own floor colour;
+   - one big pictogram arch sign;
+   - an accent light;
+   - its own sound.
+   - **No lone props.**
+4. **ATTRACT MODE (the main new thing): every machine shows off by itself.**
+   - When no player is using it, each machine plays a short demo with a demo dummy every 8-15 s:
+     - the cannon fires a dummy into a catch net;
+     - the wrecking ball smacks one;
+     - the press squashes one (flat-cartoon pop, then it springs back);
+     - a car hits the crash wall;
+     - the rocket lifts off with a dummy;
+     - the spider wraps one;
+     - the shark jumps;
+     - the bowling pins fly.
+   - **The timing is staggered,** so something happens on screen every 2-3 seconds from anywhere in the lab.
+   - **It runs on the client,** only within about 120 studs, and stops when a player uses the machine. Within the phone budget (`Config.ATTRACT_MODE`).
+   - **"Try me" pull:**
+     - the nearest machine you have NOT tried gets a pulsing glow ring and a bobbing "TRY!" hand;
+     - after you try it, the next untried machine starts pulsing;
+     - the goal pill says "Next: try the CANNON!".
+   - **First try of each machine:** a small reward pop (a few BOLTS, "NEW!" sticker).
+5. **Replace the weak machines** (each behind a switch; hide the old, do not delete):
+
+   | Today | Becomes |
+   |---|---|
+   | trampoline (a flat net) | **BOUNCE TOWER**: a giant inflatable that launches you high |
+   | slingshot frame | **GIANT CATAPULT** on the launch range |
+   | black cube | **HYDRAULIC PRESS** with glass sides and warning lights |
+   | grey box | **SPIN CYCLE**: a giant washing machine with a round window, the dummy tumbling inside |
+   | three ring pads + yellow strip | removed; their job moves to the travel gate |
+   | tree blob, dirt square, dashed ring, orange corner wedges | removed |
+
+   **New** (max 3 this round, cartoon tone, no gore):
+   - **DUMMY BOWLING:** a lane with 10 dummies as pins; roll a big ball; STRIKE banner.
+   - **PINBALL PIT:** a sunken pit with bumpers and flippers; drop a dummy in and watch it bounce with points.
+   - **ROCKET SLED:** rails that end in a padded wall.
+6. **The drop tower becomes the hero.**
+   - One designed tower, about 2x taller, with a lift that carries you up and a top deck with a PUSH plank.
+   - An airbag or splash pool below, with a height/score board.
+   - The lab-name sign on top, sized to fit any name (never cut).
+7. **Vehicles:** straight in painted bays. The crash track gets a ramp and a crash wall in line with the bays.
+8. **Paths:** one loop "tour" from the spawn past every zone in fun order, with floor arrows. The test floor in the middle.
+9. **Life everywhere:**
+   - a **DUMMY FACTORY**: a dispenser with a conveyor that brings fresh dummies to the test floor (it explains where dummies come from);
+   - flashing beacons;
+   - a crane moving a dummy;
+   - steam puffs;
+   - flags;
+   - ambient sound per zone.
+10. **The test floor is the heart:**
+    - a bigger round arena (raised, hazard rim, big painted target);
+    - dummies on test stands around it, life-size, not tiny;
+    - the BIG RED BUTTON on a big console with a glass cover.
+11. **Outside:** the lab sits in a landscape, not on flat grass:
+    - a test track running round it;
+    - hills and hangars;
+    - a road with a gate;
+    - trees in groups.
+12. **Light:** less glare from the floor, shadows that read, warm sun. The palette from section 2.
+
+### R3 Order
+1. Concept first.
+   - Draw a top-down plan image from code (coloured zone blocks with names), at `art/store/lab10/plan_r2.png`, and check the density.
+   - Then build zone by zone in this order: test floor + factory, drop tower, attract mode + "try me", the replaced machines, the new 3, the frame and outside, light.
+2. Commit after each zone.
+
+### R4 Performance
+- **Parts:** a lab must stay at or under 3,500 parts; use meshes and packages.
+- **Attract-mode demos:** one demo dummy per machine, reused and client-side; max 3 demos animating at once on a phone.
+
+### R5 Zone checklist (each must pass in its capture)
+- readable as what it is from the spawn on a phone;
+- shows a demo at least every 15 s;
+- has a frame, a floor pad, a sign, a light;
+- no empty floor > 20 studs;
+- nothing floating or clipping;
+- one obvious thing to do at its front.
+
+### R6 Done
+- The 4 captures, plus a short video (Studio recording, 20 s from the spawn).
+- Harsh score: all 9+.
+- Then publish once, with ONE Danish "Test selv" list.
