@@ -114,7 +114,6 @@ Build to these exact points.
 - **Keep, but restyled to the clean look and kept few:** the things the owner asked for by name:
   - the leaderboards and the #1 statues (F77);
   - the vehicle row (F76);
-  - one simple low name sign per attraction (F39, a plain grey board like the small sign in `ref_12`);
   - the TRY dispensers (F81), the aquarium platform (F78) and the welcome arch (simplified).
 - **Lamps:** only a few, along the main walkway, simple dark posts.
 
@@ -144,7 +143,7 @@ Build to these exact points.
 | **Walkway tiles** | 12-14 wide; 6 x 6 tiles | ONE slab per leg, with a world-aligned 6-stud tile texture (thin joint lines (180,180,175)), 0.3 over the grass, a 0.2 lip | Concrete or SmoothPlastic (205,205,200) | straight legs, square corners, one pad per junction (F82) |
 | **Plazas** | the spawn plaza raised about 4 on a grey concrete wall; the round plaza by the tower about 45 across | as the walkways, lighter | (220,220,215) | the spawn (with the 4 boards) and the round tower plaza |
 | **Grass** | the whole ground | one flat surface, no patches or dirt spots | Grass (110,140,85) | everywhere that is not walkway or an attraction |
-| **Name sign** | a board 4 x 1.6 on one post 3 high, beside the path, never across it | a board with a thin frame, a post | Metal (120,124,128), dark text | one per attraction, low, at its walkway end |
+| ~~Name sign~~ | **NONE: the owner removed all name signs (F84)** | - | - | - |
 | **Bin** | 1.4 wide, 2.4 high | a cylinder, a rim, a lid | Metal (70,74,78) | one by every bench group |
 | **Lamp** (few) | 10 high | a thin dark post, a small square head, a warm light (only within 140 studs, no shadows) | Metal (40,40,44) | only along the main walkway from the spawn, every 30 studs, 2 studs outside it |
 | **Leaderboard** | 12 wide x 9 high, on 2 posts | a dark board with a frame, a red or purple header strip, the list | board (30,32,36), headers (200,45,45) / (115,70,205), posts Metal (60,62,66) | 4 in a row on the spawn plaza in front of the wooden fence, facing the spawn (as `ref_1`); the #1 statue beside each (F77) |

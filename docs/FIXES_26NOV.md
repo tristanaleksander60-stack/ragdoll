@@ -1438,6 +1438,15 @@ This replaces F51 (NORMAL 30, sprint about 50), F38 (the Walk speed setting) and
 - **The question in NOW.md** ("Gangfart: skal NORMAL ned fra 30 til ca. 22?") is answered: 16, no setting. Remove it.
 - **Check (the owner):** walking speed is the normal Roblox speed on phone and PC; there is no RUN button, Shift does nothing, and Settings has no walk speed option.
 
+## F84 REMOVE every attraction NAME SIGN (owner, 26 Nov late: "Fjern alle der her skilte", screenshot: the green "SANDCASTLE", "GIANT FAN" and "TESLA COIL" boards on 2 wooden posts)
+- **Remove ALL the name signs:**
+  - the `signV2` boards and their posts (F39), the old `nameSign` boards, the courtyard signposts with arms, and the "IN HERE" boards;
+  - every one in the lab, delete them (do not hide them: no see-through leftovers, F82);
+  - turn off the code that builds them (`Config.NAME_SIGNS = false`), so M4's rebuild never makes them again.
+- **Kept:** the leaderboards and their plaques (F77), the TRY dispensers, the vehicle row's ground plaques (F76: low, on the ground, not boards on posts), and the machine buttons and panels.
+- This overrides F39 and the M4 table's "Name sign" row.
+- **Check (the owner):** no name boards anywhere in the lab.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
