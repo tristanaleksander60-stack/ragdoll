@@ -719,6 +719,17 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
   - run through a belt, a grove and a hedge on PC and phone: no blocking, no camera bump;
   - a walker ragdoll still keeps out of the belts.
 
+## F55 A path that runs into a WALL with no opening (owner: "Man kan ikke gå denne sti, fordi muren ikke har en dør eller en indgang")
+**The screenshot** (Animal Cove, by the aquarium): a walkway leads straight into a grey concrete wall (a pen or room wall), and the wall has no gap. The path is useless.
+
+**Fix:**
+- **Every place where a path meets or crosses a wall, fence, railing or pen edge** gets ONE of these:
+  - **an OPENING:** a proper gate or doorway, at least the path's width + 2, with a frame (posts or pillars and a lintel), a gate that swings open or an open archway; for pens, a gate in the fence (`MAP_MASTERPLAN.md` PATHS rule 4);
+  - or the path is re-routed round the wall, if the wall must stay closed (a dangerous animal's pen: then the path leads to a viewing platform or window instead).
+- **Wall ends:** walls never end in the middle of a path, and walls never cross a path diagonally.
+- **The lint** (part of F50): every path leg against every wall, fence or railing piece. Any intersection without an opening counts, and it must be 0.
+- **Check:** walk every path in Animal Cove and the other rooms to its end. Each one leads somewhere you can enter, or to a viewing spot. Nothing dead-ends at a wall.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
