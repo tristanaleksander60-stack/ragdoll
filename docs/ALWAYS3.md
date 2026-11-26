@@ -36,3 +36,26 @@ Behind `Config.ALWAYS_THREE = true`. The server decides (DummyControl / DummySpa
 - One quick Play: knock out all 3 near you. Each time one is called within about 1 s; a far one runs, a near one walks and talks.
 - Then stand still for 30 s: there are always 3 living ragdolls within 35 studs.
 - Test selv (Danish) in the run's one list: on phone and PC.
+
+## Spectators at every machine (owner, 26 Nov 2026)
+> "Der skal være en ragdoll ved hver maskine og stå og kigge, nogle gange flere, men minimum 1"
+
+Behind `Config.MACHINE_WATCHERS = true`.
+- **Every machine** (cannon, rocket, gyro cage, fan, press, washer, shredder, tesla coil, boxing ring, trampoline, slide, tower, creature tanks/pens, crash wall, lava…) always has **at least 1 ragdoll standing and watching**.
+  - About a third of the machines have 2-3 (random, changes now and then).
+  - They stand 6-10 studs from the machine, facing it, spread out, never in its path or its launch line.
+- **What they do:**
+  - **While watching:** they look around, shift their weight, point at the machine and nudge each other.
+  - **When the machine runs** (a player or attract mode): they react. They cheer, cover their eyes, step back, laugh, or wince with the pain face.
+  - **When the player comes close:** a watcher may say a line ("Have you tried it?", "Go on, press it.", "I'm not going in there.", "I've seen things."). Max one line every 6 s per player.
+- **Replacing them:** if a watcher is knocked out, used in the machine, or called to the player (the 3-near rule), another lab ragdoll walks over within about 10 s, so the minimum of 1 always comes back.
+  - With none free, a new one walks in from out of view.
+- **Phone budget** (caps: 9 on phones, 13 on tablets):
+  - watchers further than about 60 studs from the player are **light stand-ins**: anchored, animated, no physics, no talk;
+  - a stand-in turns into a full ragdoll the moment the player comes within 60 studs, or shoots or touches it (swap in place, no pop);
+  - full ragdolls further than 60 studs go back to stand-ins.
+  - So every machine has its watcher, while the physics count stays inside the caps.
+- **Check:**
+  - One Play: walk round the whole lab; every machine has at least 1 watcher.
+  - Knock one out; within about 10 s a new one stands there.
+  - Phone emulator: the physics ragdoll count stays within the cap.

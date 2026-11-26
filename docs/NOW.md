@@ -8,7 +8,7 @@
 - Build it, then **publish at once** (quick gate). The maturity questionnaire is due **Fri 27 Nov 2026 17:34 UTC** and must match the live game.
 - Then tell the owner in Danish: "Gore er slået fra og live — send spørgeskemaet nu med svarene i docs/MATURITY.md".
 - Only then the rest of the run.
-- Right after it (small, big effect): `docs/ALWAYS3.md`, always 3 living ragdolls near the player; replacements run in from afar or walk in and say a line.
+- Right after it (small, big effect): `docs/ALWAYS3.md`, always 3 living ragdolls near the player; replacements run in from afar or walk in and say a line. Plus at least 1 watcher at every machine (section "Spectators").
 
 ## CURRENT RUN: `/klar` = LAB_TARGET ROUND 3. Do it now, all of it, without asking.
 **Not blocked any more** (owner, 26 Nov 2026): "1:1 10/10 … jeg skal bare skrive /klar".
