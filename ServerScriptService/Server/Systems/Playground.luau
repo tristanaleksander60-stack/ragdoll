@@ -387,7 +387,11 @@ local function buildCannon()
 								if owner then
 									ExperimentService.event(owner, "Cannon", 1, "the CANNON")
 								end
+								m:SetAttribute("CannonBy", if owner then owner.UserId else nil) -- (M10_CANNON: whose NEW BEST it is)
 							end)
+							if Config.M10_CANNON then
+								Playground.cannonWindUp(barrelCf, loadAt, Playground.CANNON_LOAD + 0.2)
+							end
 							task.wait(Playground.CANNON_LOAD)
 							if m.Parent then
 								DummyControl.move(m, CFrame.lookAt(muzzle.Position, muzzle.Position + CANNON_DIRECTION))
@@ -396,6 +400,10 @@ local function buildCannon()
 								DummyControl.push(m, CANNON_DIRECTION * CANNON_SPEED * Playground.CANNON_DUMMY_BOOST)
 								FxService.hit(muzzle.Position, 140, "CannonPad")
 								tearOff(m, Playground.TEAR_CANNON, muzzle.Position)
+								if Config.M10_CANNON then
+									local by = m:GetAttribute("CannonBy")
+									task.spawn(Playground.cannonScore, m, muzzle.Position, if type(by) == "number" then Players:GetPlayerByUserId(by) else nil)
+								end
 								-- (Phase D, 23 Nov 2026: "cannon smoke and recoil"): a flash and a cloud of smoke out of
 								-- the muzzle, and the cannon kicks back on its wheels and rolls home.
 								task.spawn(function()
@@ -1671,5 +1679,114 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	end
 	log.info("built " .. folder.Name)
 end
+
+-- MACHINES_10 3.1 (Config.M10_CANNON): the cannon's wind-up and score. Before the shot: a fuse spark at the barrel's back
+-- and the watchers near say "Cover your ears!". After it: the ragdoll is followed until it lands; where it lands a big
+-- "123 studs!" pops (3 s), with NEW BEST for the player who loaded it (attribute CannonBest), and 1 shot in 20 is
+-- GOLDEN (a gold confetti burst, "GOLDEN SHOT!").
+local function pop(at: Vector3, text: string, color: Color3)
+	local p = Instance.new("Part")
+	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.Transparency = true, false, false, false, 1
+	p.Size = Vector3.one * 0.2
+	p.Position = at + Vector3.new(0, 4, 0)
+	local bb = Instance.new("BillboardGui")
+	bb.Size = UDim2.fromOffset(260, 70)
+	bb.AlwaysOnTop = true
+	bb.MaxDistance = 400
+	local l = Instance.new("TextLabel")
+	l.BackgroundTransparency = 1
+	l.Size = UDim2.fromScale(1, 1)
+	l.Font = Enum.Font.FredokaOne
+	l.TextScaled = true
+	l.TextColor3 = color
+	l.TextStrokeTransparency = 0.1
+	l.Text = text
+	l.Parent = bb
+	bb.Parent = p
+	p.Parent = Workspace
+	game:GetService("Debris"):AddItem(p, 3)
+end
+function Playground.cannonWindUp(barrel: CFrame, loadAt: Vector3, seconds: number)
+	local p = Instance.new("Part")
+	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.Transparency = true, false, false, false, 1
+	p.Size = Vector3.one * 0.2
+	p.CFrame = barrel * CFrame.new(0, 1.5, 4)
+	local e = Instance.new("ParticleEmitter")
+	e.Color = ColorSequence.new(Color3.fromRGB(255, 230, 120), Color3.fromRGB(255, 120, 30))
+	e.LightEmission = 1
+	e.Size = NumberSequence.new(0.35, 0)
+	e.Speed = NumberRange.new(4, 9)
+	e.SpreadAngle = Vector2.new(60, 60)
+	e.Lifetime = NumberRange.new(0.2, 0.4)
+	e.Rate = 60
+	e.Parent = p
+	p.Parent = Workspace
+	game:GetService("Debris"):AddItem(p, seconds)
+	local dummies = Workspace:FindFirstChild("Dummies")
+	for _, w in if dummies then dummies:GetChildren() else {} do
+		local wp = w:FindFirstChild("LowerTorso")
+		if w:GetAttribute("Watch") ~= nil and wp and wp:IsA("BasePart") and (wp.Position - loadAt).Magnitude < 45 then
+			w:SetAttribute("MoodSay", "Cover your ears!")
+			task.delay(2.5, function()
+				if w.Parent and w:GetAttribute("MoodSay") == "Cover your ears!" then
+					w:SetAttribute("MoodSay", nil)
+				end
+			end)
+			break
+		end
+	end
+end
+function Playground.cannonScore(m: Model, muzzle: Vector3, shooter: Player?)
+	local pelvis = m:FindFirstChild("LowerTorso")
+	if not (pelvis and pelvis:IsA("BasePart")) then
+		return
+	end
+	task.wait(0.8)
+	local t0 = os.clock()
+	local still = 0
+	while m.Parent and os.clock() - t0 < 9 do
+		task.wait(0.2)
+		if pelvis.AssemblyLinearVelocity.Magnitude < 8 then
+			still += 0.2
+			if still >= 0.6 then
+				break
+			end
+		else
+			still = 0
+		end
+	end
+	if not m.Parent then
+		return
+	end
+	local d = math.floor(Vector3.new(pelvis.Position.X - muzzle.X, 0, pelvis.Position.Z - muzzle.Z).Magnitude + 0.5)
+	local golden = math.random(1, 20) == 1
+	local best = if shooter then (shooter:GetAttribute("CannonBest") :: number?) or 0 else 0
+	local newBest = shooter ~= nil and d > best
+	if shooter and newBest then
+		shooter:SetAttribute("CannonBest", d)
+	end
+	pop(pelvis.Position, tostring(d) .. " studs!" .. (if newBest then "\nNEW BEST!" else ""), if golden then Color3.fromRGB(255, 210, 60) else Color3.new(1, 1, 1))
+	if golden then
+		pop(pelvis.Position + Vector3.new(0, 4, 0), "GOLDEN SHOT!", Color3.fromRGB(255, 200, 40))
+		local c = Instance.new("Part")
+		c.Anchored, c.CanCollide, c.CanQuery, c.CanTouch, c.Transparency = true, false, false, false, 1
+		c.Size = Vector3.one * 0.2
+		c.Position = pelvis.Position + Vector3.new(0, 2, 0)
+		local e = Instance.new("ParticleEmitter")
+		e.Color = ColorSequence.new(Color3.fromRGB(255, 220, 80), Color3.fromRGB(255, 170, 30))
+		e.LightEmission = 0.6
+		e.Size = NumberSequence.new(0.5, 0.3)
+		e.Speed = NumberRange.new(16, 28)
+		e.SpreadAngle = Vector2.new(60, 60)
+		e.Acceleration = Vector3.new(0, -25, 0)
+		e.Lifetime = NumberRange.new(1.2, 2)
+		e.Rate = 0
+		e.Parent = c
+		c.Parent = Workspace
+		e:Emit(90)
+		game:GetService("Debris"):AddItem(c, 3)
+	end
+end
+
 
 return Playground
