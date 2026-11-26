@@ -62,6 +62,60 @@ local function step()
 	end
 end
 
+-- OVERVIEW 0.158 / docs/RAGDOLL_DIRECTOR.md Part C (owner: "Hvis der er mere end 6-7 i nærheden af en telefonspiller, så skal alle
+-- over 6-7 gå væk, medmindre de er blevet ramt af et skud"; Config.NEARBY_CAP): living ragdolls within 45 studs of a
+-- player, capped by the player's device (phone 7, tablet 9, PC 12). Over it, the extras WALK AWAY (never removed in
+-- view): the farthest free ones first; never one that was shot in the last 60 s, is held, in a machine, one of the 3
+-- near (Role3), a watcher, a demo or a runner. They walk 90 studs straight away from the player and roam on from there.
+RagdollDirector.CAP = { phone = 7, tablet = 9 }
+RagdollDirector.CAP_PC = 12
+local sentAway: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+local function capStep()
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if not dummies then
+		return
+	end
+	local now = os.clock()
+	for _, p in Players:GetPlayers() do
+		local r = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+		if not (r and r:IsA("BasePart")) then
+			continue
+		end
+		local cap = RagdollDirector.CAP[tostring(p:GetAttribute("Device"))] or RagdollDirector.CAP_PC
+		local living, extras = 0, {}
+		for _, m in dummies:GetChildren() do
+			local pe = m:FindFirstChild("LowerTorso")
+			local vital = m:GetAttribute("Vital")
+			if m:IsA("Model") and pe and pe:IsA("BasePart") and vital ~= "Dead" and vital ~= "Unconscious" then
+				local d = (pe.Position - r.Position).Magnitude
+				if d < 45 then
+					living += 1
+					local hitAt = m:GetAttribute("ServerHitAt")
+					local shot = type(hitAt) == "number" and workspace:GetServerTimeNow() - hitAt < 60
+					if not shot and not inUse(m, pe) and m:GetAttribute("Role3") == nil and m:GetAttribute("Watch") == nil
+						and now - (sentAway[m] or -math.huge) > 15 then
+						table.insert(extras, { m = m, d = d, at = pe.Position })
+					end
+				end
+			end
+		end
+		local over = living - cap
+		if over > 0 then
+			table.sort(extras, function(a, b)
+				return a.d > b.d
+			end)
+			for i = 1, math.min(over, #extras) do
+				local e = extras[i]
+				local away = Vector3.new(e.at.X - r.Position.X, 0, e.at.Z - r.Position.Z)
+				local dir = if away.Magnitude > 0.1 then away.Unit else Vector3.xAxis
+				sentAway[e.m] = now
+				e.m:SetAttribute("Home", e.at + dir * 90)
+				e.m:SetAttribute("HomeLook", nil)
+			end
+		end
+	end
+end
+
 function RagdollDirector.start()
 	local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
 	if not Config.RAGDOLL_DIRECTOR then
@@ -71,6 +125,9 @@ function RagdollDirector.start()
 		while true do
 			task.wait(0.5)
 			pcall(step)
+			if Config.NEARBY_CAP then
+				pcall(capStep)
+			end
 		end
 	end)
 end
