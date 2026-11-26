@@ -966,6 +966,21 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 - **Lag-free:** the sprays and ripples animate on the client, only within about 120 studs and in view (pooled emitters), and on low tier with fewer particles. The water sound plays only near.
 - **Check:** walk past every water feature. No button, and the water is running.
 
+## F69 The motorbike rider gets STUCK (owner's screenshot: the rider and the dirt bike are wedged on a row of grey plates or a fence)
+**The cause:** BikeService steers between "clear spots of the lab" with AlignPosition and AlignOrientation in more or less straight lines. On the new big map those lines cross fences, railings, kerbs, stairs and props, and the bike gets wedged.
+
+**Fix (BikeService + the cyclist):**
+- **Ride on ROADS only:** build the route from `OwnerMapPlan` (the road and avenue centre lines: the outer avenues, the cross roads, the boulevard sides), as a loop of waypoints along the road centres. Never across grass plots, belts, plazas with props, stairs or rooms.
+- **Smooth turns** at junctions (a curve through the junction pad); the speed drops before corners.
+- **Obstacles:** it slows and steers round players, ragdolls, cars and anything on the road (a short look-ahead raycast); it stops and waits if the road is blocked.
+- **The stuck guard:**
+  - if the bike moves less than 2 studs in 2 s, it backs up 4 studs, turns and re-joins the nearest road waypoint;
+  - if it is still stuck after 6 s, the rider gets off and walks away;
+  - the bike is taken back to its pad only when no player can see it (Part C, never vanish in view), and a new rider comes later.
+- **Upright:** if the bike tips over, the rider gets off and picks it up (the existing "comes off" logic), never lying wedged.
+- **The same rules for the pedal-bike cyclist** (`LIFE_IDLE.md` 2) and the ridden wheelchairs.
+- **Check:** let the rider do 3 full loops of the map. It never leaves the roads and never gets stuck. Block it with a car, and it waits or goes round.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
