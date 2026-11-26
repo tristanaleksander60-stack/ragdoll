@@ -514,6 +514,7 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - (27 Nov) Script Sync: after turning it on, a change to a file on disk still did not reach Studio. Check the 3 folders show the sync icon and point at DocumentsRagdollLab (ServerScriptServiceServer, ReplicatedStorageReplicatedStorageShared, StarterPlayerScriptsStarterPlayerScriptsClient).
 - (26 Nov, F13) REVIVE ALL kept its key X (R and Z are taken). OK?
 - (26 Nov, F10) The German Shepherd is one rigid mesh (no free rigged one found), moved by code (trot bob, wiggle, bite shake). For real leg animations: buy or send a rigged German Shepherd (Creator Store id), or keep this?
+- (27 Nov, S2) The smooth body is built in Blender: art/models/mannequin/mannequin.fbx. Import it ONCE: Studio > File > Import 3D > that file (as a rig), or allow me to upload it as a Model asset on your account (Open Cloud asset:write + an approved folder). Default: waiting; the real hands from parts are on now.
 
 ## Phone button map (checked 26 Nov 2026, 0.63.0, iPhone landscape 750x381 in the emulator with DevTouch)
 - **Left:** Shop and Menu in row 1, then Multiplayer (`HudMenu.PHONE_KEEP`, `PortalUI` launcher). The move stick is under them.
@@ -525,5 +526,5 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - **Studio note:** without DevTouch the emulator reads as a touch laptop and shows the PC sandbox column (1ST/SLOW-MO/REVIVE/RESET), which overlaps JUMP. Real phones never show it.
 - Picture: `art/store/phone_hud_0.63.jpg`.
 - **F68 water button:** I found no button that turns water on in the start place (0 prompts, click detectors or scripts near water). Which place is it in, and where (a screenshot)? Default: parked until you say.
-- **S2 smooth body:** it needs one skinned mannequin mesh (one MeshPart with bones named LowerTorso, UpperTorso, LeftUpperArm ... like R15) made in Blender, or a Creator Store asset id you like. Default: parked; the R15 body with its current skins stays.
-- **M4 smaller map:** the layout generator tools/masterplan.py needs Python, which is not installed on this PC. Install Python 3 (python.org, tick "Add to PATH") and I rewrite the plan to the compact 300-400 stud layout. Default: the trees and clutter are gone now (M4 part 1); the size stays until Python is there.
+- **S2 smooth body:** built in Blender (27 Nov), see the question above (one import).
+- **M4 smaller map:** Python is installed now; the compact plan is ready (cloud). Built in M4.
