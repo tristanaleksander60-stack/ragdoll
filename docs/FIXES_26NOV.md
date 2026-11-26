@@ -133,6 +133,38 @@ The left stack is broken:
 - **Every publish from now on publishes BOTH places** (start: Alt+P; multiplayer: Publish to Roblox As → the multiplayer place → Overwrite), or both through Open Cloud if the key has `universe-places:write` for the group's universe.
 - **Server sizes (Creator Hub):** the start place 1; the multiplayer place 10.
 
+## F13 REVIVE ALL instead of the Z chip (PC and tablet)
+The bottom-left chip row (F run figure, V eye, Z clock) changes: the Z time-dial chip becomes **REVIVE ALL**.
+- **Look:** a revive icon (a heart with a plus) in the same style.
+- **Key:** R if it is free (the old HUD used R for Revive), else Z.
+- **What it does:** it wakes every knocked-out ragdoll in your lab at once (the existing revive-all), with a short sparkle on each.
+- **Tablets:** check which HUD they get (the phone or the PC layout). Show REVIVE ALL on tablets too: in the chip row if they use it, else as one small button.
+- **Phones:** keep the existing small REVIVE (only when a ragdoll is down).
+- **The time dial:** stays reachable from Menu.
+
+## F14 Remove the white blob round shots
+On PC, every shot shows a white blotch round the hit or the crosshair. Likely sources:
+- the white "plink" flash or the white cartoon dust puff on hit;
+- a white hit-marker image;
+- a muzzle-flash billboard drawn white.
+
+**Find it and remove it on ALL devices.** The hit feedback is the plastic chips, the grey dust and the purple splatter (`docs/BODY_V2.md` 2b and 3), plus a small thin crosshair hit-tick, never a white blob.
+
+## F15 CPR faces the right way
+- **The helper:**
+  - kneels at the side of the knocked-out ragdoll, level with its chest;
+  - its torso and face turn TOWARD the patient's chest;
+  - its hands are on the chest centre.
+- **Each compression:** before each compression, re-aim from the patient's current torso position and orientation (the body may have slid or turned).
+- **Never** from behind or facing away.
+- Check with the patient lying face up, face down (the helper rolls it over first, or does it from the side) and on a slope.
+
+## F16 Hold-to-fire only for automatic weapons
+- On phones (and the same rule on PC and console), holding SHOOT fires continuously ONLY with automatic weapons (SMG, minigun, Belt Buster, Drum Rattler, Auto Shotgun…).
+- Semi-automatic weapons (Glock/pistol, revolver, sniper, shotgun, bow…) fire ONE shot per tap or click. Holding does nothing more.
+- The fire rate cap stays per weapon.
+- **The data:** put an `auto = true/false` field on every weapon in `Shared/Toys` and use it in the client fire loop. The server also refuses shots faster than the weapon's rate.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
