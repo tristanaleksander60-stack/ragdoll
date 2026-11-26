@@ -18,14 +18,14 @@ BOUNDS = (-505, -386, 445, 434)
 # ---------- ROOMS: walled by tree belts, entered only through their openings ----------
 # (id, name, x0, z0, x1, z1, entrances [(x, z)] on the room edge, courtyard (x, z))
 ROOMS = [
-    ("AnimalCove",  "Animal Cove",   -455, -360, -150, -170, [(-305, -170), (-150, -325)], (-320, -195)),
-    ("SplashZone",  "Splash Zone",     90, -360,  395, -170, [(245, -170), (90, -325)],    (245, -195)),
-    ("CrashYard",   "Crash Yard",    -455, -130, -150,   20, [(-305, -130), (-305, 20)],  (-305, -5)),
-    ("CarPark",     "Car Park",      -455,   60, -150,  240, [(-305, 60), (-305, 240)],   (-305, 85)),
-    ("MachineHall", "Machine Hall",    90, -130,  395,   20, [(245, -130), (245, 20)],    (245, -5)),
-    ("FunFair",     "Fun Fair",        90,   60,  395,  240, [(245, 60), (245, 240)],     (245, 85)),
-    ("LaunchField", "Launch Field",  -455,  280, -150,  400, [(-200, 280)],               (-200, 308)),
-    ("DangerZone",  "Danger Zone",     90,  280,  395,  400, [(245, 280)],                (245, 308)),
+    ("AnimalCove",  "Animal Cove",   -455, -360, -150, -170, [(-305, -170), (-150, -325)], (-305, -212)),
+    ("SplashZone",  "Splash Zone",     90, -360,  395, -170, [(245, -170), (90, -325)],    (245, -212)),
+    ("CrashYard",   "Crash Yard",    -455, -130, -150,   20, [(-305, -130), (-305, 20)],  (-290, -30)),
+    ("CarPark",     "Car Park",      -455,   60, -150,  240, [(-305, 60), (-305, 240)],   (-305, 105)),
+    ("MachineHall", "Machine Hall",    90, -130,  395,   20, [(245, -130), (245, 20)],    (245, -20)),
+    ("FunFair",     "Fun Fair",        90,   60,  395,  240, [(245, 60), (245, 240)],     (245, 100)),
+    ("LaunchField", "Launch Field",  -455,  280, -150,  400, [(-200, 280)],               (-200, 318)),
+    ("DangerZone",  "Danger Zone",     90,  280,  395,  400, [(245, 280)],                (245, 318)),
     ("PicnicPark",  "Picnic Park",   -130,  150,   70,  400, [],                          None),
     ("GardensN",    "Spawn Gardens", -130, -270,   70, -170, [],                          None),
     ("LawnsMid",    "Lawns",         -130, -130,   70,  -60, [],                          None),
@@ -55,18 +55,18 @@ ROADS = [
     ("PlazaWest",   12, [(-105, -325), (-150, -325)]),         # plaza side exits into Animal Cove / Splash Zone
     ("PlazaEast",   12, [(45, -325), (90, -325)]),
     # spurs into every room entrance (from the nearest road to the room edge)
-    ("SpurCoveS",    14, [(-305, -150), (-305, -170)]),
-    ("SpurSplashS",  14, [(245, -150), (245, -170)]),
-    ("SpurCrashN",   14, [(-305, -150), (-305, -130)]),
-    ("SpurCrashS",   14, [(-305, 40), (-305, 20)]),
-    ("SpurParkN",    14, [(-305, 40), (-305, 60)]),
-    ("SpurParkS",    14, [(-305, 260), (-305, 240)]),
-    ("SpurHallN",    14, [(245, -150), (245, -130)]),
-    ("SpurHallS",    14, [(245, 40), (245, 20)]),
-    ("SpurFairN",    14, [(245, 40), (245, 60)]),
-    ("SpurFairS",    14, [(245, 260), (245, 240)]),
-    ("SpurLaunch",   14, [(-200, 260), (-200, 280)]),
-    ("SpurDanger",   14, [(245, 260), (245, 280)]),
+    ("SpurCoveS",     18, [(-305, -150), (-305, -170)]),
+    ("SpurSplashS",   18, [(245, -150), (245, -170)]),
+    ("SpurCrashN",    18, [(-305, -150), (-305, -130)]),
+    ("SpurCrashS",    18, [(-305, 40), (-305, 20)]),
+    ("SpurParkN",     18, [(-305, 40), (-305, 60)]),
+    ("SpurParkS",     18, [(-305, 260), (-305, 240)]),
+    ("SpurHallN",     18, [(245, -150), (245, -130)]),
+    ("SpurHallS",     18, [(245, 40), (245, 20)]),
+    ("SpurFairN",     18, [(245, 40), (245, 60)]),
+    ("SpurFairS",     18, [(245, 260), (245, 240)]),
+    ("SpurLaunch",    18, [(-200, 260), (-200, 280)]),
+    ("SpurDanger",    18, [(245, 260), (245, 280)]),
 ]
 
 # ---------- ITEMS: every attraction, with its footprint (keep this floor free for it) ----------
@@ -91,7 +91,7 @@ ITEMS = [
     ("BrickWall",      "CrashYard",  -432,  -50, 8, 100, "E", "the long red brick crash wall (barrels at its ends, the old sedan beside it)"),
     ("LaunchPads",     "CrashYard",  -330,  -28, 14, 50, "W", "3 launch pads aimed at the brick wall"),
     ("BoxingRing",     "CrashYard",  -215,  -85, 32, 32, "S", "the boxing ring on its pad"),
-    ("WreckingBall",   "CrashYard",  -215,  -25, 28, 28, "S", "the wrecking ball gantry"),
+    ("WreckingBall",   "CrashYard",  -215,  -25, 28, 28, "W", "the wrecking ball gantry"),
     # Car Park
     ("CarPark",        "CarPark",    -380,  130, 92, 46, "S", "the car park with 6+ parked cars in bays"),
     ("Garage",         "CarPark",    -410,  200, 50, 36, "E", "the garage, doors facing the room; a rail spur runs from the west railway into its back"),
@@ -99,7 +99,7 @@ ITEMS = [
     ("BikeRack",       "CarPark",    -235,   95, 30, 14, "S", "bike rack (the cyclist's bicycle) + later the wheelchairs"),
     # Machine Hall (under a big open-sided steel shed roof that blocks the view from outside)
     ("GiantFan",       "MachineHall", 150,  -85, 44, 32, "E", "the giant fan"),
-    ("TeslaCoil",      "MachineHall", 200,  -88, 26, 26, "S", "the Tesla coil on its white pad"),
+    ("TeslaCoil",      "MachineHall", 215,  -95, 26, 26, "S", "the Tesla coil on its white pad"),
     ("GyroCage",       "MachineHall", 335,  -90, 44, 22, "S", "the gyro cage with its red button in front"),
     ("Press",          "MachineHall", 150,  -30, 28, 28, "E", "the press (compressor)"),
     ("StretchMachine", "MachineHall", 245,  -48, 22, 30, "S", "the stretch machine"),
@@ -221,11 +221,11 @@ def lint():
     return problems
 
 # ---------- inner paths: every attraction is reached by a path from its room's courtyard ----------
-INNER_W = 12
+INNER_W = 16
 
 def front_point(x, z, w, d, face):
     f = face[0]
-    o = INNER_W / 2 + 3  # (the path's last leg stops here; the builder extends its end to meet the thing's pad)
+    o = INNER_W / 2 + 3 + ROUTE_MARGIN  # (the branch ends at a landing pad here; the builder fits the landing to the thing's built front edge)
     if f == "N":
         return (x, z - d / 2 - o)
     if f == "S":
@@ -244,11 +244,16 @@ import heapq
 
 CELL = 5
 
-def grid_path(a, b, avoid, bounds):
-    """A shortest few-turn path a -> b on a CELL grid that keeps INNER_W/2 + 2 clear of every rect in avoid
-    and stays inside bounds (x0, z0, x1, z1). Returns the corner points, or None."""
+ROUTE_MARGIN = 2  # extra studs round every attraction for routing (the built model may be a bit bigger than its plan box)
+
+def grid_path(a, b, avoid, bounds, network=None):
+    """A few-turn path from a to b (or, when network is given, to the nearest cell of that network: a T-junction)
+    on a CELL grid. It keeps INNER_W/2 + 2 + ROUTE_MARGIN clear of every rect in avoid and stays inside bounds.
+    Cells already in the network are cheap, so paths share trunks instead of running side by side.
+    Returns (corner points, cells) or (None, None)."""
     x0, z0, x1, z1 = bounds
     half = INNER_W / 2 + 2
+    keep = half + ROUTE_MARGIN
     def snap(p):
         return (round((p[0] - x0) / CELL), round((p[1] - z0) / CELL))
     nx, nz = int((x1 - x0) / CELL) + 1, int((z1 - z0) / CELL) + 1
@@ -257,10 +262,12 @@ def grid_path(a, b, avoid, bounds):
         if not (x0 + half <= x <= x1 - half and z0 + half <= z <= z1 - half):
             return False
         for r in avoid:
-            if r[0] - half < x < r[2] + half and r[1] - half < z < r[3] + half:
+            if r[0] - keep < x < r[2] + keep and r[1] - keep < z < r[3] + keep:
                 return False
         return True
-    sa, sb = snap(a), snap(b)
+    net = network or set()
+    sa = snap(a)
+    sb = snap(b) if b is not None else None
     start = (sa[0], sa[1], -1)
     dist = {start: 0}
     pq = [(0, start)]
@@ -269,7 +276,7 @@ def grid_path(a, b, avoid, bounds):
     goal = None
     while pq:
         d, (i, j, k) = heapq.heappop(pq)
-        if (i, j) == sb:
+        if (i, j) == sb or ((i, j) in net and (i, j) != sa):
             goal = (i, j, k)
             break
         if d > dist.get((i, j, k), 1e18):
@@ -278,28 +285,30 @@ def grid_path(a, b, avoid, bounds):
             ni, nj = i + di, j + dj
             if not (0 <= ni < nx and 0 <= nj < nz):
                 continue
-            endpoint = (ni, nj) in (sa, sb)
+            endpoint = (ni, nj) == sa or (ni, nj) == sb or (ni, nj) in net
             if not endpoint and not free(ni, nj):
                 continue
-            nd = d + 1 + (6 if (k != -1 and kk != k) else 0)
+            step = 0.3 if (ni, nj) in net else 1
+            nd = d + step + (6 if (k != -1 and kk != k) else 0)
             st = (ni, nj, kk)
             if nd < dist.get(st, 1e18):
                 dist[st] = nd
                 prev[st] = (i, j, k)
                 heapq.heappush(pq, (nd, st))
     if not goal:
-        return None
+        return None, None
     cells = []
     st = goal
-    while st in prev or st == start:
+    while True:
         cells.append((st[0], st[1]))
         if st == start:
             break
         st = prev[st]
     cells.reverse()
     pts = [(x0 + i * CELL, z0 + j * CELL) for i, j in cells]
-    pts[0], pts[-1] = a, b
-    # keep corners only
+    pts[0] = a
+    if b is not None and cells[-1] == sb:
+        pts[-1] = b
     out = [pts[0]]
     for k in range(1, len(pts) - 1):
         p0, p1, p2 = out[-1], pts[k], pts[k + 1]
@@ -307,19 +316,26 @@ def grid_path(a, b, avoid, bounds):
             continue
         out.append(p1)
     out.append(pts[-1])
-    # make the first and last legs straight (a and b may be off-grid): add a corner if needed
     fixed = [out[0]]
     for q in out[1:]:
         pr = fixed[-1]
         if pr[0] != q[0] and pr[1] != q[1]:
             fixed.append((q[0], pr[1]))
         fixed.append(q)
-    return fixed
+    # drop zero-length legs
+    clean = [fixed[0]]
+    for q in fixed[1:]:
+        if q != clean[-1]:
+            clean.append(q)
+    return clean, set(cells)
 
 INNER = []  # (room, target, points)
 INNER_PROBLEMS = []
 
 def build_inner():
+    """Per room ONE connected path network (a tree): the entrances join the courtyard, then every attraction's
+    branch joins the nearest point of the network already built (a T-junction), so trunks are shared and nothing
+    runs side by side. Each attraction's branch ends at its front landing."""
     INNER.clear(); INNER_PROBLEMS.clear()
     for rid, name, x0, z0, x1, z1, ents, court in ROOMS:
         if rid in OPEN_ROOMS or not court:
@@ -327,31 +343,38 @@ def build_inner():
         items = [it for it in ITEMS if it[1] == rid]
         rects = {it[0]: rect_of(it[2], it[3], it[4], it[5]) for it in items}
         inner = (x0 + BELT, z0 + BELT, x1 - BELT, z1 - BELT)
+        network = set()
+        # the courtyard is the root of the tree
+        cx0, cz0 = inner[0], inner[1]
+        network.add((round((court[0] - cx0) / CELL), round((court[1] - cz0) / CELL)))
         for e in ents:
-            # straight in through the belt's opening, then on to the courtyard
             ex, ez = e
             if ez == z0:
-                ei = (ex, z0 + BELT + 6)
+                ei = (ex, z0 + BELT + 12)
             elif ez == z1:
-                ei = (ex, z1 - BELT - 6)
+                ei = (ex, z1 - BELT - 12)
             elif ex == x0:
-                ei = (x0 + BELT + 6, ez)
+                ei = (x0 + BELT + 12, ez)
             else:
-                ei = (x1 - BELT - 6, ez)
-            pts = grid_path(ei, court, list(rects.values()), inner)
+                ei = (x1 - BELT - 12, ez)
+            pts, cells = grid_path(ei, court, list(rects.values()), inner, network)
             if pts:
                 INNER.append((rid, "entrance", [e] + pts))
+                network |= cells
             else:
                 INNER_PROBLEMS.append(f"{rid}: no clear path from entrance {e} to the courtyard")
+        # nearest attractions first, so the far ones branch off the near ones' paths
+        items.sort(key=lambda it: math.hypot(it[2] - court[0], it[3] - court[1]))
         for it in items:
             iid, _, x, z, w, d, face = it[:7]
             fp = front_point(x, z, w, d, face)
             others = [r for k, r in rects.items() if k != iid]
-            pts = grid_path(court, fp, others, inner)
+            pts, cells = grid_path(fp, None, others, inner, network)
             if pts:
-                INNER.append((rid, iid, pts))
+                INNER.append((rid, iid, list(reversed(pts))))  # from the network out to the attraction
+                network |= cells
             else:
-                INNER_PROBLEMS.append(f"{rid}: no clear path from the courtyard to {iid}'s front ({face})")
+                INNER_PROBLEMS.append(f"{rid}: no clear path from the network to {iid}'s front ({face})")
 
 # ---------- outputs ----------
 def lua_str(s):

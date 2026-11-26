@@ -126,3 +126,43 @@ Rebuild `Systems/LabOwnerMap` FROM `OwnerMapPlan`. Do not hand-place anything th
 **Check:** capture the view from the spawn, from the tower top, and from 2 room openings, on PC and on a phone. Nothing may look repeated or blobby. The layers must read clearly (forest, hills, mountains). Harsh score 9.5+.
 
 **Also seen in the same screenshot: the 4 leaderboards show as plain black panels on the phone.** Check that the scrolling top-20 lists render on phones (SurfaceGui pixels per stud, LightInfluence 0, AlwaysOnTop false, MaxDistance).
+
+## PATHS to 9/10+ (owner, 26 Nov 2026: "gulvet der går halvt ind i edderkoppens sted og stopper sådan der med 2 blocks til sidst alle steder … er smal og firkantet men alligevel ikke lige, den er 1/10 og skal minimum være 9/10")
+**What is wrong (the owner's screenshot by the spider pen):**
+- a walkway runs half into the spider's pen;
+- path ends finish with 2 overlapping blocks (a stub plus a darker overlap square: two coplanar parts z-fighting);
+- the paths are narrow, and their pieces do not line up (small steps and offsets);
+- every branch was its own separate L-path, so pieces ran side by side and overlapped.
+
+**The plan is regenerated** (`tools/masterplan.py`, `Shared/OwnerMapPlan`, `masterplan.png`):
+- each room's inner paths are now ONE connected TREE: entrance → courtyard → trunks → branches, and the branches join the existing paths at T-junctions;
+- nothing runs side by side;
+- the inner paths are 16 wide (were 12), the spurs 18 (were 14);
+- the routing keeps an extra 2 studs from every attraction;
+- the courtyards sit further in.
+
+**REBUILD all walkways from it with these rules (they are what makes it 9/10):**
+1. **One piece per straight leg:** each straight leg between two nodes (corners, junctions, ends) is ONE part, exactly from node edge to node edge. Never two parts on top of each other.
+2. **Corners and junctions:** each is ONE square pad (the path's width × width), and the legs stop exactly at its edges. No overlaps, so no z-fighting and no darker squares.
+3. **No stubs:** a leg shorter than the path's width is dropped (its pad covers it).
+4. **The end of each branch is a LANDING:** a pad 1.5× the path's width wide, 0.75× deep, that touches the attraction's BUILT front exactly.
+   - Measure the built model's real bounding box in Studio, not the plan box. Trim or extend the last leg so the landing meets it with no gap and no overlap.
+   - If the attraction has a fence (the spider pen, the T-rex pen, the croc pond, the dog yard), the landing meets a GATE opening in the fence at that spot.
+5. **Never into an attraction:**
+   - no path part may intersect any attraction's built bounding box (with 1 stud clearance);
+   - if a built model is bigger than its plan box, write its real size back into `ITEMS` in `tools/masterplan.py`, re-run the script (it re-routes and re-lints), and rebuild from the new `OwnerMapPlan`.
+6. **Straight and aligned:** every coordinate snapped to whole studs, every leg axis-aligned, all walkway tops at the same height (no steps between pieces).
+7. **One surface look:** the same slab material and texture on every path part, the texture aligned in WORLD space (the same StudsPerTile and offsets from world zero), so the slab joints line up across all pieces and pads.
+8. **Kerbs:** a continuous low kerb along both edges, broken only at junctions, landings and gates, with mitred corners (no gaps, no overlaps).
+9. **The roads and spurs** meet the room paths and plazas the same way: a junction pad, no overlap.
+10. **Lint (must be 0 each):**
+    - path parts overlapping each other (XZ overlap over 0.1 stud);
+    - path parts inside attraction bounds;
+    - branch ends not touching their attraction or a gate;
+    - legs shorter than the width;
+    - misaligned tops (height difference over 0.05);
+    - kerb gaps.
+11. **Check:**
+    - top-down capture next to `masterplan.png`;
+    - close-ups of a corner, a T-junction, a landing at the spider pen and a gate;
+    - harsh score 9+ on "clean, wide, straight, connected".
