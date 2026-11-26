@@ -707,6 +707,18 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 - **The map lint** reports trees or bushes in entrance zones and inside buildings, and it must be 0.
 - **Check:** walk into the weapon range and every other building or gate from its path. Nothing blocks the way or the sign.
 
+## F54 Players can run straight THROUGH trees and bushes (owner: "Fiks så man kan løbe igennem træerne")
+- **Players:** every tree (trunk and crown), bush, hedge and flower plant is non-collidable for PLAYERS. Use a collision group "Foliage" that does not collide with "Players" (or CanCollide off on all foliage parts). Players run through the tree belts too, so shortcuts into the rooms are fine.
+- **Ragdolls:**
+  - the solid belt volumes from F32 stay, but ONLY for ragdolls (the collision group "RagdollBlock": collides with ragdolls, not with players), so walkers do not wander into the belts;
+  - thrown bodies that land in foliage simply lie on the ground there (no tree parts to get stuck in), and the F32 unstick rule moves them out when they get up.
+- **Cars and bikes** also pass through foliage (no sudden stops on a bush).
+- **Bonus:** fewer collision parts, so less physics cost (`RAGDOLL_DIRECTOR.md` part A).
+- **Still solid:** the rocks, walls, fences, buildings, machines and benches (they are not foliage).
+- **Check:**
+  - run through a belt, a grove and a hedge on PC and phone: no blocking, no camera bump;
+  - a walker ragdoll still keeps out of the belts.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
