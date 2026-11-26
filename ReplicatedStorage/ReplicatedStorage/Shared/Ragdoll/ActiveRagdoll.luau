@@ -1719,6 +1719,11 @@ local function update(dt: number)
 			continue
 		end
 		rig.stateTime += dt
+		-- (OVERVIEW 0.1 B, Systems/RagdollDirector: far from every player and not in use: no brain, no pose update; its
+		-- held joints keep it as it is, at no cost. A touch or hit wakes it on the server at once.)
+		if model:GetAttribute("Parked") == true and rig.held == 0 then
+			continue
+		end
 		governSpeed(rig)
 		-- (24 Nov 2026, fps: a body nothing has touched for 2 s has no limb to hold back; every second step is enough.)
 		if not (LOD_PHONE and turn and os.clock() - (rig.lastImpulseAt or 0) > 2 and (rig.state == "Standing" or rig.state == "Walking")) then
