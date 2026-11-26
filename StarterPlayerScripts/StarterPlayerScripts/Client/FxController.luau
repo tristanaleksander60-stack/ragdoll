@@ -1010,6 +1010,7 @@ end
 -- V8-0.2 (Config.V8_FIRST_HIT with BLOOD off): a round in a mannequin is a dry THWACK: no hole, no
 -- flesh sound, a puff of white and yellow dust and a 60 ms white flash on the body.
 local PUFF_COLORS = { Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 236, 160) }
+local GREY_PUFF = { Color3.fromRGB(150, 150, 154), Color3.fromRGB(118, 118, 124) } -- (F14)
 local function dryHit(): boolean
 	local Config = require(Shared:WaitForChild("Config")) :: any
 	return Config.V8_FIRST_HIT == true and Config.BLOOD == "off"
@@ -1047,14 +1048,16 @@ local function roundInBody(position: Vector3, sourceUserId: number?, toyId: stri
 	-- (A player in the plaza takes no wound: a knock, not a round in flesh.)
 	if dry and not onPlayerBody(position) then
 		play("hit", position, 0.42, 1.2, { priority = priority })
-		sparks(position, rng:NextInteger(6, 10), 0.55, PUFF_COLORS)
-		if body then
+		-- (F14, owner 26 Nov 2026: no white blob round shots: grey dust, no white flash.)
+		local noWhite = (require(Shared:WaitForChild("Config")) :: any).NO_WHITE_HIT == true
+		sparks(position, rng:NextInteger(6, 10), 0.55, if noWhite then GREY_PUFF else PUFF_COLORS)
+		if body and not noWhite then
 			whiteFlash(body)
 		end
 	elseif hasBank("flesh") and not onPlayerBody(position) then
 		play("flesh", position, 0.5, 1, { cut = 0.5, priority = priority })
 		-- (V9-NOW 6: with the purple blood on, the hit puff stays: a smaller white-yellow puff at the hole.)
-		if body and (require(Shared:WaitForChild("Config")) :: any).V8_FIRST_HIT == true then
+		if body and (require(Shared:WaitForChild("Config")) :: any).V8_FIRST_HIT == true and (require(Shared:WaitForChild("Config")) :: any).NO_WHITE_HIT ~= true then -- (F14: off)
 			sparks(position, rng:NextInteger(3, 6), 0.4, PUFF_COLORS)
 		end
 	else

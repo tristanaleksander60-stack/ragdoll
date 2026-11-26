@@ -16,7 +16,7 @@ Why this order:
 | Step | What | Plan | State |
 |---|---|---|---|
 | 0 | **Owner:** press Alt+P to publish 0.58.0 (gore off), then send the maturity questionnaire, before Fri 27 Nov 17:34 UTC | `docs/MATURITY.md`, `docs/BODY_V2.md` "final answers" | BUILT, waiting for Alt+P |
-| 0.3 | **The owner's fix list of 26 Nov evening (F1-F16):** + REVIVE ALL instead of Z, no white blob on shots, CPR faces the patient, hold-to-fire only for automatic weapons; TRY once, hit reactions by spot, no black screen, bullets in bones, bubbles, clean phone UI, the cannon load, talk about what they see, the dog icon, a German Shepherd, the PC nav, the multiplayer place | `docs/FIXES_26NOV.md` | |
+| 0.3 | **The owner's fix list of 26 Nov evening (F1-F16):** + REVIVE ALL instead of Z, no white blob on shots, CPR faces the patient, hold-to-fire only for automatic weapons; TRY once, hit reactions by spot, no black screen, bullets in bones, bubbles, clean phone UI, the cannon load, talk about what they see, the dog icon, a German Shepherd, the PC nav, the multiplayer place | `docs/FIXES_26NOV.md` | DONE 0.70.0-0.75.0 (all 16; F4 and F10 part 1). State at the end of FIXES_26NOV.md. Studio now saves to the MULTIPLAYER place (v48-v51); the start place was last saved at v1129 |
 | 0.5 | **The first 2 minutes + the new TRY:** a TRY button at the machine, a ragdoll comes, grab it (lesson only the first time) and put it in. This replaces the buggy floating TRY! sign (the bug notes below explain why it is removed) | `docs/FIRST_2_MIN.md` | built 0.60.0 (place v1117): `FIRST_TWO`, Client/FirstTwo, Lab.callTo, Session "Try"/"TryStep", +25 BOLTS a machine; `TRY_ME` off. Left: per-machine load spots (the whole machine glows), walk-to-start for no-load machines |
 | 1 | Always 3 near you (update: not afraid of weapons; 2 chat, 1 comes all the way, rotating; they come very fast) + a watcher at every machine | `docs/ALWAYS3.md` (read the "Update" at the end) | 3-near built in 0.59.0; the update built in 0.61.0 (place v1118): `FEAR_WEAPONS` false, recruits Pace 2.2, 2 chatters + 1 comer rotating every 15-25 s (Lab assignRoles, Role3). **Left:** the watchers at every machine (stand-ins), new ones spawning out of view |
 | 2 | The MULTIPLAYER icon instead of the portal | the section below | built 0.59.0 (`MP_ICON`, `MP_PORTAL` false); left: phone layout of the window |
@@ -327,6 +327,8 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - Maturity: keep the gore (13+/17+) or switch it off for all ages? See docs/MATURITY.md.
 - Death effects to sell (fireworks, confetti, ghost, gold sparkle, cartoon blast, R$ 49-99 each): create them as passes and send the ids?
 - Script Sync is off in Studio: turn it on again, or allow localhost in MCP HTTP allow list (faster, cheaper sessions).
+- (26 Nov, F12) Studio now saves to the Multiplayer place. Publish BOTH: File > Publish to Roblox As > the start place (126037745825106) > Overwrite, and the multiplayer place. OK?
+- (26 Nov, F13) REVIVE ALL kept its key X (R and Z are taken). OK?
 - (26 Nov, F10) The German Shepherd is one rigid mesh (no free rigged one found), moved by code (trot bob, wiggle, bite shake). For real leg animations: buy or send a rigged German Shepherd (Creator Store id), or keep this?
 - (26 Nov, F12) Studio now saves to the Multiplayer place. Publish BOTH: File > Publish to Roblox As > the start place (126037745825106) > Overwrite, and the multiplayer place. OK to keep doing it this way?
 

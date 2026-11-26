@@ -141,6 +141,11 @@ local function holdFire()
 			if kind ~= "gun" and kind ~= "hit" then
 				break -- (one press places one)
 			end
+			-- (F16, owner 26 Nov 2026: holding fires on ONLY with an automatic weapon (Toys auto); a pistol, revolver,
+			-- sniper, shotgun or bow fires one round a tap.)
+			if toy and toy.auto ~= true and toy.id ~= "Chainsaw" then
+				break
+			end
 			local cooldown = if toy then toy.cooldown else 0.2
 			if player:GetAttribute("ZeroDelay") == true then
 				cooldown = math.min(cooldown, Shop.ZERO_DELAY)

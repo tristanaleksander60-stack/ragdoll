@@ -592,7 +592,17 @@ local function step()
 			if gap < 3.2 and state == "Standing" then
 				job.phase, job.since = "Act", now
 				m:SetAttribute("Pace", nil)
-				m:SetAttribute("Home", pelvis.Position)
+				-- (F15, owner 26 Nov 2026: CPR faces the patient: it kneels level with the chest, turned to it.)
+				if (Config :: any).CPR_FACE then
+					local chest = corpse:FindFirstChild("UpperTorso")
+					local aim = if chest and chest:IsA("BasePart") then chest.Position else cp.Position
+					local off = flat(pelvis.Position - aim)
+					local dir = if off.Magnitude > 0.1 then off.Unit else Vector3.xAxis
+					m:SetAttribute("Home", Vector3.new(aim.X, pelvis.Position.Y, aim.Z) + dir * Mourning.SIDE)
+					m:SetAttribute("HomeLook", aim)
+				else
+					m:SetAttribute("Home", pelvis.Position)
+				end
 				local a: any = job
 				a.plan, a.turn, a.nextAt = cprPlan(), 0, now
 				a.works = math.random() < Mourning.SAVE_CHANCE
@@ -609,6 +619,11 @@ local function step()
 				if stage then
 					a.nextAt = now + stage.time
 					m:SetAttribute("Mood", stage.mood)
+					-- (F15: before each round of compressions it aims again at the chest, wherever the body has slid.)
+					local chest = corpse:FindFirstChild("UpperTorso")
+					if (Config :: any).CPR_FACE and chest and chest:IsA("BasePart") then
+						m:SetAttribute("HomeLook", chest.Position)
+					end
 				elseif a.works then
 					local ok, woke = pcall(function()
 						return lazy("VitalsService").reviveNow(corpse)
