@@ -106,13 +106,44 @@ Exactly picture 2:
 - **The colour and look** of the section 2 blood (110,40,220, glossy). Pooled parts and emitters; a hard cap per lab.
 - **Shotguns:** one splatter per pellet that hits, capped at 4 per shot.
 
-## 3. New hit marks (replace the bullet holes; `HIT_MARKS_V2 = true`)
-- **No holes into the body.** A hit leaves a small purple paint splat sticker (a star-edged blob, the same purple as the blood) on the body where it hit, about 0.6 studs.
-- **Fade:** it fades after 8 s.
-- **Cap:** max 6 per body (the oldest goes first).
-- **On a hit:** a tiny white "plink" flash plus a puff of white cartoon dust.
-- **Melee and impacts:** a short white "dent ring" flash on the body instead of a hole.
-- **The body card** lists hits as "Hits: 5", not wounds.
+## 3. PERFECT bullet holes (owner, 26 Nov 2026: "perfektér … skudhuller især"; replaces the paint-splat idea; `BULLET_HOLES_V2 = true`)
+The dummies are plastic crash-test mannequins, so a hole looks like **a bullet through hard grey plastic**. That reads as real and satisfying, with no flesh and no gore.
+- **Exact place:** at the exact hit point from the server's ray (not the part's centre), lying flat on the real skin surface (the visible mesh, not the collision box).
+- **Turned to the shot:** round when shot straight on, oval when grazing.
+- **It stays glued to that spot** while the body moves, falls and gets up (welded or attached to that part; no sliding, no floating, no flicker).
+- **The look** (a small mesh or decal set, about 4 variants so no two look alike):
+  - a dark centre hole with real depth (an inner dark ring, not a flat black dot);
+  - a thin raised rim of pushed-in plastic;
+  - 3-6 short radial cracks;
+  - a slightly lighter stress-whitened ring round it (plastic goes white where it bends);
+  - a tiny purple glint deep in the centre (ties in with the purple splatter, 2b).
+- **Size by weapon:**
+
+  | Weapon | Hole |
+  |---|---|
+  | pistol and SMG | small (about 0.25 studs) |
+  | rifle | medium |
+  | sniper and railgun | big (about 0.5), with longer cracks |
+  | shotgun | a cluster of small holes in a spread |
+  | arrows | the arrow stays stuck in the body (removed when the body gets up) |
+  | melee | no hole: a dent (pushed-in, stress-whitened, no dark centre) |
+
+- **Exit holes:** sniper, railgun and rifle shots go through. A slightly bigger exit hole on the far side, with chips of grey plastic flying out the back.
+- **On every hit:**
+  - grey plastic chips (3-5 tiny bits) fly out of the hole;
+  - a puff of fine grey dust;
+  - the purple splatter (2b);
+  - a sharp "plastic crack" plus "thock" sound.
+- **X-ray:** the holes show as small dark dots in the glass shell. A bone hit through a hole shows a nick, and a break at high force (1b).
+- **Limits:**
+  - max 12 holes per body (the oldest fades first);
+  - holes clear when the ragdoll is bandaged at that spot, or 60 s after it gets up;
+  - pooled;
+  - phones: max 8 per body, the chips are 2.
+- **Check:**
+  - one quick Play: shoot a dummy standing, falling and lying, close and far, straight and at an angle, with pistol, shotgun, sniper and bow;
+  - every hole sits exactly where the crosshair was, stays glued while the body moves, and looks different per weapon;
+  - an exit hole for the sniper.
 
 ## 4. Burial + revenge (`BURIAL = true`)
 - **When:** a ragdoll's CPR fails (the existing Mourning/CPR flow) and it stays knocked out.

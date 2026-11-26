@@ -87,6 +87,27 @@ The best Roblox ragdoll games are Hyper Realistic Ragdoll, Bloody Ragdoll Physic
 
    It logs a count per session (Metrics).
 
+## PERFECT physics: the bar (owner, 26 Nov 2026: "Sørg for vi har PERFEKTIONERET physics")
+Everything in this doc, plus these hard checks. Each must pass in Studio and on the phone emulator.
+- **The hit lands where it hits.** Every hit pushes the body with `ApplyImpulseAtPosition` at the exact hit point, in the shot direction, scaled by weapon force:
+  - a shot in the shoulder turns the torso;
+  - a shot in the knee buckles that leg;
+  - a head shot snaps the head back.
+- **No explosions and no flings:** no body ever shoots off at crazy speed from an overlap or a joint fight. Clamp speed at about 250 studs/s; a watchdog resets a NaN or a runaway.
+- **No clipping:** limbs never pass through floors, walls, the tower, cars or each other. Use CCD-like checks for fast bodies (raycast the step; shrink the step when fast).
+- **Stable at rest:** a lying body goes still within 2 s and sleeps. No jitter and no slow sliding on flat ground.
+- **Stable in piles:** 5 bodies thrown on top of each other settle without vibrating.
+- **Moving things:** bodies in cars, wheelchairs, on the trampoline, on the slide and on rotating machines move with them, and fly off naturally.
+- **Water:** bodies float, bob and drift in the tanks and pools (buoyancy by part volume), never sink through the bottom or skate on top.
+- **Ownership:** the player touching or hitting a body owns it, so it reacts at once. The hand-off back to the server is smooth (no hitch, no teleport).
+- **Weight is felt:**
+  - a light pistol rocks the body;
+  - a shotgun knocks it down;
+  - a sniper spins it;
+  - a cannon sends it flying in a clean arc.
+- **Same everywhere:** the same feel on 60 and 30 fps (physics independent of frame rate).
+- **The bar:** score each check 0-10 on the bench clips. All must be 9.5+, compared side by side with the top ragdoll game.
+
 ## The bench (one Play, no suites)
 Record 5 short clips in Studio and compare them with a video of the top ragdoll game, side by side:
 1. a light shot (a flinch and a recover);

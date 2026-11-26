@@ -4,6 +4,36 @@
 
 **Next after the lab:** `docs/STAY_LONGER.md` (session length). Build items 1-8 in one run. Item 1, the quiet gift timer on phones, goes first.
 
+## THE RUN ORDER (owner, 26 Nov 2026: "sørg for planen bliver lavet i den rette rækkefølge"). `/klar` follows this list top to bottom.
+Why this order:
+- the owner's deadline first;
+- small quick wins next;
+- then the FOUNDATION (physics and the body), which everything later builds on (dog, lasso, wheelchairs, walls, effects);
+- then the big lab;
+- then the features that use the lab and the physics;
+- then session length.
+
+| Step | What | Plan | State |
+|---|---|---|---|
+| 0 | **Owner:** press Alt+P to publish 0.58.0 (gore off), then send the maturity questionnaire, before Fri 27 Nov 17:34 UTC | `docs/MATURITY.md`, `docs/BODY_V2.md` "final answers" | BUILT, waiting for Alt+P |
+| 1 | Always 3 living ragdolls near you + a watcher at every machine | `docs/ALWAYS3.md` | |
+| 2 | The MULTIPLAYER icon instead of the portal | the section below | |
+| 3 | **PERFECT PHYSICS:** the hard checks, then falls, landings, lying and get-ups | `docs/RAGDOLL_FEEL.md` ("PERFECT physics" first) | |
+| 4 | **PERFECT BULLET HOLES** + purple splatter on every hit | `docs/BODY_V2.md` 3 and 2b | |
+| 5 | The body: X-ray 10/10 (bones can break by force), the blood look, injury stages, bandages, faces | `docs/BODY_V2.md` 1, 1b, 2, 4b | |
+| 6 | Impact smoke and dust, grab-swing-SLAM | `docs/IMPACT_FX.md` | |
+| 7 | **The lab:** the owner's map 1:1, 10x bigger, faster running and sprint | `docs/LAB_TARGET.md` ROUND 3 | |
+| 8 | Lasso, breakable concrete walls, wooden crates | `docs/DESTRUCTION.md` | |
+| 9 | Burial + revenge | `docs/BODY_V2.md` 4 | |
+| 10 | The guard dog (tap a limb, it bites) | `docs/GUARD_DOG.md` | |
+| 11 | Wheelchairs | `docs/WHEELCHAIRS.md` | |
+| 12 | Session length, the rest (item 1 is done in 0.57.0) | `docs/STAY_LONGER.md` 2-8 | |
+
+**How to work through it:**
+- One quick Play after each step, and commit and push.
+- **Publish** after steps 3-6 together (the feel update), and again at the end. That makes 2 publishes, each with ONE Danish "Test selv" list.
+- Never ask the owner to test in between. Park questions with a safe default.
+
 ## RULE FOR EVERYTHING IN THIS PLAN (owner, 26 Nov 2026): mobile first, simple enough for a 10-year-old on an iPad
 - **Phone and iPad first:** every new thing is built and checked on the phone and iPad emulators before PC and console.
 - **One tap per action:**
