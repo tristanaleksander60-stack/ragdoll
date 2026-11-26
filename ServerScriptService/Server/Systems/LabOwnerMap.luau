@@ -1046,7 +1046,7 @@ local function yTree(into: Instance, kind: string, at: Vector3, height: number, 
 		if d:IsA("BasePart") then
 			local trunk = string.find(d.Name, "Trunk") ~= nil
 			d.Anchored = true
-			d.CanCollide = trunk and kind ~= "Bush"
+			d.CanCollide = trunk and kind ~= "Bush" and not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).FOLIAGE_PASS -- (F54: players, cars and ragdolls pass through foliage)
 			d.CanQuery = trunk
 			d.CanTouch = false
 			d.CastShadow = height > 14
@@ -1590,6 +1590,9 @@ local function hedge(into: Instance, a: Vector3, b: Vector3)
 		return
 	end
 	local h = part(into, "Hedge", Vector3.new(3, 3.4, len), CFrame.lookAt((a + b) / 2 + Vector3.new(0, 1.7, 0), b + Vector3.new(0, 1.7, 0)), Color3.fromRGB(70, 120, 56), Enum.Material.Grass)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).FOLIAGE_PASS then
+		h.CanCollide = false -- (F54: you run through hedges)
+	end
 	h.CastShadow = false
 end
 local function flowerBed(into: Instance, at: Vector3, w: number, d: number, rng: Random)
@@ -2297,6 +2300,45 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	extras(into, origin, origin.Y - 0.05)
 	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SPAWN_11 then
 		spawnSet(into, origin, origin.Y - 0.05) -- (OVERVIEW 0.97: the spawn to 11/10)
+	end
+	-- F53 (owner: "Man kan ikke komme ind i Weapons Testing, fordi træerne dækker"; Config.TREE_CLEAR): once everything has
+	-- stood a few seconds (other systems build their buildings too), every tree or bush whose foot stands within 4 studs
+	-- of a building, wall, machine or sign (anything that is not ground or foliage) is taken away.
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TREE_CLEAR then
+		task.delay(4, function()
+			local params = OverlapParams.new()
+			params.FilterType = Enum.RaycastFilterType.Exclude
+			local ex = {}
+			for _, n in { "Dummies", "Terrain" } do
+				local x = Workspace:FindFirstChild(n)
+				if x then
+					table.insert(ex, x)
+				end
+			end
+			params.FilterDescendantsInstances = ex
+			local removed = 0
+			for _, t in into:GetChildren() do
+				if t:IsA("Model") and (t.Name == "TreeOak" or t.Name == "TreeFir" or t.Name == "TreePoplar" or t.Name == "Bush") then
+					local foot = t:GetPivot().Position
+					local _, size = t:GetBoundingBox()
+					local base = Vector3.new(foot.X, origin.Y + 4, foot.Z)
+					local blocked = false
+					for _, h in Workspace:GetPartBoundsInBox(CFrame.new(base), Vector3.new(8, 7, 8), params) do
+						if not h:IsDescendantOf(t) and h.Transparency < 1 and not (h.Size.Y < 1.3 and math.abs(h.CFrame.UpVector.Y) > 0.95)
+							and not string.find(h.Name, "Canopy") and not string.find(h.Name, "Trunk") and h.Name ~= "Hedge" and h.Name ~= "OwnerGrass" and h.Name ~= "OwnerRim" and not string.find(h.Name, "Baseplate") then
+							blocked = true
+							break
+						end
+					end
+					if blocked then
+						t:Destroy()
+						removed += 1
+					end
+					local _ = size
+				end
+			end
+			into:SetAttribute("TreesCleared", removed)
+		end)
 	end
 	hills(origin)
 end

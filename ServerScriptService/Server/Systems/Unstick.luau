@@ -31,6 +31,9 @@ local function wall(into: Instance, a: Vector3, b: Vector3)
 	local mod = Instance.new("PathfindingModifier")
 	mod.Label = "NoGo"
 	mod.Parent = p
+	if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).FOLIAGE_PASS then
+		p.CollisionGroup = "RagdollBlock" -- (F54: the belt walls stop ragdolls only; players run through)
+	end
 	p.Parent = into
 end
 
@@ -187,6 +190,12 @@ function Unstick.start()
 	local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
 	if not Config.UNSTICK or not Config.LAB_OWNERMAP then
 		return
+	end
+	if Config.FOLIAGE_PASS then
+		local PhysicsService = game:GetService("PhysicsService")
+		pcall(PhysicsService.RegisterCollisionGroup, PhysicsService, "RagdollBlock")
+		pcall(PhysicsService.RegisterCollisionGroup, PhysicsService, "PlayerBodies")
+		PhysicsService:CollisionGroupSetCollidable("RagdollBlock", "PlayerBodies", false)
 	end
 	task.spawn(function()
 		local t = 0
