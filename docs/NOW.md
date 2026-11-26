@@ -67,6 +67,7 @@ The owner only sees M1's ground, while the OLD lab still stands in the middle (i
 
 ### MAP RUN STATE
 - M1 part 1 DONE 0.78.0 (multiplayer place v55): `LAB_OWNERMAP` on, Systems/LabOwnerMap (330 parts): 950x820 grass base at CENTER (-30,24), walkway grid 22 wide (rows z -82/-18/58/104 x S, columns x -100/-55/0/28/68/112 x S, S=3.2), spawn circle, raised granite leaderboard plaza at z -304 with cap, pipe railing and stair, railway loop west+south (ballast, rails, sleepers), Terrain hill ring. Zones.PLOT_SPACING 1100 under the switch. Capture ScreenCapture_M1 vs ref_10: grid and hills match; the old lab still sits in the middle until M7. Left in M1: walkway tile seams, grass plot edges, the 4 boards on the new plaza (M7).
+- M7 part 1 (multiplayer place v56): under `LAB_OWNERMAP` Config.LAB_SPREAD x3.2 (every machine, creature, ragdoll and path spot 3.2x further out through the code's own S, so their logic stays right) and LabLayout10 spots x3.2; LabOwnerMap.hideOld hides LabV10, zone pads, garden, paths and the plot's floor, plaza, rim, edges, barriers, cones and signs. Measured: the machines span 801 x 540 studs (ground 950 x 820). Capture ScreenCapture_M7a: no old compound left, machines spread on the grid. Left: walkway/Zones/HazardRim/Guide leftovers check, the 4 boards onto the new plaza, the set pieces (M2-M6) and their bigger sizes.
 
 ## THE RUN ORDER (owner, 26 Nov 2026: "sørg for planen bliver lavet i den rette rækkefølge"). `/klar` follows this list top to bottom.
 Why this order:

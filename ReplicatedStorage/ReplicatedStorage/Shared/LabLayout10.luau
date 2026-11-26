@@ -128,4 +128,43 @@ function LabLayout10.car(kind: string): Vector2?
 	return if LabLayout10.on then LabLayout10.CARS[kind] else nil
 end
 
+-- (GO NOW: THE MAP, Config.LAB_OWNERMAP: every spot here 3.2 times further from the spawn, like Config.LAB_SPREAD; sizes stay.)
+if Config.LAB_OWNERMAP then
+	local K = 3.2
+	local function v2(v: Vector2): Vector2
+		return v * K
+	end
+	LabLayout10.TEST_FLOOR = v2(LabLayout10.TEST_FLOOR)
+	LabLayout10.BUTTON = v2(LabLayout10.BUTTON)
+	LabLayout10.STRETCH = v2(LabLayout10.STRETCH)
+	LabLayout10.TRAMPOLINE = v2(LabLayout10.TRAMPOLINE)
+	for k, v in LabLayout10.MOVES do
+		LabLayout10.MOVES[k] = Vector3.new(v.X * K, v.Y, v.Z * K)
+	end
+	for _, t in { LabLayout10.CREATURES, LabLayout10.CARS } do
+		for k, v in t do
+			t[k] = v * K
+		end
+	end
+	for i, v in LabLayout10.BENCHES do
+		LabLayout10.BENCHES[i] = v * K
+	end
+	for _, z in LabLayout10.ZONE_PADS do
+		z.min, z.max = z.min * K, z.max * K
+	end
+	for _, t in { LabLayout10.WALL, LabLayout10.RAIL } do
+		for k, v in t do
+			t[k] = v * K
+		end
+	end
+	LabLayout10.PLAZA.min, LabLayout10.PLAZA.max = LabLayout10.PLAZA.min * K, LabLayout10.PLAZA.max * K
+	for i, v in LabLayout10.BAY_LINES.x do
+		LabLayout10.BAY_LINES.x[i] = v * K
+	end
+	LabLayout10.BAY_LINES.z1, LabLayout10.BAY_LINES.z2 = LabLayout10.BAY_LINES.z1 * K, LabLayout10.BAY_LINES.z2 * K
+	for _, g in LabLayout10.GATES do
+		g.at *= K
+	end
+end
+
 return LabLayout10

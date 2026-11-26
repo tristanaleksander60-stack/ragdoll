@@ -683,4 +683,10 @@ local Config = {
 	TOMORROW_AT = 480, -- (21 Nov 2026: 80 -> 480 s, research: early pop-ups drive players away; it comes late in a visit, near the end)
 }
 
+-- (GO NOW: THE MAP, 26 Nov 2026: the owner's map is 10x the area: every machine, creature, ragdoll and path spot 3.2 times
+-- further out from the spawn; the machines keep their own size. LabLayout10 scales its spots the same way.)
+if Config.LAB_OWNERMAP then
+	(Config :: any).LAB_SPREAD = Config.LAB_SPREAD * 3.2
+end
+
 return table.freeze(Config)

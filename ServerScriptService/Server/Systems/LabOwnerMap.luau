@@ -138,7 +138,50 @@ local function hills(o: Vector3)
 	end
 end
 
+-- M7: the old lab frame goes (the LAB10 compound and park, the plot's floor, spawn disc, edges, barriers, cones, signs and
+-- the zone pads): invisible and walked through, the new ground is under it.
+LabOwnerMap.HIDE_IN_LAB = { LabV10 = true, LabZonePads = true, ZonePads = true, LabGarden = true, Paths = true }
+LabOwnerMap.HIDE_IN_PLOT = { LabFloor = true, Plaza = true, PlazaRim = true, Edge = true, Barrier = true, Cone = true, LabSign = true, LabSignPost = true }
+local function hide(inst: Instance)
+	local list = if inst:IsA("BasePart") then { inst } else {}
+	for _, d in inst:GetDescendants() do
+		if d:IsA("BasePart") then
+			table.insert(list, d)
+		elseif d:IsA("Decal") or d:IsA("Texture") then
+			d.Transparency = 1
+		elseif d:IsA("SurfaceGui") or d:IsA("BillboardGui") then
+			d.Enabled = false
+		end
+	end
+	for _, p in list do
+		p.Transparency = 1
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.CastShadow = false
+	end
+end
+local function hideOld(folder: Instance, o: Vector3)
+	for _, c in folder:GetChildren() do
+		if LabOwnerMap.HIDE_IN_LAB[c.Name] then
+			hide(c)
+		end
+	end
+	local labs = Workspace:FindFirstChild("Labs")
+	for _, plot in if labs then labs:GetChildren() else {} do
+		local fl = plot:FindFirstChild("LabFloor", true)
+		if fl and fl:IsA("BasePart") and math.abs(fl.Position.X - o.X) < 200 and math.abs(fl.Position.Z - o.Z) < 200 then
+			for _, c in plot:GetDescendants() do
+				if LabOwnerMap.HIDE_IN_PLOT[c.Name] then
+					hide(c)
+				end
+			end
+		end
+	end
+end
+
 function LabOwnerMap.build(folder: Instance, origin: Vector3)
+	hideOld(folder, origin)
 	local into = Instance.new("Folder")
 	into.Name = "OwnerMap"
 	into.Parent = folder
