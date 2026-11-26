@@ -38,7 +38,7 @@ Starting point: the funnels of 26 Nov (`docs/FUNNELS.md`). Old D1 was about 1 % 
 5. **The owner tests; Claude Code builds.** One quick Play for errors, then a "Test selv" checklist, then publish. No suites or reviewers.
 
 ## The levers, ranked
-1. **Minutes 1-5** (the biggest leak, about 50 % lost here) → NOW item 3:
+1. **Minutes 1-5** (the biggest leak, about 50 % lost here) → NOW item 4 (after item 1, phone first):
    - a new pull every minute;
    - close unlocks early;
    - the angry dummy;
@@ -46,9 +46,9 @@ Starting point: the funnels of 26 Nov (`docs/FUNNELS.md`). Old D1 was about 1 % 
    - the creatures and maps pointed out;
    - variety past 10 KOs.
 2. **Feel and bugs:**
-   - ragdolls through the floor (NOW 1);
-   - lag on phones (NOW 2): phones are most of the players, and lag kills retention silently.
-3. **The phone first** (NOW 7): fewer, bigger buttons, aim help, a clean screen. What the big games do on mobile.
+   - ragdolls through the floor (NOW 2);
+   - lag on phones (NOW 3): phones are most of the players, and lag kills retention silently.
+3. **The phone first** (NOW 1, moved to the top on 26 Nov after the owner's phone screenshots; it is the biggest lever on minutes 1-5): fewer, bigger buttons, aim help, a clean screen. What the big games do on mobile.
 4. **Why come back tomorrow (D1):**
    - a daily streak with a gift on day 2 that is worth it;
    - a "tomorrow" teaser at the end of a visit ("Tomorrow: the whale event");
@@ -71,7 +71,7 @@ Starting point: the funnels of 26 Nov (`docs/FUNNELS.md`). Old D1 was about 1 % 
 7. **Being found (discovery):**
    - the icon and thumbnails A/B tested (show a ragdoll flying from a cannon, bright and readable at phone size);
    - the title and promo text updated with every update;
-   - the maturity label fixed (NOW 4) so the game can be shown to more players.
+   - the maturity label fixed (NOW 5) so the game can be shown to more players.
 8. **Likes:** fix what the dislike reasons say, never pay for likes, and ask for a favourite only after a wow (already built).
 
 ## What the owner should send (screenshots), so decisions use real data

@@ -1,5 +1,7 @@
 # NOW: the current work list (read this first on every /klar)
 
+**URGENT, owner only:** the maturity questionnaire (item 5) must be resubmitted by Fri 27 Nov 2026 17:34 UTC.
+
 Status: **waiting for the owner's corrections** (plan sent 26 Nov 2026). Do not start before the owner says go. Then work top to bottom.
 
 **Targets and order of levers:** `docs/STRATEGY.md`, the 1-week column. Every item is judged against those funnels.
@@ -18,24 +20,69 @@ For each item:
    - **Remove TRY FREE** from every weapon card (`WEAPONS_NO_TRY = true`). Also stop the "free try is over … or BUY it" toast and any other TRY FREE prompt (TrialService, ProgressService). Do not delete TrialService; just switch it off.
    - **The KO bar shows only on the next weapon to earn** (the first locked one in unlock order): "12 KOs to go" plus its bar. Every later locked weapon shows a lock and "Locked" only, with no number and no bar.
    - **Unlocked weapons:** EQUIP as now.
+   - **The weapons stay for sale in SHOP** (owner, 26 Nov). Check that every weapon product is in SHOP (ITEMS, or a WEAPONS tab); add the missing ones, with a picture and the price from Roblox.
    - **Texts:** the line "Locked: earn KOs, BUY, or TRY FREE for 2 min" becomes "Earn KOs to unlock the next weapon". The intro loses "or BUY".
    - **Test selv:** open WEAPONS on PC and on a phone. There are no BUY or TRY FREE buttons, only one card shows "X KOs to go", and the rest say Locked.
    - This overrides item 8's "TRY before buy" and "Get it now" for weapons.
 
-1. **Ragdolls fall through or half into the ground.**
+1. **PHONE FIRST: the whole game is built for a phone in landscape** (owner, 26 Nov 2026, after the phone screenshots: "Nu hvor jeg ser det på mobil, kan jeg pludselig godt forstå hvorfor vores spillere ikke spiller så længe"). Most players are on a phone. This is the biggest lever on the 1-5 minute leak, so it comes before everything except item 0.
+
+   **What the phone screenshots show** (iPhone, landscape, 26 Nov):
+   - **No clear thing to do.** The top pill reads "Every weapon..." (cut off and meaningless). There is no goal, no KO count and no "shoot that dummy".
+   - **Your own FOUNDER and VIP tags sit in the middle of the screen**, right on the crosshair, and your character blocks the dummy you aim at.
+   - **Grey dummies on a light grey floor under a white sky.** The targets almost vanish; everything looks washed out. The city map is fog-white.
+   - **The left side is cluttered:** Shop, Menu (red !), REVIVE (unclear, shown while alive) and the Roblox buttons. The red ! badges are everywhere: Menu, RANK & EGGS, GIFT.
+   - **Menus are a small window on a small screen:**
+     - **Shop:** one card visible; FEATURED shows "Everything" even when you OWN it; "CODES" breaks into "CO DES".
+     - **Weapons:** 4 tiny cards per row; pictures cut; descriptions cut ("Quick little pops. Your"); COMMON tags bigger than the picture.
+     - **More:** a menu inside a menu (MAPS, LAB, GOD MODE, REWARDS, RANK & EGGS, FRIENDS, SETTINGS, FAVORITE…), so key things are 2 taps deep.
+   - **The Map board in the world is unreadable** on a phone (tiny text on tiny thumbnails).
+   - **The hotbar is small** (an unclear red kit icon, Popper, Sniper, Heal). RELOAD 17/17 is small. The SHOOT button is good.
+
+   **The rule from now on:**
+   - On a phone, the screen at any moment shows only the target, SHOOT, the hotbar and ONE goal line. Everything else is at most one tap away.
+   - Every new UI is built and checked at phone size first (Studio Device emulator, iPhone landscape + a small Android), then tablet, console, PC.
+   - Minimum touch target 44 px (Roblox's own guidance); no text under about 14 px on a phone; never cut text: shorten it.
+
+   **Do, in this order** (each small, each published on its own):
+   1. **Clean the centre.**
+      - Hide your OWN overhead tags (FOUNDER, VIP, rank) for yourself on every device; others still see them. Smaller, higher tags on others.
+      - Over-the-shoulder camera on a phone when holding a gun: the character moves left and down so the crosshair sees the target (`Config.PHONE_SHOULDER_CAM`). The first-person switch on the first shot stays as it is on PC; check what feels best on a phone and keep one.
+   2. **Aim help on a phone** (`Config.PHONE_AIM_ASSIST`): a soft pull toward the nearest dummy within a small cone of the crosshair, and "tap a dummy to shoot it". The biggest mobile shooters all do this. Hit marker + a short haptic buzz (HapticService) on hit and on KO.
+   3. **Targets you can see.**
+      - Dummies must stand out from the floor: darker or warmer floor in the lab, or a slightly darker dummy grey (the owner keeps grey dummies; show 2 options as screenshots before picking).
+      - Less fog and brighter, warmer light on the maps on phones; the city map must not be fog-white.
+      - A small bobbing arrow over the nearest dummy for new players (first 2 min), off after the first few KOs.
+   4. **One goal line instead of "Every weapon..."**: the top pill shows the next goal, short and live: "Next: Bow — 3 KOs" with a bar. When it is reached, a big unlock moment ("BOW UNLOCKED!", sound, buzz, auto-equip). This also carries item 4's minute moments ("Press the red button!", "Try the cannon!").
+   5. **A clean left side and fewer badges.**
+      - On a phone: Shop and Menu only, bigger (44 px+). REVIVE only shows when you are down.
+      - Red ! only when there is really something new to claim, max one at a time. GIFT shows its timer only in the last minute, then a big "CLAIM".
+   6. **Phone menus.**
+      - Every menu opens nearly full-screen on a phone (safe area kept), with big close X.
+      - **Weapons:** 2-3 big cards per row, a big picture, name, the lock or EQUIP; no description and no stats on a phone (tap a card for details).
+      - **Shop:** FEATURED never shows an owned item (show the best unowned one); 2 big cards per row; tabs that fit (CODES not broken); the cheap starter offer first (item 8).
+      - **More:** flatter. The 4 most used (MAPS, LAB, REWARDS, SETTINGS) as big buttons; the rest below. MAPS also gets its own button on the HUD if there is room.
+   7. **The Map board:** on a phone, walking up to it (or tapping it) opens the big MAPS menu. The board itself gets fewer, bigger tiles with big names.
+   8. **The hotbar:** bigger slots on a phone, a clear icon for the kit (or move it into Menu), the ammo shown on the slot, RELOAD bigger or automatic when empty.
+   9. **Phone lag** goes with item 3: measure on a real mid phone, keep 60 fps in the lab and 30+ in events.
+   10. **Portrait (upright):** check that the game is usable upright or lock it to landscape on phones; no half-broken middle state.
+   - **Measure:** split every funnel step by device (phone / tablet / PC / console) in the custom events, so we see if the phone gap closes. Target: phone 5-min retention equal to PC within 2 weeks.
+   - **Test selv** (after each sub-step): on your own phone, in landscape, from a fresh join: can you see what to do, hit a dummy within 10 seconds, and read every menu without zooming?
+
+2. **Ragdolls fall through or half into the ground.**
    - Find the cause: a thin floor for fast bodies, the pad floor, new dummy masses, the time bubble, or spawning half inside the floor.
    - Fix: an invisible thick safety floor under the lab and every map; bodies always created above the floor; any body below the floor put back.
-2. **Lag on every platform.**
+3. **Lag on every platform.**
    - Measure first: server heartbeat, script time, network, phone FPS.
    - Fix the 5 heaviest things: loops, bodies and effects caps, lights, far things, leaks.
    - Lower detail on weak phones without losing the PC look.
-3. **Fix the 1-5 minute leak and find why people dislike** (the funnels of 26 Nov, `docs/FUNNELS.md`: half the players at 2 min are gone by 5 min, and 47 % stop between 10 and 25 KOs; targets are in that file).
+4. **Fix the 1-5 minute leak and find why people dislike** (the funnels of 26 Nov, `docs/FUNNELS.md`: half the players at 2 min are gone by 5 min, and 47 % stop between 10 and 25 KOs; targets are in that file).
    - **A new pull every minute in the first 5 minutes:**
      - unlocks close together early: a new weapon at about 3, 6, 10, 15, 20 and 25 KOs (retune `LADDER_V9_KEEP` / the first rungs, and keep the later gaps);
      - each unlock a big, satisfying reveal;
      - the "Next" bar is always visible.
    - **A planned moment at about 1, 2, 3 and 4 minutes** for new players, without pop-up spam:
-     - about 1 min: the angry dummy (item 5);
+     - about 1 min: the angry dummy (item 6);
      - about 2 min: a free mini event in your lab (the red button lights up: "Press me!");
      - about 3 min: the first terminal or creature gets pointed out (a calm glow);
      - about 4 min: the Map board gets pointed out ("New place unlocked: Island").
@@ -44,33 +91,26 @@ For each item:
    - **Measure:** add custom funnel steps (AnalyticsService funnel events) so the Creator Hub shows:
      - the minute moments above;
      - the first unlock, the first terminal used, the first map trip;
-     - the tutorial steps (item 6);
+     - the tutorial steps (item 7);
      - shop: opened → item viewed → prompt → **bought**.
    - **Dislikes:**
      - read Session_v1 (leave times, errors, FPS by device) and the like ratio by version;
      - add an optional "How's the game?" thumbs + reason (no reward);
      - write a short report with the top 3 reasons and the fixes into `docs/FUNNELS.md`.
    - **Test selv:** play 5 minutes as a new player (StudioFresh) and note what happens each minute.
-4. **Answer Roblox's mail about the maturity questionnaire** (they rejected the last answers).
+5. **Answer Roblox's mail about the maturity questionnaire** (they rejected the last answers).
    - Needs the owner to paste the mail and the old answers.
    - List what the game really contains: purple blood, guns, the words "Dead" and "bled out".
    - Draft honest answers, and offer the choice: keep the content and the label it gives, or tone it down for a lower age label.
    - **The owner submits.**
-5. **The first dummy you hit twice gets angry**, unless the first shot kills it; then it is the next dummy hit twice.
+6. **The first dummy you hit twice gets angry**, unless the first shot kills it; then it is the next dummy hit twice.
    - Red face and a short tantrum; it runs at you and gives a harmless, funny shove or slap (no damage), then flees.
    - Once per player early on, then rarely.
    - (Owner to confirm: shove allowed, or only scolding?)
-6. **A tutorial on every device** (PC, phone, tablet, console).
+7. **A tutorial on every device** (PC, phone, tablet, console).
    - 3-4 short show-don't-tell steps: shoot a dummy, grab and throw, use a terminal, find the Map board.
    - The right input glyphs per device; skippable; newcomers only; no pop-ups on top.
    - Measure step completion.
-7. **Everything better on phones**, learning from the biggest games and the audience (about 9-14):
-   - fewer, bigger buttons under the thumbs;
-   - aim and fire help;
-   - a simple shop;
-   - readable text;
-   - a fast start;
-   - upright and landscape.
 8. **Best sellers, the shop and Robux** (funnel: only 8 % open the shop, and 11 % of them press buy).
    - **Read the sales:** what sells, where it stood, and whether it was tried first. Write the analysis into `docs/FUNNELS.md`.
    - **The shop opens more:**
