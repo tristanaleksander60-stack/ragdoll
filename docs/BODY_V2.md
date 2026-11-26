@@ -242,6 +242,28 @@ Today the dummy is separate R15 parts that meet with visible seams and steps at 
 - **X-ray, bullet holes, bruises and bandages** attach to the same parts, so they follow the skin. The X-ray shell is the same skinned mesh made see-through.
 - **The joint limits must stop at human angles** (`docs/RAGDOLL_FEEL.md`), so the skin never twists into candy-wrapper shapes. Check the shoulder and the neck at extreme poses.
 
+**The SHAPE too, not only the seams** (owner, 26 Nov 2026 late: "Også udseende mæssigt så deres krop er sammenhængende og ikke lavet ud af flere klodsede dele"):
+- **The body reads as ONE human figure, not 15 blocks.** A smooth plastic mannequin or crash-test-dummy body with human proportions:
+  - a shaped chest, waist and hips;
+  - round shoulders, a neck;
+  - limbs that taper (thick thigh to thin ankle, upper arm to wrist);
+  - rounded knees and elbows;
+  - real hands (fingers below), feet with a heel and toes;
+  - a rounded head that keeps today's face style (the faces of 4b go on it).
+- **No box shapes anywhere:** no flat-sided arm or leg, no square torso, no gap or overlap between pieces.
+- **The same grey plastic colour and the same kid-friendly cartoon faces,** so it is still clearly "our" ragdoll.
+- **One look for EVERY ragdoll:** lab ragdolls, watchers, road walkers, the 3 near and the 2 close by, the PATH WALKERS (LIFE_IDLE 4: the same body, no fingers), the stand-ins, the plain #1 statue and the stone statues.
+- **Everything attached to a body part still sits right on the new shape:**
+  - bullet holes, bruises, bandages and the splatter;
+  - the X-ray shell and the bones inside it;
+  - the stretched limbs (F74 scales the bones);
+  - the dog's bite marks.
+
+  Check the attachment offsets once per part.
+- **Source:**
+  - a clean skinned mannequin or dummy from the Creator Store (R15 bone names, skin weights, malware pass);
+  - else model it in Blender with the LihFolk modelling skill, export FBX with R15 bones, and import it with the 3D Importer.
+
 **Real fingers:**
 - **Each hand gets 5 fingers with 2-3 bones each** (the thumb set apart), in the skinned hand mesh.
 - **Driven by poses, not physics parts** (cheap). The finger bones blend between hand poses by state:
