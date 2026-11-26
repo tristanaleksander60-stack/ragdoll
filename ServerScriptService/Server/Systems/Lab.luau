@@ -781,6 +781,7 @@ local THREE_LINES = {
 }
 local threeAt = 0
 local threeLineAt: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
+local threeSetDownAt: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any -- (0.156: the next set-down behind the player)
 local recruits: { [Model]: { slot: Slot, untilAt: number, walked: boolean, player: Player } } = setmetatable({}, { __mode = "k" }) :: any
 
 -- ALWAYS3 update (owner, 26 Nov 2026: "de 2 andre skal bare stå og snakke, 1 skal gå helt hen, og det skal skifte lidt"):
@@ -958,13 +959,21 @@ local function alwaysThree(plot: Plot, now: number)
 	end
 	assignRoles(player, root, nearList, now)
 	local missing = 3 - near - onWay
-	if missing <= 0 or onWay >= THREE_MAX_WAY then
+	local maxWay = if (Config :: any).FAST_THREE then 1 else THREE_MAX_WAY -- (OVERVIEW 0.156 FINAL RULE: one by one)
+	if missing <= 0 or onWay >= maxWay then
 		return
+	end
+	-- (OVERVIEW 0.155: AROUND = living ragdolls within 70 studs; a set-down behind the player only when fewer than 3 are around)
+	local around = near
+	for _, f in far do
+		if f.d < 70 then
+			around += 1
+		end
 	end
 	table.sort(far, function(a, b)
 		return a.d < b.d
 	end)
-	for i = 1, math.min(missing, #far, THREE_MAX_WAY - onWay) do
+	for i = 1, math.min(missing, #far, maxWay - onWay) do
 		local pick = far[i]
 		local angle = math.random() * math.pi * 2
 		local r = 10 + math.random() * 5
@@ -977,7 +986,8 @@ local function alwaysThree(plot: Plot, now: number)
 		pick.slot.roamHome = spot
 		pick.slot.nextRoamAt = now + THREE_GIVE_UP + 1
 		pick.model:SetAttribute("Pace", if (Config :: any).FAST_THREE then (if walked then 1.6 else 2.5) elseif walked then 1.4 else 2.2) -- (ALWAYS3 update: they come FAST; 0.15: a sprint)
-		if (Config :: any).FAST_THREE and pick.d > 110 then
+		if (Config :: any).FAST_THREE and pick.d > 150 and around < 3 and now >= (threeSetDownAt[player] or 0) then
+			threeSetDownAt[player] = now + 8 -- (0.156: then an 8 s cooldown)
 			-- (OVERVIEW 0.15: too far to arrive in 2-3 s: set down out of view 30-40 studs behind the player, then it sprints in)
 			local back = -root.CFrame.LookVector * Vector3.new(1, 0, 1)
 			local at = root.Position + (if back.Magnitude > 0.1 then back.Unit else Vector3.zAxis) * (30 + math.random() * 10)
