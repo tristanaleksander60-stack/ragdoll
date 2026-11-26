@@ -63,6 +63,10 @@ HudMenu.KEEP = { Shop = true, Rewards = true, Places = true, Sandbox = true, Set
 -- A phone: SHOP beside MENU (one row: the short screen's left edge has the big WEAPONS button
 -- too); REWARDS, PLACES, SANDBOX and SETTINGS in MENU (its badge shows what waits in REWARDS).
 HudMenu.PHONE_KEEP = if Config.MP_ICON then { Shop = true, Multiplayer = true } else { Shop = true } -- (MULTIPLAYER under Shop and Menu on a phone: PortalUI) -- (GOD MODE sits in MENU on a phone: no room in the column, LayoutCheck)
+if (Config :: any).NAV_WEAPONS then
+	-- (F63: on a phone the column is Shop, WEAPONS and Multiplayer; MORE is the gear in the top bar)
+	HudMenu.PHONE_KEEP = if Config.MP_ICON then { Shop = true, Weapons = true, Multiplayer = true } else { Shop = true, Weapons = true }
+end
 -- The column starts under the big WEAPONS button (HudSlots "Weapons": 68 px down, 58 tall; 46 on a phone).
 Controller.COLUMN_TOP = 144
 C.HUD_CAPTION_MIN = 11 -- (smaller tiles: "Settings" still fits)
@@ -250,6 +254,9 @@ function HudMenu.start()
 	Controller.COLUMN_KEEP = HudMenu.KEEP
 	Controller.PHONE_KEEP = HudMenu.PHONE_KEEP
 	hud = Controller.addHudButton({ window = "Menu", label = Controller.MENU_LAUNCHER, icon = "settings", theme = "neutral", layoutOrder = 9 })
+	if (Config :: any).NAV_WEAPONS then
+		Controller.setHudShown(Controller.MENU_LAUNCHER, false) -- (F63: the gear in the top bar opens it)
+	end
 	refresh()
 end
 

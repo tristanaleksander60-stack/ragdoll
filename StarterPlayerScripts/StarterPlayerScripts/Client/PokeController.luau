@@ -730,6 +730,9 @@ local function layout()
 		ensureSlab(id)
 	end
 	local withTools = true -- (23 Nov 2026, owner: "WEAPONS loads in first on the hotbar"): never held back in the first minute
+	if (Config :: any).NAV_WEAPONS then
+		withTools = pendingEquip ~= nil -- (F63: WEAPONS is the left column's square; the bar's slot is only CANCEL while picking)
+	end
 	local touch = ViewMode.isTouch()
 	local plan = PokeController.plan(gui.AbsoluteSize, touch, ViewMode.isLab(), withTools, #list, NextUnlocks.count())
 	chipFits = plan.chip
@@ -883,6 +886,12 @@ drawTools = function(picking: boolean)
 		local c = chip :: TextLabel
 		c.Text = key
 		c.Visible = key ~= "" and not picking
+	end
+	-- (F63, Config.NAV_WEAPONS: WEAPONS is the left column's square now, so the bar's toolbox slot only shows as CANCEL
+	-- while a weapon waits for its slot)
+	if (Config :: any).NAV_WEAPONS and (tools :: any).laidPicking ~= picking then
+		(tools :: any).laidPicking = picking
+		task.defer(layout) -- (the bar is laid out again with or without the CANCEL slot)
 	end
 	if toolsIconOnly then
 		-- (V10, owner: "WEAPONS must always show its key": the key beside the picture on a keyboard.)

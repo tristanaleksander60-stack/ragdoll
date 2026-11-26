@@ -854,9 +854,47 @@ function HudV3.start()
 	end).LayoutOrder = 1
 	-- (22 Nov 2026, owner: "remove MAPS, put More where God was, remove God"): More is the left column's
 	-- middle square now; no God square and no Maps square (the Map Board in the world still travels).
-	card("Menu", if Config.V8_FIRST_HIT then "More" else "Menu", "settings", left, function()
-		Controller.toggle("Menu")
-	end).LayoutOrder = 2
+	local gearGui: ScreenGui? = nil
+	if (Config :: any).NAV_WEAPONS then
+		-- F63 (owner: "Skift More til Våben-menuen, altså den røde mappe med T keybinded"; Config.NAV_WEAPONS): the left
+		-- column's middle square is WEAPONS (the red toolbox, key T: it opens the weapons menu as the hotbar's toolbox did;
+		-- that slot is off the hotbar now), and MORE moves to a round gear in the top bar, right of Roblox's own buttons
+		-- (key 9 stays).
+		card("Weapons", "Weapons", "toolbox", left, function()
+			local open = (require(Client:WaitForChild("PokeController")) :: any).openCatalog
+			if type(open) == "function" then
+				open()
+			end
+		end).LayoutOrder = 2
+		local gg = Instance.new("ScreenGui")
+		gg.Name = "MoreGear"
+		gg.ResetOnSpawn = false
+		gg.ScreenInsets = Enum.ScreenInsets.None
+		gg.DisplayOrder = 6
+		local gear = card("Menu", "More", "settings", gg, function()
+			Controller.toggle("Menu")
+		end)
+		gear.AnchorPoint = Vector2.new(0, 0.5)
+		local gs = Instance.new("UIScale")
+		gs.Scale = 50 / HudV3.CARD.Y
+		gs.Parent = gear
+		local GuiService = game:GetService("GuiService")
+		local function place()
+			local inset = GuiService.TopbarInset
+			gear.Position = UDim2.fromOffset(inset.Min.X + 60, (inset.Min.Y + inset.Max.Y) / 2)
+		end
+		GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(place)
+		place()
+		gg.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+		gearGui = gg
+	else
+		card("Menu", if Config.V8_FIRST_HIT then "More" else "Menu", "settings", left, function()
+			Controller.toggle("Menu")
+		end).LayoutOrder = 2
+	end
+	local function findCard(name: string): Instance?
+		return left:FindFirstChild(name) or (if gearGui then gearGui:FindFirstChild(name) else nil)
+	end
 	-- (21 Nov 2026: GOD MODE, create life: GodMode's window.)
 	if false and Config.GOD_PASS and Config.DUMMY_TYPES then
 		local godCard = card("God", "God", "god", left, function()
@@ -953,7 +991,7 @@ function HudV3.start()
 			end
 			for cardName, keyId in { Shop = "Shop", Menu = "MenuWindow", Lab = "LabWindow", Multi = "MultiWindow" } do
 				local okK, code = pcall(Keybinds.key, keyId)
-				local c = left:FindFirstChild(cardName)
+				local c = findCard(cardName)
 				if okK and code == input.KeyCode and c and tapActions[c :: GuiObject] then
 					tapActions[c :: GuiObject]()
 					return
@@ -961,8 +999,8 @@ function HudV3.start()
 			end
 		end)
 		local Keybinds = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Keybinds")) :: any
-		for cardName, keyId in { Shop = "Shop", Menu = "MenuWindow", Lab = "LabWindow", Multi = "MultiWindow" } do
-			local c = left:FindFirstChild(cardName)
+		for cardName, keyId in { Shop = "Shop", Menu = "MenuWindow", Lab = "LabWindow", Multi = "MultiWindow", Weapons = "Catalog" } do -- (F63: WEAPONS shows T; its key is answered by PokeController)
+			local c = findCard(cardName)
 			if c then
 				local chip = Instance.new("TextLabel")
 				chip.Name = "KeyChip"
