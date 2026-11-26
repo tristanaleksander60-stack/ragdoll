@@ -1397,7 +1397,46 @@ local function clearAhead(rig: Rig, direction: Vector3, groundY: number, reach: 
 	if model and model:GetAttribute("IsDummy") == true then
 		return math.huge
 	end
+	local seen: any = rig
+	seen.blockHit = hit.Instance -- (F72: what it saw, so a car is waited for, not walked round)
 	return hit.Distance
+end
+
+-- F72 NAV_BUMP_LOG: a cheap always-on count of detours and give-ups, printed once a minute when there were any.
+local NAV_BUMP_LOG = (require(script.Parent.Parent:WaitForChild("Config")) :: any).NAV_BUMP_LOG == true
+local bumpCount, bumpGiveUps, bumpCars, bumpSince = 0, 0, 0, os.clock()
+local function bumpLog(kind: string)
+	if not NAV_BUMP_LOG then
+		return
+	end
+	if kind == "detour" then
+		bumpCount += 1
+	elseif kind == "car" then
+		bumpCars += 1
+	else
+		bumpGiveUps += 1
+	end
+	local now = os.clock()
+	if now - bumpSince >= 60 then
+		print(string.format("[NavBump] last %d s: %d detours, %d other side, %d waits for a car", now - bumpSince, bumpCount, bumpGiveUps, bumpCars))
+		bumpCount, bumpGiveUps, bumpCars, bumpSince = 0, 0, 0, now
+	end
+end
+
+-- (F72: a moving car in the way: wait for it to pass instead of walking round it)
+local function carAhead(rig: Rig): boolean
+	local part = (rig :: any).blockHit
+	if not part or not part.Parent then
+		return false
+	end
+	local model = part:FindFirstAncestorOfClass("Model")
+	while model and model.Parent and model.Parent:IsA("Model") do
+		model = model.Parent :: Model
+	end
+	if not model or not model:FindFirstChildWhichIsA("VehicleSeat", true) then
+		return false
+	end
+	return part.AssemblyLinearVelocity.Magnitude > 3
 end
 
 local function blocked(rig: Rig, direction: Vector3, groundY: number): boolean
@@ -1554,10 +1593,19 @@ local function updateMoving(rig: Rig, dt: number)
 				-- Keep to the detour it chose for a moment (or it walks straight back into it).
 				direction = CFrame.Angles(0, rig.steer, 0):VectorToWorldSpace(direction)
 			elseif blocked(rig, direction, groundY) or rig.stuckTime > STUCK_DETOUR then
+				if GAME_BLOCKCAST and rig.stuckTime <= STUCK_DETOUR and carAhead(rig) then
+					-- (F72: a car going by: it waits for it to pass, then walks on)
+					local waiter: any = rig
+					waiter.waitCar = now + 0.5
+					bumpLog("car")
+				end
 				if rig.stuckTime > STUCK_DETOUR * 2 then
 					rig.steer = -rig.steer -- that side did not work: try the other one
+					bumpLog("other")
 					rig.stuckTime = 0
 					rig.bestDistance = distance
+				elseif ((rig :: any).waitCar or 0) > now then
+					-- (waiting: no detour)
 				elseif rig.steer == 0 and GAME_BLOCKCAST then
 					-- (F72: the side that is more open, not a coin toss)
 					local l = clearAhead(rig, CFrame.Angles(0, DETOUR_ANGLE, 0):VectorToWorldSpace(direction), groundY, 8)
@@ -1566,8 +1614,11 @@ local function updateMoving(rig: Rig, dt: number)
 				elseif rig.steer == 0 then
 					rig.steer = if math.random() < 0.5 then DETOUR_ANGLE else -DETOUR_ANGLE
 				end
-				rig.steerUntil = now + DETOUR_TIME
-				direction = CFrame.Angles(0, rig.steer, 0):VectorToWorldSpace(direction)
+				if ((rig :: any).waitCar or 0) <= now then
+					bumpLog("detour")
+					rig.steerUntil = now + DETOUR_TIME
+					direction = CFrame.Angles(0, rig.steer, 0):VectorToWorldSpace(direction)
+				end
 			end
 			-- Round the other dummies (they stand in a row; the way home often passes one). Going
 			-- round one is slow progress on purpose, not being stuck.
@@ -1589,6 +1640,10 @@ local function updateMoving(rig: Rig, dt: number)
 			end
 			base *= 1 - 0.45 * hurtOf(rig) -- (V9-P3: hurt, it goes slower)
 			wantSpeed = if fleeing then base else math.min(base, distance * 1.8 + 0.6)
+			if not fleeing and ((rig :: any).waitCar or 0) > now then
+				wantSpeed = 0 -- (F72: stands at the kerb while the car passes)
+				rig.stuckTime = 0
+			end
 		end
 	end
 

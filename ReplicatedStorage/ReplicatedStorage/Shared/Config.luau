@@ -95,6 +95,7 @@ local Config = {
 	IDLE_WEIGHT_SHIFT = true, -- S1: standing ragdolls shift their weight from leg to leg (slow, eased; Client/DummyLife updateIdle)
 	TURN_EVEN = true, -- F73: the heading rotates at a capped even rate (220 deg/s walking, 360 fleeing), never a lerp whip or 180 degree snap; turning on the spot steps the feet (ActiveRagdoll, DummyLife)
 	NAV_BLOCKCAST = true, -- F72: obstacles are seen with a body-sized Blockcast whose look-ahead grows with speed (2.5-7 studs), and the detour takes the more open side (ActiveRagdoll blocked/clearAhead)
+	NAV_BUMP_LOG = true, -- F72: ActiveRagdoll counts detours, other-side tries and waits for a car, printed once a minute ([NavBump]); a moving car in the way is waited for, not walked round
 	NAV_ALWAYS = true, -- F72: RagdollNav puts its waypoint in NavHome (followed before Home) and never overwrites Home, so every walk gets a path, moving goals too (re-planned when the goal moved 4 studs, max 1/s)
 	M4_CLEAN = true, -- M4 part 1: no tree belts, belt walls, bush rows, hedges, flower beds or room gates; trees only in a 50-stud edge band, at most 70 (LabOwnerMap m4Clean, Unstick)
 	REF_LOOK = true, -- M4 THE LOOK: the lab's light like the references (ClockTime 14, Brightness 2, grey ambient 70/128, Atmosphere 0.35 / 0.25 / (199,199,199), haze 1, no glow or tint) (Client/ZoneLighting)
