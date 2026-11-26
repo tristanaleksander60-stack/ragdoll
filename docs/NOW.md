@@ -16,7 +16,7 @@ Why this order:
 | Step | What | Plan | State |
 |---|---|---|---|
 | 0 | **Owner:** press Alt+P to publish 0.58.0 (gore off), then send the maturity questionnaire, before Fri 27 Nov 17:34 UTC | `docs/MATURITY.md`, `docs/BODY_V2.md` "final answers" | BUILT, waiting for Alt+P |
-| 0.5 | **BUG: the TRY! sign jumps all over the screen and flips back and forth** (owner, 26 Nov). Fix it first, see below | `Client/LabShowcase.luau` tryMe() | |
+| 0.5 | **The first 2 minutes + the new TRY:** a TRY button at the machine, a ragdoll comes, grab it (lesson only the first time) and put it in. This replaces the buggy floating TRY! sign (the bug notes below explain why it is removed) | `docs/FIRST_2_MIN.md` | |
 | 1 | Always 3 near you (update: not afraid of weapons; 2 chat, 1 comes all the way, rotating; they come very fast) + a watcher at every machine | `docs/ALWAYS3.md` (read the "Update" at the end) | 3-near built in 0.59.0; the update and the watchers are not |
 | 2 | The MULTIPLAYER icon instead of the portal | the section below | |
 | 3 | **PERFECT PHYSICS:** the hard checks, then falls, landings, lying and get-ups | `docs/RAGDOLL_FEEL.md` ("PERFECT physics" first) | |
@@ -30,7 +30,7 @@ Why this order:
 | 11 | Wheelchairs | `docs/WHEELCHAIRS.md` | |
 | 12 | Session length, the rest (item 1 is done in 0.57.0) | `docs/STAY_LONGER.md` 2-8 | |
 
-**The TRY! bug: causes found in `StarterPlayerScripts/.../Client/LabShowcase.luau` `tryMe()`. Fix all of them:**
+**The TRY! bug (the sign is REMOVED by FIRST_2_MIN; keep these notes only if any marker stays): causes found in `StarterPlayerScripts/.../Client/LabShowcase.luau` `tryMe()`. Fix all of them:**
 1. **It flickers every second.** Every second the loop sets `sign.Adornee = nil`, `StudsOffsetWorldSpace = Vector3.zero`, sets `Adornee` again and re-parents the ring and sign, even when nothing changed. For a frame the sign jumps to the ring or the screen origin.
    - **Fix:** create, parent and adorn once. Only move the anchor when the target machine changes.
 2. **It flips between machines.** The nearest untried machine is re-picked every second, so walking between two machines swaps the target back and forth.
