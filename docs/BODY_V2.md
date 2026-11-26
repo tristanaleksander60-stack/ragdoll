@@ -264,6 +264,22 @@ Today the dummy is separate R15 parts that meet with visible seams and steps at 
   - a clean skinned mannequin or dummy from the Creator Store (R15 bone names, skin weights, malware pass);
   - else model it in Blender with the LihFolk modelling skill, export FBX with R15 bones, and import it with the 3D Importer.
 
+**REAL HANDS, NOT HOOKS** (owner, 26 Nov 2026 late: "Sørg for ragdolls har ægte hænder ikke bare kroge"):
+- **Today:** the dummy's hands are the R15 hand blocks, which look like grey C-shaped hooks or claws.
+- **New:** a real human hand on every ragdoll:
+  - a palm with a soft rounded back;
+  - 4 fingers with 3 segments each, slightly tapering, with small knuckle bumps;
+  - a thumb set apart at an angle from the palm, with 2 segments;
+  - a wrist that blends smoothly into the forearm;
+  - the size of a real hand to the body (from the wrist to the fingertip about 0.9 studs on a 5.2-stud body);
+  - the same grey plastic as the body.
+- **At rest** the fingers curl slightly (relaxed), never straight like a flat paddle and never a hook.
+- **The hand poses** (the table below) give every state its own grip, so a hand looks like a hand doing something.
+- **Order:**
+  - part of S2 (the skinned body);
+  - if S2 must wait for its body mesh, FIRST replace the 2 hand parts with real hand meshes (rigged fingers, the same poses), so the hooks are gone either way.
+- **Everywhere:** every ragdoll gets these hands (the path walkers and statues too), and the X-ray shows the hand bones inside (palm bones and finger bones).
+
 **Real fingers:**
 - **Each hand gets 5 fingers with 2-3 bones each** (the thumb set apart), in the skinned hand mesh.
 - **Driven by poses, not physics parts** (cheap). The finger bones blend between hand poses by state:

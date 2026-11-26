@@ -122,6 +122,54 @@ Build to these exact points.
 
 **7. Phones:** this look is cheap (few parts, few lights, no shadows from small things), so phones keep the same look as PC, with no special phone version.
 
+## OBJECT BY OBJECT: the exact quality of every thing (owner, 26 Nov late: "Vær ultra specifik med alt kvalitet bænke osv")
+**Rules for EVERY object:**
+- **The scale:** a player is about 5.2 studs tall. Every object is real-world size to that (a bench seat at knee height, a barrel to the hip).
+- **Proper and simple:** built from several clean parts, like the references. A bench has separate slats and real legs; a crate has planks and a frame. Never one block standing in for a thing; never a ball for a flower or a rock.
+- **Plain materials,** as listed (SmoothPlastic, Wood, WoodPlanks, Metal, DiamondPlate, Concrete, Brick, Slate, Sand, Grass). No neon except where listed; no busy texture.
+- **Part colours** are given below; the haze softens them on screen to the measured ref colours.
+- **Anchored, standing flat on the ground:**
+  - not floating, not sunk, nothing overlapping or z-fighting;
+  - small parts CastShadow off;
+  - collision Box (or off for small trim);
+  - CanQuery off for pure decoration.
+- **One model per object kind,** made once (in `ServerStorage.V3Assets` or by one builder function) and cloned everywhere, so every bench is the same good bench.
+
+| Object | Size (studs) | Built from | Materials and colours (RGB) | Where and how many |
+|---|---|---|---|---|
+| **Bench** | 6 long, seat 1.6 high and 1.6 deep, back to 3.2 | 3 seat slats and 2 back slats with 0.1 gaps; 2 side frames (a leg, a seat support and a back post each, like a cast-iron park bench); slightly tilted back | slats Wood (124,92,61); frames Metal (40,40,44) | 1-2 beside an attraction's front facing it, and round the big round plaza by the tower (about 6), never on a walkway, about 25 in all |
+| **Barrel** | 2 wide, 2.8 high | a cylinder plus a white band ring and a darker top lid disc | SmoothPlastic red (190,40,30), band (235,235,235), lid (150,30,25) | in groups of 3-5, touching, a few tipped; by the brick wall, the boxing ring and the car bays (as in the shots), about 6 groups |
+| **Wooden crate** | 4 x 4 x 4 (some 3) | 4 side panels of horizontal planks, a darker frame on every edge, a plank lid | WoodPlanks (150,110,68), frame Wood (105,74,44) | stacked in 2-3 levels, slightly turned; by the sandcastle tower and the brick wall; about 3 stacks |
+| **Low wooden fence** | 2.6 high, posts every 6 | square posts 0.5 wide, 2 rails | Wood (128,94,60) | round the sandcastle area and behind the leaderboard plaza (as in the shots) |
+| **Walkway tiles** | 12-14 wide; 6 x 6 tiles | ONE slab per leg, with a world-aligned 6-stud tile texture (thin joint lines (180,180,175)), 0.3 over the grass, a 0.2 lip | Concrete or SmoothPlastic (205,205,200) | straight legs, square corners, one pad per junction (F82) |
+| **Plazas** | the spawn plaza raised about 4 on a grey concrete wall; the round plaza by the tower about 45 across | as the walkways, lighter | (220,220,215) | the spawn (with the 4 boards) and the round tower plaza |
+| **Grass** | the whole ground | one flat surface, no patches or dirt spots | Grass (110,140,85) | everywhere that is not walkway or an attraction |
+| **Name sign** | a board 4 x 1.6 on one post 3 high, beside the path, never across it | a board with a thin frame, a post | Metal (120,124,128), dark text | one per attraction, low, at its walkway end |
+| **Bin** | 1.4 wide, 2.4 high | a cylinder, a rim, a lid | Metal (70,74,78) | one by every bench group |
+| **Lamp** (few) | 10 high | a thin dark post, a small square head, a warm light (only within 140 studs, no shadows) | Metal (40,40,44) | only along the main walkway from the spawn, every 30 studs, 2 studs outside it |
+| **Leaderboard** | 12 wide x 9 high, on 2 posts | a dark board with a frame, a red or purple header strip, the list | board (30,32,36), headers (200,45,45) / (115,70,205), posts Metal (60,62,66) | 4 in a row on the spawn plaza in front of the wooden fence, facing the spawn (as `ref_1`); the #1 statue beside each (F77) |
+| **Steel tower** | about 50-55 high, 5 floors | a square lattice frame (corner columns, cross braces), DiamondPlate floors, switchback stairs with rails (F67), a railing at every floor edge | Metal (75,80,86), floors DiamondPlate (130,134,140) | the middle of the lab |
+| **Slide** | from the top floor down to the ground | one smooth curved chute with side walls on steel legs (F58) | SmoothPlastic grey-green (110,125,110), legs Metal (75,80,86) | off the tower, toward the round plaza |
+| **Rocket + gantry** | rocket about 30 high | a white body, a black nose cone, 3-4 fins; a grey lattice gantry beside it with a platform | rocket (240,240,240) + (30,30,30); gantry Metal (95,100,106) | next to the tower, as in `ref_13` |
+| **Brick wall** | about 30 long, 10 high, 2 thick | the brick panels of `BrickWall` | Brick (150,84,62) | with red barrels at its ends, as in the shots |
+| **Boxing ring** | 24 x 24, a 2-high stage | a white mat, a grey apron, 4 grey corner posts with pads, 3 black ropes a side, steps on one side | mat (235,235,230), apron (150,150,148), ropes (25,25,25) | near the wall and the car bays; 2 benches beside it |
+| **Car bays** | one bay 10 x 20 | white painted lines on grey tarmac (120,120,122) | - | the monster truck (dark green), the blue car, the tank, as in the shots |
+| **Pools** | the shots' sizes | a grey concrete rim 1.5 wide, Terrain water (F78), a ladder | rim Concrete (190,190,186) | as in the shots |
+| **Glass aquarium** | a raised tank, the walls about 10 high | a grey concrete base and walls with glass panels on the front, the water level at the top (F78) | Concrete (160,160,158), Glass (170,210,230) at 0.6 | next to the leaderboard plaza, as in `ref_12` |
+| **Cave** | a dome about 40 wide, 25 high | Terrain Rock shaped as one dome with a dark arched opening cut into it (F79) | Rock (130,128,124) | behind the aquarium, as in `ref_12` |
+| **Sandcastle tower** | about 8 x 8 x 16 | beige blocks with battlements on top | Sand or SmoothPlastic (220,200,160) | with the crates and the low fence, as in `ref_11` |
+| **Fan** | a big round fan about 30 across | a grey drum with blades and a grille, in a dark-green steel frame | Metal (150,150,150), frame (60,75,62) | as in `ref_11` |
+| **Press / gantry** | about 20 high | a dark-green steel frame with a heavy press block | (60,75,62) | beside the fan |
+| **Sandbox / sand circle** | the shots' sizes | a low wooden or concrete edge with flat sand | Sand (225,195,110) | as in `ref_11` |
+| **Lava strip** | long and narrow in a stone trench | the stone trench, orange lava (Neon allowed here, dimmed), a dark fence along it | trench Slate (90,88,86), lava (255,110,30), fence Metal (40,40,44) | along the east edge, as in the shots |
+| **Grandstand** | about 30 long, 5 rows | wooden bleachers on a frame | Wood (140,100,62) | at the edge facing the lab, as in `ref_11` |
+| **Train garage** | about 30 x 20 x 18 | a grey concrete building with a big brown door, on the rail | Concrete (150,150,148), door Wood (110,78,46) | on the railway at the west edge, as in `ref_12` |
+| **Railway** | gauge about 5 | 2 dark rails on brown sleepers every 3, on a grey gravel bed | rails Metal (70,70,72), sleepers Wood (100,72,48), bed Slate (120,118,115) | a loop along the edge, outside the walkways |
+| **Doghouse** | 5 x 5 x 5 | plank walls, a pitched dark roof, a round door | Wood (120,85,55), roof (60,45,35) | by the tower, as in `ref_13` |
+| **Conifer** | 18-30 high | a brown trunk, 3-4 stacked cone tiers | trunk (90,65,45), needles (60,95,80) | ONLY in the edge band, in loose rows |
+| **Round tree** | 15-22 high | a brown trunk, a lumpy round canopy of 3-5 blobs | trunk (100,75,50), leaves (120,165,90) | ONLY in the edge band, a few |
+| **Hills** | far, big | smooth Terrain hills, no rock faces | Terrain Grass | all round the horizon, close behind the edge band |
+
 **The size:**
 - **Use R3.2's layout and density, with its distances x 1.0-1.4** (the SMALLEST factor where every attraction fits with about 10-20 studs between neighbours; never more than 1.4). That is about 300-400 studs across inside the railway, instead of about 950 x 820 now.
 - **The big set pieces go back to about their reference size:** the tower about 50-55 studs high (5 floors); the slide, fan, gyro cage, cave, tanks, T-rex and rocket to match.
