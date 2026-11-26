@@ -4,6 +4,8 @@ argument-hint: "[optional: what the owner wants first]"
 ---
 Read `CLAUDE.md`, then `docs/NOW.md`. **If NOW.md has a ">>> GO NOW" section, do that first and keep going until it is finished** (across several sessions, from its STATE list); then work through the RUN ORDER table top to bottom. If the owner wrote something after /klar, do that first.
 
+**0. THE MAP comes before everything** (owner, 26 Nov late: "Siger det ikke igen, gør det godt nu"). Do NOTHING else until NOW.md's map "DEFINITION OF DONE" is fully true. Never call the map done before it is.
+
 **1. Remind the owner of step 0 first.** Your FIRST message in every /klar run is this one Danish line, as long as step 0 in NOW.md is not marked done:
 "Husk punkt 0: tryk Alt+P i Studio for at udgive gore-off, og send aldersspørgeskemaet med svarene i docs/MATURITY.md før fre 27/11 kl. 18.34."
 Then start working at once. Do not wait for an answer. When the owner says it is done, mark step 0 done in NOW.md.

@@ -52,6 +52,19 @@ The owner only sees M1's ground, while the OLD lab still stands in the middle (i
 4. **Do not end the session after one phase.** Keep going phase after phase until M10 is done. Only the final message goes to the owner.
 5. **Nothing of the old lab may be visible** in the owner's view when you finish. Check it with the 5 reference angles.
 
+### DEFINITION OF DONE for the map (all must be true before you say "done"; otherwise keep working)
+1. **Nothing from the old lab is visible.** No LAB10/park floor, wall, old tower set, old paths, old garden or old props, from any of the 5 reference angles.
+2. **The size is right.** Measure the built map's bounding box in Studio and print it: about 950 x 820 studs, with every zone at its 3.2x spot.
+3. **Every object in `docs/LAB_TARGET.md` R3.1 and R3.1b exists** and stands where the screenshots show it. Check it item by item and print the checklist with ✓ or ✗; any ✗ means keep working.
+4. **Every machine works** on its new spot (one Play through all of them).
+5. **The 5 captures** from the same spots as ref_6-ref_10 are saved in `art/store/lab10/own_6.jpg` … `own_10.jpg`, each scored "same map" 9.5+.
+6. **The owner gets the 5 captures** named in the final message, next to their reference names.
+
+**Until all 6 are true:**
+- work on nothing else (no F-items, no other steps);
+- do not end the run;
+- do not say "done".
+
 ### MAP RUN STATE
 - M1 part 1 DONE 0.78.0 (multiplayer place v55): `LAB_OWNERMAP` on, Systems/LabOwnerMap (330 parts): 950x820 grass base at CENTER (-30,24), walkway grid 22 wide (rows z -82/-18/58/104 x S, columns x -100/-55/0/28/68/112 x S, S=3.2), spawn circle, raised granite leaderboard plaza at z -304 with cap, pipe railing and stair, railway loop west+south (ballast, rails, sleepers), Terrain hill ring. Zones.PLOT_SPACING 1100 under the switch. Capture ScreenCapture_M1 vs ref_10: grid and hills match; the old lab still sits in the middle until M7. Left in M1: walkway tile seams, grass plot edges, the 4 boards on the new plaza (M7).
 
