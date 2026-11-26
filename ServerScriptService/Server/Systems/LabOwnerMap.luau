@@ -850,6 +850,73 @@ local function caveV2(into: Instance, o: Vector3, top: number): Vector3
 	return mouth
 end
 
+-- F76 (Config.ENTRANCE_ROW): the vehicle row by the spawn (LabLayout10.ENTRANCE_ROW): one paved slab (the walkway
+-- colour), a white line between the herringbone bays, and a low plaque on the ground at every bay's front (the
+-- no-billboard rule) with the vehicle's name and FREE, the price in Robux, or SOON (no model or no pass yet).
+local function entranceRow(into: Instance, o: Vector3, top: number)
+	local L10 = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("LabLayout10")) :: any
+	local bays = L10.ENTRANCE_ROW
+	if not bays or #bays == 0 then
+		return
+	end
+	local yaw = L10.ENTRANCE_YAW or math.rad(135)
+	local first, last = bays[1].at, bays[#bays].at
+	local it = Plan.ITEMS.EntranceVehicles
+	local depth = if it then it.size.Y else 22
+	local mid = (first + last) / 2
+	local slab = part(into, "EntranceRowSlab", Vector3.new((last.X - first.X) + 16, 0.3, depth), CFrame.new(o.X + mid.X, top + 0.15, o.Z + mid.Y), WALK, Enum.Material.Concrete)
+	slab.CastShadow = false
+	local dir = CFrame.Angles(0, yaw, 0)
+	for i = 1, #bays - 1 do
+		local a, b = bays[i], bays[i + 1]
+		local m = (a.at + b.at) / 2
+		part(into, "EntranceBayLine", Vector3.new(0.4, 0.05, 15), CFrame.new(o.X + m.X, top + 0.33, o.Z + m.Y) * dir, Color3.fromRGB(240, 240, 236), Enum.Material.SmoothPlastic, true)
+	end
+	local signs: { { label: TextLabel, id: string } } = {}
+	for _, b in bays do
+		local front = Vector3.new(o.X + b.at.X - 5.5, top, o.Z + b.at.Y + 8.5)
+		local board = part(into, "EntrancePlaque", Vector3.new(math.max(4, b.w * 0.8), 1.5, 0.25), CFrame.new(front + Vector3.new(0, 0.95, 0)) * CFrame.Angles(math.rad(-25), math.rad(-45), 0), Color3.fromRGB(34, 36, 40), Enum.Material.SmoothPlastic, true)
+		for _, sx in { -1, 1 } do
+			part(into, "EntrancePlaqueLeg", Vector3.new(0.18, 0.8, 0.18), CFrame.new(front + Vector3.new(sx * 0.9, 0.4, 0)), PROP.iron, Enum.Material.Metal, true)
+		end
+		local g = Instance.new("SurfaceGui")
+		g.Face = Enum.NormalId.Back
+		g.CanvasSize = Vector2.new(260, 96)
+		g.LightInfluence = 0
+		g.Parent = board
+		local name = Instance.new("TextLabel")
+		name.BackgroundTransparency = 1
+		name.Size = UDim2.fromScale(1, 0.55)
+		name.Font = Enum.Font.FredokaOne
+		name.TextScaled = true
+		name.TextColor3 = Color3.new(1, 1, 1)
+		name.Text = b.label
+		name.Parent = g
+		local status = Instance.new("TextLabel")
+		status.BackgroundTransparency = 1
+		status.Position = UDim2.fromScale(0, 0.55)
+		status.Size = UDim2.fromScale(1, 0.45)
+		status.Font = Enum.Font.FredokaOne
+		status.TextScaled = true
+		status.TextColor3 = Color3.fromRGB(255, 210, 70)
+		status.Text = "SOON"
+		status.Parent = g
+		table.insert(signs, { label = status, id = b.id })
+	end
+	-- (the prices come from Roblox a moment later: VehicleService.PRICES)
+	task.delay(8, function()
+		local VS = require(script.Parent:WaitForChild("VehicleService")) :: any
+		for _, s in signs do
+			local price = VS.PRICES and VS.PRICES[s.id]
+			local driveable = s.id == "Car" or s.id == "Truck" or s.id == "MuscleCar"
+			if driveable and price ~= nil then
+				s.label.Text = if price > 0 then ("R$ " .. tostring(price)) else "FREE"
+				s.label.TextColor3 = if price > 0 then Color3.fromRGB(120, 230, 120) else Color3.fromRGB(255, 255, 255)
+			end
+		end
+	end)
+end
+
 local function northRow(into: Instance, o: Vector3, top: number)
 	local S = LabOwnerMap.S
 	local function at(x: number, z: number): Vector3
@@ -2969,6 +3036,9 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	parks(into, origin, origin.Y - 0.05)
 	yards(into, origin, origin.Y - 0.05)
 	extras(into, origin, origin.Y - 0.05)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).ENTRANCE_ROW then
+		entranceRow(into, origin, origin.Y - 0.05) -- (F76: the vehicle row by the spawn)
+	end
 	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SPAWN_11 then
 		spawnSet(into, origin, origin.Y - 0.05) -- (OVERVIEW 0.97: the spawn to 11/10)
 	end

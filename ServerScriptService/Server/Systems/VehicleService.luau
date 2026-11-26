@@ -59,6 +59,31 @@ VehicleService.SPECS = {
 -- 0 = no pass yet: free to drive until the id is filled in.
 VehicleService.PASSES = { Car = 2092302232, Truck = 0, MuscleCar = 2093220108, Bike = 0 } -- (24 Nov 2026, owner: they cost Robux again, the Ford is free (its pass: 2092632252); the bike the ragdoll rides stays free) -- (Silvia, Ford, Panzer; owner 22 Nov 2026) :: { [string]: number }
 local MarketplaceService = game:GetService("MarketplaceService")
+-- (F76: only the bicycle and the dirt bike are free now. The Ford's pass 2092632252 is used when Roblox says it is for
+-- sale; else the Ford stays free as before and the owner is asked (NOW.md).)
+VehicleService.FORD_PASS = 2092632252
+VehicleService.PRICES = {} :: { [string]: number } -- (Robux per kind, read once for the plaques; 0 = free)
+task.spawn(function()
+	if not (Config :: any).ENTRANCE_ROW then
+		return
+	end
+	local ok, info = pcall(function()
+		return MarketplaceService:GetProductInfo(VehicleService.FORD_PASS, Enum.InfoType.GamePass)
+	end)
+	if ok and info and info.IsForSale then
+		VehicleService.PASSES.Truck = VehicleService.FORD_PASS
+	end
+	for kind, id in VehicleService.PASSES do
+		if id > 0 then
+			local ok2, i2 = pcall(function()
+				return MarketplaceService:GetProductInfo(id, Enum.InfoType.GamePass)
+			end)
+			VehicleService.PRICES[kind] = if ok2 and i2 and i2.PriceInRobux then i2.PriceInRobux else 0
+		else
+			VehicleService.PRICES[kind] = 0
+		end
+	end
+end)
 local owned: { [Player]: { [number]: boolean } } = {}
 game:GetService("Players").PlayerRemoving:Connect(function(p)
 	owned[p] = nil
@@ -603,6 +628,10 @@ function VehicleService.build(into: Folder, origin: Vector3)
 		local bay = (require(ReplicatedStorage.Shared:WaitForChild("LabLayout10")) :: any).car(kind)
 		if bay then
 			cf = CFrame.new(origin + Vector3.new(bay.X, spec.lift + spec.body.Y / 2 + 0.1, bay.Y))
+			local yaw = (require(ReplicatedStorage.Shared:WaitForChild("LabLayout10")) :: any).carYaw(kind) -- (F76: the herringbone row)
+			if yaw then
+				cf *= CFrame.Angles(0, yaw, 0)
+			end
 		end
 		local model, body, seat = make(kind, cf)
 		model.Parent = holder

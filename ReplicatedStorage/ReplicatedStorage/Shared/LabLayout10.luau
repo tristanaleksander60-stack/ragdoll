@@ -128,6 +128,12 @@ function LabLayout10.car(kind: string): Vector2?
 	return if LabLayout10.on then LabLayout10.CARS[kind] else nil
 end
 
+-- (F76) The yaw of a car's bay, when its bay is turned (the herringbone entrance row); nil = the builder's own.
+function LabLayout10.carYaw(kind: string): number?
+	local t = (LabLayout10 :: any).CAR_YAW
+	return if LabLayout10.on and t then t[kind] else nil
+end
+
 -- (GO NOW: THE MAP, Config.LAB_OWNERMAP: every spot here 3.2 times further from the spawn, like Config.LAB_SPREAD; sizes stay.)
 if Config.LAB_OWNERMAP then
 	local K = (function(): number -- (M4: the compact plan's K, 1.3; was 3.2)
@@ -240,6 +246,43 @@ if Config.LAB_OWNERMAP then
 		if sp then
 			LabLayout10.TEST_FLOOR = sp -- (the 3 near walk about on the spawn plaza)
 			LabLayout10.BUTTON = sp + Vector2.new(0, -14)
+		end
+		-- F76 (Config.ENTRANCE_ROW): THE VEHICLE ROW by the spawn, north of the CrossN walkway and east of the spine: bays
+		-- side by side going east, each turned 45 degrees (a herringbone) so every vehicle shows its nose to the walkway as you
+		-- come down from the spawn. Each bay is as wide as its vehicle (+1.5); the paid cars move here from the crash yard
+		-- (the CarBays stay painted, as parking). Bays without a model yet show a SOON plaque (never free by mistake).
+		local row = item("EntranceVehicles")
+		if row and (Config :: any).ENTRANCE_ROW then
+			local plan = Plan.ITEMS.EntranceVehicles
+			local spec = {
+				{ id = "Bicycle", label = "BICYCLE", w = 3 },
+				{ id = "Car", label = "SILVIA", w = 6.4 },
+				{ id = "Truck", label = "FORD TRUCK", w = 8.4 },
+				{ id = "MuscleCar", label = "PANZER", w = 11 },
+				{ id = "GoKart", label = "GO-KART", w = 5 },
+				{ id = "Police", label = "POLICE CAR", w = 7 },
+				{ id = "MonsterTruck", label = "MONSTER TRUCK", w = 10 },
+				{ id = "Bulldozer", label = "BULLDOZER", w = 9 },
+				{ id = "FireTruck", label = "FIRE TRUCK", w = 8.5 },
+			}
+			local s45 = math.sin(math.rad(45))
+			local x = row.X - plan.size.X / 2 + 4
+			local bays = {}
+			for i, b in spec do
+				if i > 1 then
+					x += ((spec[i - 1].w / 2) + (b.w / 2) + 1.5) / s45
+				end
+				table.insert(bays, { id = b.id, label = b.label, w = b.w, at = Vector2.new(x, row.Y) })
+			end
+			LabLayout10.ENTRANCE_ROW = bays
+			LabLayout10.ENTRANCE_YAW = math.rad(135) -- (the noses point south-west: to the walkway and the spine)
+			for _, b in bays do
+				if b.id == "Car" or b.id == "Truck" or b.id == "MuscleCar" then
+					LabLayout10.CARS[b.id] = b.at
+					LabLayout10.CAR_YAW = LabLayout10.CAR_YAW or {}
+					LabLayout10.CAR_YAW[b.id] = LabLayout10.ENTRANCE_YAW
+				end
+			end
 		end
 		-- The weapon range is not in the compact plan: it stands just outside the south edge (its own spot is (0, 154)).
 		LabLayout10.MOVES.ShootingRange = Vector3.new(150, 0, 255 - 154)

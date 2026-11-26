@@ -514,6 +514,7 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - (27 Nov) Script Sync: after turning it on, a change to a file on disk still did not reach Studio. Check the 3 folders show the sync icon and point at DocumentsRagdollLab (ServerScriptServiceServer, ReplicatedStorageReplicatedStorageShared, StarterPlayerScriptsStarterPlayerScriptsClient).
 - (26 Nov, F13) REVIVE ALL kept its key X (R and Z are taken). OK?
 - (26 Nov, F10) The German Shepherd is one rigid mesh (no free rigged one found), moved by code (trot bob, wiggle, bite shake). For real leg animations: buy or send a rigged German Shepherd (Creator Store id), or keep this?
+- (27 Nov, F76) The Ford: its pass 2092632252 is used only if Roblox says it is for sale; otherwise the Ford stays FREE. Put it on sale (or tell me to keep it free). The 5 new vehicles + the bicycle show SOON until you send their pass ids (suggested: go-kart 49, police 99, monster truck 149, bulldozer 149, fire truck 199).
 - (27 Nov, M4) Gangfart: kortet er mindre nu; skal NORMAL ned fra 30 til ca. 22? Default: beholdt 30.
 - (27 Nov, S2) The smooth body is built in Blender: art/models/mannequin/mannequin.fbx. Import it ONCE: Studio > File > Import 3D > that file (as a rig), or allow me to upload it as a Model asset on your account (Open Cloud asset:write + an approved folder). Default: waiting; the real hands from parts are on now.
 
