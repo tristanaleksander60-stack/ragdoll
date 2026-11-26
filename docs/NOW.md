@@ -8,6 +8,21 @@
 
 **NOW: `docs/LAB_TARGET.md` ROUND 2.** The references are the owner's OWN old map. Find that version (version history, backups), copy its lab 1:1 into `ServerStorage.OldLabMap`, use it at full size behind `LAB_OLDMAP`, and put every machine where it stood. No rebuilding by eye.
 
+**State (26 Nov 2026, ROUND 2 step 0): BLOCKED on the owner.** The old map is not found:
+- not in git (no "Lasso", "Scan" or "Tools" HUD in any commit; git starts 19 Nov 2026);
+- not in the local .rbxl files (AutoSaves 20 and 24 Nov and server.rbxl are this game; `Documents\Place1.rbxl`, 31 Oct, 385 KB, is unchecked and is the only candidate);
+- Open Cloud asset versions need the `legacy-asset:manage` scope, which is off, and the MCP cannot open a place file.
+
+Asked the owner: which game, version or file is it from? To go on, the owner can do one of these:
+- (a) open the old version in Studio (File > Open from Roblox, or Version History > open), so Claude copies the lab from that Studio window;
+- (b) open `Documents\Place1.rbxl` if that is it;
+- (c) send the game link.
+
+Nothing else in NOW.md can be done without the owner. In WEAKNESSES "Order to fix":
+- 3 needs a real phone;
+- 4 needs the dislike reasons;
+- 5 onwards are new features waiting for direction.
+
 Build `docs/LAB_TARGET.md`: the lab to the owner's reference screenshots (`art/store/look_target/lab_ref/`).
 - A realistic plot grid.
 - The steel tower and slide in the centre.
