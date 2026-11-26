@@ -125,3 +125,19 @@ A hard safety net on top of the 3-near rule. It works EVERYWHERE on the map:
 - walk to the far corners of every room, the racetrack and the station, and stand still;
 - knock out everyone near you;
 - within about 1.5 s one is always running toward you.
+
+## LOOK AT YOU when they talk to you (owner, 26 Nov 2026: "Gør så ragdolls kigger på en når de snakker til dig")
+- **When a ragdoll says a line TO the player:** the comer, a watcher's line, a walker's "Hi!", the TRY ragdoll, the angry dummy, the revenge line, or a recruit arriving.
+  - **Eyes:** first its eyes move to the player.
+  - **Head:** then its head turns (the neck joint, max about 70°, smooth over 0.2 s).
+  - **Body:** if the player is more than about 70° to the side, the whole body turns on the spot to face the player (small steps, not a spin).
+  - **While talking:** it keeps looking at the player's head (tracking smoothly if the player moves), with small natural motions: a nod, the eyebrows, a hand gesture toward the player.
+  - **After the line:** it holds the look 1 s, then goes back to what it was doing.
+- **When ragdolls talk to EACH OTHER** (the chatters, the road walkers): they look at each other, not at the player. The listener nods.
+- **Never:**
+  - the head turned past a natural angle (no owl heads);
+  - looking through the body;
+  - turning while knocked out, ragdolled or in a machine.
+- **Built with:** the active-ragdoll pose system (the neck and torso targets), plus the face decal's eyes (an eyes-left/right/up variant, or a moving pupil if the face supports it). Client-side look-at for smoothness; the server only says who talks to whom.
+- **Phones:** only ragdolls within about 40 studs do the look-at.
+- **Check:** walk round a talking ragdoll in a circle; its head and then its body follow you smoothly while it talks.
