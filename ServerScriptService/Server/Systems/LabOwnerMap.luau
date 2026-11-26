@@ -940,6 +940,119 @@ local function fill(into: Instance, o: Vector3, top: number)
 	end
 end
 
+-- MAP ROUND 3, P4: the tree belts (docs/MAP_MASTERPLAN.md rule 5): every walled room of OwnerMapPlan is ringed inside
+-- its edge by a belt BELT wide: two staggered rows of trees (Creator Store low-poly MeshParts by PopperPoppet: oak, fir,
+-- poplar; V3Assets/Trees, one part each, no scripts) and a row of bushes, so you cannot see through at eye height. The
+-- belt is broken only at the room's entrances (GAP wide), where an arch with the room's name stands. Leaves never
+-- collide; trees vary in size (+-25 %) and turn.
+local LEAF = { TreeOak = Color3.fromRGB(96, 150, 70), TreeFir = Color3.fromRGB(58, 112, 70), TreePoplar = Color3.fromRGB(120, 160, 70) }
+local function plantTree(into: Instance, kind: string, at: Vector3, height: number, rng: Random)
+	local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
+	local trees = assets and assets:FindFirstChild("Trees")
+	local src = trees and trees:FindFirstChild(kind)
+	if not (src and src:IsA("BasePart")) then
+		return
+	end
+	local t = src:Clone()
+	local k = height / src.Size.Y
+	t.Size = src.Size * k
+	t.Color = (LEAF[kind] or LEAF.TreeOak):Lerp(Color3.fromRGB(140, 170, 80), rng:NextNumber() * 0.25)
+	t.Material = Enum.Material.SmoothPlastic
+	t.CFrame = CFrame.new(at + Vector3.new(0, t.Size.Y / 2, 0)) * CFrame.Angles(0, rng:NextNumber() * math.pi * 2, 0)
+	t.Anchored, t.CanCollide, t.CanQuery, t.CanTouch = true, false, false, false
+	t.CastShadow = height > 20
+	t.Parent = into
+	if kind ~= "TreeFir" then
+		-- (one mesh: a brown trunk over its lower part)
+		local tr = part(into, "TreeTrunk", Vector3.new(height * 0.36, height * 0.09, height * 0.09), CFrame.new(at + Vector3.new(0, height * 0.18, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(110, 80, 56), Enum.Material.Wood, true, Enum.PartType.Cylinder)
+		tr.CanCollide = true -- (you bump into the trunk, not the leaves)
+	end
+end
+local function bush(into: Instance, at: Vector3, rng: Random)
+	local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
+	local src = assets and assets:FindFirstChild("Trees") and assets.Trees:FindFirstChild("TreeOak")
+	if not (src and src:IsA("BasePart")) then
+		return
+	end
+	local b = src:Clone()
+	local h = rng:NextNumber(6, 9)
+	b.Size = Vector3.new(src.Size.X * h / src.Size.Y * 1.8, h, src.Size.Z * h / src.Size.Y * 1.8)
+	b.Color = Color3.fromRGB(80, 136, 62):Lerp(Color3.fromRGB(110, 150, 60), rng:NextNumber() * 0.4)
+	b.Material = Enum.Material.SmoothPlastic
+	b.CFrame = CFrame.new(at + Vector3.new(0, h / 2 - 1.5, 0)) * CFrame.Angles(0, rng:NextNumber() * 6.28, 0)
+	b.Anchored, b.CanCollide, b.CanQuery, b.CanTouch, b.CastShadow = true, false, false, false, false
+	b.Name = "Bush"
+	b.Parent = into
+end
+local function arch(into: Instance, at: Vector3, alongX: boolean, name: string)
+	local half = Plan.GAP / 2
+	local dir = if alongX then Vector3.xAxis else Vector3.zAxis
+	for _, s in { -1, 1 } do
+		part(into, "ArchPost", Vector3.new(1.4, 16, 1.4), CFrame.new(at + dir * (s * half) + Vector3.new(0, 8, 0)), Color3.fromRGB(70, 72, 78), Enum.Material.Metal)
+	end
+	local beam = part(into, "ArchSign", if alongX then Vector3.new(Plan.GAP + 2, 4, 0.8) else Vector3.new(0.8, 4, Plan.GAP + 2), CFrame.new(at + Vector3.new(0, 16, 0)), Color3.fromRGB(40, 44, 52), Enum.Material.SmoothPlastic)
+	for _, face in (if alongX then { Enum.NormalId.Front, Enum.NormalId.Back } else { Enum.NormalId.Left, Enum.NormalId.Right }) do
+		local g = Instance.new("SurfaceGui")
+		g.Face = face
+		g.CanvasSize = Vector2.new(400, 60)
+		g.LightInfluence = 0
+		local l = Instance.new("TextLabel")
+		l.BackgroundTransparency = 1
+		l.Size = UDim2.fromScale(1, 1)
+		l.Font = Enum.Font.FredokaOne
+		l.TextScaled = true
+		l.TextColor3 = Color3.fromRGB(255, 214, 90)
+		l.Text = string.upper(name)
+		l.Parent = g
+		g.Parent = beam
+	end
+end
+local function belts(into: Instance, o: Vector3, top: number)
+	local rng = Random.new(11)
+	local kinds = { "TreeOak", "TreeFir", "TreePoplar", "TreeOak" }
+	for _, room in Plan.ROOMS do
+		if room.walled then
+			local mn, mx = room.min, room.max
+			local function open(p: Vector2): boolean
+				for _, e in room.entrances do
+					if (p - e).Magnitude < Plan.GAP / 2 + 5 then
+						return false
+					end
+				end
+				return true
+			end
+			-- the four edges, walked at three depths: trees at 5 and 13 in from the edge, bushes at 9
+			for _, row in { { d = 5, step = 14, tree = true, off = 0 }, { d = 13, step = 14, tree = true, off = 7 }, { d = 9, step = 12, tree = false, off = 3 } } do
+				local a = Vector2.new(mn.X + row.d, mn.Y + row.d)
+				local b = Vector2.new(mx.X - row.d, mx.Y - row.d)
+				local corners = { a, Vector2.new(b.X, a.Y), b, Vector2.new(a.X, b.Y) }
+				for i = 1, 4 do
+					local p0, p1 = corners[i], corners[i % 4 + 1]
+					local len = (p1 - p0).Magnitude
+					local dir = (p1 - p0).Unit
+					for s = row.off, len - 1, row.step do
+						local p = p0 + dir * s
+						-- (the opening is measured on the room's own edge)
+						local edgeP = if i == 1 then Vector2.new(p.X, mn.Y) elseif i == 2 then Vector2.new(mx.X, p.Y) elseif i == 3 then Vector2.new(p.X, mx.Y) else Vector2.new(mn.X, p.Y)
+						if open(edgeP) then
+							local w = Vector3.new(o.X + p.X + rng:NextNumber(-2, 2), top, o.Z + p.Y + rng:NextNumber(-2, 2))
+							if row.tree then
+								plantTree(into, kinds[rng:NextInteger(1, #kinds)], w, rng:NextNumber(20, 32), rng)
+							else
+								bush(into, w, rng)
+							end
+						end
+					end
+				end
+			end
+			for _, e in room.entrances do
+				local alongX = math.abs(e.Y - mn.Y) < 1 or math.abs(e.Y - mx.Y) < 1
+				arch(into, Vector3.new(o.X + e.X, top, o.Z + e.Y), alongX, room.name or "")
+			end
+		end
+	end
+end
+
 -- M7: the old lab frame goes (the LAB10 compound and park, the plot's floor, spawn disc, edges, barriers, cones, signs and
 -- the zone pads): invisible and walked through, the new ground is under it.
 LabOwnerMap.HIDE_IN_LAB = { LabV10 = true, LabZonePads = true, ZonePads = true, LabGarden = true, Paths = true }
@@ -1036,6 +1149,7 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	south(into, origin, origin.Y - 0.05)
 	-- (map round 3: the ball-on-a-stick groves are gone; the tree belts come next)
 	fill(into, origin, origin.Y - 0.05)
+	belts(into, origin, origin.Y - 0.05)
 	hills(origin)
 end
 
