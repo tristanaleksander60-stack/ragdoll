@@ -344,8 +344,68 @@ local function rebuild(w: Wall)
 	w.rebuilding = false
 end
 
+-- F48 (Config.CAR_WALL, owner: "Fiks så at muren reagerer hvis man kører ind i den med en bil, og den resetter efter 10-15
+-- sekunder"): the driver's screen owns a driven car, so Touched on the server sees little speed. Every check (0.1 s) each
+-- vehicle near a wall is measured by its own position change (works whoever owns it); a car inside a wall's slab at more
+-- than CAR_SPEED studs/s is an impact: a car-sized hole, by speed x its weight class (6-20 bricks; the tank ploughs
+-- through), the bricks pushed along the car's way; an empty car (the server owns it) also loses most of its speed.
+BrickWall.CAR_SPEED = 18
+BrickWall.CAR_CLASS = { Bike = 0.5, Car = 1, Truck = 1.4, Kart = 0.8, Jeep = 1.2, MuscleCar = 2.5 } :: { [string]: number }
+local carSeen: { [any]: { at: Vector3, t: number, hitAt: number } } = setmetatable({}, { __mode = "k" }) :: any
+local function carStep()
+	local ok, VS = pcall(function()
+		return require(script.Parent:WaitForChild("VehicleService")) :: any
+	end)
+	if not ok or not VS or #walls == 0 then
+		return
+	end
+	local now = os.clock()
+	for _, car in VS.carsForTest() do
+		local body = car.body
+		if not (body and body.Parent) then
+			continue
+		end
+		local pos = body.Position
+		local seen = carSeen[car]
+		carSeen[car] = { at = pos, t = now, hitAt = if seen then seen.hitAt else 0 }
+		if not seen or now - seen.t > 0.5 or now - seen.t <= 0 then
+			continue
+		end
+		local vel = (pos - seen.at) / (now - seen.t)
+		local speed = Vector3.new(vel.X, 0, vel.Z).Magnitude
+		if speed < BrickWall.CAR_SPEED or now - seen.hitAt < 0.6 then
+			continue
+		end
+		for _, w in walls do
+			local l = w.origin:PointToObjectSpace(pos)
+			local half = math.max(body.Size.X, body.Size.Z) / 2
+			if math.abs(l.X) < 2 + half and l.Z > -half and l.Z < w.cols * BrickWall.BW + half and l.Y < w.rows * BrickWall.BH + 2 then
+				local kind = tostring(car.kind)
+				local class = BrickWall.CAR_CLASS[kind] or 1
+				local n = math.clamp(math.floor(speed / 4 * class), 6, 20)
+				local hitPoint = w.origin * Vector3.new(0, math.clamp(l.Y, 1, w.rows * BrickWall.BH - 1), math.clamp(l.Z, 0, w.cols * BrickWall.BW))
+				hitArea(w, hitPoint, n, Vector3.new(vel.X, 2, vel.Z) * 0.5)
+				carSeen[car].hitAt = now
+				w.lastHit = now
+				if kind ~= "MuscleCar" and car.seat and car.seat.Occupant == nil then
+					pcall(function()
+						body.AssemblyLinearVelocity = body.AssemblyLinearVelocity * 0.2
+					end)
+				end
+				pcall(function()
+					(require(script.Parent:WaitForChild("FxService")) :: any).hit(hitPoint, 60, "Punch")
+				end)
+				break
+			end
+		end
+	end
+end
+
 local function tick()
 	local now = os.clock()
+	if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).CAR_WALL then
+		pcall(carStep)
+	end
 	for _, w in walls do
 		-- the cascade: one unsupported brick per step
 		local guard = 0
@@ -388,6 +448,9 @@ function BrickWall.start()
 	local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
 	if not Config.BRICK_WALL then
 		return
+	end
+	if Config.CAR_WALL then
+		BrickWall.REBUILD = 12 -- (F48: the wall rebuilds 10-15 s after it has fallen)
 	end
 	table.insert(Knockables.listeners, {
 		shot = shot,
