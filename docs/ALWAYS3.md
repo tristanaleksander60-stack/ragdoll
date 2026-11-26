@@ -319,3 +319,36 @@ This OVERRIDES the FINAL RULE's "no reserves" and the BUG section's "it RUNS ove
   - cost: one goal pick every 8-15 s per ragdoll; paths share the existing budget (about 6 a second); far stand-ins without physics follow the same paths.
 - **Check:** stand in the plaza for 1 minute. Ragdolls you could see far away come your way along the paths (not over the flower beds), spread out, and settle 60-120 studs off in small groups, with 2 closer and 3 near you. None walks into you or stops in front of your camera. Walk to another room: they follow along the paths, loosely.
 
+
+## SPREAD OUT + PERSONALITIES: curious, scared, heroes (owner, 26 Nov 2026 late: "Sørg for alle ragdolls ikke samles 1 sted, men går rundt omkring på mappet og nogle bliver tiltrukket af skud, andre bliver bange og løber, nogle prøver at være the hero")
+**This changes DRAWN TO YOU:**
+- only the 3 NEAR, the 2 CLOSE BY and at most 3 more in the AROUND band are pulled toward the player;
+- every other ragdoll lives ALL OVER the map;
+- the earlier "never afraid of weapons" rule now holds only for the CHILL and HERO personalities.
+
+**1. Spread over the whole map, never one clump** (server, the roam picker; `Config.SPREAD_LIFE = true`):
+- **Hangout spots:** every attraction's front, every bench, the round tower plaza, the pools, the leaderboard plaza and the walkway corners (from `OwnerMapPlan`).
+- **Each spot has a cap:** at most 3 ragdolls idling there, and a chat group at most 3.
+- **A wanderer's next goal** (every 10-25 s) is picked at random, weighted toward the EMPTIEST spots and ones far from where it is, so they cross the map along the walkways (F72 nav).
+- **Anti-clump:** never more than 5 ragdolls inside any 25-stud circle, except at a show (a machine running, a fight, CPR), and then only while it lasts.
+- **Phones:** the pool is small, so the far spots are filled by the PATH WALKERS (`LIFE_IDLE.md` 4). The map still looks lived-in everywhere without more physics bodies.
+
+**2. A personality for every ragdoll** (an attribute `Persona`, given when it is made or reused):
+
+| Persona | Share | Everyday | When a shot, blast or hit happens nearby (pistol 50 studs, rifle 80, shotgun 60, explosion 120) |
+|---|---|---|---|
+| **CURIOUS** | about 35% | wanders, looks at machines, watches demos | stops, turns to the sound, WALKS closer to 12-18 studs, watches; points, "Whoa!", "Do it again!"; sometimes holds up a phone and "films" (a small phone prop); leaves after 10-15 s without a new shot |
+| **SCARED** | about 30% | jumpy: flinches at loud machines | covers its head, a short scream ("Aaah!", "Not again!"), RUNS AWAY along the walkways (F72: never into things), HIDES behind the nearest cover (a wall, a car, a machine, the grandstand) and peeks out now and then; after 15 s of quiet it walks back to its life |
+| **HERO** | about 15% | walks with a straight back, helps others up | runs TO the victim: drags a hurt ragdoll by the arm to cover; gives CPR to a knocked-out one (F86 kneel); or steps between you and the victim with its arms out ("Stop!", "Leave him alone!"). If you keep shooting, it takes the hits for the victim; once in a while it shoves you (the angry shove rules, 1-3 shoves, a cooldown) |
+| **CHILL** | about 20% | sits on benches, eats, reads | ignores it, maybe a shrug ("Every day…") and goes on |
+
+**3. Rules for all of them:**
+- **The reactions use the new walking** (F72, F73, S1) and the faces of `BODY_V2` 4b (curious = wide eyes, scared = terrified, hero = determined, chill = bored).
+- **The 3 near and the refill keep working:** a SCARED one that is fleeing does not count as "near" and is not called as a recruit for 15 s; CURIOUS and HERO ones count and can be called.
+- **No vanishing in view, the nearby caps, the never-walk-into-you rules:** all as before.
+- **The personality also tunes small things:** a scared one walks a little faster and looks round more; a hero's TRY and machine lines are braver; a curious one comes to watch your machine demos.
+- **Lines:** each persona gets its own set of 6+ lines in `Shared/TalkLines`, never twice in a row.
+
+**Check (the owner):**
+- walk round the map: ragdolls everywhere in small groups, never one big crowd;
+- fire a few shots: some come to look and film, some run and hide and peek, one hero runs in to help the victim or stands in your way, and a few on the benches do not care.
