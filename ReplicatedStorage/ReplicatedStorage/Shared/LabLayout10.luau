@@ -176,6 +176,23 @@ if Config.LAB_OWNERMAP then
 	LabLayout10.MOVES.Lava = Vector3.new(-35 * K + 111, 0, -40 * K + 28)
 	-- (map round 2: the 3-near ragdolls walk about on the raised plaza by the spawn)
 	LabLayout10.TEST_FLOOR = Vector2.new(-30, -310) -- (map round 3: the spawn plaza of OwnerMapPlan)
+	-- (Map round 3, P3: every code machine on its OwnerMapPlan spot, in lab-space studs; these come after the x3.2 above.)
+	local V = Vector2.new
+	LabLayout10.CREATURES.Spider = V(330, -220) -- SpiderPen
+	LabLayout10.CREATURES.Whale = V(-230, -300) -- the shark tank in the Aquarium
+	LabLayout10.CREATURES.Washer = V(335, -30)
+	LabLayout10.CREATURES.Vacuum = V(150, -30) -- the Press (compressor)
+	LabLayout10.CREATURES.Mole = V(280, 208)
+	LabLayout10.CREATURES.Slingshot = V(318, 104) -- by the archery target, facing it
+	LabLayout10.CREATURES.Frog = V(-90, 300) -- by the duck pond
+	LabLayout10.CREATURES.Plant = V(30, 300) -- in the gazebo garden
+	LabLayout10.CREATURES.Chicken = V(-30, 210) -- on the picnic lawn
+	LabLayout10.CARS.MuscleCar = V(-394, -95) -- the bays: tank, monster truck, blue car
+	LabLayout10.CARS.Truck = V(-370, -95)
+	LabLayout10.CARS.Car = V(-346, -95)
+	LabLayout10.TRAMPOLINE = V(30, 90)
+	LabLayout10.STRETCH = V(245, -48)
+	LabLayout10.MOVES.Lava = Vector3.new(-215 + 111, 0, -85 + 28) -- the boxing ring at (-215, -85)
 end
 
 return LabLayout10

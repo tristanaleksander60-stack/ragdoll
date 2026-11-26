@@ -21,7 +21,7 @@ GuardDog.BITE_TIME = 2.2
 GuardDog.BITE_GAP = 1.5
 GuardDog.IDLE_HOME = 180
 GuardDog.REACH = 40
-GuardDog.HOUSE_AT = Vector2.new(40, 22) -- lab space: by the cannon, off the plaza
+GuardDog.HOUSE_AT = if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_OWNERMAP then Vector2.new(30, 200) else Vector2.new(40, 22) -- lab space: by the cannon, off the plaza (map round 3: OwnerMapPlan DogYard)
 GuardDog.BITABLE = {
 	LeftUpperArm = true, LeftLowerArm = true, LeftHand = true, RightUpperArm = true, RightLowerArm = true, RightHand = true,
 	LeftUpperLeg = true, LeftLowerLeg = true, LeftFoot = true, RightUpperLeg = true, RightLowerLeg = true, RightFoot = true,

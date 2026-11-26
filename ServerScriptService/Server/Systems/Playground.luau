@@ -244,6 +244,9 @@ end
 local function buildCannon()
 	local mine = folder
 	local x, z = 48 * S, 6 * S
+	if (Config :: any).LAB_OWNERMAP then
+		x, z = -235, 335 -- (map round 3: OwnerMapPlan Cannon, in the Launch Field)
+	end
 	local padPart = part("CannonPad", Vector3.new(8, 1, 8), at(x, 0.5, z), ORANGE, Enum.Material.Neon)
 	-- Clients launch the dummies they simulate with the same velocity.
 	padPart:SetAttribute("LaunchVelocity", CANNON_DIRECTION * CANNON_SPEED)
@@ -534,6 +537,9 @@ end
 
 local function buildWreckingBall()
 	local x, z = 40 * S, -38 * S
+	if (Config :: any).LAB_OWNERMAP then
+		x, z = -215, -25 -- (map round 3: OwnerMapPlan WreckingBall, in the Crash Yard)
+	end
 	local height = 24
 	local postA = part("Post", Vector3.new(2, height, 2), at(x - 8, height / 2, z), DARK, Enum.Material.Metal)
 	local postB = part("Post", Vector3.new(2, height, 2), at(x + 8, height / 2, z), DARK, Enum.Material.Metal)
