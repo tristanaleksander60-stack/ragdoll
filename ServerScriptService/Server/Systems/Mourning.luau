@@ -171,12 +171,190 @@ local function targetFor(m: Model, owner: Player): Player?
 	return best
 end
 
+-- BODY_V2 4 (owner, 26 Nov 2026; Config.BURIAL): when the CPR fails, the helper may bury its friend first: a shovel,
+-- 3 s of digging with dirt puffs, the body goes under (hidden on every screen through MachineHidden until it wakes),
+-- a dirt mound and a grey "R.I.P." stone (gone after GRAVE_HOLD s, at most GRAVE_MAX a lab), a sad beat, then one
+-- cringe line and it comes for the player who knocked its friend out (the ordinary attack, REVENGE_MAX s at most).
+-- One burial at a time a lab; never in a newcomer's first BURY_CALM s.
+Mourning.BURY_DIG = 3
+Mourning.GRAVE_HOLD = 60
+Mourning.GRAVE_MAX = 3
+Mourning.REVENGE_MAX = 10
+Mourning.BURY_CALM = 120
+Mourning.REVENGE_LINES = { "It's your time.", "This one's for Gary.", "You messed with the wrong dummy.", "Prepare to get... ragdolled.", "I'm doing this for him.", "Say goodnight, buddy.", "Your time has come. Probably.", "He was two days from retirement." }
+local burying: { [Player]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+local graves: { [Player]: { Model } } = setmetatable({}, { __mode = "k" }) :: any
+
+local function grave(owner: Player, at: Vector3)
+	local list = graves[owner] or {}
+	graves[owner] = list
+	while #list >= Mourning.GRAVE_MAX do
+		local old = table.remove(list, 1)
+		if old then
+			old:Destroy()
+		end
+	end
+	local g = Instance.new("Model")
+	g.Name = "Grave"
+	local function piece(name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, shape: Enum.PartType?): Part
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch = true, false, false, false
+		p.Size = size
+		p.CFrame = cf
+		p.Color = color
+		p.Material = material
+		if shape then
+			p.Shape = shape
+		end
+		p.Parent = g
+		return p
+	end
+	-- The ground under it.
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local dummies = workspace:FindFirstChild("Dummies")
+	params.FilterDescendantsInstances = if dummies then { dummies } else {}
+	local hit = workspace:Raycast(at + Vector3.new(0, 4, 0), Vector3.new(0, -14, 0), params)
+	local floor = if hit then hit.Position else at - Vector3.new(0, 2.5, 0)
+	local mound = piece("Mound", Vector3.new(6, 2.2, 3.2), CFrame.new(floor), Color3.fromRGB(112, 82, 56), Enum.Material.Ground, Enum.PartType.Ball)
+	mound.CFrame = CFrame.new(floor)
+	local stone = piece("Headstone", Vector3.new(2.4, 3, 0.6), CFrame.new(floor + Vector3.new(3.4, 1.5, 0)), Color3.fromRGB(140, 142, 146), Enum.Material.Slate)
+	local top = piece("HeadstoneTop", Vector3.new(0.6, 2.4, 2.4), CFrame.new(floor + Vector3.new(3.4, 3, 0)) * CFrame.Angles(0, math.rad(90), math.rad(90)), Color3.fromRGB(140, 142, 146), Enum.Material.Slate, Enum.PartType.Cylinder)
+	top.Size = Vector3.new(0.6, 2.4, 2.4)
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = Enum.NormalId.Front
+	gui.CanvasSize = Vector2.new(120, 150)
+	gui.LightInfluence = 0.6
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.fromScale(1, 1)
+	label.Text = "R.I.P."
+	label.TextScaled = true
+	label.Font = Enum.Font.Fantasy
+	label.TextColor3 = Color3.fromRGB(60, 60, 64)
+	label.Parent = gui
+	gui.Parent = stone
+	local back = gui:Clone()
+	back.Face = Enum.NormalId.Back
+	back.Parent = stone
+	g.Parent = workspace
+	table.insert(list, g)
+	task.delay(Mourning.GRAVE_HOLD, function()
+		local i = table.find(list, g)
+		if i then
+			table.remove(list, i)
+		end
+		g:Destroy()
+	end)
+end
+
+-- The burial, run in its own thread; ends by starting the revenge attack (or letting the helper go).
+local function bury(m: Model, job: Job, target: Player)
+	local a: any = job
+	a.phase, a.since = "Bury", os.clock()
+	burying[job.owner] = true
+	local corpse = job.corpse
+	local cp = pelvisOf(corpse)
+	local spot = if cp then cp.Position else (pelvisOf(m) or { Position = Vector3.zero } :: any).Position
+	m:SetAttribute("Mood", "Sad")
+	m:SetAttribute("HomeLook", spot)
+	-- The shovel in its right hand.
+	local hand = m:FindFirstChild("RightHand") or m:FindFirstChild("Right Arm")
+	local shovel: Model? = nil
+	if hand and hand:IsA("BasePart") then
+		local s = Instance.new("Model")
+		s.Name = "Shovel"
+		local shaft = Instance.new("Part")
+		shaft.Name = "Shaft"
+		shaft.Size = Vector3.new(0.25, 3.6, 0.25)
+		shaft.Color = Color3.fromRGB(120, 86, 58)
+		shaft.Material = Enum.Material.Wood
+		shaft.CanCollide, shaft.CanQuery, shaft.CanTouch, shaft.Massless = false, false, false, true
+		shaft.CFrame = hand.CFrame * CFrame.new(0, -1.2, 0)
+		shaft.Parent = s
+		local blade = Instance.new("Part")
+		blade.Name = "Blade"
+		blade.Size = Vector3.new(1, 1.2, 0.12)
+		blade.Color = Color3.fromRGB(150, 152, 158)
+		blade.Material = Enum.Material.Metal
+		blade.CanCollide, blade.CanQuery, blade.CanTouch, blade.Massless = false, false, false, true
+		blade.CFrame = shaft.CFrame * CFrame.new(0, -2.3, 0)
+		blade.Parent = s
+		for _, p in { shaft, blade } do
+			local w = Instance.new("WeldConstraint")
+			w.Part0, w.Part1 = hand, p
+			w.Parent = p
+		end
+		s.Parent = m
+		shovel = s
+	end
+	-- Dirt puffs while it digs.
+	local puff = Instance.new("Attachment")
+	puff.WorldPosition = spot
+	puff.Parent = workspace.Terrain
+	local e = Instance.new("ParticleEmitter")
+	e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	e.Color = ColorSequence.new(Color3.fromRGB(120, 92, 64))
+	e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 2.6) })
+	e.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.4), NumberSequenceKeypoint.new(1, 1) })
+	e.Lifetime = NumberRange.new(0.6, 1.2)
+	e.Speed = NumberRange.new(3, 7)
+	e.SpreadAngle = Vector2.new(50, 50)
+	e.Rate = 10
+	e.Parent = puff
+	task.wait(Mourning.BURY_DIG)
+	e.Enabled = false
+	game:GetService("Debris"):AddItem(puff, 2)
+	-- Under the ground: hidden on every screen until it wakes up again.
+	if corpse.Parent and corpse:GetAttribute("Vital") == "Dead" then
+		corpse:SetAttribute("MachineHidden", true)
+		local c
+		c = corpse:GetAttributeChangedSignal("Vital"):Connect(function()
+			if corpse:GetAttribute("Vital") ~= "Dead" then
+				corpse:SetAttribute("MachineHidden", nil)
+				c:Disconnect()
+			end
+		end)
+		grave(job.owner, spot)
+	end
+	if shovel then
+		shovel:Destroy()
+	end
+	task.wait(1.5) -- (the sad beat)
+	burying[job.owner] = nil
+	if not m.Parent or m:GetAttribute("Vital") == "Dead" or not target.Parent then
+		stop(m, nil)
+		return
+	end
+	-- Revenge: one cringe line, then it comes for the player.
+	m:SetAttribute("MoodSay", Mourning.REVENGE_LINES[math.random(1, #Mourning.REVENGE_LINES)])
+	task.delay(3, function()
+		if m.Parent then
+			m:SetAttribute("MoodSay", nil)
+		end
+	end)
+	a.phase, a.since = "Attack", os.clock()
+	a.target, a.personWas, a.nextHit, a.max = target, m:GetAttribute("Personality"), os.clock() + 1.5, Mourning.REVENGE_MAX
+	m:SetAttribute("Personality", "Brave")
+	m:SetAttribute("Mood", "Angry")
+	m:SetAttribute("Pace", 1.8)
+end
+
 -- The CPR failed: most go for the player (ANGRY_CHANCE); the others mourn and give up.
 local function failed(m: Model, job: Job)
 	job.corpse:SetAttribute("BeingHelped", nil)
 	local target = if math.random() < Mourning.ANGRY_CHANCE then targetFor(m, job.owner) else nil
 	if not target then
 		react(m, job, GONE_MOODS)
+		return
+	end
+	-- (BODY_V2 4: the burial first, then the revenge.)
+	local owner = job.owner
+	local joined = (owner:GetAttribute("V8JoinedAt") :: number?) or 0
+	local calm = owner:GetAttribute("Newcomer") == true and workspace:GetServerTimeNow() - joined < Mourning.BURY_CALM
+	if (Config :: any).BURIAL and not burying[owner] and not calm and job.corpse.Parent then
+		task.spawn(bury, m, job, target)
 		return
 	end
 	local a: any = job
@@ -370,6 +548,9 @@ local function step()
 		if job.phase == "Attack" then
 			attack(m, job, now)
 			continue
+		end
+		if job.phase == "Bury" then
+			continue -- (BODY_V2 4: the burial runs in its own thread)
 		end
 		local corpse = job.corpse
 		local pelvis = pelvisOf(m)
