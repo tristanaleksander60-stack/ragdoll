@@ -1447,6 +1447,43 @@ This replaces F51 (NORMAL 30, sprint about 50), F38 (the Walk speed setting) and
 - This overrides F39 and the M4 table's "Name sign" row.
 - **Check (the owner):** no name boards anywhere in the lab.
 
+## F85 The FACES (heads) spin round when ragdolls run (owner, 26 Nov late: "fiks så ansigterne ikke drejer rundt når de løber hvis de løber og bugger")
+**The cause (found in `Client/DummyLife.luau`):**
+- the head turns are worked out with `atan2`, which jumps from +180 to -180 degrees when the target is BEHIND the body;
+- LOOK AT YOU (`neckYaw = clamp(yaw, -70, 70)`, ~1546) and the turn to a bang (`clamp(..., -75, 75)`, ~512) then flip between +70 and -70 every frame when you or the noise are behind a running ragdoll, so the head whips from one side to the other: the "spinning face";
+- several systems also write the Neck in the same frame (the gait ~401-498, the noise look ~516, the moods ~815-839, look-at ~1569, ClipGait's Head).
+
+**The fix** (`Config.NECK_SAFE = true`):
+1. **No look behind:** if the target is more than about 100 degrees from where the chest faces, do not look at it; ease the head back to forward. In between, use hysteresis: start looking at under 90, stop at over 110.
+2. **No look while running:** in Fleeing, a run (Pace 1.5 or more) or a sprint, the head faces forward with only the gait's small bob. LOOK AT YOU and the bang turn only happen standing or walking slowly.
+3. **Smooth turning:** the neck's yaw and pitch move toward their target at most about 4 rad/s (a damped spring), never set straight to a new value, so it can never jump.
+4. **ONE owner of the Neck per frame:** a small priority list, the highest wins and blends:
+   - hit reaction;
+   - mood pose (CPR, mourn);
+   - talk look;
+   - bang look;
+   - the walk clip / gait.
+
+   Every other system only asks for its look; it never writes `Neck.Transform` itself. The same rule for the Waist.
+5. **Check (the owner):** run past ragdolls and make them run from you; their heads face forward and never spin.
+
+## F86 The LEGS still jitter while a ragdoll gives CPR (owner, 26 Nov late: "Benene bugger STADIG når de giver cpr fx")
+**The likely cause** (read the code): during a mood (CPR or mourn, `Server/Mourning` sets Mood and the pose; `DummyLife` moods ~815-839), the body is in a standing or walking state, so:
+- the server's `lift` still holds the pelvis at STANDING height and the `balance` keeps it upright, while the mood pose bends the legs into a kneel, and the legs fight the lift;
+- the client's gait or clip still runs on the legs, from the ground-speed noise of the pumping arms;
+- each CPR pump jolts the pelvis, the ground speed blips, and the walk cycle starts and stops.
+
+**The fix** (`Config.MOOD_LEGS = true`):
+1. **A real KNEEL state for moods** (CPR, mourn, kneel by a body, the burial dig) in `ActiveRagdoll`:
+   - the lift's target drops to kneeling height (the knee on the ground);
+   - the balance keeps the trunk at the mood's angle;
+   - the drive is zero;
+   - the feet and knees get high friction, so they do not slide.
+2. **The mood OWNS the legs:** while a mood runs, no gait, no clip, no foot IK, no turn steps and no walk cycle on the legs (the F85 priority list: the mood wins). Only the arms and the head animate (the pumping, the bowed head).
+3. **Blend in and out:** kneel down over about 0.5 s and stand up over about 0.6 s with the get-up's motor blend (RAGDOLL_FEEL), never a snap.
+4. **The leg detector** (`LEG_JITTER_LOG`) also logs the Mood, so any jitter left in a mood is named in the log for the next session.
+5. **Check (the owner):** watch a ragdoll give CPR and one mourn: kneeling still, the legs calm, only the arms and head move.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
