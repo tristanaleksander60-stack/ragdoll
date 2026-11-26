@@ -82,6 +82,7 @@ local Config = {
 	SLIDE_V2 = true, -- F58: the tower slide is ONE smooth chute (a curve cut into 4-stud pieces), legs every few pieces, an opening in the roof railing with a SLIDE sign, a soft mat at the run-out (LabOwnerMap hero)
 	HOLES_KEEP = 4, -- F60: the newest 4 bullet holes on each ragdoll stay sharp; older ones fade out over 2 s (Client/BulletHoles)
 	V_TOGGLE_WINS = true, -- F64: leaving first person with V (or the eye button) is the player's choice: no weapon pick, strike or shot puts them back in until they press V again (Client/FirstPerson)
+	TOWER_STAIRS_V2 = true, -- F67: real switchback stairs in the tower (two 8.5-stud lanes, half landings, 18 studs headroom, smooth ramp, rails, lights) + Invisicam inside (LabOwnerMap, Systems/TowerCam)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays

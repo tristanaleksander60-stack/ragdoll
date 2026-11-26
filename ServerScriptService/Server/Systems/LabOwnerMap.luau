@@ -309,6 +309,78 @@ local function railing(into: Instance, a: Vector3, b: Vector3)
 	guard.CastShadow = false
 end
 
+-- F67 (owner: "Fiks trappen så man kan bruge den indendørs også"; Config.TOWER_STAIRS_V2): real switchback stairs in the
+-- tower's well. Each storey: the WEST lane climbs north from the floor's south landing to a deep half landing at the
+-- north end, the EAST lane climbs back south to the next floor's south landing. Everything is stacked one storey (19
+-- studs) apart, so there are 18 studs of headroom over every step. Steps 0.95 up and 2 deep, 8.5 wide; a smooth
+-- invisible ramp on the step noses (no catching or bouncing); a divider rail between the lanes and rails round the
+-- open well; a warm light on each half landing; and an invisible TowerInside volume the client uses to switch the
+-- camera to Invisicam inside (Client/TowerCam).
+local function stairsV2(into: Instance, c: Vector3, top: number, wellX: number, wellZ: number, H: number, T: number, full: number)
+	local half = wellX / 2
+	local laneW = half - 0.5
+	local STEPS = 10
+	local RISE = (H / 2) / STEPS
+	local RUN = 2
+	local southZ = wellZ / 2 - 6 -- (the south landing: z from here to the well's end)
+	local northZ = southZ - STEPS * RUN -- (the half landing: from the well's north end to here)
+	local function lane(x: number, y0: number, fromZ: number, dir: number)
+		for k = 1, STEPS do
+			local z = fromZ + dir * (k - 0.5) * RUN
+			part(into, "TowerStep", Vector3.new(laneW, RISE, RUN + 0.05), CFrame.new(c + Vector3.new(x, y0 + k * RISE - RISE / 2, z)), PLATE, Enum.Material.DiamondPlate)
+		end
+		-- the ramp: its top runs through the step noses, from the floor 2 studs before the first step to the last step
+		local a = c + Vector3.new(x, y0, fromZ - dir * RUN)
+		local b = c + Vector3.new(x, y0 + H / 2, fromZ + dir * (STEPS - 1) * RUN)
+		local along = (b - a).Unit
+		local up = along:Cross(Vector3.xAxis)
+		if up.Y < 0 then
+			up = -up
+		end
+		local ramp = part(into, "TowerRamp", Vector3.new(laneW, 0.4, (b - a).Magnitude), CFrame.lookAt((a + b) / 2 - up * 0.2, b), PLATE, Enum.Material.SmoothPlastic)
+		ramp.Transparency = 1
+		ramp.CastShadow = false
+		-- the stringer under the outer side
+		beam(into, "TowerStringer", a + Vector3.new(x > 0 and laneW / 2 or -laneW / 2, -0.6, 0), b + Vector3.new(x > 0 and laneW / 2 or -laneW / 2, -0.6, 0), 0.5, GALV, true)
+		-- the divider rail on the middle side
+		local m = Vector3.new(-x / math.abs(x) * (laneW / 2 + 0.25), 0, 0)
+		railing(into, a + m, b + m)
+	end
+	for f = 0, LabOwnerMap.FLOORS - 1 do
+		local y0 = f * H
+		local mid = y0 + H / 2
+		lane(-half / 2 - 0.25, y0, southZ, -1) -- west lane, north
+		part(into, "TowerLanding", Vector3.new(wellX - 0.2, 0.8, northZ + wellZ / 2), CFrame.new(c + Vector3.new(0, mid - 0.4, (northZ - wellZ / 2) / 2)), PLATE, Enum.Material.DiamondPlate)
+		lane(half / 2 + 0.25, mid, northZ, 1) -- east lane, south
+		part(into, "TowerLanding", Vector3.new(wellX - 0.2, 0.8, wellZ / 2 - southZ), CFrame.new(c + Vector3.new(0, y0 + H - 0.4, (southZ + wellZ / 2) / 2)), PLATE, Enum.Material.DiamondPlate)
+		-- a warm light over the half landing
+		local lamp = part(into, "TowerLamp", Vector3.new(1.6, 0.4, 1.6), CFrame.new(c + Vector3.new(0, mid + 8.6, (northZ - wellZ / 2) / 2)), Color3.fromRGB(255, 226, 170), Enum.Material.Neon, true)
+		local light = Instance.new("PointLight")
+		light.Range = 26
+		light.Brightness = 1.3
+		light.Color = Color3.fromRGB(255, 226, 170)
+		light.Shadows = false
+		light.Parent = lamp
+		-- rails round the open well on the floor above (not over the south landing)
+		local yy = y0 + H + 0.4
+		local nw, ne = c + Vector3.new(-half, yy, -wellZ / 2), c + Vector3.new(half, yy, -wellZ / 2)
+		railing(into, nw, ne)
+		railing(into, nw, c + Vector3.new(-half, yy, southZ))
+		railing(into, ne, c + Vector3.new(half, yy, southZ))
+		if f == LabOwnerMap.FLOORS - 1 then
+			-- on the roof nothing goes on up: the rail closes the west half too
+			railing(into, c + Vector3.new(-half, yy, southZ), c + Vector3.new(0, yy, southZ))
+		end
+	end
+	-- the inside volume for the camera
+	local inside = part(into, "TowerInside", Vector3.new(T, full + 4, T), CFrame.new(c + Vector3.new(0, (full + 4) / 2, 0)), PLATE, Enum.Material.SmoothPlastic, true)
+	inside.Transparency = 1
+	inside.CanCollide = false
+	inside.CanQuery = false
+	inside.CanTouch = false
+	game:GetService("CollectionService"):AddTag(inside, "TowerInside")
+end
+
 local function hero(into: Instance, o: Vector3, top: number)
 	local S = LabOwnerMap.S
 	local T = LabOwnerMap.TOWER_SIZE
@@ -316,6 +388,10 @@ local function hero(into: Instance, o: Vector3, top: number)
 	local c = planAt(o, top, "Tower")
 	local h = T / 2
 	local wellX, wellZ = 14, 34 -- the open middle well (stairs run along Z)
+	local STAIRS_V2 = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TOWER_STAIRS_V2 == true
+	if STAIRS_V2 then
+		wellX = 18 -- (F67: two 8.5-stud lanes side by side and a divider)
+	end
 	-- Columns at the corners and the middles of the sides, the full height.
 	local full = H * LabOwnerMap.FLOORS
 	for _, x in { -h, 0, h } do
@@ -333,7 +409,7 @@ local function hero(into: Instance, o: Vector3, top: number)
 		part(into, "TowerFloor", Vector3.new(sideW, 0.8, T), CFrame.new(c + Vector3.new(wellX / 2 + sideW / 2, y, 0)), PLATE, Enum.Material.DiamondPlate)
 		local endD = (T - wellZ) / 2
 		part(into, "TowerFloor", Vector3.new(wellX, 0.8, endD), CFrame.new(c + Vector3.new(0, y, -(wellZ / 2 + endD / 2))), PLATE, Enum.Material.DiamondPlate)
-		if f == LabOwnerMap.FLOORS then
+		if f == LabOwnerMap.FLOORS and not STAIRS_V2 then
 			-- (the roof deck closes over the well, but the last flight still arrives at its north end)
 			part(into, "TowerFloor", Vector3.new(wellX, 0.8, wellZ - 10), CFrame.new(c + Vector3.new(0, y, 5)), PLATE, Enum.Material.DiamondPlate)
 		end
@@ -353,6 +429,9 @@ local function hero(into: Instance, o: Vector3, top: number)
 		end
 	end
 	-- The zig-zag stairs in the well: one flight a storey, alternating direction, steps 1 stud up.
+	if STAIRS_V2 then
+		stairsV2(into, c, top, wellX, wellZ, H, T, full)
+	else
 	for f = 0, LabOwnerMap.FLOORS - 1 do
 		local y0 = f * H
 		local dir = if f % 2 == 0 then -1 else 1 -- (north, then south)
@@ -365,6 +444,7 @@ local function hero(into: Instance, o: Vector3, top: number)
 		end
 		-- the landing at the flight's top end
 		part(into, "TowerLanding", Vector3.new(wellX - 1, 0.8, 3.2), CFrame.new(c + Vector3.new(0, y0 + H, dir * ((wellZ - 6) / 2 + 1.6))), PLATE, Enum.Material.DiamondPlate)
+	end
 	end
 	-- A ground pad under the tower.
 	part(into, "TowerPad", Vector3.new(T + 8, 0.52, T + 8), CFrame.new(c + Vector3.new(0, 0.26, 0)), CONCRETE, Enum.Material.Concrete)
