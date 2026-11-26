@@ -72,6 +72,7 @@ Keybinds.ACTIONS = table.freeze({
 	{ id = "GodWindow", label = "GOD MODE", context = "Global", default = "Seven", group = "WINDOWS" },
 	{ id = "LabWindow", label = "Lab window", context = "Global", default = "Eight", group = "WINDOWS" },
 	{ id = "MenuWindow", label = "More (menu)", context = "Global", default = "Nine", group = "WINDOWS" },
+	{ id = "MultiWindow", label = "Multiplayer", context = "Global", default = "Zero", group = "WINDOWS" }, -- (F11, 26 Nov 2026)
 	-- Building
 	{ id = "Build", label = "Build mode on/off", context = "Global", default = "B", group = "BUILD" },
 	{ id = "Turn", label = "Turn the part", context = "Build", default = "R", group = "BUILD" },

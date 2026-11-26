@@ -40,7 +40,7 @@ HudV3.GLASS_ALPHA = 0.22
 HudV3.CHIPS_H = 44
 HudV3.DOCK = 6 -- px of the nav dock round its squares (24 Nov 2026 layout)
 -- (UI audit 21 Nov 2026: Shop and Lab only; WEAPONS is the bar's own slab, one button, not two.)
-local LEFT_N = #require(script.Parent:WaitForChild("HudV3Layout")).LEFT
+local LEFT_N = #require(script.Parent:WaitForChild("HudV3Layout")).LEFT + (if (Config :: any).MP_ICON then 1 else 0) -- (F11: the Multiplayer square is in the same dock)
 
 local player = Players.LocalPlayer
 
@@ -839,6 +839,49 @@ function HudV3.start()
 			(require(script.Parent:WaitForChild("PortalUI")) :: any).openHub()
 		end)
 		mp.LayoutOrder = 4
+		-- (F11: a drawn two-people icon in the style of the cart, gear and crate, not the emoji picture.)
+		local face = mp:FindFirstChild("Face")
+		if face then
+			for _, c in face:GetChildren() do
+				if c:IsA("GuiObject") and c.Name ~= "Word" and c.Size == UDim2.fromOffset(42, 42) then
+					c:Destroy()
+				end
+			end
+			local icon = Instance.new("Frame")
+			icon.Name = "PeopleIcon"
+			icon.BackgroundTransparency = 1
+			icon.AnchorPoint = Vector2.new(0.5, 0)
+			icon.Position = UDim2.new(0.5, 0, 0, 12)
+			icon.Size = UDim2.fromOffset(42, 42)
+			icon.ClipsDescendants = true
+			icon.Parent = face
+			local function person(x: number, s: number, color: Color3, z: number)
+				local head = Instance.new("Frame")
+				head.AnchorPoint = Vector2.new(0.5, 0)
+				head.Position = UDim2.fromOffset(x, 6 + (1 - s) * 10)
+				head.Size = UDim2.fromOffset(14 * s, 14 * s)
+				head.BackgroundColor3 = color
+				head.ZIndex = z
+				corner(head, 99)
+				local hs = Instance.new("UIStroke")
+				hs.Color = Color3.fromRGB(30, 32, 40)
+				hs.Thickness = 2
+				hs.Parent = head
+				head.Parent = icon
+				local body = Instance.new("Frame")
+				body.AnchorPoint = Vector2.new(0.5, 0)
+				body.Position = UDim2.fromOffset(x, 6 + (1 - s) * 10 + 15 * s)
+				body.Size = UDim2.fromOffset(24 * s, 22 * s)
+				body.BackgroundColor3 = color
+				body.ZIndex = z
+				corner(body, 10)
+				local bs = hs:Clone()
+				bs.Parent = body
+				body.Parent = icon
+			end
+			person(28, 0.85, Color3.fromRGB(150, 196, 255), 2)
+			person(16, 1, Color3.fromRGB(236, 238, 242), 3)
+		end
 		local word = mp:FindFirstChild("Word", true)
 		if word and word:IsA("TextLabel") then
 			word.TextScaled = true
@@ -858,7 +901,7 @@ function HudV3.start()
 			if input.UserInputType ~= Enum.UserInputType.Keyboard or UIS:GetFocusedTextBox() or Keybinds.capturing then
 				return
 			end
-			for cardName, keyId in { Shop = "Shop", Menu = "MenuWindow", Lab = "LabWindow" } do
+			for cardName, keyId in { Shop = "Shop", Menu = "MenuWindow", Lab = "LabWindow", Multi = "MultiWindow" } do
 				local okK, code = pcall(Keybinds.key, keyId)
 				local c = left:FindFirstChild(cardName)
 				if okK and code == input.KeyCode and c and tapActions[c :: GuiObject] then
@@ -868,7 +911,7 @@ function HudV3.start()
 			end
 		end)
 		local Keybinds = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Keybinds")) :: any
-		for cardName, keyId in { Shop = "Shop", Menu = "MenuWindow", Lab = "LabWindow" } do
+		for cardName, keyId in { Shop = "Shop", Menu = "MenuWindow", Lab = "LabWindow", Multi = "MultiWindow" } do
 			local c = left:FindFirstChild(cardName)
 			if c then
 				local chip = Instance.new("TextLabel")
