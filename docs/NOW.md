@@ -16,10 +16,28 @@ For each item:
    - Measure first: server heartbeat, script time, network, phone FPS.
    - Fix the 5 heaviest things: loops, bodies and effects caps, lights, far things, leaks.
    - Lower detail on weak phones without losing the PC look.
-3. **Why people dislike.**
-   - Read Session_v1: when players leave, errors, FPS, pop-ups, paywalls, and the like ratio by version.
-   - Add a small optional "How's the game?" thumbs + reason (no reward).
-   - Write a short report: the top 3 reasons and the fixes.
+3. **Fix the 1-5 minute leak and find why people dislike** (the funnels of 26 Nov, `docs/FUNNELS.md`: half the players at 2 min are gone by 5 min, and 47 % stop between 10 and 25 KOs; targets are in that file).
+   - **A new pull every minute in the first 5 minutes:**
+     - unlocks close together early: a new weapon at about 3, 6, 10, 15, 20 and 25 KOs (retune `LADDER_V9_KEEP` / the first rungs, and keep the later gaps);
+     - each unlock a big, satisfying reveal;
+     - the "Next" bar is always visible.
+   - **A planned moment at about 1, 2, 3 and 4 minutes** for new players, without pop-up spam:
+     - about 1 min: the angry dummy (item 5);
+     - about 2 min: a free mini event in your lab (the red button lights up: "Press me!");
+     - about 3 min: the first terminal or creature gets pointed out (a calm glow);
+     - about 4 min: the Map board gets pointed out ("New place unlocked: Island").
+     - These go through Notify / FirstVisit and the V9-0g phone sizes.
+   - **Variety past 10 KOs:** the walkers, the GOD mode spawns and the machines are in view. The dummy line-up changes now and then (new dummy types walking in), so there is always something new to hit.
+   - **Measure:** add custom funnel steps (AnalyticsService funnel events) so the Creator Hub shows:
+     - the minute moments above;
+     - the first unlock, the first terminal used, the first map trip;
+     - the tutorial steps (item 6);
+     - shop: opened → item viewed → prompt → **bought**.
+   - **Dislikes:**
+     - read Session_v1 (leave times, errors, FPS by device) and the like ratio by version;
+     - add an optional "How's the game?" thumbs + reason (no reward);
+     - write a short report with the top 3 reasons and the fixes into `docs/FUNNELS.md`.
+   - **Test selv:** play 5 minutes as a new player (StudioFresh) and note what happens each minute.
 4. **Answer Roblox's mail about the maturity questionnaire** (they rejected the last answers).
    - Needs the owner to paste the mail and the old answers.
    - List what the game really contains: purple blood, guns, the words "Dead" and "bled out".
@@ -40,9 +58,22 @@ For each item:
    - readable text;
    - a fast start;
    - upright and landscape.
-8. **Best sellers and Robux.**
-   - Read the sales (what sells, where it stood, tried first or not) and write the analysis.
-   - Move the best sellers forward in the lab and the shop, and rework or move the weak ones.
-   - Change what is shown in the lab.
-   - Add **death effects** (fireworks, confetti, a ghost dummy floating up, gold sparkle, cartoon blast) and more cosmetics (trails, KO sounds, dummy skins, emotes): fair, no pay-to-win.
+8. **Best sellers, the shop and Robux** (funnel: only 8 % open the shop, and 11 % of them press buy).
+   - **Read the sales:** what sells, where it stood, and whether it was tried first. Write the analysis into `docs/FUNNELS.md`.
+   - **The shop opens more:**
+     - a clear SHOP button;
+     - the booths in the lab show a real, cheap, cool item;
+     - the "Next weapon" bar offers "Get it now".
+   - **More presses buy:**
+     - one cheap starter offer first (R$ 25-49, clear big value);
+     - a few strong items up front instead of a wall of passes;
+     - "Popular" and "Best value" tags from the real sales;
+     - TRY before buy on everything that can be tried;
+     - pictures and 3D that show what you get.
+   - **Move the best sellers forward** in the lab and the shop, and rework or move the weak ones. Change what is shown in the lab.
+   - **New items:**
+     - **death effects** (fireworks, confetti, a ghost dummy floating up, gold sparkle, cartoon blast);
+     - more cosmetics (trails, KO sounds, dummy skins, emotes);
+     - fair, with no pay-to-win.
    - Give the owner the product list to create.
+   - **Measure:** the shop funnel with a "Bought" step.
