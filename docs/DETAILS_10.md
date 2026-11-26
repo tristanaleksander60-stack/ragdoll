@@ -86,6 +86,23 @@ That is "AI slop": a few boxes or cylinders with flat colours or a stretched tex
 - **The cave:** a sculpted rock formation (a cave mesh or terrain rock) with depth, a real dark mouth (F36), roots, moss and boulders, not 2 balls.
 - **Buildings** (garage, hangar, towers, station): real building models, or detailed builds with doors, windows, roofs with edges, signs, pipes and lights.
 
+**3b. THE GARAGE, THE CAR PARK and THE PARKED CARS** (owner's screenshot, 26 Nov 2026: "Fjern træerne fra bygningen og gør bygningen og parkeringspladsen og bilerne meget bedre kvalitet"; not urgent, it belongs here in the model audit):
+- **Trees out of the building:** trees and bushes grow through the garage's roof and walls. Remove every tree, bush and leaf inside or touching any building (+3 studs; the F53 clear-zone rule applies to all buildings).
+- **The garage** (today a plain box with a flat pink slab roof): a real garage or workshop building.
+  - **Shape and openings:** 2-3 roll-up doors (one open, showing a car on a lift inside), windows with frames, a side door with a step.
+  - **Walls and roof:** brick or corrugated metal walls, a pitched or ribbed metal roof with a gutter and downpipes.
+  - **Details:** a sign over the doors (our own name, e.g. "RAGDOLL MOTORS"), wall lamps, oil stains, a tool bench, tyres stacked outside.
+  - Use a Creator Store building, or a detailed build in the same style.
+- **The car park** (today a flat grey slab with white lines):
+  - **Surface:** asphalt with a fine texture and slight colour variation, with crisp painted bay lines, arrows and a disabled bay (only the painted sign).
+  - **Edges and fixtures:** a raised kerb round it with a dropped kerb at the entrance; wheel stops in each bay; 2-3 tall car-park lamps; a pay machine; a "P" sign on a pole.
+  - **Ground detail:** a few oil stains and tyre marks.
+- **The parked cars** (today blocky boxes with box wheels): real car meshes in the same quality as the drivable cars (Creator Store, many favourites, malware pass, scripts removed), in 5-6 body styles and colours (hatchback, sedan, van, pickup, SUV).
+  - **Parked properly:** straight in the bays, sometimes one a bit crooked (a fun touch).
+  - **Detail:** they rock a little when hit and get dents.
+  - **Lag-free:** they are anchored and static unless hit, with simple collision.
+- **Check:** close-ups and a medium view, PC and phone. No trees in the building; the building, the car park and the cars read as real.
+
 **4. Every replacement:**
 - stands on its plan spot with the 3-stud clearance (F44);
 - uses shared meshes and materials (instancing);
