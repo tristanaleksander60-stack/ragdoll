@@ -13,8 +13,8 @@ local Workspace = game:GetService("Workspace")
 
 local Watchers = {}
 
-Watchers.NEAR = 4
-Watchers.REACH = 70
+Watchers.NEAR = 5
+Watchers.REACH = 90 -- (F45: no stand-ins any more, so real watchers come a little further out)
 Watchers.LINE_GAP = 6
 Watchers.LINES = { "Have you tried it?", "Go on, press it.", "I'm not going in there.", "I've seen things.", "It's my turn next. Maybe.", "Did you see that one fly?" }
 

@@ -76,8 +76,8 @@ local function originOf(): Vector3?
 end
 
 function WatcherStandIns.start()
-	if not Config.MACHINE_WATCHERS or not Config.LAB_OWNERMAP then
-		return
+	if not Config.MACHINE_WATCHERS or not Config.LAB_OWNERMAP or Config.WATCHER_STANDINS == false then
+		return -- (F45: no yellow stand-ins; the watchers are real grey ragdolls only)
 	end
 	local WatchSpots = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("WatchSpots")) :: any
 	local f = Instance.new("Folder")
