@@ -30,7 +30,7 @@ The median visit is about 2 minutes. Good Roblox games of this kind hold 10-20+ 
    - **Show:** one small chip with the countdown ("🎁 1:23") in a corner, and a big CLAIM only when ready.
    - **Leave out:** red !, pop-ups and the old button.
    - **Steps:** 1, 3, 5, 8, 12, 16, 20 minutes; the first one early. The rewards get better each step; the 20-min gift is a real treat (a rare skin or weapon).
-   - **Owner check:** this partly reverses "remove the free gift notifications on phones". Do it only as the quiet chip, and ask the owner in the run's question list. Default: ON, behind the switch.
+   - **Owner said YES (26 Nov 2026):** the quiet gift timer chip comes back on phones; still no red !, no pop-ups, no old button.
 2. **TRY! chain with a reward** (on top of the existing ring): "Machines tried 2/6", then a free crate at 6. It shows on the goal line, not as a card.
 3. **Something happens every 2 minutes.** A small server surprise on a timer, with a 30 s countdown on the goal line:
    - a dummy rain;
