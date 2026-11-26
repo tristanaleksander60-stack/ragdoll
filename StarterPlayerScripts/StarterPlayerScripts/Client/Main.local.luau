@@ -176,6 +176,7 @@ safe("LabShowcase", function() require(Client:WaitForChild("LabShowcase")).start
 safe("FirstTwo", function() require(Client:WaitForChild("FirstTwo")).start() end) -- FIRST_2_MIN: TRY at the machine, a ragdoll comes, the grab lesson once
 safe("XRayToggle", function() require(Client:WaitForChild("XRayToggle")).start() end) -- BODY_V2 1: the X-RAY button and B key
 safe("GuardDogClient", function() require(Client:WaitForChild("GuardDogClient")).start() end) -- GUARD_DOG: tap a limb to send the dog, the dog button, GOOD BOY!
+safe("FlightTrail", function() require(Client:WaitForChild("FlightTrail")).start() end) -- IMPACT_FX: smoke trail behind flying ragdolls
 safe("PlazaClient", function() require(Client:WaitForChild("PlazaClient")).start() end) -- V9-0d: the town square (stage dance, photo spot, its sounds)
 safe("HudV3", function() require(Client:WaitForChild("HudV3")).start() end) -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)
 safe("RewardsUI", function() require(Client:WaitForChild("RewardsUI")).start() end) -- REWARDS: daily, play gift, dares, trophies, group (round 5)

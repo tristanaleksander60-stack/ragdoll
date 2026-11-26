@@ -1318,6 +1318,37 @@ local function moodPose(life: Life, now: number, dt: number, moving: boolean): b
 	return true
 end
 
+-- (F5, owner 26 Nov 2026: "talebobler står inde i hovedet"): a bubble or line sits above the HIGHEST point of the body
+-- in world space (lying, upside down or in a machine), its bottom edge on that point (SizeOffset), so it never sinks
+-- into the head however far the camera is.
+local TALK_PARTS = { "Head", "UpperTorso", "LowerTorso", "LeftFoot", "RightFoot", "LeftHand", "RightHand" }
+local function liftTalk(life: Life)
+	local head = life.head
+	if not head then
+		return
+	end
+	local shown = (life.bubble and life.bubble.Enabled) or (life.line and life.line.Enabled)
+	if not shown then
+		return
+	end
+	local top = head.Position.Y + head.Size.Y / 2
+	for _, name in TALK_PARTS do
+		local p = life.model:FindFirstChild(name)
+		if p and p:IsA("BasePart") then
+			top = math.max(top, p.Position.Y + p.Size.Y / 2)
+		end
+	end
+	local off = Vector3.new(0, top - head.Position.Y + 0.6, 0)
+	if life.bubble then
+		life.bubble.StudsOffsetWorldSpace = off
+		life.bubble.SizeOffset = Vector2.new(0, 0.5)
+	end
+	if life.line then
+		life.line.StudsOffsetWorldSpace = off
+		life.line.SizeOffset = Vector2.new(0, 0.5)
+	end
+end
+
 local function step(life: Life, now: number, dt: number)
 	local model = life.model
 	local state = (model:GetAttribute("RagdollState") :: string?) or "Standing"
@@ -1418,6 +1449,7 @@ local function step(life: Life, now: number, dt: number)
 	else
 		updateBubble(life, now, BUBBLES)
 	end
+	liftTalk(life)
 end
 
 -- Something went bang (FxController plays every moment through here too): every dummy and person in

@@ -250,7 +250,16 @@ local function buildCannon()
 	-- An arrow on the pad and a barrel behind it, both pointing where you will fly.
 	local flat = Vector3.new(CANNON_DIRECTION.X, 0, CANNON_DIRECTION.Z).Unit
 	local arrow = part("CannonArrow", Vector3.new(1.2, 0.1, 5), CFrame.lookAt((at(x, 1.05, z)).Position, (at(x, 1.05, z)).Position + flat), WHITE, Enum.Material.Neon)
-	if (Config :: any).REAL_PADS then
+	-- (F7, owner 26 Nov 2026: "pladen ved kanonen skal ikke launche en": no plate; the pad stays as an invisible
+	-- stand-in, its name is read elsewhere. A ragdoll let go at the glowing muzzle spot slides in, then it fires.)
+	local muzzleLoad = (Config :: any).CANNON_MUZZLE_LOAD == true
+	if muzzleLoad then
+		padPart.Transparency = 1
+		padPart.CanCollide = false
+		padPart.CanTouch = false
+		padPart.CanQuery = false
+		arrow.Transparency = 1
+	elseif (Config :: any).REAL_PADS then
 		realPad(padPart, ORANGE, nil)
 		arrow.Material = Enum.Material.SmoothPlastic -- (painted on, over the mat)
 		arrow.CFrame += Vector3.new(0, 0.12, 0)
@@ -301,22 +310,81 @@ local function buildCannon()
 	padPart:SetAttribute("LaunchVelocity", nil)
 	local muzzle = barrelCf * CFrame.new(0, 0, -6)
 	local loading: { [Model]: number } = {}
+	local lastHeld: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+	-- (F7: the glowing load spot right under the muzzle: let a carried ragdoll go here.)
+	local loadAt = Vector3.new(muzzle.Position.X, (at(x, 0, z)).Position.Y, muzzle.Position.Z) + Vector3.new(CANNON_DIRECTION.X, 0, CANNON_DIRECTION.Z).Unit * 1.5
+	if muzzleLoad then
+		local spot = part("CannonLoad", Vector3.new(0.2, 5, 5), CFrame.new(loadAt + Vector3.new(0, 0.12, 0)) * CFrame.Angles(0, 0, math.rad(90)), ORANGE, Enum.Material.Neon, Enum.PartType.Cylinder)
+		spot.CanCollide, spot.CanQuery, spot.CanTouch, spot.CastShadow = false, false, false, false
+		spot.Transparency = 0.35
+		local label = Instance.new("BillboardGui")
+		label.Size = UDim2.fromOffset(160, 36)
+		label.StudsOffsetWorldSpace = Vector3.new(0, 3, 0)
+		label.AlwaysOnTop = false
+		label.MaxDistance = 40
+		local t = Instance.new("TextLabel")
+		t.BackgroundTransparency = 1
+		t.Size = UDim2.fromScale(1, 1)
+		t.Font = Enum.Font.FredokaOne
+		t.TextScaled = true
+		t.TextColor3 = Color3.new(1, 1, 1)
+		t.TextStrokeTransparency = 0.3
+		t.Text = "DROP A RAGDOLL HERE"
+		t.Parent = label
+		label.Parent = spot
+	end
 	task.spawn(function()
 		local DummyControl = require(script.Parent.DummyControl) :: any
 		while padPart.Parent do
 			task.wait(0.2)
 			local dummies = Workspace:FindFirstChild("Dummies")
+			local now = os.clock()
 			for _, m in if dummies then dummies:GetChildren() else {} do
 				local pelvis = m:FindFirstChild("LowerTorso")
+				if m:IsA("Model") and m:GetAttribute("Held") == true then
+					lastHeld[m] = now
+				end
 				if m:IsA("Model") and pelvis and pelvis:IsA("BasePart") and not loading[m] and m:GetAttribute("Held") ~= true
 					and m:GetAttribute("Vital") ~= "Dead" and m:GetAttribute("MachineHidden") ~= true then
-					local rel = padPart.CFrame:PointToObjectSpace(pelvis.Position)
-					if math.abs(rel.X) < 4.5 and math.abs(rel.Z) < 4.5 and rel.Y > -1 and rel.Y < 6 then
+					local inZone: boolean
+					if muzzleLoad then
+						-- Only a ragdoll a player just let go (never one that walks by), close under the muzzle.
+						local flat = Vector3.new(pelvis.Position.X - loadAt.X, 0, pelvis.Position.Z - loadAt.Z).Magnitude
+						local dy = pelvis.Position.Y - loadAt.Y
+						inZone = flat < 3.6 and dy > -1 and dy < 9 and now - (lastHeld[m] or -99) < 4
+					else
+						local rel = padPart.CFrame:PointToObjectSpace(pelvis.Position)
+						inZone = math.abs(rel.X) < 4.5 and math.abs(rel.Z) < 4.5 and rel.Y > -1 and rel.Y < 6
+					end
+					if inZone then
 						loading[m] = os.clock()
 						task.spawn(function()
-							m:SetAttribute("MachineHidden", true) -- (gone into the barrel, on every screen)
 							FxService.hit(padPart.Position + Vector3.new(0, 2, 0), 40, "CannonPad")
+							if muzzleLoad then
+								-- It slides into the barrel: a few steps from where it is to the muzzle, then inside.
+								local from = pelvis.CFrame
+								local into = CFrame.lookAt(muzzle.Position, muzzle.Position + CANNON_DIRECTION)
+								for i = 1, 6 do
+									DummyControl.move(m, from:Lerp(into, i / 6))
+									task.wait(0.05)
+								end
+							end
+							m:SetAttribute("MachineHidden", true) -- (gone into the barrel, on every screen)
 							DummyControl.move(m, barrelCf)
+							-- (The player who dropped it, the nearest within 30 studs, tried the cannon: TRY, goal line, record.)
+							pcall(function()
+								local owner: Player? = nil
+								local bestD = 30
+								for _, pl in Players:GetPlayers() do
+									local r = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
+									if r and r:IsA("BasePart") and (r.Position - loadAt).Magnitude < bestD then
+										owner, bestD = pl, (r.Position - loadAt).Magnitude
+									end
+								end
+								if owner then
+									ExperimentService.event(owner, "Cannon", 1, "the CANNON")
+								end
+							end)
 							task.wait(Playground.CANNON_LOAD)
 							if m.Parent then
 								DummyControl.move(m, CFrame.lookAt(muzzle.Position, muzzle.Position + CANNON_DIRECTION))
@@ -383,8 +451,8 @@ local function buildCannon()
 	padPart.Touched:Connect(function(other)
 		local character = other:FindFirstAncestorOfClass("Model")
 		local player = character and Players:GetPlayerFromCharacter(character)
-		if not player then
-			return
+		if not player or muzzleLoad then
+			return -- (F7: standing near the cannon never launches anyone)
 		end
 		local now = os.clock()
 		if lastFired[player] and now - lastFired[player] < CANNON_COOLDOWN then

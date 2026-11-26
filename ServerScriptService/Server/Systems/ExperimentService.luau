@@ -232,6 +232,15 @@ function ExperimentService.event(player: Player, kind: string, n: number?, what:
 	-- (LAB10 R2: the client's TRY ME chain moves on to the next untried machine: Client/LabShowcase.)
 	if Experiments.KINDS[kind] and player:GetAttribute("Tried_" .. kind) ~= true then
 		player:SetAttribute("Tried_" .. kind, true)
+		-- (F1, 26 Nov 2026: tried once is tried for good: kept in the saved eco counts as "T_<kind>", read back on join.)
+		pcall(function()
+			local PS = require(script.Parent:WaitForChild("ProgressService")) :: any
+			local e = PS.ecoOf(player)
+			if e and #("T_" .. kind) <= 16 then
+				e.counts["T_" .. kind] = 1
+				PS.ecoChanged(player)
+			end
+		end)
 		-- (STAY_LONGER 2: machines tried this visit, shown as "2/6" on the goal line; BOLTS at Config.TRY_REWARD.count.)
 		local reward = (Config :: any).TRY_REWARD
 		if reward and TRY_MACHINES[kind] then
@@ -384,6 +393,33 @@ function ExperimentService.start()
 	end
 	local function joined(player: Player)
 		ExperimentService.join(player)
+		task.spawn(function() -- (F1: the machines tried on earlier visits, from the save; no rewards again)
+			local PS = require(script.Parent:WaitForChild("ProgressService")) :: any
+			for _ = 1, 60 do
+				if not player.Parent or PS.isLoaded(player) then
+					break
+				end
+				task.wait(0.5)
+			end
+			local e = player.Parent and PS.ecoOf(player)
+			if not e then
+				return
+			end
+			local n = 0
+			for k in Experiments.KINDS do
+				if e.counts["T_" .. k] then
+					player:SetAttribute("Tried_" .. k, true)
+				end
+			end
+			for k in TRY_MACHINES do
+				if player:GetAttribute("Tried_" .. k) == true then
+					n += 1
+				end
+			end
+			if n > 0 then
+				player:SetAttribute("TriedCount", n)
+			end
+		end)
 		if chainOn() then
 			task.spawn(loadChain, player)
 		end

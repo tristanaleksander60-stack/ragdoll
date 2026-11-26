@@ -139,3 +139,6 @@ The left stack is broken:
 - **The robot dog:** NO. A German Shepherd (F10).
 - **Wheelchair:** yes, get one from the Creator Store (malware pass).
 - **The long goal after all weapons:** ranks with prizes first (the simplest for kids); collections and upgrades later.
+
+## State (Claude Code)
+- 0.70.0 (place v1126): F1 done (Tried_<kind> saved as eco counts "T_<kind>", read back on join, no reward again). F5 done (bubble and line above the body's highest point in world space, bottom edge on it). F7 done (`CANNON_MUZZLE_LOAD`: pad invisible and never launches players; a ragdoll let go within 4 s at the glowing "DROP A RAGDOLL HERE" spot under the muzzle slides in and fires; the nearest player gets Tried_Cannon). F9 done (dog button only within 15 studs of a doghouse, CollectionService tag "Doghouse"). Also: IMPACT_FX smoke trail (`FLIGHT_TRAIL`, Client/FlightTrail).

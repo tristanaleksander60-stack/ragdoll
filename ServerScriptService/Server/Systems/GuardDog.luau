@@ -109,6 +109,7 @@ function GuardDog.buildLab(folder: Instance, origin: Vector3)
 	end
 	local wood = Color3.fromRGB(150, 104, 64)
 	local base = part("House", Vector3.new(5, 4, 5), CFrame.new(at + Vector3.new(0, 2, 0)), wood, Enum.Material.WoodPlanks)
+	game:GetService("CollectionService"):AddTag(base, "Doghouse") -- (F9: the dog button shows only near one)
 	part("Door", Vector3.new(2, 2.6, 0.2), CFrame.new(at + Vector3.new(0, 1.3, 2.55)), Color3.fromRGB(30, 24, 20), Enum.Material.SmoothPlastic)
 	local slate = Color3.fromRGB(60, 64, 72)
 	for _, side in { -1, 1 } do

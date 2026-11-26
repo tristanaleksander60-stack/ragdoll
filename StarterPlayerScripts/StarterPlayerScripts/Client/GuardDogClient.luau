@@ -16,6 +16,8 @@ local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Net")
 
 local GuardDogClient = {}
 
+GuardDogClient.NEAR_HOUSE = 15
+
 local player = Players.LocalPlayer
 local ARMS = { "LeftUpperArm", "RightUpperArm", "LeftLowerArm", "RightLowerArm" }
 local BITABLE = {
@@ -139,9 +141,23 @@ function GuardDogClient.start()
 		remote:FireServer("Home")
 	end)
 	local hinted = false
+	-- (F9, owner 26 Nov 2026: the dog button only within NEAR_HOUSE studs of a doghouse; elsewhere walk back to send it home.)
+	local function nearHouse(): boolean
+		local c = player.Character
+		local r = c and c:FindFirstChild("HumanoidRootPart")
+		if not r or not r:IsA("BasePart") then
+			return false
+		end
+		for _, h in game:GetService("CollectionService"):GetTagged("Doghouse") do
+			if h:IsA("BasePart") and (h.Position - r.Position).Magnitude <= GuardDogClient.NEAR_HOUSE then
+				return true
+			end
+		end
+		return false
+	end
 	local function refresh()
 		local out = player:GetAttribute("DogOut") == true
-		gui.Enabled = out
+		gui.Enabled = out and nearHouse()
 		if out and not hinted then
 			hinted = true
 			say("Tap a ragdoll's arm or leg!")
@@ -149,6 +165,12 @@ function GuardDogClient.start()
 	end
 	player:GetAttributeChangedSignal("DogOut"):Connect(refresh)
 	refresh()
+	task.spawn(function()
+		while true do
+			task.wait(0.5)
+			gui.Enabled = player:GetAttribute("DogOut") == true and nearHouse()
+		end
+	end)
 	-- A computer: a click on a ragdoll orders the bite (the gun still does what it does).
 	UserInputService.InputBegan:Connect(function(input, processed)
 		if processed or input.UserInputType ~= Enum.UserInputType.MouseButton1 then
