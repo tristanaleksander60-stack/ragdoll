@@ -2,6 +2,8 @@
 
 Status: **waiting for the owner's corrections** (plan sent 26 Nov 2026). Do not start before the owner says go. Then work top to bottom.
 
+**Targets and order of levers:** `docs/STRATEGY.md`, the 1-week column. Every item is judged against those funnels.
+
 For each item:
 - build it;
 - do one quick Play (no errors);
