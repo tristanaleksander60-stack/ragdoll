@@ -68,6 +68,14 @@ Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.53.0",
+		lines = {
+			"Built for phones: a clean screen, aim help, a clear next goal",
+			"The first dummy you annoy gets ANGRY (and runs off)",
+			"Weapons are earned with KOs; buy them in SHOP if you like",
+		},
+	},
+	{
 		version = "0.33.7",
 		lines = {
 			"New code: HAVOC (750 BOLTS + a free Minigun try). Type it in CODES!",

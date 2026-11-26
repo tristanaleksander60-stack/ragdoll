@@ -138,5 +138,21 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
    - Give the owner the product list to create.
    - **Measure:** the shop funnel with a "Bought" step.
 
+## Done in the run of 26 Nov 2026 (release 0.53.0, place saved v1110; Script Sync was OFF: every script went in through the MCP, checked by length)
+- **0 done:** `WEAPONS_NO_BUY`, `WEAPONS_NO_TRY` (TrialService refuses), only the next weapon shows "N KOs to go", the rest LOCKED; every weapon sold in SHOP > ITEMS > WEAPONS (its tier product; "NEARLY YOURS" when within 15 KOs).
+- **1 mostly done:** own FOUNDER/VIP tags hidden (`HIDE_OWN_TAGS`), phone shoulder cam with a gun (`PHONE_SHOULDER_CAM`), wider touch aim help + hit buzz (`PHONE_AIM_ASSIST`), darker dummies (92,95,102) and warmer hub floor, half the fog on phones (`PHONE_CLEAR_AIR`), bobbing arrow for newcomers (`TARGET_ARROW`), goal pill "Next: X  N KOs" (`GOAL_LINE`), `PHONE_QUIET` (Client/PhoneQuiet: no gift button, no red badges, no pop-ups about gifts/eggs/codes/sales, no event card, no auto What's New, REVIVE only when a dummy is down), `PHONE_MENUS` (3 big weapon cards a row, FEATURED hides owned, CODES on one line, walking to the MAPS board opens MAPS). **Left:** More window flatter (1.6), bigger hotbar (1.8), portrait check (1.10), real-phone FPS.
+- **2 done:** GroundGuard rescues a body with nothing under it and lifts a sunk head/chest, taking the body from its player for 0.5 s (`GROUND_RESCUE`).
+- **3 partly:** measured (server p95 18 ms; client UI 22.7k objects, WEAPONS alone 8.7k); WEAPONS builds a shelf when shown (`LAZY_SHELVES`, now 16.3k total). **Left:** a real mid phone, lights/beams on phones.
+- **4 partly:** the ladder already unlocks at 3,4,5,8,10,13,16,18,21,24 KOs (denser than the target): unchanged. Minute moments at 2/3/4 min in the goal pill with a white outline (`MINUTE_MOMENTS`, Client/MinuteMoments). Funnels NewPhone/NewTablet/NewPC/NewConsole + "Tutorial"; player attribute `Device`. **Left:** read Session_v1 + like ratio, the "How's the game?" prompt, the dislike report.
+- **5 prepared:** docs/MATURITY.md (what the game contains + two answer options). Owner submits.
+- **6 done:** `ANGRY_FIRST` + `ANGRY_SHOVE` in Mourning.provoke (2nd hit on one dummy, newcomers under 60 KOs, once a visit).
+- **7 done:** FirstVisit got "GRAB a dummy and THROW it!" and "Walk to the MAPS board"; each step logs the Tutorial funnel.
+- **8 partly:** `SHOP_CHEAP_FIRST` (hero = Starter Crate R$49, cheaper FEATURED picks). **Left:** sales analysis (live data), death effects / cosmetics (need product ids).
+- Not published yet: the owner presses Alt+P (no publish action over MCP; Open Cloud cannot upload .rbxl).
+
 ## Questions for the owner (filled in during the run)
-- (none yet)
+- Angry dummy: a harmless shove (now) or scolding only? (`ANGRY_SHOVE`)
+- Dummy colour: darker grey (92,95,102, now) or the old (112,114,118)?
+- Maturity: keep the gore (13+/17+) or switch it off for all ages? See docs/MATURITY.md.
+- Death effects to sell (fireworks, confetti, ghost, gold sparkle, cartoon blast, R$ 49-99 each): create them as passes and send the ids?
+- Script Sync is off in Studio: turn it on again, or allow localhost in MCP HTTP allow list (faster, cheaper sessions).

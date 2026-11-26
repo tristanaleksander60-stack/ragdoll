@@ -399,3 +399,4 @@ Phases 0-4b, A-M, N1-N5, N7 (graphics accepted as is), M1-M8 done. M9 was under 
   - Travel streams the place in first (`WorldMaps.travel`), and is refused while seated or holding.
 - **OutOfBounds:** falls home; holds the body still 0.25 s and sets `Place`.
 - **Compressor** (`Server/Systems/Compressor`, `Config.COMPRESSOR`, V9-0m): built, but not wired yet.
+- 26 Nov 2026, 0.53.0: NOW items 0-8 (phone first). Switches in Config after START_BAR_V9 (WEAPONS_NO_BUY .. SHOP_CHEAP_FIRST). Script Sync was off; scripts went in via MCP text patches (tools: scratchpad mkpatch.pl idea: git diff hunks -> Luau string replace, check length).
