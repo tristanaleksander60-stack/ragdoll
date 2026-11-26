@@ -34,7 +34,7 @@ build is live. Written fresh; nothing is taken from another game's page.
 
 ⭐ Favorite so you can find your lab again!
 
-Cartoon effects only: stars and sparks, no blood.
+Cartoon effects only: stars, sparks and purple cartoon splats; no gore.
 
 ## Description v4 (English, release 0.23.0)
 
@@ -63,7 +63,7 @@ Cartoon effects only: stars and sparks, no blood.
 
 ⭐ Favorite so you can find your lab again!
 
-Cartoon effects only: stars and sparks, no blood.
+Cartoon effects only: stars, sparks and purple cartoon splats; no gore.
 
 ## Description v3 (English, release 0.22.0)
 
@@ -88,7 +88,7 @@ Cartoon effects only: stars and sparks, no blood.
 
 ⭐ Favorite so you can find your lab again. New maps and toys every week!
 
-Cartoon effects only: stars and sparks, no blood.
+Cartoon effects only: stars, sparks and purple cartoon splats; no gore.
 
 ## Description v2 (English, release 0.20.0; recommended)
 
@@ -112,7 +112,7 @@ Cartoon effects only: stars and sparks, no blood.
 
 ⭐ Favorite so you can find your lab again. New toys and experiments every week!
 
-Cartoon effects only: stars and sparks, no blood.
+Cartoon effects only: stars, sparks and purple cartoon splats; no gore.
 
 ## Description (English, phase 0)
 
@@ -132,7 +132,7 @@ Computer, phone (upright or sideways), tablet and controller (Xbox / PlayStation
 
 ⭐ Favorite the game so you can find your lab again. New toys arrive with every update!
 
-Cartoon effects only: dummies show stars and sparks, no blood.
+Cartoon effects only: dummies show stars, sparks and purple cartoon splats; no gore.
 
 ## Description (Danish, for the owner's own use or a Danish translation field)
 

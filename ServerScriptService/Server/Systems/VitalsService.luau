@@ -801,7 +801,7 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 	local label = if severed then (((Anatomy.cutOf(severed :: string) :: any).label) .. " severed")
 		elseif Config.MILD_TEXT then Anatomy.mildLabel(zone.id) -- (phase 0: a body region, no organs)
 		else zone.label
-	local line = string.format("%s \u{00B7} %d%% blood \u{00B7} %s", label, math.floor(v.blood + 0.5), if v.state == "Dead" then "no pulse" else "pulse " .. math.floor(v.pulse + 0.5))
+	local line = string.format("%s \u{00B7} %d%% blood \u{00B7} %s", label, math.floor(v.blood + 0.5), if v.state == "Dead" then (if Config.GORE == false then "knocked out" else "no pulse") else "pulse " .. math.floor(v.pulse + 0.5))
 	local killedNow = not wasDead and v.state == "Dead"
 	-- (24 Nov 2026: it may get mad at who hit it, the more the nearer it is to dying: Mourning.provoke.)
 	if by and v.state == "Alive" and not severed and not quiet() then

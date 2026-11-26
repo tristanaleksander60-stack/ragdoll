@@ -27,6 +27,16 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Anatomy = require(Shared:WaitForChild("Anatomy")) -- (0.37.11: the spider's bite)
 local Config = require(Shared:WaitForChild("Config")) :: any
 local LabLayout10 = require(Shared:WaitForChild("LabLayout10")) :: any
+-- BODY_V2 0 (owner, 26 Nov 2026: gore off, Config.GORE): no bones, meat or red anywhere in the creatures; what was red is
+-- the purple cartoon juice, bones become a burst of gold stars, the water never turns red.
+local GORE = Config.GORE ~= false
+local PURPLE = Color3.fromRGB(150, 70, 200)
+local function mild(c: Color3): Color3
+	if GORE then
+		return c
+	end
+	return if c.R > 0.45 and c.G < 0.3 and c.B < 0.3 then PURPLE else c
+end
 local Systems = script.Parent
 
 local LabCreatures = {}
@@ -252,6 +262,9 @@ local function spray(f: Instance, at: Vector3, colors: { Color3 }, n: number, sp
 	if #keys == 1 then
 		table.insert(keys, ColorSequenceKeypoint.new(1, colors[1]))
 	end
+	for k, key in keys do
+		keys[k] = ColorSequenceKeypoint.new(key.Time, mild(key.Value))
+	end
 	e.Color = ColorSequence.new(keys)
 	e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, size), NumberSequenceKeypoint.new(1, size * 0.3) })
 	e.Speed = NumberRange.new(speed * 0.5, speed)
@@ -266,6 +279,10 @@ local function spray(f: Instance, at: Vector3, colors: { Color3 }, n: number, sp
 end
 
 local function bones(f: Instance, at: Vector3, dir: Vector3, n: number)
+	if not GORE then
+		spray(f, at, { Color3.fromRGB(255, 215, 60), Color3.fromRGB(255, 255, 255) }, n * 4, 18, 0.6, dir)
+		return
+	end
 	for i = 1, n do
 		local bone = Instance.new("Part")
 		bone.Name = "Bone"
@@ -899,7 +916,7 @@ BUILD.Whale = function(f, at, m)
 	-- A red mist burst when the tank eats (replaces the whale's clean white spout).
 	local burst = Instance.new("ParticleEmitter")
 	burst.Texture = "rbxasset://textures/particles/smoke_main.dds"
-	burst.Color = ColorSequence.new(Color3.fromRGB(200, 40, 40))
+	burst.Color = ColorSequence.new(mild(Color3.fromRGB(200, 40, 40)))
 	burst.Size = NumberSequence.new(1.5, 3)
 	burst.Speed = NumberRange.new(12, 20)
 	burst.SpreadAngle = Vector2.new(60, 60)
@@ -933,7 +950,7 @@ BUILD.Whale = function(f, at, m)
 			spray(f, (at * CFrame.new(0, 1.2, 0)).Position, { Color3.fromRGB(255, 255, 255), Color3.fromRGB(200, 230, 240) }, 60, 20, 0.9, Vector3.new(0, 1, 0))
 			lazy("FxService").hit((at * CFrame.new(0, 1, 0)).Position, 120, "CannonPad")
 			local blue = pool.Color
-			local red = Color3.fromRGB(150, 18, 24)
+			local red = if GORE then Color3.fromRGB(150, 18, 24) else Color3.fromRGB(120, 190, 230) -- (gore off: foam, never red)
 			TweenService:Create(pool, TweenInfo.new(0.9), { Color = red, Transparency = 0.15 }):Play()
 			if shark and basePivot then
 				-- (It bursts up out of the water, jaws first, thrashes, and goes under again.)
@@ -951,7 +968,10 @@ BUILD.Whale = function(f, at, m)
 			burst:Emit(30)
 			-- The spit: bones with meat on, out of the tank and onto the floor round it.
 			local mouth = (at * CFrame.new(0, 2, 0)).Position
-			for i = 1, 7 do
+			if not GORE then
+				spray(f, mouth, { Color3.fromRGB(255, 215, 60), Color3.fromRGB(255, 255, 255) }, 28, 20, 0.6)
+			end
+			for i = 1, if GORE then 7 else 0 do
 				local chunk = Instance.new("Model")
 				chunk.Name = "SharkScraps"
 				local len = 1.6 + math.random() * 1.4
@@ -1129,7 +1149,7 @@ BUILD.Washer = function(f, at, m)
 			water.Transparency = 0.35
 			table.insert(m.temp, water)
 			local doll = puppet(f, 0.6)
-			local blue, red = Color3.fromRGB(80, 150, 220), Color3.fromRGB(150, 20, 28)
+			local blue, red = Color3.fromRGB(80, 150, 220), if GORE then Color3.fromRGB(150, 20, 28) else Color3.fromRGB(120, 200, 240)
 			play(3.0, function(t)
 				local spin = t * t * 40
 				doll.set(drum * CFrame.Angles(0, 0, spin) * CFrame.new(0, 1, 0) * CFrame.Angles(spin * 0.7, 0, 0), t * 6)

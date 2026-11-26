@@ -602,6 +602,10 @@ local function startGrab(useTouch: boolean)
 	if grab or not wearing() then
 		return
 	end
+	-- (BODY_V2 0, owner 26 Nov 2026: gore off: with Config.SEVERING off there is no pulling a piece off at all.)
+	if not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SEVERING then
+		return
+	end
 	local here = rootPos()
 	local camera = Workspace.CurrentCamera
 	if not (here and camera) then

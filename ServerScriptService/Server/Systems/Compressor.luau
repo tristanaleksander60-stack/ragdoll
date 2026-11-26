@@ -337,6 +337,9 @@ end
 -- The squeeze: a wet splat at the touch, and blood dripping off all four edges of the bed while the plate
 -- goes on down, pooling on the floor beside it; all of it gone after the pancake.
 local function squeezeFx(machine: Model)
+	if Config.GORE == false then
+		return -- (BODY_V2 0, gore off: no wet splat and no drips; a flat cartoon pancake that pops back up)
+	end
 	local bed = machine:FindFirstChild("Bed")
 	if not (bed and bed:IsA("BasePart")) then
 		return

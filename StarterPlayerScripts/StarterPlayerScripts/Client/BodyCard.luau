@@ -275,7 +275,7 @@ local function build(): Ui
 		local value = label(card, title .. "Value", 92, y, BodyCard.W - 92 - 16, 24, 20, WHITE, Enum.TextXAlignment.Right)
 		return l, fill, value, track
 	end
-	local _, bloodBar, bloodText, bt = bar(308, "Blood", BLOOD)
+	local _, bloodBar, bloodText, bt = bar(308, if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).GORE == false then "Energy" else "Blood", BLOOD)
 	local awakeLabel, awakeBar, awakeValue = bar(330, "Awake", GREEN)
 	awakeValue:Destroy()
 	-- (Blood's percent sits after its bar, like the reference: the bar is shortened for it.)
@@ -402,7 +402,7 @@ local function redraw()
 	local dead = v == "Dead"
 	local word, colour
 	if dead then
-		word, colour = "Dead", RED
+		word, colour = if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).GORE == false then "KO" else "Dead", RED -- (BODY_V2 0: gore off words)
 	elseif v == "Unconscious" then
 		word, colour = "Knocked out", CYAN
 	elseif next(gone) ~= nil then

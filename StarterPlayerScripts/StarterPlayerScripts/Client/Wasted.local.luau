@@ -45,7 +45,7 @@ remote.OnClientEvent:Connect(function(seconds: number, by: string?, how: string?
 	word.TextColor3 = Color3.fromRGB(200, 30, 36)
 	word.TextStrokeColor3 = Color3.new(0, 0, 0)
 	word.TextStrokeTransparency = 0.2
-	word.Text = "WASTED"
+	word.Text = if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).GORE == false then "OUT COLD" else "WASTED" -- (BODY_V2 0: gore off words)
 	word.TextTransparency = 1
 	word.Parent = band
 	local line = Instance.new("TextLabel")

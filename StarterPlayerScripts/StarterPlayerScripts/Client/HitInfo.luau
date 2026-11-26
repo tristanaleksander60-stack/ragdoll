@@ -104,11 +104,11 @@ function HitInfo.status(blood: number, pulse: number?, before: number?, vital: s
 		end
 		pulseText = string.format("<font color=\"%s\">pulse %d%s</font>", severity(pulse >= 50 and pulse <= 110, pulse < 40 or pulse > 150), pulse, arrow)
 	else
-		pulseText = string.format("<font color=\"%s\">no pulse</font>", CRITICAL)
+		pulseText = string.format("<font color=\"%s\">%s</font>", CRITICAL, if Config.GORE == false then "knocked out" else "no pulse") -- (BODY_V2 0: gore off words)
 	end
 	local tag = ""
 	if vital == "Dead" then
-		tag = DOT .. string.format("<font color=\"%s\">DEAD</font>", CRITICAL)
+		tag = DOT .. string.format("<font color=\"%s\">%s</font>", CRITICAL, if Config.GORE == false then "KO" else "DEAD")
 	elseif vital == "Unconscious" then
 		tag = DOT .. string.format("<font color=\"%s\">OUT COLD</font>", WORRY)
 	end
@@ -376,7 +376,7 @@ function HitInfo.show(line: string, before: number?, model: Model?)
 	t.Text = topText
 	if what then
 		-- (The server's numbers at the hit; the body's own attributes take over as they arrive.)
-		st.Text = HitInfo.status(blood :: number, pulse, before, if string.find(line, "no pulse", 1, true) then "Dead" else nil)
+		st.Text = HitInfo.status(blood :: number, pulse, before, if string.find(line, "no pulse", 1, true) or string.find(line, "knocked out", 1, true) then "Dead" else nil)
 		refreshStatus(blood, pulse)
 	else
 		st.Text = ""

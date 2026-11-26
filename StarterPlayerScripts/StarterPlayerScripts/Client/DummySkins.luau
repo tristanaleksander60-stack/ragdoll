@@ -175,6 +175,10 @@ local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: s
 	for i = 1, math.clamp(hits - #marks, 0, 8) do
 		table.insert(marks, { y = ({ 0.06, -0.24, 0.27, -0.06, 0.16, -0.34, 0.36, -0.15 })[i] * len, x = (if i % 2 == 0 then 1 else -1) * thick, hard = 0.8 })
 	end
+	-- (BODY_V2 0, gore off: the bone stays whole in X-ray; a break comes with BODY_V2 1b.)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).GORE == false then
+		table.clear(marks)
+	end
 	local boneXs: { number } = if key == "LowerArm" then { -thick * 0.62, thick * 0.62 } elseif key == "LowerLeg" then { -thick * 0.32, thick * 0.92 } else {}
 	-- How much is gone of the bone at (x, y): 0 whole .. 1 shot through.
 	local function gone(x: number, y: number, step: number): number

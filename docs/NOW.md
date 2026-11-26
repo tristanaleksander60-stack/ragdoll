@@ -27,6 +27,15 @@
 - **Order:** do it in the same run, right after ALWAYS3. It is small.
 
 ## FIRST, URGENT: `docs/BODY_V2.md` section 0, gore OFF (owner chose it, 26 Nov)
+**State (26 Nov 2026): BUILT and saved as 0.58.0 (place v1114 -> v1115), waiting for the owner to publish (Alt+P).** Switches:
+- `SEVERING = false`: no limbs off, no halves, no bursting heads; mech arms cannot tear.
+- `GORE = false`:
+  - creatures spit gold stars instead of bones or meat, red is purple, and no water turns red;
+  - the press has no splat or drips;
+  - the X-ray bone stays whole;
+  - the words are KO, knocked out, OUT COLD and Energy.
+- `STORE_TEXT.md`: "purple cartoon splats; no gore".
+- Next: ALWAYS3, then the MULTIPLAYER icon, then LAB_TARGET ROUND 3 and the rest of the run.
 - Build it, then **publish at once** (quick gate). The maturity questionnaire is due **Fri 27 Nov 2026 17:34 UTC** and must match the live game.
 - Then tell the owner in Danish: "Gore er slået fra og live — send spørgeskemaet nu med svarene i docs/MATURITY.md".
 - Only then the rest of the run.
