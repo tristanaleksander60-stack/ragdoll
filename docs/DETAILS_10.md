@@ -51,6 +51,52 @@ Use ONE consistent stylised-realistic asset style from the Creator Store: sets w
   - cracks and drain covers on the plazas.
 - **Small life:** birds landing and flying off; butterflies near the flower beds; ducks on the pond. All client-side, near you only.
 
+## 2b. EVERY code-built structure: the MODEL AUDIT (owner, 26 Nov 2026: "Fiks alle AI slop-modeller som denne")
+**The owner's picture:**
+- the snack kiosk is a plain box with a stretched plank texture;
+- a flat red plank floats along its top edge as a "roof";
+- three plain blue boxes stand in for portable toilets;
+- the only decent part is the framed "SNACKS" sign.
+
+That is "AI slop": a few boxes or cylinders with flat colours or a stretched texture, no shape, no details, no bevels, no purpose you can read.
+
+**The rule:** any object that a player would call "a box pretending to be something" is replaced.
+
+**1. Make the list.** A script lists every MODEL in the lab built by our code (LabOwnerMap, LabV10, WorldDress, etc.) with its part count and part types, and writes it in State. Judge each one as:
+- **KEEP:** it already looks like the real thing, e.g. the steel tower or the framed signs.
+- **REPLACE:** use a Creator Store model in the game's style (many favourites, one consistent stylised-realistic style, malware pass, scripts removed).
+- **REBUILD:** a detailed custom build: real shapes, bevels, trims, parts that do something, textures that fit (not stretched), plus 3-6 small details that tell what it is.
+
+**2. Everything on this list MUST be judged** (from map rounds 2 and 3):
+
+| Area | Models |
+|---|---|
+| Food and toilets | the snack kiosk, the portable toilets, the grill and the picnic tables |
+| Pools and play | the loungers and umbrellas, the playground (slide, swings, roundabout), the training yard (tyres, hurdles, climbing wall) |
+| Buildings and towers | the garage, the hangar, the water tower, the control tower, the station platform and the train |
+| The car park | the cars (no block cars) |
+| Animal Cove and Splash Zone | the cave (2 big rounded rocks today), the aquarium, the pool, the fenced pens, the sandcastle tower |
+| Machines and Danger Zone | the shredder pit, the sweeper, the rocket pad and gantry, the concrete slab, the T-rex pen, the crocodile pond, the speaker wall |
+| Small props | the crates, barrels, benches, bins and bike racks |
+| Every other prop | from any earlier round |
+
+**3. Targets for the worst ones:**
+- **The snack kiosk:** a real kiosk or food-truck model with a serving window, a striped awning or pitched roof (attached, not floating), a counter with napkins and ketchup bottles, a menu board with food pictures, a drinks fridge, 2-3 stools, a small queue of ragdolls sometimes, and a sun umbrella table next to it.
+- **The portable toilets:** real portaloo models (a moulded plastic shell, a door with a vacancy slider, a roof vent, a step). Our own colours, no real brand. A door that opens when a ragdoll goes in, a "flush" sound and a ragdoll walking out (fun).
+- **The cave:** a sculpted rock formation (a cave mesh or terrain rock) with depth, a real dark mouth (F36), roots, moss and boulders, not 2 balls.
+- **Buildings** (garage, hangar, towers, station): real building models, or detailed builds with doors, windows, roofs with edges, signs, pipes and lights.
+
+**4. Every replacement:**
+- stands on its plan spot with the 3-stud clearance (F44);
+- uses shared meshes and materials (instancing);
+- fits the part budget;
+- matches the one style.
+
+**5. Check:**
+- after each area, capture close-ups and medium views on PC and phone;
+- harsh score "would a player call this a box?" Every model must be 9+;
+- re-run the list: 0 models left marked REPLACE or REBUILD.
+
 ## 3. Lag-free rules (all devices)
 - **Meshes:** shared meshes and materials (instancing); RenderFidelity Automatic; CollisionFidelity Box or Hull; CanCollide off on small decoration; CanQuery and CanTouch off where not needed.
 - **Shadows:** CastShadow only on big things near you.
