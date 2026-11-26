@@ -21,12 +21,22 @@ RagdollNav.RATE = 6
 RagdollNav.AHEAD = 3.5 -- studs: the next waypoint is given before it arrives, so it never stops between them
 RagdollNav.NOGO = { "Lava", "Water", "Pool", "FlowerBed", "Shredder", "GyroPad", "Rail", "Sleeper", "Trench", "Pond", "Aquarium" }
 
-type Nav = { goal: Vector3, look: any, points: { Vector3 }, idx: number, lastPos: Vector3, lastAt: number, fails: number }
+type Nav = { goal: Vector3, look: any, points: { Vector3 }, idx: number, lastPos: Vector3, lastAt: number, fails: number, plannedAt: number?, dirty: boolean? }
 
 local navs: { [Model]: Nav } = setmetatable({}, { __mode = "k" }) :: any
 local mine: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any -- (we are setting Home ourselves)
 local lastOutside: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any -- (F65: when a system last set Home itself)
 local budget = RagdollNav.RATE
+-- (F72, Config.NAV_ALWAYS: the waypoint goes in its OWN attribute NavHome, which the active ragdoll follows before Home; Home is
+-- never overwritten, so a system that sets Home every tick (a moving goal: the newspaper route, a chase, FirstAid, a
+-- runner) no longer fights the path, and every walk gets one: re-planned only when the goal moved 4 studs, at most 1/s)
+local ALWAYS = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).NAV_ALWAYS == true
+local function drop(m: Model)
+	navs[m] = nil
+	if ALWAYS and m.Parent then
+		m:SetAttribute("NavHome", nil)
+	end
+end
 local agent = { AgentRadius = 2, AgentHeight = 5.5, AgentCanJump = false, AgentCanClimb = false, WaypointSpacing = 5, Costs = { NoGo = math.huge } }
 
 local function pelvisOf(m: Model): BasePart?
@@ -35,6 +45,10 @@ local function pelvisOf(m: Model): BasePart?
 end
 
 local function setHome(m: Model, at: Vector3)
+	if ALWAYS then
+		m:SetAttribute("NavHome", at)
+		return
+	end
 	mine[m] = true
 	m:SetAttribute("Home", at)
 	mine[m] = nil
@@ -66,16 +80,16 @@ local function start(m: Model, goal: Vector3)
 	end
 	local from = Vector3.new(pe.Position.X, goal.Y, pe.Position.Z)
 	if (from - goal).Magnitude < RagdollNav.FAR then
-		navs[m] = nil
+		drop(m)
 		return
 	end
 	local pts = compute(m, pe.Position, goal)
 	if not pts or #pts < 2 then
-		navs[m] = nil
+		drop(m)
 		return -- (no path or no budget: it walks straight as before)
 	end
 	local look = m:GetAttribute("HomeLook")
-	navs[m] = { goal = goal, look = look, points = pts, idx = 2, lastPos = pe.Position, lastAt = os.clock(), fails = 0 }
+	navs[m] = { goal = goal, look = look, points = pts, idx = 2, lastPos = pe.Position, lastAt = os.clock(), fails = 0, plannedAt = os.clock() }
 	if look ~= nil then
 		m:SetAttribute("HomeLook", nil)
 	end
@@ -84,7 +98,11 @@ end
 
 local function finish(m: Model, n: Nav)
 	navs[m] = nil
-	setHome(m, n.goal)
+	if ALWAYS then
+		m:SetAttribute("NavHome", nil) -- (the last stretch straight to Home itself)
+	else
+		setHome(m, n.goal)
+	end
 	if n.look ~= nil then
 		m:SetAttribute("HomeLook", n.look)
 	end
@@ -102,6 +120,16 @@ local function step()
 		if not (st == nil or st == "Standing" or st == "Walking") then
 			n.lastAt = now -- (down or held: wait)
 			continue
+		end
+		if ALWAYS and n.dirty and now - (n.plannedAt or 0) >= 1 then
+			-- (the goal moved 4+ studs: a new path, at most once a second)
+			n.dirty = false
+			n.plannedAt = now
+			local pts = compute(m, pe.Position, n.goal)
+			if pts and #pts >= 2 then
+				n.points, n.idx = pts, 2
+				setHome(m, pts[2])
+			end
 		end
 		local here = Vector3.new(pe.Position.X, 0, pe.Position.Z)
 		local wp = n.points[n.idx]
@@ -121,8 +149,12 @@ local function step()
 				-- stuck: a step back and a new path
 				n.fails += 1
 				if n.fails >= 3 then
-					navs[m] = nil
-					setHome(m, pe.Position) -- (give up: it stays where it is)
+					if ALWAYS then
+						drop(m) -- (give up: it walks straight at Home again)
+					else
+						navs[m] = nil
+						setHome(m, pe.Position) -- (give up: it stays where it is)
+					end
 					if n.look ~= nil then
 						m:SetAttribute("HomeLook", n.look)
 					end
@@ -152,6 +184,19 @@ local function watchModel(m: Instance)
 			local n = navs[m]
 			if n and (h - n.points[n.idx]).Magnitude < 0.05 then
 				return -- (our own waypoint, seen late when signals are deferred)
+			end
+			if ALWAYS then
+				if n and (h - n.goal).Magnitude < 4 then
+					n.goal = h -- (a small move: same path, new end)
+					return
+				end
+				if n and os.clock() - (n.plannedAt or 0) < 1 then
+					n.goal = h
+					n.dirty = true -- (re-planned in step, at most once a second)
+					return
+				end
+				start(m, h)
+				return
 			end
 			-- (F65: a system that moves Home more than once a second steers on its own (the newspaper route, a chase): pathing
 			-- each of those would make Home flip between its target and a waypoint, and the legs jitter.)

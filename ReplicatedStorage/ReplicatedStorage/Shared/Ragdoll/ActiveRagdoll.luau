@@ -920,6 +920,11 @@ local function brokenLegs(rig: Rig): (number, number)
 end
 
 local function homeOf(rig: Rig): Vector3?
+	-- (F72, Config.NAV_ALWAYS: Systems/RagdollNav's next waypoint, when it is leading this walk, comes before Home)
+	local nav = rig.model:GetAttribute("NavHome")
+	if typeof(nav) == "Vector3" then
+		return nav
+	end
 	local home = rig.model:GetAttribute("Home")
 	return if typeof(home) == "Vector3" then home else nil
 end
@@ -1294,7 +1299,9 @@ local function think(rig: Rig)
 		end
 		return
 	end
-	if flat(home - rig.pelvis.Position).Magnitude > HOME_LEAVE then
+	-- (F72: a path's waypoint (NavHome) is walked to even when it is close: the next one follows before it arrives)
+	local leave = if rig.model:GetAttribute("NavHome") ~= nil then HOME_ARRIVE + 0.4 else HOME_LEAVE
+	if flat(home - rig.pelvis.Position).Magnitude > leave then
 		-- (Ran from a gun that is still pointed at its place: it keeps its distance, no running
 		-- back and forth.)
 		if coward and now - rig.gunFledAt < GUN_WARY and GunThreat.near(home, GunThreat.SCARE_REACH) then
