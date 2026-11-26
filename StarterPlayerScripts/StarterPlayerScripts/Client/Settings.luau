@@ -26,7 +26,7 @@ local Icons = require(UI:WaitForChild("LihFolkUIIcons"))
 local Settings = {}
 
 --   DEAD MONITOR   ON / OFF (round 4, M11): the small monitor over a dead body under the mouse (OFF unless chosen)
-export type Values = { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean, notices: number, recoil: number, fpShot: boolean, fpStart: boolean, fpTaught: boolean }
+export type Values = { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean, notices: number, recoil: number, fpShot: boolean, fpStart: boolean, fpTaught: boolean, walk: number }
 
 -- The choices of each multi-way row, in the order a tap cycles them (index 1 is the default).
 Settings.SFX = { { name = "NORMAL", volume = 1 }, { name = "QUIET", volume = 0.4 }, { name = "OFF", volume = 0 } }
@@ -37,9 +37,12 @@ Settings.UI = { { name = "NORMAL", scale = 1 }, { name = "LARGE", scale = 1.15 }
 Settings.NOTICES = { { name = "AUTO" }, { name = "NORMAL" }, { name = "SMALL" }, { name = "MINIMAL" } }
 -- V9-NOW 9: how much your own shots kick the camera (FeelV2); Motion LESS halves it again.
 Settings.RECOIL = { { name = "FULL", scale = 1 }, { name = "HALF", scale = 0.5 }, { name = "OFF", scale = 0 } }
+-- F38 (owner: "gør så man kan adjust speed i sine settings"; Config.WALK_SETTING): the walk speed; sprint stays 1.5x it
+-- (Client/Sprint reads the player attribute WalkPref). NORMAL is the game's own speed.
+Settings.WALK = { { name = "NORMAL", speed = nil :: number? }, { name = "FAST", speed = 34 :: number? }, { name = "VERY FAST", speed = 40 :: number? }, { name = "CALM", speed = 20 :: number? } }
 local SAVE_AFTER = 0.75 -- s after the last change (one write for a flurry of taps)
 
-local values: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1, recoil = 1, fpShot = true, fpStart = false, fpTaught = false }
+local values: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1, recoil = 1, fpShot = true, fpStart = false, fpTaught = false, walk = 1 }
 local touched = false -- (changed here before the kept choice arrived: this session's choice wins)
 local loaded = false -- (V9-0w: the kept choices have come from the server)
 local saveToken = 0
@@ -92,7 +95,7 @@ end
 
 -- Checks a table from anywhere (the server's message, a test) into values; junk keeps the default.
 function Settings.clean(raw: unknown): Values
-	local v: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1, recoil = 1, fpShot = true, fpStart = false, fpTaught = false }
+	local v: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1, recoil = 1, fpShot = true, fpStart = false, fpTaught = false, walk = 1 }
 	if type(raw) ~= "table" then
 		return v
 	end
@@ -105,6 +108,7 @@ function Settings.clean(raw: unknown): Values
 	v.ui = pick(t.ui, Settings.UI) or 1
 	v.notices = pick(t.notices, Settings.NOTICES) or 1
 	v.recoil = pick(t.recoil, Settings.RECOIL) or 1 -- (V9-NOW 9)
+	v.walk = pick(t.walk, Settings.WALK) or 1 -- (F38)
 	v.blood = t.blood ~= false
 	v.shake = t.shake ~= false
 	;(v :: any).hideCard = t.hideCard == true -- (23 Nov 2026, owner: the body card after a hit can be hidden)
@@ -121,6 +125,7 @@ local function apply()
 	-- (A local preference: only this screen draws this player's hit effects. Unset is the game's
 	-- most, so ON clears it rather than naming a style.)
 	player:SetAttribute("HitFxStyle", if values.blood then nil else "Stylised")
+	player:SetAttribute("WalkPref", if Config.WALK_SETTING then Settings.WALK[values.walk].speed else nil) -- (F38: Client/Sprint)
 	Controller.setReducedMotion(Settings.MOTION[values.motion].reduced)
 	Controller.setPlayerScale(Settings.UI[values.ui].scale)
 	pcall(function()
@@ -279,6 +284,9 @@ local function build()
 	choiceRow("UI size", "Buttons and windows bigger or smaller", "scale", "ui", Settings.UI, 5, body)
 	choiceRow("Notices", "Auto: small on a phone. Minimal: only what matters", "eye", "notices", Settings.NOTICES, 9, body)
 	choiceRow("Recoil", "How much your shots kick the camera", "shake", "recoil", Settings.RECOIL, 10, body)
+	if Config.WALK_SETTING then
+		choiceRow("Walk speed", "How fast you walk. Sprint is 1.5x that", "motion", "walk", Settings.WALK, 11, body)
+	end
 	window.defaultSelection = first.hit
 	Controller.register(window)
 	apply()

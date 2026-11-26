@@ -215,11 +215,13 @@ function Sprint.start()
 			if math.abs(weight - wantWeight) < 0.004 then
 				weight = wantWeight
 			end
-			local speed = StarterPlayer.CharacterWalkSpeed * weight * (1 + (Sprint.SPEED - 1) * (if plain then amount else 0))
+			local pref = player:GetAttribute("WalkPref") -- (F38: the walk speed chosen in Settings)
+			local base = if type(pref) == "number" then math.clamp(pref, 16, 40) else StarterPlayer.CharacterWalkSpeed
+			local speed = base * weight * (1 + (Sprint.SPEED - 1) * (if plain then amount else 0))
 			-- (Only while the walk speed is ours to set: the plain walk speed or the one we wrote last.
 			-- Anything else set it (a stop, a slow, a boost): left alone.)
 			local now = humanoid.WalkSpeed
-			local ours = math.abs(now - StarterPlayer.CharacterWalkSpeed) < 0.05 or (written ~= nil and math.abs(now - written) < 0.05)
+			local ours = math.abs(now - StarterPlayer.CharacterWalkSpeed) < 0.05 or math.abs(now - base) < 0.05 or (written ~= nil and math.abs(now - written) < 0.05)
 			if ours and math.abs(now - speed) > 0.05 then
 				humanoid.WalkSpeed = speed
 				written = speed

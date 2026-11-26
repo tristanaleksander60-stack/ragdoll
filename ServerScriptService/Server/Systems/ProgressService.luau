@@ -174,7 +174,7 @@ end
 -- A stored profile made safe (anything odd dropped).
 -- SETTINGS (round 3, M6), checked: three small choices and three switches (round 4, M11: the dead
 -- body's monitor), nothing else kept.
-local SETTING_CHOICES = { sfx = 3, motion = 3, ui = 3, notices = 4, recoil = 3 } -- (notices: V9-0g; recoil: V9-NOW 9)
+local SETTING_CHOICES = { sfx = 3, motion = 3, ui = 3, notices = 4, recoil = 3, walk = 4 } -- (notices: V9-0g; recoil: V9-NOW 9)
 function ProgressService.cleanSettings(raw: any): { sfx: number, blood: boolean, shake: boolean, motion: number, ui: number, deadMon: boolean, notices: number, recoil: number }?
 	if type(raw) ~= "table" then
 		return nil
