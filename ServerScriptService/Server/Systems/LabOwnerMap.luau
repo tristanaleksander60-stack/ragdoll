@@ -380,6 +380,85 @@ local function hero(into: Instance, o: Vector3, top: number)
 		c + Vector3.new(-h - 42, 2.5, 36),
 		c + Vector3.new(-h - 42, 0.6, 48), -- (the plan's slide run-out, south-west of the tower)
 	}
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SLIDE_V2 then
+		-- F58 (owner's screenshot: loose green blocks, gaps, a piece sticking up, no opening in the railing): ONE smooth
+		-- chute. A Catmull-Rom curve through the same points, cut into short pieces (about SEG studs) that meet end to end
+		-- with only a small angle between them: no gaps, no steps. Slippery bed, side walls, steel legs every few pieces
+		-- down to the ground, an opening in the roof railing with a SLIDE sign, and a soft mat at the run-out.
+		local SEG = 4
+		local function cr(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, t: number): Vector3
+			local t2, t3 = t * t, t * t * t
+			return 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3)
+		end
+		local curve: { Vector3 } = {}
+		for i = 1, #pts - 1 do
+			local p0, p1, p2, p3 = pts[math.max(1, i - 1)], pts[i], pts[i + 1], pts[math.min(#pts, i + 2)]
+			local n = math.max(2, math.ceil((p2 - p1).Magnitude / SEG))
+			for k = 0, n - 1 do
+				table.insert(curve, cr(p0, p1, p2, p3, k / n))
+			end
+		end
+		table.insert(curve, pts[#pts])
+		for i = 1, #curve - 1 do
+			local a, b = curve[i], curve[i + 1]
+			local len = (b - a).Magnitude
+			if len < 0.05 then
+				continue
+			end
+			local cf = CFrame.lookAt((a + b) / 2, b)
+			local bed = part(into, "SlideBed", Vector3.new(10, 0.8, len + 0.35), cf, SLIDE, Enum.Material.SmoothPlastic)
+			bed.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0, 0.3, 100, 1)
+			for _, side in { -1, 1 } do
+				part(into, "SlideWall", Vector3.new(0.6, 2.4, len + 0.35), cf * CFrame.new(side * 5.3, 1.2, 0), SLIDE, Enum.Material.SmoothPlastic, true)
+			end
+			if i % 3 == 0 and a.Y - top > 5 then
+				for _, side in { -1, 1 } do
+					local foot = (cf * CFrame.new(side * 4.2, -0.4, 0)).Position
+					beam(into, "SlideLeg", Vector3.new(foot.X, top, foot.Z), foot, 0.7, GALV)
+				end
+				local l = (cf * CFrame.new(-4.2, -0.4, 0)).Position
+				local r = (cf * CFrame.new(4.2, -0.4, 0)).Position
+				part(into, "SlideBracket", Vector3.new(9.4, 0.5, 0.8), cf * CFrame.new(0, -0.65, 0), GALV, Enum.Material.Metal, true)
+				beam(into, "SlideBrace", Vector3.new(l.X, top + (l.Y - top) * 0.3, l.Z), r, 0.35, GALV, true)
+			end
+		end
+		-- the opening in the roof railing at the start, with posts and a SLIDE sign over it
+		local start = pts[1]
+		local ov = OverlapParams.new()
+		ov.FilterType = Enum.RaycastFilterType.Include
+		ov.FilterDescendantsInstances = { into }
+		for _, p in Workspace:GetPartBoundsInBox(CFrame.new(start + Vector3.new(2, 2.5, 0)), Vector3.new(8, 5, 12), ov) do
+			if string.find(p.Name, "Rail") or string.find(p.Name, "Guard") then
+				p:Destroy()
+			end
+		end
+		local dirOut = (curve[2] - curve[1]) * Vector3.new(1, 0, 1)
+		local side = Vector3.new(-dirOut.Z, 0, dirOut.X).Unit
+		for _, s in { -1, 1 } do
+			part(into, "SlidePost", Vector3.new(0.6, 8, 0.6), CFrame.new(start + side * (s * 5.8) + Vector3.new(0, 4, 0)), GALV, Enum.Material.Metal, true)
+		end
+		local signAt = start + Vector3.new(0, 8.4, 0)
+		local sign = part(into, "SlideSign", Vector3.new(12.2, 1.8, 0.4), CFrame.lookAt(signAt, signAt - dirOut.Unit), Color3.fromRGB(40, 150, 70), Enum.Material.SmoothPlastic, true)
+		for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+			local g = Instance.new("SurfaceGui")
+			g.Face = face
+			g.CanvasSize = Vector2.new(300, 44)
+			g.LightInfluence = 0
+			local l = Instance.new("TextLabel")
+			l.BackgroundTransparency = 1
+			l.Size = UDim2.fromScale(1, 1)
+			l.Font = Enum.Font.FredokaOne
+			l.TextScaled = true
+			l.TextColor3 = Color3.new(1, 1, 1)
+			l.TextStrokeTransparency = 0.2
+			l.Text = "SLIDE"
+			l.Parent = g
+			g.Parent = sign
+		end
+		-- the soft mat at the run-out
+		local last = pts[#pts]
+		part(into, "SlideMat", Vector3.new(14, 0.8, 16), CFrame.lookAt(last + Vector3.new(0, -0.1, 0), last + dirOut.Unit * 0 + (pts[#pts] - pts[#pts - 1]) * Vector3.new(1, 0, 1) + Vector3.new(0, -0.1, 0)) * CFrame.new(0, 0, -8), Color3.fromRGB(60, 120, 220), Enum.Material.Fabric)
+	else
 	for i = 1, #pts - 1 do
 		local a, b = pts[i], pts[i + 1]
 		local len = (b - a).Magnitude
@@ -399,6 +478,7 @@ local function hero(into: Instance, o: Vector3, top: number)
 			local r = (cf * CFrame.new(4.5, 0, 0)).Position
 			beam(into, "SlideBrace", Vector3.new(l.X, top + (l.Y - top) * 0.3, l.Z), r - Vector3.new(0, 0.5, 0), 0.4, GALV, true)
 		end
+	end
 	end
 	part(into, "SlideButton", Vector3.new(0.8, 3, 3), CFrame.new(pts[1] + Vector3.new(4, 1.5, -8)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(210, 40, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
 

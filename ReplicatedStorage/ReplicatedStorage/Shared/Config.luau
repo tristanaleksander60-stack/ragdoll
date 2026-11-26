@@ -79,6 +79,7 @@ local Config = {
 	NEARBY_CAP = true, -- OVERVIEW 0.158: living ragdolls within 45 studs capped per device (phone 7, tablet 9, PC 12); the extras walk away 90 studs, never removed (RagdollDirector)
 	PEN_TO_PLAN = true, -- F55: the T-rex pen is its plan size (100 x 46), gate in the WEST wall, so it no longer stands across the Animal Cove path (LabOwnerMap)
 	LEG_JITTER_LOG = true, -- F65: an always-on detector logs any ragdoll whose knee reverses 6+ times a second (state, role, Home changes, feet, fps) (Client/LegJitter)
+	SLIDE_V2 = true, -- F58: the tower slide is ONE smooth chute (a curve cut into 4-stud pieces), legs every few pieces, an opening in the roof railing with a SLIDE sign, a soft mat at the run-out (LabOwnerMap hero)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays
