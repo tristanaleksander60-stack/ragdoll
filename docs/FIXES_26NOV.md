@@ -1270,6 +1270,88 @@ Also, `BikeService.nextSpot` still drives circles 40-84 studs round the LAB ORIG
 6. **The empty case:** no #1 yet = the plain grey lab ragdoll on the plinth, the plaque "#1 COULD BE YOU" (as now). The owner and admins never stand there (F61).
 7. **Check:** both VIP boards and the normal boards: each #1 stands ON its plinth beside the board, in their own skin and clothes, and no statue covers a board's names.
 
+## F78 REAL WATER: the aquarium, the croc pond and every pool; ragdolls SWIM or DROWN (owner: "Hajen er nede i concrete i akvariet. Og der sker ikke noget hvis man kaster en derned og det ligner ikke der er vand, ragdollen skal svømme eller drukne", and "vandpøl over landet med sten"; screenshots: an empty concrete basin with dark corner posts and a "SURPRISE! MOON GRAVITY" banner; the croc pond as a flat teal disc on the grass, flat crocodiles, round grey balls for stones)
+**The causes (found in the code):**
+- **The shark is in the concrete:**
+  - the SHARK TANK creature (`LabCreatures` ~860) builds its OWN sand floor (`SharkTankFloor`) and a 1-stud `SharkTankWater` at `LabLayout10.CREATURES.Whale`, at ground level, and pushes the shark 0.7 under that surface;
+  - the aquarium (`LabOwnerMap` northRow) stands on a 3-stud concrete `AquaBase`;
+  - so the shark, its floor and its thin water are all INSIDE the concrete base.
+- **No water:**
+  - the aquarium's `AquaWater` is a Glass part (0.45 transparent, no collision); it is not water for the physics;
+  - in the owner's screenshot neither the water nor the glass walls show at all. Check in Studio whether `AquaWater` / `AquaGlass` exist and why they are hidden (a HIDE list, LagGuard, streaming, F68's "water" switch, or a cleanup step);
+  - the croc pond is a 0.6-stud teal cylinder lying ON the grass (`CrocWater`), and the pool a 0.4-stud glass sheet. Nothing anywhere is real water, so a ragdoll thrown in just lies on the floor.
+
+**The fix** (behind `Config.REAL_WATER = true`):
+1. **Every water body is REAL TERRAIN WATER in a real basin:**
+   - the aquarium, the croc pond, the big pool, the lounge pool (and the fountains if they are cheap enough);
+   - fill each with `Terrain:FillBlock` / `FillCylinder` (`Enum.Material.Water`); this gives the water look, the underwater view, player swimming and part buoyancy for free;
+   - set the terrain water once: clear blue-green, `WaterTransparency` about 0.6 (the shark and the fish show), small waves (`WaterWaveSize` 0.05), `WaterReflectance` about 0.4;
+   - terrain voxels are 4 studs: put every basin on the 4-stud grid (inner sizes and floors in multiples of 4), so no water pokes through a glass wall or a rim. Look at each from all 4 sides;
+   - remove the fake water parts (`AquaWater`, `CrocWater`, `PoolWater`, `SharkTankWater`, `SharkTankFloor` when inside the aquarium).
+2. **The AQUARIUM:**
+   - the glass tank on its base, filled with water to 2 studs under the rim;
+   - a sand floor, rocks, swaying seaweed (client), coral, small fish schools (client-only, cheap), bubbles from an air stone;
+   - **the shark swims laps INSIDE the tank at mid-depth.** Its height comes from the aquarium's floor and water surface (not the old shallow pool), and it turns smoothly at the ends;
+   - **a feeding platform:** stairs or a ladder up the side to a platform with a rail over the water, so you can carry a ragdoll up and THROW IT IN (and drop one in from the platform);
+   - the shark notices a body in the water and comes for it: the existing feed move (lunge, grab, shake, spit it out). Kid-friendly: a purple cartoon cloud, no limbs off;
+   - a ragdoll that is not taken swims to the inside ladder and climbs out (step 4), or drowns if it cannot.
+   - Fix F33 at the same time: at least 6 studs clear on every side, the lint 0.
+3. **The CROC POND: a real sunken pond, not a disc:**
+   - dig it into the ground: about 60 across, 8 deep in the middle, with sloped muddy banks (Terrain Mud and Sand) and the water 1 stud under the grass;
+   - reeds and lily pads;
+   - natural rocks half buried (Terrain Rock or Creator Store rock models, irregular), never round grey balls;
+   - the crocodiles swim slowly with only their eyes and backs above the water, and one suns itself on the bank;
+   - a ragdoll in the water: a croc goes for it (a death roll: it spins it, then lets go; no limbs off).
+   - The speaker wall south of the pond stays (it is from the owner's old map), but looks like a real speaker stack: grille texture, a brand plate, small LEDs.
+   - The cave yard's round `YardStone` balls become natural rocks the same way (F79).
+4. **Ragdolls in water: a SWIM state** (`ActiveRagdoll`, server; animation in `DummyLife`):
+   - **Detect:** the pelvis inside a water box. Every water body registers its box (CollectionService tag `WaterVolume`); the point-in-box test runs at 5 Hz per ragdoll near water only.
+   - **Splash:** on entry, a splash (particles plus a sound scaled by speed) and ripples; the first second is panicky splashing with the arms flailing, and a bubble line ("Help!", "I can't swim!", "Cold!"; `TalkLines` water lines).
+   - **Swim:**
+     - a living, awake ragdoll in water deeper than its chest keeps its head above the surface (the lift holds the head 0.6 over it), the body tilted about 30 degrees;
+     - front-crawl arms and a flutter kick while moving; treading water (slow arm sweeps) while still;
+     - it swims to the nearest exit (pool steps, a ladder, the pond bank) and CLIMBS OUT: hands on the edge, pull up, a knee up, stand;
+     - then it shakes off (water drips for 20 s, slightly darker clothes).
+   - **Drown (kid-friendly, a cartoon):** if it is knocked out, held under (shark, croc, a grab), or cannot reach an exit within 25 s, it tires:
+     - its head dips and bubbles rise;
+     - after 6 s under it is knocked out: eyes closed, `Vital` Unconscious;
+     - it floats face down at the surface, drifting.
+   - **The rescue:** pull it out (grab) and do CPR (F15): it coughs up a splash of water and wakes. If nobody helps, it wakes after the normal knockout time and swims out.
+   - **Bodies float:** a knocked-out or limp body floats (density about 0.9 of water), bobs and drifts slowly. It never sinks through the floor and never skates on top (the RAGDOLL_FEEL water bar).
+   - **Players** swim with Roblox's own swimming in terrain water, as everywhere.
+5. **Cost:** terrain water costs little; the water checks run only for ragdolls within 10 studs of a water box; the particles are capped on phones (the splash max 20 particles, the drips off beyond 60 studs).
+6. **F68** (remove the water button; water always on) is solved by this: terrain water is always there. Remove any old water switch you find.
+
+**Check:**
+- **phone and PC:** look at the aquarium. Clear water to the rim; the shark swims inside, never in the concrete;
+- carry a ragdoll up the platform and throw it in: a splash; it swims and panics; the shark takes it, or it climbs out. Hold one under (or let the shark grab it): bubbles, then it floats knocked out; pull it out and do CPR: it coughs and wakes;
+- the croc pond is a real pond with banks, and a ragdoll thrown in swims; a croc goes for it;
+- the big pool: bodies float and bob.
+
+## F79 The BEAR CAVE is a grey ball and a loose black slab (owner: "Hulen er også bare en cirkel med en masse og en sort flad væk der ikke hænger sammen", screenshot: a huge grey sphere, a black flat panel standing in front of it, round grey stone balls on a dirt yard, the bear on the path)
+**The cause:** `LabOwnerMap` northRow builds the cave from two `CaveRock` BALL parts (110 x 70 x 90 and 70 x 52 x 60), a flat black `CaveMouth` block (26 x 22 x 3) standing in front of them, and 26 round `YardStone` balls. F36's "real cave mouth" was never built.
+
+**The fix** (behind `Config.CAVE_V2 = true`; this replaces F36's cave part; F36's bear animations stay):
+1. **A rock hill from terrain, joined to the ground:**
+   - Terrain Rock and Slate (some Basalt) sculpted from several overlapping irregular shapes (`FillBall`, rotated `FillBlock`, `FillWedge`), with Grass and Ground on its top and sides, so it grows out of the land with no seam;
+   - moss patches, a few bushes and a tree on top, roots hanging over the mouth.
+2. **A real opening carved INTO it:**
+   - `FillBlock` / `FillBall` with Air: an arch about 22 wide and 18 high, a tunnel going in and turning, and a chamber about 30 deep;
+   - the inside goes dark by itself, deeper in. Add a soft dark gradient at the back (a part with a black-to-clear Decal, only visible from the front) and two glinting eyes (small Neon dots that blink every few seconds) when the bear is not out;
+   - the bear sleeps inside sometimes (F36 states).
+3. **Remove:** the `CaveRock` balls and the `CaveMouth` slab.
+4. **A Creator Store cave instead:** only if one looks clearly better and real (rock with a hollow inside, a clean license, the malware pass), sized to the plan's `CaveBear` box. Terrain is the default: cheap, natural, and it joins the ground.
+5. **The yard:**
+   - dirt (Terrain Ground) with natural half-buried rocks (no round balls), a fallen log, and a tree stump the bear scratches against (F36);
+   - a low natural rock line round the yard keeps the bear in, with the path entering through a gap;
+   - the bear walks its yard and comes to the edge, but does not walk out along the path (it turns back at the gap).
+6. **Lint:**
+   - the terrain never covers a path, a lamp or a sign (`onPath` check before every fill; the plan's path into the yard stays clear and walkable to the mouth);
+   - nothing else stands inside the hill.
+7. **Cost:** terrain carving runs once when the map is built; no extra parts, except the decal, the eyes and the props.
+
+**Check:** walk up the path to the cave. A natural rock hill with a dark opening you can walk into; the bear in its yard; no ball, no floating black panel, no round stones.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
