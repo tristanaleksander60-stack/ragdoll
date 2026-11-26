@@ -118,6 +118,7 @@ end
 LabDress.FENCE_STEP = 12
 
 local SPREAD = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAB_SPREAD or 1 -- (0.37.0: the bigger lab)
+local LabLayout10 = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("LabLayout10")) :: any
 
 function LabDress.dress(into: Instance, origin: Vector3)
 	local folder = Instance.new("Folder")
@@ -135,7 +136,10 @@ function LabDress.dress(into: Instance, origin: Vector3)
 			c.x, c.z = to.X, to.Y
 			s = c
 		end
-		if V3Assets.has(s.role) then
+		-- (LAB10: only the props that do something stay; the scattered barrels, crates, cones, rocks, benches and
+		-- lamps are gone from the crash-test lab: LabLayout10.DRESS_KEEP.)
+		local keep = not LabLayout10.on or LabLayout10.DRESS_KEEP[s.role] == true
+		if keep and V3Assets.has(s.role) then
 			local at = CFrame.new(origin + Vector3.new(s.x * SPREAD, 0, s.z * SPREAD)) * CFrame.Angles(0, math.rad(s.yaw), 0)
 			local placed = V3Assets.place(s.role, folder, at, { size = s.size, height = s.height, collide = s.collide == true })
 			-- (UI audit 21 Nov 2026: barrels, crates and cones are things you can knock over, not scenery.)
@@ -153,7 +157,7 @@ function LabDress.dress(into: Instance, origin: Vector3)
 			end
 		end
 	end
-	if V3Assets.has("Fence") then
+	if V3Assets.has("Fence") and not LabLayout10.on then -- (LAB10: the compound wall instead)
 		local x = -78 * SPREAD
 		while x <= 78 * SPREAD do
 			local at = CFrame.new(origin + Vector3.new(x, 0, -94 * SPREAD))
@@ -174,7 +178,7 @@ function LabDress.dress(into: Instance, origin: Vector3)
 	-- (24 Nov 2026, owner: the indoor weapon range behind the creature yard.)
 	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SHOOTING_RANGE == true then
 		local okR, errR = pcall(function()
-			return require(script.Parent:WaitForChild("ShootingRange")).buildLab(folder, origin)
+			return require(script.Parent:WaitForChild("ShootingRange")).buildLab(folder, origin + LabLayout10.move("ShootingRange"))
 		end)
 		if not okR then
 			warn("[LabDress] shooting range: " .. tostring(errR))

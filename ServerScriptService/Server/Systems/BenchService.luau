@@ -69,7 +69,9 @@ local function fits(origin: Vector3, spot: Vector2): CFrame?
 		end
 	end
 	local at = Vector3.new(origin.X + spot.X, origin.Y, origin.Z + spot.Y)
-	local frame = CFrame.lookAt(at, Vector3.new(origin.X, origin.Y, origin.Z))
+	local L10 = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("LabLayout10")) :: any
+	local faceZ = if L10.on then L10.TEST_FLOOR.Y else 0 -- (LAB10: they face the test floor)
+	local frame = CFrame.lookAt(at, Vector3.new(origin.X, origin.Y, origin.Z + faceZ))
 	local skip = skipList()
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
@@ -142,6 +144,10 @@ local function build(index: number, owner: Player): boolean
 			local angle = (a + (r % 2) * 0.5) * math.pi / 12
 			table.insert(spots, Vector2.new(math.cos(angle) * r, math.sin(angle) * r))
 		end
+	end
+	local L10 = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("LabLayout10")) :: any
+	if L10.on then
+		spots = table.clone(L10.BENCHES) -- (LAB10: a few benches round the test floor, nothing scattered)
 	end
 	-- (The same order in every lab and every time.)
 	local order = Random.new(7)

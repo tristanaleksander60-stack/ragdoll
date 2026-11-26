@@ -15,7 +15,7 @@ local THUMB = (Config :: any).LOOK_THUMB == true and (Config :: any).LOOK_THUMB_
 local V3 = if THUMB then (Config :: any).LOOK_THUMB_LIGHT else Config.LOOK_V3_LIGHT
 -- (V10, owner 22 Nov 2026: "remove the sun's harsh light, the exact vibe of the biggest ragdoll game"): a soft, bright,
 -- overcast day: high flat ambient, a weak sun, very soft shadows, little shine, a pale haze, colours a touch calmer.
-local SOFT = true
+local SOFT = not (Config :: any).LAB_V10 -- (LAB10, owner 26 Nov 2026: a sunny afternoon replaces the overcast look; LAB_V10 false = overcast again)
 if SOFT and not THUMB then
 	local soft = table.clone(V3 :: any)
 	soft.ClockTime = 13
@@ -36,6 +36,32 @@ if SOFT and not THUMB then
 	soft.airColor = Color3.fromRGB(222, 229, 235)
 	soft.airDecay = Color3.fromRGB(222, 229, 235)
 	V3 = soft
+end
+-- LAB10 (owner, 26 Nov 2026: "Hele labbet skal tages fra 2/10 til 10/10"): a sunny cartoon afternoon. A warm sun
+-- about 40 degrees up, real shadows, raised outdoor ambient, no fog wall (density 0.25, haze 0), +0.15
+-- saturation, +0.05 contrast, soft bloom, a bright sky with clouds. The same on phones.
+local SUNNY = (Config :: any).LAB_V10 == true and not THUMB
+if SUNNY then
+	local sun = table.clone(V3 :: any)
+	sun.ClockTime = 15.2
+	sun.Brightness = 2.2
+	sun.Ambient = Color3.fromRGB(108, 104, 112)
+	sun.OutdoorAmbient = Color3.fromRGB(150, 146, 150)
+	sun.ExposureCompensation = -0.1
+	sun.EnvironmentDiffuseScale = 1
+	sun.EnvironmentSpecularScale = 0.6
+	sun.ShadowSoftness = 0.25
+	sun.bloom = 0.35
+	sun.bloomThreshold = 1.4
+	sun.contrast = 0.05
+	sun.saturation = 0.15
+	sun.airDensity = 0.25
+	sun.airOffset = 0
+	sun.airHaze = 0
+	sun.airGlare = 0
+	sun.airColor = Color3.fromRGB(196, 220, 245)
+	sun.airDecay = Color3.fromRGB(150, 186, 232)
+	V3 = sun
 end
 
 local ZoneLighting = {}
@@ -324,6 +350,28 @@ local function overcastSky()
 	Lighting.ColorShift_Top = Color3.new(0, 0, 0)
 end
 
+-- LAB10: a bright blue sky with white fair-weather clouds and the sun disc.
+local function sunnySky()
+	local clouds = workspace.Terrain:FindFirstChildOfClass("Clouds")
+	if not clouds then
+		local made = Instance.new("Clouds")
+		made.Parent = workspace.Terrain
+		clouds = made
+	end
+	assert(clouds)
+	clouds.Cover = 0.5
+	clouds.Density = 0.45
+	clouds.Color = Color3.fromRGB(255, 255, 255)
+	clouds.Enabled = true
+	for _, d in Lighting:GetChildren() do
+		if d:IsA("Sky") then
+			d.CelestialBodiesShown = true
+		end
+	end
+	Lighting.ColorShift_Top = Color3.fromRGB(255, 236, 200)
+	Lighting.GeographicLatitude = 30
+end
+
 -- LOOK_V3's finish: soft shadows, almost no bloom, no sun rays or far blur, a low haze.
 local function finishV3()
 	Lighting.ShadowSoftness = V3.ShadowSoftness
@@ -379,6 +427,8 @@ local function finishV3()
 		thumbSky()
 	elseif SOFT then
 		overcastSky()
+	elseif SUNNY then
+		sunnySky()
 	end
 end
 

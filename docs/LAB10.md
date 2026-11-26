@@ -153,3 +153,49 @@ Each point scores 0-10 on the captures; all must be 9+.
 ## 6. After publishing
 - **Watch the 5-minute and 10-minute funnels** (phone split) for 2 days against 0.53.0.
 - **If they drop, flip `LAB_V10 = false`** and publish. That rolls the lab back, never the servers.
+
+## State (26 Nov 2026, release 0.54.0, place saved v1111, NOT published yet: the owner presses Alt+P)
+**Built** (one run, Script Sync was off: every script went in through the MCP, checked by length):
+- `Config.LAB_V10 = true`. `Shared/LabLayout10` holds every spot; the builders read it (LabCreatures, VehicleService, Playground lava/boxing, LabDress, MapShopService trampoline, BenchService, PathPlan row/button/stretch).
+- `Systems/LabV10` (last in Playground.build) adds:
+  - the floor in concrete (it was see-through over the grass);
+  - a test floor (yellow rim, rings, target) with the dummies on it 26 studs ahead of the spawn, and the BIG RED BUTTON at its north edge;
+  - an orange spawn pad with an arrow;
+  - walkways with yellow lines;
+  - the compound wall with a hazard cap and orange gate posts (S, W, E);
+  - two teal hangars, a control tower and a water tower outside;
+  - the tower re-coloured white/yellow/black and the crash wall in orange.
+- **Hidden:** the garden strips, the old paths, scattered barrels, crates, cones, rocks, lamps, fence and bench props, the white spawn disc, the blue edge lines, and landscape trees inside the wall.
+- **Moved:**
+  - spider web behind the test floor (0,-86); shark tank, frog and plant north; chicken, stretch machine and boxing ring east (smash yard);
+  - slingshot, mole, washer and compressor south-west;
+  - cars in bays in front of the crash wall; trampoline behind the spawn; weapon range outside the south gate.
+- **Kept where they were:** portal and MAPS board (they face the spawn; moving them without a turn would face them away), the drop tower set, cannon, wrecking ball, crash pads, rocket and mech arms.
+- **Light** (`ZoneLighting` SUNNY): sun at 15:20, Brightness 2.2, haze 0, density 0.25, saturation +0.15, contrast +0.05, clouds with the sun disc. `LAB_V10 = false` brings back the overcast look.
+- **Parts in one lab:** 4,127 → 2,936.
+- **Captures:** `art/store/lab10/`:
+  - before: `before_high.jpg`, `before_spawn_phone.jpg`;
+  - after: `after_high.jpg`, `after_top.jpg`, `after_spawn_phone.jpg`.
+  - A PC spawn shot is still missing; the Studio capture ran in the phone emulator.
+
+**Honest score after round 1 (bar: 9 on each):**
+- 3-second read: 7
+- theme: 7
+- layout: 7
+- clean: 8
+- light: 8
+- landmarks: 6
+- phone: 6
+- performance: 9
+- fun pull: 7
+- screenshot: 6
+
+**Left for round 2 (next /klar):**
+- zone pictogram signs on boards;
+- the drop tower as hero (a hazard crown and the lab-name sign on top);
+- one travel-gate arch round the portal + MAPS board (turned to face the spawn);
+- launch range distance boards and a catch net;
+- a crash-track ramp;
+- the shop row with booths;
+- the black leaderboard slabs dressed as screens on a frame;
+- a PC capture.

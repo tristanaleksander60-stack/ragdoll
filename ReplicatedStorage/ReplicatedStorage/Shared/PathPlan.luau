@@ -407,6 +407,17 @@ if SPREAD ~= 1 then
 	end
 end
 
+-- LAB10 (owner, 26 Nov 2026; Shared/LabLayout10): the dummies on the test floor's rim straight ahead of the
+-- spawn, the BIG RED BUTTON at its north edge, the stretch machine in the smash yard.
+do
+	local L = require(script.Parent:WaitForChild("LabLayout10")) :: any
+	if L.on then
+		PathPlan.ROW_Z = L.TEST_FLOOR.Y
+		PathPlan.BUTTON_AT = L.BUTTON
+		PathPlan.RAMP_AT = L.STRETCH
+	end
+end
+
 -- Terrain material per open-air place (what the grass under a path turns into).
 PathPlan.TERRAIN = table.freeze({
 	Plaza = "Cobblestone",

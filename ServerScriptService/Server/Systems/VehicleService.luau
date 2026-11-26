@@ -554,6 +554,11 @@ function VehicleService.build(into: Folder, origin: Vector3)
 	for _, kind in kinds do
 		local spec = VehicleService.SPECS[kind]
 		local cf = CFrame.new(origin + Vector3.new(spec.pad.X * ((Config :: any).LAB_SPREAD or 1), spec.lift + spec.body.Y / 2 + 0.1, spec.pad.Y * ((Config :: any).LAB_SPREAD or 1)))
+		-- (LAB10: in its painted bay in front of the crash wall: Shared/LabLayout10.CARS.)
+		local bay = (require(ReplicatedStorage.Shared:WaitForChild("LabLayout10")) :: any).car(kind)
+		if bay then
+			cf = CFrame.new(origin + Vector3.new(bay.X, spec.lift + spec.body.Y / 2 + 0.1, bay.Y))
+		end
 		local model, body, seat = make(kind, cf)
 		model.Parent = holder
 		local car: Car = { model = model, body = body, seat = seat, home = cf, origin = origin, kind = kind, idleSince = os.clock(), badSince = 0, ejecting = false }

@@ -26,6 +26,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Anatomy = require(Shared:WaitForChild("Anatomy")) -- (0.37.11: the spider's bite)
 local Config = require(Shared:WaitForChild("Config")) :: any
+local LabLayout10 = require(Shared:WaitForChild("LabLayout10")) :: any
 local Systems = script.Parent
 
 local LabCreatures = {}
@@ -1502,11 +1503,18 @@ function LabCreatures.build(into: Instance, origin: Vector3)
 	-- The yard's ground: soft grass under it all.
 	local ground = part(folder, "YardGrass", Vector3.new(250 * S, 0.2, 38), CFrame.new(origin + Vector3.new(0, 0.1, LabCreatures.YARD_Z)), Color3.fromRGB(86, 124, 64), Enum.Material.Grass)
 	ground.CanCollide = false
-	if (Config :: any).GREEN_TILES then
+	if (Config :: any).GREEN_TILES or LabLayout10.on then
 		ground.Transparency = 1 -- (the green tiles under it show)
 	end
 	local ticks: { () -> () } = {}
 	for _, spot in LabCreatures.LAYOUT do
+		-- (LAB10: each one in its zone of the crash-test lab: Shared/LabLayout10.)
+		local moved = LabLayout10.creature(spot.id)
+		if moved then
+			local copy = table.clone(spot :: any)
+			copy.x, copy.z = moved.X, moved.Y
+			spot = copy
+		end
 		-- (Owner, 21 Nov 2026: "a COMPRESSOR instead of the robot vacuum": the press stands on the vacuum's spot.)
 		if spot.id == "Vacuum" and (Config :: any).COMPRESSOR then
 			local okC, errC = pcall(function()

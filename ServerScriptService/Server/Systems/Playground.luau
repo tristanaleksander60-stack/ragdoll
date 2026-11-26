@@ -23,6 +23,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage.Shared
 local Log = require(Shared.Log)
 local Config = require(Shared.Config)
+local LabLayout10 = require(Shared:WaitForChild("LabLayout10")) :: any
 local S = (Config :: any).LAB_SPREAD or 1 -- (0.37.0: the bigger lab: machine spots this many times further out)
 
 local PlayerRagdoll = require(script.Parent.PlayerRagdoll)
@@ -1399,7 +1400,16 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	buildRamp()
 	local lab = folder.Name ~= "Plaza"
 	if lab then
-		buildLava()
+		-- (LAB10: built from a moved origin, so every spot it keeps moves with it: Shared/LabLayout10.)
+		do
+			local home = origin
+			origin = home + LabLayout10.move("Lava")
+			local okLava, errLava = pcall(buildLava)
+			origin = home
+			if not okLava then
+				log.warn("lava failed in " .. folder.Name .. ": " .. tostring(errLava))
+			end
+		end
 		if (Config :: any).BULLSEYE ~= false then
 			buildBullseye() -- (V9-NOW 17 / V9-0ae: Config.BULLSEYE false = no bullseye; the cannon lands on the open floor)
 		end
@@ -1479,8 +1489,10 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	-- V6-4: the garden in the wider plot's side strips (LabGarden). A failure never costs the lab.
 	if (Config :: any).LAB_V6 and lab then
 		local ok, err = pcall(function()
-			require(script.Parent.LabGarden).build(folder, origin)
-			if (Config :: any).PATHS and not (Config :: any).LAB_NO_PATHS then
+			if not LabLayout10.on then
+				require(script.Parent.LabGarden).build(folder, origin) -- (LAB10: no garden strips inside the compound)
+			end
+			if (Config :: any).PATHS and not (Config :: any).LAB_NO_PATHS and not LabLayout10.on then
 				-- (V9-0 review: a failure in the paths never costs the creatures and the guide; the
 				-- garden's kerbs, which the paths would have laid with theirs, are laid on their own.)
 				local okPaths, errPaths = pcall(function()
@@ -1508,6 +1520,16 @@ function Playground.build(labOrigin: Vector3, name: string?)
 	end
 	-- (V9-0d review: once everything stands, no path piece lies level with another or with the ground it
 	-- crosses; PathFlicker = the pairs left, 0.)
+	-- LAB10: the crash-test compound over it all: floor, test floor, spawn pad, wall, walkways, skyline, signs,
+	-- and the old scattered dressing hidden (Server/Systems/LabV10).
+	if lab and LabLayout10.on then
+		local okV, errV = pcall(function()
+			require(script.Parent:WaitForChild("LabV10")).build(folder, origin)
+		end)
+		if not okV then
+			log.warn("LabV10 failed in " .. folder.Name .. ": " .. tostring(errV))
+		end
+	end
 	if lab and (Config :: any).PATHS then
 		local okU, errU = pcall(function()
 			local roots: { Instance } = { folder }
