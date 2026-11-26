@@ -1225,6 +1225,102 @@ local function parks(into: Instance, o: Vector3, top: number)
 	end
 end
 
+-- MAP ROUND 3, P5: the yard of every attraction (docs/MAP_MASTERPLAN.md rule 6): where its inner path ends, 2 lamps
+-- either side of the path end, a bench a little to the side facing the thing, a sign with its name on a post, and a
+-- small cluster of fitting props (crates, cones or barrels). Every courtyard gets a bench, a bin, a lamp and a signpost
+-- with an arm toward each attraction of the room.
+local NAMES: { [string]: string } = {
+	CaveBear = "BEAR CAVE", Aquarium = "AQUARIUM", CrocPond = "CROC POND", TRexPen = "T-REX", BigPool = "BIG POOL", LoungePool = "LOUNGE POOL",
+	SpiderPen = "SPIDER", SnackKiosk = "SNACKS", CarBays = "CAR BAYS", BrickWall = "CRASH WALL", LaunchPads = "LAUNCH PADS", BoxingRing = "BOXING",
+	WreckingBall = "WRECKING BALL", CarPark = "CAR PARK", Garage = "GARAGE", TrainingYard = "TRAINING", BikeRack = "BIKES", GiantFan = "GIANT FAN",
+	TeslaCoil = "TESLA COIL", GyroCage = "GYRO CAGE", Press = "THE PRESS", StretchMachine = "STRETCHER", Washer = "WASHER", Sandcastle = "SANDCASTLE",
+	Playground = "PLAYGROUND", Archery = "ARCHERY", Sandbox = "SANDBOX", Seesaw = "SEESAW", Mole = "THE MOLE", SandCircle = "SAND CIRCLE",
+	Cannon = "CANNON", LandingField = "LANDING FIELD", Rocket = "ROCKET", LavaStrip = "LAVA", Shredder = "SHREDDER", Sweeper = "SWEEPER",
+}
+local function nameSign(into: Instance, at: Vector3, face: Vector3, text: string)
+	part(into, "SignPost", Vector3.new(0.5, 7, 0.5), CFrame.new(at + Vector3.new(0, 3.5, 0)), Color3.fromRGB(70, 72, 78), Enum.Material.Metal, true)
+	local board = part(into, "SignBoard", Vector3.new(7, 2, 0.3), CFrame.lookAt(at + Vector3.new(0, 7, 0), at + Vector3.new(0, 7, 0) + face), Color3.fromRGB(40, 44, 52), Enum.Material.SmoothPlastic, true)
+	for _, f in { Enum.NormalId.Front, Enum.NormalId.Back } do
+		local g = Instance.new("SurfaceGui")
+		g.Face = f
+		g.CanvasSize = Vector2.new(280, 80)
+		g.LightInfluence = 0
+		local l = Instance.new("TextLabel")
+		l.BackgroundTransparency = 1
+		l.Size = UDim2.fromScale(1, 1)
+		l.Font = Enum.Font.FredokaOne
+		l.TextScaled = true
+		l.TextColor3 = Color3.new(1, 1, 1)
+		l.Text = text
+		l.Parent = g
+		g.Parent = board
+	end
+end
+local function yards(into: Instance, o: Vector3, top: number)
+	local rng = Random.new(31)
+	local function w(v: Vector2): Vector3
+		return Vector3.new(o.X + v.X, top, o.Z + v.Y)
+	end
+	local done: { [string]: boolean } = {}
+	for _, path in Plan.INNER do
+		local id = path.to
+		if id ~= "entrance" and not done[id] and #path.points >= 2 then
+			done[id] = true
+			local n = #path.points
+			local last, prev = path.points[n], path.points[n - 1]
+			local k = n - 1
+			while k > 1 and (last - prev).Magnitude < 4 do
+				k -= 1
+				prev = path.points[k]
+			end
+			local dir = if (last - prev).Magnitude > 0.1 then (last - prev).Unit else Vector2.new(0, 1)
+			local side = Vector2.new(-dir.Y, dir.X)
+			local endP = last - dir * 4
+			-- 2 lamps either side of the path end
+			for _, s in { -1, 1 } do
+				lamp(into, w(endP + side * s * (Plan.INNER_W / 2 + 2.5)))
+			end
+			-- the name sign on the right, facing back along the path
+			local signAt = w(endP + side * (Plan.INNER_W / 2 + 6) - dir * 6)
+			if not onPath(signAt, 0.5) then
+				nameSign(into, signAt, Vector3.new(-dir.X, 0, -dir.Y), NAMES[id] or string.upper(id))
+			end
+			-- a bench on the left, facing the attraction
+			local benchAt = w(endP - side * (Plan.INNER_W / 2 + 6) - dir * 8)
+			if not onPath(benchAt, 2) then
+				part(into, "BenchSeat", Vector3.new(7, 0.5, 2), CFrame.lookAt(benchAt + Vector3.new(0, 1.6, 0), benchAt + Vector3.new(dir.X, 1.6, dir.Y)), Color3.fromRGB(140, 100, 64), Enum.Material.WoodPlanks)
+				part(into, "BenchBack", Vector3.new(7, 1.6, 0.4), CFrame.lookAt(benchAt + Vector3.new(0, 2.6, 0), benchAt + Vector3.new(dir.X, 2.6, dir.Y)) * CFrame.new(0, 0, 1), Color3.fromRGB(140, 100, 64), Enum.Material.WoodPlanks, true)
+			end
+			-- a small cluster of props behind the sign
+			local propAt = endP + side * (Plan.INNER_W / 2 + 12) - dir * 12
+			for q = 1, 3 do
+				local p = w(propAt + Vector2.new(rng:NextNumber(-3, 3), rng:NextNumber(-3, 3)))
+				if not onPath(p, 2) then
+					if q == 1 then
+						part(into, "YardCrate", Vector3.new(3, 3, 3), CFrame.new(p + Vector3.new(0, 1.5, 0)) * CFrame.Angles(0, rng:NextNumber() * 6, 0), Color3.fromRGB(160, 120, 76), Enum.Material.WoodPlanks)
+					elseif q == 2 then
+						part(into, "YardCone", Vector3.new(1.4, 2.4, 1.4), CFrame.new(p + Vector3.new(0, 1.2, 0)), Color3.fromRGB(255, 120, 40), Enum.Material.Plastic, true)
+					else
+						part(into, "YardBarrel", Vector3.new(3.4, 2.4, 2.4), CFrame.new(p + Vector3.new(0, 1.7, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(60, 110, 170), Enum.Material.Metal, false, Enum.PartType.Cylinder)
+					end
+				end
+			end
+		end
+	end
+	-- the courtyards: a bench, a bin, a lamp and a signpost
+	for _, room in Plan.ROOMS do
+		if room.courtyard then
+			local c = room.courtyard
+			lamp(into, w(c + Vector2.new(13, 13)))
+			part(into, "Bin", Vector3.new(2, 3, 2), CFrame.new(w(c + Vector2.new(-13, 13)) + Vector3.new(0, 1.5, 0)), Color3.fromRGB(60, 110, 70), Enum.Material.Metal)
+			local sp = w(c + Vector2.new(13, -13))
+			if not onPath(sp, 0.5) then
+				nameSign(into, sp, Vector3.new(0, 0, 1), string.upper(room.name or ""))
+			end
+		end
+	end
+end
+
 -- M7: the old lab frame goes (the LAB10 compound and park, the plot's floor, spawn disc, edges, barriers, cones, signs and
 -- the zone pads): invisible and walked through, the new ground is under it.
 LabOwnerMap.HIDE_IN_LAB = { LabV10 = true, LabZonePads = true, ZonePads = true, LabGarden = true, Paths = true }
@@ -1328,6 +1424,7 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	fill(into, origin, origin.Y - 0.05)
 	belts(into, origin, origin.Y - 0.05)
 	parks(into, origin, origin.Y - 0.05)
+	yards(into, origin, origin.Y - 0.05)
 	hills(origin)
 end
 

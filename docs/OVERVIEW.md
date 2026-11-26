@@ -29,7 +29,7 @@ Keep it short. When you finish or start something, update its line here (and the
 | # | What | Doc | State | LEFT |
 |---|---|---|---|---|
 | 0 | **Owner:** Alt+P (gore off) and send the maturity questionnaire (deadline Fri 27 Nov 17:34 UTC) | `MATURITY.md`, `BODY_V2.md` "final answers" | waiting for the owner | owner only |
-| 1 | **THE MAP**, round 3: the master plan | `MAP_MASTERPLAN.md`, `Shared/OwnerMapPlan.luau`, `tools/masterplan.py`, `NOW.md` GO NOW | P1-P4 done (ground, roads, plazas, paths, lamps, set pieces and machines on plan spots, tree belts + arches, parks, backdrop forest/hills/mountains; 7680 parts) | room yard dressing; lint 0; the DEFINITION OF DONE captures |
+| 1 | **THE MAP**, round 3: the master plan | `MAP_MASTERPLAN.md`, `Shared/OwnerMapPlan.luau`, `tools/masterplan.py`, `NOW.md` GO NOW | P1-P4 done (ground, roads, plazas, paths, lamps, set pieces and machines on plan spots, tree belts + arches, parks, backdrop forest/hills/mountains; 7680 parts) | the DEFINITION OF DONE captures and score (yards done v73, lint 0 small things on paths v72) |
 | 2 | Solo labs in the start place, one shared lab in multiplayer | `FIXES_26NOV.md` F30 | check | all of F30; tell the owner: start place server size 1 |
 | 3 | **MACHINES, ANIMALS, ACTIVITIES to 10/10** (the SATISFY-10 standard, 35 items in priority order) | `MACHINES_10.md` | new | everything, in its order (cannon → tower → gyro → fan → …) |
 | 4 | Bones and X-ray: every bone breakable, the real bullet path, shattering, the angry dummy 1-3 shoves | `FIXES_26NOV.md` F26-F29, `BODY_V2.md` 1/1b | check what 0.7x built | F26-F29; X-ray glass shell + blue outline + mesh skeleton |
