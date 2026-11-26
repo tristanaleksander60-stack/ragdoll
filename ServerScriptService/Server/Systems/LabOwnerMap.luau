@@ -86,6 +86,29 @@ local function onPath(p: Vector3, margin: number?): boolean
 	end
 	return false
 end
+-- F40 (owner: lamp posts still stand in paths): EVERY walkable surface (the roads and paths above, plus the plazas,
+-- the Tower Square, the station and the courtyards). Lamps keep `margin` studs outside all of it.
+local function onWalkable(p: Vector3, margin: number): boolean
+	if onPath(p, margin) then
+		return true
+	end
+	local v = Vector2.new(p.X - LabOwnerMap.origin.X, p.Z - LabOwnerMap.origin.Z)
+	for _, pz in Plan.PLAZAS do
+		if pz.kind == "circle" then
+			if (v - pz.at).Magnitude < pz.radius + margin then
+				return true
+			end
+		elseif math.abs(v.X - pz.at.X) < pz.size.X / 2 + margin and math.abs(v.Y - pz.at.Y) < pz.size.Y / 2 + margin then
+			return true
+		end
+	end
+	for _, room in Plan.ROOMS do
+		if room.courtyard and (v - room.courtyard).Magnitude < 16 + margin then
+			return true
+		end
+	end
+	return false
+end
 local SLAB_TEX = "rbxassetid://91579008413917"
 local function slab(into: Instance, name: string, a: Vector3, b: Vector3, width: number, lift: number, noKerb: boolean?)
 	local len = (b - a).Magnitude
@@ -853,7 +876,7 @@ local function car(into: Instance, at: Vector3, yaw: number, color: Color3)
 	end
 end
 local function lamp(into: Instance, at: Vector3)
-	if onPath(at, 1) then
+	if (if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAMP_LINT then onWalkable(at, 2) else onPath(at, 1)) then
 		return -- (rule 3: never on a path)
 	end
 	box(into, "LampPost", Vector3.new(0.5, 12, 0.5), CFrame.new(at + Vector3.new(0, 6, 0)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
