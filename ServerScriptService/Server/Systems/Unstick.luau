@@ -110,6 +110,37 @@ local function freePointNear(pos: Vector3): Vector3?
 	return nil
 end
 
+local airStill: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+-- F46 (owner: "Fiks så ragdollen ikke fryser når den dør"; Config.NO_DEATH_FREEZE): a dead or knocked-out body may never
+-- hang still in the air. Still (under 0.5 studs/s) with no ground within 3 studs for 0.6 s: every part is unanchored
+-- and it gets a small push down, so it falls and lies loose.
+local function deathGuard(m: Model, pe: BasePart, now: number, ray: RaycastParams)
+	local vital = m:GetAttribute("Vital")
+	if vital ~= "Dead" and vital ~= "Unconscious" then
+		airStill[m] = nil
+		return
+	end
+	if pe.AssemblyLinearVelocity.Magnitude > 0.5 or m:GetAttribute("Held") == true or m:GetAttribute("InMachine") ~= nil then
+		airStill[m] = nil
+		return
+	end
+	if Workspace:Raycast(pe.Position, Vector3.new(0, -3, 0), ray) then
+		airStill[m] = nil
+		return -- (lying on something: fine)
+	end
+	airStill[m] = airStill[m] or now
+	if now - (airStill[m] :: number) > 0.6 then
+		airStill[m] = nil
+		for _, d in m:GetDescendants() do
+			if d:IsA("BasePart") and d.Anchored and d.Name ~= "HumanoidRootPart" then
+				d.Anchored = false
+			end
+		end
+		local DC = require(script.Parent:WaitForChild("DummyControl")) :: any
+		pcall(DC.push, m, Vector3.new(0, -6, 0))
+	end
+end
+
 local function step()
 	local dummies = Workspace:FindFirstChild("Dummies")
 	if not dummies then
@@ -122,9 +153,16 @@ local function step()
 		end
 	end
 	overlap.FilterDescendantsInstances = ex
+	local ray = RaycastParams.new()
+	ray.FilterType = Enum.RaycastFilterType.Exclude
+	ray.FilterDescendantsInstances = ex
+	local guard = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).NO_DEATH_FREEZE == true
 	local now = os.clock()
 	for _, m in dummies:GetChildren() do
 		local pe = m:FindFirstChild("LowerTorso")
+		if guard and m:IsA("Model") and pe and pe:IsA("BasePart") then
+			deathGuard(m, pe, now, ray)
+		end
 		if m:IsA("Model") and pe and pe:IsA("BasePart") and m:GetAttribute("Held") ~= true and m:GetAttribute("InMachine") == nil
 			and m:GetAttribute("MachineHidden") == nil and pe.AssemblyLinearVelocity.Magnitude < 10 then
 			if solidAt(pe.Position, Vector3.new(1, 1, 1)) then
