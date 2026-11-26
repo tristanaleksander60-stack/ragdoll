@@ -79,6 +79,7 @@ safe("FirstAid", function() require(Systems:WaitForChild("FirstAid")).start() en
 safe("Mourning", function() require(Systems:WaitForChild("Mourning")).start() end) -- (V11 item 13) ragdolls mourn the dead and try CPR
 safe("GuardDog", function() require(Systems:WaitForChild("GuardDog")).start() end) -- GUARD_DOG: whistle the dog, tap a limb, it bites
 safe("MachineDemos", function() require(Systems:WaitForChild("MachineDemos")).start() end) -- F19: machine demos with real ragdolls
+safe("Watchers", function() require(Systems:WaitForChild("Watchers")).start() end) -- OVERVIEW 0.7: a watcher at every machine
 safe("MechArms", function() require(Systems:WaitForChild("MechArms")).start() end) -- mechanical arms to tear ragdolls apart
 -- V8-1.7 (phone diet): with the birds off, their models leave ReplicatedStorage (every client loaded
 -- them for nothing); Config.BIRDS on brings them back at the next server start.

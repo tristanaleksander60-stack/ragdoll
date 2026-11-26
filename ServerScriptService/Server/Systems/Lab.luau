@@ -736,6 +736,9 @@ local function roam(plot: Plot, slot: Slot, now: number)
 	if model:GetAttribute("Role3") ~= nil then
 		return -- (ALWAYS3 update: a chatter or the comer stays in its role)
 	end
+	if model:GetAttribute("Watch") ~= nil then
+		return -- (OVERVIEW 0.7: a watcher stays at its machine: Systems/Watchers)
+	end
 	local state = model:GetAttribute("RagdollState")
 	if state and state ~= "Standing" and state ~= "Walking" and state ~= "Fleeing" then
 		return -- (down, getting up, in the air: no wandering)
