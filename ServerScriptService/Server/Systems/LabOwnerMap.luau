@@ -1021,7 +1021,325 @@ local function bush(into: Instance, at: Vector3, rng: Random)
 	b.Name = "Bush"
 	b.Parent = into
 end
+-- OVERVIEW 0.97 (owner, 26 Nov 2026; docs/SPAWN_11.md; Config.SPAWN_11): 3D letters (one thick block per letter, its face
+-- lettered, read from `facing`), marquee bulbs (tag "Chase", Client/GateMotion makes them run) and the themed room GATES
+-- that replace the flat banners: each has 3D letters on the road side, its room's look, and something that MOVES
+-- (tags Spin / Bob / Swing / Barrier / Countdown / Burst, animated on each screen only near it: Client/GateMotion).
+local CollectionService = game:GetService("CollectionService")
+local function letters(into: Instance, text: string, center: Vector3, facing: Vector3, h: number, edge: Color3, face: Color3, mat: Enum.Material?): number
+	local f = Vector3.new(facing.X, 0, facing.Z).Unit
+	local right = (-f):Cross(Vector3.yAxis).Unit -- (the reader's right, standing in front)
+	local w = h * 0.74
+	local step = w + h * 0.08
+	local n = #text
+	local start = center - right * (step * (n - 1) / 2)
+	for i = 1, n do
+		local c = string.sub(text, i, i)
+		if c ~= " " then
+			local p = start + right * (step * (i - 1))
+			local b = part(into, "Letter3D", Vector3.new(w, h, h * 0.32), CFrame.lookAt(p, p + f), edge, mat or Enum.Material.SmoothPlastic, true)
+			local g = Instance.new("SurfaceGui")
+			g.Face = Enum.NormalId.Front
+			g.CanvasSize = Vector2.new(100, 135)
+			g.LightInfluence = 0.3
+			local l = Instance.new("TextLabel")
+			l.BackgroundTransparency = 1
+			l.Size = UDim2.fromScale(1, 1)
+			l.Font = Enum.Font.FredokaOne
+			l.TextScaled = true
+			l.Text = c
+			l.TextColor3 = face
+			l.TextStrokeColor3 = Color3.new(0, 0, 0)
+			l.TextStrokeTransparency = 0.2
+			l.Parent = g
+			g.Parent = b
+		end
+	end
+	return step * n
+end
+local function tag(p: Instance, name: string, attrs: { [string]: any }?): Instance
+	CollectionService:AddTag(p, name)
+	for k, v in attrs or {} do
+		p:SetAttribute(k, v)
+	end
+	return p
+end
+local function bulbs(into: Instance, a: Vector3, b: Vector3, n: number, color: Color3?)
+	for i = 0, n - 1 do
+		local p = a:Lerp(b, if n > 1 then i / (n - 1) else 0.5)
+		local bulb = part(into, "Bulb", Vector3.new(0.55, 0.55, 0.55), CFrame.new(p), color or Color3.fromRGB(255, 214, 120), Enum.Material.Neon, true, Enum.PartType.Ball)
+		bulb.CanCollide = false
+		tag(bulb, "Chase", { Idx = i })
+	end
+end
+local function emitter(at: BasePart, props: { [string]: any }): ParticleEmitter
+	local e = Instance.new("ParticleEmitter")
+	for k, v in props do
+		(e :: any)[k] = v
+	end
+	e.Parent = at
+	return e
+end
+local GATE_THEME: { [string]: { post: Color3, mat: Enum.Material, edge: Color3, face: Color3 } } = {
+	["Animal Cove"] = { post = Color3.fromRGB(120, 82, 50), mat = Enum.Material.WoodPlanks, edge = Color3.fromRGB(96, 62, 36), face = Color3.fromRGB(255, 236, 190) },
+	["Splash Zone"] = { post = Color3.fromRGB(40, 140, 230), mat = Enum.Material.SmoothPlastic, edge = Color3.fromRGB(20, 90, 180), face = Color3.fromRGB(235, 250, 255) },
+	["Crash Yard"] = { post = Color3.fromRGB(40, 40, 44), mat = Enum.Material.Rubber, edge = Color3.fromRGB(120, 124, 130), face = Color3.fromRGB(255, 200, 40) },
+	["Car Park"] = { post = Color3.fromRGB(150, 154, 160), mat = Enum.Material.Metal, edge = Color3.fromRGB(30, 80, 180), face = Color3.new(1, 1, 1) },
+	["Machine Hall"] = { post = Color3.fromRGB(70, 74, 82), mat = Enum.Material.DiamondPlate, edge = Color3.fromRGB(150, 154, 160), face = Color3.fromRGB(255, 170, 40) },
+	["Fun Fair"] = { post = Color3.fromRGB(230, 50, 60), mat = Enum.Material.SmoothPlastic, edge = Color3.fromRGB(255, 200, 40), face = Color3.fromRGB(230, 40, 120) },
+	["Launch Field"] = { post = Color3.fromRGB(220, 222, 226), mat = Enum.Material.Metal, edge = Color3.fromRGB(40, 60, 120), face = Color3.fromRGB(255, 255, 255) },
+	["Danger Zone"] = { post = Color3.fromRGB(250, 200, 20), mat = Enum.Material.SmoothPlastic, edge = Color3.fromRGB(30, 30, 30), face = Color3.fromRGB(250, 200, 20) },
+}
+local function roomByName(name: string): (string?, any)
+	for key, room in Plan.ROOMS do
+		if room.name == name then
+			return key, room
+		end
+	end
+	return nil, nil
+end
+local function prettyId(id: string): string
+	return string.upper((string.gsub(id, "(%l)(%u)", "%1 %2")))
+end
+local function themedGate(into: Instance, at: Vector3, alongX: boolean, name: string)
+	local th = GATE_THEME[name] or GATE_THEME["Machine Hall"]
+	local key, room = roomByName(name)
+	local half = Plan.GAP / 2
+	local span = if alongX then Vector3.xAxis else Vector3.zAxis
+	-- which way is the room (inside) and which way the road (outside)
+	local inDir = Vector3.zAxis
+	if room then
+		local c = (room.min + room.max) / 2
+		local o = Vector3.new(at.X - LabOwnerMap.origin.X, 0, at.Z - LabOwnerMap.origin.Z)
+		local d = Vector3.new(c.X, 0, c.Y) - o
+		inDir = if alongX then Vector3.new(0, 0, if d.Z >= 0 then 1 else -1) else Vector3.new(if d.X >= 0 then 1 else -1, 0, 0)
+	end
+	local out = -inDir
+	local g = Instance.new("Model")
+	g.Name = "Gate_" .. string.gsub(name, " ", "")
+	g.Parent = into
+	local H = 17
+	-- posts and beam
+	for _, s in { -1, 1 } do
+		local base = at + span * (s * (half + 1.5))
+		if name == "Crash Yard" then
+			for k = 0, 6 do -- tyre stacks
+				local tyre = part(g, "Tyre", Vector3.new(2.2, 4.4, 4.4), CFrame.new(base + Vector3.new(0, 1.1 + k * 2.2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(30, 30, 32), Enum.Material.Rubber, false, Enum.PartType.Cylinder)
+				tyre.CFrame *= CFrame.Angles(math.rad((k % 2) * 8), 0, 0)
+			end
+		elseif name == "Fun Fair" or name == "Danger Zone" then
+			for k = 0, 7 do -- striped posts
+				local col = if k % 2 == 0 then th.post else (if name == "Fun Fair" then Color3.new(1, 1, 1) else Color3.fromRGB(30, 30, 30))
+				part(g, "GatePost", Vector3.new(2.4, H / 8, 2.4), CFrame.new(base + Vector3.new(0, H / 16 + k * H / 8, 0)), col, th.mat)
+			end
+		else
+			part(g, "GatePost", Vector3.new(2.6, H, 2.6), CFrame.new(base + Vector3.new(0, H / 2, 0)), th.post, th.mat)
+		end
+		part(g, "GateCap", Vector3.new(3.2, 0.8, 3.2), CFrame.new(base + Vector3.new(0, H + 0.4, 0)), th.edge, th.mat, true)
+	end
+	local beamCF = CFrame.lookAt(at + Vector3.new(0, H + 1.6, 0), at + Vector3.new(0, H + 1.6, 0) + out)
+	part(g, "GateBeam", Vector3.new(Plan.GAP + 6, 2.4, 1.6), beamCF, th.edge, th.mat)
+	-- 3D letters on the road side, a plate with the name on the room side
+	local tw = letters(g, string.upper(name), at + Vector3.new(0, H + 5, 0) + out * 0.4, out, 3.2, th.edge, th.face, th.mat)
+	local plate = part(g, "GatePlate", Vector3.new(Plan.GAP, 2, 0.4), CFrame.lookAt(at + Vector3.new(0, H + 1.6, 0) + inDir * 0.9, at + Vector3.new(0, H + 1.6, 0) + inDir * 2), th.edge, th.mat, true)
+	local sg = Instance.new("SurfaceGui")
+	sg.Face = Enum.NormalId.Front
+	sg.CanvasSize = Vector2.new(520, 40)
+	sg.LightInfluence = 0.3
+	local sl = Instance.new("TextLabel")
+	sl.BackgroundTransparency = 1
+	sl.Size = UDim2.fromScale(1, 1)
+	sl.Font = Enum.Font.FredokaOne
+	sl.TextScaled = true
+	sl.Text = string.upper(name)
+	sl.TextColor3 = th.face
+	sl.Parent = sg
+	sg.Parent = plate
+	-- bulbs under the beam, both sides
+	bulbs(g, at + Vector3.new(0, H + 0.2, 0) + out * 1 - span * (half + 1), at + Vector3.new(0, H + 0.2, 0) + out * 1 + span * (half + 1), 12, th.face)
+	local top = at + Vector3.new(0, H + 2.8, 0)
+	-- the theme's moving part
+	if name == "Animal Cove" then
+		for _, s in { -1, 1 } do
+			local p = at + span * (s * (half + 1.5))
+			for k = 1, 3 do
+				part(g, "Rope", Vector3.new(0.5, 3.2, 3.2), CFrame.new(p + Vector3.new(0, k * 4.5, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 170, 110), Enum.Material.Fabric, true, Enum.PartType.Cylinder)
+			end
+		end
+		for k = -2, 2 do
+			local v = part(g, "Vine", Vector3.new(0.3, 5, 0.3), CFrame.new(at + span * (k * 4.5) + Vector3.new(0, H - 2.2, 0) + out * 0.2), Color3.fromRGB(60, 130, 50), Enum.Material.Grass, true)
+			v.CanCollide = false
+			tag(v, "Swing", { Amp = 0.15, Speed = 1.3 + k * 0.1, Pivot = Vector3.new(0, 2.5, 0) })
+		end
+		-- the croc head on top: its lower jaw snaps open and shut
+		local headAt = top + out * 0.5 + Vector3.new(0, 0.2, 0) - span * (tw / 2 + 3.5)
+		part(g, "CrocHead", Vector3.new(3.2, 1.4, 5), CFrame.lookAt(headAt + Vector3.new(0, 1.2, 0), headAt + Vector3.new(0, 1.2, 0) + out), Color3.fromRGB(70, 130, 60), Enum.Material.SmoothPlastic, true)
+		for _, s in { -1, 1 } do
+			part(g, "CrocEye", Vector3.new(0.7, 0.7, 0.7), CFrame.new(headAt + Vector3.new(0, 2.1, 0) - out * 1.4 + span * (s * 0.9)), Color3.fromRGB(255, 230, 80), Enum.Material.Neon, true, Enum.PartType.Ball)
+		end
+		local jaw = part(g, "CrocJaw", Vector3.new(3, 0.6, 4.6), CFrame.lookAt(headAt + Vector3.new(0, 0.2, 0), headAt + Vector3.new(0, 0.2, 0) + out), Color3.fromRGB(90, 150, 70), Enum.Material.SmoothPlastic, true)
+		tag(jaw, "Swing", { Amp = 0.35, Speed = 1.6, Pivot = Vector3.new(0, 0, 2.3), Snap = true })
+		-- a bear head on the other side
+		local bearAt = top + out * 0.5 + span * (tw / 2 + 3.5) + Vector3.new(0, 1.6, 0)
+		part(g, "BearHead", Vector3.new(3.4, 3.4, 3.4), CFrame.new(bearAt), Color3.fromRGB(110, 72, 42), Enum.Material.SmoothPlastic, true, Enum.PartType.Ball)
+		for _, s in { -1, 1 } do
+			part(g, "BearEar", Vector3.new(1.2, 1.2, 1.2), CFrame.new(bearAt + Vector3.new(0, 1.6, 0) + span * (s * 1.3)), Color3.fromRGB(110, 72, 42), Enum.Material.SmoothPlastic, true, Enum.PartType.Ball)
+		end
+		part(g, "BearSnout", Vector3.new(1.4, 1.1, 1.4), CFrame.new(bearAt + out * 1.6 - Vector3.new(0, 0.4, 0)), Color3.fromRGB(200, 160, 120), Enum.Material.SmoothPlastic, true, Enum.PartType.Ball)
+	elseif name == "Splash Zone" then
+		-- a wave on top and water jets arcing over the way in from both posts
+		for k = -3, 3 do
+			local y = math.cos(k / 3 * math.pi / 2) * 3
+			local wv = part(g, "Wave", Vector3.new(4.2, 1.2, 1.4), CFrame.new(top + span * (k * 4) + Vector3.new(0, y, 0) - out * 0.8) * CFrame.fromAxisAngle(out, -k * 0.18), Color3.fromRGB(110, 200, 250), Enum.Material.Glass, true)
+			wv.Transparency = 0.2
+		end
+		for _, s in { -1, 1 } do
+			local nozzle = part(g, "JetNozzle", Vector3.new(1, 1, 1), CFrame.lookAt(at + span * (s * (half + 1.5)) + Vector3.new(0, H + 1, 0), at + Vector3.new(0, H + 9, 0)), Color3.fromRGB(200, 205, 210), Enum.Material.Metal, true)
+			emitter(nozzle, { Rate = 45, Speed = NumberRange.new(20, 23), Lifetime = NumberRange.new(1.3, 1.5), Acceleration = Vector3.new(0, -32, 0), EmissionDirection = Enum.NormalId.Front,
+				Size = NumberSequence.new(0.45, 0.15), Color = ColorSequence.new(Color3.fromRGB(170, 225, 255)), Transparency = NumberSequence.new(0.2, 0.8), SpreadAngle = Vector2.new(3, 3), LightEmission = 0.2 })
+			local buoy = part(g, "Lifebuoy", Vector3.new(0.5, 3, 3), CFrame.new(at + span * (s * (half + 1.5)) + Vector3.new(0, 9, 0) + out * 1.4) * CFrame.Angles(0, if alongX then math.rad(90) else 0, 0), Color3.fromRGB(230, 50, 50), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+			part(g, "LifebuoyHole", Vector3.new(0.56, 1.5, 1.5), buoy.CFrame, th.post, Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+		end
+	elseif name == "Crash Yard" then
+		-- two crashed cars on the beam, hazard stripes and amber beacons
+		for _, s in { -1, 1 } do
+			local carAt = top + span * (s * 5.5) + Vector3.new(0, 1.2, 0)
+			local car = part(g, "WreckCar", Vector3.new(8, 2.6, 4.4), CFrame.new(carAt) * CFrame.fromAxisAngle(out, s * 0.22) * CFrame.Angles(0, if alongX then 0 else math.rad(90), 0), if s < 0 then Color3.fromRGB(200, 50, 40) else Color3.fromRGB(40, 90, 200), Enum.Material.Metal)
+			part(g, "WreckCab", Vector3.new(4, 1.6, 4), car.CFrame * CFrame.new(-0.5, 2, 0) * CFrame.Angles(0, 0, 0.12), Color3.fromRGB(40, 44, 52), Enum.Material.Glass, true)
+			local beacon = part(g, "Beacon", Vector3.new(0.8, 1.2, 1.2), CFrame.new(at + span * (s * (half + 1.5)) + Vector3.new(0, H + 1.6, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 160, 20), Enum.Material.Neon, true, Enum.PartType.Cylinder)
+			local lamp = part(g, "BeaconLamp", Vector3.new(0.3, 1, 1.6), beacon.CFrame * CFrame.new(0, 0, 0.5), Color3.fromRGB(255, 220, 120), Enum.Material.Neon, true)
+			lamp.CanCollide = false
+			tag(lamp, "Spin", { Speed = 5, Around = beacon.Position })
+		end
+		for k = -5, 5 do
+			part(g, "HazardStripe", Vector3.new(1, 2.5, 0.1), beamCF * CFrame.new(k * 2.6, 0, -0.85) * CFrame.Angles(0, 0, math.rad(40)), Color3.fromRGB(30, 30, 30), Enum.Material.SmoothPlastic, true)
+		end
+	elseif name == "Car Park" then
+		-- a striped barrier arm that lifts when you walk through
+		local pivot = at - span * half + Vector3.new(0, 3.6, 0) + out * 1.6
+		local arm = part(g, "BarrierArm", Vector3.new(Plan.GAP - 1, 0.7, 0.7), CFrame.lookAt(pivot + span * ((Plan.GAP - 1) / 2), pivot + span * ((Plan.GAP - 1) / 2) + out), Color3.fromRGB(230, 40, 40), Enum.Material.SmoothPlastic, true)
+		arm.CanCollide = false
+		tag(arm, "Barrier", { Pivot = Vector3.new(((Plan.GAP - 1) / 2) * (if (span:Cross(out)).Y > 0 then 1 else -1), 0, 0) })
+		part(g, "BarrierBox", Vector3.new(1.6, 4, 1.6), CFrame.new(at - span * half + Vector3.new(0, 2, 0) + out * 1.6), Color3.fromRGB(250, 200, 20), Enum.Material.Metal)
+		local pSign = part(g, "ParkingP", Vector3.new(3.4, 3.4, 0.5), CFrame.lookAt(top + Vector3.new(0, 1.6, 0) + out * 0.4 + span * (tw / 2 + 2.8), top + Vector3.new(0, 1.6, 0) + out * 2 + span * (tw / 2 + 2.8)), Color3.fromRGB(30, 80, 180), Enum.Material.SmoothPlastic, true)
+		local pg = Instance.new("SurfaceGui")
+		pg.Face = Enum.NormalId.Front
+		pg.CanvasSize = Vector2.new(100, 100)
+		local pl = Instance.new("TextLabel")
+		pl.BackgroundTransparency = 1
+		pl.Size = UDim2.fromScale(1, 1)
+		pl.Font = Enum.Font.GothamBlack
+		pl.TextScaled = true
+		pl.Text = "P"
+		pl.TextColor3 = Color3.new(1, 1, 1)
+		pl.Parent = pg
+		pg.Parent = pSign
+	elseif name == "Machine Hall" then
+		-- two big turning gears and a piston pumping, a steam puff now and then
+		for _, s in { -1, 1 } do
+			local gear = Instance.new("Model")
+			gear.Name = "Gear"
+			gear.Parent = g
+			local c = top + span * (s * (tw / 2 + 3.2)) + Vector3.new(0, 1.4, 0) + out * 0.6
+			local hub = part(gear, "GearHub", Vector3.new(1, 5, 5), CFrame.lookAt(c, c + out) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(160, 164, 172), Enum.Material.Metal, true, Enum.PartType.Cylinder)
+			for t = 0, 7 do
+				local a = t / 8 * math.pi * 2
+				part(gear, "GearTooth", Vector3.new(1, 1.1, 1.1), CFrame.lookAt(c, c + out) * CFrame.Angles(0, 0, a) * CFrame.new(0, 2.8, 0), Color3.fromRGB(160, 164, 172), Enum.Material.Metal, true)
+			end
+			gear.PrimaryPart = hub
+			tag(gear, "Spin", { Speed = s * 0.9, Axis = out })
+		end
+		local piston = part(g, "Piston", Vector3.new(1.2, 3, 1.2), CFrame.new(at + span * (half + 1.5) + Vector3.new(0, H + 2.6, 0)), Color3.fromRGB(200, 204, 210), Enum.Material.Metal, true, Enum.PartType.Cylinder)
+		piston.CFrame *= CFrame.Angles(0, 0, math.rad(90))
+		tag(piston, "Bob", { Amp = 0.9, Speed = 4 })
+		local steam = part(g, "SteamVent", Vector3.new(0.6, 0.6, 0.6), CFrame.new(at - span * (half + 1.5) + Vector3.new(0, H + 1.2, 0)), Color3.fromRGB(90, 94, 100), Enum.Material.Metal, true)
+		emitter(steam, { Rate = 0, Speed = NumberRange.new(4, 7), Lifetime = NumberRange.new(1.2, 1.8), Size = NumberSequence.new(1.2, 3.5), Transparency = NumberSequence.new(0.3, 1), Color = ColorSequence.new(Color3.fromRGB(240, 240, 240)), EmissionDirection = Enum.NormalId.Top })
+		tag(steam, "Burst", { Every = 6, Count = 14 })
+	elseif name == "Fun Fair" then
+		-- balloons bobbing over the beam, bulbs up the posts
+		local cols = { Color3.fromRGB(240, 60, 80), Color3.fromRGB(60, 170, 240), Color3.fromRGB(255, 210, 50), Color3.fromRGB(120, 210, 90), Color3.fromRGB(200, 100, 240) }
+		for k = 1, 5 do
+			local b = part(g, "Balloon", Vector3.new(2, 2.4, 2), CFrame.new(top + span * ((k - 3) * 5) + Vector3.new(0, 6 + (k % 2), 0) - out * 0.6), cols[k], Enum.Material.SmoothPlastic, true, Enum.PartType.Ball)
+			b.CanCollide = false
+			tag(b, "Bob", { Amp = 0.6, Speed = 1.2 + k * 0.15 })
+		end
+		for _, s in { -1, 1 } do
+			local p = at + span * (s * (half + 1.5)) + out * 1.4
+			bulbs(g, p + Vector3.new(0, 1.5, 0), p + Vector3.new(0, H - 0.5, 0), 8)
+		end
+	elseif name == "Launch Field" then
+		-- a rocket nose cone on top and a countdown that "launches" a smoke puff
+		local cone = top + Vector3.new(0, 2.5, 0) - span * (tw / 2 + 3)
+		part(g, "RocketBody", Vector3.new(5, 3.4, 3.4), CFrame.new(cone) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(245, 245, 248), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+		part(g, "RocketNose", Vector3.new(3.4, 3.4, 3.4), CFrame.new(cone + Vector3.new(0, 2.5, 0)), Color3.fromRGB(230, 50, 50), Enum.Material.SmoothPlastic, true, Enum.PartType.Ball)
+		local display = part(g, "Countdown", Vector3.new(4, 2.6, 0.5), CFrame.lookAt(top + Vector3.new(0, 1.3, 0) + out * 0.5 + span * (tw / 2 + 3), top + Vector3.new(0, 1.3, 0) + out * 3 + span * (tw / 2 + 3)), Color3.fromRGB(20, 22, 26), Enum.Material.SmoothPlastic, true)
+		local dg = Instance.new("SurfaceGui")
+		dg.Face = Enum.NormalId.Front
+		dg.CanvasSize = Vector2.new(120, 80)
+		dg.LightInfluence = 0
+		local dl = Instance.new("TextLabel")
+		dl.Name = "Digits"
+		dl.BackgroundTransparency = 1
+		dl.Size = UDim2.fromScale(1, 1)
+		dl.Font = Enum.Font.Code
+		dl.TextScaled = true
+		dl.Text = "10"
+		dl.TextColor3 = Color3.fromRGB(255, 80, 60)
+		dl.Parent = dg
+		dg.Parent = display
+		local puff = part(g, "LaunchPuff", Vector3.new(0.5, 0.5, 0.5), CFrame.new(cone - Vector3.new(0, 2, 0)), Color3.fromRGB(120, 120, 120), Enum.Material.SmoothPlastic, true)
+		puff.Transparency = 1
+		emitter(puff, { Rate = 0, Speed = NumberRange.new(5, 10), Lifetime = NumberRange.new(1.5, 2.2), Size = NumberSequence.new(2, 5), Transparency = NumberSequence.new(0.2, 1), Color = ColorSequence.new(Color3.fromRGB(235, 235, 235)), SpreadAngle = Vector2.new(60, 60), EmissionDirection = Enum.NormalId.Bottom })
+		tag(display, "Countdown", { From = 10, Every = 30 })
+	elseif name == "Danger Zone" then
+		-- spinning warning lights and cartoon flame bursts every 10 s
+		for _, s in { -1, 1 } do
+			local p = at + span * (s * (half + 1.5)) + Vector3.new(0, H + 1.6, 0)
+			local base = part(g, "WarnLight", Vector3.new(0.8, 1.2, 1.2), CFrame.new(p) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(255, 50, 30), Enum.Material.Neon, true, Enum.PartType.Cylinder)
+			local lamp = part(g, "WarnLamp", Vector3.new(0.3, 1, 1.6), base.CFrame * CFrame.new(0, 0, 0.5), Color3.fromRGB(255, 120, 90), Enum.Material.Neon, true)
+			lamp.CanCollide = false
+			tag(lamp, "Spin", { Speed = 6, Around = base.Position })
+			local jet = part(g, "FlameJet", Vector3.new(0.8, 0.8, 0.8), CFrame.new(p + Vector3.new(0, 1.2, 0) + out * 0.2), Color3.fromRGB(60, 60, 60), Enum.Material.Metal, true)
+			emitter(jet, { Rate = 0, Speed = NumberRange.new(10, 14), Lifetime = NumberRange.new(0.5, 0.8), Size = NumberSequence.new(1.6, 0.2), LightEmission = 0.8,
+				Color = ColorSequence.new(Color3.fromRGB(255, 220, 80), Color3.fromRGB(255, 80, 20)), Transparency = NumberSequence.new(0, 1), EmissionDirection = Enum.NormalId.Top, SpreadAngle = Vector2.new(10, 10) })
+			tag(jet, "Burst", { Every = 10, Count = 40 })
+		end
+	end
+	-- inside the gate: a board listing what is in the room
+	if key then
+		local names = {}
+		for id, item in Plan.ITEMS do
+			if item.zone == key and #names < 6 then
+				table.insert(names, prettyId(id))
+			end
+		end
+		table.sort(names)
+		if #names > 0 then
+			local bAt = at + inDir * 7 + span * (half + 4) + Vector3.new(0, 0, 0)
+			part(g, "ListPost", Vector3.new(0.5, 6, 0.5), CFrame.new(bAt + Vector3.new(0, 3, 0)), Color3.fromRGB(70, 72, 78), Enum.Material.Metal, true)
+			local board = part(g, "ListBoard", Vector3.new(6, 5, 0.3), CFrame.lookAt(bAt + Vector3.new(0, 6.5, 0), bAt + Vector3.new(0, 6.5, 0) + out), th.edge, Enum.Material.SmoothPlastic, true)
+			local lg = Instance.new("SurfaceGui")
+			lg.Face = Enum.NormalId.Front
+			lg.CanvasSize = Vector2.new(240, 200)
+			lg.LightInfluence = 0.3
+			local ll = Instance.new("TextLabel")
+			ll.BackgroundTransparency = 1
+			ll.Size = UDim2.fromScale(1, 1)
+			ll.Font = Enum.Font.FredokaOne
+			ll.TextScaled = true
+			ll.TextColor3 = th.face
+			ll.Text = "IN HERE:\n" .. table.concat(names, "\n")
+			ll.Parent = lg
+			lg.Parent = board
+		end
+	end
+end
+
 local function arch(into: Instance, at: Vector3, alongX: boolean, name: string)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).ROOM_GATES and GATE_THEME[name] then
+		themedGate(into, at, alongX, name) -- (OVERVIEW 0.97: a themed gate, not a flat banner)
+		return
+	end
 	local half = Plan.GAP / 2
 	local dir = if alongX then Vector3.xAxis else Vector3.zAxis
 	for _, s in { -1, 1 } do
@@ -1399,6 +1717,293 @@ local function hideOld(folder: Instance, o: Vector3)
 	end
 end
 
+-- OVERVIEW 0.97 (docs/SPAWN_11.md section 1; Config.SPAWN_11): the spawn plaza's first look. The WELCOME ARCH at the stair
+-- top (stone pillars, a steel truss, 3D title letters with chasing bulbs, banners), a compass rose with the bone logo
+-- inlaid in the floor, 2 fountains flanking the stair, 4 flagpoles, lamps at the corners, a wayfinding signpost with an
+-- arrow to every room (its distance from the spawn), 2 stone ragdoll statues at the stair foot, frames round the 4
+-- leaderboards with their names in 3D letters, and a GOLD STATUE of each board's #1 player in front of it.
+local STONE = Color3.fromRGB(196, 190, 178)
+local STEEL_D = Color3.fromRGB(60, 64, 72)
+local GOLD = Color3.fromRGB(255, 196, 60)
+local function poseRig(rig: Model, poses: { [string]: CFrame })
+	for name, cf in poses do
+		local m = rig:FindFirstChild(name, true)
+		if m and m:IsA("Motor6D") then
+			m.C0 = m.C0 * cf
+		end
+	end
+end
+local function statueOf(into: Instance, desc: HumanoidDescription, at: Vector3, look: Vector3, color: Color3, mat: Enum.Material, poses: { [string]: CFrame }): Model?
+	local ok, rig = pcall(function()
+		return game:GetService("Players"):CreateHumanoidModelFromDescription(desc, Enum.HumanoidRigType.R15)
+	end)
+	if not ok or not rig then
+		return nil
+	end
+	local animate = rig:FindFirstChild("Animate")
+	if animate then
+		animate:Destroy()
+	end
+	local hum = rig:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+		hum.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+		hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+	end
+	for _, d in rig:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.Color = color
+			d.Material = mat
+			d.CanCollide = false
+			d.CanTouch = false
+			d.CastShadow = true
+			d.Massless = true
+			if d:IsA("MeshPart") then
+				d.TextureID = ""
+			end
+		elseif d:IsA("SpecialMesh") then
+			d.TextureId = ""
+		elseif d:IsA("Decal") or d:IsA("Shirt") or d:IsA("Pants") or d:IsA("ShirtGraphic") or d:IsA("Script") or d:IsA("LocalScript") then
+			d:Destroy()
+		elseif d:IsA("SurfaceAppearance") then
+			d:Destroy()
+		end
+	end
+	poseRig(rig, poses)
+	local root = rig:FindFirstChild("HumanoidRootPart")
+	if root and root:IsA("BasePart") then
+		root.Anchored = true
+		root.Transparency = 1
+	end
+	local _, size = rig:GetBoundingBox()
+	local up = at + Vector3.new(0, size.Y / 2, 0)
+	rig:PivotTo(CFrame.lookAt(up, up + Vector3.new(look.X, 0, look.Z)))
+	rig.Parent = into
+	return rig
+end
+local VICTORY = { RightShoulder = CFrame.Angles(0, 0, math.rad(150)), LeftShoulder = CFrame.Angles(0, 0, math.rad(-150)) }
+local function spawnSet(into: Instance, o: Vector3, top: number)
+	local pz = Plan.PLAZAS.SpawnPlaza
+	local ft = top + 4.3 -- the plaza floor
+	local c = Vector3.new(o.X + pz.at.X, ft, o.Z + pz.at.Y)
+	local south = c.Z + pz.size.Y / 2
+	local set = Instance.new("Model")
+	set.Name = "Spawn11"
+	set.Parent = into
+	-- THE WELCOME ARCH at the stair top
+	local archZ = south - 3
+	local ax = c.X
+	local AH = 15 -- (15, not 22: on a phone the top bar hid a higher title)
+	for _, s in { -1, 1 } do
+		local p = Vector3.new(ax + s * 21, ft, archZ)
+		part(set, "ArchPillar", Vector3.new(4, AH, 4), CFrame.new(p + Vector3.new(0, AH / 2, 0)), STONE, Enum.Material.Slate)
+		part(set, "ArchPlinth", Vector3.new(5.4, 2, 5.4), CFrame.new(p + Vector3.new(0, 1, 0)), Color3.fromRGB(150, 146, 138), Enum.Material.Slate)
+		part(set, "ArchCap", Vector3.new(5, 1.2, 5), CFrame.new(p + Vector3.new(0, AH + 0.6, 0)), STEEL_D, Enum.Material.Metal)
+		-- a banner on each pillar, both sides
+		for _, f in { -1, 1 } do
+			local b = part(set, "ArchBanner", Vector3.new(3, 9, 0.15), CFrame.new(p + Vector3.new(0, AH - 7.5, f * 2.15)), Color3.fromRGB(200, 40, 50), Enum.Material.Fabric, true)
+			b.CanCollide = false
+			tag(b, "Swing", { Amp = 0.06, Speed = 1.1 + s * 0.2, Pivot = Vector3.new(0, 4.5, 0) })
+		end
+	end
+	-- the truss: two chords and braces
+	for _, y in { AH - 1, AH + 3.2 } do
+		part(set, "ArchChord", Vector3.new(46, 0.9, 0.9), CFrame.new(ax, ft + y, archZ), STEEL_D, Enum.Material.Metal)
+	end
+	for k = -5, 4 do
+		local x0 = ax + k * 4.2 + 2.1
+		part(set, "ArchBrace", Vector3.new(0.5, 4.9, 0.5), CFrame.new(x0, ft + AH + 1.1, archZ) * CFrame.Angles(0, 0, math.rad(if k % 2 == 0 then 40 else -40)), STEEL_D, Enum.Material.Metal, true)
+	end
+	-- the title: 3D letters on both faces of the truss, chasing bulbs above and below
+	local title = string.upper(tostring((require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SPAWN_TITLE or "RAGDOLL HAVOC"))
+	for _, f in { -1, 1 } do
+		local face = Vector3.new(0, 0, f)
+		letters(set, title, Vector3.new(ax, ft + AH + 6.6, archZ + f * 0.9), face, 4.2, Color3.fromRGB(40, 44, 52), Color3.new(1, 1, 1))
+		bulbs(set, Vector3.new(ax - 22, ft + AH + 9.3, archZ + f * 1.2), Vector3.new(ax + 22, ft + AH + 9.3, archZ + f * 1.2), 20)
+		bulbs(set, Vector3.new(ax - 22, ft + AH + 4, archZ + f * 1.2), Vector3.new(ax + 22, ft + AH + 4, archZ + f * 1.2), 20)
+	end
+	-- THE FLOOR: a compass rose with the bone logo in the middle
+	local rose = Vector3.new(c.X, ft, c.Z + 4)
+	part(set, "RoseRing", Vector3.new(0.1, 34, 34), CFrame.new(rose + Vector3.new(0, 0.06, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(120, 110, 96), Enum.Material.Slate, true, Enum.PartType.Cylinder)
+	part(set, "RoseInner", Vector3.new(0.1, 30, 30), CFrame.new(rose + Vector3.new(0, 0.1, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(222, 214, 196), Enum.Material.Marble, true, Enum.PartType.Cylinder)
+	for k = 0, 7 do
+		local long = k % 2 == 0
+		local a = k * math.pi / 4
+		local len = if long then 14 else 9
+		part(set, "RosePoint", Vector3.new(2.2, 0.08, len), CFrame.new(rose + Vector3.new(0, 0.16, 0)) * CFrame.Angles(0, a, 0) * CFrame.new(0, 0, -len / 2) * CFrame.Angles(0, 0, 0), if long then Color3.fromRGB(150, 60, 50) else Color3.fromRGB(70, 74, 82), Enum.Material.Slate, true)
+	end
+	part(set, "RoseHub", Vector3.new(0.1, 8, 8), CFrame.new(rose + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(40, 44, 52), Enum.Material.Slate, true, Enum.PartType.Cylinder)
+	part(set, "BoneShaft", Vector3.new(4.6, 0.9, 0.9), CFrame.new(rose + Vector3.new(0, 0.55, 0)) * CFrame.Angles(0, math.rad(35), 0), Color3.fromRGB(250, 246, 236), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+	for _, s in { -1, 1 } do
+		for _, t in { -1, 1 } do
+			part(set, "BoneKnob", Vector3.new(1.3, 1.3, 1.3), CFrame.new(rose + Vector3.new(0, 0.55, 0)) * CFrame.Angles(0, math.rad(35), 0) * CFrame.new(s * 2.4, 0, t * 0.55), Color3.fromRGB(250, 246, 236), Enum.Material.SmoothPlastic, true, Enum.PartType.Ball)
+		end
+	end
+	-- 2 FOUNTAINS flanking the stair top
+	for _, s in { -1, 1 } do
+		local f = Vector3.new(c.X + s * 34, ft, south - 9)
+		part(set, "FountainBasin", Vector3.new(1.4, 9, 9), CFrame.new(f + Vector3.new(0, 0.7, 0)) * CFrame.Angles(0, 0, math.rad(90)), STONE, Enum.Material.Slate, false, Enum.PartType.Cylinder)
+		local water = part(set, "FountainWater", Vector3.new(0.2, 7.6, 7.6), CFrame.new(f + Vector3.new(0, 1.35, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(90, 170, 230), Enum.Material.Glass, true, Enum.PartType.Cylinder)
+		water.Transparency = 0.25
+		local spout = part(set, "FountainSpout", Vector3.new(3, 1, 1), CFrame.new(f + Vector3.new(0, 2.6, 0)) * CFrame.Angles(0, 0, math.rad(90)), STONE, Enum.Material.Slate, true, Enum.PartType.Cylinder)
+		emitter(spout, { Rate = 60, Speed = NumberRange.new(13, 16), Lifetime = NumberRange.new(1, 1.2), Acceleration = Vector3.new(0, -30, 0), EmissionDirection = Enum.NormalId.Right,
+			Size = NumberSequence.new(0.4, 0.15), Color = ColorSequence.new(Color3.fromRGB(190, 230, 255)), Transparency = NumberSequence.new(0.15, 0.8), SpreadAngle = Vector2.new(12, 12), LightEmission = 0.2 })
+	end
+	-- 4 FLAGPOLES and lamps at the corners
+	local flagCols = { Color3.fromRGB(230, 60, 60), Color3.fromRGB(60, 140, 230), Color3.fromRGB(255, 200, 40), Color3.fromRGB(110, 200, 90) }
+	local k = 0
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			k += 1
+			local p = Vector3.new(c.X + sx * (pz.size.X / 2 - 6), ft, c.Z + sz * (pz.size.Y / 2 - 6))
+			part(set, "FlagPole", Vector3.new(0.5, 20, 0.5), CFrame.new(p + Vector3.new(0, 10, 0)), Color3.fromRGB(220, 222, 226), Enum.Material.Metal, true)
+			part(set, "FlagTop", Vector3.new(0.9, 0.9, 0.9), CFrame.new(p + Vector3.new(0, 20.3, 0)), GOLD, Enum.Material.Metal, true, Enum.PartType.Ball)
+			local flag = part(set, "Flag", Vector3.new(6, 3.6, 0.12), CFrame.new(p + Vector3.new(-sx * 3.2, 17.8, 0)), flagCols[k], Enum.Material.Fabric, true)
+			flag.CanCollide = false
+			tag(flag, "Swing", { Amp = 0.12, Speed = 1.6 + k * 0.1, Pivot = Vector3.new(sx * 3, 0, 0), Axis = "Y" })
+			lamp(set, p + Vector3.new(sx * -3, 0, sz * -3))
+		end
+	end
+	-- THE WAYFINDING SIGNPOST at the stair top, west of the arch: an arrow to every room
+	local spawnAt = Vector2.new(pz.at.X, pz.at.Y + 25)
+	local sp = Vector3.new(c.X - 48, ft, south - 20)
+	part(set, "SignpostPole", Vector3.new(0.8, 19, 0.8), CFrame.new(sp + Vector3.new(0, 9.5, 0)), Color3.fromRGB(90, 66, 44), Enum.Material.WoodPlanks)
+	local rooms = {}
+	for key, room in Plan.ROOMS do
+		if room.walled and GATE_THEME[room.name] then
+			table.insert(rooms, { key = key, room = room })
+		end
+	end
+	table.sort(rooms, function(a, b)
+		return a.key < b.key
+	end)
+	for i, r in rooms do
+		local cc = r.room.courtyard or (r.room.min + r.room.max) / 2
+		local d2 = cc - spawnAt
+		local d = Vector3.new(d2.X, 0, d2.Y).Unit
+		local y = ft + 18 - i * 1.6
+		local mid = Vector3.new(sp.X, y, sp.Z) + d * 4.6
+		local th = GATE_THEME[r.room.name]
+		local arm = part(set, "SignArrow", Vector3.new(8, 1.3, 0.25), CFrame.fromMatrix(mid, d, Vector3.yAxis), th.edge, Enum.Material.SmoothPlastic, true)
+		part(set, "SignTip", Vector3.new(0.95, 0.95, 0.25), CFrame.fromMatrix(mid + d * 4, d, Vector3.yAxis) * CFrame.Angles(0, 0, math.rad(45)), th.edge, Enum.Material.SmoothPlastic, true)
+		for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+			local g = Instance.new("SurfaceGui")
+			g.Face = face
+			g.CanvasSize = Vector2.new(320, 52)
+			g.LightInfluence = 0.2
+			local l = Instance.new("TextLabel")
+			l.BackgroundTransparency = 1
+			l.Size = UDim2.fromScale(1, 1)
+			l.Font = Enum.Font.FredokaOne
+			l.TextScaled = true
+			l.TextColor3 = th.face
+			l.TextStrokeTransparency = 0.4
+			l.Text = string.upper(r.room.name) .. "  " .. tostring(math.floor(d2.Magnitude / 5 + 0.5) * 5)
+			l.Parent = g
+			g.Parent = arm
+		end
+	end
+	-- 2 STONE RAGDOLL STATUES at the stair foot, funny poses
+	local foot = south + 14
+	local okD, plain = pcall(function()
+		return Instance.new("HumanoidDescription")
+	end)
+	if okD then
+		statueOf(set, plain, Vector3.new(c.X - 25, top + 1.4, foot), Vector3.new(0, 0, 1), STONE, Enum.Material.Slate, VICTORY)
+		statueOf(set, plain:Clone(), Vector3.new(c.X + 25, top + 1.4, foot), Vector3.new(0, 0, 1), STONE, Enum.Material.Slate,
+			{ RightShoulder = CFrame.Angles(0, 0, math.rad(120)) * CFrame.Angles(math.rad(60), 0, 0), Waist = CFrame.Angles(0, 0, math.rad(12)), LeftHip = CFrame.Angles(math.rad(35), 0, 0) })
+		for _, s in { -1, 1 } do
+			part(set, "StatuePlinth", Vector3.new(6, 1.4, 6), CFrame.new(c.X + s * 25, top + 0.7, foot), STONE, Enum.Material.Slate)
+		end
+	end
+	-- THE LEADERBOARDS: frames, 3D names and the gold #1 statues, once the boards stand (they are placed a moment later)
+	task.spawn(function()
+		local LB = require(script.Parent:WaitForChild("LeaderboardService")) :: any
+		local frames: { [string]: any } = {}
+		for _ = 1, 30 do
+			local found = 0
+			for _, plot in (Workspace:FindFirstChild("Labs") or Workspace):GetChildren() do
+				for _, b in plot:GetChildren() do
+					if b:IsA("Model") and string.sub(b.Name, 1, 6) == "Board_" then
+						local cf, size = b:GetBoundingBox()
+						if math.abs(cf.Position.X - (o.X - 30)) < 80 and math.abs(cf.Position.Z - (o.Z - 360)) < 10 and not frames[b.Name] then
+							local id = string.sub(b.Name, 7)
+							local base = Vector3.new(cf.Position.X, ft, cf.Position.Z)
+							local w = math.max(size.X, size.Z)
+							part(set, "BoardBase", Vector3.new(w + 3, 1.4, 6), CFrame.new(base + Vector3.new(0, 0.7, 0)), Color3.fromRGB(46, 48, 54), Enum.Material.Granite)
+							for _, s in { -1, 1 } do
+								part(set, "BoardPost", Vector3.new(0.8, size.Y + 2, 0.8), CFrame.new(base + Vector3.new(s * (w / 2 + 0.9), (size.Y + 2) / 2, 0)), STEEL_D, Enum.Material.Metal)
+							end
+							part(set, "BoardRoof", Vector3.new(w + 3, 0.6, 4), CFrame.new(base + Vector3.new(0, size.Y + 2.3, 0)), STEEL_D, Enum.Material.Metal)
+							bulbs(set, base + Vector3.new(-w / 2, size.Y + 1.9, 2.1), base + Vector3.new(w / 2, size.Y + 1.9, 2.1), 10, Color3.fromRGB(255, 240, 200))
+							local titleText = id
+							for _, bd in LB.BOARDS do
+								if bd.id == id then
+									titleText = string.gsub(bd.title, "%s+", " ")
+								end
+							end
+							letters(set, titleText, base + Vector3.new(0, size.Y + 4.2, 0), Vector3.new(0, 0, 1), 1.9, Color3.fromRGB(40, 44, 52), GOLD)
+							part(set, "StatuePlinth", Vector3.new(4, 2, 4), CFrame.new(base + Vector3.new(0, 1, 7)), Color3.fromRGB(46, 48, 54), Enum.Material.Granite)
+							frames[b.Name] = { at = base + Vector3.new(0, 2, 7) }
+							frames[b.Name].id = id
+						end
+						found += 1
+					end
+				end
+			end
+			if next(frames) and found >= 4 then
+				break
+			end
+			task.wait(1)
+		end
+		-- the #1 statue of each board, rebuilt when #1 changes
+		while set.Parent do
+			for _, fr in frames do
+				local rows = LB.rowsOf(fr.id)
+				local first = rows and rows[1]
+				local who = if first then first.userId else 0
+				if who ~= fr.who then
+					fr.who = who
+					if fr.statue then
+						fr.statue:Destroy()
+						fr.statue = nil
+					end
+					local okDesc, desc = pcall(function()
+						if who > 0 then
+							return game:GetService("Players"):GetHumanoidDescriptionFromUserId(who)
+						end
+						return Instance.new("HumanoidDescription")
+					end)
+					if okDesc and desc then
+						fr.statue = statueOf(set, desc, fr.at, Vector3.new(0, 0, 1), GOLD, Enum.Material.Foil, VICTORY)
+						if fr.statue then
+							local head = fr.statue:FindFirstChild("Head")
+							if head and head:IsA("BasePart") then
+								local bb = Instance.new("BillboardGui")
+								bb.Size = UDim2.fromOffset(160, 30)
+								bb.StudsOffsetWorldSpace = Vector3.new(0, 2.2, 0)
+								bb.MaxDistance = 90
+								bb.Adornee = head
+								local l = Instance.new("TextLabel")
+								l.BackgroundTransparency = 1
+								l.Size = UDim2.fromScale(1, 1)
+								l.Font = Enum.Font.FredokaOne
+								l.TextScaled = true
+								l.TextColor3 = GOLD
+								l.TextStrokeTransparency = 0.3
+								l.Text = if first then "#1 " .. tostring(first.name) else "#1 COULD BE YOU"
+								l.Parent = bb
+								bb.Parent = fr.statue
+							end
+						end
+					end
+				end
+			end
+			task.wait(120)
+		end
+	end)
+end
+
 function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	LabOwnerMap.origin = origin
 	-- (OVERVIEW 0.5, Config.SPAWN_UPRIGHT: the lab's ragdolls were laid out before the raised plaza stood, so the ones on its
@@ -1473,6 +2078,9 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	parks(into, origin, origin.Y - 0.05)
 	yards(into, origin, origin.Y - 0.05)
 	extras(into, origin, origin.Y - 0.05)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SPAWN_11 then
+		spawnSet(into, origin, origin.Y - 0.05) -- (OVERVIEW 0.97: the spawn to 11/10)
+	end
 	hills(origin)
 end
 
