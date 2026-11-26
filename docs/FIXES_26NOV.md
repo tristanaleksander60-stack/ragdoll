@@ -1026,6 +1026,31 @@ The owner sees it again: the legs jitter for 1-2 seconds at random moments. The 
 - **Only the letters go.** The gift button, its red counter and its wiggle stay as they are.
 - **Check:** phone (the Studio emulator) and iPad: no "J" on the gift and no letter on any HUD button. PC: the "J" chip is on the gift and J opens Rewards.
 
+## F71 The phone HOTBAR is SMALL until you tap it; then it grows and you pick a weapon (owner: "Gør så hotbaren er mindre på telefon, indtil du trykker på den og så bliver den forstørret og så kan du vælge våben")
+**Now:** on a landscape phone the bar (`Client/PokeController.luau`, gui `ToyBar`, `PokeController.plan`) has slots of 62 x 56 (`Config.PHONE_BIG_HOTBAR`), between the move stick and SHOOT/GRAB. It takes a big bite of the screen all the time.
+**New** (behind `Config.PHONE_MINI_BAR = true`; phones only: touch with the short screen side 500 px or less, both landscape and upright; iPad and PC keep today's bar):
+- **Small (rest):**
+  - the same bar at about 0.6 size (a `UIScale` on the bar frame, anchored bottom centre, so it shrinks downward to the bottom edge);
+  - the held weapon keeps its outline so you still see what you hold;
+  - the next-weapon cards and the WEAPONS label are hidden while it is small (the WEAPONS square stays, small);
+  - ammo numbers and slot numbers are hidden (too small to read).
+- **One tap anywhere on the small bar opens it.** In the small state the slots do not react one by one; one invisible button covers the whole small bar, at least 48 px high and 8 px wider on each side than the bar, so it is easy to hit. A tap on the small bar never fires, never equips and never moves the camera (the button sinks the touch).
+- **Open (big):**
+  - the bar grows to today's size (the size LayoutCheck already measured clear of the thumbs) in 0.15 s with a small spring (Back Out);
+  - now each slot can be tapped and works as today (tap a weapon to hold it; tap the WEAPONS square for the Weapons menu);
+  - the next-weapon cards show again.
+- **It closes by itself:**
+  - 0.3 s after you pick a weapon (so you see your pick light up);
+  - after 4 s with no tap on the bar;
+  - when you touch anywhere else (the stick, SHOOT, the camera): it closes AND that touch still works as normal (do not sink it);
+  - when a window opens (Shop, Weapons, Rewards).
+- **New weapon:** when you unlock or get a weapon, the bar opens by itself for 1.5 s with the new slot popping, then shrinks again.
+- **Everything placed over the bar follows its visible top** (small or big): the pick chip (`PickChip`), the next-weapon row, `ChaseHud`, `Speedometer` and `HudPlus`'s bar-relative parts. Read the bar's visible size (frame size x the UIScale), not `plan.size`.
+- **Cheap:** only the UIScale and the outline are tweened (one tween at a time); no new GUIs per frame. No text hint: the first time a player is on a phone, the small bar does one soft pulse (scale 0.6 to 0.66 and back, twice), then never again (a local flag, and nothing if it cannot be stored).
+- **Gamepad and keyboard** never see the small bar (a phone with a pad: today's bar).
+- **LayoutCheck:** check both states on the phone sizes (small and open) for overlap with the stick, SHOOT/GRAB, jump and the safe area.
+- **Check:** in the Studio phone emulator (landscape and upright): the bar is small; one tap opens it; picking a weapon holds it and the bar shrinks; tapping the stick closes it and you walk at once; after 4 s it closes alone. iPad and PC: today's bar, unchanged.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
