@@ -39,7 +39,7 @@ Settings.NOTICES = { { name = "AUTO" }, { name = "NORMAL" }, { name = "SMALL" },
 Settings.RECOIL = { { name = "FULL", scale = 1 }, { name = "HALF", scale = 0.5 }, { name = "OFF", scale = 0 } }
 -- F38 (owner: "gør så man kan adjust speed i sine settings"; Config.WALK_SETTING): the walk speed; sprint stays 1.5x it
 -- (Client/Sprint reads the player attribute WalkPref). NORMAL is the game's own speed.
-Settings.WALK = { { name = "NORMAL", speed = nil :: number? }, { name = "FAST", speed = 34 :: number? }, { name = "VERY FAST", speed = 40 :: number? }, { name = "CALM", speed = 20 :: number? } }
+Settings.WALK = { { name = "NORMAL", speed = 30 :: number? }, { name = "FAST", speed = 36 :: number? }, { name = "VERY FAST", speed = 44 :: number? }, { name = "CALM", speed = 22 :: number? } } -- (F51: NORMAL 30, was the place's 16)
 local SAVE_AFTER = 0.75 -- s after the last change (one write for a flurry of taps)
 
 local values: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1, recoil = 1, fpShot = true, fpStart = false, fpTaught = false, walk = 1 }
