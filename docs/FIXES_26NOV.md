@@ -890,6 +890,19 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 - **Hints:** the first-time hints and the TRY lesson that pointed at the toolbox slot now point at the WEAPONS tile.
 - **Check:** PC, tablet and phone. T opens WEAPONS from the nav; the gear opens More; there is no toolbox on the hotbar; nothing overlaps.
 
+## F64 V always toggles first person, also while holding a weapon (owner: "Fiks så at V putter en ud af first person, også hvis man holder et våben")
+**Today:** V (the eye chip, first person on and off) does not take you OUT of first person while you hold a weapon. Something forces first person with a weapon: the "the first strike or picking a weapon goes to first person" rule, an aim mode, `fpStart`, or the camera code that locks LockFirstPerson / CameraMaxZoomDistance while a gun is held.
+
+**Fix:**
+- **V is a true toggle at all times:** first person ⇄ third person, with or without a weapon, while aiming, in the shoulder cam, and in vehicles where first person exists.
+- **When the player leaves first person with V,** nothing pulls them back in. No re-entry on the next shot or the next weapon pick, until they press V again.
+- **The automatic "go to first person" on picking a weapon or on the first shot** only applies if the player has NOT chosen third person with V this session. The player's choice always wins.
+  - Remember the choice in Settings (`fpStart` / `fpShot`); the existing settings stay in charge.
+- **Phones:** the eye button does the same.
+- **Console:** its bound button does the same.
+- **Weapons keep working in third person:** the crosshair, aiming and recoil all work in third person (the shoulder cam on phones, PHONE_SHOULDER_CAM).
+- **Check:** hold each weapon class, press V several times, shoot, switch weapons. V always switches, and nothing forces you back.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
