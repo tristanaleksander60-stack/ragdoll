@@ -340,6 +340,7 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 	art.Face = Enum.NormalId.Right
 	art.Parent = hole
 	hole.Name = "BulletHole"
+	hole:SetAttribute("Scale", scale or 1) -- (F4: how heavy the round was, for the X-ray crack)
 	hole.Anchored = false
 	local weld = Instance.new("WeldConstraint")
 	weld.Part0 = part

@@ -266,6 +266,44 @@ local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: s
 	else
 		bone(0, 0, thick * 1.08, len, 1.2)
 	end
+	-- (F4, owner 26 Nov 2026: "hver eneste kugle i knoglerne med xray", Config.XRAY_SLUGS): every round that hit this limb
+	-- sits in the bone as a small grey-gold slug at the exact height and side it went in (its BulletHole), at most
+	-- SLUG_MAX a limb; a heavy round (hole Scale 1.35+, the sniper and the big guns) also leaves a dark crack line across
+	-- the bone right there, a very heavy one (1.6+) a clean snap (two lines, the piece between knocked aside). Inside the
+	-- X-ray shell only; they go with the holes (a full heal clears both).
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).XRAY_SLUGS then
+		local slugs = 0
+		local xs: { number } = if key == "LowerArm" then { -thick * 0.62, thick * 0.62 } elseif key == "LowerLeg" then { -thick * 0.32, thick * 0.92 } else { 0 }
+		for _, hole in limb:GetChildren() do
+			if hole.Name == "BulletHole" and hole:IsA("BasePart") and slugs < 15 then
+				slugs += 1
+				local l = skin.CFrame:PointToObjectSpace(hole.Position)
+				local y = math.clamp(l.Y, -len * 0.46, len * 0.46)
+				local bx = xs[1]
+				for _, x in xs do
+					if math.abs(x - l.X) < math.abs(bx - l.X) then
+						bx = x
+					end
+				end
+				if key == "Hand" or key == "Foot" then
+					bx = math.clamp(l.X, -thick * 1.4, thick * 1.4)
+				end
+				local r = if XRAY_PHONE then 0.2 else 0.15
+				local slug = bit(Enum.PartType.Ball, Vector3.one * r, CFrame.new(bx + math.sign(l.X) * thick * 0.25, y, math.sign(l.Z) * thick * 0.2), Color3.fromRGB(196, 172, 112))
+				slug.Material = Enum.Material.Metal
+				slug.Name = "XraySlug"
+				local scale = hole:GetAttribute("Scale")
+				local force = if type(scale) == "number" then scale else 1
+				if force >= 1.35 then
+					local crack = Color3.fromRGB(70, 60, 54)
+					bit(Enum.PartType.Block, Vector3.new(thick * 1.5, thick * 0.12, thick * 1.3), CFrame.new(bx, y, 0) * CFrame.Angles(0, 0, math.rad(14)), crack)
+					if force >= 1.6 then
+						bit(Enum.PartType.Block, Vector3.new(thick * 1.5, thick * 0.12, thick * 1.3), CFrame.new(bx + thick * 0.12, y + thick * 0.5, 0) * CFrame.Angles(0, 0, math.rad(-10)), crack)
+					end
+				end
+			end
+		end
+	end
 end
 
 local template: Instance? = nil
