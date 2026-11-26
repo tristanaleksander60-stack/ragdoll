@@ -693,6 +693,20 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 
 **Check:** close-ups and a medium view of both; a harsh score "would a player call this a box or slop?" They must be 9+.
 
+## F53 Trees block the WEAPON TESTING building (owner: "Man kan ikke komme ind i Weapons Testing, fordi træerne dækker")
+**The screenshot:** the weapon range ("WEAPON TESTING") in the Danger Zone has trees and bushes planted right in front of its open front and inside the entrance. They hide the sign, block the way in, and stand on the range's floor.
+
+**Fix:**
+- **Clear zone:** remove every tree, bush and prop from a clear zone in front of every building entrance and door (at least the entrance width plus 4 studs each side, 12 studs deep), and from INSIDE every building and covered attraction.
+- **Paths:** a path (`MAP_MASTERPLAN.md` PATHS rules) leads straight to the weapon range's entrance with a landing at its front.
+- **The sign:** the sign above the entrance must be fully visible from the path (no leaves in front).
+- **The general rule** for the tree and dressing placer: trees, bushes and the belts' planting never go:
+  - inside any building or attraction bounding box (+3 studs);
+  - in front of any entrance, door, gate or sign (a clear cone 12 studs deep);
+  - on any path or landing.
+- **The map lint** reports trees or bushes in entrance zones and inside buildings, and it must be 0.
+- **Check:** walk into the weapon range and every other building or gate from its path. Nothing blocks the way or the sign.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
