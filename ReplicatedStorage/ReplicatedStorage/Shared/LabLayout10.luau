@@ -193,6 +193,7 @@ if Config.LAB_OWNERMAP then
 	LabLayout10.TRAMPOLINE = V(30, 90)
 	LabLayout10.STRETCH = V(245, -48)
 	LabLayout10.MOVES.Lava = Vector3.new(-215 + 111, 0, -85 + 28) -- the boxing ring at (-215, -85)
+	LabLayout10.MOVES.ShootingRange = Vector3.new(150, 0, 151) -- the weapon range in the Danger Zone at (150, 305) (its own spot is (0, 154))
 end
 
 return LabLayout10

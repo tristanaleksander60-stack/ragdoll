@@ -61,7 +61,7 @@ local function planAt(o: Vector3, top: number, id: string, dx: number?, dz: numb
 	return Vector3.new(o.X + v.X + (dx or 0), top, o.Z + v.Y + (dz or 0))
 end
 local SLAB_TEX = "rbxassetid://91579008413917"
-local function slab(into: Instance, name: string, a: Vector3, b: Vector3, width: number, lift: number)
+local function slab(into: Instance, name: string, a: Vector3, b: Vector3, width: number, lift: number, noKerb: boolean?)
 	local len = (b - a).Magnitude
 	if len < 0.5 then
 		return
@@ -76,7 +76,7 @@ local function slab(into: Instance, name: string, a: Vector3, b: Vector3, width:
 	t.Color3 = Color3.fromRGB(150, 150, 146)
 	t.Transparency = 0.55
 	t.Parent = p
-	for _, side in { -1, 1 } do
+	for _, side in if noKerb then {} else { -1, 1 } do
 		part(into, "OwnerKerb", Vector3.new(0.8, 0.7, len), cf * CFrame.new(side * (width / 2 + 0.4), 0.1, 0), Color3.fromRGB(190, 190, 186), Enum.Material.Concrete, true)
 	end
 end
@@ -112,7 +112,7 @@ local function ground(into: Instance, o: Vector3)
 	-- Inner paths (12): entrance -> courtyard -> the front of every attraction.
 	for _, path in Plan.INNER do
 		for i = 1, #path.points - 1 do
-			slab(into, "OwnerPath", w(path.points[i]), w(path.points[i + 1]), Plan.INNER_W, 0.18)
+			slab(into, "OwnerPath", w(path.points[i]), w(path.points[i + 1]), Plan.INNER_W, 0.18, true) -- (M9: no kerbs on the inner paths)
 		end
 	end
 	-- The courtyards of the rooms.
@@ -203,7 +203,7 @@ local function ground(into: Instance, o: Vector3)
 		for _, side in { -1, 1 } do
 			part(into, "OwnerRail", Vector3.new(0.4, 0.5, len + 4), along * CFrame.new(side * 2.4, 1, 0), RAIL, Enum.Material.Metal, true)
 		end
-		local n = math.floor(len / 6)
+		local n = math.floor(len / 10) -- (M9: a sleeper every 10)
 		for k = 0, n do
 			part(into, "OwnerSleeper", Vector3.new(7, 0.35, 1.2), along * CFrame.new(0, 0.6, -len / 2 + k * (len / math.max(n, 1))), SLEEPER, Enum.Material.Wood, true)
 		end
@@ -946,7 +946,7 @@ end
 -- belt is broken only at the room's entrances (GAP wide), where an arch with the room's name stands. Leaves never
 -- collide; trees vary in size (+-25 %) and turn.
 local LEAF = { TreeOak = Color3.fromRGB(96, 150, 70), TreeFir = Color3.fromRGB(58, 112, 70), TreePoplar = Color3.fromRGB(120, 160, 70) }
-local function plantTree(into: Instance, kind: string, at: Vector3, height: number, rng: Random)
+local function plantTree(into: Instance, kind: string, at: Vector3, height: number, rng: Random, noTrunk: boolean?)
 	local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
 	local trees = assets and assets:FindFirstChild("Trees")
 	local src = trees and trees:FindFirstChild(kind)
@@ -962,8 +962,8 @@ local function plantTree(into: Instance, kind: string, at: Vector3, height: numb
 	t.Anchored, t.CanCollide, t.CanQuery, t.CanTouch = true, false, false, false
 	t.CastShadow = height > 20
 	t.Parent = into
-	if kind ~= "TreeFir" then
-		-- (one mesh: a brown trunk over its lower part)
+	if kind ~= "TreeFir" and not noTrunk then
+		-- (one mesh: a brown trunk over its lower part; only the front row: M9)
 		local tr = part(into, "TreeTrunk", Vector3.new(height * 0.36, height * 0.09, height * 0.09), CFrame.new(at + Vector3.new(0, height * 0.18, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(110, 80, 56), Enum.Material.Wood, true, Enum.PartType.Cylinder)
 		tr.CanCollide = true -- (you bump into the trunk, not the leaves)
 	end
@@ -1037,7 +1037,7 @@ local function belts(into: Instance, o: Vector3, top: number)
 						if open(edgeP) then
 							local w = Vector3.new(o.X + p.X + rng:NextNumber(-2, 2), top, o.Z + p.Y + rng:NextNumber(-2, 2))
 							if row.tree then
-								plantTree(into, kinds[rng:NextInteger(1, #kinds)], w, rng:NextNumber(20, 32), rng)
+								plantTree(into, kinds[rng:NextInteger(1, #kinds)], w, rng:NextNumber(20, 32), rng, row.d > 6)
 							else
 								bush(into, w, rng)
 							end
@@ -1079,13 +1079,17 @@ end
 local function hideOld(folder: Instance, o: Vector3)
 	for _, c in folder:GetChildren() do
 		if LabOwnerMap.HIDE_IN_LAB[c.Name] or LabOwnerMap.HIDE_OLD_TOWER[c.Name] then
-			hide(c)
+			if c.Name == "LabV10" or c.Name == "Heights" then
+				c:Destroy() -- (M9: gone, not just hidden: they cost about 1000 parts)
+			else
+				hide(c)
+			end
 		end
 	end
 	local dressF = folder:FindFirstChild("Dress")
 	local arms = dressF and dressF:FindFirstChild("MechArmsStand")
 	if arms then
-		hide(arms) -- (map round 2: the 4 mech arms are gone)
+		arms:Destroy() -- (map round 2: the 4 mech arms are gone; M9: destroyed, not hidden)
 	end
 	local labs = Workspace:FindFirstChild("Labs")
 	for _, plot in if labs then labs:GetChildren() else {} do
