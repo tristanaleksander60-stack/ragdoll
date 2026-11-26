@@ -1,6 +1,6 @@
 --!strict
 -- GUARD_DOG (owner, 26 Nov 2026; docs/GUARD_DOG.md, Config.GUARD_DOG): a doghouse in every lab. "Whistle" (E / tap) and
--- the dog (the robot dog model, V3Assets PetRobotDog) comes out and follows you, a few studs behind and to the side.
+-- the dog (a German Shepherd, V3Assets GermanShepherd; F10) comes out and follows you, a few studs behind and to the side.
 -- Tap or click a ragdoll right on a limb (Client/GuardDogClient): the dog runs there and bites exactly that limb, shakes
 -- it for a moment (a real hit on that part: DummyControl.hit + VitalsService.wound, so it reacts, gets hurt and can be
 -- knocked out, a KO for you), then trots back: "GOOD BOY!". Never the head or neck (the client picks the nearest arm).
@@ -59,7 +59,9 @@ local function whistle(player: Player, house: Vector3)
 		return
 	end
 	local src = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
-	local template = src and src:FindFirstChild("PetRobotDog")
+	-- (F10, owner 26 Nov 2026: "ikke en robothund men en schæferhund": V3Assets GermanShepherd, a Creator Store K9 mesh
+	-- (scripts and rig removed), the robot dog only if it is missing.)
+	local template = src and (src:FindFirstChild("GermanShepherd") or src:FindFirstChild("PetRobotDog"))
 	if not template then
 		return
 	end
@@ -245,8 +247,18 @@ local function step(dt: number)
 			local stepLen = math.min(dist, speed * dt)
 			local next = here + move.Unit * stepLen
 			local y = floorUnder(next, { d.model, character :: Instance }) + d.lift
-			local pos = Vector3.new(next.X, y, next.Z)
-			d.model:PivotTo(CFrame.lookAt(pos, pos + move.Unit))
+			-- (F10: a trot: the body bobs and rocks with the step, faster and higher at a run.)
+			local fast = speed >= GuardDog.RUN_SPEED
+			local beat = now * (if fast then 16 else 11)
+			local bob = math.abs(math.sin(beat)) * (if fast then 0.35 else 0.18)
+			local pos = Vector3.new(next.X, y + bob, next.Z)
+			d.model:PivotTo(CFrame.lookAt(pos, pos + move.Unit) * CFrame.Angles(math.sin(beat) * 0.04, 0, math.sin(beat * 0.5) * 0.05))
+		else
+			-- (F10: standing by you: it breathes and wags, the body wiggling a little.)
+			local flat = Vector3.new(here.X, floorUnder(here, { d.model, character :: Instance }) + d.lift, here.Z)
+			local look = Vector3.new(root.Position.X - here.X, 0, root.Position.Z - here.Z)
+			local face = if look.Magnitude > 0.05 then look.Unit else d.model:GetPivot().LookVector
+			d.model:PivotTo(CFrame.lookAt(flat + Vector3.new(0, math.sin(now * 3) * 0.04, 0), flat + face) * CFrame.Angles(0, math.sin(now * 9) * 0.06, 0))
 		end
 	end
 end
