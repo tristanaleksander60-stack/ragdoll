@@ -352,10 +352,10 @@ local function hero(into: Instance, o: Vector3, top: number)
 		c + Vector3.new(-h, roofY - top + 0.5, -10),
 		-- (map round 3: kept inside the Tower Square, radius 100)
 		c + Vector3.new(-h - 18, roofY - top - 30, 4),
-		c + Vector3.new(-h - 36, roofY - top - 58, 20),
-		c + Vector3.new(-h - 44, roofY - top - 78, 42),
-		c + Vector3.new(-h - 46, 2.5, 66),
-		c + Vector3.new(-h - 46, 0.6, 80),
+		c + Vector3.new(-h - 34, roofY - top - 58, 14),
+		c + Vector3.new(-h - 40, roofY - top - 78, 26),
+		c + Vector3.new(-h - 42, 2.5, 36),
+		c + Vector3.new(-h - 42, 0.6, 48), -- (the plan's slide run-out, south-west of the tower)
 	}
 	for i = 1, #pts - 1 do
 		local a, b = pts[i], pts[i + 1]
@@ -394,21 +394,21 @@ local function hero(into: Instance, o: Vector3, top: number)
 	end
 
 	-- THE GRANDSTAND: south of the tower on its own plot, facing north.
-	local g = c + Vector3.new(0, 0, h + 20) -- (map round 3: on the Tower Square, south of the tower, the seats facing it)
-	local W, rows = 80, 6
+	local g = c + Vector3.new(58, 0, -40) -- (map round 3: the plan's spot north-east of the tower; the rows rise to the north, the seats face south to the tower and the square)
+	local W, rows = 60, 6
 	for r = 1, rows do
 		local stepH = r * 2
-		local z = g.Z + (r - 1) * 3.2
+		local z = g.Z - (r - 1) * 3.2
 		part(into, "StandStep", Vector3.new(W, stepH, 3.2), CFrame.new(g.X, top + stepH / 2, z), CONCRETE, Enum.Material.Concrete)
-		part(into, "StandSeat", Vector3.new(W - 4, 0.5, 1.4), CFrame.new(g.X, top + stepH + 0.25, z - 0.4), WOOD, Enum.Material.WoodPlanks, true)
+		part(into, "StandSeat", Vector3.new(W - 4, 0.5, 1.4), CFrame.new(g.X, top + stepH + 0.25, z + 0.4), WOOD, Enum.Material.WoodPlanks, true)
 	end
-	local backZ = g.Z + rows * 3.2
+	local backZ = g.Z - rows * 3.2
 	part(into, "StandBack", Vector3.new(W, rows * 2 + 6, 1.2), CFrame.new(g.X, top + (rows * 2 + 6) / 2, backZ), CONCRETE, Enum.Material.Concrete)
 	for k = -3, 3 do
-		part(into, "StandPanel", Vector3.new(4, rows * 2 + 2, 0.2), CFrame.new(g.X + k * 11, top + (rows * 2 + 2) / 2 + 1, backZ + 0.7), Color3.fromRGB(70, 72, 78), Enum.Material.SmoothPlastic, true)
+		part(into, "StandPanel", Vector3.new(4, rows * 2 + 2, 0.2), CFrame.new(g.X + k * 11, top + (rows * 2 + 2) / 2 + 1, backZ - 0.7), Color3.fromRGB(70, 72, 78), Enum.Material.SmoothPlastic, true)
 	end
-	railing(into, Vector3.new(g.X - W / 2, top + rows * 2, backZ - 1.5), Vector3.new(g.X + W / 2, top + rows * 2, backZ - 1.5))
-	part(into, "StandPlot", Vector3.new(W + 20, 0.3, 40), CFrame.new(g.X, top + 0.15, g.Z + 8), Color3.fromRGB(196, 196, 190), Enum.Material.Pavement)
+	railing(into, Vector3.new(g.X - W / 2, top + rows * 2, backZ + 1.5), Vector3.new(g.X + W / 2, top + rows * 2, backZ + 1.5))
+	part(into, "StandPlot", Vector3.new(W + 20, 0.3, 40), CFrame.new(g.X, top + 0.15, g.Z - 8), Color3.fromRGB(196, 196, 190), Enum.Material.Pavement)
 end
 
 LabOwnerMap.HIDE_OLD_TOWER = { Tower = true, TowerBand = true, TowerStripe = true, Stair = true, StairEdge = true, Heights = true }
@@ -1354,7 +1354,7 @@ end
 
 -- M7: the old lab frame goes (the LAB10 compound and park, the plot's floor, spawn disc, edges, barriers, cones, signs and
 -- the zone pads): invisible and walked through, the new ground is under it.
-LabOwnerMap.HIDE_IN_LAB = { LabV10 = true, LabZonePads = true, ZonePads = true, LabGarden = true, Paths = true }
+LabOwnerMap.HIDE_IN_LAB = { LabV10 = true, LabZonePads = true, ZonePads = true, LabGarden = true, Paths = true, Bullseye = true, StationPad = true, StationRail = true, StationWall = true, CrashWallBadge = true, Pedestal = true, PedestalRim = true, Guide = true, RunStripe = true, HazardRim = true, Walkway = true, Zones = true, LikePost = true, LikeSign = true, LikeSignTop = true, Spikes = true, SpikeBlock = true }
 LabOwnerMap.HIDE_IN_PLOT = { LabFloor = true, Plaza = true, PlazaRim = true, Edge = true, Barrier = true, Cone = true, LabSign = true, LabSignPost = true }
 local function hide(inst: Instance)
 	local list = if inst:IsA("BasePart") then { inst } else {}
