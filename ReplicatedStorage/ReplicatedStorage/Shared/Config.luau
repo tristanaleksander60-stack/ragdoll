@@ -89,6 +89,7 @@ local Config = {
 	PHONE_NO_KEYS = true, -- F70: one rule for HUD key letters (ViewMode.showKeys: a keyboard and no touch screen); none on any touch screen, the gift's J included
 	NAV_WEAPONS = true, -- F63: the left nav's MORE becomes WEAPONS (toolbox, T); the hotbar toolbox only shows as CANCEL; MORE is a gear in the top bar (9) (HudV3, PokeController)
 	BACK_TO_SPAWN = true, -- F80: BACK TO SPAWN as MORE's first row: a fade, the server sets you on a free spot of the spawn plaza facing the boulevard (Net Teleport, 5 s cooldown; Systems/BackToSpawn)
+	PHONE_MINI_BAR = true, -- F71: on a phone the hotbar rests at 0.6 size; one tap opens it (0.15 s spring), it shrinks after a pick, 4 s idle, a touch elsewhere or a window (Client/MiniBar)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays
