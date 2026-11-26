@@ -108,9 +108,8 @@ Plan.INNER = {
 }
 Plan.ITEMS = {
 	Spawn = { zone = "SpawnPlaza", at = Vector2.new(-30, -300), size = Vector2.new(16, 16), face = "S", what = "spawn point, facing down the boulevard to the tower" },
-	Leaderboards = { zone = "SpawnPlaza", at = Vector2.new(-30, -360), size = Vector2.new(110, 6), face = "S", what = "the 4 leaderboards in a row (top 20, scrolling)" },
+	Leaderboards = { zone = "SpawnPlaza", at = Vector2.new(-30, -360), size = Vector2.new(110, 6), face = "S", what = "the 4 leaderboards in a row (top 20, scrolling); their SCREENS face SOUTH toward the spawn and the stair (readable from the spawn)" },
 	MapsBoard = { zone = "SpawnPlaza", at = Vector2.new(25, -320), size = Vector2.new(6, 22), face = "W", what = "the MAPS board" },
-	ShopKiosk = { zone = "SpawnPlaza", at = Vector2.new(-85, -320), size = Vector2.new(14, 14), face = "E", what = "a small shop kiosk (opens SHOP)" },
 	CaveBear = { zone = "AnimalCove", at = Vector2.new(-385, -300), size = Vector2.new(90, 70), face = "S", what = "the rock cave with the bear and its stone-ringed yard" },
 	Aquarium = { zone = "AnimalCove", at = Vector2.new(-230, -300), size = Vector2.new(70, 40), face = "S", what = "the glass aquarium with the shark (NOT near the spawn)" },
 	CrocPond = { zone = "AnimalCove", at = Vector2.new(-400, -212), size = Vector2.new(60, 40), face = "E", what = "the fenced crocodile pond + the speaker wall on its west side" },

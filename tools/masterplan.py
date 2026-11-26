@@ -74,9 +74,8 @@ ROADS = [
 ITEMS = [
     # Spawn plaza
     ("Spawn",          "SpawnPlaza", -30, -300, 16, 16, "S", "spawn point, facing down the boulevard to the tower"),
-    ("Leaderboards",   "SpawnPlaza", -30, -360, 110, 6, "S", "the 4 leaderboards in a row (top 20, scrolling)"),
+    ("Leaderboards",   "SpawnPlaza", -30, -360, 110, 6, "S", "the 4 leaderboards in a row (top 20, scrolling); their SCREENS face SOUTH toward the spawn and the stair (readable from the spawn)"),
     ("MapsBoard",      "SpawnPlaza",  25, -320, 6, 22, "W", "the MAPS board"),
-    ("ShopKiosk",      "SpawnPlaza", -85, -320, 14, 14, "E", "a small shop kiosk (opens SHOP)"),
     # Animal Cove
     ("CaveBear",       "AnimalCove", -385, -300, 90, 70, "S", "the rock cave with the bear and its stone-ringed yard"),
     ("Aquarium",       "AnimalCove", -230, -300, 70, 40, "S", "the glass aquarium with the shark (NOT near the spawn)"),
