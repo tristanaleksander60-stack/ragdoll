@@ -344,7 +344,7 @@ local function hero(into: Instance, o: Vector3, top: number)
 		part(into, "TowerLanding", Vector3.new(wellX - 1, 0.8, 3.2), CFrame.new(c + Vector3.new(0, y0 + H, dir * ((wellZ - 6) / 2 + 1.6))), PLATE, Enum.Material.DiamondPlate)
 	end
 	-- A ground pad under the tower.
-	part(into, "TowerPad", Vector3.new(T + 8, 0.4, T + 8), CFrame.new(c + Vector3.new(0, 0.2, 0)), CONCRETE, Enum.Material.Concrete)
+	part(into, "TowerPad", Vector3.new(T + 8, 0.52, T + 8), CFrame.new(c + Vector3.new(0, 0.26, 0)), CONCRETE, Enum.Material.Concrete)
 
 	-- THE SLIDE: from the roof's west edge, down and round to the south-west on a truss.
 	local roofY = top + H * LabOwnerMap.FLOORS
@@ -1002,7 +1002,7 @@ local Y_KINDS: { [string]: { string } } = {
 	Bush = { "Bush_01", "Bush_02", "Bush_03" },
 }
 local GREENS = { Color3.fromRGB(93, 107, 28), Color3.fromRGB(52, 86, 40), Color3.fromRGB(112, 140, 44), Color3.fromRGB(60, 98, 78), Color3.fromRGB(84, 96, 40) }
-local function yTree(into: Instance, kind: string, at: Vector3, height: number, rng: Random): boolean
+local function yTree(into: Instance, kind: string, at: Vector3, height: number, rng: Random, tint: Color3?): boolean
 	local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
 	local lib = assets and assets:FindFirstChild("YTrees")
 	if not lib or not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TREES_V2 then
@@ -1017,7 +1017,7 @@ local function yTree(into: Instance, kind: string, at: Vector3, height: number, 
 	local _, size = t:GetBoundingBox()
 	t:ScaleTo(math.max(0.05, height * rng:NextNumber(0.85, 1.15) / size.Y))
 	local roll = rng:NextNumber()
-	local leaf = if roll < 0.03 then Color3.fromRGB(196, 110, 44) elseif roll < 0.05 then Color3.fromRGB(170, 66, 44) elseif roll < 0.11 then Color3.fromRGB(150, 160, 52)
+	local leaf = if tint then tint elseif roll < 0.03 then Color3.fromRGB(196, 110, 44) elseif roll < 0.05 then Color3.fromRGB(170, 66, 44) elseif roll < 0.11 then Color3.fromRGB(150, 160, 52)
 		else GREENS[rng:NextInteger(1, #GREENS)]:Lerp(Color3.fromRGB(120, 140, 60), rng:NextNumber() * 0.2)
 	for _, d in t:GetDescendants() do
 		if d:IsA("BasePart") then
@@ -1500,10 +1500,16 @@ local function flowerBed(into: Instance, at: Vector3, w: number, d: number, rng:
 	if onPath(at, math.max(w, d) / 2 + 1) then
 		return -- (rule 3: never on a path)
 	end
-	part(into, "FlowerBedSoil", Vector3.new(w, 0.6, d), CFrame.new(at + Vector3.new(0, 0.3, 0)), Color3.fromRGB(96, 70, 50), Enum.Material.Ground, true)
+	part(into, "FlowerBedSoil", Vector3.new(w, 0.66, d), CFrame.new(at + Vector3.new(0, 0.35, 0)), Color3.fromRGB(96, 70, 50), Enum.Material.Ground, true)
 	part(into, "FlowerBedEdge", Vector3.new(w + 1, 0.8, d + 1), CFrame.new(at + Vector3.new(0, 0.2, 0)), Color3.fromRGB(190, 190, 186), Enum.Material.Concrete, true)
 	for k = 1, math.floor(w * d / 18) do
 		local p = at + Vector3.new(rng:NextNumber(-w / 2 + 1, w / 2 - 1), 1, rng:NextNumber(-d / 2 + 1, d / 2 - 1))
+		-- (1e: no more balls as flowers: a small flowering bush from the tree set, in a flower colour)
+		if k % 2 == 1 and yTree(into, "Bush", p - Vector3.new(0, 0.4, 0), rng:NextNumber(1.8, 2.8), rng, FLOWER[rng:NextInteger(1, #FLOWER)]) then
+			continue
+		elseif k % 2 == 0 and (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TREES_V2 then
+			continue -- (half as many: a bush is bigger than a ball)
+		end
 		part(into, "Flower", Vector3.new(1.4, 1.2, 1.4), CFrame.new(p), FLOWER[rng:NextInteger(1, #FLOWER)], Enum.Material.SmoothPlastic, true, Enum.PartType.Ball)
 		local _ = k
 	end
