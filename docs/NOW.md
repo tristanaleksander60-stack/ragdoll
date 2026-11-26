@@ -13,6 +13,19 @@
 - **Hints:** a first-time hint is one short line plus a pointing hand, shown once.
 - **Performance:** within the phone caps (ragdolls, particles, parts); light stand-ins far away.
 
+## Small UI change (owner, 26 Nov 2026): MULTIPLAYER as an icon
+> "Det er allerede i spillet i portalen, bare lav det til et ikon i stedet for"
+
+- **What exists:** the Multiplayer window (Play: QUICK JOIN / PLAY WITH FRIENDS; Open games; Private room; Join by code) opens from the multiplayer portal in the world.
+- **The icon:** put a **MULTIPLAYER icon button** on the HUD nav (two-people icon, label "Multiplayer" on PC; on phones the icon only, at least 60 px, in the left stack under Shop / More / Lab). It opens the same window.
+- **The portal:** hide the multiplayer portal behind a switch (`MP_PORTAL = false`; do not delete it). The SINGLEPLAYER way back stays reachable from the same window ("Back to my own lab").
+- **The window on phones:**
+  - near full-screen;
+  - big buttons;
+  - the side tabs as icons with short words;
+  - text cut to one short line.
+- **Order:** do it in the same run, right after ALWAYS3. It is small.
+
 ## FIRST, URGENT: `docs/BODY_V2.md` section 0, gore OFF (owner chose it, 26 Nov)
 - Build it, then **publish at once** (quick gate). The maturity questionnaire is due **Fri 27 Nov 2026 17:34 UTC** and must match the live game.
 - Then tell the owner in Danish: "Gore er slået fra og live — send spørgeskemaet nu med svarene i docs/MATURITY.md".
