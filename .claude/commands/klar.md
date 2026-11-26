@@ -39,8 +39,14 @@ Read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situat
 - **Creator Store scripts** (vehicles): build the features in our own code. A model's script may run only if it passes F76's security check.
 - **Game pass ids not sent yet:** the vehicle shows SOON; it is never free by mistake.
 - **Keys:** REVIVE ALL is X; X-RAY is I; MORE is a gear (9); WEAPONS is T.
-- **Python is not on this PC:** never install it and never work around it on the old map. The cloud session runs `tools/masterplan.py` and pushes `OwnerMapPlan.luau`; you only BUILD from that file.
-- **No Blender on this PC:** build real hands from parts and use Roblox-made body bundles (S2 plan B); never park the hands.
+- **Python and Blender:** the owner is installing both (26 Nov late).
+  - Check with `python --version` and `blender --version`; if `blender` is not on PATH, look for `C:\Program Files\Blender Foundation\Blender*\blender.exe`.
+  - **With Python:** you may run `tools/masterplan.py` yourself after a plan change (the lint must report 0). Without it, the cloud session runs it and you only build from `OwnerMapPlan.luau`. Never work around a missing tool on the old map.
+  - **With Blender:** do S2 for real:
+    1. make the skinned mannequin body with real hands and fingers in Blender from a Python script (`blender --background --python <script>`), with the LihFolk `roblox-blender-modeling` skill;
+    2. export it as FBX with R15 bone names and skin weights, into `art/models/mannequin/`;
+    3. if the MCP cannot import an FBX, put "Studio: File > Import 3D > art/models/mannequin/mannequin.fbx" in the final message as ONE owner step, and finish the hookup in the next run. Meanwhile, build the real hands from parts (S2 plan B) so the hooks are gone.
+  - **Without Blender:** S2 plan B (hands from parts, Roblox body bundles). Never park the hands.
 - **Never change the old map layout:** since M4 every map change is built on the compact plan (OVERVIEW M4).
 
 ## The ONE final message (Danish, short, only when you really stop)
