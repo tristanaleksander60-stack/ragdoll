@@ -4,6 +4,15 @@
 
 **Next after the lab:** `docs/STAY_LONGER.md` (session length). Build items 1-8 in one run. Item 1, the quiet gift timer on phones, goes first.
 
+## RULE FOR EVERYTHING IN THIS PLAN (owner, 26 Nov 2026): mobile first, simple enough for a 10-year-old on an iPad
+- **Phone and iPad first:** every new thing is built and checked on the phone and iPad emulators before PC and console.
+- **One tap per action:**
+  - big buttons (at least 60 px);
+  - icons rather than words; at most 2 words on any button;
+  - no reading needed to understand it.
+- **Hints:** a first-time hint is one short line plus a pointing hand, shown once.
+- **Performance:** within the phone caps (ragdolls, particles, parts); light stand-ins far away.
+
 ## FIRST, URGENT: `docs/BODY_V2.md` section 0, gore OFF (owner chose it, 26 Nov)
 - Build it, then **publish at once** (quick gate). The maturity questionnaire is due **Fri 27 Nov 2026 17:34 UTC** and must match the live game.
 - Then tell the owner in Danish: "Gore er slået fra og live — send spørgeskemaet nu med svarene i docs/MATURITY.md".
@@ -17,6 +26,7 @@
 - Then publish once and give one Danish "Test selv" list.
 - In the same run, after the lab: `docs/IMPACT_FX.md` (smoke and dust on every impact, grab and SLAM).
 - Then `docs/BODY_V2.md` sections 1-4b: X-ray 10/10, purple blood look, hit marks instead of holes, burial + revenge, injury stages + real bandages + changing faces.
+- Then `docs/GUARD_DOG.md`: whistle the guard dog, 3 treats, a ragdoll picks one up, and the dog takes it down in 8 cartoon ways.
 - Then `docs/WHEELCHAIRS.md`: drivable wheelchairs; put ragdolls in them, push, let go and crash.
 - Then `docs/RAGDOLL_FEEL.md`: realistic falls, landings, lying and get-ups like the top ragdoll games.
 - Then: `docs/STAY_LONGER.md`.
