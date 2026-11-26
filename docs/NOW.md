@@ -65,6 +65,92 @@ The owner only sees M1's ground, while the OLD lab still stands in the middle (i
 - do not end the run;
 - do not say "done".
 
+### MAP ROUND 2: the owner's feedback on the built map (26 Nov, late). Part of GO NOW; do it before M9/M10
+> "Fjern de 4 arme, da de ikke virker længere. Gør så man kan scrolle ned på leaderboards til top 20. Fjern TRY efter man har prøvet den 1 gang. Mappet er bedre nu, men ser meget tomt ud rundt omkring. Lav spawnpointet ved leaderboardsne og sæt maps der også. Lav en plan for at udfylde alt det tomme plads. Og fiks så at ingen ting står på stierne, og at de ligner dem fra mit screenshot. Se mine referencebilleder igen for inspiration, brug alt der og tilføj det vi mangler."
+
+**The owner's 2 screenshots show:**
+- large plain grass plots with one small thing each, far apart;
+- walkways in a small brick-pattern paving, very wide, crossing at odd places;
+- the blue mat with red barrels lying ON a walkway;
+- a yellow lasso/rope line across the grass;
+- the sandcastle tower tilted and half on a walkway;
+- the mech-arm stand (the "4 arms") by the wrecking ball.
+
+**R2.1 Small fixes (do first):**
+- **Remove the 4 MECH ARMS** (`MECH_ARMS = false`, hide the stand; they no longer work).
+- **Leaderboards: top 20.** Each of the 4 boards shows 20 rows in a scrollable list (a ScrollingFrame on the SurfaceGui). It scrolls with the mouse wheel when pointed at, and by touch-drag on phones. Rank, name and value per row; your own row highlighted, even when you are outside the top 20 (shown pinned at the bottom).
+- **TRY disappears for good after one try** (F1 again; make sure it really works):
+  - the server saves `Tried_<kind>` in the player data the moment a machine runs with the player's ragdoll;
+  - the TRY button and the outline check it every time;
+  - after a rejoin, tried machines show NO TRY.
+  - Test it by trying 2 machines, leaving and rejoining.
+- **The SPAWN moves to the raised leaderboard plaza,** at its front edge, facing down the stair toward the tower. **The MAPS board stands on the plaza** next to the boards. The 3-near ragdolls and the first goal ("Hit a dummy!") start there.
+- **Nothing on the walkways:**
+  - move every object off them (the blue mat and barrels, the sandcastle, benches, crates, lamps, trees, ragdoll spawn points);
+  - a check script raycasts every walkway and lists anything above it, and it must be empty;
+  - objects stand at least 2 studs from a walkway edge.
+- **The sandcastle tower stands upright** on its own plot.
+- **No stray rope line on the grass:** a lasso or rope left behind is removed when not held.
+
+**R2.2 Walkways like the owner's screenshots** (ref_1, ref_2, ref_3, ref_6, ref_10):
+- **Large plain light-grey concrete slabs** (about 12 x 6 studs at the original scale; scale with the map), with thin dark joints, a slight variation in tone, and a low concrete kerb on both edges. NOT small brick-pattern paving.
+- **Width:** about 14-16 studs (not 22).
+- **Layout:** a clean straight grid like ref_10. The walkways run BETWEEN the plots and meet at right angles. Every walkway leads to a plot entrance or the plaza; no odd diagonal crossings.
+- **Textures, not parts per tile** (cheap; no flicker).
+
+**R2.3 FILL THE EMPTY SPACE** (the plan the owner asked for; build all of it). The rule: from any normal view, no empty grass bigger than about 40 x 40 studs inside the compound. Every plot is at least 60 % used.
+1. **Bigger set pieces where the screenshots show them big:** the cave, the aquarium, the pool, the fan, the gyro cage, the rocket gantry, the brick wall, the T-rex pen, the grandstand and the lava strip at 1.5-2x, so each fills its plot as in ref_10.
+2. **Every plot gets a dressed yard round its machine** (as in the refs):
+   - a concrete or dirt pad under it, with a low kerb or fence round the plot;
+   - 2 lamp posts at the plot entrance;
+   - 1-2 benches facing the machine;
+   - a small cluster of fitting props: crates, barrels, cones, a tool cart, a sign with its pictogram;
+   - the watcher ragdolls (`docs/ALWAYS3.md`).
+3. **Add what the refs have that we still miss** (check each against ref_1 … ref_10 and the close-ups):
+   - the bleacher seats by the tower (if missing);
+   - the wooden ramp/plank pieces;
+   - the archery target set;
+   - the brown sedan by the brick wall;
+   - small sheds;
+   - the speaker wall;
+   - the garage with the rail car;
+   - the T-rex behind its gate;
+   - the crocodiles in their pond;
+   - the white Tesla pad;
+   - the green turf square;
+   - the round sweeper;
+   - the shredder lever box;
+   - picnic tables;
+   - fenced paddocks.
+4. **More of the good stuff, in empty plots:**
+   - a car park with 4-6 more parked cars (in bays);
+   - a second, smaller pool with sun loungers;
+   - a picnic and grill corner;
+   - a small playground (slide, swings) where ragdolls play;
+   - a training yard with tyres and hurdles;
+   - a parked train on the railway;
+   - a hangar with its doors open and a forklift;
+   - a water tower;
+   - a control tower;
+   - a few portable toilets and a snack kiosk.
+
+   All are static or lightly animated decoration in the same realistic low-poly style (Creator Store, malware pass).
+5. **Tree groves and boulders** between zones and along the outer edge (more than now), with flower beds at the plaza.
+6. **Life:**
+   - ragdolls walking the walkways in twos;
+   - some sitting on benches and the grandstand;
+   - the cyclist and the motorbike rider on the loop;
+   - birds;
+   - the dog at its house.
+7. **Performance:** use decoration as cheap meshes; streaming must work; keep inside the part budget of `docs/PERF_MOBILE.md`.
+
+**R2.4 Check:**
+- capture the owner's 2 angles (a high view from the north-east plaza corner; a high view over the brick wall) plus ref_6-ref_10;
+- no empty grass over about 40 x 40;
+- the walkways are clean and look like the refs;
+- the spawn and MAPS are at the plaza.
+- These are part of the DEFINITION OF DONE.
+
 ### MAP RUN STATE
 - OWNER (26 Nov, late): "vent til det er helt færdig": do NOT ask for Alt+P or publish until the map meets the DEFINITION OF DONE. Keep saving the place only.
 - M1 part 1 DONE 0.78.0 (multiplayer place v55): `LAB_OWNERMAP` on, Systems/LabOwnerMap (330 parts): 950x820 grass base at CENTER (-30,24), walkway grid 22 wide (rows z -82/-18/58/104 x S, columns x -100/-55/0/28/68/112 x S, S=3.2), spawn circle, raised granite leaderboard plaza at z -304 with cap, pipe railing and stair, railway loop west+south (ballast, rails, sleepers), Terrain hill ring. Zones.PLOT_SPACING 1100 under the switch. Capture ScreenCapture_M1 vs ref_10: grid and hills match; the old lab still sits in the middle until M7. Left in M1: walkway tile seams, grass plot edges, the 4 boards on the new plaza (M7).
