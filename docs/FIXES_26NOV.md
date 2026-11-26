@@ -1011,6 +1011,15 @@ The owner sees it again: the legs jitter for 1-2 seconds at random moments. The 
 - **The same rules for the pedal-bike cyclist** (`LIFE_IDLE.md` 2) and the ridden wheelchairs.
 - **Check:** let the rider do 3 full loops of the map. It never leaves the roads and never gets stuck. Block it with a car, and it waits or goes round.
 
+## F70 No KEY LETTER on the gift on a phone (owner: "Fjern keybind (J) fra gaven på tlf")
+**Why it shows:** the gift's key chip (`Client/HudV3.luau`, `giftKey`, about line 364-383) is shown when `KeyboardEnabled and not ViewMode.isTouch()`. `ViewMode.isTouch()` is false in Studio's phone emulator (it keeps the mouse) and on an iPad with a keyboard or trackpad, so the "J" shows there. It is also drawn only on `Keybinds.onChanged`, never again when the device or view changes. `RewardsUI.keyLabel` already uses the right rule (`not TouchEnabled`); the gift chip does not.
+**Fix** (behind `Config.PHONE_NO_KEYS = true`):
+- **One rule for every key letter on the HUD:** add `ViewMode.showKeys(): boolean` = `UserInputService.KeyboardEnabled and not UserInputService.TouchEnabled` (in Studio with `DevTouch`, false). Any touch screen (phone, iPad, the Studio emulator) shows no key letters.
+- **The gift:** `drawGiftKey` uses `ViewMode.showKeys()`, and is redrawn on `ViewMode.onChanged` and on `UserInputService` `KeyboardEnabled` / `TouchEnabled` changes, as well as on `Keybinds.onChanged`. The J key itself still opens Rewards on a PC.
+- **The same rule** for the other chips that use `KeyboardEnabled and not ViewMode.isTouch()`: the HudV3 chip row (about line 710), `HudPlus.keyboard()` (the left launchers, incl. `Hud_Rewards`), `LabCamera` (about line 509) and `FirstShotFP` (line 42). Also make `PhoneClean` hide any GuiObject named `Key` or `KeyChip` under HudV3 on a touch screen (its once-a-second sweep), so a new chip can never slip through.
+- **Only the letters go.** The gift button, its red counter and its wiggle stay as they are.
+- **Check:** phone (the Studio emulator) and iPad: no "J" on the gift and no letter on any HUD button. PC: the "J" chip is on the gift and J opens Rewards.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
