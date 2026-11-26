@@ -115,7 +115,7 @@ The dummies are plastic crash-test mannequins, so a hole looks like **a bullet t
   - a dark centre hole with real depth (an inner dark ring, not a flat black dot);
   - a thin raised rim of pushed-in plastic;
   - 3-6 short radial cracks;
-  - a slightly lighter stress-whitened ring round it (plastic goes white where it bends);
+  - (NO stress-whitened or white ring: the owner removed it, F41);
   - a tiny purple glint deep in the centre (ties in with the purple splatter, 2b).
 - **Size by weapon:**
 

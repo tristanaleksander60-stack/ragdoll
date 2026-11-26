@@ -479,6 +479,26 @@ The bear cave, the crocodile pond, the aquarium, the pool, the spider pen and th
 - **Fixing:** SurfaceGui with LightInfluence 0, PixelsPerStud high enough to be crisp, no flicker or z-fighting with the board (offset 0.05); the back side is a plain board, or has the same face (no mirrored text).
 - **Check:** capture every sign from the front on PC and phone. No crossings, nothing cut or blurry, and each one fits its room. Harsh score 9.5+.
 
+## F40 No lamp posts in the middle of paths
+The owner still sees lamp posts standing in the middle of walkways.
+- **Where lamps may stand:** only beside a walkway or road, 2 studs OUTSIDE its kerb, never on any walkable surface.
+- **The check covers EVERY walkable surface:** the roads, the boulevard, the spurs, ALL inner paths (also where several merge), the junction plazas, the courtyards, the spawn plaza, the Tower Square, the station platform and the bike racks' pads.
+- **The lint must report 0 lamps on walkable surfaces;** any lamp that fails is moved to the nearest legal spot beside the path, or removed.
+- **Also check** bins, signposts, benches, trees and flower beds against the same surfaces.
+
+## F41 No white blobs round the bullet holes
+**The owner's picture:** every hole on the dummy has big pale or white see-through discs round it (several overlapping), plus a purple dot. It looks like white stickers. The "stress-whitened ring" (`BODY_V2.md` 3) and/or a white hit decal is drawn as large translucent white circles.
+
+**Fix:**
+- **Remove every white or pale disc round the holes:** no stress-whitening ring and no white or translucent circle decals.
+- **A hole is only:**
+  - the dark centre with depth;
+  - a thin rim of slightly darker grey plastic (tight to the hole, at most 1.3x the hole's size);
+  - 3-6 thin hairline cracks;
+  - the small purple glint inside.
+- **Check old leftovers:** no old hit-flash decals that never fade (F14).
+- **Check:** shoot a dummy 20 times with different guns, close up, on PC and phone. No white or pale circles anywhere on the body.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
