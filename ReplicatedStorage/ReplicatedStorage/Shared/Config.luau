@@ -66,6 +66,7 @@ local Config = {
 	UNSTICK = true, -- F32: invisible solid walls along every tree belt (gaps at the entrances, NoGo for paths), and a ragdoll stuck inside anything solid for 1 s is moved to the nearest free spot (Systems/Unstick)
 	WATCHER_STANDINS = false, -- F45: the yellow watcher stand-ins are gone; real grey watchers walk to the 5 machines within 90 studs (Watchers)
 	NO_DEATH_FREEZE = true, -- F46: a dead or knocked-out body that hangs still in the air for 0.6 s is unanchored and pushed down (Systems/Unstick deathGuard)
+	LAG_GUARD = true, -- OVERVIEW 0.1: on each screen no light casts shadows, lights beyond 140 studs are off, every sign/billboard has a view distance (150), phones: no canopy shadows (Client/LagGuard)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays
