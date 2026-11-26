@@ -13,130 +13,104 @@ import math, os, sys
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BOUNDS = (-505, -386, 445, 434)
+BOUNDS = (-235, -185, 222, 215)
 
-# ---------- ROOMS: walled by tree belts, entered only through their openings ----------
-# (id, name, x0, z0, x1, z1, entrances [(x, z)] on the room edge, courtyard (x, z))
+# ---------- MAP ROUND 4 (owner, 26 Nov 2026 late: "Mappet skal være mindre som du kan se på mine reference screenshots",
+# "ikke træer imellem"): the owner's own old map (docs/LAB_TARGET.md R3.2, art/store/look_target/lab_ref/ ref_11-13_phone)
+# at about x1.3, compact and OPEN: one open lab, no rooms, no tree belts, no gates. A walkway ring + a cross (12-14 wide,
+# light tiles), every attraction's front joined to it. Trees only in the edge band outside the ring (LabOwnerMap).
+K = 1.3  # the R3.2 distances x K (LabOwnerMap.S for the builders that still use R3.2 coordinates)
+
+# (id, name, x0, z0, x1, z1, entrances, courtyard): ONE open lab (walled = false: no belts)
 ROOMS = [
-    ("AnimalCove",  "Animal Cove",   -455, -360, -150, -170, [(-305, -170), (-150, -325)], (-305, -212)),
-    ("SplashZone",  "Splash Zone",     90, -360,  395, -170, [(245, -170), (90, -325)],    (245, -212)),
-    ("CrashYard",   "Crash Yard",    -455, -130, -150,   20, [(-305, -130), (-305, 20)],  (-290, -30)),
-    ("CarPark",     "Car Park",      -455,   60, -150,  240, [(-305, 60), (-305, 240)],   (-305, 105)),
-    ("MachineHall", "Machine Hall",    90, -130,  395,   20, [(245, -130), (245, 20)],    (245, -20)),
-    ("FunFair",     "Fun Fair",        90,   60,  395,  240, [(245, 60), (245, 240)],     (245, 100)),
-    ("LaunchField", "Launch Field",  -455,  280, -150,  400, [(-200, 280)],               (-200, 318)),
-    ("DangerZone",  "Danger Zone",     90,  280,  395,  400, [(245, 280)],                (245, 318)),
-    ("PicnicPark",  "Picnic Park",   -130,  150,   70,  400, [],                          None),
-    ("GardensN",    "Spawn Gardens", -130, -270,   70, -170, [],                          None),
-    ("LawnsMid",    "Lawns",         -130, -130,   70,  -60, [],                          None),
+    ("Lab", "The Lab", -235, -185, 222, 215, [], None),
 ]
-OPEN_ROOMS = {"PicnicPark", "GardensN", "LawnsMid"}  # framed by hedges, not tree belts (the roads cross them)
+OPEN_ROOMS = {"Lab"}
 
 # ---------- PLAZAS ----------
 PLAZAS = [
-    # (id, kind, x, z, a, b)  kind "rect": a=w, b=d ; kind "circle": a=radius
-    ("SpawnPlaza",  "rect",   -30, -325, 150, 90),   # raised 4 studs: spawn, 4 leaderboards, MAPS board
-    ("Fountain",    "circle", -30, -150, 30, 0),
-    ("TowerSquare", "circle", -30,   40, 100, 0),
-    ("SouthCross",  "circle", -30,  260, 22, 0),
-    ("Station",     "rect",   -30,  405, 90, 16),    # train platform at the railway
+    ("SpawnPlaza",  "rect",     0, -140, 90, 50),   # raised 4: the spawn, the 4 leaderboards (screens face SOUTH), stair at its south edge
+    ("TowerSquare", "circle",   0,   40, 34, 0),    # the round light plaza round the tower, benches on its edge (ref_13)
 ]
 
-# ---------- ROADS (polylines, width) ----------
+# ---------- ROADS = the main walkways (polylines, width) ----------
 ROADS = [
-    ("Boulevard",   36, [(-30, -280), (-30, -60)]),            # plaza stair -> tower square, through the fountain
-    ("NorthCross",  26, [(-472, -150), (412, -150)]),
-    ("RoadW",       26, [(-130, 40), (-472, 40)]),
-    ("RoadE",       26, [(70, 40), (412, 40)]),
-    ("RoadS",       26, [(-30, 140), (-30, 397)]),
-    ("SouthCross",  26, [(-472, 260), (412, 260)]),
-    ("AvenueW",     16, [(-472, -150), (-472, 260)]),          # the outer loop (the cyclist rides it)
-    ("AvenueE",     16, [(412, -150), (412, 260)]),
-    ("PlazaWest",   12, [(-105, -325), (-150, -325)]),         # plaza side exits into Animal Cove / Splash Zone
-    ("PlazaEast",   12, [(45, -325), (90, -325)]),
-    # spurs into every room entrance (from the nearest road to the room edge)
-    ("SpurCoveS",     18, [(-305, -150), (-305, -170)]),
-    ("SpurSplashS",   18, [(245, -150), (245, -170)]),
-    ("SpurCrashN",    18, [(-305, -150), (-305, -130)]),
-    ("SpurCrashS",    18, [(-305, 40), (-305, 20)]),
-    ("SpurParkN",     18, [(-305, 40), (-305, 60)]),
-    ("SpurParkS",     18, [(-305, 260), (-305, 240)]),
-    ("SpurHallN",     18, [(245, -150), (245, -130)]),
-    ("SpurHallS",     18, [(245, 40), (245, 20)]),
-    ("SpurFairN",     18, [(245, 40), (245, 60)]),
-    ("SpurFairS",     18, [(245, 260), (245, 240)]),
-    ("SpurLaunch",    18, [(-200, 260), (-200, 280)]),
-    ("SpurDanger",    18, [(245, 260), (245, 280)]),
+    ("Spine",  14, [(0, -115), (0, 6)]),               # the spawn stair -> the tower square (the view: plaza -> tower)
+    ("SpineS", 14, [(0, 74), (0, 120)]),                 # the tower square -> the south cross
+    ("CrossN", 14, [(-150, -80), (150, -80)]),
+    ("CrossS", 14, [(-150, 120), (150, 120)]),
+    ("RingW",  14, [(-150, -80), (-150, 120)]),          # the ring (the motorbike and the cyclist ride it)
+    ("RingE",  14, [(150, -80), (150, 120)]),
+    ("TowerW", 12, [(-34, 40), (-150, 40)]),             # the tower square's side walkways to the ring
+    ("TowerE", 12, [(34, 40), (150, 40)]),
 ]
+RAILWAY = [(-222, -175), (-222, 205), (210, 205)]       # along the west edge, bending east along the south edge (ref_6/ref_12)
 
-# ---------- ITEMS: every attraction, with its footprint (keep this floor free for it) ----------
-# (id, room, x, z, w, d, face, what)   face = the side its front looks to (N/S/E/W)
+# ---------- ITEMS: every attraction, its footprint (keep it free), its front ----------
+# (id, zone, x, z, w, d, face, what)
 ITEMS = [
-    # Spawn plaza
-    ("Spawn",          "SpawnPlaza", -30, -300, 16, 16, "S", "spawn point, facing down the boulevard to the tower"),
-    ("Leaderboards",   "SpawnPlaza", -30, -360, 110, 6, "S", "the 4 leaderboards in a row (top 20, scrolling); their SCREENS face SOUTH toward the spawn and the stair (readable from the spawn)"),
-    ("MapsBoard",      "SpawnPlaza",  25, -320, 6, 22, "W", "the MAPS board"),
-    # Animal Cove
-    ("CaveBear",       "AnimalCove", -385, -300, 90, 70, "S", "the rock cave with the bear and its stone-ringed yard"),
-    ("Aquarium",       "AnimalCove", -230, -300, 70, 40, "S", "the glass aquarium with the shark (NOT near the spawn)"),
-    ("CrocPond",       "AnimalCove", -400, -212, 60, 40, "E", "the fenced crocodile pond + the speaker wall on its west side"),
-    ("TRexPen",        "AnimalCove", -220, -222, 100, 46, "W", "the walled T-rex pen with its big wooden gate"),
-    # Splash Zone
-    ("BigPool",        "SplashZone",  175, -300, 80, 50, "S", "the open pool (the whale)"),
-    ("LoungePool",     "SplashZone",  330, -300, 50, 34, "S", "the small pool with sun loungers"),
-    ("SpiderPen",      "SplashZone",  330, -220, 52, 40, "W", "the fenced dirt pen with the spider web"),
-    ("SnackKiosk",     "SplashZone",  160, -215, 24, 18, "E", "snack kiosk + 2 portable toilets"),
-    # Crash Yard
-    ("CarBays",        "CrashYard",  -370,  -95, 72, 28, "S", "painted bays: tank, monster truck, blue car"),
-    ("BrickWall",      "CrashYard",  -432,  -50, 8, 100, "E", "the long red brick crash wall (barrels at its ends, the old sedan beside it)"),
-    ("LaunchPads",     "CrashYard",  -330,  -28, 14, 50, "W", "3 launch pads aimed at the brick wall"),
-    ("BoxingRing",     "CrashYard",  -215,  -85, 32, 32, "S", "the boxing ring on its pad"),
-    ("WreckingBall",   "CrashYard",  -215,  -25, 28, 28, "W", "the wrecking ball gantry"),
-    # Car Park
-    ("CarPark",        "CarPark",    -380,  130, 92, 46, "S", "the car park with 6+ parked cars in bays"),
-    ("Garage",         "CarPark",    -410,  200, 50, 36, "E", "the garage, doors facing the room; a rail spur runs from the west railway into its back"),
-    ("TrainingYard",   "CarPark",    -220,  165, 70, 50, "W", "tyres, hurdles, a climbing wall"),
-    ("BikeRack",       "CarPark",    -235,   95, 30, 14, "S", "bike rack (the cyclist's bicycle) + later the wheelchairs"),
-    # Machine Hall (under a big open-sided steel shed roof that blocks the view from outside)
-    ("GiantFan",       "MachineHall", 150,  -85, 44, 32, "E", "the giant fan"),
-    ("TeslaCoil",      "MachineHall", 215,  -95, 26, 26, "S", "the Tesla coil on its white pad"),
-    ("GyroCage",       "MachineHall", 335,  -90, 44, 22, "S", "the gyro cage with its red button in front"),
-    ("Press",          "MachineHall", 150,  -30, 28, 28, "E", "the press (compressor)"),
-    ("StretchMachine", "MachineHall", 245,  -48, 22, 30, "S", "the stretch machine"),
-    ("Washer",         "MachineHall", 335,  -30, 28, 26, "W", "the washing machine, door facing the courtyard path"),
-    # Fun Fair
-    ("Sandcastle",     "FunFair",     150,  135, 28, 28, "E", "the sandcastle tower with crates and a picket fence"),
-    ("Playground",     "FunFair",     245,  150, 44, 40, "S", "slide and swings where ragdolls play"),
-    ("Archery",        "FunFair",     345,  120, 34, 22, "W", "the archery target + the slingshot facing it"),
-    ("Sandbox",        "FunFair",     150,  205, 32, 30, "N", "the yellow sandbox"),
-    ("Seesaw",         "FunFair",     215,  215, 26, 8,  "N", "the wooden seesaw"),
-    ("Mole",           "FunFair",     280,  208, 22, 22, "N", "the mole"),
-    ("SandCircle",     "FunFair",     350,  195, 50, 50, "N", "the big round sand circle"),
-    # Launch Field
-    ("Cannon",         "LaunchField", -235, 335, 20, 26, "W", "the cannon, firing WEST over the landing field (load: put the ragdoll fully inside)"),
-    ("LandingField",   "LaunchField", -350, 340, 170, 76, "E", "the landing field with distance boards 50/100/150"),
-    ("Rocket",         "LaunchField", -185, 358, 30, 30, "W", "the rocket on its round pad + steel gantry"),
-    # Danger Zone
-    ("LavaStrip",      "DangerZone",  180, 365, 140, 22, "N", "the lava strip with the sunken stone trench beside it, low fence"),
-    ("Shredder",       "DangerZone",  330, 318, 42, 26, "W", "the shredder pit (railing, lever box, red button)"),
-    ("Sweeper",        "DangerZone",  335, 360, 40, 40, "W", "the round sweeper pad with its turning beam"),
-    # Tower Square
-    ("Tower",          "TowerSquare", -30,   40, 56, 56, "N", "the 5-floor steel stair tower, 95 high (the landmark seen from everywhere)"),
-    ("SlideRunout",    "TowerSquare", -95,   75, 20, 30, "SW", "where the green slide ends (the slide runs from the tower top down to here)"),
-    ("Grandstand",     "TowerSquare",  30,   -5, 44, 16, "SW", "the grandstand facing the tower"),
-    ("Trampoline",     "TowerSquare",  30,   90, 26, 26, "N", "the raised trampoline"),
-    # Picnic Park
-    ("PicnicGrill",    "PicnicPark",  -90,  200, 50, 34, "E", "picnic tables + grill"),
-    ("DogYard",        "PicnicPark",   30,  200, 34, 34, "W", "the doghouse in a small fenced yard"),
-    ("Gazebo",         "PicnicPark",   30,  335, 30, 30, "W", "a gazebo in a flower garden"),
-    ("DuckPond",       "PicnicPark",  -90,  335, 46, 34, "E", "a small pond with ducks"),
-    # Edge
-    ("Hangar",         "Edge",       -440, -372, 60, 20, "S", "the train hangar at the north end of the west railway"),
-    ("WaterTower",     "Edge",        425, -372, 16, 16, "S", "the water tower"),
-    ("ControlTower",   "Edge",        425,  425, 16, 16, "N", "the control tower"),
+    # the spawn plaza (raised)
+    ("Spawn",          "SpawnPlaza",    0, -132, 12, 12, "S", "spawn point, facing down the spine to the tower"),
+    ("Leaderboards",   "SpawnPlaza",    0, -158, 70, 5,  "S", "the 4 leaderboards in a row in front of a low wooden fence; screens face SOUTH (ref_1)"),
+    # north row (R3.2: cave, aquarium, plaza, pool, pen)
+    ("CaveBear",       "Lab",        -160, -140, 50, 40, "S", "the rock dome cave with a dark arched opening, the bear and its dirt yard (F79)"),
+    ("Aquarium",       "Lab",         -82, -140, 44, 30, "S", "the raised concrete glass tank with the shark, a feeding platform (F78)"),
+    ("BigPool",        "Lab",          84, -140, 46, 30, "E", "the open pool (the whale)"),
+    ("SpiderPen",      "Lab",         164, -140, 40, 34, "S", "the fenced dirt pen with the spider web"),
+    ("EntranceVehicles","Lab",         46, -101, 60, 22, "W", "F76: the herringbone vehicle row by the spine below the spawn stair (free bicycle + paid vehicles)"),
+    # west, beyond the ring, by the railway
+    ("CrocPond",       "Lab",        -190,  -40, 40, 34, "E", "the dug-in crocodile pond with muddy banks + the speaker wall (F78)"),
+    ("TRexPen",        "Lab",        -190,   25, 40, 50, "E", "the walled T-rex pen with its wooden gate"),
+    ("Hangar",         "Lab",        -192,   95, 30, 24, "E", "the grey train garage with brown doors on the rail"),
+    # west block (R3.2: car bays, boxing ring, brick wall, rocket)
+    ("CarBays",        "Lab",        -110,  -52, 44, 18, "S", "painted bays: tank, monster truck, blue car (ref_11/12)"),
+    ("BoxingRing",     "Lab",         -45,  -50, 24, 24, "S", "the boxing ring on its stage, steps, 2 benches (ref_11-13)"),
+    ("BrickWall",      "Lab",        -135,    5, 6, 40,  "E", "the red brick crash wall, red barrel groups at its ends"),
+    ("LaunchPads",     "Lab",         -98,   10, 10, 34, "W", "3 launch pads aimed at the brick wall"),
+    ("WreckingBall",   "Lab",         -52,    8, 22, 22, "W", "the wrecking ball gantry"),
+    ("Rocket",         "Lab",         -60,   72, 18, 18, "E", "the rocket on its pad + grey lattice gantry, by the tower (ref_13)"),
+    ("SlideRunout",    "Lab",         -30,   92, 14, 18, "S", "where the tower slide ends"),
+    ("DogYard",        "Lab",        -110,   88, 18, 18, "E", "the doghouse in a small fenced yard"),
+    # the tower square
+    ("Tower",          "TowerSquare",   0,   40, 26, 26, "S", "the 5-floor steel lattice tower, 50-55 high, stairs + slide (the landmark)"),
+    # east block (R3.2: sandcastle, fan, target, plank, ring machine, trampoline)
+    ("Sandcastle",     "Lab",          26,  -52, 18, 18, "S", "the beige sandcastle tower with stacked crates and a low wooden fence (ref_11)"),
+    ("GiantFan",       "Lab",          66,  -52, 30, 22, "S", "the giant fan in its dark-green frame (ref_11)"),
+    ("Press",          "Lab",         112,  -52, 22, 22, "S", "the press on its dark-green gantry"),
+    ("TeslaCoil",      "Lab",          58,   -8, 18, 18, "S", "the Tesla coil on its pad"),
+    ("StretchMachine", "Lab",         100,   -8, 16, 22, "S", "the STRETCHER (F74)"),
+    ("Grandstand",     "Lab",          52,   72, 30, 12, "N", "the brown wooden grandstand facing the tower square (ref_11)"),
+    ("GyroCage",       "Lab",         104,   72, 30, 18, "N", "the gyro cage with its red button"),
+    ("Trampoline",     "Lab",          50,  100, 18, 14, "S", "the raised trampoline"),
+    ("Washer",         "Lab",         104,  100, 20, 14, "S", "the washing machine, door facing the walkway"),
+    ("Archery",        "Lab",         128,   10, 22, 16, "W", "the archery target + the slingshot"),
+    # east, beyond the ring
+    ("SandCircle",     "Lab",         192,  -48, 34, 34, "W", "the big round sand circle"),
+    ("LavaStrip",      "Lab",         190,   30, 14, 80, "W", "the lava strip in its stone trench with a dark fence (the east edge, ref_7/ref_8)"),
+    ("Sandbox",        "Lab",         192,  100, 26, 22, "W", "the yellow sandbox"),
+    # south (R3.2: sweeper, shredder; + the cannon field, the car park, the small fun spots)
+    ("Sweeper",        "Lab",           0,  165, 30, 30, "N", "the round sweeper pad with its turning beam"),
+    ("Shredder",       "Lab",         -75,  157, 28, 18, "N", "the shredder pit (railing, lever, red button)"),
+    ("Cannon",         "Lab",        -125,  165, 14, 18, "N", "the cannon, firing WEST over the landing field"),
+    ("LandingField",   "Lab",        -175,  170, 60, 44, "N", "the landing field with distance boards"),
+    ("CarPark",        "Lab",          75,  158, 40, 24, "N", "the car park with 4 parked cars in bays"),
+    ("BikeRack",       "Lab",         122,  145, 20, 8,  "N", "the bicycle rack (pedal bikes only) + the motorbike's bay beside it (F75)"),
+    ("Garage",         "Lab",         175,  165, 30, 26, "N", "the car garage"),
+    ("LoungePool",     "Lab",         122,  185, 30, 22, "N", "the small pool with sun loungers"),
+    ("Playground",     "Lab",         -30, -186 + 0, 0, 0, "S", "PLACEHOLDER"),
 ]
+ITEMS = [it for it in ITEMS if it[0] != "Playground"]
+ITEMS += [
+    ("Playground",     "Lab",          40,  195, 26, 18, "N", "slide and swings where ragdolls play"),
+    ("Seesaw",         "Lab",         -35,  200, 16, 8,  "N", "the wooden seesaw"),
+    ("Mole",           "Lab",         -25,  -22, 12, 12, "E", "the mole"),
+    ("PicnicGrill",    "Lab",         -60, -100, 22, 14, "S", "picnic tables + grill"),
+    ("DuckPond",       "Lab",         -75,  200, 22, 12, "N", "the small duck pond"),
+    ("TrainingYard",   "Lab",        -100,  -98, 1, 1,  "S", "PLACEHOLDER"),
+]
+ITEMS = [it for it in ITEMS if it[0] != "TrainingYard"]
 
-BELT = 18          # tree belt width inside a walled room's edge
+BELT = 0           # (round 4: no tree belts)
 GAP = 26           # opening width at an entrance
 ITEM_MARGIN = 6    # free floor between two items
 
@@ -221,7 +195,7 @@ def lint():
     return problems
 
 # ---------- inner paths: every attraction is reached by a path from its room's courtyard ----------
-INNER_W = 16
+INNER_W = 12
 
 def front_point(x, z, w, d, face):
     f = face[0]
@@ -332,49 +306,49 @@ def grid_path(a, b, avoid, bounds, network=None):
 INNER = []  # (room, target, points)
 INNER_PROBLEMS = []
 
+def road_cells():
+    cells = set()
+    x0, z0 = BOUNDS[0], BOUNDS[1]
+    for _, w, pts in ROADS:
+        for (ax, az), (bx, bz) in zip(pts, pts[1:]):
+            n = int(max(abs(bx - ax), abs(bz - az)) / CELL) + 1
+            for k in range(n + 1):
+                x = ax + (bx - ax) * k / n
+                z = az + (bz - az) * k / n
+                cells.add((round((x - x0) / CELL), round((z - z0) / CELL)))
+    for pid, kind, x, z, a, b in PLAZAS:
+        if kind == "circle":
+            for ang in range(0, 360, 10):
+                px, pz = x + a * math.cos(math.radians(ang)), z + a * math.sin(math.radians(ang))
+                cells.add((round((px - x0) / CELL), round((pz - z0) / CELL)))
+    return cells
+
 def build_inner():
-    """Per room ONE connected path network (a tree): the entrances join the courtyard, then every attraction's
-    branch joins the nearest point of the network already built (a T-junction), so trunks are shared and nothing
-    runs side by side. Each attraction's branch ends at its front landing."""
+    """Round 4: ONE open lab. The walkway ring, cross and spine are the network; every attraction's branch joins the
+    nearest point of it (a T-junction), nearest attractions first, so short branches share trunks."""
     INNER.clear(); INNER_PROBLEMS.clear()
-    for rid, name, x0, z0, x1, z1, ents, court in ROOMS:
-        if rid in OPEN_ROOMS or not court:
-            continue
-        items = [it for it in ITEMS if it[1] == rid]
-        rects = {it[0]: rect_of(it[2], it[3], it[4], it[5]) for it in items}
-        inner = (x0 + BELT, z0 + BELT, x1 - BELT, z1 - BELT)
-        network = set()
-        # the courtyard is the root of the tree
-        cx0, cz0 = inner[0], inner[1]
-        network.add((round((court[0] - cx0) / CELL), round((court[1] - cz0) / CELL)))
-        for e in ents:
-            ex, ez = e
-            if ez == z0:
-                ei = (ex, z0 + BELT + 12)
-            elif ez == z1:
-                ei = (ex, z1 - BELT - 12)
-            elif ex == x0:
-                ei = (x0 + BELT + 12, ez)
-            else:
-                ei = (x1 - BELT - 12, ez)
-            pts, cells = grid_path(ei, court, list(rects.values()), inner, network)
-            if pts:
-                INNER.append((rid, "entrance", [e] + pts))
-                network |= cells
-            else:
-                INNER_PROBLEMS.append(f"{rid}: no clear path from entrance {e} to the courtyard")
-        # nearest attractions first, so the far ones branch off the near ones' paths
-        items.sort(key=lambda it: math.hypot(it[2] - court[0], it[3] - court[1]))
-        for it in items:
-            iid, _, x, z, w, d, face = it[:7]
-            fp = front_point(x, z, w, d, face)
-            others = [r for k, r in rects.items() if k != iid]
-            pts, cells = grid_path(fp, None, others, inner, network)
-            if pts:
-                INNER.append((rid, iid, list(reversed(pts))))  # from the network out to the attraction
-                network |= cells
-            else:
-                INNER_PROBLEMS.append(f"{rid}: no clear path from the network to {iid}'s front ({face})")
+    network = road_cells()
+    items = [it for it in ITEMS if it[1] == "Lab"]
+    rects = {it[0]: rect_of(it[2], it[3], it[4], it[5]) for it in ITEMS}
+    roadr = [r for _, r in road_rects()]
+    def near_road(it):
+        fx, fz = front_point(it[2], it[3], it[4], it[5], it[6])
+        best = 1e9
+        for r in roadr:
+            dx = max(r[0] - fx, 0, fx - r[2]); dz = max(r[1] - fz, 0, fz - r[3])
+            best = min(best, math.hypot(dx, dz))
+        return best
+    items.sort(key=near_road)
+    for it in items:
+        iid, _, x, z, w, d, face = it[:7]
+        fp = front_point(x, z, w, d, face)
+        others = [r for k, r in rects.items() if k != iid]
+        pts, cells = grid_path(fp, None, others, BOUNDS, network)
+        if pts:
+            INNER.append(("Lab", iid, list(reversed(pts))))
+            network |= cells
+        else:
+            INNER_PROBLEMS.append(f"no clear path from the walkways to {iid}'s front ({face})")
 
 # ---------- outputs ----------
 def lua_str(s):
@@ -386,11 +360,14 @@ def write_luau():
     L.append("-- OwnerMapPlan: GENERATED by tools/masterplan.py (do not edit by hand; edit the script and run it).")
     L.append("-- The big owner map's master plan (owner, 26 Nov 2026: \"Det her map er 1/10, sørg for det bliver 10/10\";")
     L.append("-- docs/MAP_MASTERPLAN.md). Lab space studs: x east, z south (north = -z). LabOwnerMap builds from it.")
-    L.append("-- Rooms are walled by tree belts (BELT wide, inside the room edge) with openings (GAP wide) at the entrances,")
-    L.append("-- so you never see everything at once. Items: keep the footprint w x d free for the thing; face = its front.")
+    L.append("-- MAP ROUND 4 (owner 26 Nov late: smaller, like the references; no trees between attractions): ONE open lab,")
+    L.append("-- no rooms, belts or gates. R3.2 x K. Items: keep the footprint w x d free for the thing; face = its front.")
     L.append("")
     L.append("local Plan = {}")
     L.append(f"Plan.BELT = {BELT}")
+    L.append(f"Plan.K = {K} -- the R3.2 distances x K (LabOwnerMap.S)")
+    L.append(f"Plan.BOUNDS = {{ min = Vector2.new({BOUNDS[0]}, {BOUNDS[1]}), max = Vector2.new({BOUNDS[2]}, {BOUNDS[3]}) }}")
+    L.append("Plan.RAILWAY = { " + ", ".join(f"Vector2.new({x}, {z})" for x, z in RAILWAY) + " }")
     L.append(f"Plan.GAP = {GAP}")
     L.append("Plan.ROOMS = {")
     for rid, name, x0, z0, x1, z1, ents, court in ROOMS:
@@ -430,7 +407,7 @@ def write_luau():
     return path
 
 def draw_png():
-    SC = 2  # px per stud... image ~1900 x 1640
+    SC = 4  # px per stud (round 4: ~1830 x 1600)
     bx0, bz0, bx1, bz1 = BOUNDS
     W, H = int((bx1 - bx0) * SC), int((bz1 - bz0) * SC)
     img = Image.new("RGB", (W, H + 60), (118, 168, 84))
@@ -445,8 +422,8 @@ def draw_png():
     except Exception:
         font = small = ImageFont.load_default()
     # railway (U: west, south, east)
-    for pts in ([(-490, -360), (-490, 420)], [(-490, 420), (430, 420)], [(430, 420), (430, -360)]):
-        dr.line([P(*pts[0]), P(*pts[1])], fill=(90, 80, 70), width=8)
+    for a, b in zip(RAILWAY, RAILWAY[1:]):
+        dr.line([P(*a), P(*b)], fill=(90, 80, 70), width=8)
     # rooms + tree belts
     for rid, name, x0, z0, x1, z1, ents, court in ROOMS:
         if rid in OPEN_ROOMS:
@@ -497,8 +474,8 @@ def draw_png():
         px, pz = P(x, z)
         dr.text((px - 4 * len(iid), pz - 8), iid, fill=(20, 20, 20), font=small)
     # sightline from spawn
-    dr.line([P(-30, -300), P(-30, 40)], fill=(60, 140, 255), width=3)
-    dr.text((10, H + 15), "LAB MASTER PLAN (tools/masterplan.py)  north up  |  orange = attractions  dark green = tree belts (walls of the rooms)  grey = roads/plazas  blue = spawn + its view to the tower",
+    dr.line([P(0, -132), P(0, 40)], fill=(60, 140, 255), width=3)
+    dr.text((10, H + 15), "LAB MASTER PLAN (tools/masterplan.py)  north up  |  orange = attractions  round 4: one open lab, trees only outside the ring  grey = roads/plazas  blue = spawn + its view to the tower",
             fill=(255, 255, 255), font=small)
     out = os.path.join(ROOT, "art/store/lab10/masterplan.png")
     os.makedirs(os.path.dirname(out), exist_ok=True)

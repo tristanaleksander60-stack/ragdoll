@@ -39,6 +39,9 @@ Read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situat
 - **Creator Store scripts** (vehicles): build the features in our own code. A model's script may run only if it passes F76's security check.
 - **Game pass ids not sent yet:** the vehicle shows SOON; it is never free by mistake.
 - **Keys:** REVIVE ALL is X; X-RAY is I; MORE is a gear (9); WEAPONS is T.
+- **Python is not on this PC:** never install it and never work around it on the old map. The cloud session runs `tools/masterplan.py` and pushes `OwnerMapPlan.luau`; you only BUILD from that file.
+- **No Blender on this PC:** build real hands from parts and use Roblox-made body bundles (S2 plan B); never park the hands.
+- **Never change the old map layout:** since M4 every map change is built on the compact plan (OVERVIEW M4).
 
 ## The ONE final message (Danish, short, only when you really stop)
 1. **Step 0 reminder** (only if it is not done): "Husk punkt 0: tryk Alt+P i Studio for at udgive gore-off, og send aldersspørgeskemaet med svarene i docs/MATURITY.md."
