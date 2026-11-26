@@ -41,6 +41,7 @@ local Config = {
 	LAB_OWNERMAP = true, -- GO NOW: the owner's map from the screenshots, 10x the area (Systems/LabOwnerMap, built phase by phase; plots 1100 apart). false = the LAB10 park lab
 	MECH_ARMS = false, -- map round 2 (owner): the 4 mech arms are gone (MechArms off, the stand hidden by LabOwnerMap)
 	BOARD_TOP20 = true, -- map round 2 (owner): the 4 leaderboards show the top 20 in a scrolling list, 5 rows in view (LeaderboardService)
+	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays
 	FIRST_TWO = true, -- FIRST_2_MIN (owner, 26 Nov 2026): TRY button at an untried machine, a ragdoll runs to you, the grab lesson once, "Put it in!", a faint guide line to the next machine (Client/FirstTwo)

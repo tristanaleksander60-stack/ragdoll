@@ -325,7 +325,8 @@ function FirstTwo.start()
 				beam.Attachment0 = made
 			end
 			local far = target and targetInst and boxDistance(targetInst, r.Position) > FirstTwo.GUIDE_FROM
-			anchorPart.Parent = if far and not seated() then Workspace else nil
+			-- (Map round 2, owner: the yellow guide line looked like a stray rope across the grass: off with Config.TRY_GUIDE_LINE false.)
+			anchorPart.Parent = if far and not seated() and (Config :: any).TRY_GUIDE_LINE ~= false then Workspace else nil
 			-- The TRY button at an untried machine.
 			local m, inst = pick(lab, r)
 			if m and inst and boxDistance(inst, r.Position) <= FirstTwo.NEAR and not seated() then
