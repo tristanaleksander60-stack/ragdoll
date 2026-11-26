@@ -229,6 +229,45 @@ That is one stage only. Make it `INJURY_V2 = true`.
 
 **Performance:** bruise decals are pooled; max 6 per ragdoll; phones the same, but far ragdolls (40+ studs) show only the stage colour, no decals or bandage detail.
 
+## 4c. Real fingers and one smooth body, no visible cuts at the joints (owner, 26 Nov 2026: "Giv dem ægte fingre og gør så hele deres krop hænger smooth sammen … man ikke kan se tydelige hak mellem albuen fx og skulderen, halsen osv.")
+Today the dummy is separate R15 parts that meet with visible seams and steps at the shoulders, elbows, neck, hips and knees. Earlier fixes only overlapped them (0.38.7, 0.47.95).
+
+**The fix: a SKINNED dummy body** (`Config.SKINNED_DUMMY = true`).
+- **One skinned mesh body** in the dummy's grey plastic style, rigged to the standard R15 bones. The vertices round each joint are weighted across both bones, so the elbow, shoulder, neck, wrist, hip, knee and ankle bend smoothly like one piece. There is no gap and no step at any angle.
+- **How:**
+  - make it in Blender (or get a clean skinned mannequin from the Creator Store, malware pass);
+  - export it as FBX with R15 bone names and skin weights;
+  - import it with Studio's 3D Importer as an R15 rig.
+- **It keeps working with the physics.** The ragdoll still uses the 15 R15 parts with BallSocket and Hinge constraints. The skinned mesh follows the parts' bones, so the active ragdoll, hits, the lasso, dog bites and impacts all work as now.
+- **X-ray, bullet holes, bruises and bandages** attach to the same parts, so they follow the skin. The X-ray shell is the same skinned mesh made see-through.
+- **The joint limits must stop at human angles** (`docs/RAGDOLL_FEEL.md`), so the skin never twists into candy-wrapper shapes. Check the shoulder and the neck at extreme poses.
+
+**Real fingers:**
+- **Each hand gets 5 fingers with 2-3 bones each** (the thumb set apart), in the skinned hand mesh.
+- **Driven by poses, not physics parts** (cheap). The finger bones blend between hand poses by state:
+
+  | State | Hand pose |
+  |---|---|
+  | relaxed | slightly curled |
+  | limp or knocked out | loose and open |
+  | bracing a fall | spread wide, palms down |
+  | grabbing (CPR, holding a hurt limb, a shovel, a bandage) | curled round it |
+  | pointing or waving while talking | a pointing or a wave pose |
+  | fist (the revenge attack) | a fist |
+  | pain on the hand | clenched |
+
+- Fingers **never pass through** the body or the ground (a simple curl clamp when touching).
+- **Over 40 studs away** the fingers are not animated (frozen in the relaxed pose).
+
+**Performance (phones):** a single skinned mesh per dummy, few bones (15 + 30 finger bones), and RenderFidelity Automatic.
+- Far ragdolls and stand-ins use a cheaper version (the same skin, no finger bones).
+- Check the phone FPS with 9 skinned ragdolls (`docs/PERF_MOBILE.md`).
+
+**Check:**
+- Close-up captures of the shoulder, elbow, neck, hip and knee at rest, fully bent, and in a knocked-out tangle. No seam, gap or step may show.
+- The hands in all their poses.
+- The phone FPS before and after.
+
 ## 5. Check
 - One quick Play: shoot a dummy (purple splat marks, no holes), knock one out (puddle like picture 2), let CPR fail (burial, line, attack), and toggle X-RAY (looks like picture 1).
 - **Search the code** for leftover gore words and red colours.
