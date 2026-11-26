@@ -248,4 +248,82 @@ end
 
 MachineDemos.showFor = show -- (for a quick check)
 
+-- F81 TRY (owner: "Gør så når man trykker TRY ved en kanon fx. at dukken automatisk spawn og hopper ind i kanonen";
+-- Config.TRY_AUTO): TRY at a machine = a ragdoll comes by itself and GETS IN: the nearest machine to the player (within
+-- TRY_REACH), its watcher or the nearest free ragdoll runs there (Pace 2.2), hesitates a moment, hops in, and the machine
+-- throws it (the same arc, rise, spin or drop as the demos). You just watch. Returns false when there is no machine
+-- near or no ragdoll free (then the old TRY: one runs to you).
+MachineDemos.TRY_REACH = 45
+function MachineDemos.tryAt(player: Player): boolean
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if not (root and root:IsA("BasePart")) then
+		return false
+	end
+	local ok, idx = pcall(function()
+		return (require(script.Parent:WaitForChild("Lab")) :: any).plotIndex(player)
+	end)
+	local pg = Workspace:FindFirstChild("Playground")
+	local lab = ok and idx and pg and pg:FindFirstChild("Lab" .. tostring(idx))
+	if not lab then
+		return false
+	end
+	local best: Machine?, bestAt: Vector3?, bestD = nil, nil, MachineDemos.TRY_REACH
+	for _, mc in MachineDemos.MACHINES do
+		local at = where(find(lab, mc.path))
+		if at then
+			local d = (Vector3.new(at.X, 0, at.Z) - Vector3.new(root.Position.X, 0, root.Position.Z)).Magnitude
+			if d < bestD then
+				best, bestAt, bestD = mc, at, d
+			end
+		end
+	end
+	local mc, at = best, bestAt
+	if not (mc and at) then
+		return false
+	end
+	local m = pickDummy(at)
+	if not m then
+		return false
+	end
+	task.spawn(function()
+		if not walkIn(m, at) then
+			return
+		end
+		local DummyControl = require(script.Parent:WaitForChild("DummyControl")) :: any
+		local start = at + Vector3.new(0, mc.lift + 2, 0)
+		local pe = m:FindFirstChild("LowerTorso")
+		if pe and pe:IsA("BasePart") then
+			local to = Vector3.new(at.X - pe.Position.X, 0, at.Z - pe.Position.Z)
+			pcall(DummyControl.push, m, Vector3.new(0, 26, 0) + (if to.Magnitude > 0.1 then to.Unit * 8 else Vector3.zero))
+		end
+		task.wait(0.45)
+		DummyControl.move(m, CFrame.new(start))
+		task.wait(0.1)
+		if mc.demo == "arc" and mc.velocity then
+			DummyControl.push(m, mc.velocity)
+		elseif mc.demo == "rise" then
+			DummyControl.push(m, Vector3.new(0, 70, 0))
+		elseif mc.demo == "spin" then
+			DummyControl.push(m, Vector3.new(math.random(-12, 12), 34, math.random(-12, 12)))
+		else
+			DummyControl.push(m, Vector3.new(0, -10, 0))
+		end
+		pcall(function()
+			require(script.Parent:WaitForChild("FxService")).hit(start, 60, "CannonPad")
+		end)
+		task.delay(4, function()
+			if m.Parent and m:GetAttribute("Vital") ~= "Dead" then
+				say(m, MachineDemos.AFTER[math.random(1, #MachineDemos.AFTER)])
+			end
+		end)
+	end)
+	-- (it runs: the walk-in reads Pace from the distance; a TRY is quicker)
+	task.delay(0.05, function()
+		if m.Parent and m:GetAttribute("Watch") == "Demo" then
+			m:SetAttribute("Pace", 2.2)
+		end
+	end)
+	return true
+end
+
 return MachineDemos

@@ -100,6 +100,7 @@ local Config = {
 	WATCHER_REACT = true, -- 0.7: a watcher cheers with a line for 3 s when a body is in its machine within 24 studs (at most every 6 s; Systems/Watchers)
 	STRETCH_LONG = true, -- F74: the STRETCHER stands on the plan spot and stretches limbs long with the claws (up to 3.2x, joints kept, mass kept; Shared/Ragdoll/Stretch), never tears; full length 30 s after the release, then shrinks back over 10 s; the skins grow with the limb (Client/DummySkins)
 	CAR_WALL = true, -- F48: a car crashing into the brick wall knocks a car-sized hole (by speed x weight class, measured on the server from the car's own movement; the tank ploughs through); the wall rebuilds 12 s after the last hit (Systems/BrickWall)
+	TRY_AUTO = true, -- F81: TRY at a machine = its watcher or the nearest free ragdoll runs there (Pace 2.2), hops in and the machine throws it; no machine near = the old call (MachineDemos.tryAt, SessionStats)
 	HOME_CLEAR = true, -- F75: once the map stands every vehicle home is checked with the vehicle's box and moved to the nearest clear spot when something solid is inside it ([Vehicles] homes moved: n)
 	BIKE_ROUTE = true, -- F69: on the compact map the motorbike rider follows the walkway loop's centre line point to point (a point not reached in 14 s is skipped)
 	REAL_HANDS = true, -- S2 plan B: real hands from rounded parts (palm, 4 fingers of 3 segments, a thumb of 2), posed by state, on this screen only; the hook hand skin is shrunk away (Client/RealHands)

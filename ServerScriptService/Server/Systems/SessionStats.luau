@@ -280,9 +280,19 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 			local root = character and character:FindFirstChild("HumanoidRootPart")
 			if root and root:IsA("BasePart") then
 				local at = root.Position + root.CFrame.LookVector * 4
+				-- (F81 TRY_AUTO: a ragdoll gets into the nearest machine by itself; else the old call: one runs to you)
+				local auto = false
+				if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TRY_AUTO then
+					local okA, did = pcall(function()
+						return (require(script.Parent:WaitForChild("MachineDemos")) :: any).tryAt(player)
+					end)
+					auto = okA and did == true
+				end
+				if not auto then
 				pcall(function()
 					(require(script.Parent:WaitForChild("Lab")) :: any).callTo(player, at, root.Position)
 				end)
+				end
 			end
 			pcall(function()
 				(require(script.Parent:WaitForChild("Funnels")) :: any).used(player, "TryPressed")
