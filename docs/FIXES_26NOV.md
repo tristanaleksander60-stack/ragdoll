@@ -300,6 +300,42 @@ The ejected casings (since 0.43.1) look plain.
 - **Leave the rest alone:** the selected slot keeps its orange highlight and the ammo count. The shop and the catalog keep their 3D pictures.
 - **Check:** select each weapon on PC and phone. Nothing turns on the bar.
 
+## F26 The angry dummy shoves 1-3 times
+- The angry dummy (`ANGRY_FIRST` / `ANGRY_SHOVE`, Mourning.provoke) shoves the player a random 1, 2 or 3 times, not once.
+- Each shove gets a short wind-up and a step forward. If the player backs off, it follows a few steps.
+- A different line before each shove: "Hey!", "Stop that!", "How do YOU like it?"
+- Then it turns and flees as now.
+- A hit on it during the shoves interrupts them.
+
+## F27 Every bone can break, the belly too (the hit card says "Belly")
+- **The skeleton has breakable bones in every body part.** That includes the torso: ribs (left and right, upper and lower), sternum, spine (upper, middle, lower vertebrae), pelvis and collarbones. Also the skull and jaw (a crack only on the skull, cartoon), and the hands and feet.
+- **A hit on the belly** works on the lower ribs, the lower spine or the pelvis, whichever bone the bullet's path really reaches (F28).
+- **Force rules:** the same as `docs/BODY_V2.md` 1b and F4.
+
+## F28 X-ray: the bullet hits the bone where it really would, from where it was shot
+**Today** a lodged slug or a break may sit at a fixed place on the bone.
+
+**Fix:**
+- **Model the bones as simple capsules** (one per bone, in the part's space, matching the X-ray skeleton mesh). On a hit, take the REAL shot ray (from the muzzle, in its direction) and cut it through the body part: the bullet meets the FIRST bone capsule on its path.
+- **Where it ends up:**
+  - **it hits a bone:** the slug lodges at that exact point on the bone's surface, entering from the shot's side, and the crack or break starts there;
+  - **it passes no bone** (a shot through the side of the belly): the slug lodges in the shell along the path, or goes out the far side for strong guns (an exit hole), and no bone is hurt;
+  - **strong guns** (sniper, railgun, rifle) go through the first bone and can hit a second one behind it (ribs then spine).
+- **In X-ray, a short bright tracer line** shows the bullet's path through the glass body for 1 s after each hit, so you see it go from where you shot to the bone.
+- **Melee:** the same with the weapon's contact point and swing direction. Blunt weapons dent and crack the nearest bone under the contact point.
+
+## F29 Shoot and smash bones to pieces
+- **A bone has stages:** whole → cracked → broken (2 pieces) → **shattered** (4-6 pieces).
+- **More hits or more force move it on:**
+  - shots at a broken bone shatter it;
+  - a charged hammer or a point-blank shotgun can shatter in one hit;
+  - each new bullet adds pieces where it lands.
+- **The pieces** stay loose inside the X-ray glass shell of that limb: they rattle, follow gravity a little, and never leave the shell (constrained inside). White bone chips with jagged cartoon edges.
+- **Outside X-ray:** a shattered limb is fully limp, the ragdoll cannot use it, and it holds or drags it.
+- **Healing:** a bandage, sling or splint, or a full heal, puts the bone back whole.
+- **Maturity (honest):** cartoon X-ray bones breaking and shattering inside a see-through body, no exposed bones, no blood from it. Update the answer in `docs/MATURITY.md`.
+- **Caps:** max 40 bone pieces per body; phones 20 (the smallest merge).
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
