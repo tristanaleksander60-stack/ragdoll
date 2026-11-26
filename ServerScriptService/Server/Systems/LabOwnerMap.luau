@@ -1171,6 +1171,79 @@ local function roomByName(name: string): (string?, any)
 	end
 	return nil, nil
 end
+-- F39 (owner, 26 Nov 2026: "Skiltene ligner AI slop, og grenen splitter teksten"; Config.SIGNS_V2): every sign is a real
+-- sign. Two posts at its SIDES (nothing ever crosses the text), a framed board with depth in its room's material and
+-- colour (timber, riveted steel, hazard metal, enamel...), corner bolts, chunky lettering with a dark outline and the
+-- room's pictogram, LightInfluence 0, readable on both faces (never mirrored).
+local ROOM_ICON: { [string]: string } = {
+	["Animal Cove"] = "🐾", ["Splash Zone"] = "🌊", ["Crash Yard"] = "💥", ["Car Park"] = "🅿️", ["Machine Hall"] = "⚙️",
+	["Fun Fair"] = "🎈", ["Launch Field"] = "🚀", ["Danger Zone"] = "⚠️",
+}
+local function roomAt(at: Vector3): any
+	local o = LabOwnerMap.origin
+	if not o then
+		return nil
+	end
+	local l = Vector2.new(at.X - o.X, at.Z - o.Z)
+	for _, room in Plan.ROOMS do
+		if l.X >= room.min.X - 20 and l.X <= room.max.X + 20 and l.Y >= room.min.Y - 20 and l.Y <= room.max.Y + 20 then
+			return room
+		end
+	end
+	return nil
+end
+local function signV2(into: Instance, at: Vector3, face: Vector3, text: string): boolean
+	if not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SIGNS_V2 then
+		return false
+	end
+	local room = roomAt(at)
+	local th = room and GATE_THEME[room.name] or { post = Color3.fromRGB(90, 66, 44), mat = Enum.Material.WoodPlanks, edge = Color3.fromRGB(70, 110, 60), face = Color3.fromRGB(255, 248, 225) }
+	local icon = room and ROOM_ICON[room.name] or ""
+	local f = Vector3.new(face.X, 0, face.Z).Unit
+	local right = f:Cross(Vector3.yAxis).Unit
+	local W, H = math.clamp(#text * 0.9 + 3, 7, 13), 2.6
+	local y = 6.2
+	local center = at + Vector3.new(0, y, 0)
+	-- two posts at the sides, clear of the text
+	for _, s in { -1, 1 } do
+		local p = at + right * (s * (W / 2 + 0.55))
+		part(into, "SignPost", Vector3.new(0.6, y + H / 2 + 0.6, 0.6), CFrame.new(p + Vector3.new(0, (y + H / 2 + 0.6) / 2, 0)), th.post, th.mat, true)
+		part(into, "SignCap", Vector3.new(0.85, 0.35, 0.85), CFrame.new(p + Vector3.new(0, y + H / 2 + 0.75, 0)), th.edge, Enum.Material.Metal, true)
+	end
+	-- the frame (a bigger plate behind) and the board
+	local cf = CFrame.lookAt(center, center + f)
+	part(into, "SignFrame", Vector3.new(W + 0.9, H + 0.8, 0.3), cf, -- (centred: its border shows on both faces)
+		 th.post:Lerp(Color3.new(0, 0, 0), 0.35), th.mat, true)
+	local board = part(into, "SignBoard", Vector3.new(W, H, 0.42), cf, th.edge, th.mat, true)
+	-- corner bolts on the front
+	for _, sx in { -1, 1 } do
+		for _, sy in { -1, 1 } do
+			part(into, "SignBolt", Vector3.new(0.22, 0.22, 0.22), cf * CFrame.new(sx * (W / 2 - 0.3), sy * (H / 2 - 0.3), -0.23), Color3.fromRGB(200, 200, 196), Enum.Material.Metal, true, Enum.PartType.Ball)
+		end
+	end
+	for _, nface in { Enum.NormalId.Front, Enum.NormalId.Back } do
+		local g = Instance.new("SurfaceGui")
+		g.Face = nface
+		g.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		g.PixelsPerStud = 40
+		g.LightInfluence = 0
+		local l = Instance.new("TextLabel")
+		l.BackgroundTransparency = 1
+		l.AnchorPoint = Vector2.new(0.5, 0.5)
+		l.Position = UDim2.fromScale(0.5, 0.52)
+		l.Size = UDim2.fromScale(0.9, 0.78) -- (never touching the frame)
+		l.Font = Enum.Font.FredokaOne
+		l.TextScaled = true
+		l.TextColor3 = th.face
+		l.TextStrokeColor3 = Color3.fromRGB(20, 20, 24)
+		l.TextStrokeTransparency = 0
+		l.Text = if icon ~= "" then icon .. " " .. text else text
+		l.Parent = g
+		g.Parent = board
+	end
+	return true
+end
+
 local function prettyId(id: string): string
 	return string.upper((string.gsub(id, "(%l)(%u)", "%1 %2")))
 end
@@ -1635,6 +1708,9 @@ local NAMES: { [string]: string } = {
 	Cannon = "CANNON", LandingField = "LANDING FIELD", Rocket = "ROCKET", LavaStrip = "LAVA", Shredder = "SHREDDER", Sweeper = "SWEEPER",
 }
 local function nameSign(into: Instance, at: Vector3, face: Vector3, text: string)
+	if signV2(into, at, face, text) then
+		return -- (F39: a real sign)
+	end
 	part(into, "SignPost", Vector3.new(0.5, 7, 0.5), CFrame.new(at + Vector3.new(0, 3.5, 0)), Color3.fromRGB(70, 72, 78), Enum.Material.Metal, true)
 	local board = part(into, "SignBoard", Vector3.new(7, 2, 0.3), CFrame.lookAt(at + Vector3.new(0, 7, 0), at + Vector3.new(0, 7, 0) + face), Color3.fromRGB(40, 44, 52), Enum.Material.SmoothPlastic, true)
 	for _, f in { Enum.NormalId.Front, Enum.NormalId.Back } do
