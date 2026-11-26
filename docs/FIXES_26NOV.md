@@ -950,6 +950,22 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 - **Phones:** the stair turns are wide enough that the thumbstick steers through easily.
 - **Check:** walk from the ground to the top deck and back down on PC and phone, without hitting your head, getting stuck or losing the camera; and a ragdoll walks up.
 
+## F68 Remove the button that turns the WATER on: the water is always on (owner: "Fjern knappen der slår vandet til, bare gør så det altid er til")
+**Find it.** There is a button or prompt somewhere that switches water on (I could not find it in the repo code, so it is probably in a place-file model or added in the map rounds). Search the place for every ProximityPrompt, ClickDetector and red button near water:
+- the spawn fountains;
+- the Splash Zone gate jets;
+- the pools and the aquarium;
+- the duck pond;
+- the water tower;
+- the washer;
+- any Creator Store fountain or pool model (these often carry a "turn on" script; that also belongs to the malware pass: remove the script).
+
+**Fix:**
+- **Remove that button or prompt** (and its script).
+- **The water is ALWAYS on:** fountains spray, jets arc, pools have their water surface and gentle waves, the duck pond ripples, all the time.
+- **Lag-free:** the sprays and ripples animate on the client, only within about 120 studs and in view (pooled emitters), and on low tier with fewer particles. The water sound plays only near.
+- **Check:** walk past every water feature. No button, and the water is running.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
