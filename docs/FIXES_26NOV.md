@@ -461,6 +461,24 @@ The bear cave, the crocodile pond, the aquarium, the pool, the spider pen and th
 - **Phone:** the slider is big and easy (or 3 buttons: Normal / Fast / Very fast).
 - **Server:** it checks the value (clamped to 16-40, sprint max 60); the anti-cheat speed checks follow the player's setting.
 
+## F39 Every SIGN redesigned (owner: "Skiltene ligner AI slop, og grenen splitter teksten")
+**The owner's picture:** the "ANIMAL COVE" sign is a flat black board with plain white text, and its single post runs up THROUGH the middle of the text, splitting it.
+
+**Rules for every sign in the lab** (room signs, attraction signs, signposts, the MAPS frame, the plates):
+- **No post or part ever crosses the text or the pictogram.** Use 2 posts at the sides, a hanging sign on chains from a beam, or a wall-mounted board. Check the text area is clear from the front (a raycast grid over the text area must hit only the board).
+- **A real sign, not a flat rectangle:**
+  - a framed board with depth (a border frame, rounded or chamfered corners, bolts or nails at the corners);
+  - its material fits the place (painted timber for Animal Cove and Picnic Park; riveted steel for the Machine Hall and Crash Yard; hazard-striped metal for the Danger Zone; tiled or enamel for the Splash Zone; a carnival board with bulbs for the Fun Fair);
+  - a slight weathering decal (scratches, a little dirt).
+- **The text:**
+  - big, chunky, rounded letters (one display font for the whole game, readable on a phone from 30+ studs);
+  - a coloured fill with a dark outline and a small drop shadow, or real 3D letters on the bigger signs (`SPAWN_11.md` gates);
+  - the room's pictogram next to the name (bear paw, wave, crashed car, gear, balloon, rocket, warning);
+  - never stretched, cut off or touching the frame edge.
+- **Colour:** each room has its colour (the same one the wayfinding signpost uses), so signs read as one designed system.
+- **Fixing:** SurfaceGui with LightInfluence 0, PixelsPerStud high enough to be crisp, no flicker or z-fighting with the board (offset 0.05); the back side is a plain board, or has the same face (no mirrored text).
+- **Check:** capture every sign from the front on PC and phone. No crossings, nothing cut or blurry, and each one fits its room. Harsh score 9.5+.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
