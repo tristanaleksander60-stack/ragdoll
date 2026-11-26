@@ -218,7 +218,7 @@ local function hills(o: Vector3)
 	local n = 22
 	for i = 1, n do
 		local a = (i / n) * math.pi * 2
-		local rx, rz = LabOwnerMap.SIZE.X / 2 + 110, LabOwnerMap.SIZE.Y / 2 + 110
+		local rx, rz = LabOwnerMap.SIZE.X / 2 + 260, LabOwnerMap.SIZE.Y / 2 + 260 -- (map round 3: outside the rim and the forest)
 		local at = mid + Vector3.new(math.cos(a) * rx, -40 + (i % 3) * 6, math.sin(a) * rz)
 		pcall(function()
 			terrain:FillBall(at, 95 + (i % 4) * 18, Enum.Material.Grass)
@@ -1053,6 +1053,136 @@ local function belts(into: Instance, o: Vector3, top: number)
 	end
 end
 
+-- MAP ROUND 3, P4b: the open areas and the BACKDROP (docs/MAP_MASTERPLAN.md "Open, framed areas", rule 5; OVERVIEW 1).
+--   * The Spawn Gardens, the Lawns and the Picnic Park: low hedges along their road sides (gaps where paths cross),
+--     flower beds, a few trees, benches; trees along both sides of the boulevard.
+--   * The Picnic Park pieces of the plan: the duck pond with ducks, the gazebo in its flower garden, the dog yard fence.
+--   * The backdrop: a forest belt round the whole lab outside the railway (on a wider grass rim), the hills further out
+--     and a ring of high mountains far away (Terrain), so the world does not end at the edge.
+local FLOWER = { Color3.fromRGB(230, 70, 90), Color3.fromRGB(250, 200, 60), Color3.fromRGB(150, 90, 220), Color3.fromRGB(250, 250, 250), Color3.fromRGB(255, 140, 60) }
+local function hedge(into: Instance, a: Vector3, b: Vector3)
+	local len = (b - a).Magnitude
+	if len < 4 then
+		return
+	end
+	local h = part(into, "Hedge", Vector3.new(3, 3.4, len), CFrame.lookAt((a + b) / 2 + Vector3.new(0, 1.7, 0), b + Vector3.new(0, 1.7, 0)), Color3.fromRGB(70, 120, 56), Enum.Material.Grass)
+	h.CastShadow = false
+end
+local function flowerBed(into: Instance, at: Vector3, w: number, d: number, rng: Random)
+	part(into, "FlowerBedSoil", Vector3.new(w, 0.6, d), CFrame.new(at + Vector3.new(0, 0.3, 0)), Color3.fromRGB(96, 70, 50), Enum.Material.Ground, true)
+	part(into, "FlowerBedEdge", Vector3.new(w + 1, 0.8, d + 1), CFrame.new(at + Vector3.new(0, 0.2, 0)), Color3.fromRGB(190, 190, 186), Enum.Material.Concrete, true)
+	for k = 1, math.floor(w * d / 18) do
+		local p = at + Vector3.new(rng:NextNumber(-w / 2 + 1, w / 2 - 1), 1, rng:NextNumber(-d / 2 + 1, d / 2 - 1))
+		part(into, "Flower", Vector3.new(1.4, 1.2, 1.4), CFrame.new(p), FLOWER[rng:NextInteger(1, #FLOWER)], Enum.Material.SmoothPlastic, true, Enum.PartType.Ball)
+		local _ = k
+	end
+end
+local function parks(into: Instance, o: Vector3, top: number)
+	local rng = Random.new(23)
+	local function w(x: number, z: number): Vector3
+		return Vector3.new(o.X + x, top, o.Z + z)
+	end
+	-- Boulevard trees, both sides, outside the lamps.
+	for z = -262, -78, 26 do
+		for _, sx in { -1, 1 } do
+			plantTree(into, if (z // 26) % 2 == 0 then "TreePoplar" else "TreeOak", w(-30 + sx * 30, z), rng:NextNumber(20, 26), rng, false)
+		end
+	end
+	-- The open areas: hedges along their road sides, flower beds, trees, benches.
+	for _, id in { "GardensN", "LawnsMid", "PicnicPark" } do
+		local room = Plan.ROOMS[id]
+		local mn, mx = room.min, room.max
+		-- hedges along the west and east sides (the long roads), leaving gaps for the side paths
+		for _, x in { mn.X + 4, mx.X - 4 } do
+			hedge(into, w(x, mn.Y + 6), w(x, mn.Y + (mx.Y - mn.Y) * 0.45))
+			hedge(into, w(x, mn.Y + (mx.Y - mn.Y) * 0.55), w(x, mx.Y - 6))
+		end
+		-- flower beds in a row on each side of the middle road, trees between
+		local cx = (mn.X + mx.X) / 2
+		for z = mn.Y + 20, mx.Y - 20, 40 do
+			for _, sx in { -1, 1 } do
+				local x = cx + sx * 60
+				flowerBed(into, w(x, z), 16, 10, rng)
+				plantTree(into, if rng:NextNumber() < 0.5 then "TreeOak" else "TreePoplar", w(x + sx * 22, z + 12), rng:NextNumber(18, 26), rng, false)
+				-- a bench facing the road
+				part(into, "BenchSeat", Vector3.new(7, 0.5, 2), CFrame.new(w(x - sx * 14, z) + Vector3.new(0, 1.6, 0)), Color3.fromRGB(140, 100, 64), Enum.Material.WoodPlanks)
+			end
+		end
+	end
+	-- Flower beds along the front of the spawn plaza.
+	for _, sx in { -1, 1 } do
+		flowerBed(into, w(-30 + sx * 50, -274), 30, 6, rng)
+	end
+	-- THE DUCK POND (Picnic Park).
+	local dp = planAt(o, top, "DuckPond")
+	local water = part(into, "DuckPondWater", Vector3.new(0.4, 40, 40), CFrame.new(dp + Vector3.new(0, 0.3, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(90, 150, 190), Enum.Material.Glass, false, Enum.PartType.Cylinder)
+	water.Transparency = 0.15
+	part(into, "DuckPondRim", Vector3.new(0.6, 43, 43), CFrame.new(dp + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(150, 140, 120), Enum.Material.Cobblestone, true, Enum.PartType.Cylinder)
+	for k = 1, 4 do
+		local a = k * 1.6
+		local p = dp + Vector3.new(math.cos(a) * 10, 0.8, math.sin(a) * 10)
+		part(into, "DuckBody", Vector3.new(1.6, 1.1, 2.4), CFrame.new(p) * CFrame.Angles(0, a, 0), Color3.fromRGB(250, 250, 245), Enum.Material.SmoothPlastic, true, Enum.PartType.Ball)
+		part(into, "DuckHead", Vector3.new(0.9, 0.9, 0.9), CFrame.new(p) * CFrame.Angles(0, a, 0) * CFrame.new(0, 0.8, -1), Color3.fromRGB(250, 250, 245), Enum.Material.SmoothPlastic, true, Enum.PartType.Ball)
+		part(into, "DuckBeak", Vector3.new(0.4, 0.3, 0.5), CFrame.new(p) * CFrame.Angles(0, a, 0) * CFrame.new(0, 0.75, -1.6), Color3.fromRGB(255, 160, 40), Enum.Material.SmoothPlastic, true)
+	end
+	-- THE GAZEBO in its flower garden.
+	local gz = planAt(o, top, "Gazebo")
+	part(into, "GazeboFloor", Vector3.new(1, 20, 20), CFrame.new(gz + Vector3.new(0, 0.5, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(230, 226, 216), Enum.Material.WoodPlanks, false, Enum.PartType.Cylinder)
+	for k = 0, 5 do
+		local a = k / 6 * math.pi * 2
+		part(into, "GazeboPost", Vector3.new(0.8, 10, 0.8), CFrame.new(gz + Vector3.new(math.cos(a) * 8.5, 5.5, math.sin(a) * 8.5)), Color3.fromRGB(245, 245, 240), Enum.Material.Wood)
+	end
+	part(into, "GazeboRoof", Vector3.new(22, 5, 22), CFrame.new(gz + Vector3.new(0, 12.5, 0)), Color3.fromRGB(180, 70, 60), Enum.Material.Slate, false, Enum.PartType.Ball)
+	for k = 0, 5 do
+		local a = k / 6 * math.pi * 2 + 0.5
+		flowerBed(into, gz + Vector3.new(math.cos(a) * 17, 0, math.sin(a) * 17), 6, 6, rng)
+	end
+	-- THE DOG YARD fence round the doghouse.
+	local dy = planAt(o, top, "DogYard")
+	local half = 15
+	local corners = { Vector3.new(-half, 0, -half), Vector3.new(half, 0, -half), Vector3.new(half, 0, half), Vector3.new(-half, 0, half) }
+	for i = 1, 4 do
+		local a, b = dy + corners[i], dy + corners[i % 4 + 1]
+		if i ~= 4 then -- (the west side stays open: the yard faces the road)
+			part(into, "DogFence", Vector3.new(0.4, 3, (b - a).Magnitude), CFrame.lookAt((a + b) / 2 + Vector3.new(0, 1.5, 0), b + Vector3.new(0, 1.5, 0)), Color3.fromRGB(240, 236, 226), Enum.Material.Wood)
+		end
+	end
+	part(into, "DogYardGrass", Vector3.new(30, 0.2, 30), CFrame.new(dy + Vector3.new(0, 0.1, 0)), Color3.fromRGB(100, 160, 80), Enum.Material.Grass, true)
+	-- THE BACKDROP: a wider grass rim and a forest belt outside the railway, all the way round.
+	local c = LabOwnerMap.CENTER
+	local size = LabOwnerMap.SIZE
+	local rim = 140
+	part(into, "OwnerRim", Vector3.new(size.X + rim * 2, 2, size.Y + rim * 2), CFrame.new(o.X + c.X, top - 1.05, o.Z + c.Y), Color3.fromRGB(104, 150, 76), Enum.Material.Grass)
+	local x0, x1 = c.X - size.X / 2 - 14, c.X + size.X / 2 + 14
+	local z0, z1 = c.Y - size.Y / 2 - 14, c.Y + size.Y / 2 + 14
+	for row = 0, 2 do
+		local d = row * 22
+		local edges = {
+			{ Vector2.new(x0 - d, z0 - d), Vector2.new(x1 + d, z0 - d) }, { Vector2.new(x1 + d, z0 - d), Vector2.new(x1 + d, z1 + d) },
+			{ Vector2.new(x1 + d, z1 + d), Vector2.new(x0 - d, z1 + d) }, { Vector2.new(x0 - d, z1 + d), Vector2.new(x0 - d, z0 - d) },
+		}
+		for _, e in edges do
+			local len = (e[2] - e[1]).Magnitude
+			local dir = (e[2] - e[1]).Unit
+			for s = (row % 2) * 13, len, 26 do
+				local p = e[1] + dir * s
+				plantTree(into, if rng:NextNumber() < 0.6 then "TreeFir" else "TreeOak", Vector3.new(o.X + p.X + rng:NextNumber(-4, 4), top, o.Z + p.Y + rng:NextNumber(-4, 4)), rng:NextNumber(26, 40), rng, true)
+			end
+		end
+	end
+	-- The far mountains (Terrain rock with grass skirts).
+	local terrain = Workspace.Terrain
+	local mid = Vector3.new(o.X + c.X, top, o.Z + c.Y)
+	for i = 1, 16 do
+		local a = i / 16 * math.pi * 2
+		local at = mid + Vector3.new(math.cos(a) * (size.X / 2 + 650), 40 + (i % 3) * 30, math.sin(a) * (size.Y / 2 + 650))
+		pcall(function()
+			terrain:FillBall(at, 210 + (i % 4) * 40, Enum.Material.Rock)
+			terrain:FillBall(at - Vector3.new(0, 90, 0), 260, Enum.Material.Grass)
+		end)
+	end
+end
+
 -- M7: the old lab frame goes (the LAB10 compound and park, the plot's floor, spawn disc, edges, barriers, cones, signs and
 -- the zone pads): invisible and walked through, the new ground is under it.
 LabOwnerMap.HIDE_IN_LAB = { LabV10 = true, LabZonePads = true, ZonePads = true, LabGarden = true, Paths = true }
@@ -1154,6 +1284,7 @@ function LabOwnerMap.build(folder: Instance, origin: Vector3)
 	-- (map round 3: the ball-on-a-stick groves are gone; the tree belts come next)
 	fill(into, origin, origin.Y - 0.05)
 	belts(into, origin, origin.Y - 0.05)
+	parks(into, origin, origin.Y - 0.05)
 	hills(origin)
 end
 
