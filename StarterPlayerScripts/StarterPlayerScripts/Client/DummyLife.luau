@@ -74,10 +74,12 @@ local BUBBLE_OFFSET = 1.25 -- (23 Nov 2026, owner: lower; was 3) studs above the
 local TOUCH = game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").KeyboardEnabled
 local LOD_NEAR, LOD_FAR = if TOUCH then 24 else 50, if TOUCH then 70 else 130 -- (23 Nov 2026, fps: was 70, 170)
 local LOD_MID_RATE = if TOUCH then 1 / 12 else 1 / 15 -- s between updates beyond LOD_NEAR
-local IDLE_JOINTS = { "Neck", "Waist", "RightShoulder", "LeftShoulder", "RightElbow", "LeftElbow" }
+local IDLE_JOINTS = { "Neck", "Waist", "RightShoulder", "LeftShoulder", "RightElbow", "LeftElbow", "RightHip", "LeftHip", "RightKnee", "LeftKnee" }
 local GAIT_JOINTS = {
 	"Neck", "Waist", "RightShoulder", "LeftShoulder", "RightElbow", "LeftElbow",
 	"RightHip", "LeftHip", "RightKnee", "LeftKnee",
+	-- (S1: the walk clips also pose the ankles and wrists; without these the feet stayed tilted after a walk)
+	"RightAnkle", "LeftAnkle", "RightWrist", "LeftWrist",
 }
 local MOVING = { Walking = true, Fleeing = true, Crawling = true }
 local LEG_LIMBS = { "RightUpperLeg", "RightLowerLeg", "LeftUpperLeg", "LeftLowerLeg" }
@@ -732,6 +734,30 @@ local function updateIdle(life: Life, now: number, dt: number)
 	end
 	if j.LeftElbow then
 		j.LeftElbow.Transform = ang(10 + 3 * sin(t * 0.6 + 1.3), 0, 0)
+	end
+	-- S1 idle weight shift (Config.IDLE_WEIGHT_SHIFT): a real person never stands on both legs evenly. Every few seconds
+	-- the weight drifts onto one leg (that hip rolls out a little, the other knee unlocks), the waist leans back over it.
+	-- A slow smooth wave (period 7-11 s per body), never a snap.
+	if (Config :: any).IDLE_WEIGHT_SHIFT ~= false and not life.loose.RightHip and not life.loose.LeftHip then
+		local wave = sin(t * TAU / (7 + (life.seed % 4)))
+		local shift = wave * wave * wave -- (lingers on each leg, crosses quickly)
+		local onRight = math.max(0, shift)
+		local onLeft = math.max(0, -shift)
+		if j.RightHip then
+			j.RightHip.Transform = ang(2 * onLeft, 0, -3 * onRight)
+		end
+		if j.LeftHip then
+			j.LeftHip.Transform = ang(2 * onRight, 0, 3 * onLeft)
+		end
+		if j.RightKnee and not life.loose.RightKnee then
+			j.RightKnee.Transform = ang(-7 * onLeft, 0, 0)
+		end
+		if j.LeftKnee and not life.loose.LeftKnee then
+			j.LeftKnee.Transform = ang(-7 * onRight, 0, 0)
+		end
+		if j.Waist then
+			j.Waist.Transform = j.Waist.Transform * ang(0, 0, 2.5 * shift)
+		end
 	end
 	-- Hands up at a gun: both arms raised, elbows bent, a nervous tremble.
 	life.handsUp = handsUp
