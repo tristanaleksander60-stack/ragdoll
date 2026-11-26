@@ -1332,6 +1332,7 @@ end
 local PASS_CLEARANCE = 3.2 -- studs between the two pelvises when passing (arms swing wide)
 local GAME_NO_OVERLAP = (require(script.Parent.Parent:WaitForChild("Config")) :: any).NO_OVERLAP == true
 local PERSONAL_SPACE = if GAME_NO_OVERLAP then 2.6 else 2.4 -- (OVERVIEW 0.95: never inside each other)
+local GAME_SMOOTH = (require(script.Parent.Parent:WaitForChild("Config")) :: any).SMOOTH_MOTION == true -- (S1: the pelvis bobs with the steps, leans with speed)
 local function avoidDummies(rig: Rig, here: Vector3, direction: Vector3, goalDistance: number): (Vector3, boolean)
 	local folder = rig.model.Parent
 	if not folder then
@@ -1574,6 +1575,18 @@ local function updateMoving(rig: Rig, dt: number)
 	if gait == "Hop" and state ~= "Crawling" and rig.speed > 1 then
 		height += math.abs(math.sin(os.clock() * 7)) * 1.6
 	end
+	-- (S1 SMOOTH MOTION: the legs carry the body: the pelvis dips at each foot strike and rises mid-stride, 0.18 studs
+	-- walking, 0.25 running; and it leans forward speeding up, back and settling when it stops)
+	local R = rig :: any
+	if GAME_SMOOTH and state ~= "Crawling" and gait == nil then
+		local running = rig.speed > 11
+		R.bobPhase = ((R.bobPhase or 0) + rig.speed * dt / (if running then 9.4 else 4.7)) % 1
+		local amp = math.clamp(rig.speed / 8, 0, 1) * (if running then 0.25 else 0.18)
+		height -= amp * (0.5 + 0.5 * math.cos(R.bobPhase * math.pi * 4))
+		local accel = (rig.speed - (R.lastSpeed or rig.speed)) / math.max(dt, 1e-3)
+		R.lastSpeed = rig.speed
+		R.lean = (R.lean or 0) + (math.clamp(accel * 0.012, -0.1, 0.14) - (R.lean or 0)) * (1 - math.exp(-6 * dt))
+	end
 	rig.lift.Position = Vector3.new(here.X, groundY + height, here.Z)
 
 	-- Upright and facing the heading; crawling: face down, head first, chest a little up.
@@ -1584,6 +1597,9 @@ local function updateMoving(rig: Rig, dt: number)
 		rig.balance.CFrame = CFrame.fromMatrix(Vector3.zero, x, y)
 	else
 		local upright = swayUp(rig, hurtOf(rig), up)
+		if GAME_SMOOTH and type(R.lean) == "number" then
+			upright = (upright + rig.heading * R.lean).Unit
+		end
 		if gait == "Wobble" and rig.speed > 0.5 then
 			local roll = math.sin(os.clock() * 5) * 0.18
 			upright = (upright * math.cos(roll) + rig.heading:Cross(up).Unit * math.sin(roll)).Unit
