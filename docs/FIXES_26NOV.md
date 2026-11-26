@@ -1423,6 +1423,21 @@ Also, `BikeService.nextSpot` still drives circles 40-84 studs round the LAB ORIG
 - This is part of F50 (PATHS to 9/10). Do it at the same time.
 - **Check:** walk the boulevard and 3 inner paths, and look at the floor from above. One clean even surface, no patches or flickering squares, nothing standing on it. The lint reports 0.
 
+## F83 NO extra walk or run speed at all: back to Roblox's standard (owner, 26 Nov late: "Fjern hastighed på gå og løbe helt igen også fra standard")
+This replaces F51 (NORMAL 30, sprint about 50), F38 (the Walk speed setting) and LAB_TARGET's MOVE_FAST.
+- **Walking:** everyone walks at Roblox's standard speed, `WalkSpeed` 16. Put it back in the place's `StarterPlayer.CharacterWalkSpeed` and in every script that sets WalkSpeed (Sprint, Settings, the weapon slow-down keeps its x0.84 of 16).
+- **Running:** no extra running speed. Remove the sprint completely:
+  - the RUN button on phones;
+  - Shift on PC and the stick press on a pad;
+  - the run FOV widening and the sprint dust.
+
+  Turn them off behind `Config.NO_SPEED = true`, so they can come back with one switch.
+- **Settings:** remove the "Walk speed" option (NORMAL / FAST / VERY FAST / CALM) and ignore any saved choice (do not delete the saved value; just do not use it).
+- **The server's speed checks** (anti-cheat, `Sprint` clamps): the max allowed is 16 (plus the usual tolerance), so nobody can be faster.
+- **Not changed:** the ragdolls' own walking and running (Pace), vehicles, launch pads, the trampoline and the cannon.
+- **The question in NOW.md** ("Gangfart: skal NORMAL ned fra 30 til ca. 22?") is answered: 16, no setting. Remove it.
+- **Check (the owner):** walking speed is the normal Roblox speed on phone and PC; there is no RUN button, Shift does nothing, and Settings has no walk speed option.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.

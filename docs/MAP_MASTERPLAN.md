@@ -202,7 +202,7 @@ Build to these exact points.
    - the event areas (`EVENTS_NEWMAP.md`) and the bands in ALWAYS3 / DRAWN TO YOU stay as written (they still fit);
    - the PATH WALKERS keep their per-device numbers;
    - vehicle speed caps as before.
-   - **Walk speed:** keep the owner's chosen numbers (NORMAL 30); put a question in NOW.md: "Gangfart: kortet er mindre nu; skal NORMAL ned fra 30 til ca. 22?" (default: keep 30).
+   - **Walk speed:** Roblox standard 16, no sprint (F83).
 7. **Performance:** far fewer parts (the belts alone were about 1,900 trees and bushes), so phones get faster.
 8. **The DoD captures:** from the same 5 angles as `ref_6` … `ref_10` (the tower top and straight down), one capture each, no score. Then the lints: 0 things on walkways, 0 paths ending in grass, 0 old paving, 0 overlapping slabs or see-through parts (F82).
 
