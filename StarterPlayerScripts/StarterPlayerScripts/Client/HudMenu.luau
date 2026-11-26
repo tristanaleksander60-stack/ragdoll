@@ -142,6 +142,8 @@ function HudMenu.start()
 	grid.AutomaticSize = Enum.AutomaticSize.Y
 	grid.Parent = window.body
 	local layout = C.Grid(grid, HudMenu.CELL, HudMenu.GAP)
+	-- (NOW 1.6, 26 Nov 2026: flatter on a phone: MAPS, LAB, REWARDS and SETTINGS first, the rest below.)
+	local TOP: { [string]: number } = if Config.PHONE_MORE_FLAT then { Maps = 1, Sandbox = 2, Rewards = 3, Settings = 4 } else {}
 	layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	for index, entry in ENTRIES do
 		local name = entry.window
@@ -152,7 +154,7 @@ function HudMenu.start()
 			icon = icon,
 			role = entry.role :: any,
 			size = UDim2.fromOffset(HudMenu.CELL.X, HudMenu.CELL.Y),
-			layoutOrder = index,
+			layoutOrder = TOP[name] or (10 + index),
 			parent = grid,
 			onActivated = function()
 				if name == "Sandbox" and Controller.isRegistered and Controller.isRegistered("Lab") then

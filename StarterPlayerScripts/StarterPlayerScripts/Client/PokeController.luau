@@ -652,7 +652,7 @@ function PokeController.plan(screen: Vector2, touch: boolean, lab: boolean, with
 	local shownCount = count
 	local w = widthFor(lead + count + up, side)
 	local landscapePhone = phone and touch and screen.X > screen.Y
-	local COMPACT = 54 -- (24 Nov 2026 layout: a landscape phone's slot)
+	local COMPACT = if Config.PHONE_BIG_HOTBAR then 62 else 54 -- (24 Nov 2026 layout: a landscape phone's slot; NOW 1.8: bigger)
 	if landscapePhone and not lab then
 		-- A landscape phone keeps one short row between the move stick and GRAB/SHOOT (their box
 		-- ends PHONE_THUMB_RIGHT from the right edge), never the full width over them (PC play
@@ -690,7 +690,7 @@ function PokeController.plan(screen: Vector2, touch: boolean, lab: boolean, with
 		end
 	end
 	-- Phones are short: slabs 48 high (the touch floor is 44) keep the two-row bar low on screen.
-	local h = if touch and math.min(screen.X, screen.Y) <= 500 then 48 elseif touch then 64 else 72
+	local h = if touch and math.min(screen.X, screen.Y) <= 500 then (if Config.PHONE_BIG_HOTBAR and screen.X > screen.Y then 56 else 48) elseif touch then 64 else 72
 	local columns = perRow + lead + tail
 	local size = Vector2.new(2 * EDGE + columns * w + (columns - 1) * GAP, 2 * EDGE + rows * h + (rows - 1) * GAP)
 	return {

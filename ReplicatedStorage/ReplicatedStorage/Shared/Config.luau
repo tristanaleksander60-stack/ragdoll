@@ -383,6 +383,8 @@ local Config = {
 	ANGRY_FIRST = true, -- NOW 6: the first dummy a newcomer hits twice gets angry, runs at them, then runs off (Mourning.provoke)
 	ANGRY_SHOVE = true, -- NOW 6: that angry dummy gives one harmless funny shove; false = it only scolds (owner to choose)
 	SHOP_CHEAP_FIRST = true, -- NOW 8: the shop opens on the R$ 49 Starter Crate and cheaper picks (ShopV9 hero, ShopArt.FEATURED)
+	PHONE_MORE_FLAT = true, -- NOW 1.6: MORE on a phone starts with MAPS, LAB, REWARDS, SETTINGS (HudMenu)
+	PHONE_BIG_HOTBAR = true, -- NOW 1.8: a landscape phone's hotbar slots 62 x 56 (was 54 x 48) (PokeController.plan)
 	-- The lab guide (21 Nov 2026, the owner: "a 9-year-old must understand everything in the lab"): a
 	-- sign, a glowing drop ring and a FEED button at every creature and station (Server/Systems/LabGuide,
 	-- Client/LabGuideClient). false = none.
