@@ -391,6 +391,76 @@ The ejected casings (since 0.43.1) look plain.
 
 **Check:** stand near 3 machines for 3 minutes. Every demo starts with a ragdoll you see walking there and climbing in; nothing flies without a reason.
 
+## F32 Ragdolls stuck in the tree belts and walls
+Ragdolls get stuck inside the tree belts and the walls (the owner saw it).
+- **The belts and walls block them for real:** each tree belt gets an invisible solid wall volume (CanCollide on for ragdolls, CanQuery off) along its length, so no ragdoll walks or is thrown deep into it. The pathfinding marks it as a no-go area (`ALWAYS3.md` "never walk INTO things").
+- **Unstick:**
+  - any ragdoll whose root is inside a belt, wall, rock or building volume for more than 1 s is moved out to the nearest free walkable point (a short slide or step, not a pop), standing;
+  - a thrown or knocked body that lands inside a belt is pushed out to the room side when it gets up.
+- **Spawns, recruits and walker targets** are never inside or right next to a belt or wall (2 studs clearance).
+
+## F33 The aquarium sticks half into a wall
+The owner's screenshot shows the glass aquarium intersecting a wall or building edge.
+- **Move it** to its `OwnerMapPlan` spot with at least 6 studs clear on every side.
+- **Lint:** extend the map lint to report any attraction whose bounding box intersects a wall, a building, a belt, a path or another attraction. The report must be 0.
+
+## F34 A REAL T-rex (today it is a green leafy block "bush")
+- **Replace** the leaf-textured block dinosaur with a real T-rex model: a rigged mesh with skin detail (scales), stylised-realistic, from the Creator Store, with many favourites (malware pass, scripts removed).
+- **Animations:**
+  - idle breathing (the chest moves);
+  - head turns tracking ragdolls and players nearby;
+  - tail sway;
+  - a blink;
+  - a walk round its pen (footstep booms, a small camera shake near it);
+  - the ROAR (a mouth wide open, a head toss, a shock ring);
+  - the bite-and-toss (`MACHINES_10.md` 3.29).
+- **Scale:** about 25-30 studs tall; it must fit the pen.
+
+## F35 The ENTRANCES of attractions must be exciting (not a grey wall with 2 lamps)
+The T-rex pen's entrance is a plain grey concrete wall with 2 lamp posts and a small "T-REX" plate. Every attraction entrance gets the `SPAWN_11.md` gate treatment, sized to the attraction. The T-rex pen gets:
+- a huge timber gate in a steel frame (Jurassic-style but our own design);
+- warning lights;
+- a big "T-REX" sign in 3D letters with claw marks;
+- a viewing platform with a railing to look over the wall;
+- deep scratches on the gate;
+- the gate shudders when the T-rex bumps it from inside (every 20-40 s, a boom), so you want to look.
+
+The bear cave, the crocodile pond, the aquarium, the pool, the spider pen and the danger zone pieces all get a fitting entrance or front: a sign, a frame, something moving.
+
+## F36 The BEAR: alive, and no black slab
+- **The black plate:** the cave's mouth is a flat black slab or wall. Replace it with a real cave entrance: depth into the rock, a dark interior that fades, rocks and roots round the mouth, and a soft eye-glint in the dark.
+- **The bear today stands still.** It needs a rigged bear model (if the current one is a single mesh, replace it; Creator Store, malware pass) with animations:
+  - idle breathing;
+  - sniffing the air;
+  - scratching against a tree;
+  - walking round its yard;
+  - sitting;
+  - lying down and sleeping;
+  - standing up on its hind legs to roar.
+- **It reacts:**
+  - it looks at ragdolls and players nearby;
+  - it wakes on noise (shots nearby);
+  - the cave interaction in `MACHINES_10.md` 3.27 (it swats a ragdoll thrown in, or gives a bear hug).
+
+## F37 A cyclist and bikes you notice early (owner: "Gør så man ser en cykler ret hurtigt på fortovet, så man finder et transportmiddel, hvis man ikke ville gå")
+- **The cyclist** (`LIFE_IDLE.md` 2):
+  - in the first 20-30 s of every visit, a cyclist rides past the spawn on the walkway at the foot of the plaza stair;
+  - it rings its bell, waves at the player, and parks at a BIKE RACK right there;
+  - then it walks off.
+- **The bike rack** by the plaza stair holds 3-4 free bicycles (and 2 scooters if a good model exists):
+  - a big "RIDE" prompt (E / tap);
+  - riding is calm, fast enough to cross the map (about 40 studs/s);
+  - easy on phones;
+  - get off with jump or a button; the bike stays where you leave it and returns to the rack after 60 s unused.
+- **More racks:** at every room gate and at the station, so bikes are always near.
+- **A first-visit hint, shown once:** a small pointing hand at the rack, "Ride a bike!".
+
+## F38 Walking speed in Settings (owner: "gør så man kan adjust speed i sine settings")
+- **The slider:** Settings gets a "Walk speed" slider from 16 to 40, default 28 (`LAB_TARGET` RUN FASTER), saved per player.
+- **SPRINT:** it stays at the slider value x1.5 (max 60), with an on/off toggle for the sprint button on phones.
+- **Phone:** the slider is big and easy (or 3 buttons: Normal / Fast / Very fast).
+- **Server:** it checks the value (clamped to 16-40, sprint max 60); the anti-cheat speed checks follow the player's setting.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
