@@ -9,7 +9,8 @@
 - Do not search for the old file.
 - Rebuild the owner's own map 1:1 from `art/store/look_target/lab_ref/ref_6` … `ref_10` (and `ref_1` … `ref_5`), as `docs/LAB_TARGET.md` ROUND 3 says.
 - Then publish once and give one Danish "Test selv" list.
-- After it: `docs/STAY_LONGER.md`.
+- In the same run, after the lab: `docs/IMPACT_FX.md` (smoke and dust on every impact, grab and SLAM).
+- Then: `docs/STAY_LONGER.md`.
 
 (Older notes below.)
 
