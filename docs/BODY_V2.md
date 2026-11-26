@@ -58,7 +58,22 @@ The owner chose option 2 in `docs/MATURITY.md`.
   - hard impacts (falls, crashes, the cannon, a SLAM);
   - machines;
   - dog bites.
-- **Heavy weapons break faster:** sniper, railgun, big hammer and explosives can break a bone at stage 2.
+- **It depends on how hard the hit is** (owner: "Afhængigt af hvor hårdt man slår"). Every hit has a force from 0 to 1:
+  - **guns:** the weapon's POWER stat (1-10), plus closer range = harder;
+  - **melee:** the weapon's POWER × how long you held to charge (the existing "hold to hit harder") × the swing speed;
+  - **impacts:** the impact speed (18 studs/s = 0, 120+ = 1);
+  - **explosions:** by distance to the blast.
+
+  What a hit does:
+
+  | Force | What happens |
+  |---|---|
+  | below 0.3 | a bruise only; no stage change |
+  | 0.3-0.6 | +1 stage; breaks the bone only at stage 3 |
+  | 0.6-0.85 | +1 stage; breaks at stage 2 or 3 |
+  | above 0.85 | a full-power hit (a charged hammer swing, a sniper up close, a 120+ crash, a point-blank blast) breaks the bone at once, even on a fresh limb |
+
+- **Feedback:** the harder the hit, the louder the CRACK and the bigger the flash, so players learn it. A small "CRACK!" pop shows only when a bone breaks.
 - **Where it breaks:** the break is on the limb part that was hit (upper or lower arm or leg, hand, foot, ribs on the torso). That limb's bone breaks **in the X-ray view**:
   - the bone snaps in two pieces with a clean cartoon zig-zag break;
   - the pieces sit slightly offset and angled, still inside the glass shell;
