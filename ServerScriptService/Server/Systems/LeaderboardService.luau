@@ -42,7 +42,8 @@ LeaderboardService.BOARDS = {
 
 local BOARD_EVERY = 60 -- s between global writes and reads (4 boards: well inside the budget)
 local REDRAW_EVERY = 5 -- s at most between redraws of what changed here
-local TOP = 5 -- (five big rows read from across the plaza on a phone; ten were 1.1 studs tall)
+local TOP = if (require(game:GetService("ReplicatedStorage").Shared.Config) :: any).BOARD_TOP20 then 20 else 5 -- (five big rows read from across the plaza on a phone; ten were 1.1 studs tall) (map round 2: top 20 in a scrolling list, 5 rows in view)
+local VISIBLE = 5
 LeaderboardService.TOP = TOP
 -- Where they stand: an arc on the plaza's far side (where the one board stood), facing its middle,
 -- 3 studs behind the ring of lamps (47) and clear of the ones at 60 and 120 degrees (WorldMaps: the
@@ -246,12 +247,30 @@ local function buildBoard(board: Board, cf: CFrame, folder: Instance, boardSize:
 	local sub = label("Sub", head, { Size = UDim2.new(1, -20, 0, 20), Position = UDim2.fromOffset(10, 48), Text = "", TextColor3 = INK })
 	local rows: { Frame } = {}
 	local top, gap = 80, 3
-	local rowH = math.floor((h - top - 8) / TOP) - gap
+	local rowH = math.floor((h - top - 8) / VISIBLE) - gap
+	-- (Map round 2: the rows sit in a scrolling list: the mouse wheel over it or a finger drag scrolls to number 20.)
+	local holder: Instance = gui
+	local rowTop = top
+	if TOP > VISIBLE then
+		local scroll = Instance.new("ScrollingFrame")
+		scroll.Name = "List"
+		scroll.BackgroundTransparency = 1
+		scroll.BorderSizePixel = 0
+		scroll.Position = UDim2.fromOffset(0, top)
+		scroll.Size = UDim2.fromOffset(w, h - top - 4)
+		scroll.CanvasSize = UDim2.fromOffset(0, TOP * (rowH + gap) + 8)
+		scroll.ScrollBarThickness = 10
+		scroll.ScrollingDirection = Enum.ScrollingDirection.Y
+		scroll.Active = true
+		scroll.Parent = gui
+		holder = scroll
+		rowTop = 0
+	end
 	for i = 1, TOP do
 		local row = Instance.new("Frame")
 		row.Name = "Row" .. i
 		row.Size = UDim2.fromOffset(w - 16, rowH)
-		row.Position = UDim2.fromOffset(8, top + (i - 1) * (rowH + gap))
+		row.Position = UDim2.fromOffset(8, rowTop + (i - 1) * (rowH + gap))
 		row.BackgroundColor3 = if STYLE then (if i % 2 == 1 then STYLE.row else STYLE.rowAlt) else Color3.fromRGB(52, 44, 92)
 		row.Visible = false
 		corner(row, if STYLE then STYLE.radius else 10)
@@ -264,7 +283,7 @@ local function buildBoard(board: Board, cf: CFrame, folder: Instance, boardSize:
 			stripe.BackgroundColor3 = STYLE.medals[i]
 			stripe.Parent = row
 		end
-		row.Parent = gui
+		row.Parent = holder
 		-- The face with a medal ring (gold, silver, bronze; plain after) and its place on a badge;
 		-- the name gets most of the row (it is what people look for); the number on the right.
 		local a = rowH - 10
