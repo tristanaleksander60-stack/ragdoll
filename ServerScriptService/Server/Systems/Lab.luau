@@ -952,7 +952,7 @@ local function alwaysThree(plot: Plot, now: number)
 					if not (Config :: any).FAST_THREE then
 						table.insert(far, { slot = slot, model = model, d = d })
 					elseif watch ~= "Demo" and watch ~= "NeverZero" and model:GetAttribute("TryFor") == nil then
-						table.insert(far, { slot = slot, model = model, d = d + (if watch == "Walk" then 40 elseif watch ~= nil then 80 else 0) })
+						table.insert(far, { slot = slot, model = model, d = d + (if watch == "Close" and (Config :: any).NEARBY_TWO then -1000 elseif watch == "Walk" then 40 elseif watch ~= nil then 80 else 0) }) -- (0.1566: one of the 2 close by comes first)
 					end
 				end
 			end
@@ -990,12 +990,27 @@ local function alwaysThree(plot: Plot, now: number)
 		local walked = pick.d <= THREE_RUN_FROM
 		recruits[pick.model] = { slot = pick.slot, untilAt = now + THREE_GIVE_UP, walked = walked, player = player }
 		threeRecruitAt[player] = now
+		local wasClose = pick.model:GetAttribute("Watch") == "Close" and (Config :: any).NEARBY_TWO == true
 		if (Config :: any).FAST_THREE then
 			pick.model:SetAttribute("Watch", nil) -- (taken from its machine or its walk: the 3 near come first)
 		end
 		pick.slot.roamHome = spot
 		pick.slot.nextRoamAt = now + THREE_GIVE_UP + 1
 		pick.model:SetAttribute("Pace", if (Config :: any).FAST_THREE then (if walked then 2.0 else 2.5) elseif walked then 1.4 else 2.2) -- (ALWAYS3 update: they come FAST; 0.15: a sprint)
+		if wasClose then
+			-- (0.1566 THE 2 NEARBY: the close-by one WALKS over naturally, a jog past 45 studs, and says a line)
+			local real = pick.d + 1000
+			pick.model:SetAttribute("Pace", if real > 45 then 1.8 else 1.3)
+			pick.model:SetAttribute("CloseFor", nil)
+			local line = ({ "What happened here?", "Whoa, is he okay?", "Did you see that?", "I'm coming!" })[math.random(1, 4)]
+			pick.model:SetAttribute("MoodSay", line)
+			local who = pick.model
+			task.delay(2.8, function()
+				if who.Parent and who:GetAttribute("MoodSay") == line then
+					who:SetAttribute("MoodSay", nil)
+				end
+			end)
+		end
 		if (Config :: any).FAST_THREE and pick.d > 150 and around < 3 and now >= (threeSetDownAt[player] or 0) then
 			threeSetDownAt[player] = now + 8 -- (0.156: then an 8 s cooldown)
 			-- (OVERVIEW 0.15: too far to arrive in 2-3 s: set down out of view 30-40 studs behind the player, then it sprints in)
