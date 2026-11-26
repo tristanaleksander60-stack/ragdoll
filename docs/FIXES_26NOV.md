@@ -794,6 +794,36 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 - **Lag-free:** a few meshes, and the collision as a simple smooth surface (CollisionFidelity PreciseConvexDecomposition only on the trough, or invisible smooth collision parts).
 - **Check:** a quick look from above and from the side (no gaps, nothing sticking out), plus one ride down as a player and one ragdoll pushed in.
 
+## F59 X-ray: shots in the BELLY and the BACK must show on the bones (owner: "Gør så man kan se skud på knoglen i maven/ryggen")
+**Today:** a shot in the belly or the back shows nothing on the skeleton. The likely causes:
+- the torso has no real bones in the X-ray (only a simple block, or only the limbs have bone capsules);
+- the slugs are only placed on limb bones (`XRAY_SLUGS`: "max 15 a limb");
+- the belly part of the torso has no bone at all.
+
+**Fix:**
+1. **A full torso skeleton in the X-ray**, cartoon but anatomically placed:
+   - the **ribcage**: about 6 visible curved ribs each side, joined at the front to a **sternum** and at the back to the spine;
+   - the **spine**: a column of vertebrae from the neck down to the pelvis (neck, chest and lower back vertebrae);
+   - the **pelvis** at the bottom of the belly;
+   - 2 **shoulder blades** (scapulae) on the upper back;
+   - the **collarbones**.
+
+   Each bone has its capsule (or capsules) for the hit test (F28).
+2. **The real bullet path through the torso** (F28):
+   - **the belly from the front:** the bullet goes between or into the lower ribs, then on to the lower spine (the lumbar vertebrae) or the pelvis, depending on height and angle;
+   - **the chest from the front:** a rib or the sternum first; strong guns go on to the spine;
+   - **the back:** a shoulder blade or a rib, or the spine first;
+   - **from the side:** the ribs on that side.
+   - A bullet that misses every bone stops in the shell, or exits on strong guns (an exit hole).
+3. **What shows on the bone:**
+   - the lodged bullet (F43: a real bullet, nose pointing in the direction it travelled, about 60 % embedded) at the exact spot;
+   - crack lines from the entry point;
+   - breaks and shatters by force (1b / F29), e.g. a cracked rib, a broken rib, or a chipped vertebra (still cartoon; nothing pokes out of the body).
+4. **Visible:** the torso's X-ray shell is see-through enough (the same glass look as the limbs) that the ribs, spine and bullets read clearly, from the front and the back.
+5. **The hit card** shows "Rib", "Spine", "Pelvis" or "Shoulder blade" for torso hits, not only "Belly" or "Chest".
+
+**Check:** in X-ray, shoot the belly, the chest, the lower back and the upper back from the front, the back and the side with a pistol, a rifle and a sniper. Each bullet shows on the right bone, pointing the right way, with cracks or breaks by force.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
