@@ -49,6 +49,21 @@ Rebuild `Systems/LabOwnerMap` FROM `OwnerMapPlan`. Do not hand-place anything th
    - **The tree belts:** 2-3 staggered rows of trees with bushes underneath, so you cannot see through at eye height. They are broken only at the room openings.
    - Also groves in the open areas, trees along the boulevard, and flower beds and hedges round the plazas.
    - Performance: meshes, CanCollide off for leaves, CastShadow only on the big ones near you.
+5b. **The trees must NOT look all-green or AI-made** (owner, 26 Nov 2026: "Fiks træernes udseende, de er HELT grønne og ligner noget AI-lavet"). Today the trees and the backdrop forest are one flat green from top to bottom, with no trunks and no variation, like a green wall.
+   - **Real trunks and branches:** brown-grey bark (a texture, not flat green), showing below the crown on every broadleaf tree and between pine skirts.
+   - **Foliage with depth and colour variety:**
+     - 3-5 different greens per area (dark pine green, olive, fresh spring green, a blue-green), with lighter tops and darker undersides (vertex colour or 2-tone meshes);
+     - a few trees with yellow-green, and a rare autumn orange or red for accents;
+     - a little gap in the crowns so light shows through.
+   - **Shapes:**
+     - mixed species and heights;
+     - crowns that are not perfect spheres or cones;
+     - some leaning, some young and thin, some old and wide;
+     - bushes and ferns at their feet;
+     - grass tufts and a few stones.
+   - **Use a good tree set** (Creator Store, many favourites, one consistent stylised-realistic style, malware pass). Never code-built balls or cones.
+   - **The forest backdrop:** the same set at a lower detail, layered rows with real trunks visible at the edge, not a green wall. Darker and bluer as it goes far (atmosphere).
+   - **Check:** close-up captures of a tree, a belt and the forest edge, PC and phone. They must read as real trees with trunks and varied colour; harsh score 9.5+.
 6. **Fill every room:**
    - each attraction stands on a pad that fits it, with its yard dressing (2 lamps at its path end, 1-2 benches facing it, a cluster of fitting props, its sign, its watchers);
    - each courtyard has a bench, a bin, a lamp and a signpost pointing to the room's attractions;
