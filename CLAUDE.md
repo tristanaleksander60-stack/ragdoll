@@ -3,12 +3,12 @@
 Studio place "[💥] Ragdoll Havoc", placeId 126037745825106, universe 10774775314. Branch `release`. Talk to the owner in **Danish, short and plain**.
 
 ## How every session runs
-- **The owner types `/klar`.** Read `docs/NOW.md` (the current work list) and do it in order. Do not read the big plans whole: `docs/V9_PLAN.md` (220 KB) and `docs/V8_PLAN.md` (130 KB) hold the history. `grep -n` them for the one section a task needs.
-- **Testing (owner order, 21 Nov 2026):** the owner tests in Studio.
-  - Claude Code does **one quick Play** to check for no errors in the output.
-  - No test suites, no blind-review subagents, no long play sessions, unless the owner asks.
-  - Every task ends with a short Danish **"Test selv"** checklist: what changed, where to look, and which device (PC / phone / tablet / pad).
-- **Publishing:** by itself after each finished task, through `docs/RELEASE.md`'s quick gate. **Never restart or shut down old servers.**
+- **The owner types `/klar`.** Read `docs/OVERVIEW.md` (the one-page plan: THE ORDER in 8 phases) and build it in order, without stopping (`.claude/commands/klar.md`). `docs/NOW.md` holds details only. Do not read the big plans whole: `docs/V9_PLAN.md` (220 KB) and `docs/V8_PLAN.md` (130 KB) hold the history. `grep -n` them for the one section a task needs.
+- **Testing (owner order, 26 Nov 2026):** the owner tests EVERYTHING at the end; Claude Code builds the best possible product and does not test it.
+  - Claude Code does only **one quick Play** per item, to check for no errors in the output.
+  - No runs, watches, benches, scores, suites, reviewers or long play sessions, even where a doc asks (OVERVIEW "NO TESTING").
+  - The run ends with ONE Danish **"Test selv"** list for everything (phone first).
+- **Publishing:** NOT until the map is done and the owner has tested. Then the owner publishes both places from the final message's steps. **Never restart or shut down old servers.**
 - **Cost:**
   - read only what you need (grep first);
   - small steps;

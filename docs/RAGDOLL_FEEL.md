@@ -88,7 +88,7 @@ The best Roblox ragdoll games are Hyper Realistic Ragdoll, Bloody Ragdoll Physic
    It logs a count per session (Metrics).
 
 ## PERFECT physics: the bar (owner, 26 Nov 2026: "Sørg for vi har PERFEKTIONERET physics")
-Everything in this doc, plus these hard checks. Each must pass in Studio and on the phone emulator.
+Everything in this doc, plus these hard checks. (26 Nov late: the OWNER tests them at the end. Build to them from the code; no bench, clips or scores.)
 - **The hit lands where it hits.** Every hit pushes the body with `ApplyImpulseAtPosition` at the exact hit point, in the shot direction, scaled by weapon force:
   - a shot in the shoulder turns the torso;
   - a shot in the knee buckles that leg;
@@ -108,8 +108,8 @@ Everything in this doc, plus these hard checks. Each must pass in Studio and on 
 - **Same everywhere:** the same feel on 60 and 30 fps (physics independent of frame rate).
 - **The bar:** score each check 0-10 on the bench clips. All must be 9.5+, compared side by side with the top ragdoll game.
 
-## The bench (one Play, no suites)
-Record 5 short clips in Studio and compare them with a video of the top ragdoll game, side by side:
+## The bench: NOT RUN (26 Nov late: the owner tests; this list is what the owner will look at)
+~~Record~~ The owner looks at 5 moments; build them to look right. (Old text:) Record 5 short clips in Studio and compare them with a video of the top ragdoll game, side by side:
 1. a light shot (a flinch and a recover);
 2. a hard shot (a stumble and a fall);
 3. a fall from the tower;

@@ -948,7 +948,7 @@ The owner sees it again: the legs jitter for 1-2 seconds at random moments. The 
      - the frame rate;
      - which systems set leg targets in the last 0.5 s.
    - Send it to Metrics (live) and print it in Studio.
-3. **A longer Studio run to provoke it:** 5 minutes with about 12 ragdolls near the player, while the player moves around a lot (walking in and out of the 60-stud border, onto kerbs and slopes), with roles switching and look-at talking; once at 60 fps, once in the phone emulator at a low frame rate.
+3. **(26 Nov late: NO run; the owner tests. Keep the detector on for the owner's test.)** ~~A longer Studio run to provoke it:~~ 5 minutes with about 12 ragdolls near the player, while the player moves around a lot (walking in and out of the 60-stud border, onto kerbs and slopes), with roles switching and look-at talking; once at 60 fps, once in the phone emulator at a low frame rate.
 4. **Fix every cause the log points to.** Write the findings in this section and in OVERVIEW's State.
 5. **The likely "1-2 s" causes** to look at first:
    - a network-owner hand-off or the full/light mode switch (both are short bursts);
@@ -1075,7 +1075,7 @@ The owner sees it again: the legs jitter for 1-2 seconds at random moments. The 
 4. **Only valid goals:** every Home goes through one function, `NavTarget.snap(point)`. If the point is inside or within 1.5 studs of a solid part, on water, lava, a belt, a flower bed or a machine floor, it moves to the nearest free walkable point: test a ring of 8 points at 2, 4 and 6 studs, using a Blockcast down plus the body-box overlap check. Cache the result per spot. The watcher spots in front of machines are checked once at map load.
 5. **Touching = react at once:** a walker that wants to walk but moves at less than 30 % of its wanted speed for 0.4 s (or whose body box overlaps a solid part) steps back about 1 stud, takes the free side (step 3) and re-plans. Do not wait 1.5 s. After 3 failures it picks a new goal (as today).
 6. **Moving things:** a car, the train, a bike or a player on the walker's line within 12 studs makes it stop and wait (or step aside if it is standing in the way). It goes on when the line is clear.
-7. **A count, like the leg detector:** `NAV_BUMP_LOG` (Studio and Metrics). A BUMP is a walker in Walking/Fleeing whose body touches a non-ground solid part that is not a ragdoll or a player. Print the part's full name and the walker's system (who set its Home). A 2-minute Studio watch with the player moving through the Machine Hall, the plaza, the Fun Fair and the roads: fix every part or system the log names, and write the count before and after in this section.
+7. **A count, like the leg detector:** `NAV_BUMP_LOG` (Studio and Metrics), always on. A BUMP is a walker in Walking/Fleeing whose body touches a non-ground solid part that is not a ragdoll or a player. Print the part's full name and the walker's system (who set its Home). (26 Nov late: NO watch session; the owner tests, and the log tells the next session what to fix.)
 8. **Cost:**
    - the cast runs at 10 Hz per walker (not every frame); the side casts run only on a hit;
    - paths stay under about 6 a second in total (as today), and the re-plans of moving goals share that budget;
@@ -1109,7 +1109,7 @@ The owner sees it again: the legs jitter for 1-2 seconds at random moments. The 
 6. **Arriving and turning to HomeLook:** if the way it will face at home is more than 100 degrees from its heading, it starts turning in the last 2 studs of the walk (a curved arrival), so it seldom turns on the spot. `ARRIVE_TURN_MAX` stays the safety net.
 7. **LOOK AT YOU:** only the head and the chest turn up to 60 degrees; past that the whole body turns with the turn steps (step 1), at 2.5 rad/s, never a snap.
 8. **The detector sees turns too** (Client/LegJitter): a TURN TWIST event is the foot's speed crossing below 0.5 and above 3 studs/s more than 4 times a second while the pelvis's yawRate is over 0.8 rad/s, for 0.3 s; or a hip twist angle over 35 degrees. Log it with the same context as the F65 events plus the yawRate, the wanted-direction flips in the last 1 s and who set Home.
-9. **A short turn run in Studio** (1-2 minutes, not a long session): stand among 8 ragdolls and walk round them in circles, so they turn to look at you; let 3 arrive home; make 2 walk round a bench. The goal is 0 TURN TWIST events. Write the counts before and after in F65's findings.
+9. **(26 Nov late: NO run; the owner tests.)** ~~A short turn run in Studio~~ (1-2 minutes, not a long session): stand among 8 ragdolls and walk round them in circles, so they turn to look at you; let 3 arrive home; make 2 walk round a bench. The goal is 0 TURN TWIST events. Write the counts before and after in F65's findings.
 
 **Check:** watch ragdolls turn on the spot, turn to look at you and turn at corners. The feet step round, the legs never shake, and the body never whips round.
 

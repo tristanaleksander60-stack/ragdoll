@@ -77,7 +77,7 @@ Every living ragdoll that is standing, waiting or watching does a small human ac
    - at a junction it picks a next leg (mostly straight on, sometimes a turn), so they spread over ALL paths;
    - they never walk through a machine, a bench or a lamp: the lanes come from the plan's path legs, and anything standing on a path is avoided by a sideways lane offset;
    - pairs and threes walk side by side.
-2. **How many** (per device, measured in Studio and on the phone emulator):
+2. **How many** (per device; design targets, no measuring session):
 
    | Device | Path walkers alive | Full animation | Simple animation | Far (no limbs moving) |
    |---|---|---|---|---|

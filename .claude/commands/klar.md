@@ -1,60 +1,56 @@
 ---
-description: Build the WHOLE plan in docs/OVERVIEW.md without stopping; the owner tests only at the end
+description: Build the WHOLE plan in docs/OVERVIEW.md, phase by phase, without stopping; the owner tests only at the end
 argument-hint: "[optional: what the owner wants first]"
 ---
-Read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page map of the whole plan: ORDER, docs, done, left). Then read the doc of the item you are working on (and `docs/NOW.md` only for details). If the owner wrote something after /klar, do that first.
+Read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situation, how to work, what only the owner can do, THE ORDER in 8 phases, DONE). Then read only the doc section of the row you are on. If the owner wrote something after /klar, do that first.
 
-## THE OWNER'S ORDER (26 Nov 2026): "Gør så den laver alt nu uden at stoppe så jeg bare skal teste alt til sidst"
-**Build EVERYTHING in OVERVIEW's ORDER, top to bottom, in ONE run. Do not end your turn early.**
-- **Never end the turn after one item, one phase or a short while.** When an item is done:
-  1. one quick Play;
-  2. commit and push;
-  3. update OVERVIEW (State and LEFT);
-  4. go straight on to the next item.
-- **The only reasons to stop:**
-  - (a) every item in the ORDER is done or parked;
-  - (b) Studio or the MCP is gone and cannot be reached after 3 tries.
-- A long run is expected and wanted. When the context fills up, it is summarised automatically; keep going from OVERVIEW.
-- **Never ask the owner anything mid-run.** For every open question, pick the default below (or the safe default behind a Config switch), write it in NOW.md's "Questions for the owner", and go on.
-- **Never stop for a blocked item.** Park it in OVERVIEW with the reason and go on.
-- **Do not ask the owner to test anything until the very end.**
+## THE OWNER'S ORDERS (26 Nov 2026)
+- "Gør så den laver alt nu uden at stoppe så jeg bare skal teste alt til sidst"
+- "Sørg for den ikke tester alt selv dybt, men at det er min opgave, den skal bare lave det bedst mulige produkt og så tester jeg når alt er færdigt"
+
+**So:** build EVERYTHING in OVERVIEW's ORDER, phase by phase, top to bottom, in ONE run, as well as you possibly can the first time. Do not test it: the owner does.
+
+### The loop, per row (details in OVERVIEW "How to work")
+1. Read the row and its doc section (grep), and the code it touches.
+2. Find the real cause in the code and build the WHOLE row.
+3. Put the scripts into Studio via the MCP (checksum).
+4. ONE quick Play for errors only (plus one capture if the row is about looks).
+5. Run the fast lints the doc asks for.
+6. Save the place, commit and push `release`, and update the row in OVERVIEW.
+7. Re-read THE ORDER (the cloud session adds the owner's new wishes there) and go straight on to the next row.
+
+### Never
+- **Never end the turn after one row, one phase or a short while.** The only reasons to stop:
+  - (a) every row is DONE or PARKED;
+  - (b) Studio or the MCP cannot be reached after 3 tries.
+
+  A long run is wanted; when the context fills up it is summarised, and you keep going from OVERVIEW.
+- **Never test beyond the one quick Play.** No runs, watches, benches, clips, scores, comparisons, 2-client tests, emulator rounds, FPS sessions, suites or reviewers, even where a doc asks for them: the docs' "Check" lines are what the OWNER will test. Keep the cheap always-on logs and detectors.
+- **Never ask the owner anything mid-run.** Pick the default (below, or the safe one behind a Config switch), write it in NOW.md "Questions for the owner", and go on.
+- **Never stop for a blocked row.** PARK it in OVERVIEW with the reason and go on.
+- **Never publish.** The owner tests first, then publishes both places from your instructions.
 
 ## Standing answers (use them; do not ask again)
-- **Script Sync not landing:** do not wait for it and do not ask about it. Put every changed script into Studio through the MCP and check it by length or checksum, as before. Note it once in the final message.
+- **Script Sync not landing:** put every changed script into Studio through the MCP and check it by length or checksum. Note it once in the final message.
 - **The dog is one stiff mesh:**
-  - look in the Creator Store yourself for a RIGGED German Shepherd (bones or Motor6D joints: legs, neck, tail, jaw) with a clean license; malware pass; keep only the model;
-  - if none is good, use the best rigged realistic dog, recolour it tan and black, and animate its joints in code;
-  - never wait for the owner to send one.
-- **REVIVE ALL on X:** yes, keep X.
-- **X-RAY on I:** yes.
-- **Missing models** (wheelchair, trees, mountains, animals): get them from the Creator Store yourself (malware pass, one matching style).
-- **Publishing:**
-  - the owner said publish only when the map meets its DEFINITION OF DONE;
-  - until then, save the place after every item;
-  - at the end, tell the owner exactly how to publish BOTH places (start + multiplayer; see OVERVIEW's two-places warning).
-
-## The OWNER tests (owner, 26 Nov 2026: "Husk jeg tester, den skal bare lave det bedste muligt")
-- **Spend the time on BUILDING it as well as possible the first time,** not on testing.
-- **The "Check" sections in the docs** describe what must work. Do NOT run them as long test sessions. Per item:
-  1. one quick Play (no errors in the output);
-  2. a quick look or capture only when it is about how something looks;
-  3. a lint or script check where the doc asks for one (they are fast).
-- **No long play-throughs,** no repeated test rounds, no test suites, no reviewers. The owner tests everything at the end with the ONE "Test selv" list.
-
-## Every item
-- Phone and iPad first; simple enough for a 10-year-old.
-- Gore off (purple cartoon; X-ray bones may break).
-- A Config switch for it.
-- No test suites or reviewers; one quick Play.
-- Do not read `docs/V9_PLAN.md` or `docs/V8_PLAN.md` whole; grep them.
+  - find a RIGGED German Shepherd in the Creator Store yourself (bones or Motor6D legs, neck, tail, jaw; clean license; malware pass; keep only the model);
+  - else use the best rigged realistic dog, recoloured tan and black, with its joints animated in code.
+- **Missing models** (wheelchair, cave, rocks, vehicles, animals, props): get them from the Creator Store yourself (malware pass, one matching style). Use Terrain where the doc prefers it.
+- **Creator Store scripts** (vehicles): build the features in our own code. A model's script may run only if it passes F76's security check.
+- **Game pass ids not sent yet:** the vehicle shows SOON; it is never free by mistake.
+- **Keys:** REVIVE ALL is X; X-RAY is I; MORE is a gear (9); WEAPONS is T.
 
 ## The ONE final message (Danish, short, only when you really stop)
 1. **Step 0 reminder** (only if it is not done): "Husk punkt 0: tryk Alt+P i Studio for at udgive gore-off, og send aldersspørgeskemaet med svarene i docs/MATURITY.md."
-2. **What was built,** item by item, one line each, and what is parked and why.
-3. **How to publish both places**, if the map is done.
-4. **ONE combined "Test selv" list:** phone first, then PC, max about 20 lines.
+2. **What was built,** phase by phase, one line per row, and what is parked and why.
+3. **How to publish BOTH places** after testing (OVERVIEW PHASE 8).
+4. **ONE "Test selv" list:**
+   - phone first, then PC;
+   - about 25 lines at most;
+   - from the rows' Check lines;
+   - each line says where to go and what should happen.
 5. **The "Questions for the owner" list:** each with the default you chose.
 
-**Keep `docs/OVERVIEW.md` true:** update an item's State and LEFT whenever you finish or start it.
+**Keep `docs/OVERVIEW.md` true:** update a row's State and LEFT whenever you finish or start it.
 
 The owner's wish for this session: $ARGUMENTS

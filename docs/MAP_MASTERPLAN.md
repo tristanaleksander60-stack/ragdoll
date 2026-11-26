@@ -85,7 +85,7 @@ Rebuild `Systems/LabOwnerMap` FROM `OwnerMapPlan`. Do not hand-place anything th
    - a top view next to `masterplan.png`;
    - the spawn view (you see the boulevard, the fountain and the tower; the rooms are hidden);
    - one view inside each room.
-4. **Harsh score:** 9.5+ on clean, connected, explore-worthy, full and beautiful.
+4. ~~**Harsh score:**~~ (26 Nov late: no self-score; the owner judges.) Build it clean, connected, explore-worthy, full and beautiful.
 
 ## The BACKDROP: hills and mountains that look made by hand (owner, 26 Nov 2026: "Fiks den basic baggrund af bjerge, uden at det ligner AI slop eller noget som er lavet på 2 sekunder")
 **Today** (the owner's phone screenshot): a ring of identical smooth green blobs in a grey-green fog behind the plaza. It looks generated and cheap.
