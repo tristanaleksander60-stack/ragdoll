@@ -721,8 +721,14 @@ local function buildRamp()
 	local RAMP = (require(Shared:WaitForChild("PathPlan")) :: any).RAMP_AT -- (V9-0h: on the rim under LAYOUT_V3)
 	if (Config :: any).STRETCH_MACHINE then
 		-- (24 Nov 2026, owner: the stretching machine in the ramp's place.)
+		-- (F74: under the owner map it stands on the plan's STRETCHER spot, LabLayout10.STRETCH, not the old ramp spot)
+		local spot = RAMP
+		local L10 = require(Shared:WaitForChild("LabLayout10")) :: any
+		if (Config :: any).LAB_OWNERMAP and L10.on and L10.STRETCH then
+			spot = L10.STRETCH
+		end
 		local okM, errM = pcall(function()
-			return (require(script.Parent:WaitForChild("StretchMachine")) :: any).build(folder, at(RAMP.X, 0, RAMP.Y))
+			return (require(script.Parent:WaitForChild("StretchMachine")) :: any).build(folder, at(spot.X, 0, spot.Y))
 		end)
 		if not okM then
 			warn("[Playground] stretch machine: " .. tostring(errM))

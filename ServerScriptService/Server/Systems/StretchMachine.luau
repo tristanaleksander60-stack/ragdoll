@@ -14,6 +14,8 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Zones = require(Shared:WaitForChild("Zones"))
 local ActiveRagdoll = require(Shared:WaitForChild("Ragdoll"):WaitForChild("ActiveRagdoll")) :: any
+local Stretch = require(Shared:WaitForChild("Ragdoll"):WaitForChild("Stretch")) :: any -- (F74: limbs grow long, never tear)
+local LONG = (require(Shared:WaitForChild("Config")) :: any).STRETCH_LONG == true
 
 local StretchMachine = {}
 
@@ -24,6 +26,11 @@ StretchMachine.BREAK = 100 -- the pull a joint gives way at, in the body's mass
 StretchMachine.BREAK_TIME = 0.35 -- s over it
 StretchMachine.SPEED = 0.8 -- studs/s a winch draws in
 StretchMachine.TRAVEL = 6.5 -- studs a claw goes out at most
+StretchMachine.HOLD_LONG = 30 -- (F74) s a stretched limb stays at full length after the release
+StretchMachine.SHRINK = 10 -- (F74) s it takes to shrink back, eased out
+if LONG then
+	StretchMachine.TRAVEL = 9.5 -- (F74: a leg can be pulled to about 3x)
+end
 StretchMachine.HOLD = 1200 -- what holds the trunk, in the body's mass
 StretchMachine.LIFT = 4.2 -- studs over the floor the trunk is held at
 StretchMachine.REACH = 16 -- studs: the levers answer someone this near
@@ -126,6 +133,30 @@ local function release(mc: Machine)
 	end
 	if m and m.Parent then
 		mc.skip = m -- (not again until it has left the platform)
+		if LONG and m:GetAttribute("Stretched") == true then
+			local token = ((m:GetAttribute("StretchToken") :: number?) or 0) + 1
+			m:SetAttribute("StretchToken", token)
+			task.spawn(function()
+				task.wait(StretchMachine.HOLD_LONG)
+				local from: { [string]: number } = {}
+				for limb in Stretch.PARTS do
+					from[limb] = Stretch.factorOf(m, limb)
+				end
+				local t0 = os.clock()
+				while m.Parent and m:GetAttribute("StretchToken") == token do
+					local u = math.clamp((os.clock() - t0) / StretchMachine.SHRINK, 0, 1)
+					local e = 1 - (1 - u) * (1 - u) -- (eased out)
+					for limb, f0 in from do
+						Stretch.setLimb(m, limb, f0 + (1 - f0) * e)
+					end
+					if u >= 1 then
+						Stretch.reset(m)
+						break
+					end
+					task.wait(0.1)
+				end
+			end)
+		end
 		ActiveRagdoll.setStayDown(m, false)
 		m:SetAttribute("InMachine", nil)
 		local back = mc.owner
@@ -297,6 +328,28 @@ local function pull(mc: Machine, dt: number)
 			if a.pulling and a.gone < StretchMachine.TRAVEL then
 				a.gone = math.min(StretchMachine.TRAVEL, a.gone + StretchMachine.SPEED * dt)
 				setPalm(a, a.start + a.out * a.gone)
+			end
+			if LONG then
+				-- (F74: the limb follows the claw: its length = from the shoulder or hip joint to the claw, over its rest length)
+				local leg = string.find(a.spec.limb, "Leg") ~= nil
+				local side = if string.sub(a.spec.limb, 1, 4) == "Left" then "Left" else "Right"
+				local trunk = m:FindFirstChild(if leg then "LowerTorso" else "UpperTorso")
+				local ja = trunk and trunk:FindFirstChild(side .. (if leg then "HipRigAttachment" else "ShoulderRigAttachment"))
+				local aa: any = a
+				if ja and ja:IsA("Attachment") and os.clock() - (aa.grownAt or 0) > 0.1 then
+					aa.grownAt = os.clock()
+					local dist = (a.palm.Position - ja.WorldPosition).Magnitude
+					if aa.restFor ~= m then
+						aa.restFor, aa.rest0 = m, math.max(1, dist / Stretch.factorOf(m, a.spec.limb)) -- (its normal length: stretching again starts from the length it has now)
+					end
+					local k = dist / aa.rest0
+					local got = Stretch.setLimb(m, a.spec.limb, k)
+					if got >= Stretch.MAX - 0.01 and a.pulling then
+						a.pulling = false -- (MAX: the winch stops)
+						words(mc)
+					end
+				end
+				continue
 			end
 			-- (The spring's own pull, capped as the spring is.)
 			local tension = math.min((spring.CurrentLength - spring.FreeLength) * spring.Stiffness, spring.MaxForce)

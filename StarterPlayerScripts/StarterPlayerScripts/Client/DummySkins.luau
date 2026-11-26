@@ -506,6 +506,25 @@ local function dress(model: Model)
 				skin.Parent = folder
 				skins[d] = skin
 				d.LocalTransparencyModifier = 1
+				-- (F74 STRETCH_LONG: the server makes a limb long (its part grows on Y, attribute StretchK); the skin grows with it,
+				-- from where it sat at the dressing, so the long limb shows)
+				do
+					local k0 = (d:GetAttribute("StretchK") :: number?) or 1
+					local size0, off0 = skin.Size, d.CFrame:ToObjectSpace(skin.CFrame)
+					local grow = d:GetAttributeChangedSignal("StretchK"):Connect(function()
+						local k = ((d:GetAttribute("StretchK") :: number?) or 1) / k0
+						if not skin.Parent then
+							return
+						end
+						weld.Enabled = false
+						skin.Size = Vector3.new(size0.X, size0.Y * k, size0.Z)
+						skin.CFrame = d.CFrame * CFrame.new(off0.X, off0.Y * k, off0.Z) * off0.Rotation
+						weld.Enabled = true
+					end)
+					skin.Destroying:Once(function()
+						grow:Disconnect()
+					end)
+				end
 				-- (A limb recoloured later, a frozen one, keeps its skin the same colour.)
 				local recolour = d:GetPropertyChangedSignal("Color"):Connect(function()
 					skin.Color = shade(d.Color, tint[d.Name])
