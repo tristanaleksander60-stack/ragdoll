@@ -89,6 +89,7 @@ safe("RagdollDirector", function() require(Systems:WaitForChild("RagdollDirector
 safe("LaunchPads", function() require(Systems:WaitForChild("LaunchPads")).start() end) -- F57: the launch pads launch cars and ragdolls
 safe("TowerCam", function() require(Systems:WaitForChild("TowerCam")).start() end) -- F67: Invisicam inside the tower
 safe("NearbyTwo", function() require(Systems:WaitForChild("NearbyTwo")).start() end) -- 0.1566: the 2 close by
+safe("BackToSpawn", function() require(Systems:WaitForChild("BackToSpawn")).start() end) -- F80: BACK TO SPAWN
 safe("MechArms", function() require(Systems:WaitForChild("MechArms")).start() end) -- mechanical arms to tear ragdolls apart
 -- V8-1.7 (phone diet): with the birds off, their models leave ReplicatedStorage (every client loaded
 -- them for nothing); Config.BIRDS on brings them back at the next server start.

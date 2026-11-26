@@ -37,8 +37,13 @@ local ENTRIES: { any } = {
 	{ window = "Codes", text = "CODES", role = "go", notPhone = true }, -- (V9-0t: codes from the game page: CodesWindow. A phone's MENU is full, LayoutCheck: there it is SHOP's "HAVE A CODE?")
 	{ window = "Controls", text = "KEYS", role = "neutral", keyboardOnly = true },
 }
+-- F80 (owner: "Lav en back to spawn knap i more"; Config.BACK_TO_SPAWN): the first row, on every device.
+if (Config :: any).BACK_TO_SPAWN then
+	table.insert(ENTRIES, 1, { window = "Spawn", text = "BACK TO SPAWN", role = "go" })
+end
 -- UI v2: the drawn icon for each MENU entry (DrawnIcons names; the same pictures as the launchers).
 local MENU_ICONS: { [string]: string } = {
+	Spawn = "map",
 	Maps = "map",
 	God = "god",
 	Time = "hud_slowmo",
@@ -158,9 +163,38 @@ function HudMenu.start()
 			icon = icon,
 			role = entry.role :: any,
 			size = UDim2.fromOffset(HudMenu.CELL.X, HudMenu.CELL.Y),
-			layoutOrder = TOP[name] or (10 + index),
+			layoutOrder = if name == "Spawn" then 0 else TOP[name] or (10 + index),
 			parent = grid,
 			onActivated = function()
+				if name == "Spawn" then
+					-- (F80: a short fade to black, the server sets you on the spawn plaza, then back in)
+					Controller.closeAll()
+					local pg = game:GetService("Players").LocalPlayer:FindFirstChildOfClass("PlayerGui")
+					if not pg or pg:FindFirstChild("SpawnFade") then
+						return
+					end
+					local g = Instance.new("ScreenGui")
+					g.Name = "SpawnFade"
+					g.IgnoreGuiInset = true
+					g.DisplayOrder = 100
+					local black = Instance.new("Frame")
+					black.Size = UDim2.fromScale(1, 1)
+					black.BackgroundColor3 = Color3.new(0, 0, 0)
+					black.BackgroundTransparency = 1
+					black.Parent = g
+					g.Parent = pg
+					local TS = game:GetService("TweenService")
+					TS:Create(black, TweenInfo.new(0.25), { BackgroundTransparency = 0 }):Play()
+					task.delay(0.25, function()
+						local Net = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Net")) :: any
+						Net.event(Net.Names.Teleport):FireServer("Spawn")
+						task.wait(0.35)
+						TS:Create(black, TweenInfo.new(0.35), { BackgroundTransparency = 1 }):Play()
+						task.wait(0.4)
+						g:Destroy()
+					end)
+					return
+				end
 				if name == "Sandbox" and Controller.isRegistered and Controller.isRegistered("Lab") then
 					-- (V9-2c: a phone's SANDBOX opens the LAB window: TIME, first person, REVIVE ALL, RESET,
 					-- BUILD and the lab view, as off a phone; MENU stays at 8.)
