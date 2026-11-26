@@ -82,3 +82,20 @@ Behind `Config.MACHINE_WATCHERS = true`.
     - says one line: "Hi!", "Can I help you?", "You dropped something.", "Are you new here?"
   - **It changes a little:** every 15-25 s (random) the comer walks back to the chatters and one of the chatters becomes the comer. Sometimes (1 in 4) nobody comes for a while and all 3 chat.
 - When one is knocked out, the rule refills to 3. The new arrival takes the free role.
+
+## Spawn standing, never lying down (bug, owner 26 Nov 2026: "ragdollsne spawner væltede ved siden af en når man joiner")
+**The bug:** when you join, the ragdolls next to you appear knocked over. The likely causes:
+- spawned at the old floor height (the plaza is raised 4 studs), so they drop and topple, or spawn inside the plaza and get pushed out;
+- spawned with zero tone, or in the ragdoll state;
+- overlapping each other or a prop;
+- spawned before the plaza streamed in, so they fall through, and then GroundGuard lifts them.
+
+**The fix (`SPAWN_UPRIGHT = true`):**
+1. **Ground:** for each spawn spot, raycast down from 20 studs above it against the real built ground (the plaza included). Place the ragdoll so its feet are exactly on that surface.
+2. **Standing:** upright, in the standing state, with full tone; facing the player or its chat partner.
+3. **Held:** anchor the root for the first 0.5 s (or until the ground under it exists on that client and the server), then release.
+4. **Clear spot:** keep at least 4 studs from each other and from props; never inside a part (check with GetPartBoundsInBox, try the next spot if blocked).
+5. **Safety:** if one still falls in its first 3 s, it gets up at once with no injury and no KO count.
+6. **The same for every spawn:** recruits, walkers, watchers, TRY ragdolls and respawns.
+
+**Check:** join 5 times (solo place and multiplayer place, PC and phone emulator). All 3 stand up straight every time.

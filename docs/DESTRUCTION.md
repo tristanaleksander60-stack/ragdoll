@@ -82,6 +82,38 @@ This replaces the "chunks" idea for the BRICK crash wall. The concrete walls get
 
 **Check:** shoot single bricks out (one at a time, see the bricks above drop in a trickle), drive a car into it (a hole round the impact, the bricks above cascading), SLAM a ragdoll through it, then wait for the rebuild. Do it on PC and the phone emulator, with no lag.
 
+### 2c. Concrete walls: block by block, the same system (owner, 26 Nov 2026: "Lig det også ind for betonvæggene og trækasserne")
+- The free-standing concrete walls (and the speaker wall's concrete back) are made of **concrete blocks** (about 4 x 2 x 2 studs, cast-concrete grey with a slight tone variation, chipped edges).
+- **The same rules as the brick wall (2b):**
+  - hits remove one block at a time at the hit point; bullets crack first; heavy hits and impacts take several;
+  - support and gravity: blocks above a gap trickle down, never the whole wall at once;
+  - hybrid panels far from damage; resting blocks anchored after 2 s;
+  - the same caps (PC 80, tablet 50, phone 30, shared with the bricks);
+  - rebuilt block by block after 45 s.
+- **Concrete feel:**
+  - grey dust and small gravel chips;
+  - a heavier, duller crunch than the bricks;
+  - blocks take 2-3 bullets (tougher than bricks).
+  - Exposed rebar stubs show in a big hole (cartoon, thin rods) for fun.
+
+### 2d. Wooden crates: plank by plank, with gravity (replaces "breaks into planks at once")
+- **Each crate is built from planks:** 4 side faces of 3 planks each, a top and a bottom, and corner posts. They share one wood mesh and material, instanced, and the crate is a single panel set until hit (the hybrid idea).
+- **Hits knock out PLANKS one at a time:**
+  - a bullet splits the plank it hits (a split decal, splinters); a second bullet knocks it out;
+  - melee or a body knocks out 1-3 planks;
+  - an explosion blows the crate apart.
+- **Gravity:**
+  - with enough side planks gone, the top sags and drops in;
+  - when the lowest crate of a stack loses its strength, the crates above tip and fall as whole crates (real physics) and break further on landing by impact speed;
+  - stacks topple naturally, never all at once.
+- **The look:** wood splinters and wood dust (pooled), a wood crack and clatter sound; loose planks bounce and can knock ragdolls.
+- **Lag-free:**
+  - resting planks are anchored after 2 s;
+  - they count toward the same caps as the bricks;
+  - they fade after 30 s.
+- **Rebuild:** after 45 s with no hits, the crates rebuild plank by plank (slide-in), and the stacks restack.
+- **Check:** shoot planks out one by one, see the top sag, then knock the bottom crate so the stack topples. PC and phone emulator, no lag.
+
 **Wooden crates and plank fences** (stacks near the machines, like picture 2):
 - **Bullet holes:** guns leave small dark holes in the wood (decals). Max 10 per crate; they fade after 30 s.
 - **Breaking:** enough damage (shots or melee, by force), or a body or car through it, breaks a crate or fence into planks and splinters, with wood dust.
