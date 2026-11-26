@@ -612,13 +612,17 @@ function PortalService.buildPortals(folder: Instance, origin: Vector3)
 		if isPublic() then
 			door("PortalSolo", 30, Color3.fromRGB(80, 210, 120), "SINGLEPLAYER")
 		end
-		door("PortalMulti", 44, Color3.fromRGB(90, 170, 250), "MULTIPLAYER")
+		if Config.MP_PORTAL ~= false then -- (owner, 26 Nov 2026: Multiplayer is a HUD icon now: HudV3, Config.MP_ICON)
+			door("PortalMulti", 44, Color3.fromRGB(90, 170, 250), "MULTIPLAYER")
+		end
 		return
 	end
 	if isPublic() then
 		arch("PortalSolo", -7, Color3.fromRGB(70, 220, 110), "SINGLEPLAYER")
 	end
-	arch("PortalMulti", 7, Color3.fromRGB(80, 170, 255), "MULTIPLAYER")
+	if Config.MP_PORTAL ~= false then
+		arch("PortalMulti", 7, Color3.fromRGB(80, 170, 255), "MULTIPLAYER")
+	end
 end
 
 function PortalService.start()

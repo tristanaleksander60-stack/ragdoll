@@ -743,15 +743,124 @@ local function roam(plot: Plot, slot: Slot, now: number)
 	model:SetAttribute("HomeLook", spot + Vector3.new(math.random(-1, 1) * 5, 0, math.random(-1, 1) * 5))
 end
 
+-- ALWAYS3 (owner, 26 Nov 2026: "Sørg for der altid er 3 levende ragdolls lige i nærheden af en"; docs/ALWAYS3.md,
+-- Config.ALWAYS_THREE): every half second, if fewer than 3 living, free ragdolls of the lab are within NEAR studs of
+-- its player, the nearest free one further out is called in: from far away it RUNS (Pace), from nearer it WALKS and
+-- says one line on arrival. It stops 10-15 studs from the player, spread round them, facing them, then roams as before.
+local THREE_NEAR = 35
+local THREE_RUN_FROM = 60
+local THREE_MAX_WAY = 3
+local THREE_GIVE_UP = 20 -- s a recruit may take before it is let go
+local THREE_LINE_GAP = 4 -- s between two arrival lines for one player
+local THREE_LINES = {
+	"Did somebody call me?",
+	"What happened here?!",
+	"I heard noises.",
+	"Oh no. Not again.",
+	"Hi! Am I next?",
+	"I'm just here for the snacks.",
+	"Is it safe? It's not safe, is it.",
+	"Reporting for duty.",
+}
+local threeAt = 0
+local threeLineAt: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
+local recruits: { [Model]: { slot: Slot, untilAt: number, walked: boolean, player: Player } } = setmetatable({}, { __mode = "k" }) :: any
+
+local function freeToCall(model: Model): boolean
+	if model:GetAttribute("Vital") == "Dead" or model:GetAttribute("CommandedBy") ~= nil or model:GetAttribute("InMachine") ~= nil then
+		return false
+	end
+	local state = model:GetAttribute("RagdollState")
+	return state == nil or state == "Standing" or state == "Walking" or state == "Fleeing"
+end
+
+local function alwaysThree(plot: Plot, now: number)
+	local player = plot.owner
+	local character = player and player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not player or not root or not root:IsA("BasePart") or (humanoid and humanoid.SeatPart ~= nil) then
+		return
+	end
+	if (root.Position - plot.origin).Magnitude > 400 then
+		return -- (on another map, or far outside the lab)
+	end
+	local near, onWay = 0, 0
+	local far: { { slot: Slot, model: Model, d: number } } = {}
+	for _, slot in plot.slots do
+		local model = slot.model
+		local pelvis = model and model:FindFirstChild("LowerTorso")
+		if model and model.Parent and pelvis and pelvis:IsA("BasePart") then
+			local r = recruits[model]
+			if r then
+				-- (On its way: arrived, given up, or knocked out.)
+				local arrived = (pelvis.Position - root.Position).Magnitude < THREE_NEAR * 0.5
+				if arrived or now > r.untilAt or not freeToCall(model) then
+					recruits[model] = nil
+					model:SetAttribute("Pace", nil)
+					slot.nextRoamAt = now + math.random(6, 12)
+					if arrived and r.walked and now - (threeLineAt[player] or -math.huge) > THREE_LINE_GAP then
+						threeLineAt[player] = now
+						local line = THREE_LINES[math.random(1, #THREE_LINES)]
+						model:SetAttribute("MoodSay", line)
+						task.delay(3, function()
+							if model.Parent and model:GetAttribute("MoodSay") == line then
+								model:SetAttribute("MoodSay", nil)
+							end
+						end)
+					end
+				else
+					onWay += 1
+				end
+			end
+			if freeToCall(model) and not recruits[model] then
+				local d = (pelvis.Position - root.Position).Magnitude
+				if d <= THREE_NEAR then
+					near += 1
+				elseif not slot.target and not slot.socialKind then
+					table.insert(far, { slot = slot, model = model, d = d })
+				end
+			end
+		end
+	end
+	local missing = 3 - near - onWay
+	if missing <= 0 or onWay >= THREE_MAX_WAY then
+		return
+	end
+	table.sort(far, function(a, b)
+		return a.d < b.d
+	end)
+	for i = 1, math.min(missing, #far, THREE_MAX_WAY - onWay) do
+		local pick = far[i]
+		local angle = math.random() * math.pi * 2
+		local r = 10 + math.random() * 5
+		local spot = Vector3.new(root.Position.X + math.cos(angle) * r, if pick.slot.homeY ~= 0 then pick.slot.homeY else pick.slot.position.Y, root.Position.Z + math.sin(angle) * r)
+		local walked = pick.d <= THREE_RUN_FROM
+		recruits[pick.model] = { slot = pick.slot, untilAt = now + THREE_GIVE_UP, walked = walked, player = player }
+		pick.slot.roamHome = spot
+		pick.slot.nextRoamAt = now + THREE_GIVE_UP + 1
+		pick.model:SetAttribute("Pace", if walked then nil else 1.6)
+		pick.model:SetAttribute("Home", spot)
+		pick.model:SetAttribute("HomeLook", Vector3.new(root.Position.X, spot.Y, root.Position.Z))
+	end
+end
+
 local function watch(dt: number)
 	keepOut()
 	local now = os.clock()
+	local doThree = (Config :: any).ALWAYS_THREE == true and now >= threeAt
+	if doThree then
+		threeAt = now + 0.5
+	end
 	for _, plot in plots do
 		for _, slot in plot.slots do
 			watchSlot(plot, slot, dt)
 			roam(plot, slot, now) -- (session v850: wanders the whole lab on its own)
 		end
 		social(plot, now)
+		if doThree then
+			alwaysThree(plot, now)
+		end
 	end
 end
 

@@ -832,6 +832,21 @@ function HudV3.start()
 	card("Lab", "Lab", "sandbox", left, function()
 		Controller.toggle("Lab")
 	end).LayoutOrder = 3
+	-- (Owner, 26 Nov 2026: "bare lav det til et ikon i stedet for": the Multiplayer window from a square under Lab, the
+	-- portal in the world hidden behind Config.MP_PORTAL. The word shrinks to fit the square.)
+	if Config.MP_ICON then
+		local mp = card("Multi", "Multiplayer", "friends", left, function()
+			(require(script.Parent:WaitForChild("PortalUI")) :: any).openHub()
+		end)
+		mp.LayoutOrder = 4
+		local word = mp:FindFirstChild("Word", true)
+		if word and word:IsA("TextLabel") then
+			word.TextScaled = true
+			local cap = Instance.new("UITextSizeConstraint")
+			cap.MaxTextSize = 19
+			cap.Parent = word
+		end
+	end
 	-- (V10 phase 2, owner: "keybinds for Shop, More, Lab"): they had keys (Keybinds Shop, MenuWindow, LabWindow);
 	-- now each square shows its key in a small chip in its corner (not on touch screens).
 	if not ViewMode.isTouch() then

@@ -66,6 +66,11 @@ Why this order:
   - the words are KO, knocked out, OUT COLD and Energy.
 - `STORE_TEXT.md`: "purple cartoon splats; no gore".
 - Next: ALWAYS3, then the MULTIPLAYER icon, then LAB_TARGET ROUND 3 and the rest of the run.
+**State 0.59.0 (place v1116, not published):**
+- ALWAYS3 part 1 done (`ALWAYS_THREE`, Lab `alwaysThree`): far ones run in, near ones walk in and say a line.
+- **Left:** the spawn out of view when no ragdoll is free; the "Spectators at every machine" section (`MACHINE_WATCHERS`, stand-ins).
+- MULTIPLAYER icon done (`MP_ICON`, a "Multiplayer" square under Lab; `MP_PORTAL = false`). **Left:** the phone layout of its window (near full-screen, icon tabs).
+- Next: LAB_TARGET ROUND 3.
 - Build it, then **publish at once** (quick gate). The maturity questionnaire is due **Fri 27 Nov 2026 17:34 UTC** and must match the live game.
 - Then tell the owner in Danish: "Gore er slået fra og live — send spørgeskemaet nu med svarene i docs/MATURITY.md".
 - Only then the rest of the run.
