@@ -73,6 +73,54 @@ Both come BEFORE any other work in OVERVIEW (item 0.1).
 - nothing pops in or out in view;
 - and it is smooth.
 
+## Part C: never vanish in view, and a nearby cap per device (owner, 26 Nov 2026: "Fiks så at ingen ragdolls forsvinder i dit synsfelt. Hvis der er mere end 6-7 i nærheden af en telefonspiller, så skal alle over 6-7 gå væk, medmindre de er blevet ramt af et skud og ikke er døde og vågnet op. Tænk smart her og sørg for, vi gør det smarteste for alle enheder")
+**1. NOTHING vanishes on screen, ever.** No ragdoll (alive, knocked out, or a stand-in) is removed, faded, returned to the pool, teleported or swapped while it is in the player's view.
+- **"In view"** means inside the camera's view cone, within about 150 studs, and not hidden behind a wall, building or belt (a raycast from the camera to its head and its torso).
+- The client reports its camera CFrame and FOV to the server every 0.25 s (one small validated remote); the server keeps the latest.
+- **Multiplayer:** "in view" for ANY player near it counts.
+- **Every system obeys this:** the director's despawn, knocked-out-body cleanup, event extras leaving, demo walkers, watchers swapping, F45 stand-ins (off), the pool returns, the cap.
+- **Out of view only:** a removal happens only once it is out of every nearby player's view for at least 1 s.
+
+**2. The NEARBY CAP per device:** living ragdolls within 45 studs of the player.
+
+| Device | Nearby cap | Why |
+|---|---|---|
+| phone | 7 | the owner's 6-7 |
+| tablet | 9 | |
+| PC / console | 12 | |
+
+The device tier comes from the player's Device attribute. In multiplayer each player's cap applies round them; where players overlap, the lowest cap of the players present wins.
+
+**3. Who stays, in priority order** (the top ones are never asked to leave):
+1. **PINNED by a shot:** a ragdoll that was hit stays until it has DIED and WOKEN UP again (the owner's rule). Also pinned:
+   - held, grabbed, lassoed or bitten by the dog;
+   - in a machine;
+   - in CPR, a burial or bullet picking (F47).
+2. **The 3 NEAR roles** (2 chatters and the comer).
+3. **The watcher** of the machine the player is standing at.
+4. **Event extras** while an event runs (the event's own minimum).
+5. **Everyone else:** passing walkers, other watchers, idle ones.
+
+**4. Over the cap, the extras WALK AWAY:**
+- **Who leaves:** the lowest-priority ones go first, the farthest first within the same priority.
+- **How:**
+  - each gets a "leave" task: it says a short line now and then ("Gotta go!", "Lunch time.");
+  - it walks along a path AWAY from the player, toward a spot out of view (behind a belt, building or corner, or to another room);
+  - once it is out of view, it is returned to the pool or parked (Part B).
+- **Never** pushed, teleported or faded in view.
+- **Leavers are not replaced:** the "always 3" and NEVER ZERO rules never call one back while the count is over the cap.
+- **Knocked-out bodies over the cap:** they stay where they are (no vanishing in view). They wake by themselves as normal, then walk off as a leaver (unless pinned by a shot and not yet woken). The 20 s / 40 s cleanup still happens only out of view.
+
+**5. Physics budget on top of the cap:** of those near, only the ones in view AND within 60 studs run full active-ragdoll physics. On a phone, at most 5 of them run full physics at once (the most important by the priority list); the others in view walk in light mode (animation only, `F65` hysteresis), which looks the same at a walking pace.
+
+**6. Smart for every device:**
+- **The caps are measured, not guessed:** after Part A, measure the phone FPS with 5, 7 and 9 ragdolls near you, and keep the largest cap that holds 60 fps on a mid phone (never below 6).
+- **The auto quality governor** (`PERF_MOBILE.md`) may lower the nearby cap by 1-2 when the FPS drops, through the same walk-away rule (never vanishing).
+
+**Check:**
+- **On the phone emulator,** stand in a crowded spot (the plaza or an event end): the extras over 7 walk off out of view; none disappears on screen; the ones you shot stay until they die and wake.
+- **On PC,** the same with 12.
+
 ## Check
 - **Part A:** before and after numbers for every measure at the 3 spots, phone and PC.
 - **Part B:**
