@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
 
 local XRayToggle = {}
+XRayToggle.toggle = function() end -- (set in start)
 
 local player = Players.LocalPlayer
 local OFF = Color3.fromRGB(30, 34, 44)
@@ -73,7 +74,17 @@ function XRayToggle.start()
 		local on = not DummySkins.xrayIsOn()
 		DummySkins.setXray(on)
 		b.BackgroundColor3 = if on then ON else OFF
+		player:SetAttribute("XRayOn", on) -- (F21: the chip lights up)
 	end
+	XRayToggle.toggle = toggle
+	-- (F21: the key comes from Keybinds "XRay" (I); a pad uses D-pad left.)
+	local key = Enum.KeyCode.I
+	pcall(function()
+		local k = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Keybinds")) :: any).key("XRay")
+		if typeof(k) == "EnumItem" then
+			key = k
+		end
+	end)
 	b.Activated:Connect(toggle)
 	ContextActionService:BindAction("XRayToggle", function(_, state)
 		if state == Enum.UserInputState.Begin then
@@ -81,7 +92,7 @@ function XRayToggle.start()
 			return Enum.ContextActionResult.Sink
 		end
 		return Enum.ContextActionResult.Pass
-	end, false, Enum.KeyCode.I) -- (B is Build mode: Keybinds "Build"; I is the one free letter)
+	end, false, key, Enum.KeyCode.DPadLeft) -- (B is Build mode: Keybinds "Build"; I is the one free letter)
 end
 
 return XRayToggle

@@ -816,7 +816,7 @@ local function layout()
 		local room = PokeController.helpWidth(gui.AbsoluteSize)
 		local words = TextService:GetTextSize(help.Text, 15, Enum.Font.GothamBold, Vector2.new(10000, PokeController.HELP_H)).X
 		help.Size = UDim2.fromOffset(math.min(room, words + 28), PokeController.HELP_H)
-		help.Visible = not touch and not catalogOpen and withTools
+		help.Visible = not touch and not catalogOpen and withTools and (Config :: any).HINT_STRIP ~= false -- (F17/F20: no hint strip under the hotbar)
 	end
 
 	if not table.find(list, selected) and #list > 0 then

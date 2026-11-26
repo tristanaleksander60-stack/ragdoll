@@ -246,29 +246,58 @@ local function drawChips()
 	-- Three keys only: 1st person and revive all are in the LAB window and KEYS; five chips ran
 	-- into the help line on a small window.
 -- (F13, owner 26 Nov 2026: the time-dial chip becomes REVIVE ALL, a heart, that wakes every knocked-out ragdoll in
-	-- your lab; a click on it does it too.)
-	local reviveChip = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).REVIVE_CHIP == true
-	for _, pair in { { "Ragdoll", "Ragdoll", "hud_ragdoll" }, { "FirstPerson", "1st person", "eye" }, if reviveChip then { "ReviveAll", "Revive all", "heart" } else { "SlowMo", if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "Time" else "Slow-mo", "hud_slowmo" } } do
+	-- your lab; a click on it does it too. F21: an X-RAY chip on its key (Keybinds XRay, I), lit while X-ray is on.)
+	local cfg = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
+	local reviveChip = cfg.REVIVE_CHIP == true
+	local rows = { { "Ragdoll", "Ragdoll", "hud_ragdoll" }, { "FirstPerson", "1st person", "eye" } }
+	if cfg.XRAY_CHIP then
+		table.insert(rows, { "XRay", "X-ray", nil })
+	end
+	table.insert(rows, if reviveChip then { "ReviveAll", "Revive all", "heart" } else { "SlowMo", if cfg.TIME_DIAL then "Time" else "Slow-mo", "hud_slowmo" })
+	for _, pair in rows do
 		local key = keyOf(pair[1])
 		if key then
 			order += 1
 			chip(c, key, pair[2], order, pair[3])
 		end
 	end
-	local rc = c:FindFirstChild("Chip_Revive all")
-	if reviveChip and rc and rc:IsA("GuiObject") then
-		local tap = Instance.new("TextButton")
-		tap.Name = "Tap"
-		tap.Text = ""
-		tap.BackgroundTransparency = 1
-		tap.Size = UDim2.fromScale(1, 1)
-		tap.ZIndex = 10
-		tap.Parent = rc
-		tap.Activated:Connect(function()
-			pcall(function()
-				(require(script.Parent:WaitForChild("HudPlus")) :: any).sandbox("Revive")
+	-- (F20: the click area sits on the fixed-size key square, never a scale-sized child of the auto-sized row: that
+	-- stretched the whole row across the screen.)
+	local function tappable(name: string, act: () -> ())
+		local row = c:FindFirstChild(name)
+		local k = row and row:FindFirstChild("Key")
+		if k and k:IsA("GuiObject") then
+			local tap = Instance.new("TextButton")
+			tap.Name = "Tap"
+			tap.Text = ""
+			tap.BackgroundTransparency = 1
+			tap.Size = UDim2.fromScale(1, 1)
+			tap.ZIndex = 10
+			tap.Parent = k
+			tap.Activated:Connect(function()
+				pcall(act)
 			end)
+		end
+	end
+	if reviveChip then
+		tappable("Chip_Revive all", function()
+			(require(script.Parent:WaitForChild("HudPlus")) :: any).sandbox("Revive")
 		end)
+	end
+	if cfg.XRAY_CHIP then
+		tappable("Chip_X-ray", function()
+			(require(script.Parent:WaitForChild("XRayToggle")) :: any).toggle()
+		end)
+		local row = c:FindFirstChild("Chip_X-ray")
+		local k = row and row:FindFirstChild("Key")
+		if k and k:IsA("GuiObject") then
+			local base = k.BackgroundColor3
+			local function lit()
+				k.BackgroundColor3 = if Players.LocalPlayer:GetAttribute("XRayOn") == true then Color3.fromRGB(70, 150, 255) else base
+			end
+			Players.LocalPlayer:GetAttributeChangedSignal("XRayOn"):Connect(lit)
+			lit()
+		end
 	end
 end
 

@@ -73,6 +73,7 @@ Keybinds.ACTIONS = table.freeze({
 	{ id = "LabWindow", label = "Lab window", context = "Global", default = "Eight", group = "WINDOWS" },
 	{ id = "MenuWindow", label = "More (menu)", context = "Global", default = "Nine", group = "WINDOWS" },
 	{ id = "MultiWindow", label = "Multiplayer", context = "Global", default = "Zero", group = "WINDOWS" }, -- (F11, 26 Nov 2026)
+	{ id = "XRay", label = "X-RAY", context = "Global", default = "I", group = "WINDOWS" }, -- (F21: change the X-RAY key here only)
 	-- Building
 	{ id = "Build", label = "Build mode on/off", context = "Global", default = "B", group = "BUILD" },
 	{ id = "Turn", label = "Turn the part", context = "Build", default = "R", group = "BUILD" },
