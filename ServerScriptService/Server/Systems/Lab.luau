@@ -657,6 +657,11 @@ if L10.on then
 	Lab.PLAZA_SLOTS = 8
 	PLAZA_NEAR, PLAZA_FAR = 3, L10.TEST_RADIUS - 3
 end
+-- (F18, owner 26 Nov 2026: "for mange ragdolls ved spawn": only the 3 of "3 near you" walk about near the spawn; the
+-- other 15 roam out round the machines.)
+if (Config :: any).SPAWN_FEW then
+	Lab.PLAZA_SLOTS = 3
+end
 local PLAZA_AT = if L10.on then L10.TEST_FLOOR else Vector2.zero
 pickRoamSpot = function(plot: Plot, slot: Slot): Vector3
 	local PathPlan = require(ReplicatedStorage.Shared:WaitForChild("PathPlan")) :: any
