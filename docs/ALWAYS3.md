@@ -141,3 +141,18 @@ A hard safety net on top of the 3-near rule. It works EVERYWHERE on the map:
 - **Built with:** the active-ragdoll pose system (the neck and torso targets), plus the face decal's eyes (an eyes-left/right/up variant, or a moving pupil if the face supports it). Client-side look-at for smoothness; the server only says who talks to whom.
 - **Phones:** only ragdolls within about 40 studs do the look-at.
 - **Check:** walk round a talking ragdoll in a circle; its head and then its body follow you smoothly while it talks.
+
+## Ragdolls never walk through or into each other (owner, 26 Nov 2026: "Gør så ragdolls ikke går igennem hinanden/ind i hinanden")
+- **Collision:**
+  - standing and walking ragdolls collide with each other (a collision group pair ON for their torsos and legs, at least);
+  - knocked-out and flying ragdolls collide fully (they pile up, `RAGDOLL_FEEL.md` piles).
+- **Avoidance while walking** (they should never even bump by accident):
+  - each walker keeps a personal space of about 2.5 studs;
+  - a soft separation steer away from the others near its path;
+  - groups walk side by side or in a line, never inside each other;
+  - pathfinding with an agent radius of 2;
+  - at narrow spots one waits a moment or steps aside.
+- **If two still bump:** a small shoulder-bump reaction (a half step back) and sometimes a line ("Excuse me!", "Watch it!", "Sorry!"), looking at each other.
+- **Spawning:** never on top of another ragdoll (the `Spawn standing` clear-spot rule).
+- **Performance:** the avoidance runs at about 5 Hz on the server for walkers; stand-ins far away use simple spacing only.
+- **Check:** watch the plaza and a busy road for 2 minutes. No ragdoll may pass through another.
