@@ -84,3 +84,66 @@
 4. **Faces:** the ragdoll's face follows the show (terrified, dizzy, sooty, sneezing), with the faces of BODY_V2 4b.
 
 **Check (the owner):** walk past every animal (it does something alive) and set off every catch and every machine. Each one has its own show and its funny ending, and the ragdoll always comes back whole.
+
+## 4. MARKEDLY BETTER LOOKS for every machine, animal and model (owner, 26 Nov late: "Og selvfølgelig markant bedre udseende på alle vores maskiner og dyr/modeller generelt")
+**One style, the "clean toy-real" look:** the calm, clean vibe of the owner's references (MAP ROUND 4), but made by a real 3D artist. It must look markedly better than today's part-built boxes. Every model, made in Blender:
+- **Real proportions and a readable silhouette.** It is recognisable at 60 studs and interesting up close.
+- **Bevelled edges** (0.05-0.15 studs) and smooth shading with weighted normals. No razor-sharp box edges, no faceted blobs.
+- **Detail in three levels:**
+  - big shapes first;
+  - then medium details (panels, rims, frames, hinges, wheels);
+  - then a few small ones (bolts, rivets, a label plate, a cable).
+
+  No clutter.
+- **Colour:** 2-4 colours per model, from the palette of the M4 OBJECT table. Plain materials with a `SurfaceAppearance` for roughness and metalness (metal about 0.5 roughness, painted metal 0.6, plastic 0.6, wood 0.8, rubber 0.9).
+- **Depth:** ambient occlusion baked in Blender into a small texture (512 px) or vertex colours, so creases and joints read without real-time shadows (cheap on phones).
+- **Wear:** light wear only on machines (a few scuffs on edges, a little oil at joints); animals clean and soft; nothing grimy, nothing scary (kid-friendly).
+- **Budgets:**
+  - props 200-1,500 triangles;
+  - machines 2,000-8,000;
+  - animals about 4,000 (the T-rex 6,000);
+  - `RenderFidelity` Automatic, plus a far LOD mesh for the big ones.
+- **Gameplay keeps working:**
+  - the machines' working parts keep their names, attachments and collision parts that the code uses (the claws, the press block, the fan blades, the cannon muzzle, the trampoline bed…);
+  - the new visual mesh is welded on top, and the old box parts underneath become invisible collision proxies (`CollisionFidelity` Box or Hull).
+
+**The look target, one line each** (the Blender script builds exactly this):
+
+| Thing | Look |
+|---|---|
+| **Cannon** | a dark iron barrel with brass bands and a flared muzzle, on a wooden carriage with 2 big spoked wheels; a fuse hole that sparks |
+| **Steel tower** | the reference lattice tower with real I-beam columns, bolted gusset plates, diamond-plate floors with a raised edge, and round handrails |
+| **Slide** | a smooth glossy grey-green tube-chute with rolled edges, on steel legs with brackets |
+| **Plank** | a weathered wooden board with metal end straps, bolted to the tower |
+| **Gyro cage** | 3 chrome-and-red rings with grips and padded seats, on a heavy base with a big red mushroom button on a post |
+| **Giant fan** | a deep industrial fan: a ribbed drum, a wire grille, 5 curved blades on a hub, in a dark-green steel frame with a motor box and cables |
+| **Trampoline** | a round black bed with a blue padded rim, springs visible round it, steel legs |
+| **Wrecking ball** | a dark steel ball with a ring on top, a chain, a yellow crane-style gantry with hazard stripes |
+| **Press** | a hydraulic press: a dark-green frame, 2 chrome pistons, a heavy press plate with yellow-black hazard edges, a control box with a lever |
+| **Washer** | a giant front-loading washing machine: white with a round chrome-ringed porthole door that opens (F24), a dial panel, soap bubbles |
+| **Rocket** | a white rocket with a black nose and red fins, a window, rivet lines; a grey lattice gantry with an arm and a platform |
+| **Launch pads** | steel pads with yellow arrows and spring plates under them, a strength light on each |
+| **Boxing ring** | a white canvas mat, a blue apron with a logo plate, padded corner posts (red and blue), 3 ropes, wooden steps |
+| **Stretcher** | a steel table with 4 claw arms on winches, a crank wheel, a control panel with a green and a red button (F74) |
+| **Tesla coil** | a copper coil tower with a chrome donut on top, a black base with warning stripes, sparks crawling up |
+| **Shredder ("Tumble Rollers")** | a cartoon machine: a yellow frame, 2 big rubber rollers with soft teeth, a conveyor, a chute, a railing, a lever box |
+| **Sweeper** | a round padded arena floor, a central motor hub, a striped foam arm (F52, now in this pass) |
+| **Lava trench** | a stone trench with cut stone blocks, glowing orange lava (dimmed, slow-moving texture), a dark iron fence |
+| **Archery / slingshot** | a straw target with painted rings on a wooden stand; a big wooden slingshot with a rubber band |
+| **Shark** | a sleek grey-blue shark with a white belly, a soft cartoon face (big eyes, a toothy grin but friendly) |
+| **Crocodiles** | dark green with a lighter belly, bumpy back scales, big eyes on top, a long smile |
+| **T-rex** | a big green-brown T-rex with a striped back, a heavy tail, small arms, a goofy-proud face |
+| **Bear** | a round brown bear with a lighter muzzle and belly, small ears, soft fur shading |
+| **Spider** | a fat round black-purple spider with 8 jointed legs, big shiny eyes, a fuzzy look (cute, not creepy) |
+| **Guard dog** | the German Shepherd rebuilt rigged (tan and black, ears up, a wagging tail) |
+| **Plant** | a big pot with a green stem and leaves; a red-and-white spotted "mouth" flower with soft teeth and a leaf tongue |
+| **Frog** | a plump bright-green frog with big eyes, a pale belly, a long pink tongue |
+| **Chicken** | a round white chicken with a red comb, an orange beak and feet |
+| **Whale** | a big friendly blue whale with a pale belly and a blowhole |
+| **Mole** | a small dark-grey mole with a pink nose, big digging paws, round glasses for fun |
+| **Props** (benches, barrels, crates, fences, signs, bins, lamps, leaderboards, doghouse, grandstand, train garage) | the M4 OBJECT BY OBJECT table, built as Blender meshes with bevels and baked AO in M4 (PHASE 3) |
+
+**When, once each (no double work):**
+- **the props:** in M4 (PHASE 3), as Blender meshes;
+- **every machine and animal:** in its own row-3 pass (PHASE 5), its new MODEL together with its idles and its show (sections 1-2), in `MACHINES_10.md`'s order;
+- F49 (the model audit) and F52 (sweeper/shredder) are done INSIDE these passes, not separately.
