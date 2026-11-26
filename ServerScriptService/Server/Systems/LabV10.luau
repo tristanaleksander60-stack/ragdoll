@@ -160,6 +160,14 @@ local function walkway(into: Instance, origin: Vector3, floorY: number, a: Vecto
 	for _, side in { -1, 1 } do
 		paint(into, "WalkwayLine", Vector3.new(0.5, 0.1, len), base * CFrame.new(side * (width / 2 - 0.45), 0.09, 0), C.yellow)
 	end
+	-- (R2: yellow chevrons along it, pointing the way of the tour.)
+	local z = -len / 2 + 7
+	while z < len / 2 - 4 do
+		for _, side in { -1, 1 } do
+			paint(into, "WalkwayArrow", Vector3.new(0.6, 0.06, 2.4), base * CFrame.new(side * 0.8, 0.13, -z) * CFrame.Angles(0, math.rad(side * 40), 0), C.yellow)
+		end
+		z += 12
+	end
 end
 
 -- A hangar outside the wall: a long white shed with a rounded teal roof and a big dark door.
@@ -197,8 +205,8 @@ function LabV10.build(folder: Instance, origin: Vector3)
 
 	-- The floor: warm light concrete instead of the green tiles.
 	if floorPart and floorPart:IsA("BasePart") then
-		floorPart.Color = C.concrete
-		floorPart.Material = Enum.Material.SmoothPlastic
+		floorPart.Color = Color3.fromRGB(206, 200, 188) -- (R2: warm mid-grey concrete with its grain, not a white slab)
+		floorPart.Material = Enum.Material.Concrete
 		floorPart.Transparency = 0 -- (it was see-through over the grass)
 		for _, t in floorPart:GetChildren() do
 			if t:IsA("Texture") then
@@ -210,7 +218,7 @@ function LabV10.build(folder: Instance, origin: Vector3)
 	-- The plot's leftovers: the white spawn disc, the edge lines, the barriers and cones.
 	if plot then
 		for _, c in plot:GetChildren() do
-			if c.Name == "Plaza" or c.Name == "PlazaRim" or c.Name == "Edge" or c.Name == "Barrier" or c.Name == "Cone" then
+			if c.Name == "Plaza" or c.Name == "PlazaRim" or c.Name == "Edge" or c.Name == "Barrier" or c.Name == "Cone" or c.Name == "LabSign" or c.Name == "LabSignPost" then -- (R2: the lab sign was cut off behind the web; its place is the hero tower)
 				hide(c)
 			end
 		end
@@ -260,6 +268,27 @@ function LabV10.build(folder: Instance, origin: Vector3)
 		{ Vector2.new(30, 30), Vector2.new(L.WALL.maxX, 30) }, -- east gate
 	} do
 		walkway(into, origin, floorY, ab[1], ab[2], W)
+	end
+
+	-- R2: each zone on its own coloured pad with yellow hazard corners; bays painted on the crash track.
+	for _, z in L.ZONE_PADS or {} do
+		local size = z.max - z.min
+		local mid = (z.min + z.max) / 2
+		local at = Vector3.new(origin.X + mid.X, floorY + 0.02, origin.Z + mid.Y)
+		paint(into, "ZonePad_" .. z.name, Vector3.new(size.X, 0.04, size.Y), CFrame.new(at), z.color)
+		for _, cx in { -1, 1 } do
+			for _, cz in { -1, 1 } do
+				local corner = at + Vector3.new(cx * (size.X / 2 - 0.6), 0.03, cz * (size.Y / 2 - 0.6))
+				paint(into, "ZoneCorner", Vector3.new(6, 0.06, 1.2), CFrame.new(corner + Vector3.new(-cx * 2.4, 0, 0)), C.yellow)
+				paint(into, "ZoneCorner", Vector3.new(1.2, 0.06, 6), CFrame.new(corner + Vector3.new(0, 0, -cz * 2.4)), C.yellow)
+			end
+		end
+	end
+	local bays = L.BAY_LINES
+	if bays then
+		for _, x in bays.x do
+			paint(into, "BayLine", Vector3.new(0.6, 0.06, bays.z2 - bays.z1), CFrame.new(origin.X + x, floorY + 0.07, origin.Z + (bays.z1 + bays.z2) / 2), C.white)
+		end
 	end
 
 	-- The COMPOUND WALL with its gates.

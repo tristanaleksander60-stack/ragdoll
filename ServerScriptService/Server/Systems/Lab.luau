@@ -647,6 +647,14 @@ end
 -- on floor that really is free; the first PLAZA_SLOTS always walk about on the white spawn circle (owner, same day), the rest stay off it.
 Lab.PLAZA_SLOTS = 3
 local PLAZA_NEAR, PLAZA_FAR = 8, 26 -- studs from the spawn (the circle is 30)
+-- (LAB10 R2: under LAB_V10 the "plaza" ones walk about on the TEST FLOOR instead, and there are more of them: the
+-- heart of the lab is never empty.)
+local L10 = require(ReplicatedStorage.Shared:WaitForChild("LabLayout10")) :: any
+if L10.on then
+	Lab.PLAZA_SLOTS = 8
+	PLAZA_NEAR, PLAZA_FAR = 3, L10.TEST_RADIUS - 3
+end
+local PLAZA_AT = if L10.on then L10.TEST_FLOOR else Vector2.zero
 pickRoamSpot = function(plot: Plot, slot: Slot): Vector3
 	local PathPlan = require(ReplicatedStorage.Shared:WaitForChild("PathPlan")) :: any
 	local Visitors = require(script.Parent:WaitForChild("VisitorService")) :: any
@@ -662,6 +670,10 @@ pickRoamSpot = function(plot: Plot, slot: Slot): Vector3
 		-- (Its own slice first; with no room there, anywhere.)
 		local a = if try <= 25 and not onPlaza then (slot.index * 7 % DUMMY_COUNT + math.random()) * slice else math.random() * math.pi * 2
 		local x, z = math.cos(a) * r, math.sin(a) * r
+		if onPlaza then
+			x += PLAZA_AT.X
+			z += PLAZA_AT.Y
+		end
 		local blocked = math.abs(x) > half or z > ROAM_YARD_Z or z < ROAM_BACK_Z
 		if not blocked then
 			local local2 = Vector2.new(x, z)

@@ -23,7 +23,7 @@ LabLayout10.on = Config.LAB_V10 == true
 
 -- The test floor: its middle and radius (the dummies stand on its rim).
 LabLayout10.TEST_FLOOR = Vector2.new(0, -28)
-LabLayout10.TEST_RADIUS = 17
+LabLayout10.TEST_RADIUS = 21 -- (R2: a bigger arena, the heart of the lab)
 LabLayout10.BUTTON = Vector2.new(0, -52)
 LabLayout10.SPAWN_RADIUS = 7
 -- The compound: the lab floor's edge (Lab: LabFloor x -96..96, z -113..85) with a wall round it.
@@ -64,10 +64,21 @@ LabLayout10.CARS = {
 }
 
 -- Bought lab things (MapShopService).
-LabLayout10.TRAMPOLINE = Vector2.new(0, 50)
+LabLayout10.TRAMPOLINE = Vector2.new(-22, 66) -- (R2: off the south walkway, in the launch range)
 
 -- The stretch machine (Playground's ramp spot) in the smash yard.
 LabLayout10.STRETCH = Vector2.new(50, -15)
+
+-- R2: each zone on its own coloured floor pad (lab space rectangles: min, max, colour), with hazard corners.
+LabLayout10.ZONE_PADS = {
+	{ name = "TowerZone", min = Vector2.new(-94, -80), max = Vector2.new(-26, -2), color = Color3.fromRGB(226, 196, 150) },
+	{ name = "CreatureWing", min = Vector2.new(-94, -112), max = Vector2.new(94, -84), color = Color3.fromRGB(150, 196, 176) },
+	{ name = "SmashYard", min = Vector2.new(36, -66), max = Vector2.new(94, -4), color = Color3.fromRGB(232, 168, 124) },
+	{ name = "LaunchRange", min = Vector2.new(-94, 6), max = Vector2.new(-30, 72), color = Color3.fromRGB(160, 180, 214) },
+	{ name = "CrashTrack", min = Vector2.new(10, 30), max = Vector2.new(94, 74), color = Color3.fromRGB(92, 94, 104) },
+}
+-- R2: car bay lines on the crash track (x of each line; from z1 to z2).
+LabLayout10.BAY_LINES = { x = { 38, 56, 73, 94 }, z1 = 32, z2 = 53 }
 
 -- LabDress roles that stay (everything else of the old dressing is hidden: scattered props).
 LabLayout10.DRESS_KEEP = { Rocket = true }
