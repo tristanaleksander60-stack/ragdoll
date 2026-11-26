@@ -180,6 +180,21 @@ Today the attract mode sends test dummies flying out of machines in turn, often.
 - **Real ragdolls, no extra test dummies:** the machine's watcher walks in, gets launched or spun, lands, and gets up again (with the normal ragdoll physics and impact effects). No extra demo dummies are spawned.
 - **No demo** at a machine the player is using or standing at, and never during the first-2-minutes TRY lesson.
 
+## F20 The bottom of the PC screen (owner's screenshot, 0.6x)
+**What is wrong:**
+- A dark bar runs across the WHOLE width of the bottom of the screen, behind the chip row (F run, V eye, X revive heart). The chip row's background frame is stretched to full width.
+- Under the hotbar, the old input-hint strip is still there, but dim and almost empty (faded mouse and gun icons). It looks broken.
+
+**Fix:**
+- The chip row is a compact rounded pill sized to its chips (AutomaticSize X), bottom-left, with a safe-area margin. Nothing behind it across the screen.
+- Remove the input-hint strip under the hotbar on ALL devices (PC too; this supersedes F17's "PC may keep it").
+- Check at 1080p, 1440p and an ultrawide, and on console: nothing stretched, nothing empty.
+
+## F21 A key for X-RAY, shown in the chip row
+- X-RAY already has key I (Claude Code, 26 Nov). Add it to the chip row: `I` + an X-ray icon (a small skeleton in a blue glass outline). It lights up while X-ray is on.
+- The keys in the row: F (run), V (eye), I (X-RAY), X (REVIVE ALL). If the owner wants X for X-ray later, swap them in one place (Config keybinds), not in many files.
+- Console: a button for X-ray (D-pad left if free). Phone: the small X-RAY toggle button (F6).
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
