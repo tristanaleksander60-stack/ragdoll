@@ -925,6 +925,36 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 
 **Check:** watch 10 walkers and chatters for 2 minutes (turning, walking, gestures, LOOK AT YOU) at 60 fps and in the phone emulator. No leg jitters.
 
+### F65 UN-PARKED (owner, 26 Nov 2026: "Benene hakker stadig helt randomly i 1-2 sekunder")
+The owner sees it again: the legs jitter for 1-2 seconds at random moments. The 10 s measurement (v1151) was too short and too calm to catch it. Do NOT wait for a reproduction. Do both:
+
+1. **Build all the preventive fixes from F65 anyway:**
+   - one pose blender owns the legs;
+   - critically damped hip, knee and ankle motors (tuned at 30 and 60 fps);
+   - smoothed facing with a dead zone, and a turn-step cycle;
+   - ownership hysteresis (15 studs, 3 s);
+   - no self-collision of the legs and feet;
+   - hysteresis on the light-mode border (60 in / 75 out);
+   - the watchdog: a leg spinning too fast for 0.3 s → that leg's tone 0.5 for 0.5 s.
+2. **Catch it when it happens** (a jitter detector, always on in Studio and live, cheap):
+   - for each full-physics ragdoll near the player, count the knee-angle direction reversals per second;
+   - more than 6 a second for 0.3 s = a JITTER event.
+   - **Log the context at that moment:**
+     - its state (walking, turning, idle action, look-at, recruit run, chatter role switch, demo walk, bump);
+     - the network owner and any owner change in the last 2 s;
+     - the light/full mode and any switch in the last 2 s;
+     - its speed and its facing changes in the last 1 s;
+     - what its feet touch (kerb, path edge, another ragdoll, a slope);
+     - the frame rate;
+     - which systems set leg targets in the last 0.5 s.
+   - Send it to Metrics (live) and print it in Studio.
+3. **A longer Studio run to provoke it:** 5 minutes with about 12 ragdolls near the player, while the player moves around a lot (walking in and out of the 60-stud border, onto kerbs and slopes), with roles switching and look-at talking; once at 60 fps, once in the phone emulator at a low frame rate.
+4. **Fix every cause the log points to.** Write the findings in this section and in OVERVIEW's State.
+5. **The likely "1-2 s" causes** to look at first:
+   - a network-owner hand-off or the full/light mode switch (both are short bursts);
+   - a role switch (chatter ⇄ comer) or the start or stop of LOOK AT YOU fighting the walk;
+   - a foot catching on a kerb edge.
+
 ## F66 Remove the HIT CARD on phones (owner: "Fjern denne på telefon")
 **What it is:** the small dark hit card ("Chest · Belly · Left leg · Right leg +8 / 0% health · knocked out · KO") that shows the hit parts and the health of the ragdoll you hit (the body card / hit card / vitals text).
 
