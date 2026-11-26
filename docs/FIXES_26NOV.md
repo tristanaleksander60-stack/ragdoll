@@ -755,6 +755,23 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
   - the player is never thrown or dropped out; only the exit button gets you out;
   - check PC and phone.
 
+## F57 LAUNCH PADS launch CARS too (owner: "Fiks så launch pads virker med biler")
+**Today:** the 3 launch pads in the Crash Yard (aimed at the brick wall) only launch ragdolls. Driving over them does nothing. The likely cause: the car is owned by the driver's client, so a server impulse or Touched check does nothing to it.
+
+**Fix (`PAD_CARS = true`):**
+- **Detect on the server by position:** every 0.1 s, check for any vehicle whose wheels or body are over a pad's box (the same method as F48's wall check), moving at more than about 8 studs/s.
+- **Launch it on the machine that simulates it:**
+  - **a car with a driver** (owned by the driver's client): the server sends a validated "launch" to THAT client (one Net remote, with the pad id); the client applies the impulse to the car's assembly. The server checks the pad, the distance and a cooldown of 2 s per car per pad, and refuses anything else.
+  - **a car without a driver** (owned by the server): the server applies the impulse itself.
+- **The launch:** forward along the pad's arrow direction (toward the wall), up at about 25-35°, adding about 50-90 studs/s by pad strength (3 pads = small, medium, BIG). The car's mass is taken into account, so the tank jumps less than the drift car.
+  - A whoosh and a spring-pad "thunk", a dust burst and a short camera FOV kick for the driver.
+- **In the air:** the car keeps its rotation physics (it may flip; that is fun). The driver STAYS in (F56).
+  - An "AIR TIME 2.4 s" pop on landing, plus a NEW BEST.
+  - Landing makes a heavy thud, sparks or dust, and a camera shake.
+- **The wall:** a launched car hitting the brick wall breaks it (F48), and passenger ragdolls fly out on the big hit.
+- **The pads look the part:** arrows painted on each pad pointing at the wall, a strength label (1, 2, 3) and lights that flash when something is launched.
+- **Check:** drive the car, the drift car, the monster truck and the tank over each pad at 2 speeds, on PC and phone. Each launches in the arrow direction by strength, the driver stays in, the landing works, and the wall breaks on a hit.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
