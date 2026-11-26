@@ -583,6 +583,16 @@ The owner still sees lamp posts standing in the middle of walkways.
 
 **When:** a ragdoll that was dead or knocked out wakes up (by itself, by CPR, or by REVIVE ALL) with bullet holes or lodged bullets.
 
+**The owner again, 26 Nov late: "Gør så de piller skuddene man kan se ud fra hinanden efter de har været døde og vågner op uden skader kun med skuddene":**
+- **On waking from death, EVERY injury is healed except the shots:**
+  - broken, cracked and shattered bones are whole again (DAMAGE_12 integrity back to 100; the X-ray bones whole);
+  - the bruises, the injury stage, the limp, the dangle and the hurt face are gone;
+  - the purple puddles and drips stop;
+  - the bandages come off.
+- **What STAYS on waking:** the bullet holes you can see and the lodged bullets (the X-ray slugs, the arrows). They are there so the pick-out scene below can take them out.
+- **The waking body stands normally and walks normally** (not hurt), with only the holes and bullets on it.
+- This overrides the "Breaks stay" limit below. Knocked out WITHOUT dying (a KO that wakes by itself) keeps its injuries as before; only waking from DEATH heals all but the shots.
+
 **What happens:**
 1. **A helper comes.** A nearby free ragdoll comes over (`FirstAid` / the helper logic; the CPR helper if there was one). If none is free within 30 studs, the woken ragdoll does it itself, sitting down.
 2. **It picks the bullets out.** The helper kneels at the patient, which is sitting up, holding a pair of tweezers (a small prop). For EACH hole, up to 8, about 0.4 s each:
@@ -596,7 +606,7 @@ The owner still sees lamp posts standing in the middle of walkways.
 
 **Limits:**
 - **More than 8 holes:** the rest fade out quietly at the end.
-- **Breaks:** broken bones (1b) stay until a bandage or sling (that is the injury system); only the bullets and holes are cleared here.
+- **Breaks:** after a DEATH they are already healed on waking (see above); after a knockout without death they stay until a bandage or sling.
 - **Interruptions:** if the scene is interrupted (shot, grabbed), it stops; the rest of the holes fade after 60 s as a fallback, so bodies never stay covered.
 - **One scene at a time** within 40 studs of the player; others clear quietly off-screen.
 - **Phones:** the same, with the effects pooled.
