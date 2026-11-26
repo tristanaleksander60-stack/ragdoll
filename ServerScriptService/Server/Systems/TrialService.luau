@@ -15,6 +15,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Toys = require(Shared:WaitForChild("Toys"))
+local Config = require(Shared:WaitForChild("Config"))
 local ProgressService = require(script.Parent.ProgressService)
 local Metrics = require(script.Parent.Metrics)
 
@@ -87,6 +88,10 @@ end
 
 -- Starts a trial. Returns nil when it started, or why not.
 function TrialService.try(player: Player, id: unknown): string?
+	-- (Owner, 26 Nov 2026: no TRY FREE for weapons. Admin and code grants still use `grant`.)
+	if (Config :: any).WEAPONS_NO_TRY then
+		return "junk"
+	end
 	if type(id) ~= "string" then
 		return "junk"
 	end

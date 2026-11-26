@@ -29,6 +29,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local ShopArt = require(Shared:WaitForChild("ShopArt")) :: any
 local Shop = require(Shared:WaitForChild("Shop")) :: any
 local Config = require(Shared:WaitForChild("Config")) :: any
+local Toys = require(Shared:WaitForChild("Toys")) :: any
+local Net = require(Shared:WaitForChild("Net")) :: any
 
 local UI = ReplicatedStorage:WaitForChild("LihFolkUI")
 local Theme = require(UI:WaitForChild("LihFolkUITheme"))
@@ -119,6 +121,12 @@ end
 -- What a card shows
 
 local function owned(item: any): boolean
+	if item.kind == "weapon" then
+		local ok, state = pcall(function()
+			return (require(Client:WaitForChild("ToolCatalog")) :: any).stateOf(item.toy)
+		end)
+		return ok and state == "open"
+	end
 	if item.product then
 		return false
 	end
@@ -168,6 +176,11 @@ local function refreshCard(card: Card)
 		button.setRole("done")
 		button.setText("OWNED")
 		button.setEnabled(false)
+	elseif item.kind == "weapon" and not Toys.canBuy(Toys.byId[item.toy], (player:GetAttribute("Takedowns") :: number?) or 0) then
+		-- (One nearly earned is never sold: the server refuses it too.)
+		button.setRole("locked")
+		button.setText("NEARLY YOURS")
+		button.setEnabled(false)
 	elseif untilT then
 		local left = math.max(0, math.floor(untilT - Workspace:GetServerTimeNow()))
 		button.setRole("info")
@@ -216,6 +229,13 @@ local function buy(item: any)
 		return
 	end
 	if owned(item) then
+		return
+	end
+	if item.kind == "weapon" then
+		if os.clock() >= (asked[item.key] or -math.huge) + 2 then
+			asked[item.key] = os.clock()
+			Net.event(Net.Names.Weapons):FireServer("Buy", item.toy)
+		end
 		return
 	end
 	asked[item.key] = os.clock()
@@ -394,7 +414,7 @@ local function media(item: any, size: UDim2, big: boolean, allow3D: boolean?): G
 		pic.AnchorPoint = Vector2.new(0.5, 0.5)
 		pic.Position = UDim2.fromScale(0.5, 0.5)
 		if pic:IsA("ImageLabel") then
-			pic.ScaleType = Enum.ScaleType.Crop
+			pic.ScaleType = if item.kind == "weapon" then Enum.ScaleType.Fit else Enum.ScaleType.Crop
 		end
 		pic.Parent = holder
 		if item.kind == "event" then
@@ -884,11 +904,16 @@ function ShopV9.build(win: any, given: Api)
 			grids[tab] = grid(pages[tab], 20)
 		end
 	end
+	-- (Owner, 26 Nov 2026: the weapons, sold here now, under their own heading in ITEMS.)
+	if Config.WEAPONS_NO_BUY and pages.ITEMS then
+		heading(pages.ITEMS, "WEAPONS", 30)
+		grids.WEAPONS = grid(pages.ITEMS, 31)
+	end
 	local items = ShopArt.items()
 	local studio = RunService:IsStudio()
 	for i, item in items do
 		if item.id ~= 0 or studio then
-			makeCard(item, grids[item.tab], i)
+			makeCard(item, if item.kind == "weapon" then (grids.WEAPONS or grids[item.tab]) else grids[item.tab], i)
 		end
 	end
 	-- FEATURED: the hero and a row of picks (their own cards, the same buying).
@@ -948,6 +973,15 @@ function ShopV9.build(win: any, given: Api)
 		end
 	end
 	player:GetAttributeChangedSignal("GodTrialUntil"):Connect(refreshAll)
+	if Config.WEAPONS_NO_BUY then
+		player:GetAttributeChangedSignal("Takedowns"):Connect(function()
+			if Controller.isOpen("Events") then
+				refreshAll()
+			end
+		end)
+		player:GetAttributeChangedSignal("Owned"):Connect(refreshAll)
+		player:GetAttributeChangedSignal("PassToys"):Connect(refreshAll)
+	end
 	-- (A prompt closed without buying: no YOURS! later for it, even if a slow ownership check lands.)
 	local MarketplaceService = game:GetService("MarketplaceService")
 	local function cancelled(id: number)

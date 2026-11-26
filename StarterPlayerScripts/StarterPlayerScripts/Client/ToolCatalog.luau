@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Toys = require(Shared:WaitForChild("Toys"))
+local Config = require(Shared:WaitForChild("Config")) :: any
 local Offers = require(Shared:WaitForChild("Offers"))
 local Net = require(Shared:WaitForChild("Net"))
 local Keybinds = require(Shared:WaitForChild("Keybinds"))
@@ -193,6 +194,15 @@ local function refreshEquip()
 	local owned = ownedSet()
 	local ownedCount = 0
 	local canUnequip = b ~= nil and b.canUnequip ~= nil and (b.canUnequip :: () -> boolean)()
+	-- (Owner, 26 Nov 2026: only the next weapon to earn shows its KOs; the rest just read Locked.)
+	local nextId: string? = nil
+	local nextAt = math.huge
+	for id in equipButtons do
+		local t = Toys.byId[id]
+		if t and t.unlockAt < nextAt and (stateOf(t, owned)) == "locked" then
+			nextId, nextAt = id, t.unlockAt
+		end
+	end
 	for id, button in equipButtons do
 		local toy = Toys.byId[id]
 		local state, have = stateOf(toy, owned)
@@ -204,7 +214,7 @@ local function refreshEquip()
 		-- shows how far there is to go instead. Studio's BUY gives it, for testing.)
 		local onSale = tier ~= nil and (RunService:IsStudio() or (Shop.WEAPON_PRODUCTS[tier.key] or 0) ~= 0)
 		local inBar = b ~= nil and b.has(id)
-		local buyable = state == "locked" and tier ~= nil and onSale and Toys.canBuy(toy, have)
+		local buyable = state == "locked" and tier ~= nil and onSale and Toys.canBuy(toy, have) and not Config.WEAPONS_NO_BUY
 		local price, priced = "", true
 		if buyable and tier then
 			price, priced = priceText(tier.key)
@@ -263,7 +273,7 @@ local function refreshEquip()
 		-- TRY FREE on a locked one, while no other try runs (round 5).
 		local tryButton = tryButtons[id]
 		if tryButton then
-			tryButton.Visible = state == "locked" and trialRunning() == nil
+			tryButton.Visible = state == "locked" and trialRunning() == nil and not Config.WEAPONS_NO_TRY
 		end
 		-- (A phone's picture is too short for both: TRY FREE wins, the outline keeps the colour.)
 		local rarityTag = rarityTags[id]
@@ -278,14 +288,14 @@ local function refreshEquip()
 		if progress then
 			local need = math.max(1, toy.unlockAt)
 			progress.bar.setValue(math.clamp(have / need, 0, 1), false)
-			progress.bar.setText(ToolCatalog.killsText(have, need))
-			progress.row.Visible = state == "locked"
+			progress.bar.setText(if Config.WEAPONS_NO_BUY then string.format("%d KOs to go", math.max(1, need - have)) else ToolCatalog.killsText(have, need))
+			progress.row.Visible = state == "locked" and (id == nextId or not Config.WEAPONS_NO_BUY)
 		end
 	end
 	-- The header line (round 5): how many are yours, and the ways to the rest.
 	local line = intro
 	if line then
-		line.Text = string.format("%d/%d OWNED  ·  Locked: earn KOs, BUY, or TRY FREE for 2 min", ownedCount, #Toys.list)
+		line.Text = if Config.WEAPONS_NO_BUY then string.format("%d/%d OWNED  ·  Earn KOs to unlock the next weapon", ownedCount, #Toys.list) else string.format("%d/%d OWNED  ·  Locked: earn KOs, BUY, or TRY FREE for 2 min", ownedCount, #Toys.list)
 	end
 end
 
@@ -424,7 +434,7 @@ local function build()
 		size = WINDOW_SIZE,
 	})
 
-	intro = C.Text("body", "EQUIP puts a weapon in your bar. Locked ones: take people down, or BUY.", {
+	intro = C.Text("body", if Config.WEAPONS_NO_BUY then "EQUIP puts a weapon in your bar. Locked ones: take people down." else "EQUIP puts a weapon in your bar. Locked ones: take people down, or BUY.", {
 		color = Theme.Palette.textHi,
 		wrap = true,
 		size = UDim2.new(1, 0, 0, 28),
@@ -791,11 +801,26 @@ local function build()
 					local have = (Players.LocalPlayer:GetAttribute("Takedowns") :: number?) or 0
 					local tier = Toys.priceTier(toy)
 					local onSale = tier ~= nil and (RunService:IsStudio() or (Shop.WEAPON_PRODUCTS[tier.key] or 0) ~= 0)
-					if onSale and Toys.canBuy(toy, have) then
+					if onSale and Toys.canBuy(toy, have) and not Config.WEAPONS_NO_BUY then
 						-- BUY: Roblox's own prompt opens (the server checks it again and picks the product).
 						Net.event(Net.Names.Weapons):FireServer("Buy", id)
 					else
-						Toast.show(string.format("Take down %d more for the %s!", math.max(1, toy.unlockAt - have), toy.label))
+						-- (Owner, 26 Nov 2026: a number only for the next weapon to earn.)
+						local first = true
+						if Config.WEAPONS_NO_BUY then
+							local owned = ownedSet()
+							for _, other in Toys.list do
+								if other.unlockAt < toy.unlockAt and (stateOf(other, owned)) == "locked" then
+									first = false
+									break
+								end
+							end
+						end
+						if first then
+							Toast.show(string.format("Take down %d more for the %s!", math.max(1, toy.unlockAt - have), toy.label))
+						else
+							Toast.show("Locked. Earn KOs to unlock the next weapon first")
+						end
 					end
 					return
 				end
@@ -964,7 +989,7 @@ function ToolCatalog.start(barApi: Bar)
 			local id = toy.id
 			task.delay(120, function()
 				if Players.LocalPlayer:GetAttribute("TrialWeapon") ~= id or ToolCatalog.stateOf(id) == "locked" then
-					Toast.show(string.format("The free try is over. Earn the %s with KOs, or BUY it in WEAPONS!", toy.label))
+					Toast.show(string.format(if Config.WEAPONS_NO_BUY then "The free try is over. Earn the %s with KOs!" else "The free try is over. Earn the %s with KOs, or BUY it in WEAPONS!", toy.label))
 				end
 			end)
 		elseif kind == "Refused" and type(d.text) == "string" then

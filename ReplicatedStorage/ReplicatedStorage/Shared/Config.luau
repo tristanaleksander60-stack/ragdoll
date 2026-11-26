@@ -363,6 +363,11 @@ local Config = {
 	-- the first present at 3 KOs; the Rocket is among the hardest (Toys.HARD_RUNGS). Ladder 5 keeps
 	-- what older players had. false = the V8 bar of 5 with the Rocket at 3.
 	START_BAR_V9 = true,
+	-- WEAPONS window (owner, 26 Nov 2026): no BUY on the weapon cards (the weapons stay for sale in
+	-- SHOP), no TRY FREE anywhere (TrialService refuses), and only the next weapon to earn shows its
+	-- KOs; every later locked one reads "Locked".
+	WEAPONS_NO_BUY = true,
+	WEAPONS_NO_TRY = true,
 	-- The lab guide (21 Nov 2026, the owner: "a 9-year-old must understand everything in the lab"): a
 	-- sign, a glowing drop ring and a FEED button at every creature and station (Server/Systems/LabGuide,
 	-- Client/LabGuideClient). false = none.

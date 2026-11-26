@@ -12,14 +12,16 @@ local Shop = require(script.Parent:WaitForChild("Shop")) :: any
 local Events = require(script.Parent:WaitForChild("Events")) :: any
 local Offers = require(script.Parent:WaitForChild("Offers")) :: any
 local Config = require(script.Parent:WaitForChild("Config")) :: any
+local Toys = require(script.Parent:WaitForChild("Toys")) :: any
 
 local ShopArt = {}
 
 ShopArt.TABS = table.freeze({ "FEATURED", "PASSES", "ITEMS", "EVENTS", "BOLTS" })
 
-export type Kind = "pass" | "offer" | "event"
+export type Kind = "pass" | "offer" | "event" | "weapon"
 export type Item = {
-	key: string, -- Shop pass key, Shop.OFFERS key or event id
+	key: string, -- Shop pass key, Shop.OFFERS key, event id or "Weapon_<toy id>"
+	toy: string?, -- a weapon card's toy id
 	kind: Kind,
 	product: boolean, -- a developer product (bought again and again), not a pass
 	id: number, -- the pass or product id (0: not on sale)
@@ -158,6 +160,33 @@ function ShopArt.items(): { Item }
 			robux = 49,
 			color = e.color,
 		})
+	end
+	-- (Owner, 26 Nov 2026: no BUY on the WEAPONS cards, so every weapon is sold here instead, in ITEMS:
+	-- its price tier's product. The server picks the product again and refuses one nearly earned.)
+	if Config.WEAPONS_NO_BUY then
+		local sorted = table.clone(Toys.list)
+		table.sort(sorted, function(a: any, b: any)
+			return a.unlockAt < b.unlockAt
+		end)
+		for _, toy in sorted do
+			local tier = Toys.priceTier(toy)
+			if tier then
+				table.insert(out, {
+					key = "Weapon_" .. toy.id,
+					toy = toy.id,
+					kind = "weapon",
+					product = true,
+					id = (Shop.WEAPON_PRODUCTS[tier.key] or 0) :: number,
+					name = string.upper(toy.label),
+					line = "Yours now, no KOs needed",
+					bullets = { "The " .. toy.label .. ", yours for good", "Goes straight onto your bar" },
+					picture = "tool_" .. toy.id,
+					tab = "ITEMS",
+					robux = tier.robux,
+					color = nil,
+				})
+			end
+		end
 	end
 	return out
 end
