@@ -389,6 +389,24 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 		ring.Parent = hole
 	end
 	table.insert(list, { part = hole, at = os.clock() })
+	-- (F60, Config.HOLES_KEEP: only the newest few holes on a ragdoll stay sharp; an older one fades and shrinks over 2 s)
+	local keep = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).HOLES_KEEP
+	if type(keep) == "number" then
+		while #list > keep do
+			local old = table.remove(list, 1) :: BodyHole
+			local p = old.part
+			for _, d in p:GetDescendants() do
+				if d:IsA("Decal") then
+					TweenService:Create(d, TweenInfo.new(2), { Transparency = 1 }):Play()
+				elseif d:IsA("BasePart") then
+					TweenService:Create(d, TweenInfo.new(2), { Transparency = 1 }):Play()
+				end
+			end
+			task.delay(2.1, function()
+				release(p)
+			end)
+		end
+	end
 	if not watched[model] then
 		watched[model] = true
 		-- Patched up (its wound list cleared) or gone: the holes go too.

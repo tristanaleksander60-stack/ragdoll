@@ -524,3 +524,4 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - **Bottom centre:** the hotbar, 62x56 slots.
 - **Studio note:** without DevTouch the emulator reads as a touch laptop and shows the PC sandbox column (1ST/SLOW-MO/REVIVE/RESET), which overlaps JUMP. Real phones never show it.
 - Picture: `art/store/phone_hud_0.63.jpg`.
+- **F68 water button:** I found no button that turns water on in the start place (0 prompts, click detectors or scripts near water). Which place is it in, and where (a screenshot)? Default: parked until you say.
