@@ -45,6 +45,43 @@ The owner sent 2 pictures without text, from the old build of their own lab. Bui
 - **Reset:** chunks stay 20 s, then fade, and the wall rebuilds (a quick rise-up animation).
 - **The brick crash wall** works the same way: bricks fly out, with red brick dust.
 
+### 2b. Brick by brick, with gravity, lag-free (owner, 26 Nov 2026: "Gør så man kan smadre muren en block ad gangen, altså en mursten ad gangen, gør det lagfri på alle enheder. Så hele væggen ikke falder ned på en gang, men følger gravity.")
+This replaces the "chunks" idea for the BRICK crash wall. The concrete walls get the same system with bigger blocks.
+
+**Hits remove bricks one at a time, at the point that was hit:**
+- **A bullet:** cracks the brick it hits (a crack decal). A second bullet on it knocks it out.
+- **Big guns** (sniper, shotgun pellets close up): knock it out at once.
+- **Melee:** knocks out 1 brick, or 2-3 with a charged hit.
+- **A body or car impact:** knocks out bricks round the impact point, the number by force (2-10). A SLAMmed or lassoed ragdoll through the wall makes a body-shaped hole.
+- **An explosion:** a round hole by radius.
+
+**Gravity, brick by brick:**
+- A brick stays up only if it is SUPPORTED: a brick or the ground directly under it, or held by its mortar from both side neighbours (a short bridge, max 2 bricks wide over a gap).
+- After each removal, check the bricks above the gap: unsupported ones come loose and fall, a few per frame. Bricks fall one after another in a natural cascade, never the whole wall at once.
+- A wall with a big hole low down slowly sags and drops its upper bricks in a trickle.
+
+**Loose bricks:**
+- real physics: they tumble, bounce a little and clatter;
+- brick dust puffs (pooled); a clatter sound per brick (pooled, max 8 a second);
+- they can hit and knock ragdolls.
+
+**Lag-free on every device:**
+- **The wall is mostly anchored.** It is built from brick-sized MeshParts that all share ONE mesh and ONE material (so the engine instances them), CollisionFidelity Box, CastShadow off except on the outer row.
+- **Hybrid wall:** far from any damage, rows of bricks are merged into wall panels (a few parts with a brick texture). Only the panel that is hit is swapped for its individual bricks, in place, invisibly. A fresh wall is therefore a few dozen parts, not hundreds.
+- **Loose bricks sleep:**
+  - a brick that has rested for 2 s is anchored again where it lies (no more physics cost);
+  - network ownership of moving bricks goes to the nearest player, so they move smoothly.
+- **Caps:**
+  - max loose (moving) bricks at once: PC 80, tablet 50, phone 30;
+  - over the cap, the oldest resting debris fades away first;
+  - fallen bricks fade after 30 s.
+- **The server decides** which bricks break and fall (gameplay); the changes go out in one batched update per tick.
+- **Measure:** frame time on the phone emulator while 10 shots and a car crash hit the wall. There must be no hitch over 30 ms.
+
+**Rebuild:** after 45 s with no hits, the wall rebuilds brick by brick from the bottom up (each brick slides into place with a small "clack"). Holes heal over about 6 s.
+
+**Check:** shoot single bricks out (one at a time, see the bricks above drop in a trickle), drive a car into it (a hole round the impact, the bricks above cascading), SLAM a ragdoll through it, then wait for the rebuild. Do it on PC and the phone emulator, with no lag.
+
 **Wooden crates and plank fences** (stacks near the machines, like picture 2):
 - **Bullet holes:** guns leave small dark holes in the wood (decals). Max 10 per crate; they fade after 30 s.
 - **Breaking:** enough damage (shots or melee, by force), or a body or car through it, breaks a crate or fence into planks and splinters, with wood dust.
