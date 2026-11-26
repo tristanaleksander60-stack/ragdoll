@@ -515,6 +515,10 @@ function applyReport(player: Player, m: Model, state: string, broken: { string }
 			local joints = jointsOf(m)
 			for name, kinematic in flags do
 				local joint = joints[name]
+				local vital = m:GetAttribute("Vital")
+				if kinematic and (vital == "Dead" or vital == "Unconscious") and (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).NO_DEATH_FREEZE then
+					kinematic = false -- (F46: a dead or knocked-out body is never made rigid by a late report)
+				end
 				if joint and joint.IsKinematic ~= kinematic then
 					joint.IsKinematic = kinematic
 				end

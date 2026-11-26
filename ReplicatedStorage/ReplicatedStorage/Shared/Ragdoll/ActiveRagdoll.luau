@@ -1374,6 +1374,7 @@ end
 
 -- Something solid in the way a little ahead, at knee height (crawling: just off the floor)?
 local GAME_BLOCKCAST = (require(script.Parent.Parent:WaitForChild("Config")) :: any).NAV_BLOCKCAST == true
+local GAME_NO_FREEZE = (require(script.Parent.Parent:WaitForChild("Config")) :: any).NO_DEATH_FREEZE == true -- (F46)
 -- (F72: how far a body-sized box (2.2 wide, knee to chest) can go in this direction before it meets something solid
 -- that is not a ragdoll; the look-ahead grows with the speed. math.huge = clear.)
 local function clearAhead(rig: Rig, direction: Vector3, groundY: number, reach: number): number
@@ -1898,6 +1899,15 @@ local function update(dt: number)
 				startRamp(rig, "Recovering", 0.35)
 			end
 		elseif state == "Ragdoll" or state == "Out" then
+			if GAME_NO_FREEZE then
+				-- (F46: limp means limp: a late kinematic flag (a state report from before the fall) froze the body stiff,
+				-- mid-pose or mid-air; on the simulating screen no joint of a limp body is ever kinematic)
+				for name, joint in rig.joints do
+					if joint.IsKinematic then
+						joint.IsKinematic = false
+					end
+				end
+			end
 			checkImpact(rig)
 			local flying = isAirborne(rig)
 			local P = (GameConfig :: any).PHYSICS
