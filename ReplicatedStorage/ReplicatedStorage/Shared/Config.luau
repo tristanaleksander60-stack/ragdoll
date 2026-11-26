@@ -93,6 +93,7 @@ local Config = {
 	STATUE_SKIN = true, -- F77: the #1 statues keep the player's own skin and clothes, stand with their feet on the plinth (scaled to 7 x 5), on a gold-trimmed plinth BESIDE the board (LabOwnerMap)
 	SMOOTH_MOTION = true, -- S1: ragdolls walk and run with Roblox's real R15 clips (KeyframeSequenceProvider, blended by ground speed, phase tied to distance: no sliding), eased in (Client/ClipGait, DummyLife gaitPose)
 	TURN_EVEN = true, -- F73: the heading rotates at a capped even rate (220 deg/s walking, 360 fleeing), never a lerp whip or 180 degree snap; turning on the spot steps the feet (ActiveRagdoll, DummyLife)
+	NAV_BLOCKCAST = true, -- F72: obstacles are seen with a body-sized Blockcast whose look-ahead grows with speed (2.5-7 studs), and the detour takes the more open side (ActiveRagdoll blocked/clearAhead)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays

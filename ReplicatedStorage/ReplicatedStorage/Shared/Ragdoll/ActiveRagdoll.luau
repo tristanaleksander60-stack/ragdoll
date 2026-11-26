@@ -1366,7 +1366,37 @@ local function avoidDummies(rig: Rig, here: Vector3, direction: Vector3, goalDis
 end
 
 -- Something solid in the way a little ahead, at knee height (crawling: just off the floor)?
+local GAME_BLOCKCAST = (require(script.Parent.Parent:WaitForChild("Config")) :: any).NAV_BLOCKCAST == true
+-- (F72: how far a body-sized box (2.2 wide, knee to chest) can go in this direction before it meets something solid
+-- that is not a ragdoll; the look-ahead grows with the speed. math.huge = clear.)
+local function clearAhead(rig: Rig, direction: Vector3, groundY: number, reach: number): number
+	local height = if rig.state == "Crawling" then 0.5 else rig.standOffset * 0.6
+	local from = Vector3.new(rig.pelvis.Position.X, groundY + height, rig.pelvis.Position.Z)
+	local flat = Vector3.new(direction.X, 0, direction.Z)
+	if flat.Magnitude < 1e-3 then
+		return math.huge
+	end
+	flat = flat.Unit
+	local size = Vector3.new(2.2, if rig.state == "Crawling" then 0.6 else math.max(1, rig.standOffset * 0.7), 0.6)
+	local start = CFrame.lookAt(from + flat * 0.4, from + flat * 2)
+	local ok, hit = pcall(function()
+		return Workspace:Blockcast(start, size, flat * reach, rig.rayParams)
+	end)
+	if not ok or not hit or not hit.Instance.CanCollide then
+		return math.huge
+	end
+	local model = hit.Instance:FindFirstAncestorOfClass("Model")
+	if model and model:GetAttribute("IsDummy") == true then
+		return math.huge
+	end
+	return hit.Distance
+end
+
 local function blocked(rig: Rig, direction: Vector3, groundY: number): boolean
+	if GAME_BLOCKCAST then
+		local reach = math.clamp(2.5 + rig.speed * 0.35, 2.5, 7)
+		return clearAhead(rig, direction, groundY, reach) < reach
+	end
 	local height = if rig.state == "Crawling" then 0.5 else rig.standOffset * 0.55
 	local from = Vector3.new(rig.pelvis.Position.X, groundY + height, rig.pelvis.Position.Z)
 	local hit = Workspace:Raycast(from, direction * (if rig.state == "Crawling" then 3 else 2.5), rig.rayParams)
@@ -1520,6 +1550,11 @@ local function updateMoving(rig: Rig, dt: number)
 					rig.steer = -rig.steer -- that side did not work: try the other one
 					rig.stuckTime = 0
 					rig.bestDistance = distance
+				elseif rig.steer == 0 and GAME_BLOCKCAST then
+					-- (F72: the side that is more open, not a coin toss)
+					local l = clearAhead(rig, CFrame.Angles(0, DETOUR_ANGLE, 0):VectorToWorldSpace(direction), groundY, 8)
+					local r = clearAhead(rig, CFrame.Angles(0, -DETOUR_ANGLE, 0):VectorToWorldSpace(direction), groundY, 8)
+					rig.steer = if l > r then DETOUR_ANGLE elseif r > l then -DETOUR_ANGLE elseif math.random() < 0.5 then DETOUR_ANGLE else -DETOUR_ANGLE
 				elseif rig.steer == 0 then
 					rig.steer = if math.random() < 0.5 then DETOUR_ANGLE else -DETOUR_ANGLE
 				end
