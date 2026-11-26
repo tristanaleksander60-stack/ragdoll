@@ -27,6 +27,7 @@ BulletHoles.SKIN_SINK = 0.06 -- studs a hole ball sits under that ellipse
 local HOLE = Color3.fromRGB(26, 24, 30)
 local SCORCH = Color3.fromRGB(92, 88, 84)
 local BODY_HOLE = Anatomy.BLOOD_DARK
+local PHONE = game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").KeyboardEnabled
 
 type Hole = { parts: { BasePart }, at: number }
 local world: { Hole } = {}
@@ -309,12 +310,33 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 	end
 	-- (23 Nov 2026, owner's pictures: a black torn hole with a grey rim and a pale ring, not a purple dot.)
 	local wide = math.clamp(0.36 * (scale or 1), 0.28, 0.75)
+	-- (Owner, 26 Nov 2026: "nye skudhuller, så det ikke bare er det præcis samme skudhul hver gang selvom man skyder med
+	-- den samme pistol"; Config.HOLE_VARIETY): every hole its own: size 80-125 %, an oval that follows how slanted the round
+	-- came in (plus a little of its own), a slightly different tint, either of the two hole pictures, and (not on phones)
+	-- a pale stress ring of its own size and strength, sometimes a small chip torn out of the edge.
+	local vary = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).HOLE_VARIETY == true
+	local tall, across = wide, wide
+	if vary then
+		local size = wide * (0.8 + math.random() * 0.45)
+		local cam = workspace.CurrentCamera
+		local facing = if cam then math.abs(worldNormal:Dot((cam.CFrame.Position - worldAt).Unit)) else 1
+		local stretch = math.clamp(1 / math.max(facing, 0.45), 1, 1.8) * (0.88 + math.random() * 0.24)
+		tall, across = size * stretch, size
+	end
 	hole.Shape = Enum.PartType.Block
-	hole.Size = Vector3.new(0.02, wide, wide)
+	hole.Size = Vector3.new(0.02, tall, across)
 	hole.CFrame = flatOn(worldAt, worldNormal, 0.02) * CFrame.Angles(math.random() * math.pi * 2, 0, 0)
 	hole.Transparency = 1
 	local art = Instance.new("Decal")
-	art.Texture = if (scale or 1) >= 1.35 then "rbxassetid://138114443309934" else "rbxassetid://75824870103399"
+	local big = (scale or 1) >= 1.35
+	if vary and math.random() < 0.3 then
+		big = not big -- (the other picture now and then: no two alike)
+	end
+	art.Texture = if big then "rbxassetid://138114443309934" else "rbxassetid://75824870103399"
+	if vary then
+		local g = 0.82 + math.random() * 0.18
+		art.Color3 = Color3.new(g, g * (0.96 + math.random() * 0.04), g)
+	end
 	art.Face = Enum.NormalId.Right
 	art.Parent = hole
 	hole.Name = "BulletHole"
@@ -324,6 +346,30 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 	weld.Part1 = hole
 	weld.Parent = hole
 	hole.Parent = part
+	if vary and skin and not PHONE then
+		-- The pale stress ring round it (plastic goes white where it bends), its own size and strength.
+		local ringSize = math.max(tall, across) * (1.35 + math.random() * 0.4)
+		local ring = disc(ringSize, Color3.fromRGB(196, 198, 202), flatOn(worldAt, worldNormal, 0.012), 0.55 + math.random() * 0.25)
+		ring.Name = "BulletStress"
+		ring.Anchored = false
+		local rw = Instance.new("WeldConstraint")
+		rw.Part0 = hole
+		rw.Part1 = ring
+		rw.Parent = ring
+		ring.Parent = hole
+		-- Sometimes a small chip torn out of the edge.
+		if math.random() < 0.35 then
+			local side = hole.CFrame.UpVector * (tall * 0.42) * (if math.random() < 0.5 then 1 else -1)
+			local chip = disc(across * (0.3 + math.random() * 0.15), BODY_HOLE, flatOn(worldAt + side, worldNormal, 0.022))
+			chip.Name = "BulletChip"
+			chip.Anchored = false
+			local cw = Instance.new("WeldConstraint")
+			cw.Part0 = hole
+			cw.Part1 = chip
+			cw.Parent = chip
+			chip.Parent = hole
+		end
+	end
 	if mild and not skin then
 		local ring = disc(0.56 * (scale or 1), SCORCH, flatOn(worldAt, worldNormal, 0.02), 0.35)
 		ring.Name = "BulletScorch"

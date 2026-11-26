@@ -49,6 +49,25 @@ function XRayToggle.start()
 	edge.Color = ON
 	edge.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	edge.Parent = b
+	-- (Owner, 26 Nov 2026: "tænk mere ind i telefon"): on a phone the right column is the body card arrow (top), RAGDOLL,
+	-- RELOAD, JUMP and SHOOT; X-RAY sits in the free gap under the arrow and over RAGDOLL, 60 px. Off a phone: right, middle.
+	local function place()
+		local camera = workspace.CurrentCamera
+		local v = if camera then camera.ViewportSize else Vector2.new(1000, 1000)
+		if math.min(v.X, v.Y) <= 500 then
+			b.AnchorPoint = Vector2.new(1, 0)
+			b.Position = UDim2.new(1, -10, 0, 62)
+			b.Size = UDim2.fromOffset(60, 60)
+		else
+			b.AnchorPoint = Vector2.new(1, 0.5)
+			b.Position = UDim2.new(1, -12, 0.42, 0)
+			b.Size = UDim2.fromOffset(64, 64)
+		end
+	end
+	place()
+	if workspace.CurrentCamera then
+		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(place)
+	end
 	gui.Parent = player:WaitForChild("PlayerGui")
 	local function toggle()
 		local on = not DummySkins.xrayIsOn()

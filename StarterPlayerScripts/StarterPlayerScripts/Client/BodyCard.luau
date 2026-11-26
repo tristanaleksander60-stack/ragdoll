@@ -60,6 +60,13 @@ task.spawn(function()
 		local touch = ViewMode.isTouch()
 		b.Size = UDim2.fromOffset(if touch then 32 else 24, 44)
 		b.Position = if touch then UDim2.new(1, -62, 0, 10) else UDim2.new(1, -4, 0, 130)
+		-- (Owner, 26 Nov 2026: "om alle knapper nu er de rigtige steder": on a phone LAB VIEW sits in that corner; the arrow
+		-- goes just left of it then, never on top of it.)
+		local camGui = Players.LocalPlayer.PlayerGui:FindFirstChild("LabCamera")
+		local view = camGui and camGui:FindFirstChild("View", true)
+		if touch and view and view:IsA("GuiObject") and view.Visible and view.AbsoluteSize.X > 0 and (not camGui:IsA("ScreenGui") or camGui.Enabled) then
+			b.Position = UDim2.fromOffset(view.AbsolutePosition.X - g.AbsolutePosition.X - 6, 10)
+		end
 		g.Enabled = Settings.cardHidden() and not ViewMode.isLab()
 		task.wait(0.2)
 	end

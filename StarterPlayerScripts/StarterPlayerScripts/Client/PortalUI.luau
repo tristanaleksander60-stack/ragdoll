@@ -230,6 +230,11 @@ end
 function PortalUI.start()
 	remote = Net.event(Net.Names.Portal)
 	build()
+	-- (Owner, 26 Nov 2026: "tænk mere ind i telefon": on a phone the HudV3 squares are not shown, so MULTIPLAYER is a
+	-- launcher in the left stack under Shop and Menu there (HudMenu.PHONE_KEEP); it opens the hub with its list.)
+	if Config.MP_ICON then
+		Controller.addHudButton({ window = "Servers", label = "Multiplayer", icon = "friends", theme = "rebirth", layoutOrder = 8, onActivated = PortalUI.openHub })
+	end
 	remote.OnClientEvent:Connect(function(kind: unknown, data: unknown)
 		local d = if type(data) == "table" then data :: any else {}
 		if kind == "Open" then

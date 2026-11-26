@@ -20,8 +20,8 @@ Why this order:
 | 1 | Always 3 near you (update: not afraid of weapons; 2 chat, 1 comes all the way, rotating; they come very fast) + a watcher at every machine | `docs/ALWAYS3.md` (read the "Update" at the end) | 3-near built in 0.59.0; the update built in 0.61.0 (place v1118): `FEAR_WEAPONS` false, recruits Pace 2.2, 2 chatters + 1 comer rotating every 15-25 s (Lab assignRoles, Role3). **Left:** the watchers at every machine (stand-ins), new ones spawning out of view |
 | 2 | The MULTIPLAYER icon instead of the portal | the section below | built 0.59.0 (`MP_ICON`, `MP_PORTAL` false); left: phone layout of the window |
 | 3 | **PERFECT PHYSICS:** the hard checks, then falls, landings, lying and get-ups | `docs/RAGDOLL_FEEL.md` ("PERFECT physics" first) | part 1 in 0.62.0 (place v1119): a round's turn and push scale with its force, 0.6x-3x (`SHOT_WEIGHT`, ActiveRagdoll shotReaction). Found already: the speed cap (client sim 180 studs/s, ActiveRagdoll) and the server watchdog (over 220: sent home, Lab). To do: hit impulse at the exact point by weapon force, tone per limb, rest-sleep, piles, buoyancy, get-ups, the 5 bench clips |
-| 4 | **PERFECT BULLET HOLES** + purple splatter on every hit | `docs/BODY_V2.md` 3 and 2b | checked: 2b exists already (BloodFx.wound: 3-12 purple droplets in the shot direction on every hit, landing; skipped only at the part cap); holes exist (BulletHoles, glued to the limb, sized by weapon). PARKED: holes V2 (4 mesh variants, cracks, rim, exit holes, plastic chips) needs new hole art |
-| 5 | The body: X-ray 10/10 (bones can break by force), the blood look, injury stages, bandages, faces | `docs/BODY_V2.md` 1, 1b, 2, 4b | part 1 COMMITTED, NOT YET IN STUDIO (the owner was in Play): 0.63.0 X-RAY button + B key (`XRAY_V2`, Client/XRayToggle, DummySkins.setXray: the nearest 16 / phones 6 within 80 studs, whole skeleton). Patch it into Studio first next run (Config, DummySkins, Main, new XRayToggle), then save. Left: glass shell + blue outline look, mesh skeleton, 1b breaks, 2 blood look, 4b stages/bandages/faces |
+| 4 | **PERFECT BULLET HOLES** + purple splatter on every hit | `docs/BODY_V2.md` 3 and 2b | checked: 2b exists already (BloodFx.wound: 3-12 purple droplets in the shot direction on every hit, landing; skipped only at the part cap); holes exist (BulletHoles, glued to the limb, sized by weapon).  0.63.0: `HOLE_VARIETY` (owner: "nye skudhuller, ikke det samme hver gang"): every hole its own size, oval by angle, tint, picture, stress ring and edge chip (no rings/chips on phones). Still parked: holes V2 (4 mesh variants, cracks, rim, exit holes, plastic chips) needs new hole art |
+| 5 | The body: X-ray 10/10 (bones can break by force), the blood look, injury stages, bandages, faces | `docs/BODY_V2.md` 1, 1b, 2, 4b | part 1 in 0.63.0 (place v1120): X-RAY button + B key (owner: B is fine) (`XRAY_V2`, Client/XRayToggle, DummySkins.setXray: the nearest 16 / phones 6 within 80 studs, whole skeleton). Left: glass shell + blue outline look, mesh skeleton, 1b breaks, 2 blood look, 4b stages/bandages/faces |
 | 6 | Impact smoke and dust, grab-swing-SLAM | `docs/IMPACT_FX.md` | |
 | 7 | **The lab:** the owner's map 1:1, 10x bigger, faster running and sprint | `docs/LAB_TARGET.md` ROUND 3 | |
 | 8 | Lasso, breakable concrete walls, wooden crates | `docs/DESTRUCTION.md` | |
@@ -325,3 +325,13 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - Maturity: keep the gore (13+/17+) or switch it off for all ages? See docs/MATURITY.md.
 - Death effects to sell (fireworks, confetti, ghost, gold sparkle, cartoon blast, R$ 49-99 each): create them as passes and send the ids?
 - Script Sync is off in Studio: turn it on again, or allow localhost in MCP HTTP allow list (faster, cheaper sessions).
+
+## Phone button map (checked 26 Nov 2026, 0.63.0, iPhone landscape 750x381 in the emulator with DevTouch)
+- **Left:** Shop and Menu in row 1, then Multiplayer (`HudMenu.PHONE_KEEP`, `PortalUI` launcher). The move stick is under them.
+- **Top centre:** goal pill and gift (no red ! under `PHONE_QUIET`).
+- **Top right:** first-person eye, with the body-card arrow just left of it. The arrow moves left of LAB VIEW when that shows.
+- **Right column:** X-RAY (60 px, y 62), RELOAD, JUMP.
+- **Right bottom:** SHOOT, with TRY right over it (FirstTwo places TRY from SHOOT's real spot).
+- **Bottom centre:** the hotbar, 62x56 slots.
+- **Studio note:** without DevTouch the emulator reads as a touch laptop and shows the PC sandbox column (1ST/SLOW-MO/REVIVE/RESET), which overlaps JUMP. Real phones never show it.
+- Picture: `art/store/phone_hud_0.63.jpg`.

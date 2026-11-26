@@ -62,7 +62,7 @@ HudMenu.ICONS = MENU_ICONS
 HudMenu.KEEP = { Shop = true, Rewards = true, Places = true, Sandbox = true, Settings = true }
 -- A phone: SHOP beside MENU (one row: the short screen's left edge has the big WEAPONS button
 -- too); REWARDS, PLACES, SANDBOX and SETTINGS in MENU (its badge shows what waits in REWARDS).
-HudMenu.PHONE_KEEP = { Shop = true } -- (GOD MODE sits in MENU on a phone: no room in the column, LayoutCheck)
+HudMenu.PHONE_KEEP = if Config.MP_ICON then { Shop = true, Multiplayer = true } else { Shop = true } -- (MULTIPLAYER under Shop and Menu on a phone: PortalUI) -- (GOD MODE sits in MENU on a phone: no room in the column, LayoutCheck)
 -- The column starts under the big WEAPONS button (HudSlots "Weapons": 68 px down, 58 tall; 46 on a phone).
 Controller.COLUMN_TOP = 144
 C.HUD_CAPTION_MIN = 11 -- (smaller tiles: "Settings" still fits)

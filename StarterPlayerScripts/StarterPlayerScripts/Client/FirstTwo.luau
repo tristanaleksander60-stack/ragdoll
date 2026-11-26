@@ -189,7 +189,7 @@ function FirstTwo.start()
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "FirstTwo"
 	gui.ResetOnSpawn = false
-	gui.IgnoreGuiInset = true
+	gui.IgnoreGuiInset = false
 	gui.DisplayOrder = 5
 	gui.Enabled = false
 	local button = Instance.new("TextButton")
@@ -331,6 +331,18 @@ function FirstTwo.start()
 			if m and inst and boxDistance(inst, r.Position) <= FirstTwo.NEAR and not seated() then
 				near, nearInst = m, inst
 				outline.Adornee = inst
+				-- (Owner, 26 Nov 2026: "tænk mere ind i telefon": on touch the TRY button sits right over SHOOT, wherever SHOOT is.)
+				local shootGui = player.PlayerGui:FindFirstChild("TouchShoot")
+				local shoot = shootGui and shootGui:FindFirstChild("Shoot", true)
+				if shoot and shoot:IsA("GuiObject") and shoot.AbsoluteSize.X > 0 then
+					button.AnchorPoint = Vector2.new(0, 1)
+					button.Position = UDim2.fromOffset(shoot.AbsolutePosition.X, shoot.AbsolutePosition.Y - 10)
+					button.Size = UDim2.fromOffset(shoot.AbsoluteSize.X, shoot.AbsoluteSize.X)
+				else
+					button.AnchorPoint = Vector2.new(1, 1)
+					button.Position = UDim2.new(1, -120, 1, -230)
+					button.Size = UDim2.fromOffset(84, 84)
+				end
 				outline.Parent = player:WaitForChild("PlayerGui")
 				gui.Enabled = true
 			else
