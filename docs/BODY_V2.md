@@ -102,6 +102,61 @@ Exactly picture 2:
   - phones: the same.
 - **Funnel:** "Burial seen" and "Revenge survived".
 
+## 4b. Injury stages, real bandages, changing faces (owner, 26 Nov 2026: "Gør så de har flere stadier end bare 1 når de er skadet og mere realistiske bandager og ændrende ansigtsudtryk")
+The owner's picture shows today's look:
+- the whole torso flat-tinted lavender;
+- one plain white band on a forearm;
+- the same neutral face.
+
+That is one stage only. Make it `INJURY_V2 = true`.
+
+**Stages per body part** (head, torso, each arm, each leg), counted from the hits on that part:
+
+| Stage | Hits on the part | Look | Behaviour |
+|---|---|---|---|
+| 0 Fine | 0 | grey | normal |
+| 1 Bruised | 1-2 | 1-2 small soft-edged lavender bruise patches (decals with soft edges) where it was hit, not the whole part | flinch |
+| 2 Hurt | 3-4 | bigger, darker violet patches that merge; a small purple drip on the ground now and then | holds it (a hand on the hurt arm or torso), limps on a hurt leg, walks slower |
+| 3 Badly hurt | 5+ | deep violet over most of the part | staggers, holds the part, sits down or kneels sometimes to rest, cannot run |
+| 4 Knocked out | | as now (CPR, burial) | |
+
+- The colour blends smoothly between stages (no flat tint).
+- It heals slowly back one stage every 60 s, or at once with a bandage.
+
+**Real bandages** (put on by `FirstAid`: a helper ragdoll kneels, wraps for about 2 s with a short wrap animation; or a ragdoll does it to itself at stage 2-3):
+- **Gauze wrap on arms, legs and torso:**
+  - off-white (235,232,222) with a woven texture;
+  - overlapping wrap ridges (2-3 slightly offset rings, not one flat band);
+  - a loose end with tape;
+  - at stage 3, a small violet seep spot in the middle.
+- **Adhesive plasters** (cross-shaped, skin-beige) on the head or face for stage 1-2.
+- **A head wrap** round the forehead for a hurt head.
+- **An arm sling** for a badly hurt arm (the arm stays bent in it).
+- **A knee wrap** for a hurt leg, and the ragdoll still limps a little.
+- **Removal:** bandages stay until the ragdoll is fully healed or knocked out, then fade.
+- **Cap:** max 4 bandages per ragdoll.
+
+**Changing faces** (decal swap in the ragdolls' own face style, with a quick blink between faces):
+
+| Face | When |
+|---|---|
+| neutral | fine |
+| worried | a gun is pointed at it ("Is that a gun?", hands up: exists) |
+| pain squint | at the moment of a hit |
+| hurt | stage 2: brows up, mouth tight |
+| crying, with small cartoon tears | stage 3 |
+| dizzy (spiral eyes) | while getting up |
+| X eyes or closed eyes | knocked out |
+| angry (brows down) | revenge and attacks |
+| sad | mourning and burial |
+| relieved smile | just bandaged or healed |
+| scared (wide eyes, small mouth) | fleeing |
+
+- The face follows the most important state at that moment (KO > pain flash > angry > scared > crying > hurt > worried > neutral).
+- About 11 face decals, one style. Make them in the same style as the current face.
+
+**Performance:** bruise decals are pooled; max 6 per ragdoll; phones the same, but far ragdolls (40+ studs) show only the stage colour, no decals or bandage detail.
+
 ## 5. Check
 - One quick Play: shoot a dummy (purple splat marks, no holes), knock one out (puddle like picture 2), let CPR fail (burial, line, attack), and toggle X-RAY (looks like picture 1).
 - **Search the code** for leftover gore words and red colours.
