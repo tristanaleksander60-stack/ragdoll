@@ -60,6 +60,22 @@ function OutOfBounds.sendHome(player: Player): boolean
 		return false
 	end
 	busy[player] = true
+	local seatModel = humanoid and humanoid.SeatPart and humanoid.SeatPart:FindFirstAncestorOfClass("Model")
+	if seatModel and (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).CAR_STAY then
+		-- (F56: a driver is never pulled out of the car: the whole car goes home with them in it)
+		local Lab = require(script.Parent:WaitForChild("Lab")) :: any
+		local ok, at = pcall(Lab.originFor, player)
+		if ok and typeof(at) == "Vector3" then
+			seatModel:PivotTo(CFrame.new(at + Vector3.new(0, 6, -40)))
+			for _, d in seatModel:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.AssemblyLinearVelocity = Vector3.zero
+				end
+			end
+		end
+		busy[player] = nil
+		return true
+	end
 	if humanoid and humanoid.SeatPart then
 		humanoid.Sit = false -- (out of the seat first)
 		local weld = humanoid.SeatPart and humanoid.SeatPart:FindFirstChild("SeatWeld")

@@ -665,6 +665,11 @@ function VehicleService.start()
 			-- (V6-5: the creature yard in front of the lab is in play too.)
 			local front = if (Config :: any).LAB_CREATURES then 112 else 75
 			local off = math.abs(away.X) > reach or away.Z > front or away.Z < -96 or away.Y < -20
+			if (Config :: any).CAR_STAY and (Config :: any).LAB_OWNERMAP then
+				-- (F56, owner: "man bliver kicked fra bilerne": those bounds were the OLD small lab; on the big map a car is
+				-- only "off" when it fell out of the world or is far beyond the map)
+				off = away.Y < -20 or Vector2.new(away.X, away.Z).Magnitude > 700
+			end
 			local flipped = car.body.CFrame.UpVector.Y < 0.3
 			if off or flipped then
 				car.badSince = if car.badSince > 0 then car.badSince else now
@@ -677,11 +682,13 @@ function VehicleService.start()
 				-- Off the floor with a driver: the driver gets out and the car goes home.
 				if off and now - car.badSince > 0.5 and not car.ejecting then
 					car.ejecting = true
+					if not (Config :: any).CAR_STAY then
 					-- (The seat's weld goes: that frees the driver even though their screen owns
 					-- their humanoid.)
 					local weld = car.seat:FindFirstChild("SeatWeld")
 					if weld then
 						weld:Destroy()
+					end
 					end
 					task.delay(0.3, function()
 						home(car)

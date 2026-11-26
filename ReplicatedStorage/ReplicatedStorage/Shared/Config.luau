@@ -71,6 +71,7 @@ local Config = {
 	FAST_THREE = true, -- OVERVIEW 0.15: the 3-near check every 0.25 s, recruits sprint (Pace 2.5), one over 110 studs away is set down out of view 30-40 studs behind you first (Lab alwaysThree)
 	FOLIAGE_PASS = true, -- F54: trees, bushes and hedges have no collision (players, cars and bodies pass through); the belt walls are group RagdollBlock (ragdolls only)
 	TREE_CLEAR = true, -- F53: 4 s after the map stands, every tree/bush with its foot within 4 studs of a building, wall, machine or sign is removed (LabOwnerMap build)
+	CAR_STAY = true, -- F56: no automatic eject: a car is only "off" when it fell out of the world or is 700+ studs out (it goes home WITH the driver); OutOfBounds moves the whole car (VehicleService, OutOfBounds)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays
