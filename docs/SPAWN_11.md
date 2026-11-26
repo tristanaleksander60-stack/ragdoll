@@ -17,7 +17,7 @@ Behind `Config.SPAWN_11 = true`. Use the same asset style as `DETAILS_10.md` (Cr
 
 **The 4 LEADERBOARDS** (facing the spawn, OVERVIEW 0.6):
 - in a proper frame: a dark granite base, steel posts, a small roof with lights, and the board's name in 3D letters on top ("MOST KOs", "MOST TIME"…);
-- **#1 STATUES:** in front of each board, a gold statue of that board's current #1 player's avatar on a plinth with their name. It updates when #1 changes; built from the player's HumanoidDescription, gold material, posed. A famous Roblox hook: players want their own statue.
+- **#1 STATUES:** in front of each board, a gold statue of that board's current #1 player's avatar on a plinth. The name is ONLY on a small plaque on the plinth: NO floating text or billboards above the boards (owner: "Fjern teksten over leaderboards"). It updates when #1 changes; built from the player's HumanoidDescription, gold material, posed. A famous Roblox hook: players want their own statue.
 
 **The plaza itself:**
 - **The floor:** patterned stone paving with a big inlaid compass rose in 2 stone colours, and the game's bone logo in the middle. No plain slab.
