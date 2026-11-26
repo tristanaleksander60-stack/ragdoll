@@ -178,6 +178,7 @@ safe("XRayToggle", function() require(Client:WaitForChild("XRayToggle")).start()
 safe("GuardDogClient", function() require(Client:WaitForChild("GuardDogClient")).start() end) -- GUARD_DOG: tap a limb to send the dog, the dog button, GOOD BOY!
 safe("FlightTrail", function() require(Client:WaitForChild("FlightTrail")).start() end) -- IMPACT_FX: smoke trail behind flying ragdolls
 safe("NoBlackScreen", function() require(Client:WaitForChild("NoBlackScreen")).start() end) -- F3: the camera stays out of your body while you are knocked
+safe("PhoneClean", function() require(Client:WaitForChild("PhoneClean")).start() end) -- F6: only what is needed on a phone
 safe("PlazaClient", function() require(Client:WaitForChild("PlazaClient")).start() end) -- V9-0d: the town square (stage dance, photo spot, its sounds)
 safe("HudV3", function() require(Client:WaitForChild("HudV3")).start() end) -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)
 safe("RewardsUI", function() require(Client:WaitForChild("RewardsUI")).start() end) -- REWARDS: daily, play gift, dares, trophies, group (round 5)

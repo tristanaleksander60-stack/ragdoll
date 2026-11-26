@@ -422,7 +422,15 @@ function TouchShoot.start()
 			if rl then
 				local toy = gunPicked()
 				local text = if toy then AmmoClient.text(toy.id) else nil
-				rl.Visible = text ~= nil
+				-- (F6: on a phone RELOAD shows only when the clip is low or empty.)
+				local low = true
+				if text and (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).PHONE_CLEAN and text ~= "RELOAD" then
+					local a, b = string.match(text, "(%d+)%s*/%s*(%d+)")
+					if a and b then
+						low = tonumber(a) :: number <= math.max(1, math.floor((tonumber(b) :: number) * 0.3))
+					end
+				end
+				rl.Visible = text ~= nil and low
 				local word = if text == "RELOAD" then "..." elseif text then "RELOAD" .. string.char(10) .. text else ""
 				if rl.Text ~= word then
 					rl.Text = word
