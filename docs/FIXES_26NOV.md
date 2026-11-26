@@ -825,14 +825,15 @@ No shape, no material, nothing that says "machine". This is what F49 means, and 
 **Check:** in X-ray, shoot the belly, the chest, the lower back and the upper back from the front, the back and the side with a pistol, a rifle and a sniper. Each bullet shows on the right bone, pointing the right way, with cracks or breaks by force.
 
 ## F60 Your shots fade after 4 newer ones: smoothly, not all at once (owner: "Gør så ens skud forsvinder efter 4 skud, ikke forsvinder med det samme, men bliver mindre og mindre tydelige")
-**The rule** (per player, `SHOT_FADE = true`):
-- Each player's newest 4 bullet holes (on ragdolls, walls, crates and the ground) stay fully visible.
-- When the 5th newest is pushed out of the top 4, it starts to FADE: over about 3 s it gets lighter and smaller (Transparency 0 → 1, scale 1 → 0.6), then it is removed.
-- The 6th, 7th and so on fade the same way, each starting when it drops out of the top 4. A burst of fire gives a soft trail of fading marks, never a sudden pop.
+**The rule (owner clarified: "Altså på ragdollen": it is about the holes ON THE RAGDOLL, `SHOT_FADE = true`):**
+- **Each RAGDOLL keeps its newest 4 bullet holes** fully visible.
+- **When a 5th hole lands on that ragdoll,** the oldest starts to FADE: over about 3 s it gets lighter and smaller (Transparency 0 → 1, scale 1 → 0.6), then it is removed.
+- Every later hole pushes the next oldest out the same way, so a burst gives a soft trail of fading holes, never a sudden pop.
+- **Only the holes on ragdolls follow this rule.** Holes in walls, crates and the ground keep their own rules (`DESTRUCTION.md`: cracks, planks, fade after 30 s).
 - **What fades with the hole:** its purple splat (2b) and its X-ray bullet (F43) fade together with it, so the body never keeps old marks the player cannot see.
 - **Automatic weapons:** the same rule. At high fire rates the oldest fade quicker (about 1.5 s), so there are never more than about 8 marks fading at once.
 - **Shotguns:** one shot's pellet cluster counts as ONE shot (its holes stay and fade together).
-- **Other players' shots** follow the same rule for that player (in multiplayer, each player has their own 4).
+- **Multiplayer:** the 4 count per ragdoll, whoever shot.
 - **Kept as they are:** the F47 bullet picking (after death) and the bone BREAKS (1b) stay as they are. Only the holes, splats and slugs fade.
 - **Lag-free:** pooled decals and parts; the fade is one client tween per mark.
 - **Check:** fire 10 single shots at a dummy. Only the last 4 are sharp, and the older ones visibly fade one by one.
