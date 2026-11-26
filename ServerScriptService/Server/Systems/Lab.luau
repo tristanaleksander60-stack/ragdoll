@@ -945,7 +945,13 @@ local function alwaysThree(plot: Plot, now: number)
 						table.insert(nearList, model)
 					end
 				elseif not slot.target and not slot.socialKind then
-					table.insert(far, { slot = slot, model = model, d = d })
+					-- (OVERVIEW 0.15: the 3 near come first: a free one, else a road walker, else a watcher; never a demo, runner or TRY one)
+					local watch = model:GetAttribute("Watch")
+					if not (Config :: any).FAST_THREE then
+						table.insert(far, { slot = slot, model = model, d = d })
+					elseif watch ~= "Demo" and watch ~= "NeverZero" and model:GetAttribute("TryFor") == nil then
+						table.insert(far, { slot = slot, model = model, d = d + (if watch == "Walk" then 40 elseif watch ~= nil then 80 else 0) })
+					end
 				end
 			end
 		end
@@ -965,9 +971,25 @@ local function alwaysThree(plot: Plot, now: number)
 		local spot = Vector3.new(root.Position.X + math.cos(angle) * r, if pick.slot.homeY ~= 0 then pick.slot.homeY else pick.slot.position.Y, root.Position.Z + math.sin(angle) * r)
 		local walked = pick.d <= THREE_RUN_FROM
 		recruits[pick.model] = { slot = pick.slot, untilAt = now + THREE_GIVE_UP, walked = walked, player = player }
+		if (Config :: any).FAST_THREE then
+			pick.model:SetAttribute("Watch", nil) -- (taken from its machine or its walk: the 3 near come first)
+		end
 		pick.slot.roamHome = spot
 		pick.slot.nextRoamAt = now + THREE_GIVE_UP + 1
-		pick.model:SetAttribute("Pace", if walked then 1.4 else 2.2) -- (ALWAYS3 update: they come FAST)
+		pick.model:SetAttribute("Pace", if (Config :: any).FAST_THREE then (if walked then 1.6 else 2.5) elseif walked then 1.4 else 2.2) -- (ALWAYS3 update: they come FAST; 0.15: a sprint)
+		if (Config :: any).FAST_THREE and pick.d > 110 then
+			-- (OVERVIEW 0.15: too far to arrive in 2-3 s: set down out of view 30-40 studs behind the player, then it sprints in)
+			local back = -root.CFrame.LookVector * Vector3.new(1, 0, 1)
+			local at = root.Position + (if back.Magnitude > 0.1 then back.Unit else Vector3.zAxis) * (30 + math.random() * 10)
+			local params = RaycastParams.new()
+			params.FilterType = Enum.RaycastFilterType.Exclude
+			params.FilterDescendantsInstances = { character :: Instance, Workspace:FindFirstChild("Dummies") :: Instance }
+			local hit = Workspace:Raycast(at + Vector3.new(0, 40, 0), Vector3.new(0, -120, 0), params)
+			if hit then
+				pick.model:SetAttribute("Parked", nil)
+				pcall(DummyControl.move, pick.model, CFrame.lookAt(hit.Position + Vector3.new(0, 3.2, 0), Vector3.new(root.Position.X, hit.Position.Y + 3.2, root.Position.Z)))
+			end
+		end
 		pick.model:SetAttribute("Home", spot)
 		pick.model:SetAttribute("HomeLook", Vector3.new(root.Position.X, spot.Y, root.Position.Z))
 	end
@@ -1020,7 +1042,7 @@ local function watch(dt: number)
 	local now = os.clock()
 	local doThree = (Config :: any).ALWAYS_THREE == true and now >= threeAt
 	if doThree then
-		threeAt = now + 0.5
+		threeAt = now + (if (Config :: any).FAST_THREE then 0.25 else 0.5) -- (OVERVIEW 0.15: checked every 0.25 s)
 	end
 	for _, plot in plots do
 		for _, slot in plot.slots do

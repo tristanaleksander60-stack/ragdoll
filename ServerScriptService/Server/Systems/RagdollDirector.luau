@@ -22,6 +22,7 @@ local function inUse(m: Model, pe: BasePart): boolean
 	local hitAt = m:GetAttribute("ServerHitAt")
 	return m:GetAttribute("Held") == true or m:GetAttribute("InMachine") ~= nil or m:GetAttribute("MachineHidden") ~= nil
 		or watch == "Demo" or watch == "NeverZero" or m:GetAttribute("TryFor") ~= nil
+		or (type(m:GetAttribute("Pace")) == "number" and (m:GetAttribute("Pace") :: number) >= 1.4) -- (a recruit or runner on its way)
 		or pe.AssemblyLinearVelocity.Magnitude > 6
 		or (type(hitAt) == "number" and workspace:GetServerTimeNow() - hitAt < 10)
 end

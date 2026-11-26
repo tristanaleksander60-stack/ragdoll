@@ -13,7 +13,8 @@ local Workspace = game:GetService("Workspace")
 
 local Watchers = {}
 
-Watchers.NEAR = 5
+Watchers.NEAR = 3
+Watchers.KEEP_FREE = 4 -- (OVERVIEW 0.15: a watcher is only taken while this many free ones stay for the 3 near the player)
 Watchers.REACH = 90 -- (F45: no stand-ins any more, so real watchers come a little further out)
 Watchers.LINE_GAP = 6
 Watchers.LINES = { "Have you tried it?", "Go on, press it.", "I'm not going in there.", "I've seen things.", "It's my turn next. Maybe.", "Did you see that one fly?" }
@@ -46,7 +47,20 @@ local function usable(m: Model?): boolean
 end
 
 local function free(m: Model): boolean
-	return usable(m) and m:GetAttribute("Watch") == nil
+	if not (usable(m) and m:GetAttribute("Watch") == nil) then
+		return false
+	end
+	-- (OVERVIEW 0.15: one within 35 studs of a player belongs to the 3 near them; never taken away to a machine)
+	local pe = m:FindFirstChild("LowerTorso")
+	if pe and pe:IsA("BasePart") then
+		for _, p in Players:GetPlayers() do
+			local r = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+			if r and r:IsA("BasePart") and (r.Position - pe.Position).Magnitude < 35 then
+				return false
+			end
+		end
+	end
+	return true
 end
 
 local function release(m: Model?)
@@ -85,10 +99,16 @@ local function step()
 			local r = ranked[i]
 			want[r.s.id] = true
 			local m = mine[r.s.id]
-			if not usable(m) then
+			if not usable(m) or (m :: Model):GetAttribute("Watch") ~= r.s.id then
 				release(m)
 				-- the nearest free ragdoll takes the spot
 				local best, bestD = nil :: Model?, math.huge
+				local freeCount = 0
+				for _, d in dummies:GetChildren() do
+					if d:IsA("Model") and usable(d) and d:GetAttribute("Watch") == nil then
+						freeCount += 1
+					end
+				end
 				for _, d in dummies:GetChildren() do
 					local pe = d:FindFirstChild("LowerTorso")
 					if d:IsA("Model") and pe and pe:IsA("BasePart") and free(d) then
@@ -98,7 +118,7 @@ local function step()
 						end
 					end
 				end
-				if best then
+				if best and freeCount > Watchers.KEEP_FREE then
 					mine[r.s.id] = best
 					best:SetAttribute("Watch", r.s.id)
 					best:SetAttribute("Home", r.w)

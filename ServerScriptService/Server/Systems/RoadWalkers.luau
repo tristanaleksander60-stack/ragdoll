@@ -12,7 +12,8 @@ local Workspace = game:GetService("Workspace")
 
 local RoadWalkers = {}
 
-RoadWalkers.GROUPS = 3
+RoadWalkers.GROUPS = 2
+RoadWalkers.RESERVE = 4
 RoadWalkers.SIZE = Vector2.new(2, 3)
 RoadWalkers.PACE = 0.8
 RoadWalkers.CHAT_EVERY = Vector2.new(20, 40)
@@ -58,9 +59,23 @@ local function ok(m: Model): boolean
 		and m:GetAttribute("InMachine") == nil and m:GetAttribute("Role3") == nil and (st == nil or st == "Standing" or st == "Walking")
 end
 
+local function nearAPlayer(m: Model): boolean
+	-- (OVERVIEW 0.15: within 35 studs of a player it belongs to the 3 near them)
+	local pe = m:FindFirstChild("LowerTorso")
+	if pe and pe:IsA("BasePart") then
+		for _, p in Players:GetPlayers() do
+			local r = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+			if r and r:IsA("BasePart") and (r.Position - pe.Position).Magnitude < 35 then
+				return true
+			end
+		end
+	end
+	return false
+end
+
 local function free(m: Model): boolean
 	local st = m:GetAttribute("RagdollState")
-	return m:GetAttribute("Watch") == nil and m:GetAttribute("Held") ~= true and m:GetAttribute("Vital") ~= "Dead" and m:GetAttribute("TryFor") == nil
+	return not nearAPlayer(m) and m:GetAttribute("Watch") == nil and m:GetAttribute("Held") ~= true and m:GetAttribute("Vital") ~= "Dead" and m:GetAttribute("TryFor") == nil
 		and m:GetAttribute("InMachine") == nil and m:GetAttribute("Role3") == nil and m:GetAttribute("MachineHidden") == nil
 		and (st == nil or st == "Standing" or st == "Walking")
 end
@@ -94,8 +109,8 @@ local function newGroup(o: Vector3, dummies: Instance, plot: number?): Group?
 			table.insert(pool, d)
 		end
 	end
-	if #pool < 2 then
-		return nil
+	if #pool < 2 + RoadWalkers.RESERVE then
+		return nil -- (OVERVIEW 0.15: always keep RESERVE free ones for the 3 near the player)
 	end
 	local lead = pool[math.random(1, #pool)]
 	local lp = (pelvisOf(lead) :: BasePart).Position

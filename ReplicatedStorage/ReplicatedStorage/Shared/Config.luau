@@ -68,6 +68,7 @@ local Config = {
 	NO_DEATH_FREEZE = true, -- F46: a dead or knocked-out body that hangs still in the air for 0.6 s is unanchored and pushed down (Systems/Unstick deathGuard)
 	LAG_GUARD = true, -- OVERVIEW 0.1: on each screen no light casts shadows, lights beyond 140 studs are off, every sign/billboard has a view distance (150), phones: no canopy shadows (Client/LagGuard)
 	RAGDOLL_DIRECTOR = true, -- OVERVIEW 0.1 B: ragdolls 140+ studs from every player and not in use are Parked (the simulating screen skips their brain and pose); woken within 120 (Systems/RagdollDirector)
+	FAST_THREE = true, -- OVERVIEW 0.15: the 3-near check every 0.25 s, recruits sprint (Pace 2.5), one over 110 studs away is set down out of view 30-40 studs behind you first (Lab alwaysThree)
 	TRY_GUIDE_LINE = false, -- map round 2 (owner: "a yellow rope line across the grass"): no guide line to the next TRY machine (FirstTwo); the TRY button and the goal line stay
 	MP_ICON = true, -- (owner, 26 Nov 2026) the Multiplayer window from a square under Lab (HudV3)
 	MP_PORTAL = false, -- the multiplayer portal in the world hidden (PortalService); the SINGLEPLAYER portal stays
