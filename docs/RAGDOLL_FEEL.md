@@ -55,6 +55,72 @@ The best Roblox ragdoll games are Hyper Realistic Ragdoll, Bloody Ragdoll Physic
    - grunts on hits, a groan on landing, heavy breathing while getting up. No voices for the dead.
 10. **Faces:** pain squint on a hit, eyes closed when knocked out, dizzy eyes on the get-up.
 
+## SMOOTH AND REAL, NOT CLUMSY (owner, 26 Nov 2026 late: "Planen mangler at gøre ragdolls smooth så de er mere realistiske og ikke så klodsede")
+**Why they look clumsy today** (read in the code):
+- **Hand-made sine waves, not real motion:** the walk, run, limp and crawl are hand-coded sine waves in `Client/DummyLife.luau` `gaitPose`. A few joints swing back and forth: the hip ±22 degrees, the knee, the arms. There is:
+  - no heel-to-toe roll and no push-off;
+  - no hip sway, no shoulder counter-turn, no weight shift;
+  - the same swing at every speed;
+  - feet that slide when the stride does not match the speed.
+- **A floating pelvis:** the server holds it at one fixed height by the `lift` (`ActiveRagdoll` `updateMoving`), so the body glides like a cardboard figure; the legs do not carry it.
+- **Snaps:** standing, walking, talking, looking and turning switch poses with little or no blending, so they pop.
+- **Stepping:** the animation runs at a lower rate in the middle distance, so you can see it step.
+- **A blocky body:** 15 separate R15 blocks with seams at every joint (BODY_V2 4c).
+
+**The fix: S1 SMOOTH MOTION** (behind `Config.SMOOTH_MOTION = true`; client animation in DummyLife, server movement in ActiveRagdoll):
+1. **Real human animation clips instead of sine waves:**
+   - use a Roblox-made animation package (those work in every game): pick the most natural, realistic one (Rthro or the Adidas packs; never Zombie, Toy or Cartoony for normal walking);
+   - the clips: idle (breathing and weight shift), walk, jog, run, sprint, start, stop, turn-in-place left and right (for F73), a limp walk, a crawl, and talk gestures (point, shrug, nod, wave, laugh). Any clip missing from the packages: make it in Studio's Animation Editor and publish it to the group;
+   - play them with an `Animator` on the rig, so the `AnimationConstraint`s (the active ragdoll's joints) follow the clips with physics, and hits still knock limbs off their pose.
+   - If the Animator cannot drive the AnimationConstraints in this rig, read the clips' keyframes (`KeyframeSequenceProvider`) once on the client and write the joints' `Transform` from them yourself (still real motion, not sine waves).
+2. **A speed blend with no foot sliding:**
+   - idle, walk, jog and run play together with weights from the real ground speed (`AnimationTrack:AdjustWeight`), so the gait changes smoothly as it speeds up;
+   - each clip's playback speed is `ground speed / the clip's own speed` (`AdjustSpeed`), so the feet stay planted.
+3. **Layers on top of the walk:**
+   - the upper-body gestures (talking, pointing, waving, holding a hurt arm) play on top of the walk with only upper-body keys;
+   - LOOK AT YOU (the head and the chest) stays on top of everything.
+4. **Never a snap:** every change of clip or state fades over 0.2-0.3 s (`Play(fadeTime)`), and every hand-made pose (hit reactions, braces) blends in and out over at least 0.15 s.
+5. **The body carries its weight** (server, `updateMoving`):
+   - **the hips:** the pelvis bobs with the steps (the lift's target follows the gait: down at each foot strike, up mid-stride, about 0.15-0.25 studs), and the lift is softer, so the legs look like they carry the body;
+   - **acceleration:** a lean forward when speeding up, a lean back and a small settle when stopping (about 0.4 s);
+   - **turns:** a small lean into a turn at speed; the even, capped turn from F73;
+   - **idle:** a weight shift from foot to foot every few seconds, and breathing.
+6. **Feet on the ground** (client, within 40 studs): one `IKControl` per foot puts it on the ground under it (slopes, stairs, kerbs, the plaza step), so feet never float or sink.
+   - The same tool for the hands where they must touch something: CPR hands on the chest, a hand on a hurt limb, hands on the edge when climbing out of water (F78).
+   - Phone: at most 5 bodies with foot IK.
+7. **Smooth at every distance:**
+   - full animation every frame within 60 studs on every device;
+   - a lower rate only beyond 60 studs, where steps cannot be seen, with a hysteresis border (in at 60, out at 70) and a crossfade, never a jump.
+8. **Smooth on the network:**
+   - near bodies are simulated by the nearby player's own client (ownership, with F65's hysteresis: 15 studs, 3 s), so they move at the screen's frame rate;
+   - never set CFrame directly on a moving body in view (only out of view);
+   - a hand-off of ownership never teleports or hitches.
+9. **The fall, the lying and the get-up are the RAGDOLL_FEEL upgrade below (items 1-6):**
+   - a tone per limb;
+   - balance recovery with stumble steps;
+   - realistic masses and joint friction;
+   - the landing sequence;
+   - get-ups chosen by how it lies and matched to the lying pose;
+   - hurt behaviour.
+
+   Build them in the SAME pass as S1, with real get-up clips where the packages have them.
+10. **Cost:**
+    - one Animator per near body;
+    - a few tracks each;
+    - IK only near you;
+    - all of it on the client except the pelvis bob and the leans (server numbers).
+
+    Phones keep their caps (Part C of `RAGDOLL_DIRECTOR.md`).
+
+**S2 SMOOTH BODY:** the skinned body with real fingers, `BODY_V2.md` 4c. Do it right after S1, so the smooth motion shows on a smooth body. The R15 parts stay as the physics skeleton; the skinned mesh follows them.
+
+**Check (the owner):**
+- ragdolls walk, jog, run, stop and turn like people: heel to toe, the hips swaying, the arms swinging naturally, the feet not sliding;
+- no pose pops when they start talking, turn or stop;
+- they fall, land and get up smoothly;
+- no seams at the joints;
+- the hands have fingers.
+
 ## The upgrade (build in this order)
 1. **A tone per limb** (0-1) replacing global states where they are on or off:
    - hits lower the struck limb's tone for 0.3-0.8 s, then it returns;
