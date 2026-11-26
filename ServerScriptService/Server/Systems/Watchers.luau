@@ -18,6 +18,7 @@ Watchers.KEEP_FREE = 4 -- (OVERVIEW 0.15: a watcher is only taken while this man
 Watchers.REACH = 90 -- (F45: no stand-ins any more, so real watchers come a little further out)
 Watchers.LINE_GAP = 6
 Watchers.LINES = { "Have you tried it?", "Go on, press it.", "I'm not going in there.", "I've seen things.", "It's my turn next. Maybe.", "Did you see that one fly?" }
+Watchers.REACT_LINES = { "WHOA!", "Again! Again!", "Ooh, that looked bumpy!", "Did you SEE that?", "Better him than me!", "Ten out of ten!" }
 
 local assigned: { [Player]: { [string]: Model } } = setmetatable({}, { __mode = "k" }) :: any
 local lastLine: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
@@ -140,6 +141,46 @@ local function step()
 						w:SetAttribute("MoodSay", nil)
 					end
 				end)
+			end
+		end
+		-- (OVERVIEW 0.7 LEFT, Config.WATCHER_REACT) the watchers REACT when their machine runs: a body in a machine (InMachine
+		-- or MachineHidden) within 24 studs of a watcher's spot -> it cheers for 3 s with a line (at most every 6 s each)
+		if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).WATCHER_REACT then
+			local busy: { Vector3 } = {}
+			for _, d in dummies:GetChildren() do
+				local pe = d:FindFirstChild("LowerTorso")
+				if pe and pe:IsA("BasePart") and (d:GetAttribute("InMachine") ~= nil or d:GetAttribute("MachineHidden") ~= nil) then
+					table.insert(busy, pe.Position)
+				end
+			end
+			if #busy > 0 then
+				for _, w in mine do
+					local wp = w and w:FindFirstChild("LowerTorso")
+					if w and wp and wp:IsA("BasePart") and usable(w) and os.clock() - ((w:GetAttribute("ReactAt") :: number?) or 0) > 6 then
+						for _, b in busy do
+							if (b - wp.Position).Magnitude < 24 then
+								w:SetAttribute("ReactAt", os.clock())
+								local line = Watchers.REACT_LINES[math.random(1, #Watchers.REACT_LINES)]
+								local mood = w:GetAttribute("Mood")
+								if mood == nil then
+									w:SetAttribute("Mood", "Cheer")
+								end
+								w:SetAttribute("MoodSay", line)
+								task.delay(3, function()
+									if w.Parent then
+										if w:GetAttribute("Mood") == "Cheer" then
+											w:SetAttribute("Mood", nil)
+										end
+										if w:GetAttribute("MoodSay") == line then
+											w:SetAttribute("MoodSay", nil)
+										end
+									end
+								end)
+								break
+							end
+						end
+					end
+				end
 			end
 		end
 		-- the ones no longer near go back to roaming
