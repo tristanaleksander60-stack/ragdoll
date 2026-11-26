@@ -656,6 +656,43 @@ The owner still sees lamp posts standing in the middle of walkways.
 - **Ragdolls that run to you** (`ALWAYS3`) go to about 36, so they still keep up.
 - **Check:** walk from the spawn to the Danger Zone on NORMAL. It must feel brisk; time it and write it in State.
 
+## F52 The SWEEPER and the SHREDDER are "pure AI slop": rebuild them for real (owner's screenshot)
+**Today:**
+- **The sweeper:** a flat, bright-yellow polygon disc on the grass, an orange plank as the beam, a dark cube as the pivot, and a lamp post standing ON the pad.
+- **The shredder:** a black rectangle with a railing and a yellow box.
+
+No shape, no material, nothing that says "machine". This is what F49 means, and these two go FIRST.
+
+**THE SWEEPER, rebuilt as an arena** (our own design):
+- **The platform:** round, raised about 1.5 studs, with a padded rubber floor (a dark blue-grey rubber material, subtle tile seams) and a yellow-and-black hazard ring round its edge (a texture, not a flat colour).
+- **Edge and access:** soft padded bumpers round the edge with 2 gaps; steps up at each gap.
+- **The central hub:** a cylindrical motor housing with bolts, vents and a turning cap, and a warning beacon on top that spins while it runs.
+- **The arm:**
+  - a thick padded foam beam (red and white stripes, rounded ends) on a steel core that shows at the hub;
+  - it sweeps just above the floor;
+  - it turns smoothly on the CLIENT (`MACHINES_10.md` 3.22: 3 speeds, flinging ragdolls, the jump-the-beam challenge).
+- **The control podium** at the edge: a big lever, a speed dial and a red button; the framed "SWEEPER" sign (F39).
+- **Nothing on the platform:** no lamp post (it moves off the pad, F40 extended to attraction pads).
+
+**THE SHREDDER, rebuilt as cartoon "Tumble Rollers"** (no gore):
+- **The machine:** a steel machine frame over a sunken pit, with 3 big visible rollers covered in rounded rubber bumps (no blades or teeth) that turn with a grinding hum.
+- **In:** a short conveyor belt feeds the rollers from a hopper ("PUT RAGDOLL HERE" glow).
+- **Out:** a chute on the far side spits the ragdoll out flat like paper, folded; it pops back to shape (`MACHINES_10.md` 3.21).
+- **Safety and controls:**
+  - a yellow safety railing with hazard stripes;
+  - warning lights;
+  - a control box with a big lever and a red button;
+  - grease stains and bolts.
+- **The pit:** dark steel walls with ribs and a drainage grate. NOT a flat black rectangle.
+
+**For both:**
+- **Materials:** real ones (Metal, DiamondPlate, Rubber, Foil) with colour variation; edges bevelled or trimmed; 5+ small details each (bolts, cables, labels, vents, lights).
+- **Lag-free:** meshes where possible; the moving parts animate on the client only near you.
+
+**The rule for ALL floors and pads** (the same problem everywhere): no flat single-colour polygon discs or slabs. Every pad gets a fitting material or texture (rubber, concrete, sand, dirt, metal) with an edge or trim.
+
+**Check:** close-ups and a medium view of both; a harsh score "would a player call this a box or slop?" They must be 9+.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
