@@ -235,3 +235,20 @@ This OVERRIDES the earlier refill details where they disagree: no parallel spawn
 **Check:**
 - in an empty spot, knock out everyone near: one existing ragdoll comes running first; if none exist, exactly one appears from behind you, then the cooldown;
 - in a busy spot, nothing spawns; nearby ones come over.
+
+## BUG: the 3rd only comes after ALL 3 are knocked out (owner, 26 Nov 2026: "Sørg for, at med det samme der kun er 2 i nærheden af en, så kommer den 3. løbende, så man ikke skal dræbe dem alle 3, før der kommer en løbende")
+**Today:** the refill seems to wait for 0 near (only NEVER ZERO fires).
+
+**The fix (this is the trigger, written as plainly as possible):**
+- **The moment** the number of LIVING ragdolls within 35 studs of the player drops from 3 to 2, or to 1, ONE ragdoll starts RUNNING to the player within 0.25 s. It does not wait for 0. It does not wait for the others to die.
+  - A ragdoll that was just knocked out stops counting at once, even while its body still lies there.
+- **Who comes:** the FINAL RULE order:
+  1. an existing free ragdoll from AROUND (within 70 studs, or on screen), which now RUNS over (a jog at about 30, a sprint at about 40 if it is far), not walks;
+  2. else an existing free one within 150 studs, sprinting;
+  3. else ONE spawned behind the player out of view (the 8 s cooldown).
+- **Each missing one** gets its own runner, started 0.5 s apart.
+- **Check the code path:**
+  - the refill logic must run on the "count < 3" condition, not only on "count == 0";
+  - the knocked-out state must remove the ragdoll from the count immediately;
+  - the cooldown and hysteresis from the other sections must not block priority 1 (sending an existing one).
+- **Check:** knock out ONE of the 3 near you. Within half a second another is visibly running toward you. Do the same with 2.
