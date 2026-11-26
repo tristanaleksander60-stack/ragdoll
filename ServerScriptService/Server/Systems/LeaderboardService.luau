@@ -13,6 +13,7 @@
 
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
+local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any -- (F61)
 local UserService = game:GetService("UserService")
 local Workspace = game:GetService("Workspace")
 
@@ -114,10 +115,67 @@ end
 
 -- The ten a board shows: the global top with everyone here merged on top (their number now), best
 -- first; ties keep the earlier name. Pure on its inputs (tests call it).
+-- F61 (owner: "Fjern mig selv fra alle leaderboards"; Config.LEADERBOARD_EXCLUDE): the owner (the creator, the group's owner,
+-- anyone Owner.isOwner), the admins (Systems/Admins), the owner's known accounts and the listed ids are skipped on every
+-- board and never sent to the stores. Old store entries are left alone; they are just not shown.
+local excluded: { [number]: boolean } = {}
+function LeaderboardService.isExcluded(userId: number): boolean
+	if excluded[userId] then
+		return true
+	end
+	for _, id in Config.LEADERBOARD_EXCLUDE or {} do
+		if id == userId then
+			return true
+		end
+	end
+	local ok, listed = pcall(function()
+		return (require(script.Parent:WaitForChild("Admins")) :: any).listed(userId)
+	end)
+	return ok and listed == true
+end
+function LeaderboardService.excludeFromStart()
+	task.spawn(function()
+		if game.CreatorType == Enum.CreatorType.User then
+			excluded[game.CreatorId] = true
+		else
+			local ok, info = pcall(function()
+				return game:GetService("GroupService"):GetGroupInfoAsync(game.CreatorId)
+			end)
+			if ok and type(info) == "table" and type(info.Owner) == "table" and type(info.Owner.Id) == "number" then
+				excluded[info.Owner.Id] = true
+			end
+		end
+		for _, name in Config.LEADERBOARD_EXCLUDE_NAMES or {} do
+			local ok, id = pcall(function()
+				return Players:GetUserIdFromNameAsync(name)
+			end)
+			if ok and type(id) == "number" then
+				excluded[id] = true
+			end
+		end
+	end)
+	local function check(p: Player)
+		local ok, own = pcall(function()
+			return (require(script.Parent:WaitForChild("Owner")) :: any).isOwner(p)
+		end)
+		if ok and own == true then
+			excluded[p.UserId] = true
+		end
+	end
+	for _, p in Players:GetPlayers() do
+		check(p)
+	end
+	Players.PlayerAdded:Connect(check)
+end
+
 function LeaderboardService.merge(global: { Row }, here: { Row }): { Row }
 	local byId: { [number]: Row } = {}
 	local list: { Row } = {}
+	local skip = Config.LEADERBOARD_EXCLUDE ~= nil
 	for _, row in global do
+		if skip and LeaderboardService.isExcluded(row.userId) then
+			continue
+		end
 		if not byId[row.userId] then
 			local copy = table.clone(row)
 			byId[row.userId] = copy
@@ -125,6 +183,9 @@ function LeaderboardService.merge(global: { Row }, here: { Row }): { Row }
 		end
 	end
 	for _, row in here do
+		if skip and LeaderboardService.isExcluded(row.userId) then
+			continue
+		end
 		local seen = byId[row.userId]
 		if seen then
 			seen.value = math.max(seen.value, row.value)
@@ -414,6 +475,9 @@ end
 -- of what is stored and theirs (two servers, or a stale one, never lower a board). Within budget:
 -- at most one write per board per player per BOARD_EVERY, and once when they leave.
 local function writeFor(player: Player)
+	if Config.LEADERBOARD_EXCLUDE ~= nil and LeaderboardService.isExcluded(player.UserId) then
+		return -- (F61: never sent)
+	end
 	local mine = written[player] or {}
 	written[player] = mine
 	for _, board in LeaderboardService.BOARDS do
@@ -586,6 +650,9 @@ function LeaderboardService.buildLabBoards()
 end
 
 function LeaderboardService.start(labOrigin: Vector3)
+	if Config.LEADERBOARD_EXCLUDE ~= nil then
+		LeaderboardService.excludeFromStart() -- (F61)
+	end
 	if ProgressService.usesDataStores() then
 		for _, board in LeaderboardService.BOARDS do
 			local ok, store = pcall(function()

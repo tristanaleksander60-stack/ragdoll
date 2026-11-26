@@ -320,6 +320,12 @@ end
 -- Shows a hit (tests and LayoutCheck can call it too). before: the pulse before the hit; model:
 -- the body (a new one starts the list over).
 function HitInfo.show(line: string, before: number?, model: Model?)
+	-- (F66, owner: "Fjern denne på telefon"; Config.PHONE_HIT_CARD): no hit card on a phone (touch, no keyboard); the KO pop,
+	-- the sounds, the splatter and the reactions stay.
+	local UIS = game:GetService("UserInputService")
+	if (Config :: any).PHONE_HIT_CARD == false and UIS.TouchEnabled and not UIS.KeyboardEnabled then
+		return
+	end
 	local f, t, st = box, topLabel, statusLabel
 	if not f or not t or not st then
 		return
