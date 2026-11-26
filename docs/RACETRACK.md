@@ -5,18 +5,21 @@ The owner's top view shows the lab compound in the north and middle, and a big e
 
 Behind `Config.RACETRACK = true`. It is part of THE MAP (OVERVIEW item 1b).
 
-## 1. Where and how big
-- **Area:** south of the railway's south line (railway z 420) to the map's south edge, extended as needed: about x -500..450, z 450..1000 (lab-space studs, `OwnerMapPlan` axes). Grow the grass base and push the backdrop's forest belt and hills further south, so the track sits INSIDE the landscape (forest edge round it, hills behind).
-- **The circuit:**
-  - a real F1-style layout, about 2,500-3,500 studs a lap;
-  - a long start/finish straight along the north side (parallel to the railway, visible from the station);
-  - a hairpin at each end;
-  - a fast sweeping S-section;
-  - a chicane;
-  - a long back straight;
-  - one banked corner.
-  - **No self-crossing:** use a bridge if the layout crosses itself.
-- **Track width:** 50-60 studs (F1 cars are fast and wide); 70 on the start straight and in the pit lane.
+## 1. Where and how big: INSIDE the current map, which is NOT made bigger
+> Owner (26 Nov 2026): "Nej mappet skal ikke udvides, den størrelse med bjergene der er nu passer perfekt."
+
+- **Do not grow the map** and do not move the hills, the mountains or the forest backdrop.
+- **The track goes in the empty green area in the south**, between the lab's south edge (the railway's south line / the rooms) and the foot of the backdrop forest and hills, as seen in the owner's top view.
+  - In Studio, MEASURE that free area first (raycast or bounding boxes: from the railway's south side to where the forest belt and hills start, across the full width).
+  - Write the numbers in State.
+- **Fit the circuit to that space:**
+  - the longest layout that fits with a margin of about 15 studs to the forest and the railway;
+  - track width 40-50 (60 on the start straight);
+  - keep the parts the shape needs: a start/finish straight (along the north side, by the railway), 2 hairpins, an S-section, a chicane, a back straight;
+  - if the area is long and narrow, use a stretched layout that folds back on itself, with a bridge or underpass where it crosses;
+  - the lap can be shorter (about 1,500-2,500 studs); tune the F1 car's top speed to the track (about 150-200 studs/s) so the straights still feel fast.
+- **The grandstands, pits and paddock** go on the north side by the station, between the track and the railway. The forest side gets only barriers and marshal posts.
+- **If the free area is too small for a good circuit,** use it for the best possible one plus a drag strip. Never cut the rooms or the backdrop.
 
 ## 2. How it looks (a real circuit, not a grey loop)
 - **Surface:** dark asphalt with a fine texture, white edge lines, a start/finish chequered line, grid boxes for 10 cars, and the pole and lap markers painted on.

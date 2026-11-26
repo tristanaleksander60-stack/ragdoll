@@ -40,3 +40,24 @@ Every living ragdoll that is standing, waiting or watching does a small human ac
 - **The player can ride it** when it is free: press E at the bicycle. The same calm speed, and pedalling uses the same animation.
 - **Phones:** one bicycle per lab; simple collision.
 - **Check:** one quick Play. Watch it ride the loop, knock the rider off, see it get back on, and ride it yourself.
+
+## 3. Ragdolls walking the roads out there and chatting (owner, 26 Nov 2026: "der skal gå ragdolls rundt på vejene derude og snakke med hinanden")
+- **The walkers:**
+  - about 10-14 lab ragdolls walk the roads in 2s and 3s: the outer avenues, the cross roads, the boulevard, the road to the station, and the paths by the racetrack and the grandstands;
+  - they walk at a calm pace, keep to the walkway (never on the grass edge or in the middle of a junction), and step aside for the player, cars and the cyclist.
+- **They talk:**
+  - every 20-40 s a group stops (at a bench, a junction, a lamp or a view) and chats for 6-12 s;
+  - bubble lines in turn, with gestures (nodding, pointing at things nearby, laughing, shrugging);
+  - lines fit where they are, using `Shared/TalkLines`, plus small talk:
+    - "Nice day for it."
+    - "Did you see the T-rex?"
+    - "I'm going to the race later."
+    - "My cousin went in the washer once."
+    - "Is that the new tower?"
+  - then they walk on;
+  - sometimes one waves at the player or says "Hi!" as you pass.
+- **Hits:** knock one over and the others react (shocked, help it up, or CPR when it is knocked out). They do not run away from weapons.
+- **Phones and far away:**
+  - walkers more than about 60 studs away are light stand-ins (animated, no physics, no talk); they become full ragdolls when you come close (`docs/ALWAYS3.md`);
+  - talk bubbles only within about 40 studs;
+  - this keeps the phone caps.
