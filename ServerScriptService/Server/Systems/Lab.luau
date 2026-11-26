@@ -782,6 +782,7 @@ local THREE_LINES = {
 local threeAt = 0
 local threeLineAt: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
 local threeSetDownAt: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any -- (0.156: the next set-down behind the player)
+local threeRecruitAt: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any -- (0.1565: runners start 0.5 s apart)
 local recruits: { [Model]: { slot: Slot, untilAt: number, walked: boolean, player: Player } } = setmetatable({}, { __mode = "k" }) :: any
 
 -- ALWAYS3 update (owner, 26 Nov 2026: "de 2 andre skal bare stå og snakke, 1 skal gå helt hen, og det skal skifte lidt"):
@@ -959,9 +960,17 @@ local function alwaysThree(plot: Plot, now: number)
 	end
 	assignRoles(player, root, nearList, now)
 	local missing = 3 - near - onWay
-	local maxWay = if (Config :: any).FAST_THREE then 1 else THREE_MAX_WAY -- (OVERVIEW 0.156 FINAL RULE: one by one)
+	-- (OVERVIEW 0.1565, owner: "med det samme der kun er 2 ... så kommer den 3. løbende": each missing one gets its own
+	-- runner, started 0.5 s apart; never waiting for 0)
+	local maxWay = THREE_MAX_WAY
 	if missing <= 0 or onWay >= maxWay then
 		return
+	end
+	if (Config :: any).FAST_THREE then
+		if now - (threeRecruitAt[player] or -math.huge) < 0.5 then
+			return
+		end
+		maxWay = onWay + 1 -- (one now, the next 0.5 s later)
 	end
 	-- (OVERVIEW 0.155: AROUND = living ragdolls within 70 studs; a set-down behind the player only when fewer than 3 are around)
 	local around = near
@@ -980,12 +989,13 @@ local function alwaysThree(plot: Plot, now: number)
 		local spot = Vector3.new(root.Position.X + math.cos(angle) * r, if pick.slot.homeY ~= 0 then pick.slot.homeY else pick.slot.position.Y, root.Position.Z + math.sin(angle) * r)
 		local walked = pick.d <= THREE_RUN_FROM
 		recruits[pick.model] = { slot = pick.slot, untilAt = now + THREE_GIVE_UP, walked = walked, player = player }
+		threeRecruitAt[player] = now
 		if (Config :: any).FAST_THREE then
 			pick.model:SetAttribute("Watch", nil) -- (taken from its machine or its walk: the 3 near come first)
 		end
 		pick.slot.roamHome = spot
 		pick.slot.nextRoamAt = now + THREE_GIVE_UP + 1
-		pick.model:SetAttribute("Pace", if (Config :: any).FAST_THREE then (if walked then 1.6 else 2.5) elseif walked then 1.4 else 2.2) -- (ALWAYS3 update: they come FAST; 0.15: a sprint)
+		pick.model:SetAttribute("Pace", if (Config :: any).FAST_THREE then (if walked then 2.0 else 2.5) elseif walked then 1.4 else 2.2) -- (ALWAYS3 update: they come FAST; 0.15: a sprint)
 		if (Config :: any).FAST_THREE and pick.d > 150 and around < 3 and now >= (threeSetDownAt[player] or 0) then
 			threeSetDownAt[player] = now + 8 -- (0.156: then an 8 s cooldown)
 			-- (OVERVIEW 0.15: too far to arrive in 2-3 s: set down out of view 30-40 studs behind the player, then it sprints in)
