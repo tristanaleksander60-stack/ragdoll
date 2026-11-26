@@ -485,6 +485,16 @@ function LabShowcase.start()
 	if Config.LAB_SURPRISES then
 		task.spawn(surpriseWarning)
 	end
+	-- (STAY_LONGER 8: once a visit, at COME_BACK_AT s of play, a quiet line about tomorrow's gift and the streak.)
+	if Config.COME_BACK_AT then
+		task.delay(Config.COME_BACK_AT, function()
+			local streak = player:GetAttribute("Streak")
+			local day = (if type(streak) == "number" then streak else 0) + 1
+			pcall(function()
+				(require(script.Parent:WaitForChild("HudV3")) :: any).moment("Come back tomorrow: day " .. day .. " gift!", 6)
+			end)
+		end)
+	end
 	if Config.ATTRACT_MODE then
 		task.spawn(attract)
 	end
