@@ -1333,6 +1333,7 @@ local PASS_CLEARANCE = 3.2 -- studs between the two pelvises when passing (arms 
 local GAME_NO_OVERLAP = (require(script.Parent.Parent:WaitForChild("Config")) :: any).NO_OVERLAP == true
 local PERSONAL_SPACE = if GAME_NO_OVERLAP then 2.6 else 2.4 -- (OVERVIEW 0.95: never inside each other)
 local GAME_SMOOTH = (require(script.Parent.Parent:WaitForChild("Config")) :: any).SMOOTH_MOTION == true -- (S1: the pelvis bobs with the steps, leans with speed)
+local GAME_TURN = (require(script.Parent.Parent:WaitForChild("Config")) :: any).TURN_EVEN == true -- (F73: an even, capped turn)
 local function avoidDummies(rig: Rig, here: Vector3, direction: Vector3, goalDistance: number): (Vector3, boolean)
 	local folder = rig.model.Parent
 	if not folder then
@@ -1549,6 +1550,22 @@ local function updateMoving(rig: Rig, dt: number)
 	end
 
 	-- Turn towards the way it goes (quicker when fleeing), ease the speed.
+	if GAME_TURN then
+		-- (F73: an even turn at a capped rate, never a lerp whip or a 180 degree snap: the heading ROTATES toward the
+		-- goal at most 220 degrees a second walking, 360 fleeing, slower as it gets close, so the legs can step round)
+		local cur = rig.heading
+		local a0, a1 = math.atan2(cur.Z, cur.X), math.atan2(wantHeading.Z, wantHeading.X)
+		local diff = (a1 - a0 + math.pi) % (2 * math.pi) - math.pi
+		local cap = math.rad(if fleeing then 360 else 220) * dt
+		local stepA = math.clamp(diff * (1 - math.exp(-(if fleeing then 9 else 5) * dt)) * 2, -cap, cap)
+		if math.abs(diff) < math.rad(1) then
+			stepA = diff
+		end
+		local a = a0 + stepA
+		rig.heading = Vector3.new(math.cos(a), 0, math.sin(a))
+		local anyRig: any = rig
+		anyRig.yawRate = stepA / math.max(dt, 1e-3)
+	else
 	local turnRate = if fleeing then 9 else 5
 	local k = 1 - math.exp(-turnRate * dt)
 	local heading = rig.heading:Lerp(wantHeading, k)
@@ -1556,6 +1573,7 @@ local function updateMoving(rig: Rig, dt: number)
 		heading = wantHeading
 	end
 	rig.heading = heading.Unit
+	end
 	-- It walks where it faces, so it never moonwalks or slides sideways.
 	local facing = math.max(0, rig.heading:Dot(wantHeading))
 	rig.speed += (wantSpeed * facing - rig.speed) * (1 - math.exp(-SPEED_EASE * dt))

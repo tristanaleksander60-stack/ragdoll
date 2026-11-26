@@ -433,7 +433,15 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 		local panicking = fleeing and type(pu) == "number" and pu > Workspace:GetServerTimeNow()
 		if not (panicking and HANDS_UP) then
 			local L = life :: any
-			local speed = math.max(life.groundSpeed, if fleeing then 12 * amount else 0)
+			-- (F73: turning on the spot steps the feet round: the cycle also runs on the turn rate)
+			local look = life.pelvis.CFrame.LookVector
+			local yaw = math.atan2(look.X, look.Z)
+			local dy = (yaw - (L.lastYaw or yaw) + math.pi) % (2 * math.pi) - math.pi
+			L.lastYaw = yaw
+			L.turnRate = (L.turnRate or 0) + ((if dt > 0 then math.abs(dy) / dt else 0) - (L.turnRate or 0)) * (1 - math.exp(-8 * dt))
+			local turnSpeed = math.min(L.turnRate * 1.6, 5)
+			amount = math.max(amount, math.clamp(turnSpeed / 2.5, 0, 1))
+			local speed = math.max(life.groundSpeed, turnSpeed, if fleeing then 12 * amount else 0)
 			L.clipPhase = ClipGait.advance(L.clipPhase or 0, speed, dt)
 			local pose = ClipGait.blend(speed, L.clipPhase)
 			if pose then
