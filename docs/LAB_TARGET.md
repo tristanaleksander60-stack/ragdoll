@@ -16,12 +16,65 @@
 - the "try me" chain;
 - harsh scoring.
 
-**Originality.** Match the reference's **quality, style, structure, density and feel** as closely as possible, but with OUR machines and our own arrangement. Do not copy it 1:1:
-- no copying of its exact plot order;
-- no copying of its signs or text;
-- no copying of its unique props such as the bear cave.
+**These are the OWNER'S OWN OLD MAP, not another game** (owner, 26 Nov 2026: "Det skal ligne mit gamle map, det ikke en anden brugers"). Copy it EXACTLY: same plots, same order, same size, same props. See ROUND 2 below. Sections 1-4 are kept only as background.
 
-A one-to-one clone of another game's level can get reported and reads as a copy to players. Everything the owner likes about it is in the rules below.
+## ROUND 2: bring back the owner's old map EXACTLY (do this, not a rebuild by eye)
+> "Mappet er stadig lille og ligner slet ikke det samme. Det skal ligne mit gamle map, det ikke en anden brugers."
+
+The 0.56.0 park was rebuilt by eye inside the LAB10 frame (about 190 x 200 studs). It is too small and does not look like the references. Rebuilding by eye will never be exact. **Get the real old map back and use it.**
+
+### Step 0: find the old map (do it yourself, in this order)
+The references show an older build:
+- HUD: Shop / Tools / Lab / Multiplayer on the left;
+- Maps and Events squares top right;
+- "Unlock: Lasso 38/40" pill;
+- C Fall / Distance / Push / Grab;
+- R Revive / G Spawn / V Scan;
+- a 1-0 hotbar starting with a hand.
+
+Use these to recognise the right version. Look in this order:
+1. **The place's version history.** Creator Hub → the experience → Places → the start place (126037745825106) → Version History. Also check the universe's other places (for example the multiplayer place). Open older versions in Studio (File → Open from Roblox, or download the version) and find the newest one whose lab matches the 5 references.
+2. **Local backups:** `Documents\RagdollLab-backups\*.rbxl`, and Studio's recent files.
+3. **Other experiences or places on the owner's account** (Creator Hub → Creations) with that lab.
+4. **Only if none is found:** stop the lab work and send the owner ONE Danish line: "Jeg kan ikke finde det gamle map. Hvilket spil/hvilken version er det fra? (navn eller link)". Do the rest of NOW.md meanwhile.
+
+### Step 1: copy it 1:1 into the current place
+1. Open the old version **as a separate file**; never publish it.
+2. **If the map is stored geometry:** select every world piece of the lab (ground, plots, walkways, plaza, tower, slide, railway, terrain hills, trees, rocks, tanks, cave, walls, board frames…). Copy it into the current place as `ServerStorage.OldLabMap` (one Model), with the spawn as PrimaryPart.
+3. **If that version BUILT the lab from code:** press Play in the old file, select the built lab in Workspace while it runs, copy, Stop, then paste it into the current place as `ServerStorage.OldLabMap`. This bakes it exactly.
+4. **Terrain** (the hills): copy the Terrain region with the Terrain editor's region copy (or `Terrain:CopyRegion` / `PasteRegion`), or bake the hills as smooth meshes.
+5. **Clean-up:**
+   - remove every Script, LocalScript and ModuleScript from `OldLabMap` (the old game's code; malware pass);
+   - keep only geometry, decals, textures and lights;
+   - write down what was removed.
+6. **Lighting:** copy the old Lighting, Atmosphere, Sky and post effects values into `ZoneLighting` as preset `OLDMAP`.
+
+### Step 2: use it as the lab
+- **The switch:** `Config.LAB_OLDMAP = true` (supersedes `LAB_PARK` and `LAB_V10`'s frame; `false` = the 0.56 park).
+- **Building:** the lab builder clones `OldLabMap` at each lab's origin, at the old size (1:1, never scaled down: the size is the point), instead of LabV10's floor, wall, park and frame.
+- **Machine positions:** every current machine stands **exactly where its counterpart stood in the old map**. Read the positions from the copied models (tower, slide, rocket, cars and bays, boxing ring, tanks, spider, frog, plant, chicken, washer, press, fan/vacuum, cannon, mole, slingshot + target, lava, sand pit, trampoline, wooden ramp, red buttons, the 4 leaderboards, the MAPS board, portals). Put them in `LabLayout10.OLD`, which every builder reads as now.
+  - If the old map had a machine we no longer have, keep its geometry as decoration.
+  - If we have a machine the old map did not have, give it the nearest free plot in the same style.
+- **The old tower and slide** become the real tower and slide (climb, slide, sky deck). Hide today's code-built tower.
+- **Kept from rounds 1-2:**
+  - the TRY! ring and the goal line;
+  - attract mode, only where it does not change the look.
+- **Removed:** the LAB10 frame (park floor, wall, railway copy, skyline). The old map has its own.
+
+### Step 3: performance
+- **Count the parts** of `OldLabMap`.
+- **If one lab is over about 5,000 parts:**
+  - make small decoration CanCollide off, CanQuery off and CastShadow off;
+  - merge static groups into meshes where it is safe;
+  - put far trees and hills on low detail.
+- **Never shrink or move things** to save parts.
+- **Check FPS** on the phone emulator.
+
+### Step 4: check (it must be THE SAME map)
+1. Capture the same 5 angles as `ref_1` … `ref_5` and save them as `art/store/lab10/old_*.jpg`.
+2. Put each beside its reference and score "is this the same map", 0-10: size, plot order, every prop in place, the tower and slide, the plaza with 4 boards, the railway, the hills, the light.
+3. The bar is **9.5**; only the HUD may differ. Fix and capture again (max 3 rounds).
+4. One quick Play, publish once, and give ONE Danish "Test selv" list.
 
 ## 1. What makes the reference good (copy these principles exactly)
 1. **A grid of plots.**

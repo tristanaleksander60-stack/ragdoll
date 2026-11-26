@@ -3,6 +3,9 @@
 **All weak points, ranked:** `docs/WEAKNESSES.md` (26 Nov). After LAB10 round 2, take its "Order to fix" from item 3.
 
 ## CURRENT RUN: LAB TARGET (owner, 26 Nov 2026)
+
+**NOW: `docs/LAB_TARGET.md` ROUND 2.** The references are the owner's OWN old map. Find that version (version history, backups), copy its lab 1:1 into `ServerStorage.OldLabMap`, use it at full size behind `LAB_OLDMAP`, and put every machine where it stood. No rebuilding by eye.
+
 Build `docs/LAB_TARGET.md`: the lab to the owner's reference screenshots (`art/store/look_target/lab_ref/`).
 - A realistic plot grid.
 - The steel tower and slide in the centre.
