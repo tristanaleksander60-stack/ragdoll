@@ -16,7 +16,7 @@
     - on the other side the sandcastle tower with crates and a wooden fence, the beige car, the press/gantry, the fan, the sandbox, the pool, the lava strip with its fence, the wooden grandstand, and the train garage on the rail;
   - **walkways:** about 12-14 studs wide, light grey tiles, straight, with simple corners;
   - **grass:** wide open flat bright grass between them, no clutter;
-  - **trees:** only a FEW: thin conifer rows far at the edge in front of the hills, and 3-4 round trees inside;
+  - **trees:** only at the EDGE: thin conifer rows far out in front of the hills, and a few round trees out there. **The owner, 26 Nov late: "Det skal være opbygget på den måde, ikke træer imellem": ZERO trees between the attractions,** not even the 3-4 round ones the shots show inside;
   - **the cave:** a grey rock DOME with a dark arched opening cut INTO it (the F79 cave must read like this, never a ball plus a separate black slab);
   - **the hills:** smooth rolling green hills fill the horizon all round.
 
@@ -43,6 +43,85 @@
 - **Sparse props:** a few benches, red barrels, a bin. Lamps only along the main walkways, not many.
 - **Soft daylight** with a little haze.
 
+## THE LOOK 1:1: the air, the vibe and the quality of the references (owner, 26 Nov late: "Sørg for ALT ligner det de reference screenshots ... vi skal matche den vibe 1:1 også med luften, viben og kvalitet")
+The whole lab must feel like `ref_11/12/13_phone.png`:
+- calm, clean, bright overcast daylight;
+- soft hazy air that makes far things pale;
+- muted sage-green grass, pale tiles;
+- simple solid Roblox shapes;
+- nothing busy.
+
+Build to these exact points.
+
+**1. The air and the light: ONE look for the whole lab** (a `REF_LOOK` preset in `Client/ZoneLighting.luau`; the per-zone presets are OFF inside the lab; the other maps keep theirs).
+- **Start from Roblox's own new-place defaults** (the refs look like them):
+  - `Lighting.ClockTime` about 14, `Brightness` about 2, `ExposureCompensation` 0;
+  - `OutdoorAmbient` about (128,128,128), `Ambient` about (70,70,70);
+  - `EnvironmentDiffuseScale` and `EnvironmentSpecularScale` 1;
+  - `ShadowSoftness` about 0.2.
+- **An Atmosphere:** `Density` about 0.35, `Offset` about 0.25, `Color` about (199,199,199), `Decay` about (106,112,125), `Glare` 0, `Haze` about 1.
+- **The default Roblox sky,** pale. No coloured sky, no strong SunRays, no Bloom glow, no ColorCorrection tint (or neutral).
+- **The colours to match.** Measured as on-screen medians from the 3 phone refs, through the haze; use these to tune, not to paint parts:
+  - **grass:** about (150,168,115), a muted sage green;
+  - **walkway tiles:** about (213,211,203);
+  - **plaza tiles:** about (224,223,217);
+  - **sky** (top of the screen): about (205,211,215);
+  - **far hills:** about (154,166,142), pale with the haze.
+- **One capture per ref view** (allowed: it is about looks):
+  1. stand where the three phone refs were taken (next to the tower, facing the ring and the wall; facing the aquarium and the cave; facing the fan and the sandcastle);
+  2. take one phone-size capture each;
+  3. compare the median grass, tile, sky and hill colours with the numbers above with a tiny script (within about 10 per channel);
+  4. adjust the Atmosphere, the grass and tile colours once.
+
+  No more rounds.
+
+**2. The ground:**
+- **The grass:** ONE flat grass surface (the Grass material or a flat part) in one muted green, no patches, no dirt spots, no flower beds between the attractions.
+- **The walkways and plazas:**
+  - light grey square tiles (about 6 studs) with thin darker joint lines, in a world-aligned texture;
+  - flat, flush with the grass edge (a 0.2-0.4 stud lip at most, no tall kerbs);
+  - straight runs with simple square corners;
+  - the big round plaza by the tower with benches round its edge.
+
+**3. The attractions look like the shots, in simple solid shapes and plain materials** (SmoothPlastic, Concrete, Metal, Brick, Wood, DiamondPlate; no busy textures):
+- **the tower:** dark grey steel lattice, metal stairs with rails, diamond-plate floors, the grey-green slide;
+- **the rocket:** white with a black nose, on a grey lattice gantry;
+- **the brick wall:** red-brown brick;
+- **the boxing ring:** a white mat, black ropes, grey corner posts, steps;
+- **the red barrels:** red with a white band, in groups of 3-5;
+- **the vehicles:** the dark green monster truck, the blue car and the beige car on grey painted bays;
+- **the wooden things:** stacked brown crates and a low wooden fence by the sandcastle tower (beige blocks);
+- **the fan:** big grey, in a dark-green steel frame; the dark-green press/gantry;
+- **the sand and water:** the yellow sandbox; pools with light-blue water and grey concrete rims; the glass aquarium as a raised grey concrete tank with the water level at its top;
+- **the leaderboard plaza:** a light tile floor, a brown wooden fence, 4 dark boards with red and purple headers;
+- **the rest:** the brown wooden grandstand; the orange lava strip in its trench with a fence; the grey train garage with brown doors on the rail;
+- **the cave:** a grey rock DOME with a dark arched opening cut into it;
+- **benches:** brown wooden, with dark legs.
+
+**4. Trees and the horizon:**
+- **NO trees between the attractions** (the owner). Trees only in an edge band outside the outer walkway or the railway:
+  - mostly slim dark teal-green conifers (about (94,121,109) on screen) in loose rows;
+  - a few lumpy round light-green broadleaf trees.
+- **Behind them:** smooth rolling green hills fill the whole horizon, close, soft and pale in the haze. No mountains with rock faces, no forest wall.
+
+**5. Less is more: the clean vibe.**
+- **Remove** anything that is in neither the refs nor an owner request by name:
+  - hedges, bush rows, flower beds, groves, boulder fields;
+  - lamp-post rows, bulb strings, flags, banners;
+  - the room gates and "IN HERE" boards;
+  - extra props scattered on the grass;
+  - fountains the refs do not have.
+- **Keep, but restyled to the clean look and kept few:** the things the owner asked for by name:
+  - the leaderboards and the #1 statues (F77);
+  - the vehicle row (F76);
+  - one simple low name sign per attraction (F39, a plain grey board like the small sign in `ref_12`);
+  - the TRY dispensers (F81), the aquarium platform (F78) and the welcome arch (simplified).
+- **Lamps:** only a few, along the main walkway, simple dark posts.
+
+**6. The camera feel:** the default Roblox camera distance and FOV (70). The refs are taken with it. Do not widen or tilt it for the lab.
+
+**7. Phones:** this look is cheap (few parts, few lights, no shadows from small things), so phones keep the same look as PC, with no special phone version.
+
 **The size:**
 - **Use R3.2's layout and density, with its distances x 1.0-1.4** (the SMALLEST factor where every attraction fits with about 10-20 studs between neighbours; never more than 1.4). That is about 300-400 studs across inside the railway, instead of about 950 x 820 now.
 - **The big set pieces go back to about their reference size:** the tower about 50-55 studs high (5 floors); the slide, fan, gyro cage, cave, tanks, T-rex and rocket to match.
@@ -66,7 +145,7 @@
    Delete them; do not hide them (no see-through leftovers, F82).
 4. **Trees and bushes:**
    - about 50-80 trees in all, in the two kinds above (pick the cleanest matching set in `V3Assets` or the Creator Store: simple, solid colours, low-poly like the shots; a malware pass);
-   - mostly in loose edge groups, 6-10 single trees inside;
+   - ONLY in the edge band; ZERO between the attractions (the owner);
    - never on or within 4 studs of a walkway, never in front of an attraction, entrance or sign;
    - at most about 15 bushes (beside benches only); at most 6 flower beds.
 5. **The backdrop:** smooth rolling Terrain hills close round the edge (as in the shots), the railway at the west edge, light haze.
