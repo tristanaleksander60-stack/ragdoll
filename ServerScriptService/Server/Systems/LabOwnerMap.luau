@@ -2839,6 +2839,53 @@ local function realWater(into: Instance, o: Vector3, top: number)
 	T:FillCylinder(CFrame.new(pond + Vector3.new(0, 0.6, 0)) * axis, 1.2, CROC_R, Enum.Material.Sand)
 	T:FillCylinder(CFrame.new(pond + Vector3.new(0, 1.3, 0)) * axis, 2.6, CROC_R - 4, Enum.Material.Water)
 	waterVolume(into, "Croc", CFrame.new(pond + Vector3.new(0, 1.3, 0)), Vector3.new((CROC_R - 4) * 2, 2.6, (CROC_R - 4) * 2))
+	-- F78 part 2: reeds in clumps round the bank, lily pads on the water, half-buried natural rocks (no balls)
+	local rng = Random.new(78)
+	for i = 0, 9 do
+		local a = i / 10 * math.pi * 2 + rng:NextNumber(-0.2, 0.2)
+		local base = pond + Vector3.new(math.cos(a) * (CROC_R - 3), 1.4, math.sin(a) * (CROC_R - 3))
+		if i % 3 ~= 0 and not onPath(base, 2) then
+			for k = 1, 5 do
+				local h = rng:NextNumber(2.2, 3.8)
+				local r = part(into, "Reed", Vector3.new(0.18, h, 0.18), CFrame.new(base + Vector3.new(rng:NextNumber(-1.2, 1.2), h / 2, rng:NextNumber(-1.2, 1.2))) * CFrame.Angles(rng:NextNumber(-0.15, 0.15), 0, rng:NextNumber(-0.15, 0.15)), Color3.fromRGB(96, 128, 64), Enum.Material.Grass, true)
+				r.CanCollide = false
+			end
+		elseif not onPath(base, 2) then
+			pcall(function()
+				T:FillBall(base + Vector3.new(0, -1, 0), rng:NextNumber(1.6, 2.4), Enum.Material.Rock)
+			end)
+		end
+	end
+	for i = 1, 6 do
+		local a = rng:NextNumber(0, math.pi * 2)
+		local d = rng:NextNumber(3, CROC_R - 7)
+		local pad = part(into, "LilyPad", Vector3.new(0.1, 2.2, 2.2), CFrame.new(pond + Vector3.new(math.cos(a) * d, 2.62, math.sin(a) * d)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(86, 140, 70), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+		pad.CanCollide = false
+	end
+	-- F78 part 2: THE FEEDING PLATFORM on the aquarium's east side: steps up from the front to a railed platform that
+	-- reaches 3 studs over the water, so a ragdoll can be carried up and thrown (or dropped) in to the shark.
+	do
+		local AW2, AD2, AH2 = AQUA.X, AQUA.Y, AQUA.Z
+		local rimY = 3 + AH2
+		local ex = aq.X + AW2 / 2 -- (the east glass)
+		local steps = math.ceil(rimY / 0.85)
+		local run = math.min(1.3, (AD2 - 6) / steps)
+		for k = 1, steps do
+			local y = k * rimY / steps
+			part(into, "FeedStep", Vector3.new(4, 0.5, run + 0.05), CFrame.new(Vector3.new(ex + 3, top + y - 0.25, aq.Z + AD2 / 2 - (k - 0.5) * run)), Color3.fromRGB(150, 150, 152), Enum.Material.DiamondPlate)
+		end
+		local pz = aq.Z + AD2 / 2 - steps * run - 2.5
+		part(into, "FeedPlatform", Vector3.new(10, 0.6, 5), CFrame.new(Vector3.new(ex, top + rimY - 0.3, pz)), Color3.fromRGB(150, 150, 152), Enum.Material.DiamondPlate)
+		for _, sx in { -1, 1 } do
+			part(into, "FeedRail", Vector3.new(10, 0.25, 0.25), CFrame.new(Vector3.new(ex, top + rimY + 3, pz + sx * 2.4)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
+		end
+		part(into, "FeedRail", Vector3.new(0.25, 0.25, 5), CFrame.new(Vector3.new(ex + 5, top + rimY + 3, pz)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
+		for _, d in { Vector3.new(-5, 0, -2.4), Vector3.new(-5, 0, 2.4), Vector3.new(5, 0, -2.4), Vector3.new(5, 0, 2.4) } do
+			part(into, "FeedPost", Vector3.new(0.3, 3, 0.3), CFrame.new(Vector3.new(ex, top + rimY + 1.5, pz) + d), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
+		end
+		-- (the stair's side rail and the stringer down to the ground)
+		part(into, "FeedStringer", Vector3.new(0.4, rimY, 0.4), CFrame.new(Vector3.new(ex + 5, top + rimY / 2, pz)), Color3.fromRGB(75, 80, 86), Enum.Material.Metal)
+	end
 end
 
 

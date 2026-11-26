@@ -910,6 +910,34 @@ BUILD.Whale = function(f, at, m)
 			p.Transparency = if on then (p:GetAttribute("Shown") :: number) else 1
 		end
 	end
+	-- F78 part 2 (Config.REAL_WATER, owner: "Hajen er nede i concrete i akvariet"): on the compact map the shark lives in
+	-- the aquarium's real terrain water. Its own shallow pool, sand floor and rim go; it hangs at MID-DEPTH (the tank's base is
+	-- 3 high, the water stands to 2 under the 14-high glass), sized to the tank, and the surface fin is not needed.
+	local REAL = (Config :: any).REAL_WATER == true and (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any).compact
+	if REAL and shark then
+		for _, n in { "SharkTankFloor", "SharkTankWater", "TankRim" } do
+			local x = f:FindFirstChild(n)
+			if x and x ~= pool then
+				x:Destroy()
+			end
+		end
+		pool.Transparency = 1
+		pool.CanCollide = false
+		local tank = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any).size("Aquarium", Vector2.new(44, 30))
+		local _, s0 = shark:GetBoundingBox()
+		local long = math.max(s0.X, s0.Z)
+		if long > 0 then
+			shark:ScaleTo(shark:GetScale() * math.clamp((tank.X - 4) * 0.42 / long, 0.3, 1.5))
+		end
+		local cfS, sizeS = shark:GetBoundingBox()
+		local mid = (at * CFrame.new(0, 3 + 6, 0)).Position.Y -- (the middle of the water: base 3 + half of 12)
+		shark:PivotTo(shark:GetPivot() + Vector3.new(0, mid - cfS.Position.Y, 0))
+		local _ = sizeS
+		for _, p in finParts do
+			p:SetAttribute("Shown", 1)
+			p.Transparency = 1
+		end
+	end
 	local basePivot = shark and shark:GetPivot()
 	-- (Phase D, 23 Nov 2026: on a catch the water foams and splashes. The patrol from the server jittered back and
 	-- forth over the water (owner): taken out; it lies still until it eats.)
