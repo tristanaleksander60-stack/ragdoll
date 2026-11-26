@@ -639,6 +639,23 @@ The owner still sees lamp posts standing in the middle of walkways.
 
 **Check:** drive the car, the monster truck and the tank into the wall at low and high speed. The wall breaks round the hit, the bricks cascade, the car reacts, and the wall is back 10-15 s after the last brick fell. Check on PC and the phone emulator, with no lag.
 
+## F51 A bit faster walking and running by default (owner, 26 Nov 2026: "Gør så man går og løber lidt hurtigere ved standard, så det ikke tager så længe at gå rundt")
+- **The default walk** (Settings NORMAL = `StarterPlayer.CharacterWalkSpeed`, or what the game sets) goes to **30**. Check what it really is now in the place and write it in State.
+- **Sprint** stays 1.65x the walk (`Client/Sprint`), so about 50.
+- **The Settings choices:**
+
+  | Choice | Walk speed |
+  |---|---|
+  | CALM | 22 |
+  | NORMAL | 30 |
+  | FAST | 36 |
+  | VERY FAST | 44 |
+
+- **The walk and run animations' speed** scales with the speed (no foot sliding).
+- **Speed checks:** the server's anti-cheat and speed checks allow the new values (sprint at the highest setting is about 73; clamp anything above).
+- **Ragdolls that run to you** (`ALWAYS3`) go to about 36, so they still keep up.
+- **Check:** walk from the spawn to the Danger Zone on NORMAL. It must feel brisk; time it and write it in State.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
