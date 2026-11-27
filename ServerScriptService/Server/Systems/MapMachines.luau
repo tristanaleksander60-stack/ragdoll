@@ -31,6 +31,23 @@ local function pelvisOf(m: Model): BasePart?
 	return if p and p:IsA("BasePart") then p else nil
 end
 
+-- F92 (Config.MACHINE_SAFE): never the one you hold, one hit in the last 5 s, one within 8 studs of a player (the one
+-- you walk to), one in a mood or another machine.
+local SAFE = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).MACHINE_SAFE == true
+local function safeToCall(m: Model, pe: BasePart): boolean
+	local hitAt = m:GetAttribute("ServerHitAt")
+	if m:GetAttribute("Mood") ~= nil or (type(hitAt) == "number" and Workspace:GetServerTimeNow() - hitAt < 5) then
+		return false
+	end
+	for _, pl in Players:GetPlayers() do
+		local r = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
+		if r and r:IsA("BasePart") and (r.Position - pe.Position).Magnitude < 8 then
+			return false
+		end
+	end
+	return true
+end
+
 local function nearestFree(at: Vector3, reach: number): Model?
 	local dummies = Workspace:FindFirstChild("Dummies")
 	local best, bestD = nil :: Model?, reach
@@ -40,12 +57,48 @@ local function nearestFree(at: Vector3, reach: number): Model?
 		if pe and not busy[m] and m:GetAttribute("Held") ~= true and m:GetAttribute("Vital") ~= "Dead" and m:GetAttribute("TryFor") == nil
 			and m:GetAttribute("MachineHidden") == nil and m:GetAttribute("InMachine") == nil and (st == nil or st == "Standing" or st == "Walking") then
 			local d = (pe.Position - at).Magnitude
-			if d < bestD then
+			if d < bestD and (not SAFE or safeToCall(m, pe)) then
 				best, bestD = m, d
 			end
 		end
 	end
 	return best
+end
+
+-- F92 (Config.MACHINE_SAFE): a machine CALLS its ragdoll: it RUNS to `spot` (Pace 2.4) and only gets in once there
+-- (within 6 studs, at most 8 s); else nothing happens ("No ragdoll near!"). Never a teleport from somewhere else.
+local function callIn(m: Model, spot: Vector3, name: string): boolean
+	if not SAFE then
+		return true
+	end
+	busy[m] = true
+	m:SetAttribute("Home", spot)
+	m:SetAttribute("Pace", 2.4)
+	local t0 = os.clock()
+	local there = false
+	while os.clock() - t0 < 8 do
+		local pe = pelvisOf(m)
+		if not (pe and m.Parent) or m:GetAttribute("Held") == true then
+			break
+		end
+		if (Vector3.new(pe.Position.X, 0, pe.Position.Z) - Vector3.new(spot.X, 0, spot.Z)).Magnitude < 6 then
+			there = true
+			break
+		end
+		task.wait(0.2)
+	end
+	m:SetAttribute("Pace", nil)
+	busy[m] = nil
+	if there then
+		pcall(function()
+			(require(script.Parent:WaitForChild("RagdollDirector")) :: any).logRemoval(m, name, "called; ran there and hopped in")
+		end)
+	else
+		pcall(function()
+			require(script.Parent:WaitForChild("Playground")).pop(spot + Vector3.new(0, 5, 0), "No ragdoll near!", Color3.fromRGB(255, 200, 120))
+		end)
+	end
+	return there
 end
 
 local function prompt(button: BasePart, text: string, onUse: (Player) -> ())
@@ -219,11 +272,15 @@ local function wireGyro(pad: BasePart)
 	local live = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).GYRO_10 == true
 	if button and button:IsA("BasePart") and (button.Position - pad.Position).Magnitude < 40 then
 		local function go(player: Player, power: number)
-			local m = nearestFree(button.Position, MapMachines.LOAD_REACH)
+			local m = nearestFree(button.Position, if SAFE then 40 else MapMachines.LOAD_REACH)
 			if m then
-				local DC = control()
-				pcall(DC.move, m, CFrame.new(hub))
-				task.spawn(spin, m, hub, player, power)
+				task.spawn(function()
+					if callIn(m, Vector3.new(pad.Position.X, pad.Position.Y, pad.Position.Z), "Gyro") then
+						local DC = control()
+						pcall(DC.move, m, CFrame.new(hub))
+						spin(m, hub, player, power)
+					end
+				end)
 			end
 		end
 		if live then
@@ -356,9 +413,13 @@ local function wireShredder(pit: BasePart)
 	local button = pit.Parent and pit.Parent:FindFirstChild("ShredderButton")
 	if button and button:IsA("BasePart") and (button.Position - pit.Position).Magnitude < 60 then
 		prompt(button, "Shred!", function(player)
-			local m = nearestFree(button.Position, MapMachines.LOAD_REACH)
+			local m = nearestFree(button.Position, if SAFE then 40 else MapMachines.LOAD_REACH)
 			if m then
-				task.spawn(shred, m, pit, player)
+				task.spawn(function()
+					if callIn(m, pit.Position, "Shredder") then
+						shred(m, pit, player)
+					end
+				end)
 			end
 		end)
 	end
@@ -790,8 +851,8 @@ local function wireSeesaw(plank: BasePart)
 		end
 	end)
 	prompt(plank, "Sit a ragdoll", function(player)
-		local m = nearestFree(plank.Position, 70)
-		if m then
+		local m = nearestFree(plank.Position, if SAFE then 40 else 70)
+		if m and callIn(m, lowEnd(), "Seesaw") then
 			local seat = lowEnd() + Vector3.new(0, 3, 0)
 			pcall(control().move, m, CFrame.lookAt(seat, seat + pivot.RightVector * sign))
 			pcall(function()
