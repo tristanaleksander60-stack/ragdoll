@@ -505,6 +505,22 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - **8 partly:** `SHOP_CHEAP_FIRST` (hero = Starter Crate R$49, cheaper FEATURED picks). **Left:** sales analysis (live data), death effects / cosmetics (need product ids).
 - Not published yet: the owner presses Alt+P (no publish action over MCP; Open Cloud cannot upload .rbxl).
 
+## ANSWERS (cloud session for the owner, 27 Nov): use these, do not ask again
+1. **X-RAY on I, REVIVE ALL on X:** yes, keep both.
+2. **The angry dummy:** keep the harmless shove (1-3, a cooldown). Never in a NEW player's first 3 minutes (FTUE_10 fix 2).
+3. **The dummy colour:** the light grey of F89 (about 163,162,165), as in the owner's reference shots; not the dark 92,95,102 and not yellow.
+4. **Maturity:** gore OFF for all ages (decided 26 Nov). Purple cartoon only. Do not ask again.
+5. **Death effects for sale:** NOT now. Keep them hidden; revisit after the owner's test and release.
+6. **Script Sync:** do not wait for it and do not ask again; keep using the MCP with the length check. (The owner may turn it on later; nothing depends on it.)
+7. **Places:** Studio is on the START place. Publish BOTH places only at the very end, after the owner has tested (the steps go in the final message).
+8. **The German Shepherd:** no purchase. Blender is installed, so A0 builds a RIGGED shepherd in Blender (CREATURES_ANIM: the dog row), with real leg, tail, ear and jaw animation.
+9. **The Ford:** the owner wants only the bicycle and the dirt bike free. Keep the code as it is (the pass is used once it is for sale). The owner puts pass 2092632252 on sale in the Creator Hub.
+10. **The 5 new vehicles:** build them fully now (models, features, the touch button), each with SOON until the owner sends the pass ids. The suggested prices stand.
+11. **The smooth body v2 (F89):** the owner imports `art/models/mannequin/mannequin_v2.fbx` once (Studio, Home or Avatar tab, Import 3D, as a rig, into ReplicatedStorage as SmoothBody, replacing v1). Until then keep v1 hidden if its arms are still up: show the slim grey block body rather than the bodybuilder pose. No Open Cloud key.
+12. **3.18 boxing:** use the default: a free "PICK THE WINNER" (no BOLTS stake; a cheer, a streak and a small streak badge if right). No betting with currency in a kids' game. Now build the fight: 2 ragdolls, the bell, punches with the active ragdoll, knockdowns and the referee's count to 10.
+13. **Row 14, a ragdoll in a wheelchair:** build the "ride welded" state in ActiveRagdoll (balance, lift and drive off; the pelvis welded to the seat; the client simulation stays with the chair's owner; a sitting pose; it falls out on a hard stop or a hit) and use it for the wheelchairs, the bicycle passenger and the rocket strap.
+14. **F68, the water button:** closed. Real water is always on (F78/F87); nothing to find.
+
 ## Questions for the owner (filled in during the run)
 - X-RAY key: B is already Build mode, so X-RAY is on I now (default). OK, or another key?
 - Angry dummy: a harmless shove (now) or scolding only? (`ANGRY_SHOVE`)
