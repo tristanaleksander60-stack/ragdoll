@@ -346,6 +346,32 @@ local function bowl(lane: Lane, by: Player)
 			end
 		end
 	end
+	-- (F91 rest, Config.BOWL_OWNER: the bowler's own machine runs the pins during the roll, like the ball it already
+	-- simulates, so ball and pins meet without a network lag; back to the server after the count)
+	local owned: { BasePart } = {}
+	if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BOWL_OWNER and by and by.Parent then
+		for _, pin in lane.pins do
+			for _, p in pin:GetDescendants() do
+				if p:IsA("BasePart") and not p.Anchored then
+					if pcall(function()
+						p:SetNetworkOwner(by)
+					end) then
+						table.insert(owned, p)
+					end
+					break -- (one part sets the whole pin's assembly)
+				end
+			end
+		end
+		task.delay(Bowling.COUNT_AFTER + 0.5, function()
+			for _, p in owned do
+				pcall(function()
+					if p.Parent and not p.Anchored then
+						p:SetNetworkOwnershipAuto()
+					end
+				end)
+			end
+		end)
+	end
 	-- (T1 FTUE_10: a new player's FIRST roll is always a STRIKE: as the ball reaches the pins, every pin still up is
 	-- knocked flying)
 	local sure = by:GetAttribute("Tried_Bowling") ~= true and lane.roll == 1
