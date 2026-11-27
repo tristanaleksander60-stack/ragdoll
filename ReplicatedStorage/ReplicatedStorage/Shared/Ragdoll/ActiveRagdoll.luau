@@ -189,6 +189,7 @@ local CRAWL_FLEE_SPEED = GetAbout.CRAWL_FLEE_SPEED
 local SPEED_EASE = GetAbout.SPEED_EASE
 local HOME_LEAVE = GetAbout.HOME_LEAVE
 local HOME_ARRIVE = GetAbout.HOME_ARRIVE
+local STAND_MIN = 1.5 -- (PHYSICS_DEEP 2b: the least time in Standing before it walks off again)
 local ARRIVE_TURN_MAX = GetAbout.ARRIVE_TURN_MAX
 local LOOK_AROUND_TIME = GetAbout.LOOK_AROUND_TIME
 local FLEE_RADIUS = GetAbout.FLEE_RADIUS
@@ -697,7 +698,25 @@ local function enter(rig: Rig, state: State)
 	if not isMoving(state) then
 		stopMoving(rig)
 	end
-	if state == "Standing" or state == "Flinch" or state == "Stumble" or state == "Ragdoll" then
+	if state == "Standing" and (GameConfig :: any).STAND_HOLD and rig.model:GetAttribute("IsDummy") == true then
+		-- (PHYSICS_DEEP 2c, Config.STAND_HOLD: the probe saw a STANDING body rock back and forth on its feet (6 reversals
+		-- in 8 s, no state change): with the lift off it balanced on its legs alone. Now the lift holds the pelvis still at
+		-- standing height (the feet 0.02 over the floor, so the legs and the floor never fight); a push or a bump still
+		-- moves it a little (horizontal force capped at 1.2 times its weight), a hit makes it flinch or fall as before.)
+		applyProfile(rig, state)
+		local lift = rig.lift
+		lift.ForceLimitMode = Enum.ForceLimitMode.PerAxis
+		local g = rig.mass * Config.NORMAL_GRAVITY
+		lift.MaxAxesForce = Vector3.new(g * 1.2, g * 4, g * 1.2)
+		lift.Position = rig.pelvis.Position - Vector3.new(0, WALK_HOVER - 0.02, 0)
+		lift.Enabled = true
+		-- (with the feet off the floor nothing stops it turning: the balance holds the way it faces too, or it spins)
+		rig.heading = flatLook(rig.pelvis)
+		rig.balance.AlignType = Enum.AlignType.AllAxes
+		rig.balance.CFrame = CFrame.fromMatrix(Vector3.zero, Vector3.yAxis, -rig.heading)
+		rig.balance.MaxTorque = gravityTorque(rig, Tone.STANDING_BALANCE)
+		rig.balance.Enabled = true
+	elseif state == "Standing" or state == "Flinch" or state == "Stumble" or state == "Ragdoll" then
 		rig.lift.Enabled = false
 		applyProfile(rig, state)
 	elseif state == "Out" then
@@ -1332,6 +1351,14 @@ end
 
 -- Standing still: decide whether to set off (run from someone, crawl, or walk home).
 local function think(rig: Rig)
+	-- (PHYSICS_DEEP 2c: the standing hold follows a body that was set down somewhere else or shoved hard, so the lift
+	-- never drags it back to its old spot)
+	if rig.state == "Standing" and rig.lift.Enabled and (GameConfig :: any).STAND_HOLD and rig.seatW == nil then
+		local want = rig.pelvis.Position - Vector3.new(0, WALK_HOVER - 0.02, 0)
+		if (rig.lift.Position - want).Magnitude > 1.5 then
+			rig.lift.Position = want
+		end
+	end
 	-- (Checked a few times a second, not every step.)
 	if rig.held == 0 and rig.model:GetAttribute("IsDummy") == true and rig.model:GetAttribute("Mood") == nil and (rig.stateTime - rig.sinkCheckAt >= 0.5 or rig.stateTime < rig.sinkCheckAt) then
 		rig.sinkCheckAt = rig.stateTime
@@ -1386,7 +1413,19 @@ local function think(rig: Rig)
 	end
 	-- (F72: a path's waypoint (NavHome) is walked to even when it is close: the next one follows before it arrives)
 	local leave = if rig.model:GetAttribute("NavHome") ~= nil then HOME_ARRIVE + 0.4 else HOME_LEAVE
-	if flat(home - rig.pelvis.Position).Magnitude > leave then
+	-- (PHYSICS_DEEP 2b, Config.STATE_CALM: the probe saw Walking > Standing > Walking 6-9 times in 10 s; every switch
+	-- turns the lift off and on and jolts the body. A body that has just stood stays standing STAND_MIN s, and a path
+	-- walker's leave distance has a real dead zone over the arrive distance, unless its spot is far off.)
+	local away = flat(home - rig.pelvis.Position).Magnitude
+	if (GameConfig :: any).STATE_CALM then
+		if rig.model:GetAttribute("NavHome") ~= nil then
+			leave = HOME_ARRIVE + 1.2
+		end
+		if rig.stateTime < STAND_MIN and away < HOME_LEAVE * 2 then
+			return
+		end
+	end
+	if away > leave then
 		-- (Ran from a gun that is still pointed at its place: it keeps its distance, no running
 		-- back and forth.)
 		if coward and now - rig.gunFledAt < GUN_WARY and GunThreat.near(home, GunThreat.SCARE_REACH) then
@@ -1832,6 +1871,16 @@ local function updateMoving(rig: Rig, dt: number)
 		height -= amp * (0.5 + 0.5 * math.cos(R.bobPhase * math.pi * 4))
 		local accel = (rig.speed - (R.lastSpeed or rig.speed)) / math.max(dt, 1e-3)
 		R.lastSpeed = rig.speed
+		if (GameConfig :: any).LEAN_SMOOTH then
+			-- (PHYSICS_DEEP 2d: the lean from a speed smoothed over ~0.3 s, with a dead zone: noisy per-frame speed made
+			-- the body rock forward and back)
+			local was = R.smoothSpeed or rig.speed
+			R.smoothSpeed = was + (rig.speed - was) * (1 - math.exp(-dt / 0.3))
+			accel = (R.smoothSpeed - was) / math.max(dt, 1e-3)
+			if math.abs(accel) < 1.5 or rig.speed < 1 then
+				accel = 0
+			end
+		end
 		R.lean = (R.lean or 0) + (math.clamp(accel * 0.012, -0.1, 0.14) - (R.lean or 0)) * (1 - math.exp(-6 * dt))
 	end
 	rig.lift.Position = Vector3.new(here.X, groundY + height, here.Z)
@@ -2362,6 +2411,39 @@ function ActiveRagdoll.prepare(model: Model): (boolean, string?)
 		end
 	end
 	local mass = ActiveRagdoll.prepareParts(model)
+	-- PHYSICS_DEEP 2a (Config.SELF_NOCOLLIDE, owner 27 Nov: "de bugger frem og tilbage"): the probe found a walking v6
+	-- body's own parts pressing into each other all the time (a hand and forearm in the deeper chest 150 of 178
+	-- samples, the upper arms in the chest, the shins and feet against each other); only Roblox's 19 rig pairs were
+	-- filtered. A body never collides with itself now: one NoCollisionConstraint per pair of its own parts, once. It
+	-- still collides with the world, other bodies and props.
+	if (GameConfig :: any).SELF_NOCOLLIDE and model:GetAttribute("IsDummy") == true and not model:GetAttribute("SelfNoCollide") then
+		model:SetAttribute("SelfNoCollide", true)
+		local parts: { BasePart } = {}
+		for _, d in model:GetChildren() do
+			if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then
+				table.insert(parts, d)
+			end
+		end
+		local have: { [string]: boolean } = {}
+		for _, d in model:GetDescendants() do
+			if d:IsA("NoCollisionConstraint") and d.Part0 and d.Part1 then
+				have[d.Part0.Name .. "|" .. d.Part1.Name] = true
+				have[d.Part1.Name .. "|" .. d.Part0.Name] = true
+			end
+		end
+		for i = 1, #parts do
+			for j = i + 1, #parts do
+				local a0, a1 = parts[i], parts[j]
+				if not have[a0.Name .. "|" .. a1.Name] then
+					local n = Instance.new("NoCollisionConstraint")
+					n.Name = "SelfNoCollide"
+					n.Part0 = a0
+					n.Part1 = a1
+					n.Parent = a0
+				end
+			end
+		end
+	end
 	-- (V9-P1: a dummy's neck and spine swing with more weight: Config.PHYSICS.JOINT_FRICTION, once.)
 	local P = (GameConfig :: any).PHYSICS
 	if (GameConfig :: any).PHYSICS_V9 and P and P.JOINT_FRICTION and model:GetAttribute("IsDummy") == true and not model:GetAttribute("JointsTuned") then

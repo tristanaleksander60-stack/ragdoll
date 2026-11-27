@@ -30,6 +30,7 @@ local budget = RagdollNav.RATE
 -- (F72, Config.NAV_ALWAYS: the waypoint goes in its OWN attribute NavHome, which the active ragdoll follows before Home; Home is
 -- never overwritten, so a system that sets Home every tick (a moving goal: the newspaper route, a chase, FirstAid, a
 -- runner) no longer fights the path, and every walk gets one: re-planned only when the goal moved 4 studs, at most 1/s)
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
 local ALWAYS = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).NAV_ALWAYS == true
 local function drop(m: Model)
 	navs[m] = nil
@@ -132,6 +133,24 @@ local function step()
 			end
 		end
 		local here = Vector3.new(pe.Position.X, 0, pe.Position.Z)
+		-- (PHYSICS_DEEP 2b, Config.NAV_NO_BACKTRACK: the probe saw walkers reverse 6-11 times in 12 s while their
+		-- NavHome changed: a waypoint passed off to the side (outside AHEAD) or a new path's first point just behind it
+		-- turned it round. A waypoint it has already passed along the path is skipped: never a step back.)
+		if Config.NAV_NO_BACKTRACK then
+			while n.idx < #n.points do
+				local a0, a1 = n.points[n.idx], n.points[n.idx + 1]
+				local seg = Vector3.new(a1.X - a0.X, 0, a1.Z - a0.Z)
+				local toWp = Vector3.new(a0.X, 0, a0.Z) - here
+				if seg.Magnitude > 0.1 and toWp:Dot(seg) < 0 then
+					n.idx += 1 -- (it is behind us along the path)
+				else
+					break
+				end
+			end
+			if n.points[n.idx] ~= nil and m:GetAttribute("NavHome") ~= n.points[n.idx] and n.idx < #n.points then
+				setHome(m, n.points[n.idx])
+			end
+		end
 		local wp = n.points[n.idx]
 		if (here - Vector3.new(wp.X, 0, wp.Z)).Magnitude < RagdollNav.AHEAD then
 			-- skip ahead to the next waypoint that is not right here
