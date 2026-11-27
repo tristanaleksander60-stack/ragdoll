@@ -70,6 +70,13 @@ do -- (23 Nov 2026, fps: a leftover car far off the map, 657 pieces nobody sees.
 		leftover:Destroy()
 	end
 end
+safe("SmoothBodyV2", function() -- F89: a freshly imported slim body (File > Import 3D > mannequin_v2.fbx) lands in workspace; give it to the clients
+	local m = workspace:FindFirstChild("mannequin_v2")
+	if m and m:IsA("Model") and m:FindFirstChildWhichIsA("MeshPart", true) and not game:GetService("ReplicatedStorage"):FindFirstChild("SmoothBodyV2") then
+		m.Name = "SmoothBodyV2"
+		m.Parent = game:GetService("ReplicatedStorage")
+	end
+end)
 safe("Purchases", function() Purchases.start() end) -- the one ProcessReceipt; finds out whether orders live in a DataStore
 safe("PurchaseChat", function() require(Systems:WaitForChild("PurchaseChat")).start() end) -- (V11 B7) Robux purchases in chat on every server
 safe("BenchService", function() require(Systems:WaitForChild("BenchService")).start() end) -- benches the lab's ragdolls sit on

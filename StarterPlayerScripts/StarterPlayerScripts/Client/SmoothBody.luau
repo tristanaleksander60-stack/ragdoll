@@ -64,7 +64,7 @@ local POSES: { [string]: { number } } = {
 }
 local LANE: { [string]: number } = { Index = 1.5, Middle = 0.5, Ring = -0.5, Pinky = -1.5 }
 
-type Drive = { bone: Bone, part: BasePart, off: CFrame }
+type Drive = { bone: Bone, part: BasePart, off: CFrame, parent: number?, localPos: Vector3, rot: CFrame }
 type Digit = { bone: Bone, rest: CFrame, curlAxis: Vector3, spreadAxis: Vector3, seg: number, lane: number, thumb: boolean }
 type Body = {
 	model: Model,
@@ -109,8 +109,18 @@ local function poseOf(model: Model): string
 	return "Relaxed"
 end
 
+-- F89 (Config.SMOOTH_BODY_V2): the slim body (art/models/mannequin/build_mannequin_v2.py: arms down, slim, grey) is
+-- ReplicatedStorage.SmoothBodyV2. Its arms are narrower than the physics arm parts, so its bones are driven
+-- forward-kinematically: each bone turns like its part, but sits where its parent bone and THIS mesh's bone lengths put
+-- it (no arm held out to reach the physics shoulder). Its colour is always the grey shell (the legs' skin), never the
+-- torso's test-suit colour (no yellow bodies).
+local V2 = Config.SMOOTH_BODY_V2 == true
+local function templateName(): string
+	return if V2 and ReplicatedStorage:FindFirstChild("SmoothBodyV2") then "SmoothBodyV2" else "SmoothBody"
+end
+
 local function readTemplate(): boolean
-	local t = ReplicatedStorage:FindFirstChild("SmoothBody")
+	local t = ReplicatedStorage:FindFirstChild(templateName())
 	local mesh = t and t:FindFirstChildWhichIsA("MeshPart", true)
 	if not (t and t:IsA("Model") and mesh) then
 		return false
@@ -204,7 +214,7 @@ local function build(model: Model): Body?
 	mesh.CanTouch = false
 	mesh.Massless = true
 	mesh.CastShadow = true
-	local torsoSkin = folder:FindFirstChild("UpperTorso")
+	local torsoSkin = folder:FindFirstChild(if V2 then "LeftUpperLeg" else "UpperTorso")
 	local look = if torsoSkin and torsoSkin:IsA("BasePart") then torsoSkin else pelvis
 	mesh.Color = look.Color
 	mesh.Material = look.Material
@@ -224,12 +234,25 @@ local function build(model: Model): Body?
 		local jointRot = CFrame.new(restWorld[name].Position) * restFrame
 		return jointRot * CFrame.new(joints[name]):Inverse()
 	end
+	local driveIndex: { [Instance]: number } = {}
+	local fk = V2 and templateName() == "SmoothBodyV2"
 	for _, b in mesh:GetDescendants() do
 		if b:IsA("Bone") then
 			local name = if b.Name == "HumanoidRootPart" then "LowerTorso" else b.Name
 			local part = parts[name]
-			if part and restWorld[b.Name] then
-				table.insert(drives, { bone = b, part = part, off = restPartOf(name):Inverse() * restWorld[b.Name] })
+			local w = restWorld[b.Name]
+			if part and w then
+				local parentBone = b.Parent
+				local pIdx = if fk and parentBone then driveIndex[parentBone] else nil
+				table.insert(drives, {
+					bone = b,
+					part = part,
+					off = restPartOf(name):Inverse() * w,
+					parent = pIdx,
+					localPos = if pIdx and parentBone then restWorld[parentBone.Name]:PointToObjectSpace(w.Position) else Vector3.zero,
+					rot = restFrame:Inverse() * w.Rotation,
+				})
+				driveIndex[b] = #drives
 			end
 		end
 	end
@@ -309,8 +332,17 @@ end
 local function drive(body: Body)
 	local mesh = body.mesh
 	mesh.CFrame = body.pelvis.CFrame * body.meshOff
-	for _, d in body.drives do
-		d.bone.WorldCFrame = d.part.CFrame * d.off
+	local cfs: { CFrame } = {}
+	for i, d in body.drives do
+		local cf
+		local p = d.parent
+		if p and cfs[p] then
+			cf = CFrame.new(cfs[p]:PointToWorldSpace(d.localPos)) * (d.part.CFrame.Rotation * d.rot)
+		else
+			cf = d.part.CFrame * d.off
+		end
+		cfs[i] = cf
+		d.bone.WorldCFrame = cf
 	end
 end
 
@@ -399,7 +431,7 @@ local function step(dt: number)
 			end
 			if farTick then
 				hideBlocks(body)
-				local skin = body.folder:FindFirstChild("UpperTorso")
+				local skin = body.folder:FindFirstChild(if V2 then "LeftUpperLeg" else "UpperTorso")
 				if skin and skin:IsA("BasePart") and body.mesh.Color ~= skin.Color then
 					body.mesh.Color = skin.Color
 				end
@@ -422,7 +454,7 @@ function SmoothBody.start()
 		return
 	end
 	if not readTemplate() then
-		local t = ReplicatedStorage:WaitForChild("SmoothBody", 20)
+		local t = ReplicatedStorage:WaitForChild(templateName(), 20)
 		if not (t and readTemplate()) then
 			return -- (no smooth body in the place: the block skins and the part hands stay)
 		end
