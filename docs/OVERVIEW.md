@@ -102,7 +102,8 @@ The owner: "sørg for den ikke tester alt selv dybt, men at det er min opgave".
 
    Until then those vehicles stand in their bays with a SOON plaque.
 3. **The START place's max players = 1** (Creator Hub > the start place > Settings), for solo labs (row 2, DONE in code).
-4. **At the end:** test everything with the "Test selv" list, then publish BOTH places (the steps come in the final message).
+4. **Before publishing the MILD EXTRAS (A and C3):** update the questionnaire (Creator Hub > the experience > Maturity & Compliance): crude humour **Mild**, fear **repeated, mild**; check the label still says **Mild**.
+5. **At the end:** test everything with the "Test selv" list, then publish BOTH places (the steps come in the final message).
 
 | # | What | Doc | State | LEFT |
 |---|---|---|---|---|
@@ -153,6 +154,9 @@ Everything not listed here is DONE (see the rows). Each line points to its row; 
    - T1's rest: the one director, the plaza trio facing you, the newcomer-soft first KO, the pistol beat, the gifts, ranks, collection, the daily chest, the notification ask;
    - row 8's rest (phone lag).
 11. **AUDIT 27 Nov, the rest** (`AUDIT_27NOV.md` 5-42): fairness and compliance 5-8 before the release; gameplay and content 9-21 with the machines phase; phone UI 22-35 with T1; performance 36-42 with row 8.
+11b. **MILD EXTRAS, the owner said yes to A and C3** (`MILD_EXTRAS.md`), right after `FIXES_27NOV_LATE.md`. Each is a real 9/10 feature with its sounds, faces and reactions, cartoony and silly, never gross:
+   - **A, the crude humour pack** (`CRUDE_HUMOR`): the whoopee cushion, the fart gun (a toy weapon in the weapon bar), the burps at the grill, the green cartoon "blegh" after the gyro or washer, the fart BOOST on the go-kart, the poop-emoji slip prop;
+   - **C3, the BOO mask** (`BOO_MASK`): sneak up on a ragdoll and it jumps out of its skin, screams and runs.
 12. **END:** the ONE LONG numbered "Test selv" list of everything (klar).
 
 ## THE ORDER (top to bottom; the # is only a name)

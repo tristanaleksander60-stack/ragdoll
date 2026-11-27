@@ -21,7 +21,10 @@ Roblox content maturity **Mild**, sent 27 Nov with:
   - romance, gambling and strong language (those are Moderate or Restricted).
 - **Always:** "realistic or excessive" violence or crude humour can be moderated whatever the label, so everything stays cartoony and silly, never gross.
 
-## The ideas (each behind its own Config switch, OFF until the owner says yes; the questionnaire is updated BEFORE the switch goes live)
+## OWNER'S ANSWER (27 Nov late): "ja til A og C3". BUILD A (all 6) and C3 now; B and the rest of C stay ideas.
+**How:** `Config.CRUDE_HUMOR` (A) and `Config.BOO_MASK` (C3), built and ON in Studio. Before PUBLISHING, the owner updates the questionnaire (crude humour: Mild; fear: repeated, mild) and checks the label still says Mild. The final message reminds them.
+
+## The ideas (each behind its own Config switch; the questionnaire is updated BEFORE the switch goes live)
 ### A. Crude humour pack (the big one)
 1. **Whoopee cushion prop:** put it on a bench; a ragdoll sits, PFFRRT, it jumps up embarrassed, red face, the watchers laugh.
 2. **The fart gun (a toy weapon):** a green cartoon cloud; ragdolls in it cough, hold their noses, run, and faint comically.

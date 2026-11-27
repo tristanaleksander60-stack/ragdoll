@@ -94,7 +94,8 @@ Reading is the biggest cost; every re-read after a summary costs it again.
    - numbered, so the owner can answer "12: ...".
 5. **The "Questions for the owner" list:** each with the default you chose.
 6. **The passes the owner must still make** (NOW.md "ANSWERS 2"): go-kart 49, police car 99, monster truck 149, bulldozer 149, fire truck 199 Robux, and the Ford pass 2092632252 on sale.
-7. **Reminder (owner, 27 Nov late: "husk mig på"):** if OVERVIEW row DOG3 is not DONE, write: "Husk: hunden er kun godkendt for nu, den skal gøres bedre til sidst (række DOG3)."
+7. **The questionnaire before publishing (MILD EXTRAS):** "Opdater spørgeskemaet før du udgiver: grov humor = Mild, frygt = gentaget/mild, og tjek at der stadig står Mild."
+8. **Reminder (owner, 27 Nov late: "husk mig på"):** if OVERVIEW row DOG3 is not DONE, write: "Husk: hunden er kun godkendt for nu, den skal gøres bedre til sidst (række DOG3)."
 
 **Keep `docs/OVERVIEW.md` true:** update a row's State and LEFT whenever you finish or start it.
 
