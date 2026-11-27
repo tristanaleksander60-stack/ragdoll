@@ -505,6 +505,9 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - **8 partly:** `SHOP_CHEAP_FIRST` (hero = Starter Crate R$49, cheaper FEATURED picks). **Left:** sales analysis (live data), death effects / cosmetics (need product ids).
 - Not published yet: the owner presses Alt+P (no publish action over MCP; Open Cloud cannot upload .rbxl).
 
+## BODY V3 approval (owner gate)
+- BODY V3: not built yet. After building it: push the renders to art/models/mannequin/review_v3/, write "waiting for the owner's OK" here, park the fit pass. The cloud writes "BODY V3 APPROVED" here when the owner says yes.
+
 ## ANSWERS (cloud session for the owner, 27 Nov): use these, do not ask again
 1. **X-RAY on I, REVIVE ALL on X:** yes, keep both.
 2. **The angry dummy:** keep the harmless shove (1-3, a cooldown). Never in a NEW player's first 3 minutes (FTUE_10 fix 2).

@@ -55,6 +55,20 @@ The ragdolls ARE the game. This doc is the one umbrella for making them 10/10. I
 9. **Review renders** (Blender, allowed: about looks): front, side, three-quarter and a "knocked down" pose, next to a Gang Beasts / Human: Fall Flat style silhouette. Fix them until it reads chunky, friendly and fun.
 10. **Then BodyShape (R9) is exported from THIS mesh:** the physics parts get thicker to match, so there really is more to shoot at, and the holes, the splash, the X-ray and the bandages all fit.
 
+**THE OWNER APPROVES THE BODY FIRST** (owner, 27 Nov: "Gør så telefon, skud, bandage, avis, x-ray osv alt virker med de nye ragdolls EFTER jeg har godkendt at de er gode nok"):
+1. Build the v3 body in Blender, render the review images (front, side, three-quarter, knocked down, and next to the player) into `art/models/mannequin/review_v3/`, and push.
+2. **STOP the body work there.** Write in NOW.md "BODY V3: waiting for the owner's OK", PARK R9 and the fit list below in OVERVIEW, and go on with other rows. Do not adapt anything to v3 before the OK (no double work if the body changes).
+3. The owner looks at the renders (the cloud session shows them) and answers. The cloud writes "BODY V3 APPROVED (date)" in NOW.md, or the changes to make (then a new v3 and new renders, and wait again).
+4. **Only after "APPROVED": the FIT PASS.** The owner imports the FBX once; then EVERYTHING on a ragdoll is made to work with the v3 body, in ONE pass (R9 plus this list):
+   - **damage:** bullet holes and exit holes, the splash, drips, pools, bruises, soot, wet, paint, the X-ray shell, skeleton, slugs, cracks and the tracer, the dog's bite marks;
+   - **care:** bandages, slings, splints, plasters, the tweezers pick-out, CPR hands, the doctor's hands;
+   - **held props:** the NEWSPAPER (reading idles and the paper route), the PHONE (filming), the shovel (burial), the persona accessories (sweatband, cap, glasses, headphones), the egg hats, the lasso and grab points;
+   - **poses and rides:** sitting (benches, wheelchairs, the bike, the seesaw), the bowling ball curl, the cannon load, the stretcher (F74), the rocket strap, the machines' grips;
+   - **face and marks:** the faces and the living eyes on the new head, the crash-test markings, the tints;
+   - **the physics:** the parts and masses from BodyShape (thicker), the hit areas, the far LOD;
+   - **phones:** the same with the device caps.
+5. In that pass, every item is checked by reading where it attaches (a bone or part, an offset from BodyShape). Nothing may float off or sink into the new body.
+
 **More life:**
 - **The stance:** upright and relaxed, never hunched or hand-clasped by default;
 - **the face:** R2, living eyes, blinks and a talking mouth;
