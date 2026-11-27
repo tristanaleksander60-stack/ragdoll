@@ -95,6 +95,7 @@ safe("Purchases", function() Purchases.start() end)
 safe("WhaleSpout", function() require(Systems:WaitForChild("WhaleSpout")).start() end) -- 3.26: the big pool's whale spouts ragdolls sky-high and tail-slaps (Config.WHALE_10) -- the one ProcessReceipt; finds out whether orders live in a DataStore
 safe("TargetRun", function() require(Systems:WaitForChild("TargetRun")).start() end) -- 3.31: a 30 s timed run on the archery target (Config.TARGET_RUN)
 safe("PlayerCPR", function() require(Systems:WaitForChild("PlayerCPR")).start() end) -- 3.34: your own CPR on a down ragdoll, a rhythm game (Config.PLAYER_CPR)
+safe("ControlsDress", function() require(Systems:WaitForChild("ControlsDress")).start() end) -- C10 part 2: the machines' controls onto the kit (Config.CONTROLS_DRESS)
 safe("WheelchairRide", function() require(Systems:WaitForChild("WheelchairRide")).start() end) -- row 14: a ragdoll rides a wheelchair, PUSH it, it falls out on a crash (Config.WHEELCHAIR_RIDE)
 safe("BoxingMatch", function() require(Systems:WaitForChild("BoxingMatch")).start() end) -- 3.18: START A FIGHT in the boxing ring, pick the winner (Config.BOXING_MATCH)
 safe("AdventService", function() require(Systems:WaitForChild("AdventService")).start() end) -- AUDIT 27 Nov 2: the Christmas advent calendar (Config.ADVENT)
