@@ -1154,6 +1154,25 @@ BUILD.Washer = function(f, at, m)
 		glass.CFrame = hinge * CFrame.Angles(0, math.rad(-100 * open), 0) * CFrame.new(2.8, 0, 0) * CFrame.Angles(0, math.rad(90), 0)
 	end
 	setDoor(0)
+	-- 3.8 WASHER (docs/MACHINES_10.md; Config.WASHER_10): a program dial (a prompt on the door: DELICATE > NORMAL >
+	-- TURBO), a light purple suds wash, the machine walking across its pad on TURBO, the spin count ("142 SPINS!") with a
+	-- NEW BEST for the lab's owner (WashBest), and the body comes out dizzy with bubbles rising off it.
+	local wash10 = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).WASHER_10 == true
+	local PROGRAMS = { { name = "DELICATE", k = 0.5 }, { name = "NORMAL", k = 1 }, { name = "TURBO", k = 2 } }
+	local program = 2
+	if wash10 then
+		local pp = Instance.new("ProximityPrompt")
+		pp.ObjectText = "Washer: NORMAL"
+		pp.ActionText = "Program"
+		pp.HoldDuration = 0
+		pp.MaxActivationDistance = 12
+		pp.RequiresLineOfSight = false
+		pp.Parent = glass
+		pp.Triggered:Connect(function()
+			program = program % #PROGRAMS + 1
+			pp.ObjectText = "Washer: " .. PROGRAMS[program].name
+		end)
+	end
 	return function()
 		if m.busy then
 			return
@@ -1177,27 +1196,71 @@ BUILD.Washer = function(f, at, m)
 			water.Transparency = 0.35
 			table.insert(m.temp, water)
 			local doll = puppet(f, 0.6)
-			local blue, red = Color3.fromRGB(80, 150, 220), if GORE then Color3.fromRGB(150, 20, 28) else Color3.fromRGB(120, 200, 240)
+			local blue, red = Color3.fromRGB(80, 150, 220), if GORE then Color3.fromRGB(150, 20, 28) elseif wash10 then Color3.fromRGB(200, 170, 240) else Color3.fromRGB(120, 200, 240)
+			local k = if wash10 then PROGRAMS[program].k else 1
+			local turbo = wash10 and k >= 2
+			local walk = if turbo then Vector3.new(math.random(-10, 10) / 10, 0, math.random(-10, 10) / 10) * 2.5 else Vector3.zero
 			play(3.0, function(t)
-				local spin = t * t * 40
+				local spin = t * t * 40 * k
 				doll.set(drum * CFrame.Angles(0, 0, spin) * CFrame.new(0, 1, 0) * CFrame.Angles(spin * 0.7, 0, 0), t * 6)
 				local level = math.min(1, t * 2)
 				water.Size = Vector3.new(0.3, 0.2 + level * 4.6, 5)
 				water.CFrame = drum * CFrame.new(0, -2.2 + level * 2.3, 0) * CFrame.Angles(0, math.rad(90), 0)
 				water.Color = blue:Lerp(red, math.clamp(t * 1.4 - 0.2, 0, 1))
 				if washer then
-					local shake = 0.15 + t * 0.35
-					washer:PivotTo(base * CFrame.new(math.sin(t * 90) * shake, math.abs(math.sin(t * 60)) * shake * 0.5, math.cos(t * 70) * shake))
+					local shake = (0.15 + t * 0.35) * (if turbo then 1.8 else 1)
+					washer:PivotTo(base * CFrame.new(math.sin(t * 90) * shake, math.abs(math.sin(t * 60)) * shake * 0.5, math.cos(t * 70) * shake) + walk * t)
 				end
 			end)
 			if washer then
+				if turbo then
+					play(0.6, function(t)
+						washer:PivotTo(base + walk * (1 - t)) -- (it walks back onto its pad)
+					end)
+				end
 				washer:PivotTo(base)
+			end
+			if wash10 then
+				local spins = math.floor(40 * k * 3.5 + math.random(0, 9))
+				local text = tostring(spins) .. " SPINS!"
+				local okO, owner = pcall(function()
+					return lazy("Lab").ownerAt(door.Position)
+				end)
+				if okO and owner then
+					local best = (owner:GetAttribute("WashBest") :: number?) or 0
+					if spins > best then
+						owner:SetAttribute("WashBest", spins)
+						text ..= " NEW BEST!"
+					end
+				end
+				pcall(function()
+					lazy("Playground").pop(door.Position + Vector3.new(0, 4, 0), text, Color3.fromRGB(200, 170, 255))
+				end)
+				-- out dizzy, with bubbles rising off it for 4 s
+				local torso = model:FindFirstChild("UpperTorso")
+				if torso and torso:IsA("BasePart") then
+					local bubbles = Instance.new("ParticleEmitter")
+					bubbles.Name = "WasherBubbles"
+					bubbles.Rate = 12
+					bubbles.Lifetime = NumberRange.new(1, 1.8)
+					bubbles.Speed = NumberRange.new(2, 4)
+					bubbles.Acceleration = Vector3.new(0, 3, 0)
+					bubbles.SpreadAngle = Vector2.new(60, 60)
+					bubbles.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 0.45) })
+					bubbles.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 1) })
+					bubbles.Color = ColorSequence.new(Color3.fromRGB(230, 220, 255))
+					bubbles.LightEmission = 0.3
+					bubbles.Parent = torso
+					task.delay(4, function()
+						bubbles:Destroy()
+					end)
+				end
 			end
 			doll.remove()
 			play(0.15, function(t)
 				setDoor(t)
 			end)
-			spray(f, door.Position, { red, Color3.fromRGB(110, 10, 20) }, 50, 18, 0.6, door.LookVector + Vector3.new(0, 0.2, 0))
+			spray(f, door.Position, { red, if GORE then Color3.fromRGB(110, 10, 20) else Color3.fromRGB(235, 235, 255) }, 50, 18, 0.6, door.LookVector + Vector3.new(0, 0.2, 0))
 			water:Destroy()
 			task.delay(1.2, function()
 				play(0.4, function(t)

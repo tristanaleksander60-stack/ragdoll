@@ -145,6 +145,7 @@ local Config = {
 	FAN_10 = true, -- 3.4 giant fan: a 3-speed dial (prompt OFF>1>2>3), the blade spins, a rising roar and a dust cone, nudge / lift / blown tumbling by speed, "BLOWN 74 studs!" + NEW BEST (FanBest), players pushed at 3 (Systems/FanMachine)
 	WRECK_10 = true, -- 3.6 wrecking ball: hangs still; a lever (HOLD = pull back farther, ratchet clicks) and release swings it with a whoosh; force by ball speed ("SMASH! FORCE 87%"), distance + NEW BEST (WreckBest), a crate stack in its path that restacks (Playground)
 	PRESS_10 = true, -- 3.7 press: a soft hydraulic hiss before the slam (only with a body on the bed), "FLAT x2!" / "FLAT x3!" when pressed again while still flat, NEW BEST (FlatBest) (Compressor)
+	WASHER_10 = true, -- 3.8 washer: a program prompt (DELICATE / NORMAL / TURBO), light purple suds, TURBO walks the machine across its pad, "142 SPINS!" + NEW BEST (WashBest), out with bubbles rising off it (LabCreatures)
 	TURN_EVEN = true, -- F73: the heading rotates at a capped even rate (220 deg/s walking, 360 fleeing), never a lerp whip or 180 degree snap; turning on the spot steps the feet (ActiveRagdoll, DummyLife)
 	NAV_BLOCKCAST = true, -- F72: obstacles are seen with a body-sized Blockcast whose look-ahead grows with speed (2.5-7 studs), and the detour takes the more open side (ActiveRagdoll blocked/clearAhead)
 	NAV_BUMP_LOG = true, -- F72: ActiveRagdoll counts detours, other-side tries and waits for a car, printed once a minute ([NavBump]); a moving car in the way is waited for, not walked round
