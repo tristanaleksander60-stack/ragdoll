@@ -1894,6 +1894,74 @@ local function layers(life: Life, state: string, now: number, dt: number)
 	end
 end
 
+-- F78 step 4 (Config.SWIM_POSE): a ragdoll awake in the water SWIMS: the first second panicky splashing (both arms
+-- flailing over the head), then a front crawl (the arms turning over half a stroke apart) and a flutter kick while it
+-- moves, treading water (slow arm sweeps, a lazy kick) while still; the head up, the chest tilted forward. Blended in
+-- and out over 0.3 s; a limp or knocked-out body just floats (SwimService).
+local function swimLayer(life: Life, state: string, now: number, dt: number)
+	if not (Config :: any).SWIM_POSE then
+		return
+	end
+	local L = life :: any
+	local model = life.model
+	local vital = model:GetAttribute("Vital")
+	local wet = model:GetAttribute("InWater") == true and vital ~= "Dead" and vital ~= "Unconscious"
+		and state ~= "Ragdoll" and state ~= "Out" and model:GetAttribute("Held") ~= true
+	if wet and not L.waterSince then
+		L.waterSince = now
+	elseif not wet then
+		L.waterSince = nil
+	end
+	L.swimW = math.clamp((L.swimW or 0) + (if wet then dt else -dt) / 0.3, 0, 1)
+	local w = L.swimW
+	if w <= 0 then
+		return
+	end
+	w = w * w * (3 - 2 * w)
+	local j: any = life.joints
+	local function put(name: string, cf: CFrame)
+		local joint = j[name]
+		if joint and not life.loose[name] then
+			joint.Transform = joint.Transform:Lerp(cf, w)
+		end
+	end
+	local t = now + life.seed
+	local panic = L.waterSince and now - L.waterSince < 1.2
+	local moving = life.groundSpeed > 1.2
+	if panic then
+		local f = t * 14
+		put("RightShoulder", ang(150 + 25 * sin(f), 0, 30 + 15 * cos(f * 1.3)))
+		put("LeftShoulder", ang(150 + 25 * sin(f + 2), 0, -30 - 15 * cos(f * 1.1)))
+		put("RightElbow", ang(40 + 20 * sin(f * 1.6), 0, 0))
+		put("LeftElbow", ang(40 + 20 * cos(f * 1.4), 0, 0))
+		put("Neck", ang(20, 0, 10 * sin(f * 0.7)))
+	elseif moving then
+		local a = t * 5.5
+		-- front crawl: each arm sweeps a full circle, half a stroke apart
+		put("RightShoulder", ang(90 + 100 * sin(a), 0, 12))
+		put("LeftShoulder", ang(90 + 100 * sin(a + math.pi), 0, -12))
+		put("RightElbow", ang(25 + 25 * math.max(0, cos(a)), 0, 0))
+		put("LeftElbow", ang(25 + 25 * math.max(0, cos(a + math.pi)), 0, 0))
+		put("Neck", ang(28, 18 * sin(a), 0))
+		put("Waist", ang(-12, 6 * sin(a), 0))
+	else
+		local a = t * 2.2
+		-- treading water: slow sweeps out and in
+		put("RightShoulder", ang(40, 0, 50 + 25 * sin(a)))
+		put("LeftShoulder", ang(40, 0, -50 - 25 * sin(a)))
+		put("RightElbow", ang(30, 0, 0))
+		put("LeftElbow", ang(30, 0, 0))
+		put("Neck", ang(12, 0, 0))
+	end
+	-- the kick: quick small strokes moving, a lazy one treading
+	local k = t * (if moving then 11 else 4)
+	local amp = if moving then 18 else 10
+	put("RightHip", ang(amp * sin(k), 0, 0))
+	put("LeftHip", ang(-amp * sin(k), 0, 0))
+	put("RightKnee", ang(-10 - 8 * math.max(0, sin(k)), 0, 0))
+	put("LeftKnee", ang(-10 - 8 * math.max(0, -sin(k)), 0, 0))
+end
+
 local function step(life: Life, now: number, dt: number)
 	local model = life.model
 	local state = (model:GetAttribute("RagdollState") :: string?) or "Standing"
@@ -1980,6 +2048,7 @@ local function step(life: Life, now: number, dt: number)
 		end
 	end
 	layers(life, state, now, dt)
+	swimLayer(life, state, now, dt)
 	freeLoose(life)
 	if not MOVING[state] then
 		life.lastPosition = life.pelvis.Position
