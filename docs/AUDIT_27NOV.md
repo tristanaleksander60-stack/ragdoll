@@ -94,7 +94,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - on phones only Sound, Graphics, Camera shake, UI size, Body card;
     - kid wording;
     - delete the WALK leftovers.
-28. **Slow-mo:** 3 speed chips and START/STOP right in the LAB row (not 4 taps through 3 windows).
+28. **DONE v1341:** the LAB window's Time row has START/STOP and three speed chips (0.25x, 0.5x, 2x) right in the row (TimeDial.quick); the full TIME window stays on Z. **Slow-mo:** 3 speed chips and START/STOP right in the LAB row (not 4 taps through 3 windows).
 29. **PART DONE v1335:** "X-RAY ON" in words when on, the HUD font (BuilderSansBold), the pulse grows from the centre (UIScale). LEFT: a HudSlots slot. **X-RAY button:**
     - "X-RAY ON" in words (not colour only);
     - the HUD font;

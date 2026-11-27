@@ -634,15 +634,54 @@ local function buildLab()
 		b.root.AnchorPoint = Vector2.new(1, 0.5)
 		b.root.Position = UDim2.fromScale(1, 0.5)
 		cardObj.root.Parent = window.body
-		return b
+		return b, cardObj
 	end
 	local function keyed(id: string, line: string): string
 		local k = if ViewMode.showKeys() then keyOf(id) else nil -- (AUDIT 27 Nov 26: no key letters on touch screens)
 		return if k then line .. "  (" .. k .. ")" else line
 	end
-	row(1, if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "Time" else "Slow-mo", keyed("SlowMo", if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "Faster or slower time round you" else "A slow-motion bubble over your lab"), "motion", if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "TIME" else "SLOW", "info", function()
-		HudPlus.sandbox("SlowMo")
+	local timeDial = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL
+	local slowB, slowCard = row(1, if timeDial then "Time" else "Slow-mo", keyed("SlowMo", if timeDial then "Faster or slower time round you" else "A slow-motion bubble over your lab"), "motion", if timeDial then "START" else "SLOW", "info", function()
+		if timeDial then
+			(require(script.Parent:WaitForChild("TimeDial")) :: any).quick(nil) -- (AUDIT 28: START/STOP right here)
+		else
+			HudPlus.sandbox("SlowMo")
+		end
 	end)
+	if timeDial then
+		-- (AUDIT 28: three speed chips right in the LAB row, not 4 taps through 3 windows)
+		local TimeDial = require(script.Parent:WaitForChild("TimeDial")) :: any
+		slowCard.root.Size = UDim2.new(1, 0, 0, 116)
+		local desc = slowCard.content:FindFirstChild("Description", true)
+		if desc and desc:IsA("GuiObject") then
+			desc.AnchorPoint = Vector2.new(0, 0)
+			desc.Position = UDim2.new(0, 40 + Theme.Space.md, 0, 30) -- (under the title; the chips take the bottom)
+		end
+		local chips = Instance.new("Frame")
+		chips.Name = "Chips"
+		chips.BackgroundTransparency = 1
+		chips.AnchorPoint = Vector2.new(1, 1)
+		chips.Position = UDim2.fromScale(1, 1)
+		chips.Size = UDim2.new(1, 0, 0, 34)
+		chips.Parent = slowCard.content
+		local list = Instance.new("UIListLayout")
+		list.FillDirection = Enum.FillDirection.Horizontal
+		list.HorizontalAlignment = Enum.HorizontalAlignment.Right
+		list.Padding = UDim.new(0, 6)
+		list.Parent = chips
+		for i, sp in { 0.25, 0.5, 2 } do
+			local c = C.Button({ text = (if sp < 1 then tostring(sp) else string.format("%d", sp)) .. "x", role = if sp > 1 then "accent" else "info", size = UDim2.fromOffset(64, 32), parent = chips, onActivated = function()
+				TimeDial.quick(sp)
+				slowB.setText("STOP")
+			end })
+			c.root.LayoutOrder = i
+		end
+		slowB.root.Position = UDim2.new(1, 0, 0, 4)
+		slowB.root.AnchorPoint = Vector2.new(1, 0)
+		Players.LocalPlayer:GetAttributeChangedSignal("TimeScale"):Connect(function()
+			slowB.setText(if TimeDial.isOn() then "STOP" else "START")
+		end)
+	end
 	local fp = row(2, "First person", keyed("FirstPerson", "See the weapon in your hands"), "eye", "OFF", "neutral", function()
 		FirstPerson.toggle()
 	end)

@@ -153,6 +153,21 @@ local function build()
 	Controller.register(window)
 end
 
+-- (AUDIT 28: the speed chips and START/STOP right in the LAB row, no window in between.) quick(s) starts time at speed
+-- s round you; quick(nil) switches it on or off at the speed it has.
+function TimeDial.quick(s: number?)
+	if s then
+		speed = s
+		send(true)
+	else
+		send(not isOn())
+	end
+	task.defer(refresh)
+end
+function TimeDial.isOn(): boolean
+	return isOn()
+end
+
 -- Opens or closes the TIME window (Z, the Lab window's SLOW-MO row).
 function TimeDial.toggle()
 	Controller.toggle("Time")
