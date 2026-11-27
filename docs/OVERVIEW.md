@@ -1,7 +1,7 @@
 # OVERVIEW: the whole plan on one page (read this FIRST on every /klar)
 
-> ## ⚠ OWNER PRIORITY NOW (27 Nov, late): BODY V6 APPROVED, DO THE v6 FIT PASS BEFORE ANYTHING ELSE
-> **FIRST, the owner's test of v6 (27 Nov late):** fix `RAGDOLL_10.md` "THE v6 FIT PASS: the OWNER'S TEST" A-D (the X-ray rules and the torso bug, the whole skeleton in every limb, the round head with the face, a real walk and run), then the rest of the fit pass.
+> ## v6 FIT PASS mostly DONE (27 Nov run 6, v1319-v1325)
+> Done: hookup, BodyShape, physics sizes and arm length, X-ray glass, holes, CPR, bandages, face. Left: ride grips (owner check), far bodies as a cheap v6 mesh, head balance, round-head accessories (RAGDOLL_10 "THE v6 FIT PASS"). Then go on with the other rows.
 > The owner: "Ja, sørg nu for alt virker med den nye krop, dem der holder telefoner, cykler, avis, x-ray, knogler, vægt, physics og alting. - cpr osv". Build `RAGDOLL_10.md` "THE v6 FIT PASS" (items 0-11: hookup, BodyShape, weight and physics, bones and X-ray, holes, CPR, phone, newspaper and props in the new fingers, bicycle and every ride and pose, care, face, stretch, far bodies) in ONE pass, then go on with THE ORDER. If the owner has not imported `mannequin_v6.fbx` yet, build from the stats and bone names and put the import as ONE owner step in the final message. The dog is approved for now (PHASE 8 row DOG3 at the very end).
 
 Rebuilt 26 Nov 2026 late (cloud) on the owner's order: "lav den bedst mulige plan og sørg for alt er i korrekt rækkefølge ... sørg for den ikke tester alt selv dybt, men at det er min opgave, den skal bare lave det bedst mulige produkt og så tester jeg når alt er færdigt".
