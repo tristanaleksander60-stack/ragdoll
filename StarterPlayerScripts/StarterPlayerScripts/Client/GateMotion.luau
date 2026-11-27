@@ -55,6 +55,15 @@ local function step(t: number)
 		return
 	end
 	local cam = camera.CFrame.Position
+	-- (F87: the aquarium's water surface: its textures scroll slowly, Scroll studs a second, near the camera only)
+	for _, tex in CollectionService:GetTagged("ScrollTexture") do
+		local p = tex.Parent
+		if tex:IsA("Texture") and p and p:IsA("BasePart") and (p.Position - cam).Magnitude < 160 then
+			local sp = (tex:GetAttribute("Scroll") :: number?) or 1
+			tex.OffsetStudsU = (t * sp) % tex.StudsPerTileU
+			tex.OffsetStudsV = (t * sp * 0.6) % tex.StudsPerTileV
+		end
+	end
 	for _, b in CollectionService:GetTagged("Chase") do
 		if b:IsA("BasePart") and near(b, cam) then
 			local idx = (b:GetAttribute("Idx") :: number?) or 0

@@ -111,6 +111,7 @@ local Config = {
 	NAME_SIGNS = false, -- F84: no attraction name boards, signposts or IN HERE boards anywhere (LabOwnerMap nameSign); leaderboards, vehicle plaques and machine panels stay
 	NO_HEAD_WHIP = true, -- F85: the fleeing glance back eases at most 230 deg/s (never a 0/55 snap); a noise look never looks behind (over 100 deg) and never while running (Client/DummyLife)
 	MOOD_LEGS = true, -- F86: a kneeling mood (CPR, mourning, checking, wrapping) lowers the lift to kneeling height over 0.5 s (up again over 0.6 s), the ground measured fresh; the client runs no walk cycle on the legs during it (ActiveRagdoll, DummyLife)
+	AQUA_PARTS = true, -- F87: the aquarium's water is built from parts exactly inside the glass (no terrain voxels bulging through): blue-teal 0.55, a lighter surface with scrolling textures, light shafts, bubbles; the swim volume is the same box (LabOwnerMap realWater, Client/GateMotion scroll)
 	HOME_CLEAR = true, -- F75: once the map stands every vehicle home is checked with the vehicle's box and moved to the nearest clear spot when something solid is inside it ([Vehicles] homes moved: n)
 	BIKE_ROUTE = true, -- F69: on the compact map the motorbike rider follows the walkway loop's centre line point to point (a point not reached in 14 s is skipped)
 	REAL_HANDS = true, -- S2 plan B: real hands from rounded parts (palm, 4 fingers of 3 segments, a thumb of 2), posed by state, on this screen only; the hook hand skin is shrunk away (Client/RealHands)

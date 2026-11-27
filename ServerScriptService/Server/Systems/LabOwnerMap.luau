@@ -2934,8 +2934,65 @@ local function realWater(into: Instance, o: Vector3, top: number)
 	local AW, AD, AH = AQUA.X, AQUA.Y, AQUA.Z
 	local acf = CFrame.new(aq + Vector3.new(0, 3 + (AH - 2) / 2, 0))
 	local asz = Vector3.new(AW - 2, AH - 2, AD - 2)
-	T:FillBlock(acf, asz, Enum.Material.Water)
-	waterVolume(into, "Aqua", acf, asz)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).AQUA_PARTS then
+		-- F87 (owner: "Fiks så det ikke ligner vandet er igennem ruden"): terrain water snaps to 4-stud voxels and bulged
+		-- through the panes. The aquarium's water is built from PARTS exactly inside the glass (0.3 in from every pane,
+		-- from the floor to 1.5 under the rim): blue-teal, see-through, no collision; a lighter surface with two scrolling
+		-- textures; faint light shafts; bubbles from an air stone. The swim volume (WaterVolume) is the same box.
+		local inner = Vector3.new(AW - 0.6, AH - 1.5, AD - 0.6)
+		local wcf = CFrame.new(aq + Vector3.new(0, 3 + inner.Y / 2, 0))
+		local water = part(into, "AquaWaterV2", inner, wcf, Color3.fromRGB(60, 150, 190), Enum.Material.SmoothPlastic, true) -- (SmoothPlastic: see-through Glass material all but vanishes)
+		water.Transparency = 0.5
+		water.CanCollide = false
+		local surf = part(into, "AquaSurface", Vector3.new(inner.X, 0.1, inner.Z), wcf * CFrame.new(0, inner.Y / 2 + 0.05, 0), Color3.fromRGB(120, 200, 225), Enum.Material.Glass, true)
+		surf.Transparency = 0.35
+		surf.CanCollide = false
+		for i, speed in { 1.2, -0.8 } do
+			local tex = Instance.new("Texture")
+			tex.Texture = "rbxassetid://6876906063" -- (a soft water caustic)
+			tex.Face = Enum.NormalId.Top
+			tex.StudsPerTileU, tex.StudsPerTileV = 14 + i * 4, 14 + i * 4
+			tex.Transparency = 0.6
+			tex.Color3 = Color3.fromRGB(200, 240, 255)
+			tex:SetAttribute("Scroll", speed)
+			game:GetService("CollectionService"):AddTag(tex, "ScrollTexture")
+			tex.Parent = surf
+		end
+		-- light shafts: a few faint beams from the surface down
+		for k = -1, 1 do
+			local a0 = Instance.new("Attachment")
+			a0.Position = Vector3.new(k * inner.X / 4, 0, k * 2)
+			a0.Parent = surf
+			local a1 = Instance.new("Attachment")
+			a1.Position = Vector3.new(k * inner.X / 4 + 1.5, -inner.Y + 0.5, k * 2 + 1)
+			a1.Parent = surf
+			local b = Instance.new("Beam")
+			b.Attachment0, b.Attachment1 = a0, a1
+			b.Width0, b.Width1 = 3, 5
+			b.Color = ColorSequence.new(Color3.fromRGB(220, 245, 255))
+			b.Transparency = NumberSequence.new(0.8, 1)
+			b.LightEmission = 0.6
+			b.FaceCamera = true
+			b.Parent = surf
+		end
+		-- bubbles from the air stone
+		local stone = part(into, "AquaAirStone", Vector3.new(1.2, 0.6, 1.2), wcf * CFrame.new(inner.X / 2 - 3, -inner.Y / 2 + 0.3, inner.Z / 2 - 3), Color3.fromRGB(90, 90, 96), Enum.Material.Slate, true)
+		local bub = Instance.new("ParticleEmitter")
+		bub.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		bub.Color = ColorSequence.new(Color3.fromRGB(230, 250, 255))
+		bub.Size = NumberSequence.new(0.25, 0.4)
+		bub.Transparency = NumberSequence.new(0.3, 0.8)
+		bub.Speed = NumberRange.new(3, 5)
+		bub.Lifetime = NumberRange.new(inner.Y / 5, inner.Y / 4)
+		bub.SpreadAngle = Vector2.new(8, 8)
+		bub.Rate = 6
+		bub.EmissionDirection = Enum.NormalId.Top
+		bub.Parent = stone
+		waterVolume(into, "Aqua", wcf, inner)
+	else
+		T:FillBlock(acf, asz, Enum.Material.Water)
+		waterVolume(into, "Aqua", acf, asz)
+	end
 	-- the big pool: its rim raised to a basin wall, 3.5 studs of water
 	local pool = planAt(o, top, "BigPool")
 	local PW, PD = POOL.X, POOL.Y
