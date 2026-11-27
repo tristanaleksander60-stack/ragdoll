@@ -1621,6 +1621,22 @@ This breaks the hard rule "nothing vanishes in view" (`RAGDOLL_DIRECTOR.md` Part
 6. **The removal log** (F90) also logs every machine take ("Bowling took X: called / released by player"), so a wrong take is named.
 7. **Check (the owner):** walk up close to the cannon and the bowling lane with ragdolls around, and carry one past them. Nothing is grabbed or lifted. Only a ragdoll you put in, or one called by the lever or TRY (which runs there), goes in.
 
+## F93 The LEGS STILL jitter during CPR, and the player's "press E for CPR" goes (owner, 27 Nov: "Benene lakker stadig når der gives CPR, fjern tryk E for CPR knappen helt")
+**The CPR button:** the cloud set `PLAYER_CPR = false` (27 Nov). The prompt and the rhythm game (Systems/PlayerCPR, Client/CprGame) are off. Make sure no other CPR prompt or key hint is left anywhere (grep "CPR" in the prompts); the ragdolls' own CPR (Mourning, heroes) stays.
+
+**The legs, F86 did not fix it.** Find the real cause by reading the code paths that touch a kneeling body every frame. Check each:
+1. **Who writes the leg joints during a mood.** F86 says the client runs no walk on the legs, but:
+   - the SmoothBody / ClipGait / foot IK (S1, R3), the turn steps (F73), the persona walk (R3), the idle weight shift (S1) and the look-at may still write the hips, knees or ankles;
+   - add the mood to EVERY one of them as "skip the legs";
+   - the F85 priority list must own the legs too, with the mood first.
+2. **The server side:** while kneeling, the `balance` AlignOrientation, the `lift` and the drive must hold still. A pumping arm moves the pelvis, and `updateMoving` must not re-aim the heading or step every tick. Freeze the heading and give the lift a high damping in the kneel.
+3. **Ownership:** a nearby player's client may take over the simulation mid-CPR (F65 hysteresis). Never hand off ownership of a body in a mood.
+4. **Contacts:** the knees and feet touching the lying body or the ground can fight. Turn the collision off between the CPR giver's legs and the patient, and give the knees high friction with the ground.
+5. **The CPR pump itself:** the compressions should move only the arms and the upper body (the Waist), never the pelvis.
+6. **The leg detector** (`LEG_JITTER_LOG`) logs the Mood and which system wrote the leg joints last. Use the quick Play's output, if a CPR happens in it, to confirm.
+
+**Check (the owner):** a ragdoll giving CPR kneels still, the legs calm, only the arms pump. No "E" CPR button anywhere.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
