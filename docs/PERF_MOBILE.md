@@ -166,7 +166,7 @@ No hitch over 100 ms when machines run, a big event starts or the lab loads.
    - Foot IK rays at 20 Hz on touch devices.
    - The `layers()` table literal is hoisted.
    - **Every RenderStepped/Heartbeat/BindToRenderStep in `Client/` (66 files) returns at once, or is unbound, when its feature is idle** (no screen open, not building, not in a vehicle, no bow). One pass: `grep -l RenderStepped`, and add a small `Active.bind(name, fn)` / `Active.unbind(name)` helper. Examples: HospitalCharts, BuildController, GodMode, MechArmsClient, Cockpit, Speedometer, VehicleFeel, BowClient, AmmoClient and MapBoardClient.
-8. **`LAGFREE_SERVER_TICK` (= AUDIT 39):**
+8. **PART DONE v1392:** sleeping bodies are skipped by Unstick (GroundGuard already skips anchored ones). LEFT: the one body scheduler with rates and slices. 8. **`LAGFREE_SERVER_TICK` (= AUDIT 39):**
    - One body scheduler in the RagdollDirector tick. GroundGuard, Unstick, the vitals checks and Creatures each register a callback with a rate (2-5 Hz) and a slice (N bodies a frame, 2 ms a frame in all), round-robin.
    - Sleeping bodies are skipped.
    - The server Heartbeat time goes into item 0's report.

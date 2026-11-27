@@ -168,6 +168,9 @@ local function step()
 	local now = os.clock()
 	for _, m in dummies:GetChildren() do
 		local pe = m:FindFirstChild("LowerTorso")
+		if m:GetAttribute("Asleep") == true then
+			continue -- (LAG-FREE 2 items 2 and 8: a sleeping body lies still where it is; no checks for it)
+		end
 		if guard and m:IsA("Model") and pe and pe:IsA("BasePart") then
 			deathGuard(m, pe, now, ray)
 		end
