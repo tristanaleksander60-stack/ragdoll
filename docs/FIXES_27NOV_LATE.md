@@ -70,3 +70,15 @@ Today A2 puts a pale capsule round the limb (on the torso a big glass box), whic
    - the expressions (eyes, pupils, brows, mouth, blinks; FACES_V2 / FaceLife) are drawn as Decals on it, which follow the curve, layered and swapped per expression; no flat SurfaceGui on the head;
    - check the face from the side: nothing floats off or cuts into the head.
 5. **The check (one Play look, close up):** shoot an arm, a leg and the chest 5 times each and walk round the body: every hole lies flat ON the skin, nothing pokes out or sinks in while it walks, falls or gets up. The face, seen from the front and the side, sits on the head.
+
+## 6. The mouse "cannot move" near many things (owner, PC: "Man kan ikke bevæge musen i nærheden af mange af tingene fiks det")
+Find the real cause with ONE Play (allowed for this item):
+- walk the mouse player past 8 things: the cannon, bowling, the gyro, the shredder, the fan, a bench, the bikes and the fountain;
+- at each, log `UserInputService.MouseBehavior`, `MouseIconEnabled`, `player.CameraMode`, `FirstPerson.isOn()`, the GuiObjects under the cursor (`PlayerGui:GetGuiObjectsAtPosition`: which are Active or Modal), the open ProximityPrompts and ControlsFX prompts, and the FPS.
+
+**Likely causes, in order:**
+1. something locks the mouse near a thing: an auto first person, or the crosshair hiding the cursor (`Crosshair.luau` 176) while the camera is locked;
+2. a custom prompt or a ControlsFX / PromptGate panel that is Active (or Modal) sits under the cursor and eats the mouse, so the camera cannot turn and nothing can be clicked;
+3. the frame rate falls near busy machines (effects, lights, many parts), so the mouse stutters.
+
+**The fix:** near a thing, the mouse moves and turns the camera exactly as anywhere else. Prompts never cover the cursor's way: they are not Active except their own small button. No auto lock of the mouse. If it is the frame rate, fix that machine's cost (row 8, AUDIT 36-42).
