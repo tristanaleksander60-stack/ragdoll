@@ -37,6 +37,7 @@ local BAD_AT = 0.58 -- bleed (%/s, all its wounds) a piece is badly hurt from
 -- 2 hurt (3-4, a stronger violet), 3 badly hurt (5+, deep violet); the bandage is a gauze wrap with offset ridges, a
 -- taped loose end and, at stage 3, a violet seep spot; a head hit twice gets a head wrap.
 local INJURY_V2 = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).INJURY_V2 == true
+local INJURY_HEAL = INJURY_V2 and (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).INJURY_HEAL == true
 local GAUZE = Color3.fromRGB(235, 232, 222)
 local GAUZE_DARK = Color3.fromRGB(221, 217, 205)
 local function shade(color: Color3, hurt: number?): Color3
@@ -61,11 +62,13 @@ local function hurtOf(model: Model): ({ [string]: number }, { [string]: string }
 	local count: { [string]: number } = {}
 	local flow: { [string]: number } = {}
 	local shots: { [string]: number } = {} -- (rounds and blades, no blows)
+	local latest: { [string]: number } = {} -- (row 6, INJURY_HEAL: the server time of each piece's newest hit)
 	do
 		for _, w in Anatomy.parseWounds(model:GetAttribute("Wounds")) do
 			local side, rest = string.match(w.zone.id, "^(%u%l+)(%u.*)$")
 			local piece = rest and BRUISE_AT[rest]
 			if piece and (side == "Left" or side == "Right") then
+				latest[side .. piece] = math.max(latest[side .. piece] or 0, w.at)
 				count[side .. piece] = (count[side .. piece] or 0) + 1
 				shots[side .. piece] = (shots[side .. piece] or 0) + 1 -- (23 Nov 2026, owner: blows too, bat and all)
 				flow[side .. piece] = (flow[side .. piece] or 0) + w.zone.bleed * (if w.blunt then 0.5 else 1)
@@ -91,6 +94,13 @@ local function hurtOf(model: Model): ({ [string]: number }, { [string]: string }
 					if n > 0 then
 						if INJURY_V2 then
 							tint[side .. piece] = if n >= 5 then 3 elseif n >= 3 then 2 else 1
+							-- (row 6, Config.INJURY_HEAL: a bruise heals one stage a minute after the piece's last hit,
+							-- deep violet to violet to lavender, then gone; a new hit brings it back at its full stage)
+							if INJURY_HEAL and latest[side .. piece] then
+								local healed = math.floor((Workspace:GetServerTimeNow() - latest[side .. piece]) / 60)
+								local left = tint[side .. piece] - math.max(0, healed)
+								tint[side .. piece] = if left > 0 then left else nil
+							end
 						else
 							tint[side .. piece] = if (flow[side .. piece] or 0) >= BAD_AT then 2 else 1
 						end
@@ -1193,6 +1203,20 @@ function DummySkins.xrayIsOn(): boolean
 end
 
 function DummySkins.start()
+	if INJURY_HEAL then
+		-- (row 6: the bruises heal with time, so each body's look is checked again every 15 s; nothing is redrawn
+		-- unless its stage changed)
+		task.spawn(function()
+			while true do
+				task.wait(15)
+				for model, fn in refreshers do
+					if model.Parent and model:GetAttribute("Wounds") ~= nil and model:GetAttribute("Wounds") ~= "" then
+						pcall(fn)
+					end
+				end
+			end
+		end)
+	end
 	template = ReplicatedStorage:FindFirstChild("DummySkin2")
 	shaped = template ~= nil
 	if not template then
