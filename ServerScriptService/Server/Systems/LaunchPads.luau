@@ -70,6 +70,10 @@ local function launchCar(model: Model, seat: VehicleSeat, strength: number)
 	-- the air time
 	task.spawn(function()
 		local t0 = os.clock()
+		model:SetAttribute("PadLaunched", true) -- (3.32 RIDE_AIR: VehicleService leaves this flight's air time to us)
+		task.delay(9, function()
+			model:SetAttribute("PadLaunched", nil)
+		end)
 		task.wait(0.4)
 		local params = RaycastParams.new()
 		params.FilterType = Enum.RaycastFilterType.Exclude

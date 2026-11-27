@@ -753,6 +753,52 @@ function VehicleService.start()
 			end
 		end
 	end)
+	if (Config :: any).RIDE_AIR then
+		-- 3.32 (docs/MACHINES_10.md "BICYCLE, MOTORBIKE, WHEELCHAIRS"; Config.RIDE_AIR): any driven vehicle (bike,
+		-- wheelchair, car) that leaves the ground for 0.6 s or more pops its air time when it lands ("AIR TIME 1.4 s"),
+		-- with a NEW BEST for the driver (AirBest). The launch pads keep their own pop (they are skipped here).
+		local airSince: { [any]: number } = {}
+		local rayParams = RaycastParams.new()
+		rayParams.FilterType = Enum.RaycastFilterType.Exclude
+		local airAcc = 0
+		RunService.Heartbeat:Connect(function(dt)
+			airAcc += dt
+			if airAcc < 0.1 then
+				return
+			end
+			airAcc = 0
+			for _, car in cars do
+				local occupant = car.seat.Occupant
+				local driver = occupant and Players:GetPlayerFromCharacter(occupant.Parent)
+				local body = car.body
+				if driver and body.Parent and car.model:GetAttribute("PadLaunched") == nil then
+					rayParams.FilterDescendantsInstances = { car.model, occupant.Parent :: Instance }
+					local down = Workspace:Raycast(body.Position, Vector3.new(0, -(body.Size.Y / 2 + 3.5), 0), rayParams)
+					local now = os.clock()
+					if not down then
+						airSince[car] = airSince[car] or now
+					elseif airSince[car] then
+						local t = now - airSince[car]
+						airSince[car] = nil
+						if t >= 0.6 then
+							local air = math.floor(t * 10 + 0.5) / 10
+							local text = "AIR TIME " .. string.format("%.1f", air) .. " s"
+							local best = (driver:GetAttribute("AirBest") :: number?) or 0
+							if air > best then
+								driver:SetAttribute("AirBest", air)
+								text ..= " NEW BEST!"
+							end
+							pcall(function()
+								(require(script.Parent:WaitForChild("Playground")) :: any).pop(body.Position + Vector3.new(0, 5, 0), text, Color3.fromRGB(140, 220, 255))
+							end)
+						end
+					end
+				else
+					airSince[car] = nil
+				end
+			end
+		end)
+	end
 	local acc = 0
 	RunService.Heartbeat:Connect(function(dt)
 		acc += dt
