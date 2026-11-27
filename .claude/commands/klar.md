@@ -2,7 +2,7 @@
 description: Build the WHOLE plan in docs/OVERVIEW.md, phase by phase, without stopping; the owner tests only at the end
 argument-hint: "[optional: what the owner wants first]"
 ---
-Read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situation, how to work, what only the owner can do, THE ORDER in 8 phases, DONE). Then read only the doc section of the row you are on. If the owner wrote something after /klar, do that first.
+Read the "OWNER PRIORITY NOW" banner at the top of `docs/OVERVIEW.md` and `docs/NOW.md` FIRST and do it before anything else. Then read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situation, how to work, what only the owner can do, THE ORDER in 8 phases, DONE). Then read only the doc section of the row you are on. If the owner wrote something after /klar, do that first.
 
 ## THE OWNER'S ORDERS (26 Nov 2026)
 - "Gør så den laver alt nu uden at stoppe så jeg bare skal teste alt til sidst"

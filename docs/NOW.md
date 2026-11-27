@@ -1,3 +1,6 @@
+# ⚠ OWNER PRIORITY NOW (27 Nov late): BUILD BODY v4 FIRST (see OVERVIEW's banner). The owner has asked to see it 3 times. Do it as the very next thing, before any other row.
+# The dog (A0, art/models/dog) is NOT approved: the cloud's review says it is blobby, thin-legged and faceless (well below the CREATURES_ANIM 4 bar). Rebuild it AFTER body v4, with a real dog anatomy (a deep chest, a tucked waist, thick legs with paws, a muzzle, eyes and a nose), self-checked against the bar before showing the owner.
+
 # NOW: the current work list (read this first on every /klar)
 
 **READ `docs/OVERVIEW.md` FIRST:** it is the one-page map of the whole plan (order, docs, done, left). This file holds the details and history.
