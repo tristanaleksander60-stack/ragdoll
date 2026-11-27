@@ -118,6 +118,7 @@ end)
 safe("Purchases", function() Purchases.start() end)
 safe("WhaleSpout", function() require(Systems:WaitForChild("WhaleSpout")).start() end) -- 3.26: the big pool's whale spouts ragdolls sky-high and tail-slaps (Config.WHALE_10) -- the one ProcessReceipt; finds out whether orders live in a DataStore
 safe("TargetRun", function() require(Systems:WaitForChild("TargetRun")).start() end) -- 3.31: a 30 s timed run on the archery target (Config.TARGET_RUN)
+safe("BooMask", function() require(Systems:WaitForChild("BooMask")).start() end) -- MILD_EXTRAS C3: BOO a ragdoll from behind (Config.BOO_MASK)
 safe("PlayerCPR", function() require(Systems:WaitForChild("PlayerCPR")).start() end) -- 3.34: your own CPR on a down ragdoll, a rhythm game (Config.PLAYER_CPR)
 safe("ControlsDress", function() require(Systems:WaitForChild("ControlsDress")).start() end) -- C10 part 2: the machines' controls onto the kit (Config.CONTROLS_DRESS)
 safe("WheelchairRide", function() require(Systems:WaitForChild("WheelchairRide")).start() end) -- row 14: a ragdoll rides a wheelchair, PUSH it, it falls out on a crash (Config.WHEELCHAIR_RIDE)

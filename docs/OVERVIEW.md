@@ -156,7 +156,7 @@ Everything not listed here is DONE (see the rows). Each line points to its row; 
 11. **AUDIT 27 Nov, the rest** (`AUDIT_27NOV.md` 5-42): fairness and compliance 5-8 before the release; gameplay and content 9-21 with the machines phase; phone UI 22-35 with T1; performance 36-42 with row 8.
 11b. **MILD EXTRAS, the owner said yes to A and C3** (`MILD_EXTRAS.md`), right after `FIXES_27NOV_LATE.md`. Each is a real 9/10 feature with its sounds, faces and reactions, cartoony and silly, never gross:
    - **A, the crude humour pack** (`CRUDE_HUMOR`): the whoopee cushion, the fart gun (a toy weapon in the weapon bar), the burps at the grill, the green cartoon "blegh" after the gyro or washer, the fart BOOST on the go-kart, the poop-emoji slip prop;
-   - **C3, the BOO mask** (`BOO_MASK`): sneak up on a ragdoll and it jumps out of its skin, screams and runs.
+   - **C3, the BOO mask** (`BOO_MASK`): sneak up on a ragdoll and it jumps out of its skin, screams and runs. **DONE v1381:** a BOO! button (B on PC, a touch button) shows behind a standing ragdoll that faces away; the server checks (7 studs, behind, 1.5 s per player): a hop, a Shock face, a scream line, then it runs 5 s (PanicFrom); Funnels event "Boo".
 12. **END:** the ONE LONG numbered "Test selv" list of everything (klar).
 
 ## THE ORDER (top to bottom; the # is only a name)

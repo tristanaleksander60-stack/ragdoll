@@ -48,6 +48,7 @@ Net.Names = table.freeze({
 	Shot = "Shot", -- client -> server: a gun fired at nothing (the ground, a wall, the air)
 	Portal = "Portal", -- both ways: client List / PlayNow / Join / Own / Solo; server Open / List / Going / Refused (round 5)
 	Ammo = "Ammo", -- client -> server: Reload (a gun id) early with R (round 5; HitService counts rounds)
+	Boo = "Boo", -- client -> server: the ragdoll you BOO (MILD_EXTRAS C3); checked in BooMask (a living ragdoll within 7 studs that faces away, once every 1.5 s)
 	Trial = "Trial", -- both ways: client Try (a weapon id); server Started / Refused (round 5, TrialService)
 	Sandbox = "Sandbox", -- client -> server: SlowMo / Revive / Reset (round 5, SandboxService; own lab only); V9-2c: Time (speed, size, on) for the time bubble (SandboxService.setTime: listed speeds and sizes, paced, own or party lab)
 	Rewards = "Rewards", -- both ways: client Hello / ClaimGroup; server State (round 5, RewardsService)
