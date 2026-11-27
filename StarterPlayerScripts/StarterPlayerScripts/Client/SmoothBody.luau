@@ -269,8 +269,35 @@ local function roundHead(body: Body)
 	body.hidden[head] = true
 	local face = head:FindFirstChild("Face")
 	if face and face:IsA("SurfaceGui") then
-		face.Adornee = ball
-		body.face = face
+		if (Config :: any).FACE_ON_SKIN then
+			-- (owner 27 Nov late, the 10th time: "HVORFOR BUGGER ANSIGTET IGENNEM". The cause: the face is a SurfaceGui, a
+			-- FLAT square; on the round head it only touches the ball's front point, so from the side it stuck out of the
+			-- head like a card. FACE_ON_SKIN: the same face picture as a Decal on the ball itself, which Roblox draws ON
+			-- the round surface; it follows every expression change; the flat gui is switched off on this screen.)
+			face.Enabled = false
+			local img = face:FindFirstChildWhichIsA("ImageLabel")
+			local decal = Instance.new("Decal")
+			decal.Name = "FaceSkin"
+			decal.Face = Enum.NormalId.Front
+			decal.Texture = if img then img.Image else ""
+			decal.Parent = ball
+			if img then
+				img:GetPropertyChangedSignal("Image"):Connect(function()
+					decal.Texture = img.Image
+				end)
+			end
+			local B = body :: any
+			B.faceDecal = decal
+			-- the crash-test marks on the old head's sides would float beside the bigger round head: drawn on the ball too
+			for _, g in head:GetChildren() do
+				if g:IsA("SurfaceGui") and g.Name == "CrashMark" then
+					g.Adornee = ball
+				end
+			end
+		else
+			face.Adornee = ball
+			body.face = face
+		end
 	end
 	-- (THE FINISH LINE, round-head accessories: a hat, a cap, a sweatband or headphones welded on the old smaller head by
 	-- the server would sink into the bigger round one: on this screen everything welded on above the head's middle is
@@ -688,6 +715,10 @@ local function step(dt: number)
 		if body.ball then
 			if body.ball.Transparency ~= body.mesh.Transparency then
 				body.ball.Transparency = body.mesh.Transparency
+			end
+			local fd = (body :: any).faceDecal
+			if fd then
+				fd.Transparency = if body.ball.Transparency > 0.05 then 1 else 0
 			end
 			if body.face then
 				body.face.Enabled = if XRAY_CALM then body.mesh.Transparency < 0.05 else body.mesh.Transparency < 1

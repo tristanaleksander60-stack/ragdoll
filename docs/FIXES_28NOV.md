@@ -140,6 +140,23 @@
   - the hands visibly ON the weapon, the sleeves in the shirt's colours, nothing white or blocky;
   - V out and in with each.
 
+## CLOUD CODE ROUND 3 (push first, length check, one Play)
+- **`Systems/RagdollDirector.luau` + `Config.NEARBY_CAP_V2`** ("still far too many ragdolls right by you").
+  - **Why the old cap did nothing:** almost everyone near was exempt (anyone running to you, anyone shot in the last 60 s, every Role3 and every watcher), and a body sent away was called back by one of about 35 systems that write `Home`.
+  - **Now:**
+    - counted: every living body within 45 studs, plus the ones on their way to you;
+    - kept: held, in a machine or the ring, a demo or TRY, shot in the last 8 s, and the 2 nearest talkers;
+    - over the cap (phone 5, tablet 6, PC 8, fewer at a low FPS level): the extras walk 90 studs away and lose their job, and for 30 s any `Home` a system sets near a player is put back.
+  - **Check:**
+    - stand still 2 minutes at the spawn, at a machine and at the boxing ring, then count the ragdolls within about 45 studs (one capture each): never more than the cap plus the machine's own;
+    - check that ALWAYS3 still brings its 3 and that the boxing and machine demos still work.
+  - **Also TO DO:** the systems that spawn or call bodies (Lab FAST_THREE, VisitorService, Watchers, EventService crowd, Personas, NearbyTwo, GreeterService) must ask `RagdollDirector` for room first (a `room(player)` function: cap minus count) instead of sending and being sent back.
+- **`Client/SmoothBody.luau` + `Config.FACE_ON_SKIN`** (the face stuck out of the round head, the 10th time).
+  - **The cause:** the face is a SurfaceGui, a FLAT square, on a BALL. It touches only the front point, so from the side it is a card sticking out.
+  - **Now:** the same face picture is a Decal on the ball, drawn on its round surface, following every expression; the flat gui is off. The crash-test marks are drawn on the ball too.
+  - **Check:** captures of 3 ragdolls from the front, 45 degrees and the side, and while they talk and change face. Nothing may stick out.
+  - If the decal's projection looks wrong at the edges, use a sphere MeshPart (from Blender, UV front cap) with the face as its Decal or SurfaceAppearance. Never a flat gui on a round head.
+
 ## BATCH A (build now, then STOP for the owner's test)
 **Round 1 done (v1418-1423), STOPPED for the owner's test:** cloud code in Studio (20 files + FP_AUTO, a Config syntax break fixed), 4 DROP HERE, 6 stairs, 7 parking lot, 9 X-ray, 12 crowding. **Next round:** 10-11 holes and bandages on the v6 skin, 13 no block ragdolls, 14 bike riders welded, then 15/16/8 the real models (weapon testing building, T-rex, gyro).
 15. **PART DONE v1428 (`RANGE_CLEAR`, ShootingRange), SEEN:** the range stands just outside the compact plan where the hills begin (terrain y 7 to 40 across its depth); 10 s and 25 s after start (after the landscape fills the hills) the terrain round it (its box + 6 studs, floor up 90) is made air; captures: the whole facade and the open entrance stand free, inside a concrete firing line with a grass backstop where the hill was cut. LEFT: the plain-part shell -> a real model (next step). **WEAPON TESTING is half inside a mountain** (the building by the railway):
