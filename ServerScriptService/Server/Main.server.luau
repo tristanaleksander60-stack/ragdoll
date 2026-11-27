@@ -94,6 +94,7 @@ safe("Personas", function() require(Systems:WaitForChild("Personas")).start() en
 safe("GoldenRun", function() require(Systems:WaitForChild("GoldenRun")).start() end) -- T1: the golden ragdoll at about 2:00
 safe("DropScore", function() require(Systems:WaitForChild("DropScore")).start() end) -- 3.2: fall height scores by the tower
 safe("FanMachine", function() require(Systems:WaitForChild("FanMachine")).start() end) -- 3.4: the giant fan's dial, roar and score
+safe("AnimalCove", function() require(Systems:WaitForChild("AnimalCove")).start() end) -- 3.27-3.29: the bear, the crocodiles and the T-rex come alive
 safe("BackToSpawn", function() require(Systems:WaitForChild("BackToSpawn")).start() end) -- F80: BACK TO SPAWN
 safe("SwimService", function() require(Systems:WaitForChild("SwimService")).start() end) -- F78: ragdolls in the real water
 safe("MechArms", function() require(Systems:WaitForChild("MechArms")).start() end) -- mechanical arms to tear ragdolls apart
