@@ -79,6 +79,7 @@ safe("SmoothBodyV2", function() -- F89: a freshly imported slim body (File > Imp
 end)
 safe("Purchases", function() Purchases.start() end)
 safe("WhaleSpout", function() require(Systems:WaitForChild("WhaleSpout")).start() end) -- 3.26: the big pool's whale spouts ragdolls sky-high and tail-slaps (Config.WHALE_10) -- the one ProcessReceipt; finds out whether orders live in a DataStore
+safe("TargetRun", function() require(Systems:WaitForChild("TargetRun")).start() end) -- 3.31: a 30 s timed run on the archery target (Config.TARGET_RUN)
 safe("PurchaseChat", function() require(Systems:WaitForChild("PurchaseChat")).start() end) -- (V11 B7) Robux purchases in chat on every server
 safe("BenchService", function() require(Systems:WaitForChild("BenchService")).start() end) -- benches the lab's ragdolls sit on
 safe("BikeService", function() require(Systems:WaitForChild("BikeService")).start() end) -- a ragdoll rides the bike
