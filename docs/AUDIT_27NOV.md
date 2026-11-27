@@ -101,7 +101,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - a HudSlots slot (so LayoutCheck measures it);
     - the pulse with a UIScale from the centre.
 30. **PART DONE v1351:** RAGDOLL and KO in the live player-facing texts (the first-visit tips, the event names, the "no free ragdoll" notice, the daily goal, the achievements, the egg, the advent prize). LEFT: the Shared word list; the old missions (off) keep "dummy". **One word for each thing:** RAGDOLL (not dummy), KO (not takedown), MAPS (not Places), SOLO, in a small Shared word list, for every player-facing string.
-31. **The loading screen:** a progress bar from the real `ready()` checks, the logo and one rotating kid tip.
+31. **DONE v1354:** LoadCover has a purple progress bar driven by the real steps (lab known, floor here, ragdolls dressed; never backwards) and a kid tip that changes every 3 s. **The loading screen:** a progress bar from the real `ready()` checks, the logo and one rotating kid tip.
 32. **PARKED (27 Nov run 6):** the owner chose a GEAR for MORE (standing answer "MORE is a gear (9)") and the drawn two-people icon for Multiplayer (F11), so those stay; an egg and a ticket icon need new drawn icons uploaded (art/icons): with the icon pass. **Icons:** MORE gets a dots/grid icon (not the settings cog), Multiplayer a globe, Eggs an egg, Codes a ticket.
 33. **One font helper:** `KitStyle.font("display"|"body")` for the 21 modules still on FredokaOne, Gotham or SourceSans.
 34. **The CPR game:** rebuilt as a kit panel, an 88 px PUSH on the right thumb, a SKIP, the hotbar kept visible.
