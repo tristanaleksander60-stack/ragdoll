@@ -2337,6 +2337,26 @@ local function update(dt: number)
 				startRamp(rig, "Recovering", 0.35)
 			end
 		elseif state == "Ragdoll" or state == "Out" then
+			-- (FIXES 10.5, Config.LANDING_TWITCH: a hard landing (from over 25 to under 10 studs/s) is followed by 1-2 small
+			-- twitches of a hand or a foot, 0.5-1.4 s later, then it lies still: a body, not a sack)
+			if (GameConfig :: any).LANDING_TWITCH then
+				local R = rig :: any
+				local speed = rig.pelvis.AssemblyLinearVelocity.Magnitude
+				if (R.lastSpeed or 0) > 25 and speed < 10 and rig.stateTime > 0.3 and os.clock() - (R.lastTwitch or 0) > 4 then
+					R.lastTwitch = os.clock()
+					local model = rig.model
+					for k = 1, math.random(1, 2) do
+						task.delay(0.5 + k * 0.45 + math.random() * 0.3, function()
+							local names = { "LeftHand", "RightHand", "LeftFoot", "RightFoot", "LeftLowerArm", "RightLowerLeg" }
+							local limb = model:FindFirstChild(names[math.random(#names)])
+							if limb and limb:IsA("BasePart") and not limb.Anchored then
+								limb.AssemblyLinearVelocity += Vector3.new(math.random() - 0.5, 0.8, math.random() - 0.5).Unit * (5 + math.random() * 3)
+							end
+						end)
+					end
+				end
+				R.lastSpeed = speed
+			end
 			if GAME_NO_FREEZE then
 				-- (F46: limp means limp: a late kinematic flag (a state report from before the fall) froze the body stiff,
 				-- mid-pose or mid-air; on the simulating screen no joint of a limp body is ever kinematic)
