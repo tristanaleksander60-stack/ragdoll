@@ -2,6 +2,8 @@
 > "De bugger stadig frem og tilbage, står urealistisk, det hele er 3/10 physics, kig DYBT i det og løs det nu, det her taber mig så mange penge."
 > (Screenshot: a v6 ragdoll standing with its legs wide and bent, its arms held out from the body like a gorilla, a purple trickle stick on its back; the trickle is fixed in code, `DRIP_TRICKLE`.)
 
+**STATE (27 Nov late, v1328-v1333): mostly DONE, see NOW.md "PHYSICS_DEEP probe numbers": no self-collision, calm states, standing hold, smoothed lean, no waypoint backtrack, ghost shins and feet while walking (the bounce off kerbs and steps), blocked walkers stop pushing, path budget queue, v6 arms in, run form, a coward backs off a gun once. LEFT: the last standing drift (0.06-0.28 studs in 10 s), walkers still bumping a few walls.**
+
 **This is now the TOP priority, above every other row, A-E included where they overlap (A-E's walk and run, D, is part of this).**
 **The owner's order overrides the NO TESTING rule for THIS item only:** measure in Play with the probe below as much as you need, until the numbers pass. No other testing.
 
