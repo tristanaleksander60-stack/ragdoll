@@ -1545,6 +1545,9 @@ local function buildBigButton()
 		if not owner or not root or not root:IsA("BasePart") or Lab.ownerAt(root.Position) ~= owner then
 			return
 		end
+		if not Config.BIG_BUTTON and not (player == owner and player:GetAttribute("LabControls") == true) then
+			return -- (AUDIT 27 Nov 1: with the free button off, only the Lab Controls owner, in their own lab)
+		end
 		local EventService = require(script.Parent.EventService)
 		-- (Only events that stay in this lab, and only while nothing waits: the server's one queue
 		-- stays free for bought events. No train without its engine model.)
@@ -1583,6 +1586,51 @@ local function buildBigButton()
 		end)
 	end)
 	local _ = base
+	-- AUDIT 27 Nov 1 (Config.LAB_CONTROLS_BUTTON): the free button is off (owner, 24 Nov), so the stand shows only in the
+	-- lab of a player who owns the Lab Controls pass (they bought it: a free random event every LAB_CONTROLS_GAP s).
+	if not Config.BIG_BUTTON then
+		local names = { BigButtonBase = true, BigButtonStand = true, BigButtonTop = true, BigButtonRing = true, BigButton = true, ButtonSignPost = true, ButtonSign = true }
+		local mine: { BasePart } = {}
+		local collide: { [BasePart]: boolean } = {}
+		for _, c in (button.Parent :: Instance):GetChildren() do
+			if names[c.Name] and c:IsA("BasePart") and (c.Position - base.Position).Magnitude < 12 then
+				table.insert(mine, c)
+				collide[c] = c.CanCollide
+			end
+		end
+		for _, c in countdowns do
+			local g = c.Parent
+			if g and g:IsA("SurfaceGui") then
+				local t = g:FindFirstChildWhichIsA("TextLabel")
+				if t and t ~= c then
+					t.Text = "LAB CONTROLS:\nA RANDOM EVENT!"
+				end
+			end
+		end
+		prompt.ObjectText = "Lab Controls"
+		local shown: boolean? = nil
+		task.spawn(function()
+			while button.Parent do
+				local owner = (require(script.Parent.Lab) :: any).ownerAt(labOrigin)
+				local on = owner ~= nil and owner:GetAttribute("LabControls") == true
+				if on ~= shown then
+					shown = on
+					for _, p in mine do
+						p.Transparency = if on then 0 else 1
+						p.CanCollide = on and collide[p] == true
+						p.CanQuery = on
+						for _, g in p:GetChildren() do
+							if g:IsA("SurfaceGui") then
+								g.Enabled = on
+							end
+						end
+					end
+					prompt.Parent = if on then button else nil
+				end
+				task.wait(2)
+			end
+		end)
+	end
 end
 
 -- V10 phase 4 (owner: "a wooden info post: 50 likes = Area 51"): a post and a plank sign at the edge of the spawn
@@ -1660,8 +1708,8 @@ function Playground.build(labOrigin: Vector3, name: string?)
 			buildSpikes() -- (owner, 20 Nov 2026: the red spike plates are gone: Config.SPIKE_BLOCKS)
 		end
 		buildStations() -- (round 5: PUT RAGDOLL HERE)
-		if Config.BIG_BUTTON then
-			buildBigButton() -- (v3 Phase C)
+		if Config.BIG_BUTTON or (Config :: any).LAB_CONTROLS_BUTTON then
+			buildBigButton() -- (v3 Phase C; AUDIT 27 Nov 1: for Lab Controls owners only when the free one is off)
 		end
 		pcall(buildLikePost) -- (V10 phase 4)
 		-- Round 5, phase 3: round pedestals under the things to try.

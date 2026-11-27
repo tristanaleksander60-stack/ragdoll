@@ -16,7 +16,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
 - **No auto first person on touch screens** (Config.PHONE_AUTO_FP = false).
 
 ## URGENT (build right after F90/F89)
-1. **The "Lab Controls" pass (179 R$) is sold, but its BIG RED BUTTON is switched off** (`Config.BIG_BUTTON = false`; Shop.luau ~338). Buyers get nothing.
+1. **DONE v1289 (`LAB_CONTROLS_BUTTON`, Systems/PassLint):** the stand shows only in a pass owner's lab, only they can press; the shop sells the pass again; PassLint prints an error at startup for any pass on sale whose feature is off. **Was:** The "Lab Controls" pass (179 R$) is sold, but its BIG RED BUTTON is switched off** (`Config.BIG_BUTTON = false`; Shop.luau ~338). Buyers get nothing.
    - **Fix:** bring the button back ONLY for pass owners, in their own lab, on the new map (a small pedestal by the spawn plaza).
    - Add a startup lint: every pass on sale must reach a live feature (log an error otherwise).
 2. **CHRISTMAS ADVENT CALENDAR, live from 1 Dec** (4 days):

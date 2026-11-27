@@ -515,6 +515,7 @@ local Config = {
 	SHOOTING_RANGE = true, -- 24 Nov 2026 (owner): the indoor weapon range (ShootingRange)
 	SCAFFOLDS = false, -- 24 Nov 2026 (owner): wooden scaffolds to knock over in the labs
 	BIG_BUTTON = false, -- 24 Nov 2026 (owner): no free event button and sign in the lab
+	LAB_CONTROLS_BUTTON = true, -- AUDIT 27 Nov 1: the BIG RED BUTTON stand comes back ONLY in the lab of a Lab Controls pass owner (a random event every LAB_CONTROLS_GAP s); others never see it (Playground.buildBigButton, Systems/PassLint)
 	BIG_BUTTON_GAP = 300, -- (22 Nov 2026, owner: a free random event every 5 minutes; was 75) -- s between two presses of a lab's BIG RED BUTTON (a random free event)
 	LAB_CONTROLS_GAP = 8, -- s: the same with the Lab Controls pass (its owner, in their own lab)
 	-- All UI 3D and interactive (19 Nov 2026, the owner): turning weapon models on the cards and the
