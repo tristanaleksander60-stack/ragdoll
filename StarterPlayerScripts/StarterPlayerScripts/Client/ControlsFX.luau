@@ -206,6 +206,39 @@ local function showPrompt(prompt: ProximityPrompt, input: Enum.ProximityPromptIn
 	local key = if input == Enum.ProximityPromptInputType.Keyboard then " [" .. prompt.KeyboardKeyCode.Name .. "]" else ""
 	word.Text = string.upper(prompt.ActionText) .. key
 	word.Parent = gui
+	-- a hold prompt: a ring of light fills round the button while it is held (C10 5)
+	if prompt.HoldDuration > 0 then
+		local fill = Instance.new("UIStroke")
+		fill.Name = "HoldFill"
+		fill.Thickness = 0
+		fill.Color = Color3.fromRGB(90, 255, 120)
+		fill.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		fill.Parent = btn
+		stroke.Thickness = 4
+		local tw: Tween? = nil
+		local c1 = prompt.PromptButtonHoldBegan:Connect(function()
+			if tw then
+				tw:Cancel()
+			end
+			fill.Thickness = 0
+			stroke.Enabled = false
+			local t = TweenService:Create(fill, TweenInfo.new(prompt.HoldDuration, Enum.EasingStyle.Linear), { Thickness = 10 })
+			tw = t
+			t:Play()
+		end)
+		local c2 = prompt.PromptButtonHoldEnded:Connect(function()
+			if tw then
+				tw:Cancel()
+				tw = nil
+			end
+			fill.Thickness = 0
+			stroke.Enabled = true
+		end)
+		gui.Destroying:Connect(function()
+			c1:Disconnect()
+			c2:Disconnect()
+		end)
+	end
 	-- a tap (touch) or a click works the prompt by hand (a Custom prompt has no built-in button)
 	btn.InputBegan:Connect(function(io: InputObject)
 		if io.UserInputType == Enum.UserInputType.Touch or io.UserInputType == Enum.UserInputType.MouseButton1 then
