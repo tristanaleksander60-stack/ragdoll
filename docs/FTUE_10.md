@@ -6,7 +6,7 @@
 ## The principles (what the best Roblox games do in their first minutes)
 1. **Action in the first 5 seconds, a "WOW" before 30 seconds.** No reading, no menus, no waiting.
 2. **Show, don't tell:** at most 3 words on screen at a time, plus an icon. A faint line on the ground shows the way; nothing floats over the action.
-3. **ONE goal and ONE hint at a time,** never two. A small goal line at the top says what to do next, and it is always close: under 30 seconds of walking or doing.
+3. **ONE goal and ONE hint at a time,** never two. A small goal line at the top says what to do next, and it is always close. **Only ONE machine is shown (the bowling); after that the player explores or fights as they like.**
 4. **A reward every 30-90 seconds in the first 5 minutes,** then every 2-3 minutes up to 20.
 5. **The world shows off by itself:** ragdolls react, animals do things, machines run with watchers. The player should feel "there is so much here".
 6. **Phone first:**
@@ -36,12 +36,12 @@ The spawn is on the raised plaza facing south. Right below the stair: RAGDOLL BO
 | **20-40 s** | The ground line leads down the stair to the bowling lane (about 60 studs, 4 s). TRY there: a ragdoll rolls down. **The FIRST roll of a new player is always a STRIKE** (fix 5). Confetti, cheers, "+BOLTS". THIS IS THE WOW. | "Bowl a STRIKE!" | the TRY button (big, right side on a phone) shows when you are near; after TRY, the lane's LEVER bowls again any time |
 | **40-60 s** | The first weapon unlock: a toy PISTOL at 3 KOs (the unlock happens when earned; its BEAT waits until the bowling is done, fix 1). The mini hotbar opens 1.5 s with the new slot popping (F71). | "Shoot a ragdoll!" | the pistol: the different shot, the splash and drips, bone damage adding up |
 | **60-90 s** | The first gift is ready (the gift chip, 1 min). | "Open your gift!" | tap the chip; a short, satisfying open |
-| **1:30-3:30** | THE TOUR, one walking loop with no back-tracking (fix 6): BOXING RING (beside the spine) → GIANT FAN → TESLA → the TOWER slide (the landmark) → the CANNON (south-west, about 12 s walk from the tower). TRY: automatic (F81), with the machine's show (CREATURES_ANIM). Pops "2/6" … "6/6". | "Try the BOXING RING" … | each step under 15 s of walking at the normal speed (16) |
+| **after the bowling: FREE PLAY** (owner, 26 Nov late: "Kun vis 1 maskine så ved de selv resten, så kan de selv tage det i den rækkefølge de vil, nogle vil også bare dræbe") | The bowling is the ONE machine that is shown. After it, NO tour and NO pointing at machines: the player goes where they want. Every machine shows its TRY button when you walk up to it (F81), so explorers find them by themselves, and players who just want to fight keep fighting. | the goal line shows the next WEAPON ("3 KOs to the BOW"), not a machine | the machines' own shows (CREATURES_ANIM) are the reward for exploring |
 | **about 2:00** | The first SURPRISE: a GOLDEN RAGDOLL runs past (it is worth 10 KOs), with a 10 s countdown on the goal line. | "Catch the GOLDEN one!" | only when no beat runs |
 | **2:30-3:30** | **The X-RAY moment:** after the first bone break (or at 3:00), the X-RAY button pulses once. Tap it: the cracked bones show. | "See the bones!" | the pulse only once, ever |
 | **after the tour** | **The BIKE, only when useful** (fix 7): the first time the next goal is more than 150 studs away, the goal line says "Faster: free BIKE" and points to the NEAREST free bicycle (a second free bicycle stand at the tower square, so it is never a walk back to the spawn) | "Faster: free BIKE" | the paid vehicles in the entrance row are seen on the way out of the spawn, never pushed |
-| **3:00-4:00** | **The CANNON** ends the tour, the biggest show: TRY; BOOM; the landing distance pops with "NEW BEST"; then "6/6" | "Fire the CANNON!" | |
-| **4:00-5:00** | "Tried 6/6" gives the TOUR REWARD (a free egg or crate, opened at once, server-checked); the 3 min and 5 min gifts are ready in between (their beats wait for the shows) | - | |
+| **any time** | Machines tried are counted quietly ("Tried 3" pops after each first TRY). At 6 tried, the TRY REWARD (a free egg or crate) without ever having been told to do it | - | |
+| **4:00-5:00** | the 3 min and 5 min gifts (their beats wait for the shows) | - | |
 | **5-10 min** | **The world takes over:** the personalities (P1), the animals' idles and catches, the 2-minute surprises (a ragdoll rain, a giant ragdoll, the free red-button event), the next weapons close together (6 unlocks by about 25 KOs), "NEW BEST" moments (bowling, cannon, slide). | the goal line always shows the next weapon ("3 KOs to the BOW") or the next untried machine | one goal at a time |
 | **about 8 min** | One quiet offer: "Play with friends" opens MULTIPLAYER (once, never again) | - | |
 | **10-20 min** | **Long goals:** RANK 2-3 with a reward each (a ragdoll skin, a hit effect, a title), the collection page (machines tried, animals fed, bones broken), the 8, 12, 16 min gifts; at 12 min a quiet line "Tomorrow: DAY 2 chest"; at 20 min the big gift (a rare skin or weapon). After the first great moment (a strike, a cannon best), ask ONCE for Roblox experience notifications. | the next rank or gift | |
@@ -66,11 +66,10 @@ The spawn is on the raised plaza facing south. Right below the stair: RAGDOLL BO
 5. **"The first roll is always a STRIKE"** cannot be left to physics, or it will fail sometimes.
    - **Fix:** the first roll of a new player is guided: the curled ragdoll follows the lane's centre line (an AlignPosition along the lane), and the pins get their knock impulses on contact.
    - Every roll after that is real physics.
-6. **Back-and-forth walking:** the first draft sent the player down to the tower and then back up to the bike at the spawn. Since F83 there is no sprint (walk speed 16), so every detour costs time.
-   - **Fix:** ONE loop with no back-tracking, each step under 15 s of walking: bowling → boxing ring → giant fan → tesla → tower slide → cannon.
+6. **No tour** (the owner): only the bowling is shown. After it the player chooses: explore the machines in any order (their TRY buttons appear on approach), or just fight. No ground line ever points at a machine after the bowling.
 7. **The bike was a detour.** **Fix:**
    - a SECOND free bicycle stand at the tower square;
-   - the bike beat only when the next goal is over 150 studs away, pointing to the nearest stand.
+   - the bike beat only the first time a player has walked more than about 150 studs in one go, pointing to the nearest stand.
 8. **TRY is once per machine (F1):** after the tour a player might not know how to run a machine again.
    - **Fix:** at the end of every TRY show, the machine's own button or lever glows once ("Again? Press it!", 2 words).
    - The bowling lane has its lever.
@@ -92,7 +91,7 @@ The spawn is on the raised plaza facing south. Right below the stair: RAGDOLL BO
     - the floor: 30 fps on a low phone, 60 on a mid phone.
 14. **Orientation:** phones and tablets play in LANDSCAPE (`ScreenOrientation` LandscapeSensor), where the thumbs and the HUD were designed.
 15. **Too much at once later:** after 5 minutes the world "takes over", but the goal line must not go empty.
-    - **Fix:** the goal line ALWAYS has one next goal, in this order: the next weapon if 5 KOs away or less; else the next untried machine; else the next rank; else the next gift.
+    - **Fix:** the goal line ALWAYS has one next goal, in this order: the next weapon; else the next rank; else the next gift. It never names a machine after the bowling (the owner: players choose for themselves).
 16. **The 8-minute multiplayer offer** teleports the player away and can cut the session.
     - **Fix:** it is a small, quiet chip for 10 s that is easy to ignore, only when the player is idle (not in a show or a fight), once ever.
 17. **The notification ask** must follow Roblox's rules: it is asked once, right after a great moment the player caused (a strike, a cannon best), with the Roblox prompt only (`ExperienceNotificationService`), never forced.
