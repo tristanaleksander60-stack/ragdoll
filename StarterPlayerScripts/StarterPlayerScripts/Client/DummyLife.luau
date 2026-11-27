@@ -80,6 +80,54 @@ local PERSONA_GESTURES: { [string]: { string } } = {
 	Scared = { "LookBack", "FootTap", "Nails" },
 	Chill = { "Yawn", "Hips", "Shrug" },
 }
+-- R3 PERSONA_WALK (docs/RAGDOLL_10.md): each persona walks its own way on top of the walk clip (eased in with the speed):
+-- HERO upright, chest out; SCARED hunched, head low, arms in, glancing round; CHILL loose, a lazy sway, arms hanging
+-- wider; CURIOUS head forward, looking about. (The speeds are in ActiveRagdoll: Hero and Scared quicker, Chill slower.)
+local function personaWalk(life: any, now: number)
+	if not (Config :: any).PERSONA_WALK or life.model:GetAttribute("Mood") ~= nil then
+		return
+	end
+	local persona = life.model:GetAttribute("Persona")
+	if type(persona) ~= "string" then
+		return
+	end
+	local j = life.joints
+	local w = math.clamp((life.groundSpeed - 1) / 3, 0, 1)
+	if w <= 0 then
+		return
+	end
+	local t = now + life.seed
+	local function add(name: string, cf: CFrame)
+		local joint = j[name]
+		if joint and not life.loose[name] then
+			joint.Transform = joint.Transform * CFrame.identity:Lerp(cf, w)
+		end
+	end
+	local rad = math.rad
+	if persona == "Hero" then
+		add("Waist", CFrame.Angles(rad(-5), 0, 0))
+		add("Neck", CFrame.Angles(rad(4), 0, 0))
+		add("RightShoulder", CFrame.Angles(0, 0, rad(4)))
+		add("LeftShoulder", CFrame.Angles(0, 0, rad(-4)))
+	elseif persona == "Scared" then
+		local glance = math.sin(t * 1.3) ^ 9 * 35
+		add("Waist", CFrame.Angles(rad(14), 0, 0))
+		add("Neck", CFrame.Angles(rad(-10), rad(glance), 0))
+		add("RightShoulder", CFrame.Angles(rad(10), 0, rad(-6)))
+		add("LeftShoulder", CFrame.Angles(rad(10), 0, rad(6)))
+	elseif persona == "Chill" then
+		local sway = math.sin(t * 2.1) * 4
+		add("Waist", CFrame.Angles(rad(-3), rad(sway), rad(sway * 0.5)))
+		add("Neck", CFrame.Angles(rad(-4), 0, rad(-sway * 0.6)))
+		add("RightShoulder", CFrame.Angles(0, 0, rad(-7)))
+		add("LeftShoulder", CFrame.Angles(0, 0, rad(7)))
+	elseif persona == "Curious" then
+		local look = math.sin(t * 0.7) * 22
+		add("Neck", CFrame.Angles(rad(-6), rad(look), 0))
+		add("Waist", CFrame.Angles(rad(4), 0, 0))
+	end
+end
+
 local MAX_YAW, MAX_PITCH_UP, MAX_PITCH_DOWN = 70, 30, 25
 local LOOK_SMOOTH = 5 -- 1/s
 local AIR_CLEARANCE = require(Shared:WaitForChild("Ragdoll"):WaitForChild("Config")).AIR_CLEARANCE
@@ -2276,6 +2324,7 @@ local function step(life: Life, now: number, dt: number)
 			updateGait(life, state, now, dt)
 			if state == "Walking" then
 				moodPose(life, now, dt, true)
+				personaWalk(life, now)
 			end
 		end
 	end

@@ -178,6 +178,7 @@ local ICE_COLOR = Config.ICE_COLOR
 -- Getting about: tuning in Config.GetAbout.
 local GetAbout = Config.GetAbout
 local WALK_SPEED = GetAbout.WALK_SPEED
+local GAME_PERSONA_WALK = (GameConfig :: any).PERSONA_WALK == true -- R3
 local LIMP_SPEED = GetAbout.LIMP_SPEED
 local CRAWL_SPEED = GetAbout.CRAWL_SPEED
 local FLEE_SPEED = GetAbout.FLEE_SPEED
@@ -1755,6 +1756,11 @@ local function updateMoving(rig: Rig, dt: number)
 				base *= pace
 			end
 			base *= 1 - 0.45 * hurtOf(rig) -- (V9-P3: hurt, it goes slower)
+			if GAME_PERSONA_WALK and not fleeing then
+				-- (R3 PERSONA_WALK: Hero strides out, Scared hurries, Chill strolls)
+				local persona = rig.model:GetAttribute("Persona")
+				base *= if persona == "Hero" then 1.12 elseif persona == "Scared" then 1.08 elseif persona == "Chill" then 0.85 else 1
+			end
 			wantSpeed = if fleeing then base else math.min(base, distance * 1.8 + 0.6)
 			if not fleeing and ((rig :: any).waitCar or 0) > now then
 				wantSpeed = 0 -- (F72: stands at the kerb while the car passes)
