@@ -85,6 +85,13 @@
      - check that the touch look-drag and SHOOT work in first person;
      - check that the eye never covers Roblox's own top-right buttons or the X-RAY chip. If it does, move it (HudSlots `Eye`).
 
+5e. **The hotbar** (owner's screenshot: the slots lie on top of each other, the selected one has a turning 3D gun off-centre):
+   - **cloud code:** `Config.HOTBAR_3D = false` (PokeController): no turning 3D model in the selected slot and no spring on selecting. The drawn icon stays in the middle of the box, selected or not.
+   - **TO DO:**
+     - find why the slots overlap on a phone (the owner's capture: the selected orange slot under slot 2): check PokeController.plan's cell and GAP on a phone at the MiniBar's 0.6 rest size AND opened, the ring (UIStroke) thickness, and the ammo chip ("30/30") width;
+     - every slot at least 6 px apart in every state, the ammo chip inside its own slot's top edge, the icon centred;
+     - check with captures on a phone: rest, opened, each slot selected.
+
 ## BATCH A (build now, then STOP for the owner's test)
 15. **WEAPON TESTING is half inside a mountain** (the building by the railway):
     - move it onto flat open ground, or cut the hill back, so the whole building and its entrance stand free with a path to the door;

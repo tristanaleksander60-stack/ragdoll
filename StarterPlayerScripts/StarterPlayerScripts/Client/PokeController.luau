@@ -571,10 +571,10 @@ local function refresh()
 	for id, slab in slabs do
 		local toy = Toys.byId[id]
 		local lit = id == selected and not picking and not handEmpty
-		live3D(slab, id, lit and Config.UI_3D == true)
+		live3D(slab, id, lit and Config.UI_3D == true and Config.HOTBAR_3D ~= false) -- (owner 27 Nov late: "Fjern 3D rotation fra hotbaren": the selected slot keeps its drawn icon, centred)
 		slab.button.setSwatch(swatchFor(toy.color, lit))
 		-- Colour plus one more cue: the selected tool (or, while picking, every slot) has a ring.
-		if Theme.Premium and lit and not slab.ring.Enabled and not reducedMotion() then
+		if Theme.Premium and lit and not slab.ring.Enabled and not reducedMotion() and Config.HOTBAR_3D ~= false then -- (HOTBAR_3D off: no spring, the slots never grow into each other)
 			-- (Just picked: the slot springs.)
 			slab.pop.Scale = 0.92
 			TweenService:Create(slab.pop, TweenInfo.new(0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()

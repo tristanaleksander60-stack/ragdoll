@@ -164,6 +164,7 @@ local Config = {
 	BUILD_DONE_ALWAYS = true, -- (owner 27 Nov late: nobody could leave build mode: the big DONE button shows on every device while building, BuildController)
 	FP_AUTO = true, -- (owner 27 Nov late) picking a weapon glides you into first person, a shot puts you in; V/eye out holds until the next pick (Client/FirstShotFP)
 	FP_EYE_PHONE = true, -- (owner 27 Nov late) the first-person eye button shows again on phones and tablets (52 px on a phone; PhoneClean no longer hides it)
+	HOTBAR_3D = false, -- (owner 27 Nov late: "Fjern 3D rotation fra hotbaren ... ikoen er i midten af boksen selvom det er valgt": no turning 3D model and no spring on the selected slot; PokeController)
 	SHOVE_SERIES = true, -- F26: the angry dummy shoves a random 1-3 times, a line before each ("Hey!", "Stop that!", "How do YOU like it?"), a short wind-up, following if you back off; knocked over ends it; then it flees (Mourning attack)
 	XRAY_TRACER = true, -- F28: with X-ray on, your round leaves a short bright line through the glass body for 1 s, along the shot (FxController.predictHit)
 	HARD_PHYS = true, -- row 5: the physics watchdog (a NaN or runaway body is stopped and put back at its last good place) and no tunnelling (a body over 70 studs/s that crossed a wall or floor in one step is put back short of it, its speed into it taken off) (ActiveRagdoll hardChecks)
