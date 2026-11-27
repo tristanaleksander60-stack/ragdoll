@@ -2315,6 +2315,18 @@ local function step(life: Life, now: number, dt: number)
 	end
 	updateStars(life, now)
 
+	-- (P1 rest, Config.PERSONA_FACE: at rest each persona has its own face now and then: a SCARED one looks worried
+	-- about 3 s of every 8, a HERO wears a determined frown about 3 s of every 10; the curious and the chill keep the
+	-- living calm eyes. Each body has its own phase, so a crowd never changes face together.)
+	if expression == "Neutral" and (Config :: any).PERSONA_FACE then
+		local persona = model:GetAttribute("Persona")
+		local phase = now + life.seed * 7
+		if persona == "Scared" and phase % 8 < 3 then
+			expression = "Worried"
+		elseif persona == "Hero" and phase % 10 < 3 then
+			expression = "Grumpy"
+		end
+	end
 	-- Blinking, only when the eyes are open and relaxed.
 	if expression == "Neutral" or expression == "Grumpy" then
 		local calm = string.sub(life.shown or "", 1, 4) == "Look" or string.sub(life.shown or "", 1, 4) == "Talk" -- (R2: the living calm faces count as open eyes)
