@@ -51,6 +51,9 @@
 - Custom funnels: PlaytimeNew, PlaytimeAll, NewPhone/NewTablet/NewPC/NewConsole, ShopVisit, Vehicles (Pressed, SatFree, PassPrompt, Bought), Multiplayer. Retired: Tutorial, TakedownsNew.
 - Custom events: FirstUse, XrayToggle, BodyCardHidden, CPRDone, BowlingScore (a frame scores at most 30, so the buckets are 0-9 / 10-19 / 20-30, not 0-50/51-100/101+).
 
+## 28 Nov, round 1 of FIXES_28NOV (v1423): STOPPED for the owner's test
+Done and SEEN where a capture can show it: DROP HERE spots at 18 machines, the aquarium stair opening, the straight parking lot, the calm X-ray, the crowding cap; the cloud code of 27 Nov evening and FP_AUTO are in Studio. Next round after the owner's OK: FIXES_28NOV 10-11, 13, 14, then 15/16/8.
+
 ## Run end (27 Nov late, v1417)
 Built this run (v1349-1417): FIXES_27NOV_LATE, MILD EXTRAS A+C3, LAG-FREE 2 items 0-10, the v6 FIT PASS rest (skull, run arms), PHASE 2-7 rests (bruises heal/patches, hurt rest, bowling turkey/BOLTS/bumpers/cheers, F82 paths, rider pedal, scared hide, persona faces, wheelchair funnel), AUDIT 5/7/17. PARKED (reasons in OVERVIEW): uploads the MCP refuses (Blender models, X-ray glass, LITE mesh, pictures), looks that need a working Play capture (Play captures render white this session: sling, hero drag, bowling show, big ball, bike seat, AUDIT 9-21 UI), owner ids (badges, passes). DOG3 not done.
 

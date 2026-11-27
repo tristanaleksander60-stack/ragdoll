@@ -887,6 +887,26 @@ local function spreadSpot(plot: Plot, slot: Slot, model: Model): Vector3?
 		if crowd >= SPREAD_CLUMP then
 			continue
 		end
+		-- (FIXES_28NOV 12, Config.NO_CROWD: at most 3 goals at one spot (10 studs) and at most 4 bodies in its 20 x 20 cell)
+		if (Config :: any).NO_CROWD then
+			local atSpot, inCell = 0, 0
+			local cx, cz = math.floor(spot.X / 20), math.floor(spot.Z / 20)
+			for _, other in plot.slots do
+				local h = other.roamHome
+				if other ~= slot and h and Vector3.new(h.X - spot.X, 0, h.Z - spot.Z).Magnitude < 10 then
+					atSpot += 1
+				end
+			end
+			for _, m in if dummies then dummies:GetChildren() else {} do
+				local pe = m:FindFirstChild("LowerTorso")
+				if m ~= model and pe and pe:IsA("BasePart") and math.floor(pe.Position.X / 20) == cx and math.floor(pe.Position.Z / 20) == cz then
+					inCell += 1
+				end
+			end
+			if atSpot >= 3 or inCell >= 4 then
+				continue
+			end
+		end
 		local far = math.min((spot - pelvis.Position).Magnitude, 200)
 		local score = far / 40 - crowd * 2 + math.random()
 		if score > bestScore then
@@ -1291,9 +1311,62 @@ function Lab.callTo(player: Player, at: Vector3, look: Vector3): Model?
 	return model
 end
 
+-- (FIXES_28NOV 12, Config.NO_CROWD, the owner's screenshot: 8 ragdolls round one rock. Every 3 s a free, standing
+-- ragdoll with more than 3 others within 10 studs, or in a 20 x 20 cell holding more than 4, picks a new roam spot now
+-- (spreadSpot keeps it out of full spots). Watchers, the ALWAYS3 trio, a TRY call and commanded ones stay where they are.)
+local declumpAt = 0
+local function declump(plot: Plot)
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if not dummies then
+		return
+	end
+	local pos: { Vector3 } = {}
+	local cell: { [string]: number } = {}
+	for _, m in dummies:GetChildren() do
+		local pe = m:FindFirstChild("LowerTorso")
+		if pe and pe:IsA("BasePart") and m:GetAttribute("Vital") ~= "Dead" then
+			table.insert(pos, pe.Position)
+			local k = math.floor(pe.Position.X / 20) .. ":" .. math.floor(pe.Position.Z / 20)
+			cell[k] = (cell[k] or 0) + 1
+		end
+	end
+	for _, slot in plot.slots do
+		local m = slot.model
+		local pe = m and m:FindFirstChild("LowerTorso")
+		if not (m and pe and pe:IsA("BasePart")) or slot.target or slot.socialKind then
+			continue
+		end
+		if m:GetAttribute("Watch") ~= nil or m:GetAttribute("Role3") ~= nil or m:GetAttribute("TryFor") ~= nil
+			or m:GetAttribute("CommandedBy") ~= nil or m:GetAttribute("InMachine") ~= nil or m:GetAttribute("Mood") ~= nil then
+			continue
+		end
+		local st = m:GetAttribute("RagdollState")
+		if st and st ~= "Standing" and st ~= "Walking" then
+			continue
+		end
+		local near = 0
+		for _, p in pos do
+			if (p - pe.Position).Magnitude < 10 then
+				near += 1
+			end
+		end
+		local k = math.floor(pe.Position.X / 20) .. ":" .. math.floor(pe.Position.Z / 20)
+		if near - 1 > 3 or (cell[k] or 0) > 4 then
+			slot.nextRoamAt = 0 -- (roam picks a new, emptier spot this tick)
+			cell[k] = (cell[k] or 1) - 1
+		end
+	end
+end
+
 local function watch(dt: number)
 	keepOut()
 	local now = os.clock()
+	if (Config :: any).NO_CROWD and now >= declumpAt then
+		declumpAt = now + 3
+		for _, plot in plots do
+			pcall(declump, plot)
+		end
+	end
 	local doThree = (Config :: any).ALWAYS_THREE == true and now >= threeAt
 	if doThree then
 		threeAt = now + (if (Config :: any).FAST_THREE then 0.25 else 0.5) -- (OVERVIEW 0.15: checked every 0.25 s)

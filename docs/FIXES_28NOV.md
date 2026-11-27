@@ -93,6 +93,7 @@
      - check with captures on a phone: rest, opened, each slot selected.
 
 ## BATCH A (build now, then STOP for the owner's test)
+**Round 1 done (v1418-1423), STOPPED for the owner's test:** cloud code in Studio (20 files + FP_AUTO, a Config syntax break fixed), 4 DROP HERE, 6 stairs, 7 parking lot, 9 X-ray, 12 crowding. **Next round:** 10-11 holes and bandages on the v6 skin, 13 no block ragdolls, 14 bike riders welded, then 15/16/8 the real models (weapon testing building, T-rex, gyro).
 15. **WEAPON TESTING is half inside a mountain** (the building by the railway):
     - move it onto flat open ground, or cut the hill back, so the whole building and its entrance stand free with a path to the door;
     - replace its plain-part shell with a real model: a proper firing-range building with a sign, doors and a roof (Blender or a checked Creator Store model);
@@ -138,7 +139,7 @@
     - they sit on the hidden block parts (SmoothBody `hideBlocks`) or inside the thicker v6 skin;
     - draw them on the v6 surface (a ring or patch mesh at the limb's v6 radius, moved with the bone in SmoothBody's drive);
     - check: a capture of a patched-up body.
-12. **No crowding:**
+12. **BUILT v1423 (`NO_CROWD`, Lab):** spreadSpot skips a spot with 3 goals within 10 studs or a 20 x 20 cell holding 4; every 3 s a free standing ragdoll with more than 3 others within 10 studs (or in a cell of more than 4) picks a new spot (watchers, the ALWAYS3 trio, TRY calls, commanded and mood ones stay). Play (Studio = phone, 9 bodies): biggest 10-stud clump 2. OWNER CHECK on PC (40 bodies). **No crowding:**
     - at most 3 ragdolls per activity spot, at least 4 studs apart, at most 4 in any 20 x 20 stud cell;
     - the owner's screenshot showed 8 around the rock;
     - the RagdollDirector enforces it, sending the extras on to another spot.
