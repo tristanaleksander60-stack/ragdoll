@@ -5,6 +5,33 @@
 
 This doc REPLACES the build part of F88 (its place in the plan and the chicken move stay). It is built in PHASE 4 (the map), right after M4, as ONE pass: model, animation and game together.
 
+## 0. FIRST FIX (owner, 27 Nov: "Gør så man faktisk ser ragdollen blive krøllet hurtigt sammen og flyve ind i keglerne, ikke bare halvejs ind på banen")
+**Why it fails today** (`Systems/Bowling.luau` ~226-262):
+- the ragdoll is only put on its side (`PivotTo` with -80 degrees, NOT curled) and given ONE push (`DummyControl.hit`) plus a spin, so a limp body slides and flops with the lane's friction and stops halfway;
+- the first-roll STRIKE knocks the pins over on a 1.5 s timer whether the ragdoll got there or not, so the pins fly while the ragdoll is still lying halfway down the lane.
+
+**The fix** (`Config.BOWL_BALL = true`):
+1. **The curl, fast and visible (0.25 s):**
+   - the ragdoll tucks into a tight BALL: knees to the chest, arms round the shins, head down;
+   - held by a strong pose (tone 1 on every joint) while it rolls;
+   - its face scared and dizzy (BODY_V2 4b).
+2. **A real ball:**
+   - while curled, the ragdoll rides inside an invisible SPHERE collider (about 3.6 across, the curled body welded and massless inside, its limbs' own collisions off), so it ROLLS like a bowling ball instead of flopping;
+   - the lane is low friction (about 0.08), the ball 0.3 with no bounce; the gutters keep it on the lane.
+3. **The throw:**
+   - the sphere gets a real speed down the lane: 45-65 studs/s (by the swipe power, BOWLING_12 3; a tap = 55), and a forward spin to match;
+   - a tiny curve by the swipe angle;
+   - **min-speed guard:** if it drops under 25 studs/s before the pin deck, the lane gives it a soft push, so it ALWAYS reaches the pins (except a real gutter ball, which rolls on in the gutter to the pit).
+4. **The impact:** as the sphere reaches the first pin, the ragdoll BURSTS out of the curl (the sphere removed, the tone drops, its speed kept) and flies into the pins as a full ragdoll, so the pins scatter from a real body. A slow motion of 0.4 s on a strike (BOWLING_12 2).
+5. **The guaranteed first STRIKE (FTUE):**
+   - it comes from the BALL: the first roll's sphere follows the lane's centre line exactly (an AlignPosition along the lane, ending at the head pin) at 60 studs/s;
+   - the knock-over of any pin still standing happens only AFTER the ball has hit the pins (an impact trigger, not a timer).
+6. **Smooth on every screen:**
+   - during a roll, the bowler's client owns the sphere AND the 10 pins (`SetNetworkOwner`), so the roll and the crash are smooth with no hitch;
+   - the server owns them again when the pins are counted.
+7. **Afterwards:** the ragdoll gets up dizzy in the pit, takes a bow on a strike (or a face-palm on a gutter) and walks back (BOWLING_12 2.7).
+8. **Check (the owner):** tap BOWL or TRY. The ragdoll curls up into a ball in a blink, rolls fast all the way down, and smashes into the pins; the pins fly only when it hits them. 10 rolls in a row: all reach the pins (a gutter rolls to the end in the gutter).
+
 ## 1. The look (Blender, the CREATURES_ANIM 4 style pushed to its best)
 - **The lane:**
   - about 44 long, 8 wide, glossy maple wood planks with a clear coat (SurfaceAppearance: roughness 0.25, a soft reflection);
