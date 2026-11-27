@@ -1724,6 +1724,7 @@ local function pop(at: Vector3, text: string, color: Color3)
 	p.Parent = Workspace
 	game:GetService("Debris"):AddItem(p, 3)
 end
+Playground.pop = pop -- (3.2: DropScore pops its heights the same way)
 function Playground.cannonWindUp(barrel: CFrame, loadAt: Vector3, seconds: number)
 	local p = Instance.new("Part")
 	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.Transparency = true, false, false, false, 1

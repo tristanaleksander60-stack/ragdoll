@@ -92,6 +92,7 @@ safe("NearbyTwo", function() require(Systems:WaitForChild("NearbyTwo")).start() 
 safe("PickOut", function() require(Systems:WaitForChild("PickOut")).start() end) -- F47: a helper picks the bullets out after a ragdoll wakes
 safe("Personas", function() require(Systems:WaitForChild("Personas")).start() end) -- P1: curious, scared, hero and chill ragdolls react to shots
 safe("GoldenRun", function() require(Systems:WaitForChild("GoldenRun")).start() end) -- T1: the golden ragdoll at about 2:00
+safe("DropScore", function() require(Systems:WaitForChild("DropScore")).start() end) -- 3.2: fall height scores by the tower
 safe("BackToSpawn", function() require(Systems:WaitForChild("BackToSpawn")).start() end) -- F80: BACK TO SPAWN
 safe("SwimService", function() require(Systems:WaitForChild("SwimService")).start() end) -- F78: ragdolls in the real water
 safe("MechArms", function() require(Systems:WaitForChild("MechArms")).start() end) -- mechanical arms to tear ragdolls apart
