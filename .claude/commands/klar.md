@@ -65,6 +65,7 @@ Read the "OWNER PRIORITY NOW" banner at the top of `docs/OVERVIEW.md` and `docs/
    - no length limit;
    - numbered, so the owner can answer "12: ...".
 5. **The "Questions for the owner" list:** each with the default you chose.
+6. **Reminder (owner, 27 Nov late: "husk mig på"):** if OVERVIEW row DOG3 is not DONE, write: "Husk: hunden er kun godkendt for nu, den skal gøres bedre til sidst (række DOG3)."
 
 **Keep `docs/OVERVIEW.md` true:** update a row's State and LEFT whenever you finish or start it.
 
