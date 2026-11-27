@@ -192,6 +192,52 @@ function ImpactDust.burst(at: Vector3, speed: number)
 	if tier == 3 then
 		shockRing(point, normal, LOOKS[kind].dust[1])
 	end
+	-- (row 7 IMPACT FX, Config.IMPACT_SCUFF: a hard slam leaves a scuff on the ground that fades over SCUFF_LIFE s; at most
+	-- SCUFF_MAX at once (the oldest is reused), none on water)
+	if (Config :: any).IMPACT_SCUFF and tier >= 2 and kind ~= "water" then
+		ImpactDust.scuff(point, normal, tier)
+	end
+end
+
+ImpactDust.SCUFF_LIFE = 10
+ImpactDust.SCUFF_MAX = 12
+local scuffs: { { part: Part, at: number } } = {}
+function ImpactDust.scuff(point: Vector3, normal: Vector3, tier: number)
+	local s: { part: Part, at: number }
+	if #scuffs >= ImpactDust.SCUFF_MAX then
+		s = table.remove(scuffs, 1) :: { part: Part, at: number }
+	else
+		local p = Instance.new("Part")
+		p.Name = "ImpactScuff"
+		p.Anchored = true
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.CastShadow = false
+		p.Material = Enum.Material.SmoothPlastic
+		p.Color = Color3.fromRGB(70, 62, 52)
+		p.Shape = Enum.PartType.Cylinder
+		p.Parent = Workspace
+		s = { part = p, at = 0 }
+	end
+	local r = if tier >= 3 then 3.4 else 2.2
+	s.part.Size = Vector3.new(0.06, r * 2, r * 1.6)
+	s.part.CFrame = CFrame.lookAt(point + normal * 0.04, point + normal * 2) * CFrame.Angles(0, math.rad(90), 0) * CFrame.Angles(math.rad(math.random(0, 360)), 0, 0)
+	s.part.Transparency = 0.45
+	s.at = os.clock()
+	table.insert(scuffs, s)
+	local mine = s.at
+	task.spawn(function()
+		while s.at == mine and s.part.Parent do
+			local u = (os.clock() - mine) / ImpactDust.SCUFF_LIFE
+			if u >= 1 then
+				s.part.Transparency = 1
+				break
+			end
+			s.part.Transparency = 0.45 + 0.55 * u * u
+			task.wait(0.25)
+		end
+	end)
 end
 
 return ImpactDust
