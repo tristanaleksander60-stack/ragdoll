@@ -51,6 +51,9 @@
 - Custom funnels: PlaytimeNew, PlaytimeAll, NewPhone/NewTablet/NewPC/NewConsole, ShopVisit, Vehicles (Pressed, SatFree, PassPrompt, Bought), Multiplayer. Retired: Tutorial, TakedownsNew.
 - Custom events: FirstUse, XrayToggle, BodyCardHidden, CPRDone, BowlingScore (a frame scores at most 30, so the buckets are 0-9 / 10-19 / 20-30, not 0-50/51-100/101+).
 
+## 28 Nov, round 2 of FIXES_28NOV (v1427): STOPPED for the owner's test
+13 the crowd in v6 + 20 v6 bodies on phones (V6_EVERYONE), 14 bike riders welded (BIKE_WELD), 10 head holes on the round head (HOLES_EVERYWHERE; BRUISE_PATCH off), 11 gauze at the v6 size. A SmoothBody load error from v1425 was found and fixed in v1426. Next round: 15/16/8 the real models (weapon testing building, T-rex, gyro).
+
 ## 28 Nov, round 1 of FIXES_28NOV (v1423): STOPPED for the owner's test
 Done and SEEN where a capture can show it: DROP HERE spots at 18 machines, the aquarium stair opening, the straight parking lot, the calm X-ray, the crowding cap; the cloud code of 27 Nov evening and FP_AUTO are in Studio. Next round after the owner's OK: FIXES_28NOV 10-11, 13, 14, then 15/16/8.
 
