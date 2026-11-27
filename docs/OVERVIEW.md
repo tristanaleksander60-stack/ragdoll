@@ -1,5 +1,8 @@
 # OVERVIEW: the whole plan on one page (read this FIRST on every /klar)
 
+> ## ⚠ OWNER PRIORITY NOW (27 Nov late): THE OWNER TESTED v6, FIX `RAGDOLL_10.md` "THE v6 FIT PASS: the OWNER'S TEST" A-E FIRST
+> A: X-ray only after 3 hits IN A ROW on one limb, for 3 s (toggle ON = always); the torso X-ray bug that never goes away. B: the whole skeleton in EVERY limb, fixed inside the body. C: the round grey head with the face instead of the old cylinder head. D: a real walk and run (arms down; find the bone-rest cause). E: the rounds only inside on the bone in X-ray, only our nice holes on the skin, only the 3 newest holes bleed. Do these before the fit pass's leftovers and every other row. (Keep this banner until A-E are DONE.)
+>
 > ## v6 FIT PASS mostly DONE (27 Nov run 6, v1319-v1325)
 > Done: hookup, BodyShape, physics sizes and arm length, X-ray glass, holes, CPR, bandages, face. Left: ride grips (owner check), far bodies as a cheap v6 mesh, head balance, round-head accessories (RAGDOLL_10 "THE v6 FIT PASS"). Then go on with the other rows.
 > The owner: "Ja, sørg nu for alt virker med den nye krop, dem der holder telefoner, cykler, avis, x-ray, knogler, vægt, physics og alting. - cpr osv". Build `RAGDOLL_10.md` "THE v6 FIT PASS" (items 0-11: hookup, BodyShape, weight and physics, bones and X-ray, holes, CPR, phone, newspaper and props in the new fingers, bicycle and every ride and pose, care, face, stretch, far bodies) in ONE pass, then go on with THE ORDER. If the owner has not imported `mannequin_v6.fbx` yet, build from the stats and bone names and put the import as ONE owner step in the final message. The dog is approved for now (PHASE 8 row DOG3 at the very end).
