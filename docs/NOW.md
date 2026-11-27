@@ -1,3 +1,5 @@
+# READ `docs/RUN.md` FIRST: it is the ONE ordered to-do list (batch 1 now). The lines below are history; RUN.md overrides them.
+
 # ⚠⚠⚠ CLOUD CODE ROUND 3: `FIXES_28NOV.md` "CLOUD CODE ROUND 3": NEARBY_CAP_V2 (fewer ragdolls by you, for real) and FACE_ON_SKIN (the face on the round head, not a flat card). Push first.
 # ⚠⚠⚠ FIRST PERSON ARMS (owner's capture: a floating pistol and a white block): `FIXES_28NOV.md` "FIRST PERSON ARMS" is the TOP of batch A: real avatar arms with the shirt, two-bone IK onto the grip, the weapon smaller and lower. Never a plain Part arm again.
 # ⚠⚠⚠ CLOUD CODE ROUND 2 (27 Nov late): `docs/FIXES_28NOV.md` "CLOUD CODE ROUND 2" FIRST: UPRIGHT_WALK (no more leaning back: the forward-only lean plus ChestBalance), FP_EXIT_FIX (V really leaves first person). Push, one Play, capture, then the test list.

@@ -178,6 +178,7 @@ local Config = {
 	FACE_ON_SKIN = true, -- (owner 27 Nov late, 10th time: the face stuck out of the round head) the face is a Decal ON the round head's surface, not a flat SurfaceGui card (SmoothBody roundHead)
 	BOARD_SCROLL = true, -- (owner 27 Nov late: the leaderboards could not be scrolled: a SurfaceGui in the Workspace gets no input) every "Board" gui is moved into the PlayerGui, adorned to its panel (Client/BoardScroll)
 	SPAWN_ROOM = true, -- (SPAWN_V2 step 1) every system that spawns or calls a body near a player asks RagdollDirector.room(player) first
+	BIKE_SEAT_FIT = true, -- the welded bike rider sits on the vehicle's own seat part, not at a fixed offset behind it (BikeService)
 	SHOVE_SERIES = true, -- F26: the angry dummy shoves a random 1-3 times, a line before each ("Hey!", "Stop that!", "How do YOU like it?"), a short wind-up, following if you back off; knocked over ends it; then it flees (Mourning attack)
 	XRAY_TRACER = true, -- F28: with X-ray on, your round leaves a short bright line through the glass body for 1 s, along the shot (FxController.predictHit)
 	HARD_PHYS = true, -- row 5: the physics watchdog (a NaN or runaway body is stopped and put back at its last good place) and no tunnelling (a body over 70 studs/s that crossed a wall or floor in one step is put back short of it, its speed into it taken off) (ActiveRagdoll hardChecks)

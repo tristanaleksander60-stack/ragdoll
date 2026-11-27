@@ -1,114 +1,59 @@
 ---
-description: Build the WHOLE plan in docs/OVERVIEW.md, phase by phase, without stopping; the owner tests only at the end
+description: Build the next batch of docs/RUN.md properly (find causes, prove with captures), then stop with a short test list
 argument-hint: "[optional: what the owner wants first]"
 ---
-**START OF EVERY RUN (owner 27 Nov late):** open `docs/FIXES_28NOV.md`.
-1. Push every file under "CLOUD CODE" and "CLOUD CODE ROUND 2" into Studio. Also push any other file the cloud changed since your last run: `git log --since` your last commit, with an author that is not the PC. Use a length check, then one Play.
-2. Then the open items of the batch, then STOP with a short Danish test list.
+# /klar: one batch, done properly
 
-Then read the "OWNER PRIORITY NOW" banner at the top of `docs/OVERVIEW.md` and `docs/NOW.md`, and do it before anything else. Then read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situation, how to work, what only the owner can do, THE ORDER in 8 phases, DONE). Then read only the doc section of the row you are on. If the owner wrote something after /klar, do that first.
+## 1. Read (in this order, nothing else first)
+1. `docs/RUN.md`: the ONE ordered to-do list, its rules and the item statuses. It overrides every banner in OVERVIEW and NOW and any other plan doc.
+2. `CLAUDE.md` (project rules).
+3. Only the doc sections an item points to: grep them, never read big docs whole (V8_PLAN, V9_PLAN, HISTORY, DONE, NOW_ARCHIVE).
 
-## WORK FAST AND CHEAP (owner, 27 Nov late: "Vi skal også arbejde hurtigere, for mindre credits, bedre output")
-Reading is the biggest cost; every re-read after a summary costs it again.
-1. **Read small.**
-   - `OVERVIEW.md`: read the banners at the top, "WHAT IS LEFT" and only the row you are on (grep -n it).
-   - `NOW.md` is short now: read it once.
-   - Never read `DONE.md`, `NOW_ARCHIVE.md`, `HISTORY.md` or the V8/V9 plans whole; grep them. A `NOW.md "..."` section that is missing from NOW.md is in `NOW_ARCHIVE.md`.
-2. **Code:**
-   - grep -n the function, then read about 80 lines round it; never read a 2,000+ line file (ActiveRagdoll, DummyLife, BloodFx…) top to bottom.
-   - Make the edit with Edit, not by rewriting the file.
-3. **Batch by file:** do every open row that touches the same files in one go. Then:
-   - push all changed scripts into Studio in one MCP pass (the length check);
-   - ONE Play for the whole batch, with one capture that covers the batch's looks;
-   - one commit for the batch.
-4. **Write short:**
-   - a row's State: one line (what, the switch, the version);
-   - no long logs in NOW.md; HISTORY: one line only if a future run needs it;
-   - commit messages one line.
-5. **No double work:**
-   - never re-check or re-measure a DONE row;
-   - never rebuild what a switch already does;
-   - grep before writing a new module (reuse).
-6. **Think in proportion:** mechanical edits (renames, numbers, wiring) need no long planning; save the deep thinking for the hard rows (physics, looks, data safety).
-7. **Captures:** at scale 1, only for rows about looks, one per batch.
-8. **Better output comes from the quality gate (THE FINISH LINE),** not from more reading: get it right once, at the bar, then move on.
+## 2. Preflight (always, before any item): RUN.md rule 1
+1. `git pull --rebase`.
+2. List every `.luau` file that commits NOT made by you changed since your last commit (`git log <your last commit>..HEAD --format=%ae --name-only`).
+3. Parse each one (`stylua --syntax Luau - < file > /dev/null`, non-zero = a syntax error: fix it).
+4. Push each one into Studio via the MCP, with a length check.
+5. One Play: read the output and fix every error first.
 
-## THE OWNER'S NEWEST ORDER (27 Nov late, wins where it clashes with the 26 Nov orders below)
-- **27 Nov evening (wins over everything):** `docs/FIXES_28NOV.md` "HOW THIS RUN WORKS":
-  - small batches, then STOP with a short test list and wait for the owner; never a 10-hour run;
-  - DONE = a capture from the owner's angle that shows it working;
-  - NO plain-part art for anything a player looks at;
-  - no stair blocked, no tank or pit without a way out.
-  - Then `RAGDOLL_V7.md` step by step, with a STOP after each step.
-- "næste gang jeg ser på min computer skal jeg have et færdig spil, ikke noget 5/10 som det er nu": follow OVERVIEW "THE FINISH LINE": build until EVERY row is DONE at its 9/10 bar, with ONE Play look (and one capture for looks) per row to check it is at the bar before it counts as DONE; a feature not at the bar by the end is switched OFF and listed.
-- "Sørg for ALT er lagfri på telefon og tablet": build `PERF_MOBILE.md` §6 LAG-FREE 2, items 0-10 (OVERVIEW 11c), after MILD_EXTRAS.
-  - Every NEW feature from here on also follows it: pooled (no `Instance.new` on a hit), no per-frame loop while idle, reads its numbers from `PERF_LEVELS`, and skips sleeping bodies.
+## 3. Work the batch
+For each item in the current batch of `RUN.md`, top to bottom:
+1. **Find the exact cause in the code** (file, function, why) and write it in the item's State.
+2. **Build the fix behind a Config switch.** Every remote through `Net`. The server decides. No plain-part art for anything visible (a Blender model with the quality gate, or a malware-checked Creator Store model).
+3. **Push into Studio** (length check) and run one Play.
+4. **Prove it:** a capture from the angle the item names, on PC AND in the phone emulator. If the capture does not show it working, it is not done: find the real cause and go again. After 2 failed tries, mark it LEFT with what you found.
+5. **Record it:** commit, push, and set the State (`DONE` plus the capture's line, or `LEFT` plus the reason).
 
-## THE OWNER'S ORDERS (26 Nov 2026)
-- "Gør så den laver alt nu uden at stoppe så jeg bare skal teste alt til sidst"
-- "Sørg for den ikke tester alt selv dybt, men at det er min opgave, den skal bare lave det bedst mulige produkt og så tester jeg når alt er færdigt"
+## 4. Stop after the batch
+- Stop when the batch is done, or after about 2 hours of work, whichever is first.
+- The final message is in Danish, short:
+  1. **One line per item:** DONE / LEFT, and what the capture showed or why it is left.
+  2. **"Test selv":** at most 12 numbered lines for exactly this batch, phone first, each with where to go and what must happen.
+  3. **Owner steps** (only if any): Studio saves, passes, the questionnaire.
+  4. **If DOG3 is not done:** one line reminding the owner the dog is approved only for now and gets better at the end.
 
-**So:** build EVERYTHING in OVERVIEW's ORDER, phase by phase, top to bottom, in ONE run, as well as you possibly can the first time. Do not test it: the owner does.
+## 5. Never
+- Publish.
+- Force-push or rewrite history.
+- Restart or shut down servers.
+- Write to live DataStores beyond the game's own saving.
+- Delete owner content without a backup.
+- Mark something DONE without a capture that shows it.
+- Ask the owner mid-run: pick the safe default behind a Config switch, note it, and go on.
 
-### The loop, per row (details in OVERVIEW "How to work")
-1. Read the row and its doc section (grep), and the code it touches.
-2. Find the real cause in the code and build the WHOLE row.
-3. Put the scripts into Studio via the MCP (checksum).
-4. ONE quick Play for errors only (plus one capture if the row is about looks).
-5. Run the fast lints the doc asks for.
-6. Save the place, commit and push `release`, and update the row in OVERVIEW.
-7. `git pull --rebase` (the cloud session pushes the owner's new wishes and generated files, such as `OwnerMapPlan.luau`), re-read THE ORDER, and go straight on to the next row.
+## 6. Standing facts (no need to ask)
+- **Script Sync is off:** push scripts through the MCP with a length check.
+- **Vehicle passes:**
+  - GoKart 2098603396;
+  - Police 2098855450;
+  - MonsterTruck 2099065438;
+  - Bulldozer 2098381516;
+  - FireTruck 2101716732.
 
-### Never
-- **Never end the turn after one row, one phase or a short while.** The only reasons to stop:
-  - (a) every row is DONE or PARKED;
-  - (b) Studio or the MCP cannot be reached after 3 tries.
-
-  A long run is wanted; when the context fills up it is summarised, and you keep going from OVERVIEW.
-- **Never test beyond the one quick Play.** No runs, watches, benches, clips, scores, comparisons, 2-client tests, emulator rounds, FPS sessions, suites or reviewers, even where a doc asks for them: the docs' "Check" lines are what the OWNER will test. Keep the cheap always-on logs and detectors.
-- **Never ask the owner anything mid-run.** Pick the default (below, or the safe one behind a Config switch), write it in NOW.md "Questions for the owner", and go on.
-- **Never stop for a blocked row.** PARK it in OVERVIEW with the reason and go on.
-- **Never publish.** The owner tests first, then publishes both places from your instructions.
-
-## Standing answers (use them; do not ask again)
-- **Script Sync not landing:** put every changed script into Studio through the MCP and check it by length or checksum. Note it once in the final message.
-- **The dog is one stiff mesh:**
-  - find a RIGGED German Shepherd in the Creator Store yourself (bones or Motor6D legs, neck, tail, jaw; clean license; malware pass; keep only the model);
-  - else use the best rigged realistic dog, recoloured tan and black, with its joints animated in code.
-- **Missing models** (wheelchair, cave, rocks, vehicles, animals, props): get them from the Creator Store yourself (malware pass, one matching style). Use Terrain where the doc prefers it.
-- **Creator Store scripts** (vehicles): build the features in our own code. A model's script may run only if it passes F76's security check.
-- **Game pass ids not sent yet:** the vehicle shows SOON; it is never free by mistake.
-- **Keys:** REVIVE ALL is X; X-RAY is I; MORE is a gear (9); WEAPONS is T.
-- **Python and Blender:** the owner is installing both (26 Nov late).
-  - Check with `python --version` and `blender --version`; if `blender` is not on PATH, look for `C:\Program Files\Blender Foundation\Blender*\blender.exe`.
-  - **With Python:** you may run `tools/masterplan.py` yourself after a plan change (the lint must report 0). Without it, the cloud session runs it and you only build from `OwnerMapPlan.luau`. Never work around a missing tool on the old map.
-  - **With Blender:** do S2 for real:
-    1. make the skinned mannequin body with real hands and fingers in Blender from a Python script (`blender --background --python <script>`), with the LihFolk `roblox-blender-modeling` skill;
-    2. export it as FBX with R15 bone names and skin weights, into `art/models/mannequin/`;
-    3. if the MCP cannot import an FBX, put "Studio: File > Import 3D > art/models/mannequin/mannequin.fbx" in the final message as ONE owner step, and finish the hookup in the next run. Meanwhile, build the real hands from parts (S2 plan B) so the hooks are gone.
-  - **Without Blender:** S2 plan B (hands from parts, Roblox body bundles). Never park the hands.
-- **Code written by the cloud session:** after `git pull`, list the `.luau` files that commits since your last run changed (`git diff --name-only <your last commit>..HEAD -- "*.luau"`).
-  - Put every one into Studio through the MCP (the length check); new files are created where their folder says.
-  - One quick Play, then fix any error before anything else.
-  - The cloud cannot run Studio, so its code is untested until you do this.
-- **Never change the old map layout:** since M4 every map change is built on the compact plan (OVERVIEW M4).
-
-## The ONE final message (Danish, short, only when you really stop)
-1. **Step 0 reminder:** the questionnaire was SENT on 27 Nov (Roblox rating Mild), so do not remind about it again. (Old line, kept for history:) "Husk punkt 0: tryk Alt+P i Studio for at udgive gore-off, og send aldersspørgeskemaet med svarene i docs/MATURITY.md."
-2. **What was built,** phase by phase, one line per row, and what is parked and why.
-3. **How to publish BOTH places** after testing (OVERVIEW PHASE 8).
-4. **ONE LONG "Test selv" list covering EVERYTHING built in the run** (owner, 26 Nov late: "send en lang test liste med alt, så sender jeg hvis der er noget som skal ændres"):
-   - grouped by area (the first minutes, ragdolls, the body and bones, the map, life, the machines and animals, vehicles, phone UI, PC);
-   - phone first, then PC;
-   - one line per thing to try, saying where to go and what should happen;
-   - taken from every row's Check lines;
-   - no length limit;
-   - numbered, so the owner can answer "12: ...".
-5. **The "Questions for the owner" list:** each with the default you chose.
-6. **The passes the owner must still make** (NOW.md "ANSWERS 2"): go-kart 49, police car 99, monster truck 149, bulldozer 149, fire truck 199 Robux, and the Ford pass 2092632252 on sale.
-7. **The questionnaire before publishing (MILD EXTRAS):** "Opdater spørgeskemaet før du udgiver: grov humor = Mild, frygt = gentaget/mild, og tjek at der stadig står Mild."
-8. **Reminder (owner, 27 Nov late: "husk mig på"):** if OVERVIEW row DOG3 is not DONE, write: "Husk: hunden er kun godkendt for nu, den skal gøres bedre til sidst (række DOG3)."
-
-**Keep `docs/OVERVIEW.md` true:** update a row's State and LEFT whenever you finish or start it.
+  The Ford pass is 2092632252 (used when on sale).
+- **Missing models:** take them from the Creator Store (malware pass, one matching style). A model's scripts run only after the security check; build features in our own code.
+- **Blender:** check `blender --version` (or `C:\Program Files\Blender Foundation\Blender*\blender.exe`); build with the LihFolk `roblox-blender-modeling` skill and its quality gate.
+- **Map changes** are built on the compact plan (`OwnerMapPlan.luau`, `tools/masterplan.py` lint at 0).
+- **Talk to the owner in Danish,** short and plain.
 
 The owner's wish for this session: $ARGUMENTS

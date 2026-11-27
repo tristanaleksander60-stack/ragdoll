@@ -3,7 +3,7 @@
 Studio place "[💥] Ragdoll Havoc", placeId 126037745825106, universe 10774775314. Branch `release`. Talk to the owner in **Danish, short and plain**.
 
 ## How every session runs
-- **The owner types `/klar`.** Read `docs/OVERVIEW.md` (the one-page plan: THE ORDER in 8 phases) and build it in order, without stopping (`.claude/commands/klar.md`). `docs/NOW.md` holds details only. Do not read the big plans whole: `docs/V9_PLAN.md` (220 KB) and `docs/V8_PLAN.md` (130 KB) hold the history. `grep -n` them for the one section a task needs.
+- **The owner types `/klar`.** Read `docs/RUN.md` first (the ONE ordered to-do list; small batches, causes found, proof by capture, then stop with a short test list). Background: `docs/OVERVIEW.md` (the one-page plan: THE ORDER in 8 phases) and build it in order, without stopping (`.claude/commands/klar.md`). `docs/NOW.md` holds details only. Do not read the big plans whole: `docs/V9_PLAN.md` (220 KB) and `docs/V8_PLAN.md` (130 KB) hold the history. `grep -n` them for the one section a task needs.
 - **Testing (owner order, 26 Nov 2026):** the owner tests EVERYTHING at the end; Claude Code builds the best possible product and does not test it.
   - Claude Code does only **one quick Play** per item, to check for no errors in the output.
   - No runs, watches, benches, scores, suites, reviewers or long play sessions, even where a doc asks (OVERVIEW "NO TESTING").

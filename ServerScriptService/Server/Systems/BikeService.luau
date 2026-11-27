@@ -194,7 +194,16 @@ local function ride(car: any, owner: Player, rider: Model)
 		task.wait(0.25)
 		local pe = rider:FindFirstChild("LowerTorso")
 		if pe and pe:IsA("BasePart") and body.Parent then
-			pe.CFrame = body.CFrame * CFrame.new(0, 2.4, 1.1)
+			-- (owner 27 Nov late: the rider sat BEHIND the bike: a fixed offset (0, 2.4, 1.1) from the physics box, which is
+			-- not where each model's saddle is. BIKE_SEAT_FIT: the pelvis sits on the vehicle's own seat part, just above its
+			-- top, facing the way the bike drives.)
+			local seat = car.seat
+			if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).BIKE_SEAT_FIT and seat and seat:IsA("BasePart") then
+				local top = seat.CFrame * CFrame.new(0, seat.Size.Y / 2 + pe.Size.Y / 2 + 0.15, 0)
+				pe.CFrame = CFrame.new(top.Position) * body.CFrame.Rotation
+			else
+				pe.CFrame = body.CFrame * CFrame.new(0, 2.4, 1.1)
+			end
 			local w = Instance.new("WeldConstraint")
 			w.Name = "RideWeld"
 			w.Part0 = body
