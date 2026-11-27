@@ -510,6 +510,25 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 			L.turnRate = (L.turnRate or 0) + ((if dt > 0 then math.abs(dy) / dt else 0) - (L.turnRate or 0)) * (1 - math.exp(-8 * dt))
 			local turnSpeed = math.min(L.turnRate * 1.6, 5)
 			amount = math.max(amount, math.clamp(turnSpeed / 2.5, 0, 1))
+			if (Config :: any).TURN_STEP then
+				-- (F73 step 2: hysteresis: the step cycle fades in above a drive of 0.6 and out only below 0.3 held 0.2 s,
+				-- so it never flickers between walking and standing; eased, never a snap)
+				local drive = life.groundSpeed + 1.4 * L.turnRate
+				if drive > 0.6 then
+					L.cycleOn = true
+					L.cycleLow = nil
+				elseif drive < 0.3 then
+					L.cycleLow = L.cycleLow or now
+					if now - L.cycleLow > 0.2 then
+						L.cycleOn = false
+					end
+				end
+				L.cycleW = (L.cycleW or 0) + ((if L.cycleOn then 1 else 0) - (L.cycleW or 0)) * (1 - math.exp(-10 * dt))
+				amount = math.max(amount, math.clamp(drive / 2.5, 0, 1)) * L.cycleW
+				if dy ~= 0 then
+					L.turnSign = if dy > 0 then 1 else -1
+				end
+			end
 			local speed = math.max(life.groundSpeed, turnSpeed, if fleeing then 12 * amount else 0)
 			L.clipPhase = ClipGait.advance(L.clipPhase or 0, speed, dt)
 			local pose = ClipGait.blend(speed, L.clipPhase)
@@ -519,6 +538,27 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 					local joint = life.joints[jn]
 					if joint and not life.loose[jn] then
 						joint.Transform = joint.Transform:Lerp(CFrame.identity:Lerp(cf, amount), ease)
+					end
+				end
+				if (Config :: any).TURN_STEP then
+					-- (F73 step 1: a TURN pose while it turns with little ground speed: short steps, the knee lifting about
+					-- 25 degrees, the stepping hip turned about 15 degrees into the turn, little swing; blended over 0.15 s)
+					local turning = L.turnRate > 0.8 and life.groundSpeed < 1.5
+					L.turnW = (L.turnW or 0) + ((if turning then 1 else 0) - (L.turnW or 0)) * math.min(1, dt / 0.15)
+					local tw = L.turnW * amount
+					if tw > 0.01 then
+						local sp = sin(L.clipPhase * TAU)
+						local sign = L.turnSign or 1
+						for _, side in { "Right", "Left" } do
+							local lift = math.max(0, if side == "Right" then sp else -sp)
+							local hip, knee = life.joints[side .. "Hip"], life.joints[side .. "Knee"]
+							if hip and not life.loose[side .. "Hip"] then
+								hip.Transform = hip.Transform:Lerp(ang(12 * lift, 15 * sign * lift, 0), tw)
+							end
+							if knee and not life.loose[side .. "Knee"] then
+								knee.Transform = knee.Transform:Lerp(ang(-25 * lift, 0, 0), tw)
+							end
+						end
 					end
 				end
 				if fleeing then

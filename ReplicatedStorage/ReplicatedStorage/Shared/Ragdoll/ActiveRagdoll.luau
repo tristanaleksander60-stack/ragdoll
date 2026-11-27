@@ -684,6 +684,8 @@ local function flatLook(part: BasePart): Vector3
 	return if flat.Magnitude > 0.05 then flat.Unit else Vector3.new(0, 0, -1)
 end
 
+local footFriction: { [BasePart]: any } = setmetatable({}, { __mode = "k" }) :: any
+local GAME_TURN_STEP_EARLY = (require(script.Parent.Parent:WaitForChild("Config")) :: any).TURN_STEP == true
 local function enter(rig: Rig, state: State)
 	local was = rig.state
 	rig.state = state
@@ -725,6 +727,25 @@ local function enter(rig: Rig, state: State)
 		rig.steer = 0
 		rig.steerUntil = 0
 		rig.arriveTime = 0
+	end
+	if GAME_TURN_STEP_EARLY then
+		-- (F73 step 5: no dragged feet: upright, the feet slide easily (friction 0.25; the lift holds the body, the feet
+		-- only touch); fallen, the body's own friction again. Set once per state change, never per frame.)
+		local upright = state == "Standing" or state == "Walking" or state == "Fleeing"
+		for _, n in { "LeftFoot", "RightFoot" } do
+			local f = rig.model:FindFirstChild(n)
+			if f and f:IsA("BasePart") then
+				local saved = footFriction[f]
+				if upright and saved == nil then
+					footFriction[f] = f.CustomPhysicalProperties or false
+					local cur = f.CurrentPhysicalProperties
+					f.CustomPhysicalProperties = PhysicalProperties.new(cur.Density, 0.25, cur.Elasticity, 3, cur.ElasticityWeight)
+				elseif not upright and saved ~= nil then
+					f.CustomPhysicalProperties = if saved then saved else nil
+					footFriction[f] = nil
+				end
+			end
+		end
 	end
 	if state == "Standing" or isMoving(state) then
 		applyPose(rig, Poses.REST)
@@ -1395,6 +1416,7 @@ local GAME_NO_OVERLAP = (require(script.Parent.Parent:WaitForChild("Config")) ::
 local PERSONAL_SPACE = if GAME_NO_OVERLAP then 2.6 else 2.4 -- (OVERVIEW 0.95: never inside each other)
 local GAME_SMOOTH = (require(script.Parent.Parent:WaitForChild("Config")) :: any).SMOOTH_MOTION == true -- (S1: the pelvis bobs with the steps, leans with speed)
 local GAME_TURN = (require(script.Parent.Parent:WaitForChild("Config")) :: any).TURN_EVEN == true -- (F73: an even, capped turn)
+local GAME_TURN_STEP = (require(script.Parent.Parent:WaitForChild("Config")) :: any).TURN_STEP == true -- (F73 part 2: walk round corners, curved arrivals)
 local function avoidDummies(rig: Rig, here: Vector3, direction: Vector3, goalDistance: number): (Vector3, boolean)
 	local folder = rig.model.Parent
 	if not folder then
@@ -1684,6 +1706,19 @@ local function updateMoving(rig: Rig, dt: number)
 			if steered then
 				rig.stuckTime = 0
 			end
+			if GAME_TURN_STEP and not fleeing and state == "Walking" and distance < HOME_ARRIVE + 2.5 then
+				-- (F73 step 6: a curved arrival: when the way it will face at home is far round from its way in, it starts
+				-- turning in the last 2.5 studs, so it seldom turns on the spot when it gets there)
+				local lookAt: any = rig.model:GetAttribute("HomeLook")
+				local face = if typeof(lookAt) == "Vector3" then flat(lookAt - here) else Vector3.zero
+				if face.Magnitude > 0.1 and face.Unit:Dot(direction) < -0.17 then
+					local w = math.clamp((HOME_ARRIVE + 2.5 - distance) / 2.5, 0, 1) * 0.6
+					local mix = direction * (1 - w) + face.Unit * w
+					if mix.Magnitude > 0.05 then
+						direction = mix.Unit
+					end
+				end
+			end
 			wantHeading = direction
 			local base = if state == "Crawling"
 				then (if fleeing then CRAWL_FLEE_SPEED else CRAWL_SPEED)
@@ -1731,6 +1766,12 @@ local function updateMoving(rig: Rig, dt: number)
 	end
 	-- It walks where it faces, so it never moonwalks or slides sideways.
 	local facing = math.max(0, rig.heading:Dot(wantHeading))
+	if GAME_TURN_STEP and state ~= "Crawling" then
+		-- (F73 step 4: it keeps walking through a turn of up to 120 degrees, in an arc, and slows to a third for a
+		-- bigger one (the legs step it round): the ground speed no longer drops to 0 and back at every corner)
+		local dot = rig.heading:Dot(wantHeading)
+		facing = if dot >= -0.5 then 0.35 + 0.65 * math.max(0, dot) else 0.33
+	end
 	rig.speed += (wantSpeed * facing - rig.speed) * (1 - math.exp(-SPEED_EASE * dt))
 	-- (V9-2c: inside a time bubble it walks at the bubble's time: TimeScale, set on this screen by
 	-- Client/SlowMotion; its lift holds the bubble's gravity.)

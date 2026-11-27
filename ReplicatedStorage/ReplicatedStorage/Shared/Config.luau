@@ -169,6 +169,7 @@ local Config = {
 	REVIVE_WAVE = true, -- 3.34 REVIVE ALL: a sparkling green ring sweeps out from you across the lab and every body it brings back bursts with sparkles (SandboxService)
 	RIDE_AIR = true, -- 3.32 rides: any driven bike, wheelchair or car that leaves the ground 0.6 s+ pops "AIR TIME 1.4 s" + NEW BEST (AirBest); pad launches keep their own (VehicleService, LaunchPads)
 	TURN_EVEN = true, -- F73: the heading rotates at a capped even rate (220 deg/s walking, 360 fleeing), never a lerp whip or 180 degree snap; turning on the spot steps the feet (ActiveRagdoll, DummyLife)
+	TURN_STEP = true, -- F73 part 2: a turn pose with stepping feet, cycle hysteresis (in 0.6 / out 0.3), walks round corners in an arc, curved arrivals home, low foot friction upright, the TURN TWIST detector (ActiveRagdoll, DummyLife, LegJitter)
 	NAV_BLOCKCAST = true, -- F72: obstacles are seen with a body-sized Blockcast whose look-ahead grows with speed (2.5-7 studs), and the detour takes the more open side (ActiveRagdoll blocked/clearAhead)
 	NAV_BUMP_LOG = true, -- F72: ActiveRagdoll counts detours, other-side tries and waits for a car, printed once a minute ([NavBump]); a moving car in the way is waited for, not walked round
 	NAV_ALWAYS = true, -- F72: RagdollNav puts its waypoint in NavHome (followed before Home) and never overwrites Home, so every walk gets a path, moving goals too (re-planned when the goal moved 4 studs, max 1/s)

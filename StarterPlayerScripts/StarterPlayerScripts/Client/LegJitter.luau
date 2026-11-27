@@ -142,6 +142,57 @@ function LegJitter.start()
 					t.lastLog = now
 					report(m, t, rate)
 				end
+				if Config.TURN_STEP then
+					-- F73 step 8: a TURN TWIST: while the pelvis turns (over 0.8 rad/s) a foot sticks and slips (its speed
+					-- crossing below 0.5 and above 3 studs/s more than 4 times in a second), or a hip twists over 35 degrees
+					local T = t :: any
+					local look = pe.CFrame.LookVector
+					local yaw = math.atan2(look.X, look.Z)
+					local dy = (yaw - (T.lastYaw or yaw) + math.pi) % (2 * math.pi) - math.pi
+					T.lastYaw = yaw
+					T.yawRate = (T.yawRate or 0) + (math.abs(dy) / math.max(dt, 1e-3) - (T.yawRate or 0)) * (1 - math.exp(-8 * dt))
+					local foot = m:FindFirstChild("LeftFoot")
+					if foot and foot:IsA("BasePart") then
+						local fp = foot.Position
+						local fs = if T.lastFoot then (fp - T.lastFoot).Magnitude / math.max(dt, 1e-3) else 0
+						T.lastFoot = fp
+						if fs < 0.5 then
+							T.footSlow = true
+						elseif fs > 3 and T.footSlow then
+							T.footSlow = false
+							T.cross = T.cross or {}
+							table.insert(T.cross, now)
+						end
+					end
+					local cross = 0
+					if T.cross then
+						while #T.cross > 0 and now - T.cross[1] > 1 do
+							table.remove(T.cross, 1)
+						end
+						cross = #T.cross
+					end
+					local twist = 0
+					local thigh = m:FindFirstChild("LeftUpperLeg")
+					if thigh and thigh:IsA("BasePart") then
+						local rel = pe.CFrame:ToObjectSpace(thigh.CFrame).LookVector
+						twist = math.abs(math.deg(math.atan2(-rel.X, -rel.Z)))
+					end
+					if T.yawRate > 0.8 and (cross > 4 or twist > 35) and now - (T.lastTwist or -math.huge) > 5 then
+						T.lastTwist = now
+						local line = string.format("[LegJitter] TURN TWIST %s | yawRate=%.1f rad/s | foot stick-slips 1 s=%d | hip twist=%.0f deg | state=%s | Home changes in 2 s=%d | sim=%s",
+							m.Name, T.yawRate, cross, twist, tostring(st), (function()
+								local n = 0
+								for _, at in t.homeChanges do
+									if now - at < 2 then
+										n += 1
+									end
+								end
+								return n
+							end)(), tostring(m:GetAttribute("SimulatedBy")))
+						print(line)
+						Players.LocalPlayer:SetAttribute("TurnTwistCount", ((Players.LocalPlayer:GetAttribute("TurnTwistCount") :: number?) or 0) + 1)
+					end
+				end
 			end
 		end)
 	end)
