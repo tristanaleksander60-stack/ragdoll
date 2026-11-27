@@ -118,6 +118,28 @@
   - `Client/PhoneClean.luau`, `Client/HudSlots.luau` (5d);
   - `Client/PokeController.luau` (5e).
 
+## FIRST PERSON ARMS: TOP OF BATCH A (owner's capture 27 Nov late: a pistol floating with no hand, a plain WHITE BLOCK sticking up from the bottom of the screen)
+- **The cause** (`Client/Viewmodel.luau`): the "arms" are two plain `Part` blocks (`Forearm`, `SupportArm`, `Viewmodel.ARM` sized), stretched between fixed points. The right one is not even placed at the grip. This is exactly the plain-part art that is banned.
+- **Build it like the real FPS games do:**
+  1. **A viewmodel Model** in the camera with its own `Humanoid` (`RigType` R15, no states, `DisplayDistanceType` None) and clones of the player's OWN `RightUpperArm`, `RightLowerArm`, `RightHand`, `LeftUpperArm`, `LeftLowerArm` and `LeftHand`: the real MeshParts with their skin colour.
+     - Copy the character's `Shirt` into the model: a Humanoid in the model makes the shirt's sleeves draw on the arms.
+     - No shirt: the skin colour.
+     - Motor6Ds between them as on the avatar.
+  2. **Two-bone IK** (the shoulder fixed off-screen low right / low left, the elbow bending outward) puts the RIGHT HAND exactly on the weapon's `Grip` (the handle's grip point or the hold table's `at`). The hand faces along the grip, the fingers closed round it (the R15 hand mesh posed by its wrist only).
+  3. **Two-handed weapons:** the LEFT HAND on the fore-grip under the barrel. One-handed: the left arm hidden.
+  4. **Size and place:**
+     - the weapon at about 0.55 of today's size (it now fills a third of the screen);
+     - lower right;
+     - the muzzle pointing to the crosshair's distance (converging at about 40 studs);
+     - nothing covering the middle third of the screen;
+     - on a phone, smaller still (0.45) and lower, clear of the SHOOT button.
+  5. **Motion stays:** sway, bob, recoil, reload dip and the aim-down-sight pose (the arms follow, since they are IK'd to the weapon each frame).
+  6. Never a plain Part for any arm or hand again. Remove `Forearm` and `SupportArm`.
+- **Check (DONE only with these captures):**
+  - pistol, rifle, minigun, a melee weapon, the fart gun and a throwable, each on PC and on a phone;
+  - the hands visibly ON the weapon, the sleeves in the shirt's colours, nothing white or blocky;
+  - V out and in with each.
+
 ## BATCH A (build now, then STOP for the owner's test)
 **Round 1 done (v1418-1423), STOPPED for the owner's test:** cloud code in Studio (20 files + FP_AUTO, a Config syntax break fixed), 4 DROP HERE, 6 stairs, 7 parking lot, 9 X-ray, 12 crowding. **Next round:** 10-11 holes and bandages on the v6 skin, 13 no block ragdolls, 14 bike riders welded, then 15/16/8 the real models (weapon testing building, T-rex, gyro).
 15. **PART DONE v1428 (`RANGE_CLEAR`, ShootingRange), SEEN:** the range stands just outside the compact plan where the hills begin (terrain y 7 to 40 across its depth); 10 s and 25 s after start (after the landscape fills the hills) the terrain round it (its box + 6 studs, floor up 90) is made air; captures: the whole facade and the open entrance stand free, inside a concrete firing line with a grass backstop where the hill was cut. LEFT: the plain-part shell -> a real model (next step). **WEAPON TESTING is half inside a mountain** (the building by the railway):
