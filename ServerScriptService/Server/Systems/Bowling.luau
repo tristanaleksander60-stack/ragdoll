@@ -45,6 +45,46 @@ type Lane = {
 
 local today: { [number]: { name: string, best: number } } = {}
 
+-- (F88 part 2, Config.BOWLING_FX: a pin crash on a strike with confetti, a sad trombone on a gutter)
+Bowling.STRIKE_SOUND = "rbxassetid://4692687595" -- (Creator Store "Bowling Strike Sound Effect")
+Bowling.GUTTER_SOUND = "rbxassetid://190705984" -- (Creator Store "Sad-Trombone")
+local function sound(id: string, at: Vector3, volume: number)
+	local p = Instance.new("Part")
+	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.Transparency = true, false, false, false, 1
+	p.Size = Vector3.one
+	p.Position = at
+	p.Parent = Workspace
+	local s = Instance.new("Sound")
+	s.SoundId = id
+	s.Volume = volume
+	s.RollOffMaxDistance = 160
+	s.Parent = p
+	s:Play()
+	game:GetService("Debris"):AddItem(p, 6)
+end
+local function confetti(at: Vector3)
+	local p = Instance.new("Part")
+	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.Transparency = true, false, false, false, 1
+	p.Size = Vector3.one
+	p.Position = at
+	p.Parent = Workspace
+	local e = Instance.new("ParticleEmitter")
+	e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	e.Color = ColorSequence.new({ ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 80, 120)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 220, 60)), ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 200, 255)) })
+	e.Size = NumberSequence.new(0.5, 0.3)
+	e.Speed = NumberRange.new(18, 30)
+	e.SpreadAngle = Vector2.new(50, 50)
+	e.Acceleration = Vector3.new(0, -30, 0)
+	e.Lifetime = NumberRange.new(1.2, 2)
+	e.Rotation = NumberRange.new(0, 360)
+	e.RotSpeed = NumberRange.new(-200, 200)
+	e.EmissionDirection = Enum.NormalId.Top
+	e.Enabled = false
+	e.Parent = p
+	e:Emit(80)
+	game:GetService("Debris"):AddItem(p, 3)
+end
+
 local function part(into: Instance, name: string, size: Vector3, cf: CFrame, colour: Color3, material: Enum.Material?, anchored: boolean?): Part
 	local p = Instance.new("Part")
 	p.Name = name
@@ -292,6 +332,14 @@ local function bowl(lane: Lane, by: Player)
 			end
 		end
 		lane.roll = 1
+	end
+	if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BOWLING_FX then
+		if string.sub(word, 1, 6) == "STRIKE" or string.sub(word, 1, 5) == "SPARE" then
+			sound(Bowling.STRIKE_SOUND, lane.deckAt + Vector3.new(0, 3, 0), 1)
+			confetti(lane.deckAt + Vector3.new(0, 4, 0))
+		elseif string.sub(word, 1, 6) == "GUTTER" then
+			sound(Bowling.GUTTER_SOUND, lane.at + Vector3.new(0, 3, 0), 0.8)
+		end
 	end
 	showBoard(lane, by, word)
 	if frameDone then
