@@ -58,7 +58,7 @@ Shop.WEAPON_PRODUCTS = table.freeze({
 
 -- Round 5: the game's Roblox group (REWARDS: join it for a free weapon egg; joining is allowed as
 -- a reward, likes and favourites are not). 0 until the owner sends the group id: the card says SOON.
-Shop.GROUP_ID = 0
+Shop.GROUP_ID = if game.CreatorType == Enum.CreatorType.Group then game.CreatorId else 0 -- (27 Nov, audit: the game belongs to the owner's group now, so the group gift works by itself; 0 in a personal place)
 -- Today's deal (round 5): the Starter Pack developer product. 0 until the owner creates it: the
 -- card says SOON and never opens a prompt. What it gives: STARTER_PACK below (MoneyService).
 Shop.STARTER_PACK = 0
