@@ -19,7 +19,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
 1. **DONE v1289 (`LAB_CONTROLS_BUTTON`, Systems/PassLint):** the stand shows only in a pass owner's lab, only they can press; the shop sells the pass again; PassLint prints an error at startup for any pass on sale whose feature is off. **Was:** The "Lab Controls" pass (179 R$) is sold, but its BIG RED BUTTON is switched off** (`Config.BIG_BUTTON = false`; Shop.luau ~338). Buyers get nothing.
    - **Fix:** bring the button back ONLY for pass owners, in their own lab, on the new map (a small pedestal by the spawn plaza).
    - Add a startup lint: every pass on sale must reach a live feature (log an error otherwise).
-2. **CHRISTMAS ADVENT CALENDAR, live from 1 Dec** (4 days):
+2. **DONE v1290 (`ADVENT`: Shared/Advent, Systems/AdventService, Client/AdventCalendar):** 24 doors, one a UTC day from 1 Dec, a missed day caught up later (until 31 Dec), fixed gifts shown on the doors (BOLTS; Rainbow Trail, Fire Trail and Crash-Test Suit for 3 days on doors 6/12/21; a weapon egg on 18; door 24: 1,000 BOLTS + an egg + Gold Dummies 7 days), kept in eco.codes (no new save field); the gift button opens it while a door waits; one validated remote, 1 call a second. NOT built: Christmas-only hats/trails, the snowball launcher and the sleigh event (new content; question in NOW). **Was:** CHRISTMAS ADVENT CALENDAR, live from 1 Dec (4 days):
    - 24 doors, one claim per UTC day through one validated `Net` remote (the DailyGoals day maths, the streak freeze);
    - fixed rewards shown in advance: BOLTS, Christmas-only hats and trails, and a big day 24 (a snowball launcher toy and a Santa sleigh event);
    - a festive calendar window opened from the gift chip in December;

@@ -34,6 +34,8 @@ local HudV3 = {}
 
 HudV3.CARD = Vector2.new(84, 84) -- px at a 1080 px tall screen
 HudV3.GAP = 6
+HudV3.giftHook = nil :: (() -> boolean)? -- (AUDIT 27 Nov 2: Client/AdventCalendar; true = it took the tap)
+HudV3.openRewards = nil :: (() -> ())?
 HudV3.MARGIN = 12
 HudV3.GLASS = Color3.fromRGB(18, 18, 22)
 HudV3.GLASS_ALPHA = 0.22
@@ -354,8 +356,14 @@ local function buildTop(onRewards: () -> ())
 	-- the egg; otherwise it opens Rewards. Its counter (IconCount "Rewards") is what waits there.
 	-- (24 Nov 2026, owner: the gift always opens Rewards; RewardsUI then opens a waiting egg over it.)
 	local function onGift()
+		-- (AUDIT 27 Nov 2: in December a waiting advent door opens the calendar first: Client/AdventCalendar)
+		local hook = HudV3.giftHook
+		if hook and hook() then
+			return
+		end
 		onRewards()
 	end
+	HudV3.openRewards = onRewards
 	local giftCount = require(script.Parent:WaitForChild("IconCount")) :: any
 	giftCount.attach("Rewards", gift)
 	gift.Activated:Connect(onGift)

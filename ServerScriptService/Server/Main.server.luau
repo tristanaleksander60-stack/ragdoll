@@ -81,6 +81,7 @@ safe("Purchases", function() Purchases.start() end)
 safe("WhaleSpout", function() require(Systems:WaitForChild("WhaleSpout")).start() end) -- 3.26: the big pool's whale spouts ragdolls sky-high and tail-slaps (Config.WHALE_10) -- the one ProcessReceipt; finds out whether orders live in a DataStore
 safe("TargetRun", function() require(Systems:WaitForChild("TargetRun")).start() end) -- 3.31: a 30 s timed run on the archery target (Config.TARGET_RUN)
 safe("PlayerCPR", function() require(Systems:WaitForChild("PlayerCPR")).start() end) -- 3.34: your own CPR on a down ragdoll, a rhythm game (Config.PLAYER_CPR)
+safe("AdventService", function() require(Systems:WaitForChild("AdventService")).start() end) -- AUDIT 27 Nov 2: the Christmas advent calendar (Config.ADVENT)
 safe("PassLint", function() require(Systems:WaitForChild("PassLint")).run() end) -- AUDIT 27 Nov 1: every pass on sale reaches a live feature
 safe("PurchaseChat", function() require(Systems:WaitForChild("PurchaseChat")).start() end) -- (V11 B7) Robux purchases in chat on every server
 safe("BenchService", function() require(Systems:WaitForChild("BenchService")).start() end) -- benches the lab's ragdolls sit on
