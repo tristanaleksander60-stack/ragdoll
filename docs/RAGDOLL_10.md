@@ -13,6 +13,54 @@ The ragdolls ARE the game. This doc is the one umbrella for making them 10/10. I
 | **Sound** | few body sounds | footsteps by surface, thuds by speed, cartoon voices (oof, ow, hey) by persona |
 | **Bugs** | vanishing (F90), heads spinning (F85), legs jitter (F73, F86), walking into things (F72) | ZERO of each, guarded by the always-on logs |
 
+## THE LOOK 10/10: a CHUNKY TOY CRASH-TEST DUMMY (owner, 27 Nov late: "Gør dem tykkere, så der er mere at skyde på og giv dem lidt mere liv" and "De ligner nu 5/10, de skal 10/10, undersøg hvad de største ragdoll spil gør, udnyt Blender fuldt ud")
+**What the best ragdoll games do with their bodies:**
+- **Gang Beasts, Human: Fall Flat, TABS, Fall Guys:**
+  - CHUNKY, soft, rounded bodies with thick limbs and a big head: a big target, a readable silhouette, and funny when they flop;
+  - simple, very expressive faces;
+  - squash, wobble and jiggle on every impact;
+  - matte "rubber or plastic toy" materials with soft light, never thin or realistic.
+- **Real crash-test dummies** (the Hybrid III look): segmented, with visible JOINT RINGS at the neck, shoulders, elbows, hips and knees, a chest plate, bolts, and the black-and-yellow target markings. That reads "dummy" at a glance, and the rings hide where the skin bends.
+- **The top Roblox ragdoll games** use thick R15 bodies (avatars or chunky dummies). Our v2 is THINNER than all of them: less to hit, and it looks fragile and sad (the owner's screenshot: skinny, hunched, hands clasped).
+
+**So the v3 body is a chunky toy crash-test dummy, made in Blender with every tool** (`tools/blender/mannequin_v3.py`, headless):
+1. **Proportions:** sturdy and toy-like. In studs, on a 5.2-stud body:
+   - **head:** a big rounded head, about 1.25 wide;
+   - **neck:** a short neck with a joint ring;
+   - **torso:** a broad chest about 2.0 wide x 1.0 deep with a rounded chest PLATE, a firm waist about 1.6 wide, hips about 1.8;
+   - **arms:** about 0.66 thick at the upper arm, 0.56 at the forearm, a joint ring at the shoulder and the elbow. The shoulders sit far enough out that the arms hang free of the body, never clipping it;
+   - **legs:** about 0.85 thick at the thigh, 0.66 at the calf, a joint ring at the hip and the knee, solid ankles;
+   - **hands:** big friendly hands, chunky fingers and a thumb;
+   - **feet:** rounded boot-like feet with a sole.
+
+   The hit area is about the old block body's or more.
+2. **The surface detail, baked** (not polygons):
+   - a NORMAL MAP for the panel seams on the chest plate, the thighs and the forearms, small bolts, the joint ring grooves and a fine plastic grain;
+   - an AMBIENT OCCLUSION bake into the colour map (the creases, under the chest plate, between the fingers);
+   - a ROUGHNESS map (about 0.5, the rings a little shinier).
+
+   All 1024 px, exported with the FBX and used as a `SurfaceAppearance` (ColorMap, NormalMap, RoughnessMap).
+3. **The markings:**
+   - the black-and-yellow quarter circles on both temples, the chest plate and the outsides of the knees, painted into the colour map;
+   - a small number stencil on the back ("RD-07"), random per ragdoll by a tint swap.
+4. **Clean topology:**
+   - modelled from primitives, then subdivided, then remeshed and smoothed;
+   - edge loops at every joint so it bends without collapsing;
+   - automatic weights corrected by hand rules in the script (the rings follow their joint bone 100%);
+   - about 9-12k triangles, plus a LOD of about 2.5k for the far bodies.
+5. **The rest pose matches R15** (F89 rule): arms down, relaxed.
+6. **The face:** our expressive faces (FACES_V2 + R2's living eyes, blinks and mouth) on the big round face area. The eyes are bigger, so the expressions read from far.
+7. **Wobble and squash:** on a hard hit, a short squash-and-stretch on the struck part (bone scale is not possible, so a tiny bone offset jiggle), and a soft belly and chest jiggle after impacts (a damped spring on a chest bone). Cheap, only near.
+8. **Colour:** the light grey toy plastic (about 163,162,165) with the yellow-black markings. (The persona accessories of R5 sit on top.)
+9. **Review renders** (Blender, allowed: about looks): front, side, three-quarter and a "knocked down" pose, next to a Gang Beasts / Human: Fall Flat style silhouette. Fix them until it reads chunky, friendly and fun.
+10. **Then BodyShape (R9) is exported from THIS mesh:** the physics parts get thicker to match, so there really is more to shoot at, and the holes, the splash, the X-ray and the bandages all fit.
+
+**More life:**
+- **The stance:** upright and relaxed, never hunched or hand-clasped by default;
+- **the face:** R2, living eyes, blinks and a talking mouth;
+- **idles:** R3 and R5, weight shift, looking round, persona gestures, scratching the head, stretching;
+- **squash and jiggle:** item 7 above.
+
 ## The pass, in order
 **R1. The body, everywhere** (F89 + S2's rest):
 - the slim grey v2 body on EVERY ragdoll you can see: the nearest 12 with full bones, the rest with a cheap version of the SAME mesh (no finger bones). Never a block body in view;
