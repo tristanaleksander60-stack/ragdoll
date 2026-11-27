@@ -137,6 +137,17 @@ local function bandage(limb: BasePart, folder: Instance, stage: number?)
 		local wide = math.max(limb.Size.X, limb.Size.Z) * (if head then 1.06 else 1.18)
 		local thick = limb.Size.Y * (if head then 0.2 else 0.14)
 		local y0 = if head then 0.18 else 0.4
+		-- (THE v6 FIT PASS item 8: on a v6 body the wrap goes round v6's own round limb at its radius + 0.05)
+		local model = limb.Parent
+		if not head and model and model:GetAttribute("BodyV6") == true then
+			local ok, BodyShape = pcall(function()
+				return require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("BodyShape")) :: any
+			end)
+			local r = ok and BodyShape.active() and BodyShape.wrapRadius(limb.Name, 0.5 - y0) or nil
+			if r then
+				wide = r * 2
+			end
+		end
 		-- three overlapping gauze rings, each a little offset and tilted (wrap ridges)
 		for i = 0, 2 do
 			local r = Instance.new("Part")
