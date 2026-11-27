@@ -211,7 +211,27 @@ local function encodeWounds(v: Vitals, now: number): string
 end
 
 -- Shares the list when it changed (a new wound, or one that stopped bleeding).
+-- (AUDIT 36, WOUNDS_COALESCE: the first change goes out at once; more within WOUNDS_GAP s (an
+-- automatic gun) are sent together once at the end of the gap, so a burst is one replication, not 10.)
+local WOUNDS_GAP = 0.2
 local function shareWounds(model: Model, v: Vitals, now: number)
+	if (Config :: any).WOUNDS_COALESCE then
+		local vv = v :: any
+		local t = os.clock()
+		if vv.sharedAt and t - vv.sharedAt < WOUNDS_GAP then
+			if not vv.sharePending then
+				vv.sharePending = true
+				task.delay(WOUNDS_GAP - (t - vv.sharedAt), function()
+					vv.sharePending = false
+					if model.Parent and vitals[model] == v then
+						shareWounds(model, v, os.clock())
+					end
+				end)
+			end
+			return
+		end
+		vv.sharedAt = t
+	end
 	local text = encodeWounds(v, now)
 	if text ~= v.shared then
 		v.shared = text

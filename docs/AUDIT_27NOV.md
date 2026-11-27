@@ -108,7 +108,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
 35. **DONE v1313:** the map board's window is "Go to a map", the shared one "Shared lab". **Was:** Window titles: "Go to a map" and "Maps", "Shared lab" and "Multiplayer" no longer share titles.
 
 ## PERFORMANCE (with row 8 / R8)
-36. **Wounds are resent whole** (up to 80 entries, about 2 KB) to every client on every hit: send only the new one (`WoundNew` + a sequence number); the full list only when a body streams in; `WoundsReset` for heals and the pick-out.
+36. **PART DONE v1318 (`WOUNDS_COALESCE`):** wound list changes within 0.2 s go out as ONE attribute update (the first at once), so a minigun burst replicates once, not 10 times. LEFT: the delta protocol (`WoundNew` + sequence) below, which touches every reader of the attribute. **Was:** **Wounds are resent whole** (up to 80 entries, about 2 KB) to every client on every hit: send only the new one (`WoundNew` + a sequence number); the full list only when a body streams in; `WoundsReset` for heals and the pick-out.
 37. **PART DONE v1315 (`HOLE_CAP_PHONE`):** a phone keeps the newest 24 holes a body (a PC all 80, the owner's choice); the holes were already pooled and massless with no query/touch. **Was:** Bullet holes:
     - capped per device: about 12 on a phone, 30 on a PC per body;
     - only on the nearest bodies, pooled;
