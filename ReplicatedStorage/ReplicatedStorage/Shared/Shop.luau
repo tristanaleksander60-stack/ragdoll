@@ -63,7 +63,7 @@ Shop.GROUP_ID = if game.CreatorType == Enum.CreatorType.Group then game.CreatorI
 -- card says SOON and never opens a prompt. What it gives: STARTER_PACK below (MoneyService).
 Shop.STARTER_PACK = 0
 Shop.STARTER_PACK_ROBUX = 29
-Shop.STARTER_PACK_TEXT = "3 weapon eggs + the Revolver"
+Shop.STARTER_PACK_TEXT = "The Revolver + 300 BOLTS" -- (AUDIT 27 Nov 5: no paid random items: fixed contents, never eggs)
 
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({

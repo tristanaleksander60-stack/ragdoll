@@ -142,15 +142,21 @@ function RewardsService.claimGroup(player: Player): string?
 end
 
 -- Today's deal: the Starter Pack (Shop.STARTER_PACK; 0 = not on sale, the card says SOON). An
--- order gives STARTER_EGGS weapon eggs and the Revolver (an extra egg if it is yours already).
-RewardsService.STARTER_EGGS = 3
+-- order gives the Revolver and STARTER_BOLTS (+STARTER_EXTRA if the Revolver is yours already).
+-- (AUDIT 27 Nov 5: it gave 3 weapon eggs, a paid random item; now its contents are fixed, never eggs.)
+RewardsService.STARTER_BOLTS = 300
+RewardsService.STARTER_EXTRA = 100
 function RewardsService.deliverStarter(player: Player, purchaseId: string)
 	if not ProgressService.isLoaded(player) then
 		error("profile not ready") -- (Purchases releases the claim: claimed again once it is)
 	end
 	local newWeapon = ProgressService.grantWeapon(player, "Revolver", "StarterPack")
-	ProgressService.addBoughtEggs(player, RewardsService.STARTER_EGGS + (if newWeapon then 0 else 1))
-	ProgressService.notice(player, "STARTER PACK! Your eggs are waiting" .. (if newWeapon then " and the Revolver is yours" else "") .. ". Thank you!")
+	local bolts = RewardsService.STARTER_BOLTS + (if newWeapon then 0 else RewardsService.STARTER_EXTRA)
+	local Economy = require(script.Parent:WaitForChild("EconomyService")) :: any
+	if not Economy.give(player, bolts, nil, true) then
+		error("bolts not given") -- (Purchases releases the claim: claimed again once the profile is safe)
+	end
+	ProgressService.notice(player, string.format("STARTER PACK! +%d BOLTS", bolts) .. (if newWeapon then " and the Revolver is yours" else "") .. ". Thank you!")
 	task.spawn(Purchases.complete, player.UserId, purchaseId)
 end
 
