@@ -193,6 +193,14 @@ local function build()
 	tomorrowText = C.Text("title", "", { scaled = true, color = Color3.fromRGB(255, 210, 74), size = UDim2.new(1, 0, 0, 30), layoutOrder = -1, parent = window.body })
 	eggButton = C.Button({ text = "OPEN EGG", role = "go", size = UDim2.new(1, 0, 0, Theme.Size.buttonH), layoutOrder = 0, parent = window.body, onActivated = ProgressUI.openEggNow })
 	eggButton.root.Visible = false
+	-- AUDIT 27 Nov 5 (Config.EGG_ODDS): what an egg holds, shown before you open it (Roblox's rule for random rewards).
+	if (Config :: any).EGG_ODDS then
+		local P = require(Shared:WaitForChild("Progress")) :: any
+		local R = P.RARITY
+		C.Text("caption", string.format(
+			"What's inside: a weapon you don't have yet (85%% one of your next 6, 15%% any locked weapon). With every weapon: a hat (Common %d%%, Rare %d%%, Epic %d%%, Legendary %d%%).",
+			R.Common.weight, R.Rare.weight, R.Epic.weight, R.Legendary.weight), { autoY = true, wrap = true, color = Theme.Palette.textMid, layoutOrder = 0, parent = window.body })
+	end
 	-- Play gift.
 	C.SectionHeader("PLAY GIFT", "daily", 3, window.body)
 	local playCard = C.Card({ name = "PlayGift", gap = SP.xs, layoutOrder = 4, parent = window.body, size = UDim2.new(1, 0, 0, 84) })

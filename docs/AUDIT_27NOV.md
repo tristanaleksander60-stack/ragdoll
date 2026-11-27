@@ -35,7 +35,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
    - cap takedowns per player per minute (anything over the cap goes to Metrics).
 
 ## BEFORE THE RELEASE (fairness, kids, compliance)
-5. **Egg odds shown** in the egg window (60/28/10/2). The VIP "egg every 50 instead of 75" is a paid speed-up of random rewards: change it to a non-random VIP perk (a VIP-only hat + BOLTS), or gate it with PolicyService `ArePaidRandomItemsRestricted`. The parked starter pack's "3 weapon eggs" must never go live as written.
+5. **PART DONE v1306 (`EGG_ODDS`):** what an egg holds and the hat odds shown under OPEN EGG (Rewards); the paid VIP's faster eggs off where PolicyService restricts paid random items (asked in the background, never yields; the free launch VIP keeps it). LEFT: the parked starter pack's "3 weapon eggs" (it is not live). **Was:** Egg odds shown in the egg window (60/28/10/2). The VIP "egg every 50 instead of 75" is a paid speed-up of random rewards: change it to a non-random VIP perk (a VIP-only hat + BOLTS), or gate it with PolicyService `ArePaidRandomItemsRestricted`. The parked starter pack's "3 weapon eggs" must never go live as written.
 6. **Prices:**
    - a single weapon (up to 199 R$) can cost more than "All Guns" (149): when the category pass costs the same or less, BUY shows the pass instead;
    - cap single prices below their category pass;

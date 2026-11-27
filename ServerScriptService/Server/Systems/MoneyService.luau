@@ -441,8 +441,32 @@ function MoneyService.start()
 	remote = Net.event(Net.Names.Money)
 	remote.OnServerEvent:Connect(onRequest)
 	-- The egg rate (VIP) and the board's VIP mark read from here.
+	-- (AUDIT 27 Nov 5, Config.EGG_ODDS: the paid VIP's faster eggs are a paid speed-up of a random reward: not where
+	-- Roblox's PolicyService says paid random items are restricted for that player; the free launch VIP keeps it.)
+	local restricted: { [Player]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+	local function paidRandomRestricted(player: Player): boolean
+		local known = restricted[player]
+		if known ~= nil then
+			return known
+		end
+		-- (never yields here: asked once in the background; until it answers, the perk waits)
+		restricted[player] = true
+		task.spawn(function()
+			local ok, info = pcall(function()
+				return game:GetService("PolicyService"):GetPolicyInfoForPlayerAsync(player)
+			end)
+			restricted[player] = not ok or (info and info.ArePaidRandomItemsRestricted == true) or false
+		end)
+		return true
+	end
 	ProgressService.eggEvery = function(player: Player): number
-		return if MoneyService.owns(player, "VIP") or MoneyService.launchFree() then Shop.VIP_EGG_EVERY else nil :: any
+		if MoneyService.launchFree() then
+			return Shop.VIP_EGG_EVERY
+		end
+		if MoneyService.owns(player, "VIP") and not ((Config :: any).EGG_ODDS and paidRandomRestricted(player)) then
+			return Shop.VIP_EGG_EVERY
+		end
+		return nil :: any
 	end
 	-- The launch's free passes: kept for every server; everyone's attributes follow it, and again
 	-- the moment it ends (checked every 15 s).
