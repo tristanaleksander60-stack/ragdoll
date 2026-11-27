@@ -525,6 +525,11 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 14. **F68, the water button:** closed. Real water is always on (F78/F87); nothing to find.
 
 ## Questions for the owner (filled in during the run)
+- (27 Nov, run 5) **Ragdolls per lab (WATCH_EVERY):** a real watcher at every machine needs more bodies: your lab now holds 40 on PC, 20 console, 14 tablet, 9 phone (`LAB_DUMMIES_PC`). If a PC drops frames, say a lower number. Default: 40.
+- (27 Nov, run 5) **Body v3:** look at `art/models/mannequin/review_v3/` (front, side, posed, knocked down, next to a player). Say "BODY V3 APPROVED" or what to change. Default: wait (nothing in the game changes until you import it).
+- (27 Nov, run 5) **Police siren:** a community upload ("main hi lo", 103787335792735), no PSE siren found. Default: keep it.
+- (27 Nov, run 5) **Body voices:** PSE "Video Game Effects 15" (oof) and "Seahorse Whine 10" (get-up grunt), pitched per ragdoll. Default: keep; tell me if they sound wrong.
+- (27 Nov, run 5) **The control kit (C10)** is built from parts in code now; the Blender look and moving the ~39 old machine prompts onto it come next. Default: build on.
 - X-RAY key: B is already Build mode, so X-RAY is on I now (default). OK, or another key?
 - Angry dummy: a harmless shove (now) or scolding only? (`ANGRY_SHOVE`)
 - Dummy colour: darker grey (92,95,102, now) or the old (112,114,118)?
