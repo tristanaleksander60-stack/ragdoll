@@ -9,6 +9,7 @@
 -- A leaf: Blasts, HitService, LabDress and SandboxService call in; it requires nothing of the game.
 
 local RunService = game:GetService("RunService")
+local CRATE_BURST = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).CRATE_BURST == true
 
 local Knockables = {}
 
@@ -55,7 +56,82 @@ Knockables.listeners = {} :: { { shot: (Vector3, Vector3) -> (), blast: (Vector3
 local entries: { [BasePart]: Entry } = {}
 local started = false
 
+-- Row 7 (Config.CRATE_BURST; IMPACT_FX "props react"): a body flung through a crate fast (CRATE_BURST_SPEED studs/s)
+-- smashes it: the crate's pieces vanish, 6-8 planks fly out with a crack and wood dust, and the body flies on through
+-- (the crate's body stops blocking). It comes back whole on its spot with the others (goHome).
+Knockables.CRATE_BURST_SPEED = 40
+local burstLooks: { [Entry]: { [BasePart]: number } } = setmetatable({}, { __mode = "k" }) :: any
+local CRACK_ID = "rbxassetid://9116785204"
+local function burst(e: Entry, other: BasePart)
+	if burstLooks[e] then
+		return
+	end
+	local looks: { [BasePart]: number } = {}
+	local color = Color3.fromRGB(170, 120, 70)
+	for _, d in e.model:GetDescendants() do
+		if d:IsA("BasePart") and d ~= e.body then
+			looks[d] = d.Transparency
+			color = d.Color
+			d.Transparency = 1
+		end
+	end
+	burstLooks[e] = looks
+	local body = e.body
+	body.CanCollide = false
+	body.Anchored = true
+	e.looseAt = e.looseAt or os.clock()
+	e.model:SetAttribute("Loose", true)
+	local at = body.Position
+	local push = other.AssemblyLinearVelocity
+	for i = 1, math.random(6, 8) do
+		local plank = Instance.new("Part")
+		plank.Name = "CratePlank"
+		plank.Size = Vector3.new(math.random(18, 30) / 10, 0.25, math.random(5, 8) / 10)
+		plank.Color = color
+		plank.Material = Enum.Material.WoodPlanks
+		plank.CanQuery, plank.CanTouch, plank.CastShadow = false, false, false
+		plank.CFrame = CFrame.new(at + Vector3.new(math.random(-10, 10) / 10, math.random(-5, 10) / 10, math.random(-10, 10) / 10))
+			* CFrame.Angles(math.random() * 6, math.random() * 6, math.random() * 6)
+		plank.AssemblyLinearVelocity = push * 0.35 + Vector3.new(math.random(-12, 12), math.random(8, 18), math.random(-12, 12))
+		plank.AssemblyAngularVelocity = Vector3.new(math.random(-10, 10), math.random(-10, 10), math.random(-10, 10))
+		plank.Parent = workspace
+		game:GetService("Debris"):AddItem(plank, 5 + i * 0.2)
+	end
+	local s = Instance.new("Sound")
+	s.SoundId = CRACK_ID
+	s.Volume = 1.1
+	s.PlaybackSpeed = 0.8
+	s.RollOffMaxDistance = 110
+	s.Parent = body
+	s:Play()
+	local dust = Instance.new("ParticleEmitter")
+	dust.Texture = "rbxasset://textures/particles/smoke_main.dds"
+	dust.Color = ColorSequence.new(Color3.fromRGB(196, 170, 130))
+	dust.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.4), NumberSequenceKeypoint.new(1, 1) })
+	dust.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1.5), NumberSequenceKeypoint.new(1, 4) })
+	dust.Lifetime = NumberRange.new(0.6, 1.1)
+	dust.Speed = NumberRange.new(5, 12)
+	dust.SpreadAngle = Vector2.new(180, 180)
+	dust.Rate = 0
+	dust.Parent = body
+	dust:Emit(22)
+	task.delay(3, function()
+		s:Destroy()
+		dust:Destroy()
+	end)
+end
+
 local function goHome(e: Entry)
+	local looks = burstLooks[e]
+	if looks then
+		burstLooks[e] = nil
+		for d, t in looks do
+			if d.Parent then
+				d.Transparency = t
+			end
+		end
+		e.body.CanCollide = true
+	end
 	e.looseAt = nil
 	e.stillSince = nil
 	e.body.Anchored = true
@@ -144,6 +220,17 @@ local function onTouched(e: Entry, other: BasePart)
 	local speed = relative.Magnitude
 	if speed < Knockables.KNOCK_SPEED then
 		return
+	end
+	if e.role == "Crate" and speed >= Knockables.CRATE_BURST_SPEED and CRATE_BURST then
+		local m = other:FindFirstAncestorOfClass("Model")
+		if m and m.Parent and m.Parent.Name == "Dummies" then
+			e.lastKnock = now
+			burst(e, other)
+			return
+		end
+	end
+	if burstLooks[e] then
+		return -- (smashed: nothing left to knock)
 	end
 	knock(e, relative * Knockables.CARRY)
 end
