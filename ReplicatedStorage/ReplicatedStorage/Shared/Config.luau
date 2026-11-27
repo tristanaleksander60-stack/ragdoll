@@ -116,6 +116,7 @@ local Config = {
 	DRIPS_V2 = true, -- D12 part 3: only the 2-3 newest bullet holes drip (phones 2, within 40 studs), a drop every 0.6-1.2 s each, for 8 s, then stop (Client/BloodFx, BulletHoles.dripHoles)
 	SHOVE_SERIES = true, -- F26: the angry dummy shoves a random 1-3 times, a line before each ("Hey!", "Stop that!", "How do YOU like it?"), a short wind-up, following if you back off; knocked over ends it; then it flees (Mourning attack)
 	XRAY_TRACER = true, -- F28: with X-ray on, your round leaves a short bright line through the glass body for 1 s, along the shot (FxController.predictHit)
+	HARD_PHYS = true, -- row 5: the physics watchdog (a NaN or runaway body is stopped and put back at its last good place) and no tunnelling (a body over 70 studs/s that crossed a wall or floor in one step is put back short of it, its speed into it taken off) (ActiveRagdoll hardChecks)
 	HOME_CLEAR = true, -- F75: once the map stands every vehicle home is checked with the vehicle's box and moved to the nearest clear spot when something solid is inside it ([Vehicles] homes moved: n)
 	BIKE_ROUTE = true, -- F69: on the compact map the motorbike rider follows the walkway loop's centre line point to point (a point not reached in 14 s is skipped)
 	REAL_HANDS = true, -- S2 plan B: real hands from rounded parts (palm, 4 fingers of 3 segments, a thumb of 2), posed by state, on this screen only; the hook hand skin is shrunk away (Client/RealHands)

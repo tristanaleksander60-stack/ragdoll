@@ -560,6 +560,60 @@ local EXPLOSION_FACTOR = 1.5 -- a limb this far over LIMB_REL_MAX is a solver ex
 ActiveRagdoll.FLINCH_REL_MAX = FLINCH_REL_MAX
 ActiveRagdoll.explosions = 0 -- (counted by guardLimbs on this machine; the bench reads it)
 ActiveRagdoll.LIMB_SPIN_MAX = LIMB_SPIN_MAX
+-- Row 5 (RAGDOLL_FEEL "PERFECT physics"; Config.HARD_PHYS): two hard checks on the machine that simulates the body.
+-- 1. The watchdog: a part with a NaN or runaway position or speed (a solver blow-up) gets its speed zeroed, and the
+--    body goes back to its last good place.
+-- 2. No tunnelling: a fast body (over 70 studs/s) is ray-checked from its last pelvis position to this one; if the step
+--    crossed a wall or a floor, the body is put back just short of it and its speed into the surface is taken off (the
+--    rest of its speed stays, so it slides along or bounces, never passes through).
+local GAME_HARD_PHYS = (require(script.Parent.Parent:WaitForChild("Config")) :: any).HARD_PHYS == true
+local TUNNEL_SPEED = 70
+local function bad(v: Vector3): boolean
+	return v.X ~= v.X or v.Y ~= v.Y or v.Z ~= v.Z or v.Magnitude > 1e5
+end
+local function hardChecks(rig: Rig)
+	local r: any = rig
+	local pelvis = rig.pelvis
+	local pos = pelvis.Position
+	local vel = pelvis.AssemblyLinearVelocity
+	if bad(pos) or bad(vel) or bad(pelvis.AssemblyAngularVelocity) then
+		for _, part in rig.parts do
+			part.AssemblyLinearVelocity = Vector3.zero
+			part.AssemblyAngularVelocity = Vector3.zero
+		end
+		local good = r.lastGoodAt
+		if good then
+			pcall(function()
+				rig.model:PivotTo(CFrame.new(good + Vector3.new(0, 2, 0)))
+			end)
+		end
+		return
+	end
+	local last = r.lastGoodAt
+	r.lastGoodAt = pos
+	if not last or rig.held > 0 or rig.state == "Frozen" or vel.Magnitude < TUNNEL_SPEED then
+		return
+	end
+	local step = pos - last
+	if step.Magnitude < 0.5 or step.Magnitude > 60 then
+		return -- (still, or a teleport: not a tunnel)
+	end
+	local hit = Workspace:Raycast(last, step, rig.rayParams)
+	local wall = hit and hit.Instance
+	if wall and (hit :: RaycastResult).Material ~= Enum.Material.Water and (wall:IsA("Terrain") or (wall:IsA("BasePart") and wall.Anchored and wall.CanCollide)) then -- (only the world: walls, floors, the tower; never another body or a loose prop)
+		local back = (hit :: RaycastResult).Position + (hit :: RaycastResult).Normal * 1.6 - pos
+		for _, part in rig.parts do
+			part.CFrame += back
+			local v = part.AssemblyLinearVelocity
+			local into = v:Dot((hit :: RaycastResult).Normal)
+			if into < 0 then
+				part.AssemblyLinearVelocity = v - (hit :: RaycastResult).Normal * into * 1.3 -- (a little bounce back off it)
+			end
+		end
+		r.lastGoodAt = pelvis.Position
+	end
+end
+
 local function guardLimbs(rig: Rig)
 	if not LIMB_GUARD or rig.held > 0 or rig.state == "Frozen" then
 		return
@@ -1863,6 +1917,9 @@ local function update(dt: number)
 		-- (24 Nov 2026, fps: a body nothing has touched for 2 s has no limb to hold back; every second step is enough.)
 		if not (LOD_PHONE and turn and os.clock() - (rig.lastImpulseAt or 0) > 2 and (rig.state == "Standing" or rig.state == "Walking")) then
 			guardLimbs(rig)
+		end
+		if GAME_HARD_PHYS then
+			hardChecks(rig)
 		end
 		local state = rig.state
 		if state ~= "Ragdoll" and state ~= "Out" and state ~= "Frozen" and rig.held == 0 and vitalDown(rig) then
