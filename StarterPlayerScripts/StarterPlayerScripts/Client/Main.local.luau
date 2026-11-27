@@ -191,6 +191,7 @@ safe("LagGuard", function() require(Client:WaitForChild("LagGuard")).start() end
 safe("LegJitter", function() require(Client:WaitForChild("LegJitter")).start() end) -- F65: the always-on leg jitter detector
 safe("MiniBar", function() require(Client:WaitForChild("MiniBar")).start() end) -- F71: the phone hotbar is small until tapped
 safe("TextFloor", function() require(Client:WaitForChild("TextFloor")).start() end) -- AUDIT 25: phone text at least 14 px
+safe("FontSweep", function() require(Client:WaitForChild("FontSweep")).start() end) -- AUDIT 33: one house font
 safe("RealHands", function() require(Client:WaitForChild("RealHands")).start() end) -- S2: real hands with fingers, not hooks
 safe("SmoothBody", function() require(Client:WaitForChild("SmoothBody")).start() end) -- S2: the smooth skinned body from Blender
 safe("ViewReport", function() require(Client:WaitForChild("ViewReport")).start() end) -- 0.158: the camera report for "in view"

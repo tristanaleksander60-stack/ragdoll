@@ -1,6 +1,7 @@
 # FIXES 27 Nov late (owner, while testing): do these FIRST, in this order, as ONE batch where files overlap
 
 ## 0. Cloud code already written (push into Studio, ONE quick Play)
+**DONE v1361:** all five files are in Studio (length check), one Play clean.
 - **"." closes and opens the body card on a computer** (`Client/BodyCard.luau`, `Config.NO_EMOTE_MENU`): Roblox's emote wheel also uses ".", and it took the press, so it is turned off.
 - **More room round the player** (`Config.MORE_ROOM`, `Systems/Lab.luau`, `Systems/RagdollDirector.luau`): the comer stops 9 studs away (not 5.5); within 45 studs at most 5 on a phone, 6 on a tablet and 8 on a PC (not 7, 9, 12).
 - **The head no longer wobbles on the body** (`Client/SmoothBody.luau`): the round head was welded to the physics head, while the mesh's neck is drawn from the bone chain every frame. Now it is anchored and placed from the mesh's own Head bone in the same frame. Check that the face, the X-ray skull and the hats still follow it.
