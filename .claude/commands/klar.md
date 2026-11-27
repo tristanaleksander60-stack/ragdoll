@@ -31,6 +31,8 @@ Reading is the biggest cost; every re-read after a summary costs it again.
 
 ## THE OWNER'S NEWEST ORDER (27 Nov late, wins where it clashes with the 26 Nov orders below)
 - "næste gang jeg ser på min computer skal jeg have et færdig spil, ikke noget 5/10 som det er nu": follow OVERVIEW "THE FINISH LINE": build until EVERY row is DONE at its 9/10 bar, with ONE Play look (and one capture for looks) per row to check it is at the bar before it counts as DONE; a feature not at the bar by the end is switched OFF and listed.
+- "Sørg for ALT er lagfri på telefon og tablet": build `PERF_MOBILE.md` §6 LAG-FREE 2, items 0-10 (OVERVIEW 11c), after MILD_EXTRAS.
+  - Every NEW feature from here on also follows it: pooled (no `Instance.new` on a hit), no per-frame loop while idle, reads its numbers from `PERF_LEVELS`, and skips sleeping bodies.
 
 ## THE OWNER'S ORDERS (26 Nov 2026)
 - "Gør så den laver alt nu uden at stoppe så jeg bare skal teste alt til sidst"

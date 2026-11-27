@@ -1,6 +1,6 @@
 # OVERVIEW: the whole plan on one page (read this FIRST on every /klar)
 
-> ## ⚠⚠ FIRST OF ALL (owner testing, 27 Nov late): `docs/FIXES_27NOV_LATE.md` 0-12 (cloud code into Studio; X-ray glass in the limb's own shape, never a cylinder; CPR hands together; only 1-2 talk to you, the rest do things where they are; funnels for the new game; bullet holes and the face ON the skin, following the mesh). Then THE FINISH LINE.
+> ## ⚠⚠ FIRST OF ALL (owner testing, 27 Nov late): `docs/FIXES_27NOV_LATE.md` 0-12 (cloud code into Studio; X-ray glass in the limb's own shape, never a cylinder; CPR hands together; only 1-2 talk to you, the rest do things where they are; funnels for the new game; bullet holes and the face ON the skin, following the mesh). Then `MILD_EXTRAS.md` (11b), then LAG-FREE 2 (`PERF_MOBILE.md` §6, 11c: everything lag-free on phones and tablets). Then THE FINISH LINE.
 
 > ## ⚠⚠ THE FINISH LINE (owner, 27 Nov late): "næste gang jeg ser på min computer skal jeg have et færdig spil, ikke noget 5/10 som det er nu"
 > **This run does not stop until the game is FINISHED:** every row in THE ORDER DONE (or PARKED only for a real outside block: a missing pass id or a Roblox limit), every row at the 9/10 bar of its doc, not "part 1".
@@ -157,6 +157,14 @@ Everything not listed here is DONE (see the rows). Each line points to its row; 
 11b. **MILD EXTRAS, the owner said yes to A and C3** (`MILD_EXTRAS.md`), right after `FIXES_27NOV_LATE.md`. Each is a real 9/10 feature with its sounds, faces and reactions, cartoony and silly, never gross:
    - **A, the crude humour pack** (`CRUDE_HUMOR`): the whoopee cushion, the fart gun (a toy weapon in the weapon bar), the burps at the grill, the green cartoon "blegh" after the gyro or washer, the fart BOOST on the go-kart, the poop-emoji slip prop; **PART DONE v1382 (`CRUDE_HUMOR`, Systems/CrudeHumor):** A1 whoopee cushion (20 % of bench sitters: PFFRRT, a hop, "...wasn't me!"), A3 burps at the grill (every 10-20 s), A4 "Blegh..." and a green cartoon puddle after the washer/gyro, A5 the go-kart BOOST fart and green puff, A6 a poop emoji by each picnic corner that a walking ragdoll slips on (seen on the grass). Sounds: DailySoundsFX whoopee 137644960996530, PSE belch 9113414717. A2 DONE v1383: the Fart Gun toy (Toys "FartGun", a place toy, unlock at 40 KOs): a green cloud, ragdolls within 10 studs cough ("EWWW!"), run 4 s, 1 in 5 faints comically. LEFT: a held model for it (the built stand-in is used).
    - **C3, the BOO mask** (`BOO_MASK`): sneak up on a ragdoll and it jumps out of its skin, screams and runs. **DONE v1381:** a BOO! button (B on PC, a touch button) shows behind a standing ragdoll that faces away; the server checks (7 studs, behind, 1.5 s per player): a hop, a Shock face, a scream line, then it runs 5 s (PanicFrom); Funnels event "Boo".
+11c. **LAG-FREE 2 on phones and tablets** (owner 27 Nov late: "Sørg for ALT er lagfri på telefon og tablet"; `PERF_MOBILE.md` §6, items 0-10), right after 11b. The causes were found in the code:
+   - the phone simulates its whole lab and nothing ever sleeps;
+   - the server never learns a phone's FPS level (a client-set attribute does not replicate);
+   - the governor reaches only 5 systems;
+   - SmoothBody drives bodies behind the camera and dead bodies every frame;
+   - Highlights are made in 17 places;
+   - effects are made new on every hit.
+   Build 0 (telemetry), 1 (the server knows), 2 (SLEEP) and 3 (SKIN) first: they are the big wins. v6 stays on every body in view.
 12. **END:** the ONE LONG numbered "Test selv" list of everything (klar).
 
 ## THE ORDER (top to bottom; the # is only a name)
