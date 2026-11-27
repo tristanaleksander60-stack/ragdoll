@@ -199,6 +199,8 @@ Build on `RAGDOLL_FEEL.md` "The upgrade" and `RAGDOLL_10.md` R4. Finish what is 
    Each must read like a real body at first sight; fix any that do not.
 
 ## 11. Vehicles never poke through things (owner, screenshot: the wheelchairs sunk into the grass: "Fiks så køretøjer ikke stikker igennem ting, fx kørestole igennem jorden")
+
+**PART DONE v1369:** measured at rest: the bicycle and the wheelchairs stand on the ground (0.01-0.02); the real fault was HOME_CLEAR: its check box reached into the floor, so every home counted as blocked and only 1 of 13 ever moved (the Ford stood inside the Spawn11 statue, three trucks over the entrance plaque). Now only a part that reaches up into the vehicle box blocks, the search goes out to 60 studs and runs again at 20 s: 8 homes moved, no vehicle box inside anything. LEFT (owner check): the moved vehicles may stand off their painted bays; the physics box is not refitted to the look.
 **Cloud code, done** (`VEHICLE_GROUNDED`, `Systems/VehicleService.luau`): `V3Assets.place` assumed every model's pivot is its bottom middle; the wheelchairs and the bicycle have it elsewhere, so they stood sunk in the ground. Now every look is measured and stands on its real lowest point on the ground.
 
 **Left for you:**

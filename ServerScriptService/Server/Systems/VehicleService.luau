@@ -746,8 +746,13 @@ local function homeBlocked(car: any, cf: CFrame): boolean
 		end
 	end
 	params.FilterDescendantsInstances = skip
+	-- (FIXES 11: the check box reached down into the floor, so a thick floor counted as "inside" and EVERY home was
+	-- blocked: only 1 of 13 ever moved, the Ford stayed inside a spawn statue. Now a part blocks only when it reaches up
+	-- into the vehicle's own box; the floor and low things the chassis clears (the entrance plaque) do not.)
+	local bodyBottom = cf.Position.Y - size.Y / 2
 	for _, p in Workspace:GetPartBoundsInBox(cf + Vector3.new(0, 0.6, 0), box, params) do
-		if p.CanCollide and p.Transparency < 1 and not (p.Size.Y < 1.3 and math.abs(p.CFrame.UpVector.Y) > 0.95) then
+		local _, top = p.CFrame, p.Position.Y + (math.abs(p.CFrame.RightVector.Y) * p.Size.X + math.abs(p.CFrame.UpVector.Y) * p.Size.Y + math.abs(p.CFrame.LookVector.Y) * p.Size.Z) / 2
+		if p.CanCollide and p.Transparency < 1 and top > bodyBottom + 0.1 and not (p.Size.Y < 1.3 and math.abs(p.CFrame.UpVector.Y) > 0.95) then
 			return true
 		end
 	end
@@ -757,9 +762,9 @@ function VehicleService.homeClear(car: any): boolean
 	if not homeBlocked(car, car.home) then
 		return false
 	end
-	for r = 6, 36, 6 do
-		for k = 0, 11 do
-			local a = k / 12 * math.pi * 2
+	for r = 6, 60, 6 do -- (FIXES 11: out to 60 studs; the entrance by the bays is full)
+		for k = 0, 15 do
+			local a = k / 16 * math.pi * 2
 			local cf = car.home + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r)
 			if not homeBlocked(car, cf) then
 				car.home = cf
@@ -770,6 +775,7 @@ function VehicleService.homeClear(car: any): boolean
 			end
 		end
 	end
+	warn("[Vehicles] no clear home for " .. tostring(car.kind))
 	return false
 end
 
@@ -818,6 +824,17 @@ function VehicleService.build(into: Folder, origin: Vector3)
 				end
 			end
 			print(string.format("[Vehicles] homes moved: %d", moved))
+			-- (FIXES 11: once more when the statues and the late map pieces stand)
+			task.wait(14)
+			local again = 0
+			for _, car in cars do
+				if car.origin == origin and car.model.Parent and VehicleService.homeClear(car) then
+					again += 1
+				end
+			end
+			if again > 0 then
+				print(string.format("[Vehicles] homes moved on the second look: %d", again))
+			end
 		end)
 	end
 	VehicleService.start()
