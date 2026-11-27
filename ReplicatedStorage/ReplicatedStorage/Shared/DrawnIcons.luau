@@ -62,6 +62,7 @@ DrawnIcons.ASSETS = {
 	crown = "rbxassetid://97120792689619",
 	toolbox = "rbxassetid://87530964149060",
 	map = "rbxassetid://135418487521264",
+	home = "rbxassetid://87325338541332", -- (AUDIT 22: BACK TO SPAWN, a house)
 	friends = "rbxassetid://133196367639079",
 	camera = "rbxassetid://97886507627944",
 	music = "rbxassetid://119428311265233",

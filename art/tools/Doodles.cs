@@ -490,6 +490,12 @@ public static partial class Doodles
 				Line(Red, 8, 52, 186, 90, 140, 130, 160, 176, 102);
 				Text("X", 192, 92, 54, Red);
 				break;
+			case "home":
+				Add(Rect(62, 120, 132, 96), Yellow);
+				Add(Poly(40, 128, 128, 46, 216, 128), Red);
+				Add(Rect(108, 160, 40, 56), Rgb(150, 100, 60));
+				Add(Rect(152, 136, 28, 24), Rgb(150, 210, 255));
+				break;
 			case "friends":
 				Add(Oval(92, 112, 58, 58), Yellow); Add(Oval(170, 140, 58, 58), Blue);
 				Flat(Oval(76, 104, 7, 9), Black); Flat(Oval(106, 104, 7, 9), Black); Ink(6, 74, 132, 92, 142, 112, 132);
@@ -957,7 +963,7 @@ public static partial class Doodles
 	}
 
 	public static string[] Names = {
-		"shop", "settings", "sandbox", "gift", "present", "guide_feed", "sign_lava", "sign_target", "sign_up", "sign_fling", "sign_crash", "sign_wrecking", "sign_bounce", "sign_button", "sign_tower", "sign_car", "sign_monster", "hud_click", "hud_tap", "hud_ragdoll", "hud_slowmo", "god", "star", "crown", "toolbox", "map", "friends", "camera", "music", "keys", "eye", "shake", "heart",
+		"shop", "settings", "sandbox", "gift", "present", "guide_feed", "sign_lava", "sign_target", "sign_up", "sign_fling", "sign_crash", "sign_wrecking", "sign_bounce", "sign_button", "sign_tower", "sign_car", "sign_monster", "hud_click", "hud_tap", "hud_ragdoll", "hud_slowmo", "god", "star", "crown", "toolbox", "map", "home", "friends", "camera", "music", "keys", "eye", "shake", "heart",
 		"event_DummyRain", "event_MegaBomb", "event_ZeroG", "event_BouncyFloor", "event_FlashFreeze",
 		"tool_Blaster", "tool_Deagle", "tool_Shotgun", "tool_NailGun", "tool_Crossbow", "tool_Portal", "tool_Slime",
 		"tool_Grab", "tool_Poke", "tool_Slap", "tool_Shove", "tool_Punch", "tool_Kick", "tool_Uppercut", "tool_MegaSlap", "tool_Glove",

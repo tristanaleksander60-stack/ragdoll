@@ -43,7 +43,7 @@ if (Config :: any).BACK_TO_SPAWN then
 end
 -- UI v2: the drawn icon for each MENU entry (DrawnIcons names; the same pictures as the launchers).
 local MENU_ICONS: { [string]: string } = {
-	Spawn = "map",
+	Spawn = "home", -- (AUDIT 22: a house for BACK TO SPAWN)
 	Maps = "map",
 	God = "god",
 	Time = "hud_slowmo",
