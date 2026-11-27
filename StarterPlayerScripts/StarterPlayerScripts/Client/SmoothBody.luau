@@ -132,7 +132,12 @@ local V2 = Config.SMOOTH_BODY_V2 == true
 -- thick limbs, joint rings, a chest plate, the yellow-and-black markings in its baked colour map) is
 -- ReplicatedStorage.SmoothBodyV3 once imported; it wins over v2 and is driven the same forward-kinematic way.
 local V3 = (Config :: any).SMOOTH_BODY_V3 == true
+-- RAGDOLL_10 v6 (Config.SMOOTH_BODY_V6, APPROVED by the owner): the round chunky toy body; it wins over every older one.
+local V6 = (Config :: any).SMOOTH_BODY_V6 == true
 local function templateName(): string
+	if V6 and ReplicatedStorage:FindFirstChild("SmoothBodyV6") then
+		return "SmoothBodyV6"
+	end
 	if V3 and ReplicatedStorage:FindFirstChild("SmoothBodyV3") then
 		return "SmoothBodyV3"
 	end
@@ -255,7 +260,7 @@ local function build(model: Model): Body?
 		return jointRot * CFrame.new(joints[name]):Inverse()
 	end
 	local driveIndex: { [Instance]: number } = {}
-	local fk = (V2 and templateName() == "SmoothBodyV2") or templateName() == "SmoothBodyV3"
+	local fk = (V2 and templateName() == "SmoothBodyV2") or templateName() == "SmoothBodyV3" or templateName() == "SmoothBodyV6"
 	for _, b in mesh:GetDescendants() do
 		if b:IsA("Bone") then
 			local name = if b.Name == "HumanoidRootPart" then "LowerTorso" else b.Name

@@ -70,6 +70,20 @@ do -- (23 Nov 2026, fps: a leftover car far off the map, 657 pieces nobody sees.
 		leftover:Destroy()
 	end
 end
+safe("SmoothBodyV6", function() -- RAGDOLL_10 v6 (APPROVED): the imported body (File > Import 3D > mannequin_v6.fbx) lands in workspace; give it to the clients with its baked colour map
+	local m = workspace:FindFirstChild("mannequin_v6")
+	local RS = game:GetService("ReplicatedStorage")
+	if m and m:IsA("Model") and m:FindFirstChildWhichIsA("MeshPart", true) and not RS:FindFirstChild("SmoothBodyV6") then
+		local mesh = m:FindFirstChildWhichIsA("MeshPart", true) :: MeshPart
+		if not mesh:FindFirstChildWhichIsA("SurfaceAppearance") then
+			local sa = Instance.new("SurfaceAppearance")
+			sa.ColorMap = "rbxassetid://127740164602654" -- art/models/mannequin/mannequin_v6_color.png (grey x AO, chest plate, marks, soles)
+			sa.Parent = mesh
+		end
+		m.Name = "SmoothBodyV6"
+		m.Parent = RS
+	end
+end)
 safe("SmoothBodyV3", function() -- RAGDOLL_10 THE LOOK: a freshly imported chunky body (File > Import 3D > mannequin_v3.fbx) lands in workspace; give it to the clients with its baked colour map
 	local m = workspace:FindFirstChild("mannequin_v3")
 	local RS = game:GetService("ReplicatedStorage")
