@@ -384,6 +384,22 @@ local function setJoint(life: Life, name: string, cf: CFrame)
 end
 
 -- Walking, running away, limping and crawling, timed by how fast the body really moves.
+-- F85 (owner: "fiks så ansigterne ikke drejer rundt når de løber"; Config.NO_HEAD_WHIP): the fleeing glance over the shoulder
+-- used to SNAP between 0 and 55 degrees; now it eases toward its target and turns at most 230 degrees a second.
+local function glanceBack(life: Life, now: number, dt: number): number
+	local L = life :: any
+	local want = if sin((now + life.seed) * 1.4) > 0.55 then 55 else 0
+	if not (Config :: any).NO_HEAD_WHIP then
+		return want
+	end
+	local cur = L.glance or 0
+	local step = math.clamp(want - cur, -230 * dt, 230 * dt)
+	cur += step
+	cur = math.clamp(cur, 0, 55)
+	L.glance = cur
+	return cur
+end
+
 local function gaitPose(life: Life, state: string, now: number, dt: number)
 	local position = life.pelvis.Position
 	local moved = Vector3.new(position.X - life.lastPosition.X, 0, position.Z - life.lastPosition.Z).Magnitude
@@ -462,7 +478,7 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 					end
 				end
 				if fleeing then
-					local back = if sin((now + life.seed) * 1.4) > 0.55 then 55 else 0
+					local back = glanceBack(life, now, dt) -- (F85: eased and rate-capped, never a 0/55 snap)
 					local neck = life.joints.Neck
 					if neck and not life.loose.Neck then
 						neck.Transform = neck.Transform * ang(0, back * amount, 0)
@@ -499,7 +515,7 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 	setJoint(life, "Waist", ang(lean * amount, 0, 0))
 	if fleeing then
 		-- Glances back over its shoulder at whoever it runs from.
-		local back = if sin((now + life.seed) * 1.4) > 0.55 then 55 else 0
+		local back = glanceBack(life, now, dt) -- (F85: eased and rate-capped, never a 0/55 snap)
 		setJoint(life, "Neck", ang(-lean * 0.6, back, 0))
 	else
 		setJoint(life, "Neck", ang(-lean * 0.5, 0, 0))
@@ -516,11 +532,16 @@ local function updateGait(life: Life, state: string, now: number, dt: number)
 		local offset = at - life.head.Position
 		if offset.Magnitude > 0.5 then
 			local dir = life.chest.CFrame:VectorToObjectSpace(offset.Unit)
+			local raw = deg(math.atan2(-dir.X, -dir.Z))
 			local yaw = math.clamp(deg(math.atan2(-dir.X, -dir.Z)), -75, 75)
 			local pitch = math.clamp(deg(math.asin(math.clamp(dir.Y, -1, 1))), -MAX_PITCH_DOWN, MAX_PITCH_UP)
 			-- (Eased in and out over the look, so it does not snap.)
 			local k = math.clamp(math.min(since, NOISE_LOOK - since) / 0.25, 0, 1)
-			setJoint(life, "Neck", ang(pitch * k, yaw * k, 0))
+			-- (F85: no look behind (the atan2 flips sign there and the clamp whipped the head across), none while running)
+			local skip = (Config :: any).NO_HEAD_WHIP and (math.abs(raw) > 100 or life.groundSpeed > 9)
+			if not skip then
+				setJoint(life, "Neck", ang(pitch * k, yaw * k, 0))
+			end
 		end
 	end
 end

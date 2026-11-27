@@ -109,6 +109,7 @@ local Config = {
 	IMPACT_SCUFF = true, -- row 7: a hard slam (dust tier 2-3) leaves a scuff on the ground that fades over 10 s; at most 12 at once, none on water (Client/ImpactDust)
 	NO_SPEED = true, -- F83: no extra walk or run speed: StarterPlayer.CharacterWalkSpeed 16 (Roblox's standard), no RUN button, no Shift or stick sprint, no run FOV; the Walk speed setting is off (WALK_SETTING false, saved choices ignored)
 	NAME_SIGNS = false, -- F84: no attraction name boards, signposts or IN HERE boards anywhere (LabOwnerMap nameSign); leaderboards, vehicle plaques and machine panels stay
+	NO_HEAD_WHIP = true, -- F85: the fleeing glance back eases at most 230 deg/s (never a 0/55 snap); a noise look never looks behind (over 100 deg) and never while running (Client/DummyLife)
 	HOME_CLEAR = true, -- F75: once the map stands every vehicle home is checked with the vehicle's box and moved to the nearest clear spot when something solid is inside it ([Vehicles] homes moved: n)
 	BIKE_ROUTE = true, -- F69: on the compact map the motorbike rider follows the walkway loop's centre line point to point (a point not reached in 14 s is skipped)
 	REAL_HANDS = true, -- S2 plan B: real hands from rounded parts (palm, 4 fingers of 3 segments, a thumb of 2), posed by state, on this screen only; the hook hand skin is shrunk away (Client/RealHands)
