@@ -193,6 +193,7 @@ safe("MiniBar", function() require(Client:WaitForChild("MiniBar")).start() end) 
 safe("TextFloor", function() require(Client:WaitForChild("TextFloor")).start() end) -- AUDIT 25: phone text at least 14 px
 safe("FontSweep", function() require(Client:WaitForChild("FontSweep")).start() end) -- AUDIT 33: one house font
 safe("HighlightCap", function() require(Client:WaitForChild("HighlightCap")).start() end) -- LAG-FREE 2 item 5: at most 3/5/10 Highlights drawn
+safe("SoundCap", function() require(Client:WaitForChild("SoundCap")).start() end) -- LAG-FREE 2 item 6: at most 12 world sounds on a phone, none too far to hear
 safe("BooButton", function() require(Client:WaitForChild("BooButton")).start() end) -- MILD_EXTRAS C3: the BOO! button
 safe("WorldGuiPass", function() require(Client:WaitForChild("WorldGuiPass")).start() end) -- FIXES_27NOV_LATE 6: signs never eat the mouse
 safe("RealHands", function() require(Client:WaitForChild("RealHands")).start() end) -- S2: real hands with fingers, not hooks

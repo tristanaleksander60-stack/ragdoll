@@ -31,6 +31,8 @@ local GRAVITY = 80 -- studs/s², snappier than the world: cartoon arcs
 local UserInputService = game:GetService("UserInputService")
 local MAX_PARTS = if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then 110 else 260 -- live blood parts on this screen (splats past it push the oldest out)
 local MAX_BURSTS = 6 -- per BURST_WINDOW
+local PHONE_SPLATS = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+	and (require(Shared:WaitForChild("Config")) :: any).LAGFREE_POOLS == true
 local BURST_WINDOW = 0.25
 local SPLAT_HOLD = 4 -- s a splat stays before it fades (V9-NOW 6: little marks that go after a few seconds; was 10)
 local DRIP_EVERY = 0.45 -- s between two drips from a bleeding body
@@ -174,6 +176,12 @@ function BloodFx.splat(at: Vector3, radius: number, normal: Vector3?)
 	while live > MAX_PARTS - (if small then 4 else 18) and splatList[1] and tries < 6 do
 		fadeSplat(splatList[1], true)
 		tries += 1
+	end
+	-- (LAG-FREE 2 item 6, Config.LAGFREE_POOLS: at most 40 splats on a phone, the oldest fades)
+	if PHONE_SPLATS then
+		while #splatList >= 40 and splatList[1] do
+			fadeSplat(splatList[1], true)
+		end
 	end
 	if live > MAX_PARTS - (if small then 4 else 18) then
 		return
