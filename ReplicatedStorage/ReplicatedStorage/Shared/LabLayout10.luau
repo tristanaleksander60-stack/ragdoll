@@ -266,18 +266,24 @@ if Config.LAB_OWNERMAP then
 				{ id = "FireTruck", label = "FIRE TRUCK", w = 8.5 },
 			}
 			local s45 = math.sin(math.rad(45))
-			local x = row.X - plan.size.X / 2 + 4
+			-- (FIXES_28NOV 7, Config.PARKING_STRAIGHT, the owner's screenshot: the 45-degree bays overlapped each other, so the
+			-- home check pushed 7 vehicles off their bays, and the plaques stood in front of the neighbours. Now STRAIGHT bays,
+			-- left to right, each as wide as its vehicle + 2.5, every vehicle centred in its own bay with its nose to the walkway.)
+			local straight = (Config :: any).PARKING_STRAIGHT == true
+			local x = row.X - plan.size.X / 2 + 4 + (if straight then 12 + spec[1].w / 2 else 0) -- (straight: start past the spawn statue that stands at the row's west end)
 			local bays = {}
 			for i, b in spec do
 				if i > 1 then
-					x += ((spec[i - 1].w / 2) + (b.w / 2) + 1.5) / s45
+					x += if straight then (spec[i - 1].w / 2) + (b.w / 2) + 3.5 else ((spec[i - 1].w / 2) + (b.w / 2) + 1.5) / s45
 				end
 				table.insert(bays, { id = b.id, label = b.label, w = b.w, at = Vector2.new(x, row.Y) })
 			end
 			LabLayout10.ENTRANCE_ROW = bays
-			LabLayout10.ENTRANCE_YAW = math.rad(135) -- (the noses point south-west: to the walkway and the spine)
+			LabLayout10.ENTRANCE_STRAIGHT = straight
+			LabLayout10.ENTRANCE_DEPTH = plan.size.Y
+			LabLayout10.ENTRANCE_YAW = if straight then math.pi else math.rad(135) -- (the noses point to the walkway)
 			for _, b in bays do
-				if b.id == "Car" or b.id == "Truck" or b.id == "MuscleCar" or ((Config :: any).NEW_VEHICLES and (b.id == "GoKart" or b.id == "Police" or b.id == "MonsterTruck" or b.id == "Bulldozer" or b.id == "FireTruck")) then
+				if (straight and b.id == "Bicycle") or b.id == "Car" or b.id == "Truck" or b.id == "MuscleCar" or ((Config :: any).NEW_VEHICLES and (b.id == "GoKart" or b.id == "Police" or b.id == "MonsterTruck" or b.id == "Bulldozer" or b.id == "FireTruck")) then
 					LabLayout10.CARS[b.id] = b.at
 					LabLayout10.CAR_YAW = LabLayout10.CAR_YAW or {}
 					LabLayout10.CAR_YAW[b.id] = LabLayout10.ENTRANCE_YAW
@@ -285,7 +291,9 @@ if Config.LAB_OWNERMAP then
 			end
 		end
 		-- (F76: the free bicycle on its own stand by the tower square, the plan's BikeStand2)
-		set(LabLayout10.CARS, "Bicycle", item("BikeStand2"))
+		if not (LabLayout10.ENTRANCE_STRAIGHT and LabLayout10.CARS.Bicycle) then
+			set(LabLayout10.CARS, "Bicycle", item("BikeStand2"))
+		end
 		-- (row 14: 3 wheelchairs in a neat row west of the boxing ring, 5 studs apart, clear of the mole and the walkways)
 		set(LabLayout10.CARS, "Wheelchair", item("BoxingRing", -28, -6))
 		set(LabLayout10.CARS, "Wheelchair2", item("BoxingRing", -28, -1))

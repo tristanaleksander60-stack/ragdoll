@@ -741,7 +741,9 @@ local function homeBlocked(car: any, cf: CFrame): boolean
 	local box = Vector3.new(math.max(size.X, msize.X) + 1, math.max(3, msize.Y - 1), math.max(size.Z, msize.Z) + 1)
 	local params = OverlapParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	local skip: { Instance } = { car.model }
+	-- (FIXES_28NOV 7: "another vehicle" never blocks, as said above; the check skipped only the car itself, so a wide
+	-- neighbour's look (the Panzer) pushed the Ford and the Panzer off their bays)
+	local skip: { Instance } = { car.model.Parent or car.model }
 	for _, n in { "Dummies", "Terrain" } do
 		local x = Workspace:FindFirstChild(n)
 		if x then

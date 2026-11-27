@@ -933,18 +933,32 @@ local function entranceRow(into: Instance, o: Vector3, top: number)
 	local it = Plan.ITEMS.EntranceVehicles
 	local depth = if it then it.size.Y else 22
 	local mid = (first + last) / 2
-	local slab = part(into, "EntranceRowSlab", Vector3.new((last.X - first.X) + 16, 0.3, depth), CFrame.new(o.X + mid.X, top + 0.15, o.Z + mid.Y), WALK, Enum.Material.Concrete)
+	local straight = L10.ENTRANCE_STRAIGHT == true
+	local width = if straight then (last.X - first.X) + bays[1].w / 2 + bays[#bays].w / 2 + 7 else (last.X - first.X) + 16
+	local slab = part(into, "EntranceRowSlab", Vector3.new(width, 0.3, depth), CFrame.new(o.X + mid.X + (if straight then (bays[#bays].w - bays[1].w) / 4 else 0), top + 0.15, o.Z + mid.Y), WALK, Enum.Material.Concrete)
 	slab.CastShadow = false
 	local dir = CFrame.Angles(0, yaw, 0)
 	for i = 1, #bays - 1 do
 		local a, b = bays[i], bays[i + 1]
-		local m = (a.at + b.at) / 2
-		part(into, "EntranceBayLine", Vector3.new(0.4, 0.05, 15), CFrame.new(o.X + m.X, top + 0.33, o.Z + m.Y) * dir, Color3.fromRGB(240, 240, 236), Enum.Material.SmoothPlastic, true)
+		if straight then
+			-- (FIXES_28NOV 7: a straight white line between two bays, halfway between their vehicles' sides)
+			local lx = a.at.X + a.w / 2 + 1.75
+			part(into, "EntranceBayLine", Vector3.new(0.4, 0.05, depth - 3), CFrame.new(o.X + lx, top + 0.33, o.Z + a.at.Y), Color3.fromRGB(240, 240, 236), Enum.Material.SmoothPlastic, true)
+		else
+			local m = (a.at + b.at) / 2
+			part(into, "EntranceBayLine", Vector3.new(0.4, 0.05, 15), CFrame.new(o.X + m.X, top + 0.33, o.Z + m.Y) * dir, Color3.fromRGB(240, 240, 236), Enum.Material.SmoothPlastic, true)
+		end
 	end
 	local signs: { { label: TextLabel, id: string } } = {}
 	for _, b in bays do
 		local front = Vector3.new(o.X + b.at.X - 5.5, top, o.Z + b.at.Y + 6.5) -- (on the row's own slab, off the walkway)
-		local board = part(into, "EntrancePlaque", Vector3.new(math.max(4, b.w * 0.8), 1.5, 0.25), CFrame.new(front + Vector3.new(0, 0.95, 0)) * CFrame.Angles(math.rad(-25), math.rad(-45), 0), Color3.fromRGB(34, 36, 40), Enum.Material.SmoothPlastic, true)
+		local turn = CFrame.Angles(math.rad(-25), math.rad(-45), 0)
+		if straight then
+			-- (FIXES_28NOV 7: on the kerb right in front of ITS vehicle, centred on the bay, just past the slab's front edge)
+			front = Vector3.new(o.X + b.at.X, top, o.Z + b.at.Y + depth / 2 + 1.5)
+			turn = CFrame.Angles(math.rad(-25), 0, 0)
+		end
+		local board = part(into, "EntrancePlaque", Vector3.new(math.max(4, b.w * 0.8), 1.5, 0.25), CFrame.new(front + Vector3.new(0, 0.95, 0)) * turn, Color3.fromRGB(34, 36, 40), Enum.Material.SmoothPlastic, true)
 		for _, sx in { -1, 1 } do
 			part(into, "EntrancePlaqueLeg", Vector3.new(0.18, 0.8, 0.18), CFrame.new(front + Vector3.new(sx * 0.9, 0.4, 0)), PROP.iron, Enum.Material.Metal, true)
 		end
