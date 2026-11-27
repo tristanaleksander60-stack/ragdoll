@@ -155,14 +155,27 @@ end
 
 -- (AUDIT 28: the speed chips and START/STOP right in the LAB row, no window in between.) quick(s) starts time at speed
 -- s round you; quick(nil) switches it on or off at the speed it has.
+-- (owner 27 Nov late: "den er bare stuck på 2x": a tap within the server's 0.25 s gap was dropped without a word. Now the
+-- LAST tap is always sent, 0.3 s after the one before, and the chips light the speed that is really on.)
+local lastQuickAt = 0
 function TimeDial.quick(s: number?)
+	local want = if s then true else not isOn()
 	if s then
 		speed = s
-		send(true)
-	else
-		send(not isOn())
 	end
+	sendToken += 1
+	local token = sendToken
+	local wait = math.max(0, 0.3 - (os.clock() - lastQuickAt))
+	task.delay(wait, function()
+		if token == sendToken then
+			lastQuickAt = os.clock()
+			send(want)
+		end
+	end)
 	task.defer(refresh)
+end
+function TimeDial.speed(): number?
+	return if isOn() then player:GetAttribute("TimeScale") :: number else nil
 end
 function TimeDial.isOn(): boolean
 	return isOn()

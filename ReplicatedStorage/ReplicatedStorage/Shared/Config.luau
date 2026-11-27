@@ -159,6 +159,7 @@ local Config = {
 	WORLD_POPS = false, -- (owner 27 Nov late: "Fjern ALLE de her tekster": no floating world texts ("23 stud DROP!", "TAIL SLAP!", "SMASH!", the machines' scores, CRACK!); every pop() returns at once)
 	CARRY_FLOOR_RAY = true, -- (owner 27 Nov late: carried bodies flew onto machine roofs and the tower top: GrabController looked for the floor from 30 studs up and met the roof first; now from just above the body)
 	PLAYER_SWIM = true, -- (owner 27 Nov late: a player fell into the aquarium and was stuck: Client/PlayerSwim: swim in part-water tanks, JUMP at the surface climbs out, a safety net after 25 s / 6 s still)
+	BUILD_DONE_ALWAYS = true, -- (owner 27 Nov late: nobody could leave build mode: the big DONE button shows on every device while building, BuildController)
 	SHOVE_SERIES = true, -- F26: the angry dummy shoves a random 1-3 times, a line before each ("Hey!", "Stop that!", "How do YOU like it?"), a short wind-up, following if you back off; knocked over ends it; then it flees (Mourning attack)
 	XRAY_TRACER = true, -- F28: with X-ray on, your round leaves a short bright line through the glass body for 1 s, along the shot (FxController.predictHit)
 	HARD_PHYS = true, -- row 5: the physics watchdog (a NaN or runaway body is stopped and put back at its last good place) and no tunnelling (a body over 70 studs/s that crossed a wall or floor in one step is put back short of it, its speed into it taken off) (ActiveRagdoll hardChecks)

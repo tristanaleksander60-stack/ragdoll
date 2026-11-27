@@ -669,18 +669,29 @@ local function buildLab()
 		list.HorizontalAlignment = Enum.HorizontalAlignment.Right
 		list.Padding = UDim.new(0, 6)
 		list.Parent = chips
-		for i, sp in { 0.25, 0.5, 2 } do
-			local c = C.Button({ text = (if sp < 1 then tostring(sp) else string.format("%d", sp)) .. "x", role = if sp > 1 then "accent" else "info", size = UDim2.fromOffset(64, 32), parent = chips, onActivated = function()
+		-- (owner 27 Nov late: "stuck på 2x": the 2x chip was ALWAYS orange, so it looked chosen. Now only the speed that is
+		-- really on is lit (blue slow, orange fast), the rest are grey; 1x is there to go back to normal.)
+		local chipOf: { [number]: any } = {}
+		local function lightChips()
+			local on = TimeDial.speed()
+			for sp, c in chipOf do
+				c.setRole(if on == sp then (if sp > 1 then "accent" else "info") else "neutral")
+			end
+		end
+		for i, sp in { 0.25, 0.5, 1, 2 } do
+			local c = C.Button({ text = (if sp < 1 then tostring(sp) else string.format("%d", sp)) .. "x", role = "neutral", size = UDim2.fromOffset(58, 32), parent = chips, onActivated = function()
 				TimeDial.quick(sp)
-				slowB.setText("STOP")
 			end })
 			c.root.LayoutOrder = i
+			chipOf[sp] = c
 		end
 		slowB.root.Position = UDim2.new(1, 0, 0, 4)
 		slowB.root.AnchorPoint = Vector2.new(1, 0)
 		Players.LocalPlayer:GetAttributeChangedSignal("TimeScale"):Connect(function()
 			slowB.setText(if TimeDial.isOn() then "STOP" else "START")
+			lightChips()
 		end)
+		lightChips()
 	end
 	local fp = row(2, "First person", keyed("FirstPerson", "See the weapon in your hands"), "eye", "OFF", "neutral", function()
 		FirstPerson.toggle()

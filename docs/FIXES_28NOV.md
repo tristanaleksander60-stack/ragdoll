@@ -59,7 +59,26 @@
      - a safety net sets you outside after 25 s in the tank, or 6 s still on the bottom.
    - Check: jump in, swim, get out on each side. Also on a phone (the jump button).
 
+5b. **Time speed chips "stuck on 2x"** (cloud code: `Client/TimeDial.luau` and `Client/HudV3.luau`):
+   - **The cause:** the 2x chip was always orange (a fixed colour), so it looked chosen, and a tap within the server's 0.25 s gap was dropped without a word.
+   - **Now:** only the speed that is really on is lit, there is a 1x chip to go back to normal, and the LAST tap is always sent.
+   - Check: 0.25x, 0.5x, 1x, 2x and STOP, in any order and fast.
+
+5c. **No way out of build mode** (cloud code: `Client/BuildController.luau`, `Config.BUILD_DONE_ALWAYS`):
+   - **The cause:** the way out was the column's SANDBOX tile, which the new HUD no longer has.
+   - **Now:** the big green DONE shows on every device while building.
+   - Check: on PC, phone and tablet, BUILD then DONE. Also add a 1-line hint at the start: "Tap DONE to stop building".
+
 ## BATCH A (build now, then STOP for the owner's test)
+15. **WEAPON TESTING is half inside a mountain** (the building by the railway):
+    - move it onto flat open ground, or cut the hill back, so the whole building and its entrance stand free with a path to the door;
+    - replace its plain-part shell with a real model: a proper firing-range building with a sign, doors and a roof (Blender or a checked Creator Store model);
+    - check every other building on the map for clipping into hills: one capture per building.
+16. **The T-rex is made of plain blocks with a leaf material.**
+    - Replace it with a real dinosaur model: Blender with the quality gate ≥ 8.5, or a malware-checked Creator Store T-rex with real proportions and a mesh skin, at the same pen.
+    - Give it an idle animation (breathing, a head turn, a roar every 20-40 s) and keep its feeding (DropSpot).
+    - The same goes for every other creature or prop made of blocks: list them here and replace them, worst first.
+
 6. **The aquarium stairs:** the platform at the top of the aquarium stairs has a railing ACROSS the stair, so you cannot walk onto it.
    - Make a 5-stud opening where the stair lands, and keep the rails only on the open drop sides.
    - Check every stair on the map for the same fault (a rail or wall across a stair landing).

@@ -393,6 +393,11 @@ local function modeShown(): boolean
 	-- (Off a phone the column's SANDBOX tile reads DONE while building: one way out, not two.)
 	-- Phase 0: a phone starts building from MENU's SANDBOX; the button shows only while building
 	-- (the way back to playing), so the first minute has one button less.
+	-- (owner 27 Nov late: "Der er ingen som ved hvordan man lukker build mode igen": the way out was the column's SANDBOX
+	-- tile, which the new HUD no longer has. BUILD_DONE_ALWAYS: the big green DONE shows on EVERY device while building.)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).BUILD_DONE_ALWAYS then
+		return active
+	end
 	return HudSlots.context(ViewMode.isTouch(), ViewMode.isLab()).phone and active
 end
 
