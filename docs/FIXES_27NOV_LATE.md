@@ -195,3 +195,14 @@ Build on `RAGDOLL_FEEL.md` "The upgrade" and `RAGDOLL_10.md` R4. Finish what is 
    - break a leg and watch it fail and crawl.
 
    Each must read like a real body at first sight; fix any that do not.
+
+## 11. Vehicles never poke through things (owner, screenshot: the wheelchairs sunk into the grass: "Fiks så køretøjer ikke stikker igennem ting, fx kørestole igennem jorden")
+**Cloud code, done** (`VEHICLE_GROUNDED`, `Systems/VehicleService.luau`): `V3Assets.place` assumed every model's pivot is its bottom middle; the wheelchairs and the bicycle have it elsewhere, so they stood sunk in the ground. Now every look is measured and stands on its real lowest point on the ground.
+
+**Left for you:**
+1. **Push it into Studio, then one Play look at every vehicle at rest:** the 3 wheelchairs, the bicycle, the dirt bike, the Silvia, the Ford, the Panzer and the 5 new ones. The tyres, or the tank tracks, must touch the ground with nothing below it.
+2. **While driving, nothing pokes through walls, props or bodies:**
+   - the look does not collide; only the code box (`spec.body`) does;
+   - so fit each kind's physics box to its look's real size (from the look's bounds, a little inside it), so it stops where it looks like it touches;
+   - each wheel's radius from the look (the existing `Radius` attributes).
+3. **Riding over kerbs and slopes:** no sinking into a ramp or a kerb; the wheels follow the ground (the screens' wheel welds).

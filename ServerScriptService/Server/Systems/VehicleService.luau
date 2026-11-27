@@ -451,6 +451,23 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	-- white sedan), scaled to its length: five white sedans of different sizes. They show their own part-built look
 	-- (decorate) until a real model is set as spec.look.)
 	local look = if VehicleService.FEATURE[kind] and not spec.look then nil else V3Assets.place(role, model, bottom, { size = b.Z + 1.5, collide = false, anchored = false, name = "Look" })
+	if look and (Config :: any).VEHICLE_GROUNDED then
+		-- (27 Nov late, owner: "køretøjer ikke stikker igennem ting, fx kørestole igennem jorden": V3Assets.place assumes each
+		-- model's pivot is its bottom middle, but several imports (the wheelchairs, the bicycle) have it elsewhere, so they
+		-- stood sunk into the grass. Measure the look's real lowest point and stand it exactly on `bottom` (the ground).)
+		local up = bottom.UpVector
+		local lowest = math.huge
+		for _, d in look:GetDescendants() do
+			if d:IsA("BasePart") and d.Transparency < 0.95 then
+				local c, h = d.CFrame, d.Size / 2
+				local reach = math.abs(c.RightVector:Dot(up)) * h.X + math.abs(c.UpVector:Dot(up)) * h.Y + math.abs(c.LookVector:Dot(up)) * h.Z
+				lowest = math.min(lowest, (c.Position - bottom.Position):Dot(up) - reach)
+			end
+		end
+		if lowest < math.huge and math.abs(lowest) > 0.02 then
+			look:PivotTo(look:GetPivot() + up * -lowest)
+		end
+	end
 	if look then
 		-- (22 Nov 2026, owner: "sit the right way in the go-kart"): the model's own seats never take a
 		-- rider (the kart's faced backwards); only our Seat does, and it faces where the car drives.

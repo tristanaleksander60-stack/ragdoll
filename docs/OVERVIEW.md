@@ -1,6 +1,6 @@
 # OVERVIEW: the whole plan on one page (read this FIRST on every /klar)
 
-> ## ⚠⚠ FIRST OF ALL (owner testing, 27 Nov late): `docs/FIXES_27NOV_LATE.md` 0-10 (cloud code into Studio; X-ray glass in the limb's own shape, never a cylinder; CPR hands together; only 1-2 talk to you, the rest do things where they are; funnels for the new game; bullet holes and the face ON the skin, following the mesh). Then THE FINISH LINE.
+> ## ⚠⚠ FIRST OF ALL (owner testing, 27 Nov late): `docs/FIXES_27NOV_LATE.md` 0-11 (cloud code into Studio; X-ray glass in the limb's own shape, never a cylinder; CPR hands together; only 1-2 talk to you, the rest do things where they are; funnels for the new game; bullet holes and the face ON the skin, following the mesh). Then THE FINISH LINE.
 
 > ## ⚠⚠ THE FINISH LINE (owner, 27 Nov late): "næste gang jeg ser på min computer skal jeg have et færdig spil, ikke noget 5/10 som det er nu"
 > **This run does not stop until the game is FINISHED:** every row in THE ORDER DONE (or PARKED only for a real outside block: a missing pass id or a Roblox limit), every row at the 9/10 bar of its doc, not "part 1".

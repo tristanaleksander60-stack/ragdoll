@@ -135,6 +135,7 @@ local Config = {
 	MORE_ROOM = true, -- (owner, 27 Nov late: "alt for mange ragdolls tæt på en, de skal holde lidt mere afstand") the comer stops 9 studs away (not 5.5); within 45 studs at most phone 5, tablet 6, PC 8 living ragdolls (not 7/9/12) (Lab, RagdollDirector)
 	DROP_HERE_V2 = true, -- (owner, 27 Nov late) the DROP HERE sign: a fixed size on screen, only the ONE nearest machine within 40 studs, no flicker between two, the other rings quiet while you carry (Client/LabGuideClient)
 	GROUND_INSIDE_ONLY = true, -- (owner, 27 Nov late: bodies taken into the tower were "sent to the top") GroundGuard lifts a body only when it is really INSIDE a solid (a storey above is a ceiling), never a carried one; Unstick finds a free spot on the body's own floor first (GroundGuard, Unstick)
+	VEHICLE_GROUNDED = true, -- (owner, 27 Nov late: wheelchairs sunk into the ground) every vehicle look stands on its real lowest point, not its pivot (VehicleService)
 	TIE_SHOE = true, -- row 11 rest: a new idle gesture: it bends down and ties its shoe (4-5 s, right foot forward, hands fiddling) (Client/DummyLife)
 	FILM_PHONE = true, -- P1 rest: half the curious ragdolls that come to look get their phone out and film it (a lit phone held up at face height) (Personas + Client/DummyLife filmLayer)
 	WHALE_10 = true, -- 3.26: a whale in the big pool surfaces under a ragdoll in the water and spouts it sky-high (SPOUT! studs + NEW BEST), and tail-slaps a wave every 25-40 s (Systems/WhaleSpout)
