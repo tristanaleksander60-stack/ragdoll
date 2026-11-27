@@ -1542,6 +1542,38 @@ This replaces F51 (NORMAL 30, sprint about 50), F38 (the Walk speed setting) and
 - **Cost:** 10 light pins asleep until hit; reset by tween; the scoreboard is one SurfaceGui with a MaxDistance.
 - **Check (the owner):** from the spawn you see the lane first. Tap TRY: a ragdoll rolls, pins fly, STRIKE, confetti. The chicken lives in its coop in the south.
 
+## F89 The new smooth body walks like a BODYBUILDER / ROBOT: elbows up at shoulder height, all the time (owner, 27 Nov: "De skal ikke gå som bodybuilder eller hvordan end det der er hele tiden, med albuerne i skulder-højde som en robot nærmest"; screenshot `art/store/owner_shots/f89_bodybuilder_arms.png`: YELLOW lumpy mannequins with both arms held out wide, the elbows up at the shoulders)
+**The likely causes** (read `Client/SmoothBody.luau` and `art/models/mannequin/build_mannequin.py`):
+- **The arms' rest pose does not match:**
+  - the Blender body was modelled with its arms OUT (an A or T pose from the Skin modifier's edge skeleton), but the R15 arm parts hang DOWN;
+  - SmoothBody's per-bone offsets ("from the rig attachments") then keep the mesh arms rotated out by that difference, so every pose, the walk too, has the arms lifted like a bodybuilder.
+- **The shape:** the Skin modifier made thick, lumpy shoulders and upper arms (the "bodybuilder" look).
+- **The colour:** the bodies are YELLOW. Our ragdolls are GREY plastic (F45: never yellow).
+
+**The fix** (`Config.SMOOTH_BODY_V2 = true`):
+1. **Rebuild the body in Blender with the arms DOWN in the rest pose,** matching the R15 rig's own rest exactly:
+   - the arms hang at the sides, about 5 degrees out;
+   - the elbows slightly bent (about 10 degrees), the palms facing the thighs.
+
+   Then compute SmoothBody's bone offsets from BOTH rests (mesh bone rest vs part rest), so a part pose maps 1:1 to the mesh. Any arm-out offset left over is a bug.
+2. **Natural proportions,** like a slim crash-test mannequin, not a bodybuilder:
+   - shoulders about 1.6x the head width;
+   - upper arms tapering from about 0.42 to 0.34 studs thick, forearms to 0.28 at the wrist;
+   - thighs to knees to ankles tapering the same way;
+   - a defined waist;
+   - no lumps: model it with clean loops (or smooth the Skin modifier result: remesh plus a smooth corrective), and weight it so the shoulders and elbows bend without bulging.
+
+   Render front, side and three-quarter views next to a simple human proportion guide, and fix them before the export (the review renders are allowed; they are about looks).
+3. **The walk and idle on the new body:**
+   - the arms hang and swing naturally by the walk clip (about ±20 degrees, elbows below the chest);
+   - standing, the arms relax at the sides with the idle weight shift.
+   - Check by reading the transforms: in idle and walk, both upper arms point downward (the arm's down vector within about 25 degrees of the world down).
+4. **The colour:** the same grey plastic as before (about RGB 163,162,165, SmoothPlastic, a soft sheen). Never yellow. Player-chosen skins are the only other colours.
+5. **The hands:** RealHands and the fingers stay attached at the new wrists.
+6. **Check (the owner):**
+   - ragdolls stand and walk with relaxed arms hanging at their sides, like people;
+   - grey, slim, smooth bodies, no bodybuilder shoulders, no lumps.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
