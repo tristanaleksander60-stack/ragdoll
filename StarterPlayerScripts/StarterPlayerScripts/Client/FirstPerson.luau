@@ -53,7 +53,17 @@ function FirstPerson.set(want: boolean, asked: boolean?)
 	end
 	on = want
 	if want then
-		kept = { mode = player.CameraMode, minZoom = player.CameraMinZoomDistance, maxZoom = player.CameraMaxZoomDistance }
+		-- (owner 27 Nov late: "man kan trykke V, men våbnet forsvinder bare og man bliver i first person": what was kept
+		-- could itself be first person (LockFirstPerson, or a max zoom squeezed to the head by the glide), so V restored
+		-- first person. FP_EXIT_FIX: only a real third-person camera is ever kept.)
+		local fix = Config.FP_EXIT_FIX == true
+		local mode = player.CameraMode
+		local maxZoom = player.CameraMaxZoomDistance
+		kept = {
+			mode = if fix and mode == Enum.CameraMode.LockFirstPerson then Enum.CameraMode.Classic else mode,
+			minZoom = if fix then math.min(player.CameraMinZoomDistance, 0.5) else player.CameraMinZoomDistance,
+			maxZoom = if fix and maxZoom < 12 then math.max(game:GetService("StarterPlayer").CameraMaxZoomDistance, 30) else maxZoom,
+		}
 		player.CameraMode = Enum.CameraMode.LockFirstPerson
 	else
 		leftAt = os.clock()
@@ -65,13 +75,19 @@ function FirstPerson.set(want: boolean, asked: boolean?)
 		end
 		-- (Out of first person Roblox leaves the camera at the head: back to a normal distance.)
 		player.CameraMinZoomDistance = math.max(player.CameraMinZoomDistance, 0.5)
+		if Config.FP_EXIT_FIX then
+			player.CameraMode = Enum.CameraMode.Classic -- (out is ALWAYS the normal camera behind you)
+		end
 		task.defer(function()
-			if not on and player.CameraMaxZoomDistance >= 10 then
+			if not on and (Config.FP_EXIT_FIX or player.CameraMaxZoomDistance >= 10) then
 				local camera = workspace.CurrentCamera
 				local head = player.Character and player.Character:FindFirstChild("Head")
-				if camera and head and head:IsA("BasePart") and (camera.CFrame.Position - head.Position).Magnitude < 2 then
+				if camera and head and head:IsA("BasePart") and (camera.CFrame.Position - head.Position).Magnitude < (if Config.FP_EXIT_FIX then 6 else 2) then
 					player.CameraMinZoomDistance = 10
 					task.wait()
+					if Config.FP_EXIT_FIX then
+						task.wait() -- (two frames: the camera really moves out before the min goes back)
+					end
 					player.CameraMinZoomDistance = if k then k.minZoom else 0.5
 				end
 			end
@@ -231,7 +247,7 @@ function FirstPerson.start()
 	-- out leaves it; V still toggles. Roblox's own zoom is read, never fought: under ENTER_AT studs
 	-- from the head counts as in. Not in the lab view, not while seated (a car), not on touch.
 	game:GetService("RunService").RenderStepped:Connect(function()
-		if on or ViewMode.isLab() or os.clock() - leftAt < 0.6 or not (UserInputService.MouseEnabled or UserInputService.TouchEnabled) then
+		if on or ViewMode.isLab() or os.clock() - leftAt < (if Config.FP_EXIT_FIX then 1.5 else 0.6) or not (UserInputService.MouseEnabled or UserInputService.TouchEnabled) then
 			return
 		end
 		local camera = workspace.CurrentCamera

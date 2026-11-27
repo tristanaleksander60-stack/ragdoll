@@ -2,7 +2,11 @@
 description: Build the WHOLE plan in docs/OVERVIEW.md, phase by phase, without stopping; the owner tests only at the end
 argument-hint: "[optional: what the owner wants first]"
 ---
-Read the "OWNER PRIORITY NOW" banner at the top of `docs/OVERVIEW.md` and `docs/NOW.md` FIRST and do it before anything else. Then read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situation, how to work, what only the owner can do, THE ORDER in 8 phases, DONE). Then read only the doc section of the row you are on. If the owner wrote something after /klar, do that first.
+**START OF EVERY RUN (owner 27 Nov late):** open `docs/FIXES_28NOV.md`.
+1. Push every file under "CLOUD CODE" and "CLOUD CODE ROUND 2" into Studio. Also push any other file the cloud changed since your last run: `git log --since` your last commit, with an author that is not the PC. Use a length check, then one Play.
+2. Then the open items of the batch, then STOP with a short Danish test list.
+
+Then read the "OWNER PRIORITY NOW" banner at the top of `docs/OVERVIEW.md` and `docs/NOW.md`, and do it before anything else. Then read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situation, how to work, what only the owner can do, THE ORDER in 8 phases, DONE). Then read only the doc section of the row you are on. If the owner wrote something after /klar, do that first.
 
 ## WORK FAST AND CHEAP (owner, 27 Nov late: "Vi skal også arbejde hurtigere, for mindre credits, bedre output")
 Reading is the biggest cost; every re-read after a summary costs it again.

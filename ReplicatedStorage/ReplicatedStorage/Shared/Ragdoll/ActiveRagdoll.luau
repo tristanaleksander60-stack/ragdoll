@@ -2002,7 +2002,13 @@ local function updateMoving(rig: Rig, dt: number)
 				accel = 0
 			end
 		end
-		R.lean = (R.lean or 0) + (math.clamp(accel * 0.012, -0.1, 0.14) - (R.lean or 0)) * (1 - math.exp(-6 * dt))
+		-- (owner 27 Nov late, 3rd time: "de læner sig virkelig mærkeligt bagud nogle gange og går". UPRIGHT_WALK: a slowing
+		-- body leaned BACK up to 0.1 rad (accel < 0); a walking person never does. The lean is now only forward: a small one
+		-- that grows with the speed (a walk ~2 deg, a run ~6 deg), plus a little more while speeding up.)
+		local want = if (GameConfig :: any).UPRIGHT_WALK
+			then math.clamp(rig.speed * 0.008, 0, 0.1) + math.clamp(accel * 0.008, 0, 0.05)
+			else math.clamp(accel * 0.012, -0.1, 0.14)
+		R.lean = (R.lean or 0) + (want - (R.lean or 0)) * (1 - math.exp(-6 * dt))
 	end
 	rig.lift.Position = Vector3.new(here.X, groundY + height, here.Z)
 
@@ -2703,6 +2709,38 @@ function ActiveRagdoll.setup(model: Model): (boolean, string?)
 	balance.Responsiveness = 40
 	balance.Parent = pelvis
 	table.insert(created, balance)
+
+	-- (UPRIGHT_WALK, owner 27 Nov late: only the pelvis was held upright, so when the drive pushed the hips forward the
+	-- chest was left behind on the waist joint alone and the body leaned far back. The chest is now held to the SAME
+	-- upright as the pelvis, with half its torque, whenever the balance is on; limp states turn both off.)
+	if (GameConfig :: any).UPRIGHT_WALK then
+		local chestAttachment = Instance.new("Attachment")
+		chestAttachment.Name = "ChestBalanceAttachment"
+		chestAttachment.CFrame = CFrame.fromMatrix(Vector3.zero, Vector3.yAxis, Vector3.zAxis)
+		chestAttachment.Parent = chest
+		table.insert(created, chestAttachment)
+		local chestBalance = Instance.new("AlignOrientation")
+		chestBalance.Name = "ChestBalance"
+		chestBalance.Mode = Enum.OrientationAlignmentMode.OneAttachment
+		chestBalance.AlignType = Enum.AlignType.PrimaryAxisParallel
+		chestBalance.PrimaryAxis = Vector3.yAxis
+		chestBalance.Attachment0 = chestAttachment
+		chestBalance.Responsiveness = 30
+		chestBalance.Enabled = false
+		chestBalance.Parent = chest
+		table.insert(created, chestBalance)
+		local function follow()
+			chestBalance.Enabled = balance.Enabled and balance.MaxTorque > 0
+			chestBalance.MaxTorque = balance.MaxTorque * 0.5
+			chestBalance.CFrame = balance.CFrame
+		end
+		balance.Changed:Connect(function(prop: string)
+			if prop == "Enabled" or prop == "MaxTorque" or prop == "CFrame" then
+				follow()
+			end
+		end)
+		follow()
+	end
 
 	local liftAttachment = Instance.new("Attachment")
 	liftAttachment.Name = "LiftAttachment"

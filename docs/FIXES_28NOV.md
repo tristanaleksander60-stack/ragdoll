@@ -92,6 +92,32 @@
      - every slot at least 6 px apart in every state, the ammo chip inside its own slot's top edge, the icon centred;
      - check with captures on a phone: rest, opened, each slot selected.
 
+## CLOUD CODE ROUND 2 (27 Nov late, after the PC's round 2): push these into Studio FIRST (length check), one Play
+- **`Shared/Ragdoll/ActiveRagdoll.luau` + `Config.UPRIGHT_WALK`** (the owner, the 3rd time: "de læner sig virkelig mærkeligt bagud nogle gange og går"). Two causes were found in the code:
+  1. **The walk lean leaned BACK whenever a body slowed down or turned** (`R.lean` from a negative acceleration, up to -0.1 rad). It is now forward only: about 2 degrees at a walk, about 6 at a run, plus a little more while speeding up.
+  2. **Only the pelvis was held upright** (Balance on LowerTorso), so when the drive pushed the hips forward, the chest hung back on the waist joint alone. A `ChestBalance` AlignOrientation on UpperTorso now follows the pelvis balance exactly (the same upright, half the torque, on and off with it, so limp states are untouched).
+  - **Check, with captures from the side:**
+    - 5 ragdolls walking, one running to you, one stopping and turning;
+    - none leans back;
+    - standing still is unchanged (no new rocking);
+    - a hit still knocks them down as before.
+- **`Client/FirstPerson.luau` + `Client/FirstShotFP.luau` + `Config.FP_EXIT_FIX`** (the owner: "man kan trykke V, men våbnet forsvinder bare og man bliver i first person").
+  - **The cause:** the camera kept for leaving could itself be first person: LockFirstPerson, or a max zoom squeezed to the head by the weapon-pick glide.
+  - **Now:**
+    - leaving first person ALWAYS gives the normal camera behind you, pushed out to about 10 studs;
+    - only a real third-person camera is kept;
+    - no zoom glide on a weapon pick (a plain switch);
+    - scrolling in does not pull you back in for 1.5 s after leaving.
+  - **Check on PC:**
+    - pick a weapon (in), V (out, the camera behind you, the gun in your hand), shoot (you stay out), V (in), V (out);
+    - pick another weapon (in);
+    - on a phone, the same with the eye.
+- **Also from round 1, if not yet pushed:**
+  - `Client/TimeDial.luau`, `Client/HudV3.luau` (5b);
+  - `Client/BuildController.luau` (5c);
+  - `Client/PhoneClean.luau`, `Client/HudSlots.luau` (5d);
+  - `Client/PokeController.luau` (5e).
+
 ## BATCH A (build now, then STOP for the owner's test)
 **Round 1 done (v1418-1423), STOPPED for the owner's test:** cloud code in Studio (20 files + FP_AUTO, a Config syntax break fixed), 4 DROP HERE, 6 stairs, 7 parking lot, 9 X-ray, 12 crowding. **Next round:** 10-11 holes and bandages on the v6 skin, 13 no block ragdolls, 14 bike riders welded, then 15/16/8 the real models (weapon testing building, T-rex, gyro).
 15. **PART DONE v1428 (`RANGE_CLEAR`, ShootingRange), SEEN:** the range stands just outside the compact plan where the hills begin (terrain y 7 to 40 across its depth); 10 s and 25 s after start (after the landscape fills the hills) the terrain round it (its box + 6 studs, floor up 90) is made air; captures: the whole facade and the open entrance stand free, inside a concrete firing line with a grass backstop where the hill was cut. LEFT: the plain-part shell -> a real model (next step). **WEAPON TESTING is half inside a mountain** (the building by the railway):

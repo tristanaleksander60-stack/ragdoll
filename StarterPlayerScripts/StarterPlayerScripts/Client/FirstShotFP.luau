@@ -222,7 +222,7 @@ local function watchPicks()
 			end
 		end
 		if pendingUntil > 0 then
-			if autoEnter(true) or os.clock() > pendingUntil then
+			if autoEnter(not Config.FP_EXIT_FIX) or os.clock() > pendingUntil then -- (FP_EXIT_FIX: no zoom glide, it broke V)
 				pendingUntil = 0
 			end
 		end
