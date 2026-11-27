@@ -39,8 +39,15 @@ do
 		SmoothBody.MAX_BODIES = 24
 		SmoothBody.BUILD_REACH = 120
 		SmoothBody.DROP_REACH = 150
+	elseif (Config :: any).V6_EVERYONE and (Config :: any).SMOOTH_BODY_V6 and phone then
+		-- (FIXES_28NOV 13: old block bodies showed past 80 studs on phones: 20 within 100 now; the far ones are driven at
+		-- FAR_RATE and a sleeping body is drawn once, so the cost stays low)
+		SmoothBody.MAX_BODIES = 20
+		SmoothBody.BUILD_REACH = 100
+		SmoothBody.DROP_REACH = 130
 	end
 end
+local V6_EVERYONE = (Config :: any).V6_EVERYONE == true
 
 local rad = math.rad
 
@@ -371,6 +378,16 @@ local function build(model: Model): Body?
 	local torsoSkin = folder:FindFirstChild(if V2 then "LeftUpperLeg" else "UpperTorso")
 	local look = if torsoSkin and torsoSkin:IsA("BasePart") then torsoSkin else pelvis
 	mesh.Color = look.Color
+	-- (FIXES_28NOV 13, V6_EVERYONE: a crowd person wears the v6 body too, its colour map tinted by the role's shirt)
+	local tint = model:GetAttribute("CrowdTint")
+	if typeof(tint) == "Color3" then
+		local sa = mesh:FindFirstChildOfClass("SurfaceAppearance")
+		if sa then
+			pcall(function()
+				(sa :: any).Color = (tint :: Color3):Lerp(Color3.new(1, 1, 1), 0.25)
+			end)
+		end
+	end
 	mesh.Material = look.Material
 	mesh.Reflectance = look.Reflectance
 	mesh.TextureID = ""
@@ -601,7 +618,7 @@ local function step(dt: number)
 		if dummies and count < SmoothBody.MAX_BODIES then
 			local list: { { m: Model, d: number } } = {}
 			for _, m in dummies:GetChildren() do
-				if m:IsA("Model") and not bodies[m] and m:GetAttribute("Mannequin") == true and not (refused[m] and os.clock() - refused[m] < 30) then
+				if m:IsA("Model") and not bodies[m] and (m:GetAttribute("Mannequin") == true or (V6_EVERYONE and m:GetAttribute("CrowdTint") ~= nil)) and not (refused[m] and os.clock() - refused[m] < 30) then
 					local pelvis = m:FindFirstChild("LowerTorso")
 					if pelvis and pelvis:IsA("BasePart") then
 						local d = (pelvis.Position - eye).Magnitude
@@ -637,7 +654,8 @@ local function step(dt: number)
 					local sa = body.mesh:FindFirstChildOfClass("SurfaceAppearance")
 					if sa then
 						pcall(function()
-							(sa :: any).Color = if want > 0 then Color3.fromRGB(52, 74, 150) else Color3.new(1, 1, 1)
+							local tint = body.model:GetAttribute("CrowdTint")
+							(sa :: any).Color = if want > 0 then Color3.fromRGB(52, 74, 150) elseif typeof(tint) == "Color3" then tint:Lerp(Color3.new(1, 1, 1), 0.25) else Color3.new(1, 1, 1)
 						end)
 					end
 					if body.ball then

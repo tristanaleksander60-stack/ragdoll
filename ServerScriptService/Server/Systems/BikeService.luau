@@ -185,6 +185,28 @@ local function ride(car: any, owner: Player, rider: Model)
 	pcall(function()
 		lazy("DummyControl").move(rider, body.CFrame * CFrame.new(0, 2.4, 1.1))
 	end)
+	-- (FIXES_28NOV 14, Config.BIKE_WELD: the rider jittered: the server steered the bike while the lab player's screen
+	-- simulated the rider and held it over the saddle with forces. Now the rider's pelvis is WELDED to the saddle (one
+	-- assembly) and the bike is simulated by that same screen, so one machine moves both; the server's steering targets
+	-- still drive it there. The ride's end (a hit, a new wound) removes the weld before the rider is thrown off.)
+	local weld: WeldConstraint? = nil
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).BIKE_WELD then
+		task.wait(0.25)
+		local pe = rider:FindFirstChild("LowerTorso")
+		if pe and pe:IsA("BasePart") and body.Parent then
+			pe.CFrame = body.CFrame * CFrame.new(0, 2.4, 1.1)
+			local w = Instance.new("WeldConstraint")
+			w.Name = "RideWeld"
+			w.Part0 = body
+			w.Part1 = pe
+			w.Parent = body
+			weld = w
+			local simOwner = lazy("DummyControl").ownerOf(rider)
+			pcall(function()
+				body:SetNetworkOwner(simOwner)
+			end)
+		end
+	end
 	-- (It brushes past crates and people instead of being knocked off by them.)
 	local solid: { BasePart } = {}
 	for _, d in rider:GetChildren() do
@@ -289,6 +311,12 @@ local function ride(car: any, owner: Player, rider: Model)
 		end
 	end
 	local speed = if body.Parent then body.AssemblyLinearVelocity else Vector3.zero
+	if weld then
+		weld:Destroy()
+		pcall(function()
+			body:SetNetworkOwnershipAuto()
+		end)
+	end
 	pos:Destroy()
 	turn:Destroy()
 	at:Destroy()

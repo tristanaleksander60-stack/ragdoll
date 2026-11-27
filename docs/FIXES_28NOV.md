@@ -143,11 +143,11 @@
     - at most 3 ragdolls per activity spot, at least 4 studs apart, at most 4 in any 20 x 20 stud cell;
     - the owner's screenshot showed 8 around the rock;
     - the RagdollDirector enforces it, sending the extras on to another spot.
-13. **No old block ragdolls in view** (until V7 makes it impossible):
+13. **BUILT v1425 (`V6_EVERYONE`):** the crowd people (Mannequin false) now wear the v6 body too, tinted by their role's shirt (CrowdTint; X-ray keeps the tint after); phones draw 20 v6 bodies within 100 studs (was 12 within 80, the old blocks beyond). The v6 LITE mesh for the far ones stays PARKED (an upload). **No old block ragdolls in view** (until V7 makes it impossible):
     - the crowd people (`CrowdService` calls `removeMarks`, so `Mannequin = false`) get the v6 body too, tinted by their role colour;
     - SmoothBody builds a body BEFORE it is shown (a new body stays invisible until its mesh is ready);
     - the far ones beyond the reach get the v6 LITE mesh (`PERF_MOBILE.md` §6 item 3).
-14. **The bike riders** jitter on the bike and are sometimes the old body.
+14. **BUILT v1425 (`BIKE_WELD`):** the rider's pelvis is welded to the saddle and the bike is simulated by the rider's own screen (one assembly, one simulator; the server's steering targets still drive it); the ride's end removes the weld. Play: a ride started in 9 s, pelvis on the saddle (0.00 off), owner = the lab player, 12 studs/s; a capture shows the grey v6 rider on the bike. OWNER CHECK: no jitter while riding. **The bike riders** jitter on the bike and are sometimes the old body.
     - **The cause:** the server steers the bike (AlignPosition targets over the network) while the lab player's client simulates the rider and holds them over the saddle with forces.
     - **Fix now:** weld the rider to the saddle in a pedal pose (one assembly), and let the server own and steer both bike and rider. A hit breaks the weld and the rider falls off.
     - Also check why a rider is drawn as the old body (Ride/seated state or the MachineHidden attribute in SmoothBody).
