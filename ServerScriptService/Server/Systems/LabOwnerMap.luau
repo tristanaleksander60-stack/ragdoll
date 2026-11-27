@@ -221,10 +221,21 @@ local function onWalkable(p: Vector3, margin: number): boolean
 	return false
 end
 local SLAB_TEX = "rbxassetid://91579008413917"
+-- (F82, Config.F82_PATHS, owner: "flere forskellige skygger der overlapper hinanden" in the paths: two legs of a path
+-- (or a road) overlapping at the same height made their half-see-through tile textures fight, showing lighter and
+-- darker rectangles, and the roads lay only 0.02 over the paths. Now the legs step through 4 heights 0.02 apart, so
+-- the upper one covers a joint or a crossing whole; paths (0.12-0.18) stay under the roads (0.2-0.26) under the
+-- junctions (0.3).)
+local F82 = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).F82_PATHS == true
+local legCount = 0
 local function slab(into: Instance, name: string, a: Vector3, b: Vector3, width: number, lift: number, noKerb: boolean?)
 	local len = (b - a).Magnitude
 	if len < 0.5 then
 		return
+	end
+	if F82 then
+		legCount += 1
+		lift = (if name == "OwnerPath" then 0.12 else lift) + (legCount % 4) * 0.02
 	end
 	local cf = CFrame.lookAt((a + b) / 2 + Vector3.new(0, lift, 0), b + Vector3.new(0, lift, 0))
 	local p = part(into, name, Vector3.new(width, 0.4, len + width * 0.02), cf, WALK, Enum.Material.SmoothPlastic)
@@ -315,7 +326,7 @@ local function ground(into: Instance, o: Vector3)
 			slab(into, "OwnerRoad", w(r.points[i]), w(r.points[i + 1]), r.width, 0.2)
 		end
 		for _, p in r.points do
-			disc(into, "OwnerJunction", w(p), r.width / 2 + 2, 0.19, WALK)
+			disc(into, "OwnerJunction", w(p), r.width / 2 + 2, if F82 then 0.3 else 0.19, WALK)
 		end
 	end
 	-- Inner paths (12): entrance -> courtyard -> the front of every attraction.
