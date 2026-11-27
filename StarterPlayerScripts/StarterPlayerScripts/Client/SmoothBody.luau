@@ -128,7 +128,14 @@ end
 -- it (no arm held out to reach the physics shoulder). Its colour is always the grey shell (the legs' skin), never the
 -- torso's test-suit colour (no yellow bodies).
 local V2 = Config.SMOOTH_BODY_V2 == true
+-- RAGDOLL_10 THE LOOK (Config.SMOOTH_BODY_V3): the chunky toy crash-test dummy (art/models/mannequin/build_mannequin_v3.py:
+-- thick limbs, joint rings, a chest plate, the yellow-and-black markings in its baked colour map) is
+-- ReplicatedStorage.SmoothBodyV3 once imported; it wins over v2 and is driven the same forward-kinematic way.
+local V3 = (Config :: any).SMOOTH_BODY_V3 == true
 local function templateName(): string
+	if V3 and ReplicatedStorage:FindFirstChild("SmoothBodyV3") then
+		return "SmoothBodyV3"
+	end
 	return if V2 and ReplicatedStorage:FindFirstChild("SmoothBodyV2") then "SmoothBodyV2" else "SmoothBody"
 end
 
@@ -248,7 +255,7 @@ local function build(model: Model): Body?
 		return jointRot * CFrame.new(joints[name]):Inverse()
 	end
 	local driveIndex: { [Instance]: number } = {}
-	local fk = V2 and templateName() == "SmoothBodyV2"
+	local fk = (V2 and templateName() == "SmoothBodyV2") or templateName() == "SmoothBodyV3"
 	for _, b in mesh:GetDescendants() do
 		if b:IsA("Bone") then
 			local name = if b.Name == "HumanoidRootPart" then "LowerTorso" else b.Name

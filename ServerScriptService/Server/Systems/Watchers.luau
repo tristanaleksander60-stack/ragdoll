@@ -73,6 +73,10 @@ local function release(m: Model?)
 end
 
 local GROUPS = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).WATCH_GROUPS == true
+-- (0.7, owner 27 Nov: "sørg for der er ragdolls ved hver maskine"; Config.WATCH_EVERY): EVERY watch spot in the lab gets a
+-- real watcher, nearest first, as long as KEEP_FREE free ones stay for the 3 near you (the lab holds more: Lab.DUMMY_COUNT).
+-- Far watchers stand Parked by the RagdollDirector (free on the server).
+local EVERY = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).WATCH_EVERY == true
 local function groupSpot(id: string): boolean
 	local sum = 0
 	for i = 1, #id do
@@ -97,7 +101,7 @@ local function step()
 		for _, s in WatchSpots.LIST do
 			local w = Vector3.new(o.X + s.at.X, o.Y, o.Z + s.at.Y)
 			local d = (Vector3.new(w.X, 0, w.Z) - Vector3.new(root.Position.X, 0, root.Position.Z)).Magnitude
-			if d < Watchers.REACH then
+			if d < Watchers.REACH or EVERY then
 				table.insert(ranked, { s = s, w = w, d = d })
 				-- (0.7 part 3, Config.WATCH_GROUPS: a third of the spots get a pair: a second watcher 2.6 studs to the side)
 				if GROUPS and groupSpot(s.id) then
@@ -112,7 +116,7 @@ local function step()
 			return a.d < b.d
 		end)
 		local want: { [string]: boolean } = {}
-		for i = 1, math.min((if GROUPS then Watchers.NEAR + 1 else Watchers.NEAR), #ranked) do
+		for i = 1, math.min(if EVERY then #ranked elseif GROUPS then Watchers.NEAR + 1 else Watchers.NEAR, #ranked) do
 			local r = ranked[i]
 			want[r.s.id] = true
 			local m = mine[r.s.id]

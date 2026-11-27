@@ -47,6 +47,11 @@ local log = Log.new("Lab")
 -- (session v850, owner: "tilføj 4 mere"): ten dummies on the test row (was six). They wander the
 -- whole lab on their own after they first stand (ROAM_* below).
 local DUMMY_COUNT = 18 -- (22 Nov 2026, owner: 18 dummies walking round the lab; nothing else spawns: Config.ONLY_LAB_DUMMIES)
+-- (0.7, owner 27 Nov: "sørg for der er ragdolls ved hver maskine"; Config.WATCH_EVERY): more in your own lab so a real
+-- watcher can stand at every machine (far ones stand Parked: no brain, no cost on the server)
+if (Config :: any).WATCH_EVERY then
+	DUMMY_COUNT = (Config :: any).LAB_DUMMIES_PC or 40
+end
 local RADIUS = 22
 local RESPAWN_DELAY = 3
 local AWAY_DISTANCE = 6 -- studs from the slot: on its way home
@@ -91,9 +96,9 @@ local SOURCE_RANGE = 120 -- studs: a bang's maker this close is who it runs from
 local Lab = {}
 Lab.DUMMY_COUNT = DUMMY_COUNT -- (World/Feel v2: T80 adds it to a device's ragdoll budget)
 Lab.FIRST_FILL = 3 -- (23 Nov 2026: these appear at once, the rest one by one, a phone's slower: no stall at the join)
-Lab.PHONE_DUMMIES = 7 -- (V10 phase 1: a phone simulates its own lab's bodies; fewer keep it smooth)
-Lab.TABLET_DUMMIES = 10
-Lab.CONSOLE_DUMMIES = 13
+Lab.PHONE_DUMMIES = if (Config :: any).WATCH_EVERY then 9 else 7 -- (V10 phase 1: a phone simulates its own lab's bodies; fewer keep it smooth; 0.7 WATCH_EVERY: 9, the watchers nearest first)
+Lab.TABLET_DUMMIES = if (Config :: any).WATCH_EVERY then 14 else 10
+Lab.CONSOLE_DUMMIES = if (Config :: any).WATCH_EVERY then 20 else 13
 
 Lab.PLOT_COUNT = 10 -- labs on one server (the place's server size should be 10)
 Lab.PLOT_SPACING = Zones.PLOT_SPACING -- studs between the middles of two neighbouring labs (and the plaza; V6-4 wider)

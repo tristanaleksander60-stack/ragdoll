@@ -1,0 +1,12 @@
+{
+ "tris": 14516,
+ "bones": 44,
+ "unweighted_vertices": 0,
+ "baked": true,
+ "size_studs": [
+  3.438,
+  4.113,
+  1.23
+ ],
+ "fbx": "C:\\Users\\tristan\\Documents\\RagdollLab\\art\\models\\mannequin\\mannequin_v3.fbx"
+}
