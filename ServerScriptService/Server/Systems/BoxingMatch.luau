@@ -675,6 +675,9 @@ local function backgroundFight(player: Player)
 	end
 	backgroundDone[player] = true
 	task.wait(8 + math.random() * 7)
+	if player:GetAttribute("PerfLevel") == 0 then
+		return -- (LAG-FREE 2 item 1: a struggling device gets no background fight)
+	end
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	local pg = Workspace:FindFirstChild("Playground")
 	if not (root and root:IsA("BasePart") and pg) then

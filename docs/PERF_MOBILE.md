@@ -109,12 +109,12 @@ No hitch over 100 ms when machines run, a big event starts or the lab loads.
 8. **The server has about 15 Heartbeat loops** (VehicleService 3, Creatures 3, ToyService, Knockables, GuardDog, CrowdService, ...), and GroundGuard/Unstick query every body. A slow server tick shows on every device as rubber-banding (AUDIT 39 is the same item).
 
 ### The fixes (build in this order)
-0. **`LAGFREE_TELEMETRY`: measure live first** (small, and it gives the owner before/after numbers without testing).
+0. **DONE v1385 (with item 1):** Systems/PerfReport + Client/QualityGovernor; remote PerfReport; custom events Fps_p50, Fps_p10, Hitches, MemoryMb with the device in CustomField01 (not in Studio). **`LAGFREE_TELEMETRY`: measure live first** (small, and it gives the owner before/after numbers without testing).
    - Every 60 s the client sends one small packet through `Net`: FPS p50 and p10 over the minute, frames over 50 ms, `Stats:GetTotalMemoryUsageMb()`, bodies it simulates, and the Quality level.
    - The remote is `Perf.Report` (validator: numbers clamped and integer, rate 1 per 30 s).
    - The server logs `AnalyticsService:LogCustomEvent` (`Fps_p10`, `Fps_p50`, `Hitches`, `MemoryMb`) with the device as a custom field, so the Creator Hub shows them per device.
    - The same remote carries item 1's level.
-1. **`LAGFREE_SERVER_KNOWS`: the server follows the real FPS.**
+1. **DONE v1385:** the level reaches the server (PerfLevel, seen 2 in Studio); RagdollDirector near cap -1/-2 at levels 1/0 (never under 3); no background boxing at 0. LEFT: visitors and chasers by level. **`LAGFREE_SERVER_KNOWS`: the server follows the real FPS.**
    - The client sends its level (0-3) only when it changes, at most once per 5 s. The server stores it as the player's `PerfLevel` and decides with it.
    - Levels 3 and 2: the device caps as now.
    - Level 1: the near cap -1 and visitors -1.

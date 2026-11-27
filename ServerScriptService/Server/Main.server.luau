@@ -118,6 +118,7 @@ end)
 safe("Purchases", function() Purchases.start() end)
 safe("WhaleSpout", function() require(Systems:WaitForChild("WhaleSpout")).start() end) -- 3.26: the big pool's whale spouts ragdolls sky-high and tail-slaps (Config.WHALE_10) -- the one ProcessReceipt; finds out whether orders live in a DataStore
 safe("TargetRun", function() require(Systems:WaitForChild("TargetRun")).start() end) -- 3.31: a 30 s timed run on the archery target (Config.TARGET_RUN)
+safe("PerfReport", function() require(Systems:WaitForChild("PerfReport")).start() end) -- LAG-FREE 2 items 0-1: live FPS numbers per device, and the server follows each device's level
 safe("CrudeHumor", function() require(Systems:WaitForChild("CrudeHumor")).start() end) -- MILD_EXTRAS A: the crude humour pack (Config.CRUDE_HUMOR)
 safe("BooMask", function() require(Systems:WaitForChild("BooMask")).start() end) -- MILD_EXTRAS C3: BOO a ragdoll from behind (Config.BOO_MASK)
 safe("PlayerCPR", function() require(Systems:WaitForChild("PlayerCPR")).start() end) -- 3.34: your own CPR on a down ragdoll, a rhythm game (Config.PLAYER_CPR)

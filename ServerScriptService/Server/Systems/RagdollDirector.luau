@@ -177,6 +177,12 @@ local function capStep()
 			continue
 		end
 		local cap = RagdollDirector.CAP[tostring(p:GetAttribute("Device"))] or RagdollDirector.CAP_PC
+		-- (LAG-FREE 2 item 1, Config.LAGFREE_SERVER_KNOWS: the device's real frame rate (PerfLevel, sent by its
+		-- QualityGovernor) lowers the near cap: level 1 one less, level 0 two less; never under ALWAYS3's 3.)
+		local lvl = p:GetAttribute("PerfLevel")
+		if type(lvl) == "number" and lvl <= 1 then
+			cap = math.max(3, cap - (if lvl <= 0 then 2 else 1))
+		end
 		local living, extras = 0, {}
 		for _, m in dummies:GetChildren() do
 			local pe = m:FindFirstChild("LowerTorso")
