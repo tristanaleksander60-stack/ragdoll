@@ -12,7 +12,7 @@ Badges.LIST = table.freeze({
 	{ key = "FirstTakedown", id = 3373445548782736, name = "First Takedown", description = "Knock out your first dummy." },
 	{ key = "FirstEgg", id = 3474625754262331, name = "First Egg", description = "Open your first weapon egg." },
 	{ key = "FiveMinutes", id = 260717568329975, name = "Five Minutes", description = "Play for 5 minutes in one visit." },
-	{ key = "Bullseye", id = 3887603893235173, name = "Bullseye", description = "Land on the bullseye with the human cannon." },
+	{ key = "Bullseye", id = 3887603893235173, name = "Bullseye", description = "Fire a ragdoll onto a cannon target." },
 	{ key = "Takedowns100", id = 1844051455503525, name = "Havoc Maker", description = "Reach 100 takedowns." },
 	{ key = "Nuke", id = 4449427007770327, name = "Nuked It", description = "Drop a nuke on your lab." },
 	{ key = "Takedowns1000", id = 287835808177315, name = "Havoc Legend", description = "Reach 1,000 takedowns." },

@@ -2196,6 +2196,10 @@ function Playground.cannonScore(m: Model, muzzle: Vector3, shooter: Player?)
 					local bonus = (t:GetAttribute("Bonus") :: number?) or 25
 					d += bonus
 					pop(pelvis.Position + Vector3.new(0, 7, 0), tostring(t:GetAttribute("Label")) .. "! +" .. bonus, Color3.fromRGB(120, 230, 255))
+					if shooter then
+						-- (AUDIT 15: the painted bullseye is gone; a ragdoll fired onto a target is the PERFECT landing)
+						pcall(BadgeAwards.award, shooter, "Bullseye")
+					end
 					break
 				end
 			end

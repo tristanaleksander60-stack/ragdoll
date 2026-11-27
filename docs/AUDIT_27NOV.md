@@ -60,7 +60,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - a statue for the weekly #1 (the F77 code).
 13. **PLAY TOGETHER:** from the solo start place, the invite first takes you to a reserved multiplayer server (PortalService), then opens the invite there, so friends really meet.
 14. **DONE v1358:** the daily pool has "Bowl a strike" (Bowling), "Break 5/10 bones" (VitalsService), "Fire the cannon 3 times" and "Feed 2/3 animals" (ExperimentService.event) and "Use 3/4 different weapons" (VitalsService, a max goal). **Daily goals use the map:** "Bowl a strike", "Fire the cannon 3 times", "Feed 2 animals", "Break 5 bones", "Use 4 different weapons".
-15. **Badges:**
+15. **PART DONE v1359:** "Bullseye" re-pointed: a ragdoll fired onto a cannon target gives it (the player cannon and painted bullseye are gone). LEFT: the 8 new badges wait for the owner's ids (NOW.md question). **Badges:**
     - add 7-day streak, all weapons, all hats, every machine tried, every animal catch, Legend, the first gold mastery star, the advent finish;
     - re-point "Bullseye" (its bullseye is removed) to the cannon's PERFECT landing.
 16. **A co-op chip:** "Together: 40 KOs in 3 min" for friends in one lab or the multiplayer place, stars and BOLTS for everyone. Not the old mission card.
