@@ -399,7 +399,7 @@ function FriendsUI.start()
 	Net.event(Net.Names.Horde).OnClientEvent:Connect(function(kind: unknown, data: unknown)
 		local d = if type(data) == "table" then data :: any else {}
 		if kind == "HordeWarning" then
-			Toast.show(string.format("HORDE of %d at the Plaza in %d s! Open Places to go", tonumber(d.count) or 0, tonumber(d.seconds) or 10), Color3.fromRGB(255, 110, 110))
+			Toast.show(string.format("HORDE of %d at the Plaza in %d s! Open MAPS to go", tonumber(d.count) or 0, tonumber(d.seconds) or 10), Color3.fromRGB(255, 110, 110))
 		elseif kind == "HordeCancelled" then
 			Toast.show("No horde this time: the plaza is too full", Color3.fromRGB(255, 210, 74))
 		elseif kind == "HordeEnd" then

@@ -235,7 +235,7 @@ local function build()
 	-- (Everyone else's lab goes into the same grid, after the plaza.)
 	labsGrid = grid
 	Controller.register(window)
-	Controller.addHudButton({ window = "Maps", label = "Places", icon = "map", theme = "codes", layoutOrder = 4 })
+	Controller.addHudButton({ window = "Maps", label = "Maps", icon = "map", theme = "codes", layoutOrder = 4 })
 end
 
 -- The arrival flash: the place's colour over the screen, its name, then gone.
@@ -356,7 +356,7 @@ function PlaceMenu.start()
 			arrived(detail)
 		elseif kind == "LabReady" then
 			-- A lab came free and it is ours now (we lived in the plaza).
-			Toast.show("A lab came free: it's yours! Open Places > My Lab", Color3.fromRGB(124, 200, 255))
+			Toast.show("A lab came free: it's yours! Open MAPS > My Lab", Color3.fromRGB(124, 200, 255))
 			refresh()
 		elseif kind == "Refused" and type(detail) == "string" then
 			Toast.show(detail)

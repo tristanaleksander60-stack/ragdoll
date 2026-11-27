@@ -400,7 +400,7 @@ function PokeController.helpText(id: string, lab: boolean): string
 	elseif toy.kind == "grab" then
 		first = if lab then "Press on a dummy and drag it, let go to throw" elseif ViewMode.isTouch() then "Tap a ragdoll to pick it up" else "Pick a dummy up, swing it, throw it"
 	elseif toy.kind == "dummy" or toy.kind == "place" then
-		first = "Click the ground to put down the " .. toy.label
+		first = (if ViewMode.isTouch() then "Tap the ground to put down the " else "Click the ground to put down the ") .. toy.label
 	else
 		first = ""
 	end
@@ -1072,6 +1072,10 @@ function PokeController.eyes(on: boolean)
 			local character = player.Character
 			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 			if not humanoid or humanoid.Health <= 0 or humanoid.SeatPart or ViewMode.isLab() or player:GetAttribute("Building") == true then
+				return
+			end
+			-- (audit 27 Nov: a phone had no visible way back from the automatic first person; Config.PHONE_AUTO_FP)
+			if (Config :: any).PHONE_AUTO_FP == false and game:GetService("UserInputService").TouchEnabled then
 				return
 			end
 		end

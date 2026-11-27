@@ -422,7 +422,7 @@ local function build()
 	end)
 	local hide = small("Hide", "X", Color3.fromRGB(150, 50, 60), function()
 		hiddenCard = true
-		Toast.show("Missions hidden (" .. (require(Shared:WaitForChild("Keybinds")) :: any).labelOf("MissionHide") .. " or MENU > MISSIONS shows them)")
+		-- (audit 27 Nov: missions were removed on 23 Nov; no toast pointing at them)
 	end)
 	local function placeSmall()
 		local h = math.max(18, b.AbsoluteSize.Y - 8)
@@ -455,7 +455,7 @@ function ExperimentCard.start()
 			Net.event(Net.Names.Experiment):FireServer("Skip")
 		elseif Keybinds.is("MissionHide", input.KeyCode) then
 			hiddenCard = not hiddenCard
-			Toast.show(if hiddenCard then "Missions hidden (" .. Keybinds.labelOf("MissionHide") .. " shows them)" else "Missions on screen")
+			-- (audit 27 Nov: no mission toast; missions were removed)
 		end
 	end)
 	Net.event(Net.Names.Experiment).OnClientEvent:Connect(function(kind: unknown, data: unknown)

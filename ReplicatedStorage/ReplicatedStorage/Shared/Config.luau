@@ -62,8 +62,7 @@ local Config = {
 	LAMP_LINT = true, -- F40: no lamp within 2 studs of ANY walkable surface (roads, paths, plazas, Tower Square, station, courtyards) (LabOwnerMap onWalkable)
 	PROP_CLEAR = true, -- F44: yard benches, signs and props only go where nothing stands within 3 studs (GetPartBoundsInBox; next spot if blocked) (LabOwnerMap freeSpot)
 	NO_WHITE_RINGS = true, -- F41: no pale stress ring and no white rim round the bullet holes (the hole picture tinted darker) (Client/BulletHoles)
-	WALK_SETTING = false, -- F38: Settings > Walk speed: NORMAL / FAST 34 / VERY FAST 40 / CALM 20, saved in the profile; sprint is 1.5x it (Client/Settings, Client/Sprint)
- (F83: off, the owner wants Roblox's standard walk speed)
+	WALK_SETTING = false, -- F38: Settings > Walk speed: NORMAL / FAST 34 / VERY FAST 40 / CALM 20, saved in the profile; sprint is 1.5x it (Client/Settings, Client/Sprint) (F83: off, the owner wants Roblox's standard walk speed)
 	UNSTICK = true, -- F32: invisible solid walls along every tree belt (gaps at the entrances, NoGo for paths), and a ragdoll stuck inside anything solid for 1 s is moved to the nearest free spot (Systems/Unstick)
 	WATCHER_STANDINS = false, -- F45: the yellow watcher stand-ins are gone; real grey watchers walk to the 5 machines within 90 studs (Watchers)
 	NO_DEATH_FREEZE = true, -- F46: a dead or knocked-out body that hangs still in the air for 0.6 s is unanchored and pushed down (Systems/Unstick deathGuard)
@@ -573,6 +572,7 @@ local Config = {
 	ANGRY_SHOVE = true, -- NOW 6: that angry dummy gives one harmless funny shove; false = it only scolds (owner to choose)
 	SHOP_CHEAP_FIRST = true, -- NOW 8: the shop opens on the R$ 49 Starter Crate and cheaper picks (ShopV9 hero, ShopArt.FEATURED)
 	PHONE_MORE_FLAT = true, -- NOW 1.6: MORE on a phone starts with MAPS, LAB, REWARDS, SETTINGS (HudMenu)
+	PHONE_AUTO_FP = false, -- (audit 27 Nov) picking a weapon or the first hit no longer pulls a TOUCH screen into first person (a phone had no visible way back)
 	NEVER_VANISH = true, -- F90 (owner 27 Nov): RagdollDirector.mayRemove guards moves/hides; Unstick pushes instead of teleporting in view; path walkers swap for a real ragdoll instead of fading (Systems/PathSwap, Client/PathWalkers)
 	REMOVAL_LOG = true, -- F90: every guarded removal or move of a ragdoll is printed; "in view: YES" is a bug
 	PHONE_BIG_HOTBAR = true, -- NOW 1.8: a landscape phone's hotbar slots 62 x 56 (was 54 x 48) (PokeController.plan)
