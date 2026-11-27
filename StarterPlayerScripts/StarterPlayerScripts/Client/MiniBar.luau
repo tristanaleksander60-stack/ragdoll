@@ -16,7 +16,7 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 
 local MiniBar = {}
 
-MiniBar.SMALL = 0.6
+MiniBar.SMALL = 0.75 -- (AUDIT 24: the slots stay at least 44 px at rest)
 MiniBar.IDLE = 4
 
 local function isPhone(): boolean
@@ -94,7 +94,7 @@ function MiniBar.start()
 			end
 			if inside then
 				lastTap = os.clock()
-				task.delay(0.35, function()
+				task.delay(1.5, function() -- (AUDIT 24: it stays open 1.5 s after a pick)
 					if open and os.clock() - lastTap >= 0.3 then
 						close()
 					end

@@ -81,7 +81,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - the card's price button also opens the detail (BUY only there, so a child always sees what it is);
     - CODES moves to the window header;
     - each tab gets a one-line kid subtitle ("BOLTS: coins for weapons").
-24. **The mini hotbar** (F71) at rest:
+24. **PART DONE v1337:** SMALL 0.75 (slots at least 44 px at rest), it stays open 1.5 s after a pick. LEFT: icons only at rest, the selected slot full size. **The mini hotbar** (F71) at rest:
     - icons only (no names), the selected slot full size, `SMALL = 0.75` (slots at least 44 px);
     - it stays open 1.5 s after a pick.
 25. **PART DONE v1336:** the tile reads ONLINE (not Multiplayer), the gift clock is 15 px in a 64x20 box. LEFT: the general caption minimum ceil(14 / scale). **Text at least 14 px on phones:**
