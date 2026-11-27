@@ -117,6 +117,7 @@ local Config = {
 	WHALE_10 = true, -- 3.26: a whale in the big pool surfaces under a ragdoll in the water and spouts it sky-high (SPOUT! studs + NEW BEST), and tail-slaps a wave every 25-40 s (Systems/WhaleSpout)
 	TARGET_RUN = true, -- 3.31: a 30 s TARGET RUN on the archery target: it slides side to side, your hits score by ring, a NEW BEST per weapon (Systems/TargetRun)
 	SEESAW_10 = true, -- 3.33: the seesaw: "Sit a ragdoll" seats one on the low end; you (or anything heavy) coming down on the high end launches it: "SEESAW! xx studs" + NEW BEST (MapMachines wireSeesaw)
+	PLAYER_CPR = true, -- 3.34: a CPR prompt on every down lab ragdoll: a 5-beat rhythm game with a heart monitor; good beats raise the chance of IT'S ALIVE (Systems/PlayerCPR, Client/CprGame)
 	AUTO_QUALITY = true, -- 8: an FPS governor on each screen: start level by device (PC 3, phone/tablet 2), under 45 FPS for 10 s one step down, over 58 for 30 s one up: particles halved and far walkers slower, then no shadows and nearer lights, then fewer walkers and real hands (Client/QualityGovernor)
 	IDLE_LIFE = true, -- 11: standing ragdolls do small human actions 8-20 s apart, never the same twice in a row: + hands on hips, neck roll, rub eyes, look at nails, sneeze, wave, crack knuckles (Client/DummyLife gestures)
 	HIT_BONE_NAME = true, -- row 4: a round to the trunk names the bone on the hit card (Sternum, Rib, Spine, Shoulder blade, Pelvis, Lower spine), as the X-ray shows (VitalsService)
