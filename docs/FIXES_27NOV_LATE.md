@@ -29,7 +29,9 @@ Today A2 puts a pale capsule round the limb (on the torso a big glass box), whic
 - The chatter pairs talk to EACH OTHER, facing each other, not the player.
 - Use the existing idles and watcher roles (`Watchers`, `LIFE_IDLE`); a spot with nothing to do gets the nearest activity.
 
-## 4. Funnels that match the game now (owner: "Sæt funnels op så de passer til alt det nye så vi kan tracke vores data")
+## 4. Funnels that match the game now
+**DONE v1364:** Funnels rebuilt (onboarding 11 steps, Vehicles funnel, Tutorial and TakedownsNew retired, 4 new events), hooked in Bowling, PlayerCPR, VehicleService, SessionStats (X-ray and card through the Session remote). The names are in NOW.md. Not done: the ShopVisit PassPrompt step (the Vehicles funnel has it); "Seen bay" is "Pressed" (the server cannot see a prompt shown).
+ (owner: "Sæt funnels op så de passer til alt det nye så vi kan tracke vores data")
 `Systems/Funnels.luau` still tracks the old first minutes (FirstTool, ThirdTool, Takedowns; a "Tutorial" funnel with Throw/Cannon/Wrecking/Maps). Rebuild it around the new first minutes (FTUE_10: bowling first, then free play). Server-side only, each step logged once and in order, from actions the server accepted, never in Studio.
 - **Onboarding (new players):**
   1. Joined

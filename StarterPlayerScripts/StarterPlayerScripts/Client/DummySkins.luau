@@ -222,6 +222,7 @@ local XRAY_PHONE = game:GetService("UserInputService").TouchEnabled and not game
 -- BODY_V2 1 (owner, 26 Nov 2026: X-ray 10/10): the X-RAY toggle (Client/XRayToggle) shows every near body in X-ray, whole
 -- skeleton, until it is switched off; the nearest XRAY_ALL_MAX only (phones fewer), within XRAY_ALL_REACH studs.
 local xrayAll: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+local xraySeenSent = false -- (FIXES_27NOV_LATE 4: the first X-ray from a 3-in-a-row, told once a visit)
 local refreshers: { [Model]: () -> () } = setmetatable({}, { __mode = "k" }) :: any
 local XRAY_ALL_REACH = 80
 local XRAY_ALL_MAX = if XRAY_PHONE then 6 else 16
@@ -936,6 +937,16 @@ local function dress(model: Model)
 						end
 						if clear then
 							xrayBone(limb, skin, folder, key, n)
+							if not xraySeenSent and not xrayAll[model] then
+								xraySeenSent = true
+								pcall(function()
+									local r = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+									local e = r and r:FindFirstChild("Session")
+									if e and e:IsA("RemoteEvent") then
+										e:FireServer("Xray", "streak")
+									end
+								end)
+							end
 							if not xrayAll[model] and model:GetAttribute("BodyV6") == true then
 								limbGlow(limb, folder) -- (A2: this limb only, through the solid body)
 							end

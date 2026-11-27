@@ -43,6 +43,11 @@
 - **Keys, the angry shove, the colour, maturity, death effects, Script Sync, publishing both places, REVIVE ALL on X, the German Shepherd, F68 water, the smooth body import:** all answered in "ANSWERS" (27 Nov) and since. Nothing is waiting on the owner but the PASSES below.
 - **The passes the owner still has to make** (until then: SOON, never free by mistake): go-kart 49, police car 99, monster truck 149, bulldozer 149, fire truck 199 Robux; and the Ford's pass 2092632252 put on sale. The bicycle and the dirt bike are FREE (they must never show SOON).
 
+## Funnels to look at (Creator Hub > Analytics > Funnels, live only, v1364)
+- Onboarding: Joined, Loaded, BowlingTry, FirstStrike, FirstShot, FirstKO, FirstXray, SecondMachine, ThirdMachine, FirstCare (player CPR), FiveMinutes.
+- Custom funnels: PlaytimeNew, PlaytimeAll, NewPhone/NewTablet/NewPC/NewConsole, ShopVisit, Vehicles (Pressed, SatFree, PassPrompt, Bought), Multiplayer. Retired: Tutorial, TakedownsNew.
+- Custom events: FirstUse, XrayToggle, BodyCardHidden, CPRDone, BowlingScore (a frame scores at most 30, so the buckets are 0-9 / 10-19 / 20-30, not 0-50/51-100/101+).
+
 ## Questions for the owner (filled in during the run)
 - **New badges (AUDIT 15):** make 8 badges on the Creator Hub and send the ids: 7-day streak, all weapons, all hats, every machine tried, every animal fed, Legend, first gold mastery star, advent finished. Also change the "Bullseye" badge text to "Fire a ragdoll onto a cannon target." Default: none added until the ids come (a 0 id is never awarded).
 - **BODY V6 APPROVED (27 Nov late)**: do THE v6 FIT PASS. (Old:) (27 Nov, run 6) **BODY V6 is ready for your OK:** `art/models/mannequin/review_v6/` (as v5, plus closeup_neck, closeup_shoulder, closeup_hand_thigh). A short thin neck, no dark bands (one clean light grey), the marks on the upper arms and thighs away from the joints, no specks, slivers or holes (checked: one closed shell). 14.5k tris, 44 bones. Say "BODY V6 APPROVED" or what to change. Default: wait.

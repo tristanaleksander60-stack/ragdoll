@@ -122,6 +122,11 @@ function PlayerCPR.start()
 				lazy("VitalsService").reviveNow(m)
 			end)
 			pop(torso.Position + Vector3.new(0, 5, 0), "IT'S ALIVE! (" .. beats .. "/5)", Color3.fromRGB(120, 255, 160))
+			pcall(function() -- (FIXES_27NOV_LATE 4: the onboarding's FirstCare and the "CPRDone" event)
+				local F = lazy("Funnels")
+				F.step(player, "FirstCare")
+				F.event(player, "CPRDone")
+			end)
 		else
 			pop(torso.Position + Vector3.new(0, 5, 0), "Flatline... try again (" .. beats .. "/5)", Color3.fromRGB(255, 160, 160))
 		end

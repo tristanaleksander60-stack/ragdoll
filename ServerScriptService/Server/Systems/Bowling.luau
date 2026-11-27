@@ -244,6 +244,9 @@ local function bowl(lane: Lane, by: Player)
 	end
 	lane.busy = true
 	lane.lastRoll = now
+	pcall(function() -- (FIXES_27NOV_LATE 4: the onboarding's BowlingTry)
+		(require(script.Parent:WaitForChild("Funnels")) :: any).step(by, "BowlingTry")
+	end)
 	ball:SetAttribute("Bowling", true)
 	local safe = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).MACHINE_SAFE == true
 	local DC = require(script.Parent:WaitForChild("DummyControl")) :: any
@@ -506,6 +509,14 @@ local function bowl(lane: Lane, by: Player)
 	if string.sub(word, 1, 6) == "STRIKE" and by and by.Parent then
 		pcall(function() -- (AUDIT 14: the "Bowl a strike" daily goal)
 			(require(script.Parent:WaitForChild("ProgressService")) :: any).goal(by, "Strike", 1)
+		end)
+		pcall(function() -- (FIXES_27NOV_LATE 4: the onboarding's FirstStrike)
+			(require(script.Parent:WaitForChild("Funnels")) :: any).step(by, "FirstStrike")
+		end)
+	end
+	if frameDone and by and by.Parent then
+		pcall(function() -- (FIXES_27NOV_LATE 4: "BowlingScore", the frame's score in a bucket)
+			(require(script.Parent:WaitForChild("Funnels")) :: any).event(by, "BowlingScore", if score >= 20 then "20-30" elseif score >= 10 then "10-19" else "0-9")
 		end)
 	end
 	showBoard(lane, by, word)

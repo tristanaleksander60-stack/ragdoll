@@ -317,6 +317,19 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 		end
 	elseif kind == "EggCard" then
 		r.eggCard = true
+	elseif kind == "Xray" and (data == "toggle" or data == "streak") then
+		-- (FIXES_27NOV_LATE 4: an X-ray seen, the toggle or the 3-in-a-row: the onboarding's FirstXray, and the toggle event)
+		pcall(function()
+			local F = require(script.Parent:WaitForChild("Funnels")) :: any
+			F.step(player, "FirstXray")
+			if data == "toggle" then
+				F.event(player, "XrayToggle")
+			end
+		end)
+	elseif kind == "CardHidden" then
+		pcall(function()
+			(require(script.Parent:WaitForChild("Funnels")) :: any).event(player, "BodyCardHidden")
+		end)
 	elseif kind == "Loaded" and (r :: any).loadedAt == nil then
 		-- (V10 phase 1: the load cover lifted: the funnel's "loaded" step, and whether it gave up waiting.)
 		local rr = r :: any

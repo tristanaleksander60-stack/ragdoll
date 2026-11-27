@@ -78,6 +78,15 @@ function XRayToggle.start()
 		b.BackgroundColor3 = if on then ON else OFF
 		b.Text = if on then "X-RAY ON" else "X-RAY" -- (AUDIT 29: said in words, not by colour only)
 		player:SetAttribute("XRayOn", on) -- (F21: the chip lights up)
+		if on then
+			pcall(function() -- (FIXES_27NOV_LATE 4: the funnel step and event, told to the server)
+			local r = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+			local e = r and r:FindFirstChild("Session")
+			if e and e:IsA("RemoteEvent") then
+				e:FireServer("Xray", "toggle")
+			end
+		end)
+		end
 	end
 	XRayToggle.toggle = toggle
 	-- (F21: the key comes from Keybinds "XRay" (I); a pad uses D-pad left.)

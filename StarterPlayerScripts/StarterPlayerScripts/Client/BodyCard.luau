@@ -20,6 +20,15 @@ local BodyCard = {}
 function BodyCard.toggleHidden()
 	local Settings = require(script.Parent:WaitForChild("Settings")) :: any
 	Settings.set("hideCard", not Settings.cardHidden())
+	if Settings.cardHidden() then
+		pcall(function() -- (FIXES_27NOV_LATE 4: the "BodyCardHidden" event)
+			local r = ReplicatedStorage:FindFirstChild("Remotes")
+			local e = r and r:FindFirstChild("Session")
+			if e and e:IsA("RemoteEvent") then
+				e:FireServer("CardHidden")
+			end
+		end)
+	end
 end
 -- (27 Nov late, owner: "Fiks \".\" keybind så den lukker hospitalmenu igen på computer": "." is also the key of Roblox's
 -- emote wheel, which took the press; Config.NO_EMOTE_MENU turns that wheel off, so "." always hides and shows the card.)

@@ -405,15 +405,21 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	prompt.Triggered:Connect(function(player: Player)
 		local character = player.Character
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local F = (require(script.Parent:WaitForChild("Funnels")) :: any) -- (FIXES_27NOV_LATE 4: the Vehicles funnel)
+		pcall(F.vehicle, player, "Pressed")
 		-- (0.37.12: locked behind its game pass: Roblox's own buy window instead of the seat.)
 		if not VehicleService.mayDrive(player, kind) then
 			if (VehicleService.PASSES[kind] or 0) > 0 then
+				pcall(F.vehicle, player, "PassPrompt")
 				MarketplaceService:PromptGamePassPurchase(player, VehicleService.PASSES[kind])
 			end
 			return
 		end
 		if humanoid and humanoid.Health > 0 and not seat.Occupant and humanoid.SeatPart == nil then
 			seat:Sit(humanoid)
+			if (VehicleService.PASSES[kind] or 0) <= 0 then
+				pcall(F.vehicle, player, "SatFree")
+			end
 		end
 	end)
 	seat:GetPropertyChangedSignal("Occupant"):Connect(function()

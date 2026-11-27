@@ -1,13 +1,16 @@
 --!strict
 -- Funnels (24 Nov 2026, owner: "better funnels that fit us now"). What the Creator Dashboard's funnels show. From the
 -- server only, nothing in Studio, every step logged in order and once, a failing call never breaks the game.
---   Onboarding (new players, once): 1 Joined  2 Loaded  3 FirstTool  4 FirstTakedown  5 SecondTool  6 FiveTakedowns
---     7 ThirdTool
---   PlaytimeNew / PlaytimeAll (each visit): 1 Joined  2 30s  3 1min  4 2min  5 5min  6 10min  7 20min
---   TakedownsNew (new players): 1 Joined  2 1  3 5  4 10  5 25  6 50  7 100
+-- (FIXES_27NOV_LATE 4, owner: "Sæt funnels op så de passer til alt det nye": rebuilt round the new first minutes.)
+--   Onboarding (new players, once): 1 Joined  2 Loaded  3 BowlingTry  4 FirstStrike  5 FirstShot  6 FirstKO
+--     7 FirstXray  8 SecondMachine  9 ThirdMachine  10 FirstCare  11 FiveMinutes
+--   PlaytimeNew / PlaytimeAll and NewPhone/NewTablet/NewPC/NewConsole (each visit): 1 Joined  2 30s ... 7 20min
 --   ShopVisit (each opening of the shop): 1 Opened  2 Prompt  3 Bought
+--   Vehicles (per player and day): 1 Pressed (a vehicle's prompt)  2 SatFree  3 PassPrompt (a paid one)  4 Bought
 --   Multiplayer (per player and day): 1 InSingleplayer  2 Travelled  3 Arrived
--- And the custom event "FirstUse" (which machine, creature or map a player used, once a visit each).
+--   (retired: Tutorial and TakedownsNew measured the old game)
+-- Custom events: "FirstUse" (a machine, creature or map, once a visit), "XrayToggle", "BodyCardHidden", "CPRDone",
+-- "BowlingScore" (the frame's score in 0-9 / 10-19 / 20-30).
 -- A hop between our own two places is the same visit: no new Joined or playtime there.
 
 local AnalyticsService = game:GetService("AnalyticsService")
@@ -20,7 +23,9 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 
 local Funnels = {}
 
-Funnels.ONBOARDING = { "Joined", "Loaded", "FirstTool", "FirstTakedown", "SecondTool", "FiveTakedowns", "ThirdTool" }
+Funnels.ONBOARDING = { "Joined", "Loaded", "BowlingTry", "FirstStrike", "FirstShot", "FirstKO", "FirstXray", "SecondMachine", "ThirdMachine", "FirstCare", "FiveMinutes" }
+-- What counts as a machine for SecondMachine / ThirdMachine (bowling is the first one).
+Funnels.MACHINES = { Cannon = true, Wrecking = true, Spider = true, Plant = true, Frog = true, Whale = true, Chicken = true, Washer = true, Slingshot = true, Mole = true, Vacuum = true, Tower = true, Compressor = true, Shredder = true, Gyro = true, Fan = true } :: { [string]: boolean }
 Funnels.PLAYTIME = { { 30, "30s" }, { 60, "1min" }, { 120, "2min" }, { 300, "5min" }, { 600, "10min" }, { 1200, "20min" } }
 Funnels.DEVICE_FUNNEL = { phone = "NewPhone", tablet = "NewTablet", pc = "NewPC", console = "NewConsole" } :: { [string]: string }
 Funnels.TAKEDOWNS = { 1, 5, 10, 25, 50, 100 }
@@ -38,6 +43,7 @@ type State = {
 	shopAt: number,
 	shopStep: number,
 	used: { [string]: boolean },
+	machines: number?,
 }
 local states: { [Player]: State } = {}
 
@@ -103,15 +109,37 @@ local function takedowns(player: Player)
 		return
 	end
 	if n >= 1 then
-		mark(player, "FirstTakedown")
+		mark(player, "FirstKO")
 	end
-	if n >= 5 then
-		mark(player, "FiveTakedowns")
+end
+
+-- A step of the new onboarding reached (Bowling, VitalsService, PlayerCPR, SessionStats ...): logged in order, once.
+function Funnels.step(player: Player, name: string)
+	if table.find(Funnels.ONBOARDING, name) then
+		mark(player, name)
 	end
-	while s.takedownStep < #Funnels.TAKEDOWNS and n >= Funnels.TAKEDOWNS[s.takedownStep + 1] do
-		s.takedownStep += 1
-		funnel(player, "TakedownsNew", tostring(player.UserId), s.takedownStep + 1, tostring(Funnels.TAKEDOWNS[s.takedownStep]))
+end
+
+-- A custom event (Metrics), never in Studio.
+function Funnels.event(player: Player, name: string, label: string?)
+	pcall(function()
+		(require(script.Parent:WaitForChild("Metrics")) :: any).event(player, name, 1, label)
+	end)
+end
+
+-- The Vehicles funnel: "Pressed", "SatFree", "PassPrompt", "Bought" (per player and day, each step once; only the
+-- steps really taken are logged, so a pass bought without the free bike first never counts a false SatFree).
+Funnels.VEHICLE_STEPS = { "Pressed", "SatFree", "PassPrompt", "Bought" }
+local vehicleDone: { [Player]: { [string]: boolean } } = setmetatable({}, { __mode = "k" }) :: any
+function Funnels.vehicle(player: Player, what: string)
+	local i = table.find(Funnels.VEHICLE_STEPS, what)
+	local done = vehicleDone[player] or {}
+	vehicleDone[player] = done
+	if not i or done[what] then
+		return
 	end
+	done[what] = true
+	funnel(player, "Vehicles", day(player), i, what)
 end
 
 -- The player is new (OnboardingService knows once the saved record is read).
@@ -125,7 +153,6 @@ function Funnels.newPlayer(player: Player)
 	climb(player, s)
 	if not hopped(player) then
 		funnel(player, "PlaytimeNew", s.visit, 1, "Joined")
-		funnel(player, "TakedownsNew", tostring(player.UserId), 1, "Joined")
 	end
 	takedowns(player)
 end
@@ -144,12 +171,12 @@ function Funnels.tool(player: Player, id: string)
 	s.tools[id] = true
 	s.toolCount += 1
 	mark(player, "Loaded") -- (whoever uses a tool is in)
-	mark(player, "FirstTool")
-	if s.toolCount >= 2 then
-		mark(player, "SecondTool")
-	end
-	if s.toolCount >= 3 then
-		mark(player, "ThirdTool")
+	local ok, gun = pcall(function()
+		local toy = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Toys")) :: any).byId[id]
+		return toy ~= nil and toy.gun == true
+	end)
+	if ok and gun then
+		mark(player, "FirstShot")
 	end
 end
 
@@ -180,6 +207,9 @@ end
 Funnels.TUTORIAL = { "Takedown", "Throw", "Cannon", "Wrecking", "Weapons", "Maps" }
 local tutorialDone: { [Player]: { [string]: boolean } } = setmetatable({}, { __mode = "k" }) :: any
 function Funnels.tutorial(player: Player, id: string)
+	if true then
+		return -- (FIXES_27NOV_LATE 4: the "Tutorial" funnel is retired; it measured the old game)
+	end
 	local index = table.find(Funnels.TUTORIAL, id)
 	if not index then
 		return
@@ -205,6 +235,13 @@ function Funnels.used(player: Player, what: string)
 		return
 	end
 	s.used[what] = true
+	if Funnels.MACHINES[what] then
+		s.machines = (s.machines or 0) + 1
+		mark(player, "SecondMachine")
+		if (s.machines :: number) >= 2 then
+			mark(player, "ThirdMachine")
+		end
+	end
 	pcall(function()
 		(require(script.Parent:WaitForChild("Metrics")) :: any).event(player, "FirstUse", 1, what)
 	end)
@@ -238,6 +275,9 @@ local function join(player: Player)
 	for i, mark_ in Funnels.PLAYTIME do
 		task.delay(math.max(0, (mark_[1] :: number) - (os.clock() - began)), function()
 			if player.Parent and states[player] == s then
+				if (mark_[1] :: number) >= 300 then
+					mark(player, "FiveMinutes")
+				end
 				funnel(player, "PlaytimeAll", s.visit, i + 1, mark_[2] :: string)
 				if s.new then
 					funnel(player, "PlaytimeNew", s.visit, i + 1, mark_[2] :: string)
@@ -253,6 +293,20 @@ local function join(player: Player)
 end
 
 function Funnels.start()
+	-- (Vehicles funnel, step 4: a vehicle pass bought)
+	game:GetService("MarketplaceService").PromptGamePassPurchaseFinished:Connect(function(player, passId, bought)
+		if not bought then
+			return
+		end
+		pcall(function()
+			for _, id in (require(script.Parent:WaitForChild("VehicleService")) :: any).PASSES do
+				if id == passId then
+					Funnels.vehicle(player, "Bought")
+					break
+				end
+			end
+		end)
+	end)
 	Players.PlayerAdded:Connect(join)
 	for _, p in Players:GetPlayers() do
 		task.spawn(join, p)
