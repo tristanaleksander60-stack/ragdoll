@@ -1,7 +1,7 @@
 # OVERVIEW: the whole plan on one page (read this FIRST on every /klar)
 
-> ## ⚠ OWNER PRIORITY NOW (27 Nov, late): BUILD BODY v6 BEFORE ANYTHING ELSE
-> The owner answered v5: "Gør halsen lidt mindre, sørg for intet overlapper, fjern de sorte striber". Build body v6 with `RAGDOLL_10.md` "v6 FIXES" (a smaller neck, zero overlaps, slivers or spikes, no black bands; keep the rest of v5), self-check, renders to `art/models/mannequin/review_v6/`, write "BODY V6: waiting for the owner's OK" in NOW.md, then go on with other rows. The dog is approved FOR NOW (owner); it gets better only at the very end (PHASE 8 row DOG3).
+> ## BODY v6 BUILT (27 Nov run 6): waiting for the owner's OK
+> Renders in `art/models/mannequin/review_v6/` (short neck, no bands, no overlaps or specks). The dog waits too (`art/models/dog/review/`). Nothing in the game changes before the OK; go on with the other rows.
 
 Rebuilt 26 Nov 2026 late (cloud) on the owner's order: "lav den bedst mulige plan og sørg for alt er i korrekt rækkefølge ... sørg for den ikke tester alt selv dybt, men at det er min opgave, den skal bare lave det bedst mulige produkt og så tester jeg når alt er færdigt".
 
