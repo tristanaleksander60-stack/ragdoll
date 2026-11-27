@@ -1232,6 +1232,80 @@ BUILD.Whale = function(f, at, m)
 end
 
 -- CHICKEN: a coop; a dummy that walks in is laid as an egg that wobbles, cracks and hatches it.
+-- 3.16 CHICKEN (docs/MACHINES_10.md; Config.CHICKEN_10): when the egg hatches, a little yellow chick pops out too and
+-- follows the lab's owner for CHICK_TIME s (hopping, 3 studs behind, at most one chick each), then waddles off and is gone.
+local CHICK_TIME = 60
+local chickOf: { [Player]: BasePart } = {}
+local function chickFollow(owner: Player, from: Vector3, into: Instance)
+	local old = chickOf[owner]
+	if old and old.Parent then
+		old:Destroy()
+	end
+	local chick = Instance.new("Part")
+	chick.Name = "Chick"
+	chick.Shape = Enum.PartType.Ball
+	chick.Size = Vector3.one * 1.1
+	chick.Color = Color3.fromRGB(255, 220, 70)
+	chick.Material = Enum.Material.SmoothPlastic
+	chick.Anchored, chick.CanCollide, chick.CanQuery, chick.CanTouch = true, false, false, false
+	chick.CFrame = CFrame.new(from)
+	local beak = Instance.new("Part")
+	beak.Name = "Beak"
+	beak.Size = Vector3.new(0.25, 0.2, 0.35)
+	beak.Color = Color3.fromRGB(255, 140, 40)
+	beak.Material = Enum.Material.SmoothPlastic
+	beak.Anchored, beak.CanCollide, beak.CanQuery, beak.CanTouch = true, false, false, false
+	beak.Parent = chick
+	for _, x in { -0.2, 0.2 } do
+		local eye = Instance.new("Part")
+		eye.Name = "Eye"
+		eye.Shape = Enum.PartType.Ball
+		eye.Size = Vector3.one * 0.16
+		eye.Color = Color3.fromRGB(20, 20, 24)
+		eye.Anchored, eye.CanCollide, eye.CanQuery, eye.CanTouch = true, false, false, false
+		eye:SetAttribute("X", x)
+		eye.Parent = chick
+	end
+	chick.Parent = into
+	chickOf[owner] = chick
+	pcall(function()
+		lazy("Playground").pop(from + Vector3.new(0, 3, 0), "A CHICK! It follows you", Color3.fromRGB(255, 230, 90))
+	end)
+	task.spawn(function()
+		local t0 = os.clock()
+		local pos = from
+		while chick.Parent and owner.Parent and os.clock() - t0 < CHICK_TIME do
+			local root = owner.Character and owner.Character:FindFirstChild("HumanoidRootPart")
+			if root and root:IsA("BasePart") then
+				local goal = root.Position - root.CFrame.LookVector * 3 + root.CFrame.RightVector * -1.5 - Vector3.new(0, 2.4, 0)
+				local step = goal - pos
+				if step.Magnitude > 60 then
+					pos = goal -- (it was left far behind: it catches up)
+				elseif step.Magnitude > 0.3 then
+					pos += step.Unit * math.min(step.Magnitude, 1.6)
+				end
+				local hop = math.abs(math.sin(os.clock() * 12)) * (if step.Magnitude > 0.3 then 0.5 else 0.08)
+				local face = if step.Magnitude > 0.3 then CFrame.lookAt(pos, pos + Vector3.new(step.X, 0, step.Z)) else CFrame.lookAt(pos, Vector3.new(root.Position.X, pos.Y, root.Position.Z))
+				local cf = face + Vector3.new(0, hop, 0)
+				chick.CFrame = cf
+				beak.CFrame = cf * CFrame.new(0, 0, -0.6)
+				for _, e in chick:GetChildren() do
+					if e.Name == "Eye" and e:IsA("BasePart") then
+						e.CFrame = cf * CFrame.new(e:GetAttribute("X") :: number, 0.2, -0.45)
+					end
+				end
+			end
+			task.wait(0.1)
+		end
+		if chick.Parent then
+			chick:Destroy()
+		end
+		if chickOf[owner] == chick then
+			chickOf[owner] = nil
+		end
+	end)
+end
+
 BUILD.Chicken = function(f, at, m)
 	part(f, "Coop", Vector3.new(14, 0.4, 12), at * CFrame.new(0, 0.2, 0), Color3.fromRGB(196, 160, 96), Enum.Material.WoodPlanks)
 	local hen = place(f, "MChicken", (at * CFrame.new(0, 0.4, 2)).Position, 180, 9)
@@ -1303,6 +1377,14 @@ BUILD.Chicken = function(f, at, m)
 			end)
 			chick.remove()
 			hideBody(model, false)
+			if (Config :: any).CHICKEN_10 then
+				local okO, owner = pcall(function()
+					return lazy("Lab").ownerAt(eggAt)
+				end)
+				if okO and owner then
+					chickFollow(owner, eggAt, f)
+				end
+			end
 			return Vector3.new(0, 70, 0) + m.toLab * 25
 		end)
 	end
