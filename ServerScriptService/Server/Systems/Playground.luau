@@ -1566,6 +1566,13 @@ function Playground.build(labOrigin: Vector3, name: string?)
 		if not ok then
 			log.warn("Vehicles failed in " .. folder.Name .. ": " .. tostring(err))
 		end
+		-- F88: the ragdoll bowling lane by the spawn (Systems/Bowling, Config.BOWLING).
+		local okB, errB = pcall(function()
+			require(script.Parent.Bowling).build(folder, origin)
+		end)
+		if not okB then
+			log.warn("Bowling failed in " .. folder.Name .. ": " .. tostring(errB))
+		end
 	end
 	-- v4 C1: zones, today's machine and NEW tags (pictures only: LabZones).
 	if lab then

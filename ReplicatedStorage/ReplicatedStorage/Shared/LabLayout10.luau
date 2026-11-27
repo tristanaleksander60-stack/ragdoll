@@ -228,7 +228,7 @@ if Config.LAB_OWNERMAP then
 		set(C, "Slingshot", item("Archery", 0, 9)) -- (beside the target, off its line)
 		set(C, "Frog", item("DuckPond", 14, 0))
 		C.Plant = Vector2.new(-120, -140) -- (the open spot between the cave and the aquarium; no garden in the compact plan)
-		set(C, "Chicken", item("PicnicGrill", 22, 0))
+		set(C, "Chicken", item("ChickenCoop") or item("PicnicGrill", 22, 0)) -- (F88: its own coop in the south, away from the spawn)
 		local bays = item("CarBays")
 		if bays then
 			LabLayout10.CARS.MuscleCar = bays + Vector2.new(-14.6, 0) -- the bays: tank, monster truck, blue car
