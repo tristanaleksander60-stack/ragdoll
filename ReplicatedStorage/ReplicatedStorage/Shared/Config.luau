@@ -120,6 +120,7 @@ local Config = {
 	FACE_TEARS = true, -- row 6: a crying face while mourning or in despair: the hurt face with two light-blue tears running down, drawn in code (DummyLife setFace)
 	OWN_SLAM = true, -- row 7: a body you hit or threw in the last 2.5 s slamming down at 70+ studs/s gives you a small camera shake and a 40 ms hit-stop (FxController Land)
 	BOWLING = true, -- F88 part 1: the ragdoll bowling lane on the plan's RagdollBowling spot (parts: maple lane, 10 giant physics pins, roof, bulb scoreboard, red lever); the lever rolls the nearest ragdoll down it; STRIKE/SPARE/SPLIT/GUTTER, frames of 2, TODAY'S BEST; the chicken moved to its coop (Systems/Bowling, LabLayout10)
+	SPLASH_FLOAT = true, -- F78 part 3: a splash of drops where a body goes into water, and code buoyancy in the aquarium (its water is parts now): a body below the surface is lifted and slowed so it floats (SwimService)
 	HOME_CLEAR = true, -- F75: once the map stands every vehicle home is checked with the vehicle's box and moved to the nearest clear spot when something solid is inside it ([Vehicles] homes moved: n)
 	BIKE_ROUTE = true, -- F69: on the compact map the motorbike rider follows the walkway loop's centre line point to point (a point not reached in 14 s is skipped)
 	REAL_HANDS = true, -- S2 plan B: real hands from rounded parts (palm, 4 fingers of 3 segments, a thumb of 2), posed by state, on this screen only; the hook hand skin is shrunk away (Client/RealHands)

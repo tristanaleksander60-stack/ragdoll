@@ -19,6 +19,7 @@ SwimService.LINES_IN = { "Help!", "I can't swim!", "Cold!", "Splash!" }
 SwimService.LINES_OUT = { "Brr!", "So cold!", "I'm soaked!" }
 
 local since: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+local SPLASH_FLOAT = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).SPLASH_FLOAT == true
 
 local function say(m: Model, line: string)
 	m:SetAttribute("MoodSay", line)
@@ -71,6 +72,44 @@ local function climbOut(m: Model, box: BasePart, at: Vector3)
 	end)
 end
 
+-- F78 part 3 (Config.SPLASH_FLOAT): a splash where a body goes in (a burst of white-blue drops at the surface), and in
+-- the aquarium, whose water is now parts (F87 AQUA_PARTS, no terrain water to hold a body up), code buoyancy: a body
+-- below the surface is lifted toward it and slowed in the water, so it floats and bobs as in the pools.
+local function splash(box: BasePart, at: Vector3)
+	local top = box.Position.Y + box.Size.Y / 2
+	local p = Instance.new("Part")
+	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.Transparency = true, false, false, false, 1
+	p.Size = Vector3.new(1, 1, 1)
+	p.Position = Vector3.new(at.X, top, at.Z)
+	local e = Instance.new("ParticleEmitter")
+	e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	e.Color = ColorSequence.new(Color3.fromRGB(210, 235, 255))
+	e.Size = NumberSequence.new(0.6, 0.2)
+	e.Transparency = NumberSequence.new(0.1, 1)
+	e.Speed = NumberRange.new(10, 18)
+	e.SpreadAngle = Vector2.new(35, 35)
+	e.Acceleration = Vector3.new(0, -50, 0)
+	e.Lifetime = NumberRange.new(0.5, 0.9)
+	e.EmissionDirection = Enum.NormalId.Top
+	e.Enabled = false
+	e.Parent = p
+	p.Parent = Workspace
+	e:Emit(36)
+	game:GetService("Debris"):AddItem(p, 2)
+end
+
+local function float(box: BasePart, m: Model)
+	local top = box.Position.Y + box.Size.Y / 2
+	for _, pe in m:GetChildren() do
+		if pe:IsA("BasePart") and not pe.Anchored then
+			local depth = top - 0.8 - pe.Position.Y
+			local v = pe.AssemblyLinearVelocity
+			local up = if depth > 0 then math.clamp(depth * 6, 2, 14) else math.min(v.Y, 0) * 0.5
+			pe.AssemblyLinearVelocity = Vector3.new(v.X * 0.8, if depth > 0 then math.max(v.Y * 0.5, up) else up, v.Z * 0.8)
+		end
+	end
+end
+
 local function step(dummies: Instance)
 	if #CollectionService:GetTagged("WaterVolume") == 0 then
 		return
@@ -92,10 +131,16 @@ local function step(dummies: Instance)
 		if not since[m] then
 			since[m] = now
 			m:SetAttribute("InWater", true)
+			if SPLASH_FLOAT then
+				splash(box, pe.Position)
+			end
 			local vital = m:GetAttribute("Vital")
 			if vital ~= "Dead" and vital ~= "Unconscious" then
 				say(m, SwimService.LINES_IN[math.random(1, #SwimService.LINES_IN)])
 			end
+		end
+		if SPLASH_FLOAT and box.Name == "AquaWaterVolume" and m:GetAttribute("Held") ~= true then
+			float(box, m :: any)
 		end
 		local vital = m:GetAttribute("Vital")
 		local awake = vital ~= "Dead" and vital ~= "Unconscious"
