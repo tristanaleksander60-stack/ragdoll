@@ -452,3 +452,61 @@ try:
         bpy.ops.render.render(write_still=True)
 except Exception as ex:
     print("review failed:", ex)
+
+# ---- the gate renders: knocked down, and next to a player-sized figure ------------------------------------------
+try:
+    rdir = os.path.join(HERE, "review_v3")
+    # next to the player: a plain R15-sized stand-in (about 5.2 studs, blocky) one body-width to the side
+    bpy.ops.mesh.primitive_cube_add(size=1, location=B(3.2, -0.3, 0))
+    ref = bpy.context.active_object
+    ref.name = "PlayerSizeRef"
+    ref.scale = (2.0, 1.0, 5.2)
+    refm = bpy.data.materials.new("Ref")
+    refm.diffuse_color = (0.15, 0.35, 0.8, 1)
+    ref.data.materials.append(refm)
+    a = math.radians(200)
+    cam.location = Vector((11 * math.sin(a) + 1.6, -11 * math.cos(a), 0.2))
+    d = Vector((1.6, 0, -0.2)) - cam.location
+    cam.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
+    scene.render.filepath = os.path.join(rdir, "next_to_player.png")
+    bpy.ops.render.render(write_still=True)
+    bpy.data.objects.remove(ref)
+    # knocked down: lying on its back, limbs splayed (posed on the armature)
+    bpy.context.view_layer.objects.active = rig
+    bpy.ops.object.mode_set(mode="POSE")
+    pb = rig.pose.bones
+    def turn(name, x=0, y=0, z=0):
+        b = pb.get(name)
+        if b:
+            b.rotation_mode = "XYZ"
+            b.rotation_euler = (math.radians(x), math.radians(y), math.radians(z))
+    turn("LeftUpperArm", 0, 0, 0)
+    for nm in ("LeftUpperArm", "RightUpperArm", "LeftUpperLeg", "RightUpperLeg", "RightLowerLeg", "LeftLowerArm"):
+        b = pb.get(nm)
+        if b:
+            b.rotation_mode = "XYZ"
+    # (bone-local axes, found from posed_front.png: X swings a limb out to the side for these down-pointing bones)
+    pb["LeftUpperArm"].rotation_euler = (0, 0, math.radians(65))
+    pb["RightUpperArm"].rotation_euler = (0, 0, math.radians(-75))
+    pb["LeftLowerArm"].rotation_euler = (math.radians(-25), 0, 0)
+    pb["LeftUpperLeg"].rotation_euler = (0, 0, math.radians(18))
+    pb["RightUpperLeg"].rotation_euler = (0, 0, math.radians(-22))
+    pb["RightLowerLeg"].rotation_euler = (math.radians(40), 0, 0)
+    bpy.ops.object.mode_set(mode="OBJECT")
+    rig.rotation_euler = (math.radians(90), 0, math.radians(20))
+    rig.location = (0, 0, -1.6)
+    cam.location = Vector((0.5, 1.0, 9))
+    d = Vector((0, 0, -1.6)) - cam.location
+    cam.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
+    scene.render.filepath = os.path.join(rdir, "knocked_down.png")
+    bpy.ops.render.render(write_still=True)
+    # the same pose standing, seen from the front: do the rings and the plate stay on their joints?
+    rig.rotation_euler = (0, 0, 0)
+    rig.location = (0, 0, 0)
+    cam.location = Vector((0, 9, 0))
+    d = Vector((0, 0, -0.1)) - cam.location
+    cam.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
+    scene.render.filepath = os.path.join(rdir, "posed_front.png")
+    bpy.ops.render.render(write_still=True)
+except Exception as ex:
+    print("gate renders failed:", ex)
