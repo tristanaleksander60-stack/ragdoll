@@ -29,8 +29,10 @@ local function play(remote: RemoteEvent, model: Instance)
 	gui.ResetOnSpawn = false
 	gui.IgnoreGuiInset = true
 	local panel = Instance.new("Frame")
+	-- (AUDIT 34: a kit panel above the hotbar (it stays in view), an 88 px PUSH on the right thumb on a phone, a SKIP)
+	local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 	panel.AnchorPoint = Vector2.new(0.5, 1)
-	panel.Position = UDim2.new(0.5, 0, 0.82, 0)
+	panel.Position = UDim2.new(0.5, 0, 0.7, 0)
 	panel.Size = UDim2.fromOffset(300, 190)
 	panel.BackgroundColor3 = Color3.fromRGB(24, 26, 32)
 	panel.BackgroundTransparency = 0.1
@@ -73,12 +75,32 @@ local function play(remote: RemoteEvent, model: Instance)
 	button.AnchorPoint = Vector2.new(0.5, 0.5)
 	button.Position = ring.Position
 	button.Size = UDim2.fromOffset(58, 58)
+	if touch then
+		button.AnchorPoint = Vector2.new(1, 1)
+		button.Position = UDim2.new(1, -28, 1, -120)
+		button.Size = UDim2.fromOffset(88, 88)
+	end
 	button.BackgroundColor3 = Color3.fromRGB(220, 60, 80)
 	button.Font = Enum.Font.GothamBold
 	button.TextScaled = true
 	button.TextColor3 = Color3.new(1, 1, 1)
 	button.Text = "PUSH"
-	button.Parent = panel
+	button.Parent = if touch then gui else panel
+	local skipped = false
+	local skip = Instance.new("TextButton")
+	skip.AnchorPoint = Vector2.new(1, 0)
+	skip.Position = UDim2.new(1, -8, 0, 6)
+	skip.Size = UDim2.fromOffset(64, 26)
+	skip.BackgroundColor3 = Color3.fromRGB(60, 64, 76)
+	skip.Font = Enum.Font.GothamBold
+	skip.TextSize = 16
+	skip.TextColor3 = Color3.new(1, 1, 1)
+	skip.Text = "SKIP"
+	skip.Parent = panel
+	Instance.new("UICorner").Parent = skip
+	skip.Activated:Connect(function()
+		skipped = true
+	end)
 	local bc = Instance.new("UICorner")
 	bc.CornerRadius = UDim.new(1, 0)
 	bc.Parent = button
@@ -121,12 +143,18 @@ local function play(remote: RemoteEvent, model: Instance)
 			title.Text = "Get ready..."
 		end
 	end)
-	task.wait(LEAD + BEAT * BEATS + 0.3)
+	local untilT = os.clock() + LEAD + BEAT * BEATS + 0.3
+	while os.clock() < untilT and not skipped do
+		task.wait(0.05)
+	end
+	if skipped then
+		score = 0 -- (skipped: no try at a revive)
+	end
 	c1:Disconnect()
 	c2:Disconnect()
 	c3:Disconnect()
 	remote:FireServer("Result", model, score)
-	title.Text = "Beats: " .. score .. " / " .. BEATS
+	title.Text = if skipped then "Skipped" else "Beats: " .. score .. " / " .. BEATS
 	task.wait(1.2)
 	gui:Destroy()
 	running = false

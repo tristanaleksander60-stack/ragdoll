@@ -104,7 +104,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
 31. **DONE v1354:** LoadCover has a purple progress bar driven by the real steps (lab known, floor here, ragdolls dressed; never backwards) and a kid tip that changes every 3 s. **The loading screen:** a progress bar from the real `ready()` checks, the logo and one rotating kid tip.
 32. **PARKED (27 Nov run 6):** the owner chose a GEAR for MORE (standing answer "MORE is a gear (9)") and the drawn two-people icon for Multiplayer (F11), so those stay; an egg and a ticket icon need new drawn icons uploaded (art/icons): with the icon pass. **Icons:** MORE gets a dots/grid icon (not the settings cog), Multiplayer a globe, Eggs an egg, Codes a ticket.
 33. **DONE v1361 (`FONT_SWEEP`, Client/FontSweep):** every text that appears on FredokaOne, Gotham or SourceSans gets the kit BuilderSans (display/body); 0 FredokaOne left at spawn. **One font helper:** `KitStyle.font("display"|"body")` for the 21 modules still on FredokaOne, Gotham or SourceSans.
-34. **The CPR game:** rebuilt as a kit panel, an 88 px PUSH on the right thumb, a SKIP, the hotbar kept visible.
+34. **DONE v1378 (but the game is OFF: `PLAYER_CPR = false`, owner 27 Nov):** the panel sits above the hotbar, an 88 px PUSH on the right thumb on phones, a SKIP (no revive try). **The CPR game:** rebuilt as a kit panel, an 88 px PUSH on the right thumb, a SKIP, the hotbar kept visible.
 35. **DONE v1313:** the map board's window is "Go to a map", the shared one "Shared lab". **Was:** Window titles: "Go to a map" and "Maps", "Shared lab" and "Multiplayer" no longer share titles.
 
 ## PERFORMANCE (with row 8 / R8)
