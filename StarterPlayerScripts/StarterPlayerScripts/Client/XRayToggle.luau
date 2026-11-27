@@ -33,7 +33,7 @@ function XRayToggle.start()
 	b.Size = UDim2.fromOffset(64, 64)
 	b.BackgroundColor3 = OFF
 	b.BackgroundTransparency = 0.15
-	b.Font = Enum.Font.FredokaOne
+	b.Font = Enum.Font.BuilderSansBold -- (AUDIT 29: the HUD font)
 	b.TextColor3 = Color3.new(1, 1, 1)
 	b.TextScaled = true
 	b.Text = "X-RAY"
@@ -45,6 +45,8 @@ function XRayToggle.start()
 	pad.PaddingLeft, pad.PaddingRight = UDim.new(0.12, 0), UDim.new(0.12, 0)
 	pad.PaddingTop, pad.PaddingBottom = UDim.new(0.3, 0), UDim.new(0.3, 0)
 	pad.Parent = b
+	local grow = Instance.new("UIScale") -- (AUDIT 29: the pulse grows from the centre, not from the corner)
+	grow.Parent = b
 	local edge = Instance.new("UIStroke")
 	edge.Thickness = 2
 	edge.Color = ON
@@ -74,6 +76,7 @@ function XRayToggle.start()
 		local on = not DummySkins.xrayIsOn()
 		DummySkins.setXray(on)
 		b.BackgroundColor3 = if on then ON else OFF
+		b.Text = if on then "X-RAY ON" else "X-RAY" -- (AUDIT 29: said in words, not by colour only)
 		player:SetAttribute("XRayOn", on) -- (F21: the chip lights up)
 	end
 	XRayToggle.toggle = toggle
@@ -106,12 +109,12 @@ function XRayToggle.start()
 				(require(script.Parent:WaitForChild("HudV3")) :: any).moment("See the bones! Tap X-RAY", 6)
 			end)
 			local TweenService = game:GetService("TweenService")
-			local big = UDim2.fromOffset(b.Size.X.Offset * 1.3, b.Size.Y.Offset * 1.3)
-			local small = b.Size
 			for _ = 1, 3 do
-				TweenService:Create(b, TweenInfo.new(0.25), { Size = big, BackgroundColor3 = ON }):Play()
+				TweenService:Create(grow, TweenInfo.new(0.25), { Scale = 1.3 }):Play()
+				TweenService:Create(b, TweenInfo.new(0.25), { BackgroundColor3 = ON }):Play()
 				task.wait(0.3)
-				TweenService:Create(b, TweenInfo.new(0.25), { Size = small, BackgroundColor3 = if DummySkins.xrayIsOn() then ON else OFF }):Play()
+				TweenService:Create(grow, TweenInfo.new(0.25), { Scale = 1 }):Play()
+				TweenService:Create(b, TweenInfo.new(0.25), { BackgroundColor3 = if DummySkins.xrayIsOn() then ON else OFF }):Play()
 				task.wait(0.3)
 			end
 		end

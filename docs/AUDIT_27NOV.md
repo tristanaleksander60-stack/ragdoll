@@ -95,7 +95,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - kid wording;
     - delete the WALK leftovers.
 28. **Slow-mo:** 3 speed chips and START/STOP right in the LAB row (not 4 taps through 3 windows).
-29. **X-RAY button:**
+29. **PART DONE v1335:** "X-RAY ON" in words when on, the HUD font (BuilderSansBold), the pulse grows from the centre (UIScale). LEFT: a HudSlots slot. **X-RAY button:**
     - "X-RAY ON" in words (not colour only);
     - the HUD font;
     - a HudSlots slot (so LayoutCheck measures it);
