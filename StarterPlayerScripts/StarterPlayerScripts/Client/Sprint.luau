@@ -48,6 +48,9 @@ local touchButton: TextButton? = nil
 
 -- Whether sprinting is wanted and allowed right now.
 function Sprint.active(): boolean
+	if Config.NO_SPEED then
+		return false -- (F83: no running: Roblox's standard walk only)
+	end
 	if ViewMode.isLab() then
 		return false
 	end
@@ -154,9 +157,13 @@ local function onAction(_: string, state: Enum.UserInputState, input: InputObjec
 end
 
 function Sprint.start()
+	-- (F83 NO_SPEED: no RUN button, no Shift or stick run, no run FOV; the weapon slow-down still works on the standard 16)
+	local noSpeed = Config.NO_SPEED == true
+	if not noSpeed then
 	ContextActionService:BindActionAtPriority(ACTION, onAction, false, Enum.ContextActionPriority.High.Value, Enum.KeyCode.LeftShift, Enum.KeyCode.RightShift, Enum.KeyCode.ButtonL3)
 	if UserInputService.TouchEnabled then
 		touchButton = makeTouchButton()
+	end
 	end
 	showHold()
 	-- The touch button only in the walk view (the lab view has no thumbstick to run with), in its
@@ -216,7 +223,7 @@ function Sprint.start()
 				weight = wantWeight
 			end
 			local pref = player:GetAttribute("WalkPref") -- (F38: the walk speed chosen in Settings)
-			local base = if type(pref) == "number" then math.clamp(pref, 16, 44) else StarterPlayer.CharacterWalkSpeed
+			local base = if type(pref) == "number" and not Config.NO_SPEED then math.clamp(pref, 16, 44) else StarterPlayer.CharacterWalkSpeed
 			local speed = base * weight * (1 + (Sprint.SPEED - 1) * (if plain then amount else 0))
 			-- (Only while the walk speed is ours to set: the plain walk speed or the one we wrote last.
 			-- Anything else set it (a stop, a slow, a boost): left alone.)
