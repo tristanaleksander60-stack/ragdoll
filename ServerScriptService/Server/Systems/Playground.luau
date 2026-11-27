@@ -1566,6 +1566,9 @@ function Playground.build(labOrigin: Vector3, name: string?)
 		if not ok then
 			log.warn("Vehicles failed in " .. folder.Name .. ": " .. tostring(err))
 		end
+		if (Config :: any).CANNON_TARGETS then
+			pcall(Playground.buildCannonTargets, folder, origin)
+		end
 		-- F88: the ragdoll bowling lane by the spawn (Systems/Bowling, Config.BOWLING).
 		local okB, errB = pcall(function()
 			require(script.Parent.Bowling).build(folder, origin)
@@ -1751,6 +1754,80 @@ function Playground.cannonWindUp(barrel: CFrame, loadAt: Vector3, seconds: numbe
 		end
 	end
 end
+-- 3.1 CANNON part 2 (Config.CANNON_TARGETS; docs/MACHINES_10.md 3.1 "Score"): 3 targets on the landing field: a HAY RING
+-- (8 bales in a circle), a PAINT circle (white and red rings) and a little SPLASH pool; a body that lands inside one
+-- gets its name and a bonus on top of the distance.
+function Playground.buildCannonTargets(into: Instance, labOrigin: Vector3)
+	local okP, PlanSpot = pcall(function()
+		return require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any
+	end)
+	if not okP then
+		return
+	end
+	local field = PlanSpot.at("LandingField", Vector2.new(-175, 170))
+	local f = Instance.new("Model")
+	f.Name = "CannonTargets"
+	f.Parent = into
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local function ground(x: number, z: number): Vector3
+		local at = Vector3.new(labOrigin.X + x, labOrigin.Y + 60, labOrigin.Z + z)
+		local hit = Workspace:Raycast(at, Vector3.new(0, -140, 0), params)
+		return if hit then hit.Position else Vector3.new(at.X, labOrigin.Y, at.Z)
+	end
+	local function flat(name: string, at: Vector3, r: number, colour: Color3, lift: number)
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Shape = Enum.PartType.Cylinder
+		p.Size = Vector3.new(0.1, r * 2, r * 2)
+		p.CFrame = CFrame.new(at + Vector3.new(0, lift, 0)) * CFrame.Angles(0, 0, math.rad(90))
+		p.Color = colour
+		p.Material = Enum.Material.SmoothPlastic
+		p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.CastShadow = true, false, false, false, false
+		p.Parent = f
+		return p
+	end
+	local function mark(name: string, at: Vector3, r: number, bonus: number)
+		local tag = Instance.new("Part")
+		tag.Name = "Target_" .. name
+		tag.Anchored, tag.CanCollide, tag.CanQuery, tag.CanTouch, tag.Transparency = true, false, false, false, 1
+		tag.Size = Vector3.one
+		tag.Position = at
+		tag:SetAttribute("Label", name)
+		tag:SetAttribute("Radius", r)
+		tag:SetAttribute("Bonus", bonus)
+		game:GetService("CollectionService"):AddTag(tag, "CannonTarget")
+		tag.Parent = f
+	end
+	-- the hay ring
+	local hay = ground(field.X - 12, field.Y - 8)
+	for k = 0, 7 do
+		local a = k / 8 * math.pi * 2
+		local b = Instance.new("Part")
+		b.Name = "HayBale"
+		b.Size = Vector3.new(2.4, 1.6, 1.6)
+		b.CFrame = CFrame.new(hay + Vector3.new(math.cos(a) * 6, 0.8, math.sin(a) * 6)) * CFrame.Angles(0, -a, 0)
+		b.Color = Color3.fromRGB(214, 180, 92)
+		b.Material = Enum.Material.Grass
+		b.Anchored = true
+		b.Parent = f
+	end
+	mark("HAY RING", hay, 6, 25)
+	-- the paint circle
+	local paint = ground(field.X + 10, field.Y + 6)
+	flat("PaintOuter", paint, 6, Color3.fromRGB(240, 240, 240), 0.05)
+	flat("PaintMid", paint, 4, Color3.fromRGB(220, 50, 60), 0.07)
+	flat("PaintIn", paint, 2, Color3.fromRGB(240, 240, 240), 0.09)
+	mark("PAINT CIRCLE", paint, 6, 40)
+	-- the splash pool
+	local pool = ground(field.X + 18, field.Y - 12)
+	flat("PoolRim", pool, 5, Color3.fromRGB(200, 200, 205), 0.05)
+	local water = flat("PoolWater", pool, 4.3, Color3.fromRGB(70, 160, 220), 0.08)
+	water.Material = Enum.Material.Glass
+	water.Transparency = 0.2
+	mark("SPLASH POOL", pool, 5, 50)
+end
+
 function Playground.cannonScore(m: Model, muzzle: Vector3, shooter: Player?)
 	local pelvis = m:FindFirstChild("LowerTorso")
 	if not (pelvis and pelvis:IsA("BasePart")) then
@@ -1779,6 +1856,20 @@ function Playground.cannonScore(m: Model, muzzle: Vector3, shooter: Player?)
 	local newBest = shooter ~= nil and d > best
 	if shooter and newBest then
 		shooter:SetAttribute("CannonBest", d)
+	end
+	-- (3.1 part 2: a target hit adds its bonus)
+	if (Config :: any).CANNON_TARGETS then
+		for _, t in game:GetService("CollectionService"):GetTagged("CannonTarget") do
+			if t:IsA("BasePart") then
+				local flatD = Vector3.new(pelvis.Position.X - t.Position.X, 0, pelvis.Position.Z - t.Position.Z).Magnitude
+				if flatD <= ((t:GetAttribute("Radius") :: number?) or 5) + 1 then
+					local bonus = (t:GetAttribute("Bonus") :: number?) or 25
+					d += bonus
+					pop(pelvis.Position + Vector3.new(0, 7, 0), tostring(t:GetAttribute("Label")) .. "! +" .. bonus, Color3.fromRGB(120, 230, 255))
+					break
+				end
+			end
+		end
 	end
 	pop(pelvis.Position, tostring(d) .. " studs!" .. (if newBest then "\nNEW BEST!" else ""), if golden then Color3.fromRGB(255, 210, 60) else Color3.new(1, 1, 1))
 	if golden then
