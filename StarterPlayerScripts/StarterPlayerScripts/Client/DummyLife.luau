@@ -71,6 +71,15 @@ if (Config :: any).TIE_SHOE then
 	-- (row 11 rest: it bends down and ties a shoe: the right foot forward, the knee bent, both hands fiddling at it)
 	table.insert(GESTURES, "TieShoe")
 end
+-- R5 PERSONA_IDLE (docs/RAGDOLL_10.md): almost half the idle gestures come from the ragdoll's persona, so each one reads
+-- at a glance: HERO flexes, stretches and folds its arms; CURIOUS points at things and looks round; SCARED taps a foot
+-- and looks back over its shoulder; CHILL yawns and stands hands on hips.
+local PERSONA_GESTURES: { [string]: { string } } = {
+	Hero = { "Flex", "Stretch", "Arms" },
+	Curious = { "PointAt", "LookAround", "Watch" },
+	Scared = { "LookBack", "FootTap", "Nails" },
+	Chill = { "Yawn", "Hips", "Shrug" },
+}
 local MAX_YAW, MAX_PITCH_UP, MAX_PITCH_DOWN = 70, 30, 25
 local LOOK_SMOOTH = 5 -- 1/s
 local AIR_CLEARANCE = require(Shared:WaitForChild("Ragdoll"):WaitForChild("Config")).AIR_CLEARANCE
@@ -852,6 +861,11 @@ local function updateIdle(life: Life, now: number, dt: number)
 		life.nextGestureAt = now + rng:NextNumber(GESTURE_GAP_MIN, GESTURE_GAP_MAX)
 	elseif not life.gesture and not busy and now >= life.nextGestureAt then
 		local pick = GESTURES[rng:NextInteger(1, #GESTURES)]
+		local persona = life.model:GetAttribute("Persona")
+		local own = if (Config :: any).PERSONA_IDLE and type(persona) == "string" then PERSONA_GESTURES[persona] else nil
+		if own and rng:NextNumber() < 0.45 then
+			pick = own[rng:NextInteger(1, #own)]
+		end
 		if (Config :: any).IDLE_LIFE2 and rng:NextNumber() < 0.5 then
 			local w = life.model:GetAttribute("Wounds")
 			if (type(w) == "string" and w ~= "") or life.model:GetAttribute("BoneStages") ~= nil then
@@ -1141,6 +1155,40 @@ local function updateIdle(life: Life, now: number, dt: number)
 		blend("RightElbow", ang(100, 0, 0))
 		blend("LeftElbow", ang(100, 0, 0))
 		blend("Neck", ang(-12, neckYaw * 0.3, 0))
+	elseif gesture == "Flex" then
+		-- R5 HERO: both arms up, elbows bent, a proud little pump
+		local pump = 8 * math.max(0, sin(t * 6))
+		blend("RightShoulder", ang(20, 0, 95 + pump))
+		blend("LeftShoulder", ang(20, 0, -95 - pump))
+		blend("RightElbow", ang(100 + pump, 0, 0))
+		blend("LeftElbow", ang(100 + pump, 0, 0))
+		blend("Waist", ang(-6, 0, 0))
+		blend("Neck", ang(8, neckYaw * 0.4, 0))
+	elseif gesture == "PointAt" then
+		-- R5 CURIOUS: points at something off to the side and looks along the arm
+		local side = if life.seed % 2 < 1 then 1 else -1
+		blend(if side > 0 then "RightShoulder" else "LeftShoulder", ang(80, 0, side * 35))
+		blend(if side > 0 then "RightElbow" else "LeftElbow", ang(8, 0, 0))
+		blend("Waist", ang(0, side * -12, 0))
+		blend("Neck", ang(4, side * -32, 0))
+	elseif gesture == "LookBack" then
+		-- R5 SCARED: a quick nervous look back over the shoulder, hunched
+		local twitch = 4 * sin(t * 13)
+		blend("Waist", ang(10, 38 + twitch, 0))
+		blend("Neck", ang(-4, 46 + twitch, 0))
+		blend("RightShoulder", ang(25, 0, -12))
+		blend("LeftShoulder", ang(25, 0, 12))
+		blend("RightElbow", ang(70, 0, 0))
+		blend("LeftElbow", ang(70, 0, 0))
+	elseif gesture == "Yawn" then
+		-- R5 CHILL: a big slow yawn, arms wide and up, the head back
+		local wave = sin(t * 2.2) * 6
+		blend("RightShoulder", ang(150, 0, 35 + wave))
+		blend("LeftShoulder", ang(150, 0, -35 - wave))
+		blend("RightElbow", ang(35, 0, 0))
+		blend("LeftElbow", ang(35, 0, 0))
+		blend("Waist", ang(-10, 0, 0))
+		blend("Neck", ang(26, 0, 0))
 	end
 	-- Personalities (CrowdService): a laugh, a shaken fist, a doze, a clown's little dance.
 	if moodOn(model, "LaughUntil") then
