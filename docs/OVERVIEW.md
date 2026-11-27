@@ -150,7 +150,7 @@ Everything not listed here is DONE (see the rows). Each line points to its row; 
    - 1.0's rest;
    - 13 (the dog);
    - 14 (wheelchairs).
-10. **The first minutes and phones (PHASE 7):**
+10. **Checked v1414: The first minutes and phones (PHASE 7):** already in: the newcomer-soft first KO (HitService.boostFor, NEWCOMER_DAMAGE for the first 3 takedowns), the gifts (LaunchGift), the DAY 2 chest line (FTUE_LATER), the collection (BONE_JOURNAL), the notification ask (Notify.goodMoment, Roblox's PromptOptIn), the stars/ranks (LEGEND_STARS); row 8's join streaming (LoadCover RequestStreamAroundAsync at the lab). LEFT small: one director owning every beat (an inner refactor, no player-visible change), the pistol beat. Was:
    - T1's rest: the one director, the plaza trio facing you, the newcomer-soft first KO, the pistol beat, the gifts, ranks, collection, the daily chest, the notification ask;
    - row 8's rest (phone lag).
 11. **AUDIT 27 Nov, the rest** (`AUDIT_27NOV.md` 5-42): fairness and compliance 5-8 before the release; gameplay and content 9-21 with the machines phase; phone UI 22-35 with T1; performance 36-42 with row 8.
