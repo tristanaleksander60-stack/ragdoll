@@ -99,6 +99,22 @@ The ragdolls ARE the game. This doc is the one umbrella for making them 10/10. I
 - it looks like it belongs in a top Roblox game next to a player avatar;
 - the renders: front, side, three-quarter, back, knocked down (a starfish pose), next to a player, and a CLOSE-UP of a hand and a marking.
 
+**v5 FIXES: the owner rejected v4** (27 Nov late: "nej"; the cloud rated v4 6/10). v4 got the one mesh, the crisp chest plate and marks, and the round boots right; KEEP those. Fix these (build `build_mannequin_v5.py` from v4, renders to `art/models/mannequin/review_v5/`):
+1. **The hands still read as mittens with a HOOK** (from the side the thumb sticks out down and forward like a claw, the 4 fingers are one fused lump):
+   - 4 separate thick fingers with clear gaps between them (visible in the silhouette from the front AND the side), rounded tips, a relaxed half-open pose (the fingers gently curled, not straight);
+   - the thumb shorter and thick, set on the inner side of the palm and pointing forward along the index finger, never sideways or downward;
+   - **the hook test:** in the side and front silhouettes, no part of the hand may look like a hook or a claw. Add a side close-up of the hand to the renders.
+2. **Too thin, flat as cardboard from the side** (v4 is 1.13 studs deep):
+   - the torso about 1.6 deep at the chest and belly (the depth about 75% of the chest width), with a round belly and a round back;
+   - every limb round in cross-section (as deep as it is wide): thighs about 0.95, shins 0.8, upper arms 0.75, forearms 0.7;
+   - **the side test:** the side render must read as chunky and round, like Fall Guys or Gang Beasts.
+3. **The bands have stair-step, notched edges** (the arm bands show square steps at the seams):
+   - the bands are whole edge loops in the mesh with their own dark colour (a vertex colour or a second material on the loop's faces), so the edge is a straight clean line all the way round; no band drawn in the colour map;
+   - one band per joint only (neck, shoulders, elbows, wrists, hips, knees, ankles), the same width everywhere; no extra stripes on the upper arm or the shin (v4 looks like striped pyjamas).
+4. **No head in the renders:** render the whole ragdoll WITH the game's head on it (the big round head with the BODY_V2 4b face, at its real size), and add a close-up of the head. The owner judges the whole doll.
+5. **"Next to a player" shows a grey slab:** put a real Roblox-size blocky R15 avatar next to it (head, torso 2x2x1, arms and legs 1x2x1, in normal avatar colours), so the scale reads.
+6. **The bar** is the v4 bar plus: no seams or steps on any band at close-up size; the hand passes the hook test; the side render reads chunky. Judge every render against it harshly and fix before you show the owner.
+
 **More life:**
 - **The stance:** upright and relaxed, never hunched or hand-clasped by default;
 - **the face:** R2, living eyes, blinks and a talking mouth;
