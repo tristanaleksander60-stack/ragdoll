@@ -5,7 +5,8 @@
 --   A4 the spin sick: after the washer or the gyro, a dizzy ragdoll says "blegh" and leaves a green cartoon puddle;
 --   A5 the fart boost: the go-kart's BOOST goes PFFRRT with a green puff (VehicleService calls fartPuff);
 --   A6 the poop emoji: a smiling cartoon poop by each picnic corner; a walking ragdoll that steps on it slips.
--- (A2, the fart gun, is a new weapon and waits for the weapon work.) The questionnaire says crude humour: Mild.
+--   A2 the fart gun: a toy (Toys "FartGun", a place toy) that leaves a green cloud; ragdolls in it cough and run.
+-- The questionnaire says crude humour: Mild.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
@@ -86,6 +87,38 @@ function CrudeHumor.fartPuff(body: BasePart)
 	local back = body.Position - body.CFrame.LookVector * (body.Size.Z / 2 + 0.5)
 	sound(back, CrudeHumor.FART, 0.75 + math.random() * 0.2, 1)
 	puff(back, GREEN, 20)
+end
+
+-- A2: the fart gun (ToyService place toy "FartGun"): a green cloud; the ragdolls in it cough, hold their noses and
+-- run from it, and now and then one faints comically.
+local COUGH = { "*cough cough*", "EWWW!", "WHO DID THAT?!", "MY NOSE!", "Gross!" }
+function CrudeHumor.fartCloud(player: Player?, at: Vector3)
+	if not on then
+		return
+	end
+	sound(at, CrudeHumor.FART, 0.7, 1)
+	puff(at + Vector3.new(0, 1.5, 0), GREEN, 45)
+	local dummies = Workspace:FindFirstChild("Dummies")
+	for _, m in if dummies then dummies:GetChildren() else {} do
+		local chest = m:FindFirstChild("UpperTorso")
+		if m:IsA("Model") and chest and chest:IsA("BasePart") and (chest.Position - at).Magnitude < 10 and m:GetAttribute("Vital") ~= "Dead"
+			and m:GetAttribute("InMachine") == nil then
+			task.delay(math.random() * 0.6, function()
+				if not m.Parent then
+					return
+				end
+				say(m, COUGH[math.random(#COUGH)])
+				if math.random() < 0.2 then
+					pcall(function() -- (a comic faint)
+						lazy("DummyControl").push(m, Vector3.new(math.random() - 0.5, 0.3, math.random() - 0.5).Unit * 14, player)
+					end)
+				else
+					m:SetAttribute("PanicFrom", at)
+					m:SetAttribute("PanicUntil", Workspace:GetServerTimeNow() + 4)
+				end
+			end)
+		end
+	end
 end
 
 -- A1: a ragdoll just sat down on a bench (BenchService).

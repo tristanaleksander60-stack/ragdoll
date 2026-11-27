@@ -1363,6 +1363,9 @@ local PLACE: { [string]: PlaceFn } = {
 	BlackHole = blackHole,
 	SpringPad = springPad,
 	Banana = banana,
+	FartGun = function(player: Player?, at: Vector3, facing: Vector3) -- (MILD_EXTRAS A2: Systems/CrudeHumor)
+		(require(script.Parent:WaitForChild("CrudeHumor")) :: any).fartCloud(player, at)
+	end,
 	Slime = slime,
 	Float = floatBubble,
 	Slowmo = slowmo,

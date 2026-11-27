@@ -263,6 +263,10 @@ add("Anvil", { label = "Anvil", kind = "place", category = "Specials", blurb = "
 add("Trampoline", { label = "Trampoline", short = "Trampo", kind = "place", category = "Specials", blurb = "Boing. Throw dummies on it", glyph = "🦘", color = rgb(80, 170, 255), cooldown = 0.8, power = 0.4, chaos = 0.4, fx = "Prop", big = true, unlockAt = 135})
 add("SpringPad", { label = "Spring Pad", short = "Spring", kind = "place", category = "Specials", blurb = "Step on it and get FLUNG", glyph = "⏫️", color = rgb(255, 160, 220), cooldown = 0.8, power = 0.7, chaos = 0.5, fx = "Prop", big = true, unlockAt = 200})
 add("Banana", { label = "Banana", kind = "place", category = "Specials", blurb = "Walk on it. Slip. Every time", glyph = "🍌", color = rgb(255, 225, 60), cooldown = 0.5, power = 0.2, chaos = 0.35, fx = "Prop", unlockAt = 25})
+-- (MILD_EXTRAS A2, Config.CRUDE_HUMOR: a toy cloud of cartoon fart gas; ragdolls in it cough, hold their noses and run)
+if (Config :: any).CRUDE_HUMOR then
+	add("FartGun", { label = "Fart Gun", short = "Toot", kind = "place", category = "Specials", blurb = "A green cloud. Everyone runs", glyph = "\u{1F922}", color = rgb(150, 220, 90), cooldown = 1.2, power = 0.1, chaos = 0.4, fx = "Prop", unlockAt = 40 })
+end
 add("Fan", { label = "Fan", kind = "place", category = "Specials", blurb = "A giant fan. Blows them away", glyph = "🌬️", color = rgb(170, 220, 255), cooldown = 1.0, power = 0.3, chaos = 0.5, fx = "Prop", unlockAt = 300})
 add("Bowling", { label = "Bowling", kind = "place", category = "Specials", blurb = "Strike! Bowls dummies like pins", glyph = "🎳", color = rgb(150, 90, 220), cooldown = 0.6, power = 0.45, chaos = 0.5, fx = "Prop", big = true, unlockAt = 260})
 
