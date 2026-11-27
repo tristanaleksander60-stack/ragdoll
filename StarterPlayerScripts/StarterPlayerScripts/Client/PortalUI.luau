@@ -165,7 +165,11 @@ function PortalUI.openHub()
 end
 
 local function build()
-	local multi = C.Window({ name = "Servers", title = "Multiplayer", theme = "rebirth", icon = "friends", size = PortalUI.WINDOW })
+	-- (Row 15: on a phone the window is lower and the body scrolls, so the fit scale stays near 1 and the buttons keep their
+	-- full size instead of the whole 560 x 520 window shrinking to fit a landscape phone.)
+	local vp = if workspace.CurrentCamera then workspace.CurrentCamera.ViewportSize else Vector2.new(1000, 1000)
+	local phoneWin = math.min(vp.X, vp.Y) <= 500 and (Config :: any).MP_PHONE ~= false
+	local multi = C.Window({ name = "Servers", title = "Multiplayer", theme = "rebirth", icon = "friends", size = if phoneWin then Vector2.new(math.min(560, vp.X - 40), math.min(520, vp.Y - 60)) else PortalUI.WINDOW })
 	hereLabel = C.Text("caption", "", { wrap = true, autoY = true, layoutOrder = -10, parent = multi.body })
 	-- (23 Nov 2026, owner: "multiplayer: see the servers, join your friends, make your own server"): the hub.
 	-- FRIENDS: friends online in this game, JOIN.
