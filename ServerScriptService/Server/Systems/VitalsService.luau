@@ -971,6 +971,22 @@ function VitalsService.step(model: Model, v: Vitals, dt: number)
 		publish(model, v, bleeding)
 		return
 	end
+	-- (FIXES 10.2, Config.BLEED_STAGES: a slow, readable bleed-out. It already sways and walks slower as Blood falls
+	-- (ActiveRagdoll hurtOf); in the last 12 % before out cold it sinks to its knees, a hand on the ground ("Breath",
+	-- a kneeling mood), then at UNCONSCIOUS_AT it tips over and lies still, breathing.)
+	if (Config :: any).BLEED_STAGES and model:GetAttribute("IsDummy") == true then
+		local mood = model:GetAttribute("Mood")
+		local sinking = v.state == "Alive" and bleeding and v.blood < Anatomy.UNCONSCIOUS_AT + 12 and v.blood >= Anatomy.UNCONSCIOUS_AT
+		if sinking and mood == nil and model:GetAttribute("InMachine") == nil then
+			model:SetAttribute("Mood", "Breath")
+			model:SetAttribute("FaintMood", true)
+		elseif not sinking and model:GetAttribute("FaintMood") == true then
+			model:SetAttribute("FaintMood", nil)
+			if mood == "Breath" then
+				model:SetAttribute("Mood", nil)
+			end
+		end
+	end
 	-- Out cold, dead, or back.
 	local dead = v.blood <= Anatomy.DEAD_AT or (v.lethalAt ~= nil and now >= (v.lethalAt :: number)) or (not BLOOD_KILLS and v.pulse < Anatomy.DEAD_PULSE and target < Anatomy.DEAD_PULSE)
 	if dead then
