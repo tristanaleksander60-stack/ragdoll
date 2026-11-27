@@ -84,7 +84,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
 24. **PART DONE v1337:** SMALL 0.75 (slots at least 44 px at rest), it stays open 1.5 s after a pick. Icons only at rest DONE v1355 (slot names hide while small, come back on open). LEFT: the selected slot full size. **The mini hotbar** (F71) at rest:
     - icons only (no names), the selected slot full size, `SMALL = 0.75` (slots at least 44 px);
     - it stays open 1.5 s after a pick.
-25. **PART DONE v1336:** the tile reads ONLINE (not Multiplayer), the gift clock is 15 px in a 64x20 box. LEFT: the general caption minimum ceil(14 / scale). **Text at least 14 px on phones:**
+25. **PART DONE v1336:** the tile reads ONLINE (not Multiplayer), the gift clock is 15 px in a 64x20 box. Caption minimum DONE v1356 (`PHONE_TEXT_FLOOR`, Client/TextFloor: fixed text at least ceil(14 / UIScale) on phones, scaled text MinTextSize 14). DONE. **Text at least 14 px on phones:**
     - the caption minimum `ceil(14 / scale)`;
     - "ONLINE" instead of "Multiplayer" on the tile;
     - the gift clock 15-16 px in a 64x20 box.

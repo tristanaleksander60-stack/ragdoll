@@ -182,6 +182,7 @@ local Config = {
 	BLOCKED_EASE = true, -- PHYSICS_DEEP: a walker pushed back against its own way stops pushing (speed 2) instead of bouncing off the obstacle again and again
 	PHYSICS_PROBE = false, -- PHYSICS_DEEP step 1: logs [PhysProbe] when a walking dummy moves against its own drive, with what it touches (ActiveRagdoll); off by default
 	TOUCH_HOLD = true, -- F92 rest: on a touch screen every prompt without a hold needs 0.3 s, so a tap while walking past never starts a machine (Client/ControlsFX)
+	PHONE_TEXT_FLOOR = true, -- AUDIT 25: on phones no fixed-size text under 14 px on screen (Client/TextFloor)
 	BOWL_OWNER = true, -- F91 rest: the bowler's machine runs the pins during the roll (network owner), back to the server after the count (Systems/Bowling)
 	BOWL_SLOWMO = true, -- BOWLING_12 rest: a short slow moment round the pins as the bowled ragdoll bursts out of its ball (Client/SlowMotion watches Curl)
 	BOWL_SPHERE = true, -- F91 rest: an invisible low-friction ball welded round the curled bowled ragdoll, so it rolls true to the pins (Systems/Bowling)
