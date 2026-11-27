@@ -256,6 +256,9 @@ local function watch(m: Model, job: Job, now: number)
 			job.untilAt = now + rng:NextNumber(SIT_MIN, SIT_MAX)
 			m:SetAttribute("Mood", "Sit")
 			m:SetAttribute("Seat", job.seat.cf)
+			pcall(function() -- (MILD_EXTRAS A1: sometimes a whoopee cushion)
+				(require(script.Parent:WaitForChild("CrudeHumor")) :: any).sat(m)
+			end)
 		end
 		return
 	end

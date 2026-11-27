@@ -189,6 +189,7 @@ local Config = {
 	TOUCH_HOLD = true, -- F92 rest: on a touch screen every prompt without a hold needs 0.3 s, so a tap while walking past never starts a machine (Client/ControlsFX)
 	HOLES_ON_SKIN = true, -- FIXES_27NOV_LATE 5: on a v6 body a bullet hole is small (0.35 limb / 0.45 torso), 0.005 off the skin, with no 3D ring or chip discs (they poked out) (Client/BulletHoles)
 	BLEED_STAGES = true, -- FIXES 10.2: a bleeding ragdoll sinks to its knees (mood Breath) in the last 12 % of Blood before it passes out and tips over (VitalsService.step)
+	CRUDE_HUMOR = true, -- MILD_EXTRAS A (owner yes): whoopee cushion on benches, burps at the grill, blegh after the washer/gyro, the go-kart fart boost, the poop-emoji slip; the fart gun (A2) waits; questionnaire crude humour: Mild BEFORE publishing (Systems/CrudeHumor)
 	BOO_MASK = true, -- MILD_EXTRAS C3 (owner yes): sneak up behind a ragdoll, BOO! (B / a touch button): it jumps, screams and runs; questionnaire fear: mild, BEFORE publishing (Systems/BooMask, Client/BooButton)
 	SHOP_ONE_TAP = true, -- AUDIT 23: on a phone one tap on a shop card (or its price) opens the detail; BUY only there (Client/ShopV9)
 	LANDING_TWITCH = true, -- FIXES 10.5: after a hard landing a limp body gives 1-2 small twitches of a hand or a foot, then lies still (ActiveRagdoll)

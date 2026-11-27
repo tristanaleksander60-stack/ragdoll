@@ -877,6 +877,9 @@ function VehicleService.start()
 			return
 		end
 		if action == "Boost" then
+			pcall(function() -- (MILD_EXTRAS A5: the fart boost)
+				(require(script.Parent:WaitForChild("CrudeHumor")) :: any).fartPuff(body)
+			end)
 			for _, f in car:GetDescendants() do
 				if f:IsA("Fire") and f.Name == "BoostFlame" then
 					f.Enabled = true
