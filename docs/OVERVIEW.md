@@ -137,9 +137,9 @@ Everything not listed here is DONE (see the rows). Each line points to its row; 
    - S2's rest: grip and point poses, a cheaper far version.
 7. **The map (PHASE 4):**
    - M4's OBJECT BY OBJECT as Blender meshes, THE LOOK 1:1 colour check, the path lint (F82);
-   - BOWLING_12's rest: the Blender models, the ragdoll-as-ball show, slow-mo, cheers, phone swipe, turkey, big ball, bumpers, BOLTS and badges;
+   - BOWLING_12's rest: the Blender models, the ragdoll-as-ball show, cheers, phone swipe, big ball, bumpers, BOLTS and badges (slow-mo DONE v1349 BOWL_SLOWMO; turkey DONE v1406 BOWL_TURKEY: 2 strikes in a row DOUBLE!, 3 TURKEY! with extra confetti, a big hit and a shout);
    - F76's rest: ~~the bicycle's pedalling legs and bell~~ (DONE v1277, `BIKE_PEDAL`: Client/BikePedal + the horn button rings a PSE bell 9125390319); ~~the 5 new vehicles~~ (DONE v1298, `NEW_VEHICLES`: Go-Kart BOOST with exhaust flames, Police Car SIREN with flashing bar, sound and hands up, Monster Truck JUMP, Bulldozer BLADE up/down, Fire Truck WATER CANNON pushing ragdolls over; built from parts in our code; F / ButtonY / one touch button; SOON until the pass ids);
-   - F78's rest: ~~the swim animation~~ (DONE v1278, `SWIM_POSE`: panic splash, front crawl + flutter kick, treading water), the drown animation; ~~the croc death roll~~ (3.x ANIMALS_10).
+   - F78's rest: ~~the swim animation~~ (DONE v1278, `SWIM_POSE`: panic splash, front crawl + flutter kick, treading water), the drown animation (NOT BUILT: SwimService's kid-friendly rule "no drowning effects beyond floating" and the Mild rating; a question for the owner in NOW.md); ~~the croc death roll~~ (3.x ANIMALS_10).
 8. **Life (PHASE 5):**
    - 0.1 / 0.158: the pool by tier and the "in view" camera report;
    - 0.1567, 0.1568 and P1's rests;

@@ -44,6 +44,7 @@ type Lane = {
 }
 
 local today: { [number]: { name: string, best: number } } = {}
+local strikesInRow: { [number]: number } = {} -- (BOWL_TURKEY: strikes in a row per player this visit)
 
 -- (F88 part 2, Config.BOWLING_FX: a pin crash on a strike with confetti, a sad trombone on a gutter)
 Bowling.STRIKE_SOUND = "rbxassetid://4692687595" -- (Creator Store "Bowling Strike Sound Effect")
@@ -478,6 +479,23 @@ local function bowl(lane: Lane, by: Player)
 		end
 		frameDone = true
 	end
+	-- (BOWLING_12 rest, Config.BOWL_TURKEY: strikes in a row: 2 is a DOUBLE, 3 (and on) a TURKEY with an extra
+	-- confetti burst and a big shout; any frame that is not a strike starts the count again)
+	local turkey = false
+	if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BOWL_TURKEY and by then
+		if string.sub(word, 1, 6) == "STRIKE" then
+			strikesInRow[by.UserId] = (strikesInRow[by.UserId] or 0) + 1
+			local n = strikesInRow[by.UserId]
+			if n >= 3 then
+				word ..= "  TURKEY!"
+				turkey = true
+			elseif n == 2 then
+				word ..= "  DOUBLE!"
+			end
+		elseif frameDone then
+			strikesInRow[by.UserId] = nil
+		end
+	end
 	if goldDown then
 		word ..= "  GOLDEN PIN!"
 	end
@@ -517,6 +535,15 @@ local function bowl(lane: Lane, by: Player)
 	if frameDone and by and by.Parent then
 		pcall(function() -- (FIXES_27NOV_LATE 4: "BowlingScore", the frame's score in a bucket)
 			(require(script.Parent:WaitForChild("Funnels")) :: any).event(by, "BowlingScore", if score >= 20 then "20-30" elseif score >= 10 then "10-19" else "0-9")
+		end)
+	end
+	if turkey then
+		confetti(lane.deckAt + Vector3.new(0, 7, 0))
+		pcall(function()
+			(require(script.Parent:WaitForChild("FxService")) :: any).hit(lane.deckAt + Vector3.new(0, 5, 0), 120, "Bowling")
+		end)
+		pcall(function()
+			(require(script.Parent:WaitForChild("ProgressService")) :: any).notice(by, "\u{1F983} TURKEY! Three strikes in a row!")
 		end)
 	end
 	showBoard(lane, by, word)
