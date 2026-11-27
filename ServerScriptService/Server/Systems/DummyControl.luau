@@ -247,6 +247,7 @@ function DummyControl.hit(model: Model, part: BasePart, impulse: Vector3, positi
 	-- HANDOFF_GAP s a body.
 	local current = owners[model]
 	if by and current and by ~= current and by.Parent and (by:GetAttribute("SharedGuest") ~= nil or by:GetAttribute("SharedHost") == true)
+		and model:GetAttribute("Mood") == nil -- (F93: never hand off a body in a mood: a kneeling CPR giver stays on one screen)
 		and os.clock() - (lastHandoff[model] or -math.huge) >= DummyControl.HANDOFF_GAP then
 		lastHandoff[model] = os.clock()
 		DummyControl.setOwner(model, by)

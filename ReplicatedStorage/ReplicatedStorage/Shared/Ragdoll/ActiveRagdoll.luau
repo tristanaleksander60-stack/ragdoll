@@ -179,6 +179,7 @@ local ICE_COLOR = Config.ICE_COLOR
 local GetAbout = Config.GetAbout
 local WALK_SPEED = GetAbout.WALK_SPEED
 local GAME_PERSONA_WALK = (GameConfig :: any).PERSONA_WALK == true -- R3
+local GAME_CPR_STILL = (GameConfig :: any).CPR_STILL == true -- F93
 local LIMP_SPEED = GetAbout.LIMP_SPEED
 local CRAWL_SPEED = GetAbout.CRAWL_SPEED
 local FLEE_SPEED = GetAbout.FLEE_SPEED
@@ -2093,7 +2094,41 @@ local function update(dt: number)
 				end
 			end
 		elseif state == "Walking" or state == "Fleeing" or state == "Crawling" then
-			updateMoving(rig, dt)
+			-- F93 (owner 27 Nov: "Benene lakker stadig naar der gives CPR"; Config.CPR_STILL): the CPR giver is in WALKING
+			-- (its Home is by the patient), so the walk kept re-aiming the heading, driving and holding the pelvis at
+			-- STANDING height while the mood pose bent the legs into a kneel: the legs fought every frame. Now, at its spot
+			-- (within 3 studs of Home, out at 4.5), a kneeling mood HOLDS: no drive, the heading frozen, the mood pose on
+			-- every joint, and the lift eased down to kneeling height (the knee on the ground). Only the arms and the waist
+			-- move with the pumps (Poses.MOODS).
+			local kmood = rig.model:GetAttribute("Mood")
+			local kr: any = rig
+			local khome = if GAME_CPR_STILL and state == "Walking" and type(kmood) == "string" and KNEEL_MOODS[kmood] then homeOf(rig) else nil
+			local kpe = rig.pelvis.Position
+			if khome and Vector3.new(khome.X - kpe.X, 0, khome.Z - kpe.Z).Magnitude < (if kr.kneelHold then 4.5 else 3) then
+				kr.kneelHold = true
+				rig.speed = 0
+				rig.drive.VectorVelocity = Vector3.zero
+				rig.balance.CFrame = uprightFrame(Vector3.yAxis, rig.heading)
+				local kpose = Poses.MOODS[kmood]
+				if kpose then
+					applyPose(rig, kpose(rig.stateTime))
+				end
+				if not kr.kneelGround2 then
+					local hit = Workspace:Raycast(kpe + Vector3.new(0, 1, 0), Vector3.new(0, -(rig.standOffset + 4), 0), rig.rayParams)
+					kr.kneelGround2 = if hit then hit.Position.Y else kpe.Y - rig.standOffset
+				end
+				kr.kneelW2 = math.min(1, (kr.kneelW2 or 0) + dt / 0.5)
+				local e = kr.kneelW2 * kr.kneelW2 * (3 - 2 * kr.kneelW2)
+				local lp = rig.lift.Position
+				rig.lift.Position = Vector3.new(lp.X, kr.kneelGround2 + rig.standOffset + WALK_HOVER * (1 - e) - KNEEL_DROP * e, lp.Z)
+			else
+				if kr.kneelHold then
+					kr.kneelHold = nil
+					kr.kneelGround2 = nil
+					kr.kneelW2 = nil
+				end
+				updateMoving(rig, dt)
+			end
 		elseif state == "Flinch" then
 			if (GameConfig :: any).HIT_REACT_V2 and rig.hitSpot then
 				applyPose(rig, Poses.hitReact(rig.hitSpot, rig.hitVariant or 1, rig.hitSide, rig.hitLimbSide, rig.stateTime, rig.hitStrength))

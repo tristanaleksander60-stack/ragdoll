@@ -2082,7 +2082,7 @@ local function layers(life: Life, state: string, now: number, dt: number)
 		end
 	end
 	-- Foot IK while standing, near this screen only.
-	if state == "Standing" and model:GetAttribute("Frozen") ~= true then
+	if state == "Standing" and model:GetAttribute("Frozen") ~= true and not ((Config :: any).CPR_STILL and model:GetAttribute("Mood") ~= nil) then -- (F93: a mood owns the legs)
 		local cam = Workspace.CurrentCamera
 		local near = cam ~= nil and (life.pelvis.Position - cam.CFrame.Position).Magnitude <= FOOT_IK_REACH
 		local k = 1 - math.exp(-8 * dt)
@@ -2322,7 +2322,8 @@ local function step(life: Life, now: number, dt: number)
 		local mood = model:GetAttribute("Mood")
 		local kneeling = (Config :: any).MOOD_LEGS and state == "Walking" and type(mood) == "string"
 			and (mood == "CPR" or mood == "CPRFast" or mood == "CPRSlam" or mood == "CPROne" or mood == "Mourn" or mood == "Check" or mood == "Breath")
-			and life.groundSpeed < 2
+			and life.groundSpeed < (if (Config :: any).CPR_STILL then (if (life :: any).kneelLegs then 5 else 3) else 2) -- (F93: the pumps' ground-speed noise never starts a walk on the legs)
+		;(life :: any).kneelLegs = kneeling or nil
 		if kneeling then
 			moodPose(life, now, dt, false)
 		else
