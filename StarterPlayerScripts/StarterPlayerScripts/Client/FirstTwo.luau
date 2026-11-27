@@ -246,6 +246,30 @@ function FirstTwo.start()
 	local targetInst: Instance? = nil
 	local near: any = nil -- the untried machine within NEAR, if any
 	local nearInst: Instance? = nil
+	-- (T1 part 3: the golden ragdoll: a countdown on the goal line while it runs, then the result)
+	if Config.GOLDEN_RUN then
+		player:GetAttributeChangedSignal("GoldenUntil"):Connect(function()
+			local untilT = player:GetAttribute("GoldenUntil")
+			if type(untilT) ~= "number" then
+				return
+			end
+			task.spawn(function()
+				while player:GetAttribute("GoldenUntil") == untilT do
+					local left = math.max(0, math.ceil(untilT - Workspace:GetServerTimeNow()))
+					pcall(function()
+						(require(script.Parent:WaitForChild("HudV3")) :: any).moment("Catch the GOLDEN one! " .. left, 1.1)
+					end)
+					task.wait(1)
+				end
+			end)
+		end)
+		player:GetAttributeChangedSignal("GoldenCaught"):Connect(function()
+			local c = player:GetAttribute("GoldenCaught")
+			if c ~= nil then
+				say(if c then "GOLDEN! +10 KOs" else "It got away!")
+			end
+		end)
+	end
 	local busyUntil = 0
 	local bikeShown, walked, stillSince = false, 0, os.clock() -- (T1 part 2: the free BIKE hint)
 	local lastPos: Vector3? = nil
