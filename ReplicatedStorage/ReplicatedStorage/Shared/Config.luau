@@ -106,6 +106,7 @@ local Config = {
 	PICK_OUT = true, -- F47: a ragdoll that wakes after being dead or out with bullet holes gets them picked out one by one by a helper that comes over (or by itself), with lines (Systems/PickOut, VitalsService.pickOneOut)
 	DEATH_HEAL = true, -- F47: waking from DEATH heals every injury (bones, bruises, limp, face, drips, plasters) but the bullet holes, which stay (closed) for the pick-out scene (VitalsService)
 	BUOYANCY_V2 = true, -- row 5: in the part-water tanks each limb floats by how much of its volume is under (a VectorForce per limb, 1.4x its weight fully under, plus drag), not a velocity write that fought the simulating screen (SwimService)
+	PUDDLE_GLOSS = true, -- row 6: the purple pools are glossy (sheen + a light highlight) with 2-4 star splats on the edge, growing and fading with the pool (Client/BloodFx)
 	AUTO_QUALITY = true, -- 8: an FPS governor on each screen: start level by device (PC 3, phone/tablet 2), under 45 FPS for 10 s one step down, over 58 for 30 s one up: particles halved and far walkers slower, then no shadows and nearer lights, then fewer walkers and real hands (Client/QualityGovernor)
 	IDLE_LIFE = true, -- 11: standing ragdolls do small human actions 8-20 s apart, never the same twice in a row: + hands on hips, neck roll, rub eyes, look at nails, sneeze, wave, crack knuckles (Client/DummyLife gestures)
 	HIT_BONE_NAME = true, -- row 4: a round to the trunk names the bone on the hit card (Sternum, Rib, Spine, Shoulder blade, Pelvis, Lower spine), as the X-ray shows (VitalsService)

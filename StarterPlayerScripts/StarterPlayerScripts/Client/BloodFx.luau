@@ -454,7 +454,12 @@ local POOL_START = 0.25
 local POOL_MAX = 2.2
 local POOL_STAY = 20 -- s a pool stays once its body stopped bleeding (or went)
 local MAX_POOLS = 12
-type Pool = { ink: Part, blob: Part, radius: number, at: Vector3, normal: Vector3, quietSince: number? }
+type Extra = { part: Part, angle: number, frac: number, rot: number, scale: number }
+type Pool = { ink: Part, blob: Part, radius: number, at: Vector3, normal: Vector3, quietSince: number?, extras: { Extra }? }
+-- Row 6 (Config.PUDDLE_GLOSS; BODY_V2 2 "Puddle"): the pool is glossy (a soft sheen and a light highlight blob) with 2-4
+-- star-shaped splats round its edge, all growing with it and fading with it.
+local PUDDLE_GLOSS = (require(Shared:WaitForChild("Config")) :: any).PUDDLE_GLOSS == true
+local GLOSS = Color3.fromRGB(190, 140, 255)
 local pools: { [Model]: Pool } = {}
 local oldPools: { Pool } = {}
 
@@ -477,10 +482,50 @@ local function sizePool(pool: Pool)
 	local d = pool.radius * 2
 	pool.ink.Size = Vector3.new(0.04, d + 0.18, d + 0.18)
 	pool.blob.Size = Vector3.new(0.04, d, d * 0.86)
+	if pool.extras then
+		local base = pool.blob.CFrame
+		for _, e in pool.extras do
+			local r = pool.radius * e.frac
+			e.part.Size = Vector3.new(0.04, d * e.scale * 0.22, d * e.scale)
+			e.part.CFrame = base * CFrame.new(0.006, math.sin(e.angle) * r, math.cos(e.angle) * r) * CFrame.Angles(e.rot, 0, 0)
+		end
+	end
+end
+
+local function glossOf(blob: Part): { Extra }
+	local extras: { Extra } = {}
+	blob.Reflectance = 0.18
+	-- the highlight: a light soft blob near one side
+	local hi = blob:Clone()
+	hi.Color = GLOSS
+	hi.Reflectance = 0
+	hi.Transparency = 0.35
+	hi.Parent = blob.Parent
+	table.insert(extras, { part = hi, angle = 2.4, frac = 0.35, rot = 0.5, scale = 0.32 })
+	-- 2-4 stars: two crossed thin strokes each, on the edge
+	local n = math.random(2, 4)
+	for i = 1, n do
+		local angle = (i / n) * math.pi * 2 + math.random() * 0.8
+		for k = 0, 1 do
+			local arm = Instance.new("Part")
+			arm.Shape = Enum.PartType.Block
+			arm.Material = Enum.Material.SmoothPlastic
+			arm.Color = blob.Color
+			arm.Reflectance = 0.18
+			arm.Anchored, arm.CanCollide, arm.CanQuery, arm.CanTouch, arm.CastShadow = true, false, false, false, false
+			arm.Parent = blob.Parent
+			table.insert(extras, { part = arm, angle = angle, frac = 1.02, rot = angle + k * math.pi / 2 + 0.4, scale = 0.38 })
+		end
+	end
+	return extras
 end
 
 local function dropPool(pool: Pool)
-	for _, part in { pool.ink, pool.blob } do
+	local all = { pool.ink, pool.blob }
+	for _, e in pool.extras or {} do
+		table.insert(all, e.part)
+	end
+	for _, part in all do
 		if part.Parent then
 			local t = TweenService:Create(part, TweenInfo.new(1), { Transparency = 1 })
 			t:Play()
@@ -560,7 +605,7 @@ local function tendPool(model: Model, dt: number, bleeding: boolean)
 		blob.CFrame = poolCFrame(below.Position, below.Normal, FLOOR_LIFT(below.Normal) + 0.01)
 		ink.Parent = container()
 		blob.Parent = container()
-		pool = { ink = ink, blob = blob, radius = POOL_START, at = below.Position, normal = below.Normal, quietSince = nil }
+		pool = { ink = ink, blob = blob, radius = POOL_START, at = below.Position, normal = below.Normal, quietSince = nil, extras = if PUDDLE_GLOSS then glossOf(blob) else nil }
 		pools[model] = pool
 	end
 	local p = pool :: Pool
