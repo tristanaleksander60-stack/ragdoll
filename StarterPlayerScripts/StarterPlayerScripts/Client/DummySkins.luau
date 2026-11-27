@@ -409,6 +409,33 @@ local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: s
 			end
 		end
 	end
+	-- D12 (DAMAGE_12.md 1, Config.BONES_V2): the bone's STAGE from the server's bone model (BoneStages) drawn on it:
+	-- HAIRLINE a thin crack line, CRACKED a zig-zag crack with a little gap, BROKEN snapped (a dark gap across it),
+	-- SHATTERED a wider gap with chips spread inside the shell. Never outside the X-ray.
+	local model = limb.Parent
+	local stages = if model then model:GetAttribute("BoneStages") else nil
+	local stage = if type(stages) == "string" then tonumber(string.match(stages, limb.Name .. ":(%d)")) else nil
+	if stage and stage > 0 and not (key == "UpperTorso" or key == "LowerTorso") then
+		local crack = Color3.fromRGB(54, 44, 40)
+		local w = thick * 1.25
+		local y0 = len * 0.08
+		if stage == 1 then
+			bit(Enum.PartType.Block, Vector3.new(w, thick * 0.07, w), CFrame.new(0, y0, 0) * CFrame.Angles(0, 0, math.rad(18)), crack)
+		else
+			for k = -1, 1 do
+				bit(Enum.PartType.Block, Vector3.new(w * 0.55, thick * 0.1, w), CFrame.new(k * w * 0.3, y0 + (if k == 0 then thick * 0.18 else 0), 0) * CFrame.Angles(0, 0, math.rad(if k == 0 then -32 else 32)), crack)
+			end
+			if stage >= 3 then
+				bit(Enum.PartType.Block, Vector3.new(w * 1.1, thick * (if stage == 4 then 0.55 else 0.3), w * 1.1), CFrame.new(0, y0 - thick * 0.3, 0), MARROW)
+			end
+			if stage == 4 then
+				for _ = 1, 4 do
+					local c = thick * rng:NextNumber(0.18, 0.3)
+					bit(Enum.PartType.Block, Vector3.new(c, c * 1.3, c), CFrame.new(rng:NextNumber(-0.9, 0.9) * thick, y0 + rng:NextNumber(-1.2, 0.8) * thick, rng:NextNumber(-0.9, 0.9) * thick) * CFrame.Angles(rng:NextNumber(0, 3), rng:NextNumber(0, 3), 0), BONE_END)
+				end
+			end
+		end
+	end
 end
 
 local template: Instance? = nil
@@ -769,6 +796,45 @@ local function dress(model: Model)
 		end
 	end
 	refreshers[model] = showHurt
+	-- (D12: a bone's stage rose: the X-ray bones are drawn again with the new crack, and the bone flashes white)
+	local lastStages = tostring(model:GetAttribute("BoneStages") or "")
+	model:GetAttributeChangedSignal("BoneStages"):Connect(function()
+		local now = tostring(model:GetAttribute("BoneStages") or "")
+		local risen: { [string]: boolean } = {}
+		for name, s in string.gmatch(now, "(%w+):(%d)") do
+			local before = tonumber(string.match(lastStages, name .. ":(%d)")) or 0
+			if (tonumber(s) or 0) > before then
+				risen[name] = true
+			end
+		end
+		lastStages = now
+		local skins = model:FindFirstChild("Skins")
+		if not skins then
+			return
+		end
+		for _, s in skins:GetDescendants() do
+			if s:GetAttribute("Xray") ~= nil then
+				s:SetAttribute("Xray", nil)
+			end
+		end
+		showHurt()
+		task.delay(0.3, function()
+			local lit: { [BasePart]: Color3 } = {}
+			for _, b in skins:GetDescendants() do
+				if b:IsA("BasePart") and b.Name == "XrayBone" and risen[tostring(b:GetAttribute("Of"))] then
+					lit[b] = b.Color
+					b.Color = Color3.new(1, 1, 1)
+				end
+			end
+			task.delay(0.18, function()
+				for b, c in lit do
+					if b.Parent then
+						b.Color = c
+					end
+				end
+			end)
+		end)
+	end)
 	model:GetAttributeChangedSignal("Wounds"):Connect(showHurt)
 	model:GetAttributeChangedSignal("Vital"):Connect(showHurt)
 	-- (F59: a hole landing on or leaving the torso redraws its X-ray)
