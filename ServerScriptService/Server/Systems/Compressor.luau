@@ -433,6 +433,19 @@ function Compressor.press(machine: Model, presser: Player?, owner: Player?)
 	local psiAtPress = (machine:GetAttribute("PressurePSI") :: number?) or 0
 	machine:SetAttribute("PressurePSI", 0)
 	machine:SetAttribute("PressAt", Workspace:GetServerTimeNow())
+	if Config.PRESS_10 and #Compressor.onBed(machine) > 0 then
+		-- 3.7: a soft hydraulic hiss as the lamp blinks (only with a body on the bed: the owner wants the press quiet)
+		local hiss = Instance.new("Sound")
+		hiss.SoundId = "rbxassetid://9116496074" -- (PSE "Medium Pressure Air Release 6")
+		hiss.Volume = 0.35
+		hiss.PlaybackSpeed = 1.3
+		hiss.RollOffMaxDistance = 60
+		hiss.Parent = bed
+		hiss:Play()
+		task.delay(2, function()
+			hiss:Destroy()
+		end)
+	end
 	task.wait(Compressor.SLAM_AFTER)
 	-- (Owner, 21 Nov 2026: the plate itself slams down and lifts again, on every screen.)
 	local plate = machine:FindFirstChild("Plate")
@@ -497,6 +510,26 @@ function Compressor.press(machine: Model, presser: Player?, owner: Player?)
 		task.delay(0.12, squeezeFx, machine) -- (0.37.6: the splat and the drips as the plate touches)
 	end
 	for _, m in onBedNow do
+		if Config.PRESS_10 and m:GetAttribute("IsDummy") == true then
+			-- 3.7 "FLAT x1/x2/x3": pressed again while still a pancake counts up; a NEW BEST for the lab's owner (FlatBest)
+			local prev = m:GetAttribute("Flat")
+			local combo = if type(prev) == "number" and prev > Workspace:GetServerTimeNow() then ((m:GetAttribute("FlatCombo") :: number?) or 1) + 1 else 1
+			m:SetAttribute("FlatCombo", combo)
+			local text = "FLAT x" .. tostring(combo) .. "!"
+			if owner and combo > 1 then
+				local best = (owner:GetAttribute("FlatBest") :: number?) or 1
+				if combo > best then
+					owner:SetAttribute("FlatBest", combo)
+					text ..= " NEW BEST!"
+				end
+			end
+			local bed0 = machine:FindFirstChild("Bed")
+			if bed0 and bed0:IsA("BasePart") then
+				pcall(function()
+					lazy("Playground").pop(bed0.Position + Vector3.new(0, 5 + combo, 0), text, if combo >= 3 then Color3.fromRGB(255, 210, 60) else Color3.fromRGB(255, 255, 255))
+				end)
+			end
+		end
 		m:SetAttribute("Flat", flatUntil)
 		m:SetAttribute("PressedAt", Workspace:GetServerTimeNow()) -- (a body left on the bed is not pressed again for AGAIN s)
 		if m:GetAttribute("IsDummy") == true then
