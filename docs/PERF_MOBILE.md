@@ -175,7 +175,7 @@ No hitch over 100 ms when machines run, a big event starts or the lab loads.
    - Hole, face and decal pictures at 256-512, never 1024.
    - Preload only the first minute's sounds; the rest in the background.
    - Big moments (an event start, the boxing, the machine demos, the lab surprise): build at most 2 ragdolls a frame and warm the pools at join idle time, so nothing hitches.
-10. **The iPad's big screen** (pixels cost there):
+10. **DONE v1391 (`LAGFREE_IPAD`):** an iPad with a keyboard was treated as a PC (PhoneDiet checks KeyboardEnabled); now the server's Device "tablet" also turns off Bloom, SunRays, depth of field and shadows. 10. **The iPad's big screen** (pixels cost there):
     - the full-screen extras (Highlights, Bloom, SunRays, DepthOfField, Blur) follow the level; PhoneDiet already turns them off on touch devices without a keyboard;
     - check that an iPad with a keyboard is still treated as a tablet (`Device` from the server, not `KeyboardEnabled`).
 

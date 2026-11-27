@@ -189,6 +189,7 @@ local Config = {
 	TOUCH_HOLD = true, -- F92 rest: on a touch screen every prompt without a hold needs 0.3 s, so a tap while walking past never starts a machine (Client/ControlsFX)
 	HOLES_ON_SKIN = true, -- FIXES_27NOV_LATE 5: on a v6 body a bullet hole is small (0.35 limb / 0.45 torso), 0.005 off the skin, with no 3D ring or chip discs (they poked out) (Client/BulletHoles)
 	BLEED_STAGES = true, -- FIXES 10.2: a bleeding ragdoll sinks to its knees (mood Breath) in the last 12 % of Blood before it passes out and tips over (VitalsService.step)
+	LAGFREE_IPAD = true, -- LAG-FREE 2 item 10: an iPad with a keyboard is still a tablet: no Bloom, SunRays, depth of field or shadows (Client/PhoneDiet)
 	LAGFREE_POOLS = true, -- LAG-FREE 2 item 6: the shot lights (FeelV2) and the gold sparks (FxController) come from pools, not new on every hit
 	LAGFREE_HIGHLIGHT = true, -- LAG-FREE 2 item 5: at most 3 (phone) / 5 (tablet) / 10 (PC) Highlights drawn, by priority (held, X-ray, dog, the rest), none off screen (Client/HighlightCap)
 	LAGFREE_SMALL = true, -- LAG-FREE 2 item 7: DummyLife chat partner kept 0.5 s, foot IK rays at 20 Hz on touch, the sides table hoisted

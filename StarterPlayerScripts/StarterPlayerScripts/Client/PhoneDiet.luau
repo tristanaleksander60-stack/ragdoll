@@ -116,11 +116,7 @@ local function carDiet()
 	end
 end
 
-function PhoneDiet.start()
-	task.spawn(carDiet)
-	if not PhoneDiet.wanted() then
-		return
-	end
+local function screenDiet()
 	local function noShadows()
 		if Lighting.GlobalShadows then
 			Lighting.GlobalShadows = false
@@ -132,6 +128,33 @@ function PhoneDiet.start()
 		effect(d)
 	end
 	Lighting.ChildAdded:Connect(effect)
+end
+
+function PhoneDiet.start()
+	task.spawn(carDiet)
+	if not PhoneDiet.wanted() then
+		-- (LAG-FREE 2 item 10, Config.LAGFREE_IPAD: an iPad with a keyboard is still a tablet (the server's Device), and
+		-- its big screen pays most for the full-screen extras: no Bloom, SunRays, depth of field or shadows there either)
+		local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
+		if Config.LAGFREE_IPAD and UserInputService.TouchEnabled then
+			task.spawn(function()
+				local lp = game:GetService("Players").LocalPlayer
+				local dev: any = nil
+				for _ = 1, 20 do
+					dev = lp:GetAttribute("Device")
+					if dev ~= nil then
+						break
+					end
+					task.wait(0.5)
+				end
+				if dev == "tablet" or dev == "phone" then
+					screenDiet()
+				end
+			end)
+		end
+		return
+	end
+	screenDiet()
 	Workspace.ChildAdded:Connect(function(c)
 		if table.find(PhoneDiet.ROOTS, c.Name) then
 			watch(c)
