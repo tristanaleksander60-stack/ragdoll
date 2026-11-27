@@ -737,8 +737,12 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 			end
 		end
 	end
-	local swing = (if fleeing then 42 else 22) * amount
-	local knee = if fleeing then 62 else 34
+	-- (PHYSICS_DEEP step 3, Config.RUN_FORM: the probe found fast walkers (12-14 studs/s) running in the walk form,
+	-- upright with straight arms (lean 1 deg, elbows 17); from 9 studs/s on it runs: a bouncy jog, arms bent and pumping,
+	-- a forward lean and a higher knee lift. Fleeing keeps its glance back and its panic arms.)
+	local runs = fleeing or ((Config :: any).RUN_FORM and life.groundSpeed > 9)
+	local swing = (if runs then 42 else 22) * amount
+	local knee = if runs then 62 else 34
 	setJoint(life, "RightHip", ang(swing * s, 0, 0))
 	setJoint(life, "LeftHip", ang(-swing * s, 0, 0))
 	setJoint(life, "RightKnee", ang(-(6 + knee * math.max(0, c)) * amount, 0, 0))
@@ -755,11 +759,11 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 	else
 		setJoint(life, "RightShoulder", ang(-swing * 0.9 * s, 0, 7))
 		setJoint(life, "LeftShoulder", ang(swing * 0.9 * s, 0, -7))
-		local elbow = if fleeing then 80 else 14
+		local elbow = if runs then 85 else 14
 		setJoint(life, "RightElbow", ang(elbow + 8 * c * amount, 0, 0))
 		setJoint(life, "LeftElbow", ang(elbow - 8 * c * amount, 0, 0))
 	end
-	local lean = if fleeing then -14 else -3
+	local lean = if runs then -12 else -3
 	setJoint(life, "Waist", ang(lean * amount, 0, 0))
 	if fleeing then
 		-- Glances back over its shoulder at whoever it runs from.
