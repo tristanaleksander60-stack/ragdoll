@@ -435,6 +435,9 @@ local Config = {
 		Jeep = table.freeze({ speed = 56, reverse = 56, accel = 2.3, turn = 1.7 }), -- (owner 21 Nov 2026: the jeep on its own pad)
 		Bike = table.freeze({ speed = 44, reverse = 44, accel = 2.8, turn = 2.2 }), -- (BikeService)
 		Bicycle = table.freeze({ speed = 26, reverse = 12, accel = 2.4, turn = 2.4 }), -- (F76: the free pedal bicycle, slower than the motorbike)
+		Wheelchair = table.freeze({ speed = 18, reverse = 8, accel = 2, turn = 2.6 }), -- (row 14: the 3 free wheelchairs)
+		Wheelchair2 = table.freeze({ speed = 18, reverse = 8, accel = 2, turn = 2.6 }),
+		Wheelchair3 = table.freeze({ speed = 18, reverse = 8, accel = 2, turn = 2.6 }),
 		MuscleCar = table.freeze({ speed = 68, reverse = 68, accel = 2.8, turn = 1.8 }), -- (session v842: a 70s muscle car, fast and heavy, slightly less nimble than the supercar)
 		flippedReset = 4, -- s an empty flipped or fallen car waits before it goes home
 		idleReset = 30, -- s an empty car left away from its pad waits before it goes home

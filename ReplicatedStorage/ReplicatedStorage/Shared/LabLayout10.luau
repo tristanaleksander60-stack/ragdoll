@@ -286,6 +286,10 @@ if Config.LAB_OWNERMAP then
 		end
 		-- (F76: the free bicycle on its own stand by the tower square, the plan's BikeStand2)
 		set(LabLayout10.CARS, "Bicycle", item("BikeStand2"))
+		-- (row 14: 3 wheelchairs in a neat row west of the boxing ring, 5 studs apart, clear of the mole and the walkways)
+		set(LabLayout10.CARS, "Wheelchair", item("BoxingRing", -28, -6))
+		set(LabLayout10.CARS, "Wheelchair2", item("BoxingRing", -28, -1))
+		set(LabLayout10.CARS, "Wheelchair3", item("BoxingRing", -28, 4))
 		-- The weapon range is not in the compact plan: it stands just outside the south edge (its own spot is (0, 154)).
 		LabLayout10.MOVES.ShootingRange = Vector3.new(150, 0, 255 - 154)
 	end
