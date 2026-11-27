@@ -115,7 +115,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - Massless with CanCollide, CanQuery and CanTouch off.
 38. **PART DONE v1339:** SmoothBody keeps up to 8 dropped meshes in a pool and reuses them (no clone/destroy at the reach edge). LEFT: the phone tier (kept 12: the owner wants v6 everywhere), one shared candidate list with RealHands. **SmoothBody:** pool the meshes (no clone/destroy at the edge), a phone tier (`MAX_BODIES` 4-6), one shared candidate list with RealHands.
 39. **The server loops:** one body scheduler in the RagdollDirector tick; systems register a callback with a rate and a time slice (N bodies a frame).
-40. **The DataStore budget:**
+40. **PART DONE v1340 (`CLOSE_ORDER`):** at close the boards wait 1 s for the progress saves and are skipped (logged) when the UpdateAsync budget is below players x boards. LEFT: Orders after Progress, SessionStats skip, folding the small stores into the profile. **The DataStore budget:**
     - at close, save Progress first, then Orders; skip SessionStats and leaderboard writes when the budget is low;
     - later, fold the small per-player stores into the profile (one read on join, one write on close).
 41. **DONE v1316:** LabCreatures `lastRevenge` has weak keys; MechArms clears `held` on the body's Destroying; PurchaseChat already cleared `last` on PlayerRemoving. **Was:** **Small leaks:** PurchaseChat `last[userId]` (clear on PlayerRemoving), LabCreatures `lastRevenge` (weak keys), MechArms `held` (clear on Destroying).

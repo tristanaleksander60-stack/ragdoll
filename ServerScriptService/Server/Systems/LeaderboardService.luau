@@ -693,6 +693,16 @@ function LeaderboardService.start(labOrigin: Vector3)
 		if not next(stores) then
 			return
 		end
+		if Config.CLOSE_ORDER then
+			-- (AUDIT 40: at close the players' progress is saved first (ProgressService); the boards wait a moment and are
+			-- skipped when the write budget is too low for them, never the other way round. A board catches up next time.)
+			task.wait(1)
+			local budget = DataStoreService:GetRequestBudgetForRequestType(Enum.DataStoreRequestType.UpdateAsync)
+			if budget < #Players:GetPlayers() * #(function() local l = {} for k in stores do table.insert(l, k) end return l end)() then
+				warn("[Boards] close: write budget low (" .. budget .. "), boards skipped; progress saved first")
+				return
+			end
+		end
 		-- Everyone's writes at once (not one after another), waited for within the close's time.
 		local left = 0
 		for _, player in Players:GetPlayers() do

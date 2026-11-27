@@ -181,6 +181,7 @@ local Config = {
 	LEGS_GHOST = true, -- PHYSICS_DEEP: a walking or fleeing dummy's shins and feet do not collide (the lift carries it over kerbs and steps); the probe found walkers bouncing off kerbs, ramps and lamp feet
 	BLOCKED_EASE = true, -- PHYSICS_DEEP: a walker pushed back against its own way stops pushing (speed 2) instead of bouncing off the obstacle again and again
 	PHYSICS_PROBE = false, -- PHYSICS_DEEP step 1: logs [PhysProbe] when a walking dummy moves against its own drive, with what it touches (ActiveRagdoll); off by default
+	CLOSE_ORDER = true, -- AUDIT 40: at server close the boards wait 1 s for the progress saves and are skipped when the write budget is low (Systems/LeaderboardService)
 	GUN_ONCE = true, -- PHYSICS_DEEP check 2: a coward that ran from a gun runs again within GUN_WARY s only if the gun comes clearly closer (no flee-stop-flee ping-pong while you just hold it)
 	RUN_FORM = true, -- PHYSICS_DEEP step 3: a dummy faster than 9 studs/s runs in the run form (arms bent 85 and pumping, a forward lean, higher knees), not the upright walk form (Client/DummyLife)
 	NAV_QUEUE = true, -- PHYSICS_DEEP: a walk that missed the path budget waits for the next refill (12 paths a second) instead of walking straight into things (Systems/RagdollNav)
