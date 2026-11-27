@@ -51,6 +51,19 @@ for _, hat in Progress.HATS do
 	Progress.hatById[hat.id] = hat
 end
 
+-- (AUDIT 11, Config.LEGEND_STARS: after Legend the goal never runs out: a LEGEND STAR every 500 KOs, BOLTS for each)
+Progress.STAR_EVERY = 500
+Progress.STAR_BOLTS = 150
+-- The Legend stars for a number of takedowns, and the KOs still needed for the next one.
+function Progress.starsOf(takedowns: number): (number, number)
+	local legend = Progress.RANKS[#Progress.RANKS].at
+	if takedowns < legend then
+		return 0, legend + Progress.STAR_EVERY - takedowns
+	end
+	local past = takedowns - legend
+	return math.floor(past / Progress.STAR_EVERY), Progress.STAR_EVERY - past % Progress.STAR_EVERY
+end
+
 -- Your rank for a number of takedowns, and the next one (nil at the top).
 function Progress.rankOf(takedowns: number): (Rank, Rank?)
 	local current = Progress.RANKS[1]

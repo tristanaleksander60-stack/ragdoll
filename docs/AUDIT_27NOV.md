@@ -53,7 +53,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
 
    This makes 2x BOLTS and the Everything pass worth having.
 10. **Weapon MASTERY** as the long goal: bronze, silver and gold stars per weapon at 25/100/300 KOs, each unlocking a cosmetic finish (gold, rainbow, candy). The goal line shows "12 KOs to GOLD Katana".
-11. **Endless LEGEND STARS:** one star every 500 KOs after Legend, a title colour per 5 stars, BOLTS per star. The goal line never goes empty.
+11. **PART DONE v1360 (`LEGEND_STARS`):** a LEGEND STAR every 500 KOs after Legend with 150 BOLTS, the rank card reads "LEGEND ⭐N" and its bar fills to the next star. LEFT: a title colour per 5 stars. **Endless LEGEND STARS:** one star every 500 KOs after Legend, a title colour per 5 stars, BOLTS per star. The goal line never goes empty.
 12. **WEEKLY boards:**
     - "THIS WEEK'S KOs" (resets on Monday);
     - one "BEST OF THE WEEK" board rotating between bowling, cannon, tower drop and target run;

@@ -90,9 +90,20 @@ local function redraw()
 		takedownLabel.Text = string.format("%d takedowns", state.takedowns)
 			.. (if nextRank then string.format("  \u{00B7}  %d to %s", nextRank.at - state.takedowns, nextRank.name) else "  \u{00B7}  top rank")
 	end
+	-- (AUDIT 11: at the top the bar fills towards the next LEGEND STAR, so the goal line never goes empty)
+	local stars, toStar = Progress.starsOf(state.takedowns)
+	if not nextRank and (Config :: any).LEGEND_STARS then
+		if rankLabel then
+			rankLabel.Text = if stars > 0 then string.format("LEGEND \u{2B50}%d", stars) else "LEGEND"
+		end
+		if takedownLabel then
+			takedownLabel.Text = string.format("%d takedowns  \u{00B7}  %d to star %d", state.takedowns, toStar, stars + 1)
+		end
+	end
 	if rankBar then
 		local span = if nextRank then nextRank.at - rank.at else 1
-		rankBar.setValue(if nextRank then (state.takedowns - rank.at) / span else 1)
+		local legendFill = if (Config :: any).LEGEND_STARS then 1 - toStar / Progress.STAR_EVERY else 1
+		rankBar.setValue(if nextRank then (state.takedowns - rank.at) / span else legendFill)
 	end
 	-- (The server says how often an egg comes for this player: VIP finds them sooner.)
 	local every = state.eggEvery or Progress.EGG_EVERY

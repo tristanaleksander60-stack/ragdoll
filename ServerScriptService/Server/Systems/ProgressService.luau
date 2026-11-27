@@ -1105,6 +1105,18 @@ function ProgressService.addTakedowns(player: Player, count: number): number
 		remote:FireClient(player, "Rank", rankNow.name)
 		Metrics.event(player, "RankUp_" .. rankNow.name)
 	end
+	-- (AUDIT 11: a LEGEND STAR every 500 KOs after Legend, with BOLTS)
+	if (Config :: any).LEGEND_STARS and not readFailed[player] then
+		local starsBefore = Progress.starsOf(before)
+		local starsNow = Progress.starsOf(p.takedowns)
+		player:SetAttribute("LegendStars", starsNow)
+		if starsNow > starsBefore then
+			pcall(function()
+				(require(script.Parent:WaitForChild("EconomyService")) :: any).give(player, Progress.STAR_BOLTS * (starsNow - starsBefore), "\u{2B50} LEGEND STAR " .. starsNow .. "! +" .. Progress.STAR_BOLTS * (starsNow - starsBefore) .. " BOLTS", true)
+			end)
+			Metrics.event(player, "LegendStar")
+		end
+	end
 	-- A tool unlocked: told once, the moment its takedowns are reached.
 	if not readFailed[player] then -- (counting from 0 while the store is unreadable: no false news)
 		ProgressService.tellUnlocks(player, before, p.takedowns)
