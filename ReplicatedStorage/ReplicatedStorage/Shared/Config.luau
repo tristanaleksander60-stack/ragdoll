@@ -225,6 +225,7 @@ local Config = {
 	PHONE_TEXT_FLOOR = true, -- AUDIT 25: on phones no fixed-size text under 14 px on screen (Client/TextFloor)
 	BOWL_OWNER = true, -- F91 rest: the bowler's machine runs the pins during the roll (network owner), back to the server after the count (Systems/Bowling)
 	BOWL_SLOWMO = true, -- BOWLING_12 rest: a short slow moment round the pins as the bowled ragdoll bursts out of its ball (Client/SlowMotion watches Curl)
+	BOWL_BOLTS = true, -- BOWLING_12 rewards: +5 BOLTS a strike, +3 a spare, +15 a turkey, at most 100 a visit (Systems/Bowling)
 	BOWL_TURKEY = true, -- BOWLING_12 rest: 2 strikes in a row show DOUBLE!, 3 a TURKEY! with extra confetti and a shout (Systems/Bowling)
 	BOWL_SPHERE = true, -- F91 rest: an invisible low-friction ball welded round the curled bowled ragdoll, so it rolls true to the pins (Systems/Bowling)
 	CLOSE_ORDER = true, -- AUDIT 40: at server close the boards wait 1 s for the progress saves and are skipped when the write budget is low (Systems/LeaderboardService)

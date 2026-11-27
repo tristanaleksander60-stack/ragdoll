@@ -45,6 +45,7 @@ type Lane = {
 
 local today: { [number]: { name: string, best: number } } = {}
 local strikesInRow: { [number]: number } = {} -- (BOWL_TURKEY: strikes in a row per player this visit)
+local boltsGot: { [number]: number } = {} -- (BOWL_BOLTS: bolts from bowling per player this visit)
 
 -- (F88 part 2, Config.BOWLING_FX: a pin crash on a strike with confetti, a sad trombone on a gutter)
 Bowling.STRIKE_SOUND = "rbxassetid://4692687595" -- (Creator Store "Bowling Strike Sound Effect")
@@ -545,6 +546,23 @@ local function bowl(lane: Lane, by: Player)
 		pcall(function()
 			(require(script.Parent:WaitForChild("ProgressService")) :: any).notice(by, "\u{1F983} TURKEY! Three strikes in a row!")
 		end)
+	end
+	-- (BOWLING_12 rewards, Config.BOWL_BOLTS: small BOLTS for a strike (5) or a spare (3), +15 for a turkey; at most
+	-- 100 from bowling a visit, so the lane is a treat, not a farm)
+	if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BOWL_BOLTS and by and by.Parent then
+		local pay = if string.sub(word, 1, 6) == "STRIKE" then 5 elseif string.sub(word, 1, 5) == "SPARE" then 3 else 0
+		if turkey then
+			pay += 15
+		end
+		local got = boltsGot[by.UserId] or 0
+		pay = math.min(pay, 100 - got)
+		if pay > 0 then
+			boltsGot[by.UserId] = got + pay
+			pcall(function()
+				(require(script.Parent:WaitForChild("EconomyService")) :: any).give(by, pay, nil)
+			end)
+			word ..= string.format("  +%d BOLTS", pay)
+		end
 	end
 	showBoard(lane, by, word)
 	if frameDone then
