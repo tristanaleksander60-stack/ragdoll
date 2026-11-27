@@ -1598,6 +1598,29 @@ This breaks the hard rule "nothing vanishes in view" (`RAGDOLL_DIRECTOR.md` Part
 5. **A removal log, always on:** `REMOVAL_LOG` prints, in Studio and to Metrics, every removal, hide, pool or teleport of a ragdoll, with the system's name, the reason, the distance to the nearest player and "in view yes/no". An "in view: yes" line is a bug the log names for the next session.
 6. **Check (the owner):** stand and beat ragdolls for a few minutes at different places (by benches, walls, the walkways). None vanishes or jumps away while you look at it.
 
+## F92 Machines GRAB a ragdoll and lift it up when you only walk close (owner, 27 Nov: "Fiks så at tingene ikke tager ragdollen op i toppen når man prøver at gå tæt på, det gør kanonkuglen og bowlingbanen, jeg ved ikke om andre også")
+**The causes found in the code:**
+- **Bowling** (`Systems/Bowling.luau` `freeRagdoll`/`bowl`): any trigger takes the NEAREST free ragdoll within 90 studs (often one standing by you, or the one you are about to grab) and TELEPORTS it onto the approach (`PivotTo`): it pops up out of nowhere.
+- **The cannon:** its load zone takes a ragdoll that a player let go of within 4 s inside a 3.6-stud circle up to 9 studs high, so a ragdoll you carry past and drop, or one that falls near it, is snatched up into the muzzle.
+- **On phones,** a ProximityPrompt fires on one TAP, so walking close and touching the screen can start a machine by accident.
+- Other machines use the same patterns (the gyro, the shredder and the stretcher take "the nearest free ragdoll"; TRY's auto-start, F81).
+
+**One rule for EVERY machine** (`Config.MACHINE_SAFE = true`; one helper `MachineLoad.accepts(model, volume, by)` that every machine calls):
+1. **A machine only takes a ragdoll that:**
+   - a PLAYER deliberately put into its load volume: released (let go or thrown) by that player within 2 s, and inside the TIGHT load volume (the hopper, the lane's approach box, the cage's middle), never "near";
+   - OR a ragdoll it called itself for a TRY or a button press.
+2. **A called ragdoll WALKS or RUNS to the machine and gets in** with the hop-in move (F81). NEVER a teleport or a snap from somewhere else.
+   - If none is free within 40 studs, the machine says "No ragdoll near!" and does nothing (or the TRY dispenser pops one out, F81).
+   - **Never take** the ragdoll you are holding, the one you are aiming at or hitting (hit in the last 5 s), one of the 3 NEAR you that you are walking toward, or one in another machine.
+3. **No accidental starts:**
+   - every machine prompt needs a short HOLD (0.3 s; `HoldDuration`) on touch screens;
+   - the prompt reach is about 8-10 studs, and only the nearest control shows (CONTROLS_10);
+   - walking past never starts anything.
+4. **The cannon:** the hopper (CONTROLS_10 1) is the only way in; the old zone under the muzzle is removed.
+5. **The bowling:** the lever calls a free ragdoll that RUNS to the approach (about 2 s) and then curls (F91); or you throw one onto the approach box yourself.
+6. **The removal log** (F90) also logs every machine take ("Bowling took X: called / released by player"), so a wrong take is named.
+7. **Check (the owner):** walk up close to the cannon and the bowling lane with ragdolls around, and carry one past them. Nothing is grabbed or lifted. Only a ragdoll you put in, or one called by the lever or TRY (which runs there), goes in.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
