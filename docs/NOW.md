@@ -524,6 +524,12 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 13. **Row 14, a ragdoll in a wheelchair:** build the "ride welded" state in ActiveRagdoll (balance, lift and drive off; the pelvis welded to the seat; the client simulation stays with the chair's owner; a sitting pose; it falls out on a hard stop or a hit) and use it for the wheelchairs, the bicycle passenger and the rocket strap.
 14. **F68, the water button:** closed. Real water is always on (F78/F87); nothing to find.
 
+## Done in the run of 27 Nov, part 5 (v1287-v1309)
+- F89 v2 body in ReplicatedStorage.SmoothBodyV2 (owner imported). F90 never-vanish guard on NearbyTwo/Watchers/Lab/DummySpawn, hit bodies stay streamed in.
+- AUDIT 1 Lab Controls button for buyers + PassLint; 2 advent calendar (ADVENT); 3 profile lock + safe eco merge (PROFILE_LOCK); 4 takedown guard; 5 egg odds + VIP egg PolicyService gate (EGG_ODDS); 6 Events Pass wording; 7 Economy rate limit; 8 signed TeleportData (JOIN_SIGN, key = ServerStorage attribute JoinSignSecret in the place file).
+- R10: R2 living faces (FACE_LIFE), R6 body sounds (BODY_SOUND), R5 persona idles (PERSONA_IDLE), R3 persona walks (PERSONA_WALK); THE LOOK v3 body built in Blender, waiting for the owner's OK (review_v3).
+- 0.7 a real watcher at every machine (WATCH_EVERY, LAB_DUMMIES_PC 40). Row 7 cars rock (CAR_ROCK). F76 the 5 new vehicles (NEW_VEHICLES, SOON). 3.18 boxing (BOXING_MATCH). C10 part 1 control kit + cannon hopper (CONTROLS_V2, CANNON_HOPPER). F92 machines call ragdolls, never snatch (MACHINE_SAFE). F91 bowling always reaches the pins + curl (BOWL_BALL). F93 CPR givers kneel still (CPR_STILL). Row 14 ragdoll rides a wheelchair (WHEELCHAIR_RIDE).
+
 ## Questions for the owner (filled in during the run)
 - (27 Nov, run 5) **Ragdolls per lab (WATCH_EVERY):** a real watcher at every machine needs more bodies: your lab now holds 40 on PC, 20 console, 14 tablet, 9 phone (`LAB_DUMMIES_PC`). If a PC drops frames, say a lower number. Default: 40.
 - (27 Nov, run 5) **Body v3:** look at `art/models/mannequin/review_v3/` (front, side, posed, knocked down, next to a player). Say "BODY V3 APPROVED" or what to change. Default: wait (nothing in the game changes until you import it).
