@@ -67,6 +67,10 @@ if (Config :: any).IDLE_LIFE2 then
 		table.insert(GESTURES, g)
 	end
 end
+if (Config :: any).TIE_SHOE then
+	-- (row 11 rest: it bends down and ties a shoe: the right foot forward, the knee bent, both hands fiddling at it)
+	table.insert(GESTURES, "TieShoe")
+end
 local MAX_YAW, MAX_PITCH_UP, MAX_PITCH_DOWN = 70, 30, 25
 local LOOK_SMOOTH = 5 -- 1/s
 local AIR_CLEARANCE = require(Shared:WaitForChild("Ragdoll"):WaitForChild("Config")).AIR_CLEARANCE
@@ -757,7 +761,7 @@ local function updateIdle(life: Life, now: number, dt: number)
 		(life :: any).lastGesture = pick
 		life.gesture = pick
 		life.gestureAt = now
-		life.gestureLength = rng:NextNumber(2.2, 3.4)
+		life.gestureLength = if pick == "TieShoe" then rng:NextNumber(4.2, 5.4) else rng:NextNumber(2.2, 3.4)
 	end
 	-- How far into its gesture (eased in and out, 0..1..0).
 	local g = 0
@@ -1015,6 +1019,17 @@ local function updateIdle(life: Life, now: number, dt: number)
 		blend("RightElbow", ang(95, 0, 0))
 		blend("Waist", ang(8 + 6 * wince, 0, -6))
 		blend("Neck", ang(-8 - 8 * wince, neckYaw * 0.3, 0))
+	elseif gesture == "TieShoe" then
+		local f = 9 * sin(t * 9)
+		blend("Waist", ang(-52, 0, 0))
+		blend("Neck", ang(-18, 0, 0))
+		blend("RightHip", ang(24, 0, 0))
+		blend("RightKnee", ang(-38, 0, 0))
+		blend("LeftKnee", ang(-12, 0, 0))
+		blend("RightShoulder", ang(62 + f * 0.4, 0, -8))
+		blend("LeftShoulder", ang(58 - f * 0.4, 0, 10))
+		blend("RightElbow", ang(28 + f, 0, 0))
+		blend("LeftElbow", ang(30 - f, 0, 0))
 	elseif gesture == "Knuckles" then
 		-- cracks its knuckles: hands together in front, a little push
 		local push = 6 * math.max(0, sin(t * 7))
