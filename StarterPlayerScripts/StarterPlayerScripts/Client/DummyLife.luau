@@ -1004,11 +1004,14 @@ local function updateIdle(life: Life, now: number, dt: number)
 	if j.Neck then
 		j.Neck.Transform = ang(life.pitch - 1 * breathe + 4 * jolt, neckYaw, 0)
 	end
+	-- (PHYSICS_DEEP 2e: the v6 mesh hangs its arms about 14 degrees out already; its idle brings them 5 in, for the
+	-- relaxed 8-10 degrees of a real standing person, just clear of the thick thighs. Other bodies keep 5 out.)
+	local armZ = if life.model:GetAttribute("BodyV6") == true then -5 else 5
 	if j.RightShoulder then
-		j.RightShoulder.Transform = ang(3 + 1.5 * breathe, 0, 5 + 1.2 * breathe)
+		j.RightShoulder.Transform = ang(3 + 1.5 * breathe, 0, armZ + 1.2 * breathe)
 	end
 	if j.LeftShoulder then
-		j.LeftShoulder.Transform = ang(3 + 1.5 * breathe, 0, -5 - 1.2 * breathe)
+		j.LeftShoulder.Transform = ang(3 + 1.5 * breathe, 0, -armZ - 1.2 * breathe)
 	end
 	if j.RightElbow then
 		j.RightElbow.Transform = ang(10 + 3 * sin(t * 0.6), 0, 0)
