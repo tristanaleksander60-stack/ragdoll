@@ -140,6 +140,7 @@ local Config = {
 	BIKE_ROUTE = true, -- F69: on the compact map the motorbike rider follows the walkway loop's centre line point to point (a point not reached in 14 s is skipped)
 	REAL_HANDS = true, -- S2 plan B: real hands from rounded parts (palm, 4 fingers of 3 segments, a thumb of 2), posed by state, on this screen only; the hook hand skin is shrunk away (Client/RealHands)
 	SMOOTH_BODY = true, -- S2: the Blender-made skinned mannequin (ReplicatedStorage.SmoothBody, one connected body, real fingers) on the nearest ragdolls; bones follow the physics parts; block skins hidden (Client/SmoothBody)
+	FACES_V2 = true, -- row 6: 7 new v2 faces (worried, pain, angry, sad, relieved, scared, X eyes when dead; art/faces/v2/make_faces.py) chosen by state and mood (DummyLife expressionFor)
 	TURN_EVEN = true, -- F73: the heading rotates at a capped even rate (220 deg/s walking, 360 fleeing), never a lerp whip or 180 degree snap; turning on the spot steps the feet (ActiveRagdoll, DummyLife)
 	NAV_BLOCKCAST = true, -- F72: obstacles are seen with a body-sized Blockcast whose look-ahead grows with speed (2.5-7 studs), and the detour takes the more open side (ActiveRagdoll blocked/clearAhead)
 	NAV_BUMP_LOG = true, -- F72: ActiveRagdoll counts detours, other-side tries and waits for a car, printed once a minute ([NavBump]); a moving car in the way is waited for, not walked round

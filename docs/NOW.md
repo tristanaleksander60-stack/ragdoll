@@ -529,7 +529,7 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - **F68 water button:** I found no button that turns water on in the start place (0 prompts, click detectors or scripts near water). Which place is it in, and where (a screenshot)? Default: parked until you say.
 - **S2 smooth body:** built in Blender (27 Nov), see the question above (one import).
 - **M4 smaller map:** Python is installed now; the compact plan is ready (cloud). Built in M4.
-- **Row 6 new faces (worried, pain, angry, sad, relieved, scared, X eyes):** they need new face images in the v2 style, and this PC has no Pillow to draw them (installing it, and serving the images for the upload, is a step I did not take on my own). Default: the crying face is drawn in code (tears on the hurt face); the rest wait. Say "installer Pillow" and the next run draws and uploads them.
+- ~~Row 6 new faces~~: done 27 Nov (Pillow installed by the owner; FACES_V2, v1241).
 
 ## Done in the run of 27 Nov 2026 (start place v1203-v1228; Script Sync OFF: every script through the MCP, checked by length)
 - F86 kneeling moods, F87 aquarium water from parts, D12 bones 12/10 (integrity, weapon classes, drips, stage sounds, X-ray cracks, ribs/skull), F47 tweezers + bullets + plaster, F26 shove series, F28 X-ray tracer, row 5 physics watchdog + no tunnelling, row 6 crying face, row 7 own-slam shake, F88 RAGDOLL BOWLING part 1 (+ chicken to its coop), F78 splash + aquarium buoyancy, F76 free bicycle, P1 personas + spread over the map, row 13 dog bark + pet, T1 bowling-first FTUE + X-RAY pulse + bike hint, row 8 Graphics AUTO/LOW/HIGH, row 15 MP window on phones, row 17 burial funnel, row 14 wheelchairs.

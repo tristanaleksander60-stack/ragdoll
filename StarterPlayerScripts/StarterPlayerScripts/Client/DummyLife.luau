@@ -305,7 +305,11 @@ local function setFace(life: Life, name: string)
 	life.shown = name
 	local face = life.face
 	if face and face.Parent then
-		face.Image = (Faces :: any)[name] or (Faces :: any).Ouch
+		local key = name
+		if (Config :: any).FACES_V2 then
+			key = if name == "Scared" then "Scared2" elseif name == "Cry" then "Sad" else name -- (v2: real wide eyes; tears on the sad face)
+		end
+		face.Image = (Faces :: any)[key] or (Faces :: any).Ouch
 		tears(face, name == "Cry")
 	end
 end
@@ -1033,9 +1037,13 @@ end
 local function expressionFor(life: Life, now: number): string
 	local model = life.model
 	local state = life.state
+	-- Row 6 (Config.FACES_V2): the new v2 faces (art/faces/v2/make_faces.py): X eyes when dead, pain when crawling or
+	-- walking on a broken leg, angry when angry, worried getting up and walking back, sad with a broken bone, relieved
+	-- when cheering, hugging or relieved, scared with real wide eyes.
+	local v2 = (Config :: any).FACES_V2 == true
 	-- Dead (round 3, M2 fix 2): eyes shut, no stars (out cold has the stars).
 	if model:GetAttribute("Vital") == "Dead" then
-		return "Blink"
+		return if v2 then "Dead" else "Blink"
 	end
 	if model:GetAttribute("Frozen") == true or state == "Frozen" then
 		return "Scared"
@@ -1045,13 +1053,13 @@ local function expressionFor(life: Life, now: number): string
 	elseif state == "Fleeing" then
 		return "Scared"
 	elseif state == "Crawling" then
-		return "Ouch"
+		return if v2 then "Pain" else "Ouch"
 	elseif state == "Walking" then
 		if life.brokenLeg ~= 0 then
-			return "Ouch"
+			return if v2 then "Pain" else "Ouch"
 		end
 		-- On its way to say hi or to chat: friendly; walking home after a knock: grumpy.
-		return if model:GetAttribute("Paper") == true or moodOn(model, "GreetUntil") or type(model:GetAttribute("Chatting")) == "number" then "Neutral" else "Grumpy"
+		return if model:GetAttribute("Paper") == true or moodOn(model, "GreetUntil") or type(model:GetAttribute("Chatting")) == "number" then "Neutral" elseif v2 then "Worried" else "Grumpy"
 	end
 	if state == "Ragdoll" then
 		if model:GetAttribute("Held") == true or life.airborne then
@@ -1064,16 +1072,18 @@ local function expressionFor(life: Life, now: number): string
 	elseif state == "Flinch" or state == "Stumble" or state == "Recovering" then
 		return "Ouch"
 	elseif state == "GettingUp" then
-		return "Grumpy"
+		return if v2 then "Worried" else "Grumpy"
 	end
 	-- Standing
 	local temper = model:GetAttribute("Mood")
 	if temper == "Angry" or temper == "Box" then
-		return "Grumpy"
+		return if v2 then "Angry" else "Grumpy"
 	elseif temper == "Rage" then
-		return "Grumpy"
+		return if v2 then "Angry" else "Grumpy"
 	elseif temper == "Mourn" or temper == "Despair" or temper == "Sky" or temper == "CPRSlam" then
 		return if (Config :: any).FACE_TEARS and temper ~= "CPRSlam" then "Cry" else "Ouch"
+	elseif v2 and (temper == "Cheer" or temper == "Relief" or temper == "Hug") then
+		return "Relieved"
 	elseif temper == "Sit" or temper == "Cheer" or temper == "Relief" or temper == "Hug" then
 		return "Neutral"
 	elseif type(temper) == "string" then
@@ -1085,7 +1095,7 @@ local function expressionFor(life: Life, now: number): string
 		return "Grumpy"
 	end
 	if moodOn(model, "AngryUntil") then
-		return "Grumpy"
+		return if v2 then "Angry" else "Grumpy"
 	elseif model:GetAttribute("Dozing") == true then
 		return "Blink" -- eyes shut
 	end
@@ -1094,7 +1104,7 @@ local function expressionFor(life: Life, now: number): string
 	end
 	local broken = model:GetAttribute("Broken")
 	if type(broken) == "number" and broken > 0 then
-		return "Grumpy"
+		return if v2 then "Sad" else "Grumpy"
 	end
 	return "Neutral"
 end
