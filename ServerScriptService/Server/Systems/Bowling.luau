@@ -191,16 +191,36 @@ local function showBoard(lane: Lane, by: Player?, word: string?)
 	end
 end
 
+-- F92 (Config.MACHINE_SAFE): the machine only CALLS a ragdoll: a free, standing one within 40 studs that is not the one
+-- you hold, not one hit in the last 5 s, not one within 8 studs of a player (the one you are walking to), not in another
+-- machine. It then RUNS to the approach (never a teleport from somewhere else).
 local function freeRagdoll(near: Vector3): Model?
+	local safe = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).MACHINE_SAFE == true
 	local dummies = Workspace:FindFirstChild("Dummies")
-	local best, bestD = nil :: Model?, 90
+	local best, bestD = nil :: Model?, if safe then 40 else 90
+	local now = Workspace:GetServerTimeNow()
 	for _, m in if dummies then dummies:GetChildren() else {} do
 		local pe = m:FindFirstChild("LowerTorso")
 		if m:IsA("Model") and pe and pe:IsA("BasePart") and m:GetAttribute("Vital") ~= "Dead" and m:GetAttribute("Held") ~= true
 			and m:GetAttribute("InMachine") == nil and m:GetAttribute("Watch") == nil and m:GetAttribute("Bowling") == nil
 			and m:GetAttribute("CommandedBy") == nil and m:GetAttribute("TryFor") == nil then
+			local ok = true
+			if safe then
+				local st = m:GetAttribute("RagdollState")
+				local hitAt = m:GetAttribute("ServerHitAt")
+				ok = (st == nil or st == "Standing" or st == "Walking") and m:GetAttribute("Mood") == nil
+					and not (type(hitAt) == "number" and now - hitAt < 5)
+				if ok then
+					for _, pl in Players:GetPlayers() do
+						local r = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
+						if r and r:IsA("BasePart") and (r.Position - pe.Position).Magnitude < 8 then
+							ok = false
+						end
+					end
+				end
+			end
 			local d = (pe.Position - near).Magnitude
-			if d < bestD then
+			if ok and d < bestD then
 				best, bestD = m, d
 			end
 		end
@@ -225,8 +245,44 @@ local function bowl(lane: Lane, by: Player)
 	lane.busy = true
 	lane.lastRoll = now
 	ball:SetAttribute("Bowling", true)
-	-- The ball: put on the approach, curled (a ragdoll on its side), then a real push down the lane.
-	ball:PivotTo(CFrame.lookAt(lane.at + Vector3.new(0, 3, 0), lane.at + Vector3.new(0, 3, 0) + lane.dir) * CFrame.Angles(math.rad(-80), 0, 0))
+	local safe = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).MACHINE_SAFE == true
+	local DC = require(script.Parent:WaitForChild("DummyControl")) :: any
+	if safe then
+		-- F92: it RUNS to the approach (about 2 s), and only then gets in (a short hop onto the lane)
+		ball:SetAttribute("Home", lane.at - lane.dir * 2)
+		ball:SetAttribute("Pace", 2.4)
+		local t0 = os.clock()
+		local there = false
+		while os.clock() - t0 < 8 do
+			local pe = ball:FindFirstChild("LowerTorso")
+			if not (pe and pe:IsA("BasePart") and ball.Parent) or ball:GetAttribute("Held") == true then
+				break
+			end
+			if (Vector3.new(pe.Position.X, 0, pe.Position.Z) - Vector3.new(lane.at.X, 0, lane.at.Z)).Magnitude < 5 then
+				there = true
+				break
+			end
+			task.wait(0.2)
+		end
+		ball:SetAttribute("Pace", nil)
+		if not there then
+			ball:SetAttribute("Bowling", nil)
+			lane.busy = false
+			lane.word.Text = "No ragdoll near!"
+			lane.word.TextTransparency = 0
+			task.delay(1.5, function()
+				lane.word.TextTransparency = 1
+			end)
+			return
+		end
+		pcall(function()
+			(require(script.Parent:WaitForChild("RagdollDirector")) :: any).logRemoval(ball, "Bowling", "called; ran to the approach and hopped on")
+		end)
+		pcall(DC.move, ball, CFrame.lookAt(lane.at + Vector3.new(0, 3, 0), lane.at + Vector3.new(0, 3, 0) + lane.dir) * CFrame.Angles(math.rad(-80), 0, 0))
+	else
+		-- The ball: put on the approach, curled (a ragdoll on its side), then a real push down the lane.
+		ball:PivotTo(CFrame.lookAt(lane.at + Vector3.new(0, 3, 0), lane.at + Vector3.new(0, 3, 0) + lane.dir) * CFrame.Angles(math.rad(-80), 0, 0))
+	end
 	task.wait(0.15)
 	local pelvis = ball:FindFirstChild("LowerTorso")
 	if pelvis and pelvis:IsA("BasePart") then
@@ -250,8 +306,39 @@ local function bowl(lane: Lane, by: Player)
 	local sure = by:GetAttribute("Tried_Bowling") ~= true and lane.roll == 1
 		and (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).FTUE_10 == true
 	by:SetAttribute("Tried_Bowling", true)
-	if sure then
+	-- F91 (Config.BOWL_BALL): it ALWAYS reaches the pins: a min-speed guard pushes it on while it is slower than 25 studs/s
+	-- on the lane; the guaranteed first strike waits for the body to reach the pin deck (an impact, never a timer).
+	local ballCfg = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BOWL_BALL == true
+	local reached = Instance.new("BindableEvent")
+	if ballCfg then
+		task.spawn(function()
+			local DC2 = require(script.Parent:WaitForChild("DummyControl")) :: any
+			local t0 = os.clock()
+			local deckAlong = (lane.deckAt - lane.at):Dot(lane.dir)
+			while os.clock() - t0 < 7 do
+				task.wait(0.1)
+				local pe = ball:FindFirstChild("LowerTorso")
+				if not (pe and pe:IsA("BasePart") and ball.Parent) then
+					break
+				end
+				local along = (pe.Position - lane.at):Dot(lane.dir)
+				if along >= deckAlong - 3 then
+					break
+				end
+				local speed = pe.AssemblyLinearVelocity:Dot(lane.dir)
+				if speed < 25 then
+					pcall(DC2.push, ball, lane.dir * (40 - math.max(speed, 0)), nil)
+				end
+			end
+			reached:Fire()
+		end)
+	else
 		task.delay(1.5, function()
+			reached:Fire()
+		end)
+	end
+	if sure then
+		reached.Event:Once(function()
 			for i, pin in lane.pins do
 				if standing(pin, lane.homes[i]) then
 					local side = lane.dir:Cross(Vector3.yAxis) * (math.random() - 0.5) * 30

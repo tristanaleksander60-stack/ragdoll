@@ -460,7 +460,8 @@ local function buildCannon()
 						local ht = hopperTop :: Vector3
 						local flatD = Vector3.new(pelvis.Position.X - ht.X, 0, pelvis.Position.Z - ht.Z).Magnitude
 						local dy = pelvis.Position.Y - ht.Y
-						inZone = flatD < 3.4 and dy > -3 and dy < 6
+						-- (F92: only one a player let go of or threw in the last 2.5 s: never one that walks or falls past)
+						inZone = flatD < 3.4 and dy > -3 and dy < 6 and now - (lastHeld[m] or -99) < 2.5
 					elseif muzzleLoad then
 						-- Only a ragdoll a player just let go (never one that walks by), close under the muzzle.
 						local flat = Vector3.new(pelvis.Position.X - loadAt.X, 0, pelvis.Position.Z - loadAt.Z).Magnitude
