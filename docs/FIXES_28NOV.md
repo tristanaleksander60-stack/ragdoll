@@ -142,7 +142,7 @@
    - nothing else in a bay: no statue, no ragdoll standing in the bicycle bay;
    - order the bays left to right and size each bay to its vehicle;
    - check with ONE top-down capture of the whole lot plus one from the walkway.
-8. **The gyro** ("the yellow thing that spins round with an orange line and a black box in the middle": `MapMachines`).
+8. **PART v1430 (`GYRO_STYLE`), SEEN:** the 3 rings are round painted tubes (red, yellow, blue; 28 pieces each), bulbs on the outer ring, a padded seat with red straps in the middle (turns with the inner ring). Still parts, not a model; no Creator Store gyroscope fits (searched: a pendulum ride and a "Fireball" ring ride, both other rides). LEFT: the platform with steps, fence with gate, control booth, real stands. **The gyro** ("the yellow thing that spins round with an orange line and a black box in the middle": `MapMachines`).
    - Replace the plain-part build with a real model:
      - a proper gyroscope ride: 3 nested painted steel rings that spin on different axes;
      - a padded seat with straps at the centre;

@@ -1280,9 +1280,14 @@ local function east(into: Instance, o: Vector3, top: number)
 	local rings: { { parts: { BasePart }, r: number, axis: Vector3, speed: number, base: { CFrame } } } = {}
 	-- (MAP_MACHINES_LIVE: the rings turn on each screen (Client/GateMotion "Spin"), not by the server 10 times a second)
 	local gyroClient = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).MAP_MACHINES_LIVE == true
+	-- (FIXES_28NOV 8, Config.GYRO_STYLE, owner: "the yellow thing that spins round with an orange line and a black box":
+	-- the rings were 16 grey-green square blocks each. Now each ring is 28 round steel tube pieces painted red, yellow and
+	-- blue, the outer one carries light bulbs, and a padded seat with straps sits in the middle, turning with the inner one.)
+	local styled = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).GYRO_STYLE == true
+	local PAINT = { Color3.fromRGB(214, 44, 44), Color3.fromRGB(246, 186, 40), Color3.fromRGB(40, 104, 214) }
 	for i, spec in { { 8.5, Vector3.xAxis, 0.6 }, { 7, Vector3.zAxis, -0.9 }, { 5.5, Vector3.xAxis, 1.3 } } do
 		local list, bases = {}, {}
-		local n = 16
+		local n = if styled then 28 else 16
 		local ringModel = Instance.new("Model")
 		ringModel.Name = "GyroRingSet"
 		ringModel.Parent = into
@@ -1291,12 +1296,47 @@ local function east(into: Instance, o: Vector3, top: number)
 			local seg = 2 * math.pi * spec[1] / n + 0.3
 			local cf = CFrame.Angles(0, 0, a) * CFrame.new(spec[1], 0, 0)
 			local p = part(into, "GyroRing", Vector3.new(1.2, seg, 1.2), CFrame.new(hub) * cf, Color3.fromRGB(96, 116, 98), Enum.Material.Metal, true)
+			if styled then
+				-- (a round tube piece along the ring: a cylinder's axis is X, turned onto the ring's tangent)
+				cf = cf * CFrame.Angles(0, 0, math.pi / 2)
+				p.Shape = Enum.PartType.Cylinder
+				p.Size = Vector3.new(seg, 1.1, 1.1)
+				p.CFrame = CFrame.new(hub) * cf
+				p.Color = PAINT[i]
+				p.Material = Enum.Material.SmoothPlastic
+				p.Reflectance = 0.12
+				if i == 1 and k % 4 == 0 then
+					local bulb = part(into, "GyroBulb", Vector3.new(0.6, 0.6, 0.6), CFrame.new(hub) * cf * CFrame.new(0, 0.7, 0), Color3.fromRGB(255, 236, 170), Enum.Material.Neon, true, Enum.PartType.Ball)
+					bulb.CanCollide = false
+					if gyroClient then
+						bulb.Parent = ringModel
+					end
+				end
+			end
 			p.CanCollide = false
 			if gyroClient then
 				p.Parent = ringModel
 			end
 			table.insert(list, p)
 			table.insert(bases, cf)
+		end
+		if styled and i == 3 then
+			-- the padded seat with its straps in the middle, turning with the inner ring
+			local seat = part(into, "GyroSeat", Vector3.new(2.6, 0.7, 2.4), CFrame.new(hub + Vector3.new(0, -1.4, 0)), Color3.fromRGB(34, 34, 38), Enum.Material.Fabric, true)
+			local back = part(into, "GyroSeat", Vector3.new(2.6, 3, 0.6), CFrame.new(hub + Vector3.new(0, 0.1, 1.1)), Color3.fromRGB(34, 34, 38), Enum.Material.Fabric, true)
+			for _, sx in { -0.7, 0.7 } do
+				local strap = part(into, "GyroStrap", Vector3.new(0.3, 2.8, 0.15), CFrame.new(hub + Vector3.new(sx, 0.1, 0.75)), Color3.fromRGB(214, 44, 44), Enum.Material.Fabric, true)
+				strap.CanCollide = false
+				if gyroClient then
+					strap.Parent = ringModel
+				end
+			end
+			for _, sp in { seat, back } do
+				sp.CanCollide = false
+				if gyroClient then
+					sp.Parent = ringModel
+				end
+			end
 		end
 		table.insert(rings, { parts = list, r = spec[1], axis = spec[2], speed = spec[3], base = bases })
 		if gyroClient then
