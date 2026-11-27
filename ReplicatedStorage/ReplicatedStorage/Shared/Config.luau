@@ -197,6 +197,7 @@ local Config = {
 		[3] = { skinReach = 45, skinRate = 15 },
 	},
 	LAGFREE_IPAD = true, -- LAG-FREE 2 item 10: an iPad with a keyboard is still a tablet: no Bloom, SunRays, depth of field or shadows (Client/PhoneDiet)
+	LAGFREE_SERVER_TICK = true, -- LAG-FREE 2 item 8: GroundGuard checks the bodies in 10 slices over its 2 s, not all in one burst; sleeping bodies skipped
 	LAGFREE_SOUNDS = true, -- LAG-FREE 2 item 6: at most 12 world sounds at once on a phone (16 tablet, 32 PC), a sound too far to hear is stopped (Client/SoundCap)
 	LAGFREE_POOLS = true, -- LAG-FREE 2 item 6: the shot lights (FeelV2) and the gold sparks (FxController) come from pools, not new on every hit
 	LAGFREE_HIGHLIGHT = true, -- LAG-FREE 2 item 5: at most 3 (phone) / 5 (tablet) / 10 (PC) Highlights drawn, by priority (held, X-ray, dog, the rest), none off screen (Client/HighlightCap)

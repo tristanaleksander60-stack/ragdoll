@@ -13,7 +13,7 @@ do
 	-- (THE FINISH LINE, a clean console: two remotes a client waits for at its start were made seconds later by their
 	-- systems ("Infinite yield possible" on Trial and NpcCommand); they exist from the first moment now)
 	local Net = require(Shared:WaitForChild("Net")) :: any
-	for _, name in { "Trial", "NpcCommand" } do
+	for _, name in { "Trial", "NpcCommand", "Weapons" } do
 		if Net.Names[name] then
 			pcall(Net.event, Net.Names[name])
 		end

@@ -177,13 +177,32 @@ function GroundGuard.check(model: Model): boolean
 end
 
 function GroundGuard.start()
+	-- (LAG-FREE 2 item 8, Config.LAGFREE_SERVER_TICK: the same check every CHECK_EVERY s per body, but spread over
+	-- 10 slices instead of every body in one burst (about 400 bodies on a full server); sleeping bodies are skipped)
+	local sliced = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).LAGFREE_SERVER_TICK == true
 	task.spawn(function()
 		while true do
-			task.wait(GroundGuard.CHECK_EVERY)
+			if not sliced then
+				task.wait(GroundGuard.CHECK_EVERY)
+				local folder = Workspace:FindFirstChild("Dummies")
+				for _, model in if folder then folder:GetChildren() else {} do
+					if model:IsA("Model") then
+						pcall(GroundGuard.check, model)
+					end
+				end
+				continue
+			end
 			local folder = Workspace:FindFirstChild("Dummies")
-			for _, model in if folder then folder:GetChildren() else {} do
-				if model:IsA("Model") then
-					pcall(GroundGuard.check, model)
+			local list = if folder then folder:GetChildren() else {}
+			local SLICES = 10
+			local per = math.ceil(#list / SLICES)
+			for slice = 0, SLICES - 1 do
+				task.wait(GroundGuard.CHECK_EVERY / SLICES)
+				for i = slice * per + 1, math.min(#list, (slice + 1) * per) do
+					local model = list[i]
+					if model.Parent and model:IsA("Model") and model:GetAttribute("Asleep") ~= true then
+						pcall(GroundGuard.check, model)
+					end
 				end
 			end
 		end
