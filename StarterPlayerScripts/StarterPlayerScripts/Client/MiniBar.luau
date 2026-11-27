@@ -81,12 +81,35 @@ function MiniBar.start()
 				end
 			end
 		end
+		-- (AUDIT 24 rest: while the bar is small, the selected weapon's slot stays full size)
+		local function selectedBig(on: boolean)
+			local slotsF = bar:FindFirstChild("Slots", true)
+			if not slotsF then
+				return
+			end
+			local sel: string? = nil
+			if on then
+				pcall(function()
+					sel = (require(script.Parent:WaitForChild("PokeController")) :: any).getSelected()
+				end)
+			end
+			for _, slot in slotsF:GetChildren() do
+				local pop = slot:FindFirstChild("Pop")
+				if pop and pop:IsA("UIScale") then
+					local want = if on and slot.Name == sel then 1 / MiniBar.SMALL else 1
+					if math.abs(pop.Scale - want) > 0.01 and (want ~= 1 or pop.Scale > 1.01) then
+						pop.Scale = want
+					end
+				end
+			end
+		end
 		local function close()
 			open = false
 			if isPhone() then
 				to(MiniBar.SMALL, false)
 				hit.Visible = true
 				names(false)
+				selectedBig(true)
 			end
 		end
 		local function openIt()
@@ -94,6 +117,7 @@ function MiniBar.start()
 			lastTap = os.clock()
 			hit.Visible = false
 			names(true)
+			selectedBig(false)
 			to(1, true)
 		end
 		hit.Activated:Connect(openIt)
@@ -152,6 +176,7 @@ function MiniBar.start()
 					close()
 				elseif not open then
 					names(false) -- (a slot added while small)
+					selectedBig(true)
 				end
 				if open then
 					local window = Controller.getCurrent and Controller.getCurrent() ~= nil
