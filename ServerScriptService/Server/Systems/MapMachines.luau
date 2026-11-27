@@ -720,6 +720,87 @@ local function wireLava(lava: BasePart)
 	end)
 end
 
+-- 3.33 SEESAW (docs/MACHINES_10.md "Seesaw"; Config.SEESAW_10): "SIT A RAGDOLL" seats the nearest free one on the low
+-- end. Anything heavy coming down on the HIGH end (you jumping on it, a falling ragdoll, a thrown crate) flips the plank:
+-- the low end kicks up and the ragdoll sitting there is launched: "SEESAW! 38 studs" (the height) with a NEW BEST for
+-- whoever jumped (SeesawBest). The plank stays tipped the other way, ready for the next one.
+MapMachines.SEESAW_TILT = 9
+local function wireSeesaw(plank: BasePart)
+	local pivot = plank.CFrame * CFrame.Angles(0, 0, -math.rad(MapMachines.SEESAW_TILT)) -- (level)
+	local half = plank.Size.X / 2
+	local sign = 1 -- (+1: the +X end is high)
+	local lastFlip = 0
+	local function tipped(sg: number): CFrame
+		return pivot * CFrame.Angles(0, 0, math.rad(MapMachines.SEESAW_TILT) * sg)
+	end
+	plank.CFrame = tipped(sign)
+	local function lowEnd(): Vector3
+		return (pivot * CFrame.new(-sign * (half - 1.2), 0, 0)).Position
+	end
+	local function flip(by: Player?)
+		local now = os.clock()
+		if now - lastFlip < 1 then
+			return
+		end
+		lastFlip = now
+		local low = lowEnd()
+		sign = -sign
+		game:GetService("TweenService"):Create(plank, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { CFrame = tipped(sign) }):Play()
+		local dummies = Workspace:FindFirstChild("Dummies")
+		for _, m in if dummies then dummies:GetChildren() else {} do
+			local pe = m:IsA("Model") and pelvisOf(m)
+			if pe and (pe.Position - low).Magnitude < 4.5 then
+				local out = (pivot.RightVector * -(-sign)) -- (away from the pivot, over the end that kicked up)
+				local y0 = pe.Position.Y
+				pcall(control().push, m, out * 18 + Vector3.new(0, 95, 0), by)
+				task.spawn(function()
+					local peak = y0
+					local t0 = os.clock()
+					while os.clock() - t0 < 2.5 and pe.Parent do
+						peak = math.max(peak, pe.Position.Y)
+						task.wait(0.05)
+					end
+					local h = math.floor(peak - y0 + 0.5)
+					local text = "SEESAW! " .. h .. " studs"
+					if by then
+						local best = (by:GetAttribute("SeesawBest") :: number?) or 0
+						if h > best then
+							by:SetAttribute("SeesawBest", h)
+							text ..= " NEW BEST!"
+						end
+					end
+					pcall(function()
+						require(script.Parent:WaitForChild("Playground")).pop(low + Vector3.new(0, 6, 0), text, Color3.fromRGB(255, 220, 80))
+					end)
+				end)
+			end
+		end
+	end
+	plank.Touched:Connect(function(other: BasePart)
+		-- (only a hit on the HIGH end, coming down hard)
+		local rel = pivot:PointToObjectSpace(other.Position)
+		if rel.X * sign < half * 0.35 then
+			return
+		end
+		local vy = other.AssemblyLinearVelocity.Y
+		local char = other:FindFirstAncestorOfClass("Model")
+		local player = char and Players:GetPlayerFromCharacter(char)
+		if (player and vy < -6) or (not player and vy < -15) then
+			flip(player)
+		end
+	end)
+	prompt(plank, "Sit a ragdoll", function(player)
+		local m = nearestFree(plank.Position, 70)
+		if m then
+			local seat = lowEnd() + Vector3.new(0, 3, 0)
+			pcall(control().move, m, CFrame.lookAt(seat, seat + pivot.RightVector * sign))
+			pcall(function()
+				require(script.Parent:WaitForChild("Playground")).pop(seat + Vector3.new(0, 4, 0), "JUMP ON THE OTHER END!", Color3.fromRGB(255, 255, 255))
+			end)
+		end
+	end)
+end
+
 function MapMachines.start()
 	local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
 	if not Config.MAP_MACHINES_LIVE or not Config.LAB_OWNERMAP then
@@ -751,6 +832,11 @@ function MapMachines.start()
 						wired[sPad] = true
 						local post = om:FindFirstChild("SweeperPost")
 						wireSweeper(sPad, sBeam, if post and post:IsA("BasePart") then post else nil)
+					end
+					local plank = om:FindFirstChild("SeesawPlank")
+					if Config.SEESAW_10 and plank and plank:IsA("BasePart") and not wired[plank] then
+						wired[plank] = true
+						wireSeesaw(plank)
 					end
 					local tBase, tTop = om:FindFirstChild("TeslaBase"), om:FindFirstChild("TeslaTop")
 					if Config.TESLA_10 and tBase and tTop and tBase:IsA("BasePart") and tTop:IsA("BasePart") and not wired[tBase] then
