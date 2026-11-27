@@ -75,6 +75,31 @@ function PerfReport.start()
 		lastStats[p] = nil
 		lastLevel[p] = nil
 	end)
+	-- (LAG-FREE 2 item 8: the server's own step time, once a minute: the slowest step and the share of steps over
+	-- 1/45 s, logged on the first player as ServerStepMaxMs / ServerSlowPct; never in Studio)
+	if Config.LAGFREE_TELEMETRY and not RunService:IsStudio() then
+		local steps, slow, worst = 0, 0, 0
+		RunService.Heartbeat:Connect(function(dt)
+			steps += 1
+			if dt > 1 / 45 then
+				slow += 1
+			end
+			if dt > worst then
+				worst = dt
+			end
+		end)
+		task.spawn(function()
+			while true do
+				task.wait(60)
+				local first = Players:GetPlayers()[1]
+				if first and steps > 0 then
+					log(first, "ServerStepMaxMs", math.floor(worst * 1000 + 0.5), "server")
+					log(first, "ServerSlowPct", math.floor(slow / steps * 100 + 0.5), "server")
+				end
+				steps, slow, worst = 0, 0, 0
+			end
+		end)
+	end
 end
 
 return PerfReport
