@@ -2295,6 +2295,9 @@ local NAMES: { [string]: string } = {
 	Cannon = "CANNON", LandingField = "LANDING FIELD", Rocket = "ROCKET", LavaStrip = "LAVA", Shredder = "SHREDDER", Sweeper = "SWEEPER",
 }
 local function nameSign(into: Instance, at: Vector3, face: Vector3, text: string)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).NAME_SIGNS == false then
+		return -- (F84, owner: "Fjern alle der her skilte": no name boards anywhere)
+	end
 	if signV2(into, at, face, text) then
 		return -- (F39: a real sign)
 	end
@@ -2689,7 +2692,9 @@ local function spawnSet(into: Instance, o: Vector3, top: number)
 	-- THE WAYFINDING SIGNPOST at the stair top, west of the arch: an arrow to every room
 	local spawnAt = Vector2.new(pz.at.X, pz.at.Y + 25)
 	local sp = Vector3.new(c.X - 48, ft, south - 20)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).NAME_SIGNS ~= false then -- (F84: no signpost either)
 	part(set, "SignpostPole", Vector3.new(0.8, 19, 0.8), CFrame.new(sp + Vector3.new(0, 9.5, 0)), Color3.fromRGB(90, 66, 44), Enum.Material.WoodPlanks)
+	end
 	local rooms = {}
 	for key, room in Plan.ROOMS do
 		if room.walled and GATE_THEME[room.name] then
