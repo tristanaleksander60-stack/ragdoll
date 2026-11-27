@@ -3,11 +3,14 @@
 Studio place "[💥] Ragdoll Havoc", placeId 126037745825106, universe 10774775314. Branch `release`. Talk to the owner in **Danish, short and plain**.
 
 ## How every session runs
-- **The owner types `/klar`.** Read `docs/RUN.md` first (the ONE ordered to-do list; small batches, causes found, proof by capture, then stop with a short test list). Background: `docs/OVERVIEW.md` (the one-page plan: THE ORDER in 8 phases) and build it in order, without stopping (`.claude/commands/klar.md`). `docs/NOW.md` holds details only. Do not read the big plans whole: `docs/V9_PLAN.md` (220 KB) and `docs/V8_PLAN.md` (130 KB) hold the history. `grep -n` them for the one section a task needs.
-- **Testing (owner order, 26 Nov 2026):** the owner tests EVERYTHING at the end; Claude Code builds the best possible product and does not test it.
-  - Claude Code does only **one quick Play** per item, to check for no errors in the output.
-  - No runs, watches, benches, scores, suites, reviewers or long play sessions, even where a doc asks (OVERVIEW "NO TESTING").
-  - The run ends with ONE Danish **"Test selv"** list for everything (phone first).
+- **The owner types `/klar`.** Read `docs/RUN.md` first: it is the ONE ordered to-do list and overrides every banner in OVERVIEW and NOW. Then follow `.claude/commands/klar.md`:
+  1. the preflight (push the cloud's code, parse it, one Play);
+  2. one batch;
+  3. for each item, the exact cause found in the code and the fix proven by a capture on PC and in the phone emulator;
+  4. then STOP with a short Danish "Test selv" list for that batch.
+
+  `docs/OVERVIEW.md` and `docs/NOW.md` are background and history. Do not read the big plans whole (`docs/V9_PLAN.md`, `docs/V8_PLAN.md`): grep them.
+- **Proof, not runs:** no long play sessions, benches or suites. But nothing is DONE without a capture that shows it working.
 - **Publishing:** NOT until the map is done and the owner has tested. Then the owner publishes both places from the final message's steps. **Never restart or shut down old servers.**
 - **Cost:**
   - read only what you need (grep first);
