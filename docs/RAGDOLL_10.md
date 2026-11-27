@@ -115,6 +115,15 @@ The ragdolls ARE the game. This doc is the one umbrella for making them 10/10. I
 5. **"Next to a player" shows a grey slab:** put a real Roblox-size blocky R15 avatar next to it (head, torso 2x2x1, arms and legs 1x2x1, in normal avatar colours), so the scale reads.
 6. **The bar** is the v4 bar plus: no seams or steps on any band at close-up size; the hand passes the hook test; the side render reads chunky. Judge every render against it harshly and fix before you show the owner.
 
+**v6 FIXES: the owner's changes to v5** (27 Nov late: "Gør halsen lidt mindre, sørg for intet overlapper, fjern de sorte striber"; the cloud rated v5 8/10). KEEP everything else from v5 (the round chunky SDF body, the hands with separate fingers, the chest plate, the yellow-black marks, the head and its face). Build `build_mannequin_v6.py` from v5, renders to `art/models/mannequin/review_v6/` (the same set as v5):
+1. **A smaller neck:** shorter and thinner (about 0.28 radius instead of 0.36, and about half as long), so the head sits closer to the shoulders with only a short soft neck showing; the head must still turn freely without clipping into the chest.
+2. **Nothing overlaps:**
+   - no part of the mesh pokes through another: the head and the neck, the arms and the torso, the hands and the thighs (in the standing pose the hands hang just clear of the legs), the thumb and the palm;
+   - no marking overlaps anything: each yellow-black mark sits whole on a clean spot (the upper arms and the thighs, away from the joints), never cut or covered;
+   - no stray shapes: remove the small black slivers and specks on the neck, the hip and the thigh, and the small spike at the base of the thumb (v5 has them).
+3. **No black stripes:** remove ALL the dark joint bands (neck, shoulders, elbows, wrists, hips, knees, ankles), so the body is one clean light grey. The chest plate, the yellow-black marks and the dark boot soles stay.
+4. **The bar:** the v5 bar, minus the bands, plus: a close-up of the neck, a shoulder and a hand next to the thigh, with zero overlaps, slivers or spikes. Judge harshly and fix before showing the owner.
+
 **More life:**
 - **The stance:** upright and relaxed, never hunched or hand-clasped by default;
 - **the face:** R2, living eyes, blinks and a talking mouth;
