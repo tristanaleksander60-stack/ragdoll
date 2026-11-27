@@ -157,7 +157,11 @@ The ragdolls ARE the game. This doc is the one umbrella for making them 10/10. I
   - **walk:** upright, a tiny forward lean, the arms swing down by the sides opposite to the legs, the knees bend, heel then toe, the stride matched to v6's shorter legs so the feet never slide, a soft up-down bob and a little side sway (a toy waddle, cute, never stiff);
   - **run:** a bouncy jog with a forward lean of about 10 degrees, the arms bent at 90 degrees pumping, a higher knee lift, the head steady;
   - the switch between them eased; the speed limits stay (F83).
-- **The owner's checks** (in the final test list): shoot one limb 3 times in a row: it shows its bones for 3 s and goes; shoot 3 different limbs: no X-ray; X-RAY on: all near bodies show the full skeleton in every limb until it is turned off. A walking and a running v6 ragdoll: round grey head with its face, straight body, arms down and swinging, no foot sliding.
+- **E. The rounds INSIDE, on the bone; only nice holes on the skin** (owner, 27 Nov late: "Kun gør så skudene er synlig med x-ray inde på knoglen, ikke ude på huden, der skal bare bløde fra de 3 seneste huller og være custom hul på huden hvor det er flotte skudhuller som altid"):
+  - **the slugs** (the brass rounds) exist ONLY in X-ray and ONLY on a bone inside the body: each one on the bone its shot line reaches first (BodyShape centre line), never on or outside the skin (the owner's screenshot shows brass sticks poking out all round the chest: none of that). Out of X-ray, no slug can be seen at all;
+  - **the skin** shows only our own custom bullet holes (the nice hole decals as always, on the v6 surface point, `fbf5864`), with their exit holes; no brass, no bone, no sticks on the skin;
+  - **the bleeding:** only the **3 newest** holes on a body drip purple (the trickle down the skin, the drops, the pool under the lowest); older holes stay as dry holes. A new hit moves the drip to the newest 3.
+- **The owner's checks** (in the final test list): shoot one limb 3 times in a row: it shows its bones for 3 s and goes; shoot 3 different limbs: no X-ray; in X-ray the rounds sit inside on the bones, out of X-ray only nice holes on the skin and only the 3 newest bleed; X-RAY on: all near bodies show the full skeleton in every limb until it is turned off. A walking and a running v6 ragdoll: round grey head with its face, straight body, arms down and swinging, no foot sliding.
 
 **More life:**
 - **The stance:** upright and relaxed, never hunched or hand-clasped by default;
