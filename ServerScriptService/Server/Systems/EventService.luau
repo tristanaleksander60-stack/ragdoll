@@ -80,9 +80,71 @@ local function hostOf(job: Job): Player?
 	return if userId then Players:GetPlayerByUserId(userId) else nil
 end
 
+-- 1.0 EVENTS ON THE NEW MAP, rule 1 (docs/EVENTS_NEWMAP.md; Config.EVENTS_V2): an event happens AROUND THE PLAYER it is
+-- for, in view at once, not in the lab's middle hundreds of studs away. When that player stands somewhere covered or
+-- cramped (a roof over the head within 40 studs, in a seat, high up on the tower), it centres on the nearest OPEN spot
+-- of the plan within 90 studs (the Tower Square, the spawn plaza, a walkway crossing). nil = not in their own lab.
+local OPEN_SPOTS: { Vector2 }? = nil
+local function openSpots(): { Vector2 }
+	if OPEN_SPOTS then
+		return OPEN_SPOTS
+	end
+	local list: { Vector2 } = {}
+	pcall(function()
+		local Plan = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("OwnerMapPlan")) :: any
+		for _, pz in Plan.PLAZAS or {} do
+			table.insert(list, pz.at)
+		end
+		for _, r in Plan.ROADS or {} do
+			for _, p in r.points do
+				table.insert(list, p)
+			end
+		end
+	end)
+	OPEN_SPOTS = list
+	return list
+end
+local eventParams = RaycastParams.new()
+eventParams.FilterType = Enum.RaycastFilterType.Exclude
+local function eventSpot(job: Job?): Vector3?
+	if not (Config :: any).EVENTS_V2 then
+		return nil
+	end
+	local host = job and hostOf(job)
+	local character = host and host.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not (host and root and root:IsA("BasePart") and Lab.plotIndex(host) and Lab.ownerAt(root.Position) == host) then
+		return nil
+	end
+	local dummies = workspace:FindFirstChild("Dummies")
+	eventParams.FilterDescendantsInstances = if dummies then { character :: Instance, dummies } else { character :: Instance }
+	local groundY = Lab.plazaOrigin().Y
+	local here = Vector3.new(root.Position.X, groundY, root.Position.Z)
+	local hum = (character :: Model):FindFirstChildOfClass("Humanoid")
+	local covered = workspace:Raycast(root.Position + Vector3.new(0, 3, 0), Vector3.new(0, 40, 0), eventParams) ~= nil
+	local cramped = covered or (hum ~= nil and hum.SeatPart ~= nil) or root.Position.Y - groundY > 14
+	if not cramped then
+		return here
+	end
+	local o = Lab.originFor(host)
+	local best, bestD = here, 90
+	for _, s in openSpots() do
+		local p = Vector3.new(o.X + s.X, groundY, o.Z + s.Y)
+		local d = (p - here).Magnitude
+		if d < bestD and not workspace:Raycast(p + Vector3.new(0, 3, 0), Vector3.new(0, 40, 0), eventParams) then
+			best, bestD = p, d
+		end
+	end
+	return best
+end
+
 -- Where an event happens: in the lab of the player it is for, while they are in it; anywhere else
 -- (they went out, or it is nobody's) in the plaza, the place for everyone.
 local function labCenter(job: Job?): Vector3
+	local spot = eventSpot(job)
+	if spot then
+		return spot -- (1.0 rule 1: round the buyer)
+	end
 	local host = job and hostOf(job)
 	local character = host and host.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
@@ -348,6 +410,10 @@ end
 
 -- v3 Phase C: the animals walk the host's lab (its middle; the plaza when they are not in it).
 local function labMiddle(job: Job): Vector3
+	local spot = eventSpot(job)
+	if spot then
+		return Vector3.new(spot.X, spot.Y - 0.5, spot.Z) -- (1.0 rule 1: round the buyer)
+	end
 	local host = hostOf(job)
 	local character = host and host.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
