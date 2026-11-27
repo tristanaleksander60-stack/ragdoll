@@ -289,6 +289,15 @@ function MachineDemos.tryAt(player: Player): boolean
 		if not walkIn(m, at) then
 			return
 		end
+		if player:GetAttribute("GrabTipShown") ~= true then
+			-- (F81 rest: the one-time grab tip, after the first TRY: next time they can do it themselves)
+			player:SetAttribute("GrabTipShown", true)
+			task.delay(2.5, function()
+				pcall(function()
+					(require(script.Parent:WaitForChild("ProgressService")) :: any).notice(player, "Tip: grab a ragdoll and throw it in yourself!")
+				end)
+			end)
+		end
 		local DummyControl = require(script.Parent:WaitForChild("DummyControl")) :: any
 		local start = at + Vector3.new(0, mc.lift + 2, 0)
 		local pe = m:FindFirstChild("LowerTorso")
