@@ -287,7 +287,18 @@ local function letGo(model: Model)
 end
 
 -- lihfolk-ignore: remote-unvalidated-args (kind is checked first: only TakeOff, Grab, Let and Tear pass)
+-- (AUDIT 27 Nov 7: a token bucket per player on this remote: 10 calls a second, a burst of 20; the rest is dropped)
+local tearBucket: { [Player]: { n: number, t: number } } = setmetatable({}, { __mode = "k" }) :: any
 local function onTear(player: Player, kind: unknown, target: unknown, asked: unknown)
+	local now = os.clock()
+	local bk = tearBucket[player] or { n = 20, t = now }
+	bk.n = math.min(20, bk.n + (now - bk.t) * 10)
+	bk.t = now
+	tearBucket[player] = bk
+	if bk.n < 1 then
+		return
+	end
+	bk.n -= 1
 	if kind == "TakeOff" then
 		if player:GetAttribute("MechArms") == true then
 			MechArms.toggle(player)
