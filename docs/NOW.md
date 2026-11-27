@@ -365,6 +365,7 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - Build items 0-8 top to bottom in ONE session, without stopping to ask. Item 5 is the owner's (only prepare the answers).
 - After each item: one quick Play (no errors), commit and push, mark it done here. **Do not ask the owner to test in between.**
 - Anything that needs the owner (new product ids, a picture choice, a yes/no): pick the safe default behind a Config switch, write it in the "Questions for the owner" list at the end, and go on. Never wait.
+- **F89 (27 Nov):** may Claude upload models itself? Add `C:\Users\tristan\Documents\RagdollLab\art\models` to Studio Assistant Settings > MCP Permissions > upload folders. Default: you import `mannequin_v2.fbx` yourself (File > Import 3D).
 - **Publish ONCE at the end** through RELEASE.md (quick gate; never restart old servers).
 - Then give the owner **ONE combined Danish "Test selv" list** for everything, grouped by device (phone first, then PC, tablet, console), max about 15 lines, plus the "Questions for the owner" list.
 

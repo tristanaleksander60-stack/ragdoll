@@ -88,7 +88,7 @@ The owner: "sørg for den ikke tester alt selv dybt, men at det er min opgave".
 
 ## WHAT IS LEFT (27 Nov): the next run builds it in THIS order
 Everything not listed here is DONE (see the rows). Each line points to its row; build the row's LEFT.
-1. **F89 FIRST:** the new body walks like a bodybuilder with its arms up (a rest-pose mismatch), lumpy and yellow. Rebuild it with the arms down, slim and grey (FIXES F89).
+1. **F89 FIRST:** the new body walks like a bodybuilder with its arms up (a rest-pose mismatch), lumpy and yellow. Rebuild it with the arms down, slim and grey (FIXES F89). **BUILT v1267, waiting for ONE owner step:** the cause was the body's shape (shoulders out to 1.6 studs, a hump) and the torso's yellow test suit, not the drive (bones matched the parts within 1 degree). `art/models/mannequin/build_mannequin_v2.py` makes the slim body (arms down 5 degrees, elbows bent 10, shoulders 2.0 wide, smoothed, grey) as `mannequin_v2.fbx`. SmoothBody V2 (`SMOOTH_BODY_V2`) drives it forward-kinematically and always grey (the legs' shell colour). The owner: Studio, File > Import 3D > `art/models/mannequin/mannequin_v2.fbx`, then save (the server hands a `mannequin_v2` model in workspace to the clients; the next run moves it to ReplicatedStorage.SmoothBodyV2). The MCP upload is refused: the folder is not approved in MCP Permissions.
 2. **The ragdoll itself (PHASE 2):**
    - S1's rest: upper-body gesture layers, foot IK, smooth ownership;
    - F73's rest (0.1571): the turn pose, foot friction, curved arrivals, the TURN TWIST detector;
