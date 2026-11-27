@@ -904,6 +904,20 @@ function ShopV9.build(win: any, given: Api)
 		page.Visible = tab == current
 		page.LayoutOrder = i
 		C.list(page, Enum.FillDirection.Vertical, 12, Enum.HorizontalAlignment.Center)
+		-- (AUDIT 23: each tab says in one kid line what it is)
+		local LINES = { FEATURED = "The best picks right now", PASSES = "Unlock things for good", ITEMS = "Boosts and fun extras", EVENTS = "Start a big event in your lab", BOLTS = "BOLTS: coins for weapons" }
+		if LINES[tab] then
+			local sub = Instance.new("TextLabel")
+			sub.Name = "Subtitle"
+			sub.BackgroundTransparency = 1
+			sub.Size = UDim2.new(1, -16, 0, 22)
+			sub.Font = Enum.Font.BuilderSansBold
+			sub.TextSize = 16
+			sub.TextColor3 = Color3.fromRGB(205, 215, 230)
+			sub.Text = LINES[tab]
+			sub.LayoutOrder = -1
+			sub.Parent = page
+		end
 		page.Parent = s
 		pages[tab] = page
 	end
