@@ -124,6 +124,7 @@ local Config = {
 	PERSONAS = true, -- P1 part 1: every ragdoll a Persona (Curious 35, Scared 30, Hero 15, Chill 20): at a shot, hit or crash nearby the curious walk over and watch, the scared scream and run, a hero runs to the hurt body, the chill shrug (Systems/Personas)
 	SPREAD_LIFE = true, -- P1 part 2: only 8 bodies a lab are drawn to the player; the rest roam to the fronts of the plan's attractions, weighted to the emptiest and far ones, never where 5 are within 25 studs (Lab spreadSpot)
 	DOG_PET = true, -- row 13 part 2: the guard dog barks (coming out, biting) and its owner can Pet it (F): a happy bark and pink hearts (GuardDog)
+	FTUE_10 = true, -- T1 part 1: the bowling lane is the ONE machine shown (the goal line "Bowl a STRIKE!", the guide line, TRY bowls); a new player's first roll is always a STRIKE; after it free play: nothing is pointed at, TRY shows at any machine you walk up to (Client/FirstTwo, Bowling)
 	HOME_CLEAR = true, -- F75: once the map stands every vehicle home is checked with the vehicle's box and moved to the nearest clear spot when something solid is inside it ([Vehicles] homes moved: n)
 	BIKE_ROUTE = true, -- F69: on the compact map the motorbike rider follows the walkway loop's centre line point to point (a point not reached in 14 s is skipped)
 	REAL_HANDS = true, -- S2 plan B: real hands from rounded parts (palm, 4 fingers of 3 segments, a thumb of 2), posed by state, on this screen only; the hook hand skin is shrunk away (Client/RealHands)

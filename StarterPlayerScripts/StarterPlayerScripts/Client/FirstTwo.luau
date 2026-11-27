@@ -35,6 +35,7 @@ local function showcase(): any
 	return require(script.Parent:WaitForChild("LabShowcase")) :: any
 end
 
+local BOWLING = { kind = "Bowling", label = "BOWLING" } -- (T1: the lane, a machine row of its own)
 local function tried(kind: string): boolean
 	return player:GetAttribute("Tried_" .. kind) == true
 end
@@ -253,6 +254,16 @@ function FirstTwo.start()
 			return
 		end
 		busyUntil = os.clock() + 3
+		if m.kind == "Bowling" then
+			local prompt = inst:FindFirstChildOfClass("ProximityPrompt")
+			if prompt then
+				prompt:InputHoldBegin()
+				task.delay(0.1, function()
+					prompt:InputHoldEnd()
+				end)
+			end
+			return
+		end
 		session("Try", m.kind)
 		player:SetAttribute("TryBusy", true)
 		task.spawn(function()
@@ -276,6 +287,15 @@ function FirstTwo.start()
 	local function pick(lab: Instance, r: BasePart): (any, Instance?)
 		local S = showcase()
 		local best, bestInst, bestD = nil, nil, math.huge
+		-- (T1 FTUE_10: the bowling lane is the ONE machine shown; its lever is the target until you have bowled)
+		if Config.FTUE_10 and not tried("Bowling") then
+			local lane = lab:FindFirstChild("RagdollBowling", true)
+			local lever = lane and lane:FindFirstChild("LeverBase")
+			if lever then
+				best, bestInst, bestD = BOWLING, lever, 0
+				return best, bestInst
+			end
+		end
 		for _, m in S.MACHINES do
 			if m.kind and not tried(m.kind) then
 				local inst = S.find(lab, m.path)
@@ -302,8 +322,15 @@ function FirstTwo.start()
 			-- The target: kept until it is tried (no flipping between two machines).
 			if not target or tried(target.kind) or not targetInst or not targetInst.Parent then
 				target, targetInst = pick(lab, r)
+				if Config.FTUE_10 and target and target.kind ~= "Bowling" then
+					target, targetInst = nil, nil -- (free play: after the bowling nothing is pointed at; TRY still shows at any machine)
+				end
 				if target then
-					say("Try " .. (showcase().SHORT[target.label] or "IT") .. count())
+					if target.kind == "Bowling" then
+						say("Bowl a STRIKE!")
+					else
+						say("Try " .. (showcase().SHORT[target.label] or "IT") .. count())
+					end
 					local pos = showcase().where(targetInst)
 					if pos then
 						-- (The machine's own floor, found once: the line never jumps with the player.)

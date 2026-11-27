@@ -205,6 +205,26 @@ local function bowl(lane: Lane, by: Player)
 			end
 		end
 	end
+	-- (T1 FTUE_10: a new player's FIRST roll is always a STRIKE: as the ball reaches the pins, every pin still up is
+	-- knocked flying)
+	local sure = by:GetAttribute("Tried_Bowling") ~= true and lane.roll == 1
+		and (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).FTUE_10 == true
+	by:SetAttribute("Tried_Bowling", true)
+	if sure then
+		task.delay(1.5, function()
+			for i, pin in lane.pins do
+				if standing(pin, lane.homes[i]) then
+					local side = lane.dir:Cross(Vector3.yAxis) * (math.random() - 0.5) * 30
+					for _, p in pin:GetChildren() do
+						if p:IsA("BasePart") then
+							p.AssemblyLinearVelocity = lane.dir * 26 + side + Vector3.new(0, 14, 0)
+							p.AssemblyAngularVelocity = Vector3.new(math.random(-8, 8), math.random(-8, 8), math.random(-8, 8))
+						end
+					end
+				end
+			end
+		end)
+	end
 	task.wait(Bowling.COUNT_AFTER)
 	ball:SetAttribute("Bowling", nil)
 	local down = 0
