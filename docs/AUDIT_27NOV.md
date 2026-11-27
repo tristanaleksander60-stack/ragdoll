@@ -59,7 +59,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - one "BEST OF THE WEEK" board rotating between bowling, cannon, tower drop and target run;
     - a statue for the weekly #1 (the F77 code).
 13. **PLAY TOGETHER:** from the solo start place, the invite first takes you to a reserved multiplayer server (PortalService), then opens the invite there, so friends really meet.
-14. **Daily goals use the map:** "Bowl a strike", "Fire the cannon 3 times", "Feed 2 animals", "Break 5 bones", "Use 4 different weapons".
+14. **PART DONE v1357:** "Bowl a strike" (Bowling) and "Break 5/10 bones" (VitalsService, BROKEN or SHATTERED by a player) are in the daily pool. LEFT: cannon, feed animals, 4 different weapons. **Daily goals use the map:** "Bowl a strike", "Fire the cannon 3 times", "Feed 2 animals", "Break 5 bones", "Use 4 different weapons".
 15. **Badges:**
     - add 7-day streak, all weapons, all hats, every machine tried, every animal catch, Legend, the first gold mastery star, the advent finish;
     - re-point "Bullseye" (its bullseye is removed) to the cannon's PERFECT landing.

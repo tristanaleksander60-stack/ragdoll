@@ -503,6 +503,11 @@ local function bowl(lane: Lane, by: Player)
 			sound(Bowling.GUTTER_SOUND, lane.at + Vector3.new(0, 3, 0), 0.8)
 		end
 	end
+	if string.sub(word, 1, 6) == "STRIKE" and by and by.Parent then
+		pcall(function() -- (AUDIT 14: the "Bowl a strike" daily goal)
+			(require(script.Parent:WaitForChild("ProgressService")) :: any).goal(by, "Strike", 1)
+		end)
+	end
 	showBoard(lane, by, word)
 	if frameDone then
 		task.wait(1.2) -- (the pin-setter)

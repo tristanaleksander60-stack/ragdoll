@@ -8,7 +8,7 @@
 
 local DailyGoals = {}
 
-export type Kind = "Takedowns" | "Minutes" | "Eggs" | "Trips" | "Combo" | "Arena"
+export type Kind = "Takedowns" | "Minutes" | "Eggs" | "Trips" | "Combo" | "Arena" | "Strike" | "Breaks"
 export type Goal = { kind: Kind, need: number, text: string }
 
 -- What can be asked, and how much (one of `need` is picked). "max" kinds count the best of the
@@ -20,6 +20,9 @@ DailyGoals.POOL = table.freeze({
 	{ kind = "Trips" :: Kind, need = { 2, 3 }, text = "Visit %d places" },
 	{ kind = "Combo" :: Kind, need = { 5, 8 }, text = "Get a combo of %d" },
 	{ kind = "Arena" :: Kind, need = { 1, 2 }, text = "Play %d arena round%s" },
+	-- (AUDIT 14: goals that use the map; Bowling and VitalsService count them)
+	{ kind = "Strike" :: Kind, need = { 1 }, text = "Bowl %d strike%s" },
+	{ kind = "Breaks" :: Kind, need = { 5, 10 }, text = "Break %d bone%s" },
 })
 -- V9-0s: no arena goals while the Game Arena is hidden (Config.ARENA_ENABLED).
 if not (require(script.Parent:WaitForChild("Config")) :: any).ARENA_ENABLED then

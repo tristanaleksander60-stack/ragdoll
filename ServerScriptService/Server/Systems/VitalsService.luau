@@ -851,6 +851,11 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 		end)
 		if okB and type(word) == "string" then
 			label = label .. ": " .. word
+			if (word == "BROKEN" or word == "SHATTERED") and by then
+				pcall(function() -- (AUDIT 14: the "Break N bones" daily goal)
+					(require(script.Parent:WaitForChild("ProgressService")) :: any).goal(by, "Breaks", 1)
+				end)
+			end
 		end
 	end
 	local line = string.format("%s \u{00B7} %d%% blood \u{00B7} %s", label, math.floor(v.blood + 0.5), if v.state == "Dead" then (if Config.GORE == false then "knocked out" else "no pulse") else "pulse " .. math.floor(v.pulse + 0.5))
