@@ -61,6 +61,7 @@ FxController.lastShake = nil :: CFrame? -- (V8-1.2: the shake put on the camera 
 
 local fxFolder: Folder
 local shakeAmount = 0
+local ownActionAt = -math.huge -- (row 7: when this player last hit or threw something)
 local fovKick = 0
 local baseFov: number? = nil
 local rng = Random.new()
@@ -1376,6 +1377,15 @@ local function onFx(kind: string, position: Vector3, speed: number, toyId: strin
 		BloodFx.burst(position, 2.2) -- a limb snapping is the biggest splash
 	elseif kind == "Land" and speed >= 40 then
 		local power = math.clamp(speed / 50, 0.2, 1.5)
+		-- (Row 7, Config.OWN_SLAM: a body YOU hit or threw in the last 2.5 s slamming down at 70+: a small shake and a 40 ms
+		-- hit-stop, for you only)
+		if speed >= 70 and os.clock() - ownActionAt < 2.5 and (require(Shared:WaitForChild("Config")) :: any).OWN_SLAM then
+			shakeAmount = math.max(shakeAmount, near * 0.45)
+			local stopFn = (FxController :: any).ownStop
+			if stopFn then
+				stopFn(0.04)
+			end
+		end
 		pcall(function()
 			(require(script.Parent:WaitForChild("ImpactDust")) :: any).burst(position, speed) -- (IMPACT_FX: dust by surface and speed)
 		end)
@@ -1499,6 +1509,7 @@ FxController.fovZoom = 0 -- (round 5: a scope's zoom, GunFeel; apart from the sp
 
 -- Plays an effect for a moment of this client's own simulation (landings, breaks, prop contacts).
 function FxController.localEvent(kind: string, position: Vector3, speed: number, toyId: string)
+	ownActionAt = os.clock()
 	onFx(kind, position, speed, toyId, nil, nil, nil, true)
 end
 
@@ -1623,6 +1634,8 @@ local function hitStop(length: number)
 		frozenUntil = os.clock() + length
 	end
 end
+local fxAny: any = FxController
+fxAny.ownStop = hitStop -- (row 7: the own-slam hit-stop, called from onFx above)
 
 bigStop = function(length: number)
 	hitStop(FxController.takeHitStop(length))
@@ -1631,6 +1644,7 @@ end
 -- Plays a hit effect immediately for the local player's own tap (server echo is then skipped).
 -- stop: the hit-stop (s) granted for this hit (FxController.takeHitStop).
 function FxController.predictHit(position: Vector3, speed: number, toyId: string, direction: Vector3?, stop: number?, byHand: boolean?)
+	ownActionAt = os.clock()
 	hitStop(stop or 0)
 	local queue = predicted[toyId] or {}
 	predicted[toyId] = queue
