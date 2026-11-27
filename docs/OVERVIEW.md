@@ -1,4 +1,8 @@
 # OVERVIEW: the whole plan on one page (read this FIRST on every /klar)
+
+> ## ⚠ OWNER PRIORITY NOW (27 Nov, late): BUILD BODY v4 BEFORE ANYTHING ELSE
+> The owner is waiting to see it. Stop the current row after its commit and build body v4 with `RAGDOLL_10.md` "v4 FIXES" in Blender. Judge it yourself against its bar, push the renders to `art/models/mannequin/review_v4/`, and write "BODY V4: waiting for the owner's OK" in NOW.md. Then go on with the other rows while you wait. Remove this banner when the renders are pushed.
+
 Rebuilt 26 Nov 2026 late (cloud) on the owner's order: "lav den bedst mulige plan og sørg for alt er i korrekt rækkefølge ... sørg for den ikke tester alt selv dybt, men at det er min opgave, den skal bare lave det bedst mulige produkt og så tester jeg når alt er færdigt".
 
 This page is the map of the whole plan:
