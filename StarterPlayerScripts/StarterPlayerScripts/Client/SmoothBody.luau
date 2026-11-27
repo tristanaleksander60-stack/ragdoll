@@ -458,6 +458,13 @@ end
 
 -- Is this body's X-ray look on (its skins see-through)?
 local XRAY_GLASS = 0.78
+-- (FIXES_28NOV 9, Config.XRAY_CALM, owner: "X-ray 2/10, hurts the eyes": the classic X-ray look: the body a dark navy
+-- see-through silhouette (0.6), the pale ivory bones inside, the face hidden; no glow, no flicker)
+local XRAY_CALM = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).XRAY_CALM == true
+local XRAY_NAVY = Color3.fromRGB(28, 42, 84)
+if XRAY_CALM then
+	XRAY_GLASS = 0.6
+end
 local function xrayed(body: Body): boolean
 	for _, s in body.folder:GetChildren() do
 		if s:IsA("BasePart") and s ~= body.mesh and JOINT[s.Name] and s.Transparency > 0.01 then
@@ -621,6 +628,22 @@ local function step(dt: number)
 			local want = if xrayOn and xrayed(body) then XRAY_GLASS else 0
 			if body.mesh.Transparency ~= want then
 				body.mesh.Transparency = want
+				if XRAY_CALM then
+					local skin = body.folder:FindFirstChild(if V2 then "LeftUpperLeg" else "UpperTorso")
+					local colour = if want > 0 then XRAY_NAVY elseif skin and skin:IsA("BasePart") then skin.Color else body.mesh.Color
+					body.mesh.Color = colour
+					-- (the v6 mesh draws its SurfaceAppearance colour map over Color: tint the map itself; the map's grey
+					-- times this blue gives the dark navy)
+					local sa = body.mesh:FindFirstChildOfClass("SurfaceAppearance")
+					if sa then
+						pcall(function()
+							(sa :: any).Color = if want > 0 then Color3.fromRGB(52, 74, 150) else Color3.new(1, 1, 1)
+						end)
+					end
+					if body.ball then
+						body.ball.Color = if want > 0 then XRAY_NAVY else HEAD_GREY
+					end
+				end
 			end
 			hideBlocks(body)
 		elseif xrayed(body) or hidden then
@@ -649,7 +672,7 @@ local function step(dt: number)
 				body.ball.Transparency = body.mesh.Transparency
 			end
 			if body.face then
-				body.face.Enabled = body.mesh.Transparency < 1
+				body.face.Enabled = if XRAY_CALM then body.mesh.Transparency < 0.05 else body.mesh.Transparency < 1
 			end
 			if body.skull then
 				local show = body.mesh.Transparency > 0.05 and body.mesh.Transparency < 1

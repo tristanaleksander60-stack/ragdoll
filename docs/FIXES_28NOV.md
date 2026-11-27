@@ -117,7 +117,7 @@
      - lights on the rings.
    - From Blender (quality gate ≥ 8.5, capture next to a real gyro ride photo) or a malware-checked Creator Store model.
    - Then list EVERY other machine still built from plain parts here, and replace the worst 3 in this batch.
-9. **The X-ray (2/10, "hurts the eyes"):**
+9. **DONE v1422 (`XRAY_CALM`), SEEN:** the body was near-clear light glass with the living face (eyes, red cheeks) drawn over the skull, and a second skull from DummySkins on v6 bodies. Now the v6 body is a dark blue see-through silhouette at 0.6 (the SurfaceAppearance map tinted: it draws over Color), the face hidden in X-ray, the bones pale ivory, one skull (SmoothBody's), and a shot limb's bones show as a soft ivory fill with NO outline, eased in over 0.3 s. Captures (front and back, X-RAY on): ivory skull, ribs, spine and limb bones in a calm blue body. **The X-ray (2/10, "hurts the eyes"):**
    - the classic X-ray look: the body a dark navy, see-through silhouette (about 0.6 transparent), the bones a soft pale ivory or blue-white;
    - NO Neon, NO glowing Highlight outlines, nothing white-hot, no flicker;
    - real bone shapes in every limb, the head and the hands and feet: a skull with eye holes and a jaw, a ribcage with separate ribs, the spine, the pelvis, two bones in each forearm and shin, and hand and foot bones;

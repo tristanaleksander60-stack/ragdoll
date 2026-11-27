@@ -155,6 +155,7 @@ local Config = {
 	BONES_V2 = true, -- D12 part 1: every bone has integrity 100; each wound takes base (round 20, blow 14, blast 60) x power x bone factor off it, adding up; HAIRLINE <70, CRACKED <40, BROKEN 0 (a limb breaks for real via BreakReq, guns too), SHATTERED on one huge hit; the card names the stage; a heal resets (Systems/Bones)
 	DRIPS_V2 = true, -- D12 part 3: only the 2-3 newest bullet holes drip (phones 2, within 40 studs), a drop every 0.6-1.2 s each, for 8 s, then stop (Client/BloodFx, BulletHoles.dripHoles)
 	DRIP_TRICKLE = false, -- (owner, 27 Nov late: "ikke lilla striber") the welded purple trickle stick under a dripping hole is off; the 3 newest holes only drip drops (Client/BloodFx)
+	XRAY_CALM = true, -- FIXES_28NOV 9: a calm X-ray: the v6 body dark navy at 0.6 see-through, pale ivory bones, the face hidden, no glowing outline on a shot limb (SmoothBody, DummySkins)
 	PARKING_STRAIGHT = true, -- FIXES_28NOV 7: the vehicle row in straight bays, left to right, each as wide as its vehicle + 2.5, the vehicle centred, its plaque on the kerb in front of it; the bicycle in its own bay (LabLayout10, LabOwnerMap)
 	STAIR_OPENING = true, -- FIXES_28NOV 6: the aquarium feeding platform's rail no longer runs across the stair's top step (a 5-stud opening, LabOwnerMap)
 	WORLD_POPS = false, -- (owner 27 Nov late: "Fjern ALLE de her tekster": no floating world texts ("23 stud DROP!", "TAIL SLAP!", "SMASH!", the machines' scores, CRACK!); every pop() returns at once)

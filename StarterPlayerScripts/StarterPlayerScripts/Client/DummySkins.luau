@@ -295,6 +295,12 @@ local XRAY_TINT = if XRAY_PHONE then Color3.fromRGB(52, 96, 176) else Color3.fro
 local XRAY_BLUE = if XRAY_PHONE then 0.85 else 0.55
 local BONE = Color3.fromRGB(168, 152, 118)
 local BONE_END = Color3.fromRGB(180, 166, 134)
+-- (FIXES_28NOV 9, Config.XRAY_CALM: soft pale ivory bones, the classic X-ray look)
+local XRAY_CALM = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).XRAY_CALM == true
+if XRAY_CALM then
+	BONE = Color3.fromRGB(230, 222, 200)
+	BONE_END = Color3.fromRGB(214, 205, 182)
+end
 local MARROW = Color3.fromRGB(96, 44, 40)
 local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: string, hits: number)
 	local rng = Random.new(#limb.Name * 7 + 3) -- (the same bone every time it is drawn again)
@@ -621,6 +627,13 @@ local function limbGlow(limb: BasePart, folder: Instance)
 	hl.FillTransparency = 0.15
 	hl.OutlineColor = Color3.fromRGB(140, 200, 255)
 	hl.OutlineTransparency = 0.25
+	if XRAY_CALM then
+		-- (no glowing outline: a soft ivory fill only, eased in over 0.3 s)
+		hl.FillColor = Color3.fromRGB(226, 218, 196)
+		hl.OutlineTransparency = 1
+		hl.FillTransparency = 1
+		TweenService:Create(hl, TweenInfo.new(0.3), { FillTransparency = 0.3 }):Play()
+	end
 	hl.Parent = holder
 	holder.Parent = folder
 	table.insert(glows, holder)
@@ -1162,8 +1175,8 @@ local function skull(model: Model, show: boolean)
 		return
 	end
 	local head = model:FindFirstChild("Head")
-	if old or not (head and head:IsA("BasePart")) then
-		return
+	if old or not (head and head:IsA("BasePart")) or model:GetAttribute("BodyV6") == true then
+		return -- (a v6 body: SmoothBody's round head carries its own skull already)
 	end
 	local holder = Instance.new("Model")
 	holder.Name = "XraySkull"
