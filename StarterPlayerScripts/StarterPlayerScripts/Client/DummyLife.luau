@@ -259,6 +259,39 @@ local function build(model: Model): Life?
 	}
 end
 
+-- Row 6 (BODY_V2 4b faces; Config.FACE_TEARS): a crying face: the hurt face with two light-blue cartoon tears that run
+-- down from the eyes (drawn in code on the face, no new image), while mourning or in despair.
+local function tears(face: ImageLabel, on: boolean)
+	local box = face:FindFirstChild("Tears")
+	if not on then
+		if box then
+			box:Destroy()
+		end
+		return
+	end
+	if box then
+		return
+	end
+	local f = Instance.new("Frame")
+	f.Name = "Tears"
+	f.BackgroundTransparency = 1
+	f.Size = UDim2.fromScale(1, 1)
+	f.Parent = face
+	for _, x in { 0.29, 0.71 } do
+		local t = Instance.new("Frame")
+		t.BackgroundColor3 = Color3.fromRGB(120, 190, 255)
+		t.BorderSizePixel = 0
+		t.AnchorPoint = Vector2.new(0.5, 0)
+		t.Size = UDim2.fromScale(0.045, 0.09)
+		t.Position = UDim2.fromScale(x, 0.5)
+		local c = Instance.new("UICorner")
+		c.CornerRadius = UDim.new(0.5, 0)
+		c.Parent = t
+		t.Parent = f
+		game:GetService("TweenService"):Create(t, TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In, -1), { Position = UDim2.fromScale(x, 0.72), BackgroundTransparency = 0.7 }):Play()
+	end
+end
+
 local function setFace(life: Life, name: string)
 	if life.shown == name then
 		return
@@ -266,7 +299,8 @@ local function setFace(life: Life, name: string)
 	life.shown = name
 	local face = life.face
 	if face and face.Parent then
-		face.Image = (Faces :: any)[name]
+		face.Image = (Faces :: any)[name] or (Faces :: any).Ouch
+		tears(face, name == "Cry")
 	end
 end
 
@@ -1008,7 +1042,7 @@ local function expressionFor(life: Life, now: number): string
 	elseif temper == "Rage" then
 		return "Grumpy"
 	elseif temper == "Mourn" or temper == "Despair" or temper == "Sky" or temper == "CPRSlam" then
-		return "Ouch"
+		return if (Config :: any).FACE_TEARS and temper ~= "CPRSlam" then "Cry" else "Ouch"
 	elseif temper == "Sit" or temper == "Cheer" or temper == "Relief" or temper == "Hug" then
 		return "Neutral"
 	elseif type(temper) == "string" then

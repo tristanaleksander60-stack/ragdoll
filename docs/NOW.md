@@ -529,3 +529,4 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - **F68 water button:** I found no button that turns water on in the start place (0 prompts, click detectors or scripts near water). Which place is it in, and where (a screenshot)? Default: parked until you say.
 - **S2 smooth body:** built in Blender (27 Nov), see the question above (one import).
 - **M4 smaller map:** Python is installed now; the compact plan is ready (cloud). Built in M4.
+- **Row 6 new faces (worried, pain, angry, sad, relieved, scared, X eyes):** they need new face images in the v2 style, and this PC has no Pillow to draw them (installing it, and serving the images for the upload, is a step I did not take on my own). Default: the crying face is drawn in code (tears on the hurt face); the rest wait. Say "installer Pillow" and the next run draws and uploads them.
