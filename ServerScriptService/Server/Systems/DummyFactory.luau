@@ -66,6 +66,33 @@ end
 local LOW = { LeftLowerArm = true, RightLowerArm = true, LeftLowerLeg = true, RightLowerLeg = true }
 local ENDS = { LeftHand = true, RightHand = true, LeftFoot = true, RightFoot = true }
 
+-- RAGDOLL_10 THE v6 FIT PASS, item 2 (Config.BODY_FIT + SMOOTH_BODY_V6): the physics parts sit just inside the
+-- approved v6 body (Shared/BodyShape): a deep torso (1.6 deep), round thinner arms, slimmer shins, long round boots.
+-- Only the cross-sections change: every part keeps its length and its joints (the rig attachments stay where they are),
+-- and its mass (ActiveRagdoll.prepareParts sets each part's density from Config.PHYSICS.MASS, not from its size).
+local V6_SIZE: { [string]: { x: number?, z: number? } } = {
+	UpperTorso = { z = 1.5 }, -- v6: 1.94 wide, 1.6 deep at the chest
+	LowerTorso = { x = 1.75, z = 1.4 }, -- the hips: 1.76 wide, 1.48 deep
+	LeftUpperArm = { x = 0.72, z = 0.72 }, RightUpperArm = { x = 0.72, z = 0.72 }, -- the upper arm 0.75 round
+	LeftLowerArm = { x = 0.66, z = 0.66 }, RightLowerArm = { x = 0.66, z = 0.66 }, -- the forearm 0.7
+	LeftHand = { x = 0.4, z = 0.7 }, RightHand = { x = 0.4, z = 0.7 }, -- the thick palm facing the body
+	LeftUpperLeg = { x = 0.92, z = 0.92 }, RightUpperLeg = { x = 0.92, z = 0.92 }, -- the thigh 0.94
+	LeftLowerLeg = { x = 0.78, z = 0.78 }, RightLowerLeg = { x = 0.78, z = 0.78 }, -- the shin 0.8
+	LeftFoot = { x = 0.72, z = 1.25 }, RightFoot = { x = 0.72, z = 1.25 }, -- the round boot, 1.32 long
+}
+local function fitV6(model: Model)
+	if not ((Config :: any).BODY_FIT and (Config :: any).SMOOTH_BODY_V6 and ReplicatedStorage:FindFirstChild("SmoothBodyV6")) then
+		return
+	end
+	for name, want in V6_SIZE do
+		local p = model:FindFirstChild(name)
+		if p and p:IsA("BasePart") then
+			p.Size = Vector3.new(want.x or p.Size.X, p.Size.Y, want.z or p.Size.Z)
+		end
+	end
+	model:SetAttribute("BodyV6", true)
+end
+
 local function segment(model: Model)
 	-- A smaller head, still sitting on the neck (it shrinks towards its neck joint).
 	local head = model:FindFirstChild("Head")
@@ -302,6 +329,7 @@ function DummyFactory.spawn(at: Vector3, lookAt: Vector3?, owner: Player?, lift:
 		giveMarks(model) -- (LOOK_V3: a plain mannequin, no crash-test marks)
 	end
 	segment(model)
+	fitV6(model)
 	if Config.WORLD_V2 then
 		suit(model)
 	end
