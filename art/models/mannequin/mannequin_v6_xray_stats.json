@@ -1,0 +1,20 @@
+{
+ "pieces": {
+  "Head": 348,
+  "UpperTorso": 2281,
+  "LowerTorso": 264,
+  "LeftUpperArm": 1122,
+  "LeftLowerArm": 362,
+  "LeftHand": 1730,
+  "RightUpperArm": 1114,
+  "RightLowerArm": 360,
+  "RightHand": 1718,
+  "LeftUpperLeg": 926,
+  "LeftLowerLeg": 670,
+  "LeftFoot": 1006,
+  "RightUpperLeg": 971,
+  "RightLowerLeg": 662,
+  "RightFoot": 980
+ },
+ "unmapped": []
+}
