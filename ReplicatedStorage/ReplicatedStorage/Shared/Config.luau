@@ -104,6 +104,7 @@ local Config = {
 	TRY_AUTO = true, -- F81: TRY at a machine = its watcher or the nearest free ragdoll runs there (Pace 2.2), hops in and the machine throws it; no machine near = the old call (MachineDemos.tryAt, SessionStats)
 	EVENTS_V2 = true, -- 1.0 rule 1: an event happens round the player it is for (their own spot; a covered, seated or high spot moves it to the nearest open plaza or walkway crossing within 90 studs; EventService eventSpot)
 	PICK_OUT = true, -- F47: a ragdoll that wakes after being dead or out with bullet holes gets them picked out one by one by a helper that comes over (or by itself), with lines (Systems/PickOut, VitalsService.pickOneOut)
+	DEATH_HEAL = true, -- F47: waking from DEATH heals every injury (bones, bruises, limp, face, drips, plasters) but the bullet holes, which stay (closed) for the pick-out scene (VitalsService)
 	AUTO_QUALITY = true, -- 8: an FPS governor on each screen: start level by device (PC 3, phone/tablet 2), under 45 FPS for 10 s one step down, over 58 for 30 s one up: particles halved and far walkers slower, then no shadows and nearer lights, then fewer walkers and real hands (Client/QualityGovernor)
 	IDLE_LIFE = true, -- 11: standing ragdolls do small human actions 8-20 s apart, never the same twice in a row: + hands on hips, neck roll, rub eyes, look at nails, sneeze, wave, crack knuckles (Client/DummyLife gestures)
 	HIT_BONE_NAME = true, -- row 4: a round to the trunk names the bone on the hit card (Sternum, Rib, Spine, Shoulder blade, Pelvis, Lower spine), as the X-ray shows (VitalsService)

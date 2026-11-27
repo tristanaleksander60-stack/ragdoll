@@ -1004,7 +1004,21 @@ local function tend(model: Model, v: Vitals, dt: number, now: number)
 	if v.state == "Dead" and model:GetAttribute("BeingHelped") ~= true and now - v.since >= (if labDummy then (vr.reviveIn or LAB_REVIVE_AFTER) else REVIVE_AFTER) and (next(v.severed) == nil or labDummy) and model:GetAttribute("IsDummy") == true then
 		if labDummy and next(v.severed) ~= nil then reattach(model, v) end
 		paintDead(model, false)
-		patchUp(model, v, true)
+		if (Config :: any).DEATH_HEAL then
+			-- (F47, owner 26 Nov late: waking from DEATH heals every injury (bones, bruises, limp, the hurt face, drips,
+			-- plasters) EXCEPT the shots: the bullet holes stay (closed, no longer bleeding) so the pick-out scene
+			-- (Systems/PickOut) can take them out one by one)
+			patchUp(model, v, true, true)
+			for i = #v.wounds, 1, -1 do
+				if v.wounds[i].blunt then
+					table.remove(v.wounds, i)
+				end
+			end
+			v.shared = encodeWounds(v, os.clock())
+			model:SetAttribute("Wounds", v.shared)
+		else
+			patchUp(model, v, true)
+		end
 		v.knockUntil = now + WAKE_SLOW
 		model:SetAttribute("Waking", true) -- (out cold only WAKE_SLOW, not OUT_HOLD)
 		setState(model, v, "Unconscious")
