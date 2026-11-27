@@ -273,7 +273,11 @@ local function neverZero()
 					params.FilterType = Enum.RaycastFilterType.Exclude
 					params.FilterDescendantsInstances = { dummies, char :: Instance }
 					local hit = Workspace:Raycast(at + Vector3.new(0, 40, 0), Vector3.new(0, -120, 0), params)
-					if hit then
+					local Dir = require(script.Parent:WaitForChild("RagdollDirector")) :: any
+					if hit and (Dir.mayRemove == nil or Dir.mayRemove(best)) then -- F90: else it runs the whole way
+						if Dir.logRemoval then
+							Dir.logRemoval(best, "Watchers", "NEVER ZERO runner set down behind a player")
+						end
 						local DummyControl = require(script.Parent:WaitForChild("DummyControl")) :: any
 						local p = hit.Position + Vector3.new(0, 3.2, 0)
 						pcall(DummyControl.move, best, CFrame.lookAt(p, Vector3.new(root.Position.X, p.Y, root.Position.Z)))

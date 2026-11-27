@@ -136,7 +136,11 @@ local function step(dummies: Instance)
 					back = if back.Magnitude > 0.1 then back.Unit else Vector3.zAxis
 					local at = root.Position + back * math.random(55, 70)
 					local hit = Workspace:Raycast(at + Vector3.new(0, 40, 0), Vector3.new(0, -120, 0), params)
-					if hit and hit.Normal.Y > 0.8 then
+					local Dir = require(script.Parent:WaitForChild("RagdollDirector")) :: any
+					if hit and hit.Normal.Y > 0.8 and (Dir.mayRemove == nil or Dir.mayRemove(far)) then -- F90: never pulled away from where someone sees it
+						if Dir.logRemoval then
+							Dir.logRemoval(far, "NearbyTwo", "set down behind a player")
+						end
 						setDownAt[player] = now + 8
 						far:SetAttribute("Parked", nil)
 						local DC = require(script.Parent:WaitForChild("DummyControl")) :: any

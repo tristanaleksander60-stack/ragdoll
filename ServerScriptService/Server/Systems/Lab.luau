@@ -1208,7 +1208,11 @@ local function alwaysThree(plot: Plot, now: number)
 			params.FilterType = Enum.RaycastFilterType.Exclude
 			params.FilterDescendantsInstances = { character :: Instance, Workspace:FindFirstChild("Dummies") :: Instance }
 			local hit = Workspace:Raycast(at + Vector3.new(0, 40, 0), Vector3.new(0, -120, 0), params)
-			if hit then
+			local Dir = require(script.Parent:WaitForChild("RagdollDirector")) :: any
+			if hit and (Dir.mayRemove == nil or Dir.mayRemove(pick.model)) then -- F90: never pulled away from where someone sees it
+				if Dir.logRemoval then
+					Dir.logRemoval(pick.model, "Lab", "FAST_THREE set down behind a player")
+				end
 				pick.model:SetAttribute("Parked", nil)
 				pcall(DummyControl.move, pick.model, CFrame.lookAt(hit.Position + Vector3.new(0, 3.2, 0), Vector3.new(root.Position.X, hit.Position.Y + 3.2, root.Position.Z)))
 			end

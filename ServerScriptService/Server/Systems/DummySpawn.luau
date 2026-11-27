@@ -512,11 +512,18 @@ function DummySpawn.spawnMany(player: Player, kind: unknown, at: unknown, patter
 		table.remove(spots)
 	end
 	local function recycle(onlyHere: boolean): boolean
-		for i, m in list do
-			if spare(m) and (not onlyHere or m:GetAttribute("GodLab") == owner.UserId) then
-				table.remove(list, i)
-				m:Destroy()
-				return true
+		-- F90: first one nobody sees; only then the oldest (logged)
+		local Dir = require(script.Parent:WaitForChild("RagdollDirector")) :: any
+		for pass = 1, 2 do
+			for i, m in list do
+				if spare(m) and (not onlyHere or m:GetAttribute("GodLab") == owner.UserId) and (pass == 2 or Dir.mayRemove == nil or Dir.mayRemove(m)) then
+					table.remove(list, i)
+					if Dir.logRemoval then
+						Dir.logRemoval(m, "DummySpawn", "recycled for a new GOD MODE spawn")
+					end
+					m:Destroy()
+					return true
+				end
 			end
 		end
 		return false

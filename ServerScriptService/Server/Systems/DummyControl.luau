@@ -204,6 +204,22 @@ function DummyControl.stampServerHit(model: Model, by: number?)
 	if type(last) ~= "number" or now - last >= 0.5 or model:GetAttribute("ServerHitBy") ~= who then
 		model:SetAttribute("ServerHitAt", now)
 		model:SetAttribute("ServerHitBy", who)
+		-- F90 streaming: a body you hit stays streamed in on your screen for 30 s (it can never stream out mid-fight)
+		local hitter = if who > 0 then Players:GetPlayerByUserId(who) else nil
+		if hitter and owners[model] ~= hitter then
+			pcall(function()
+				model.ModelStreamingMode = Enum.ModelStreamingMode.PersistentPerPlayer
+				model:AddPersistentPlayer(hitter)
+			end)
+			task.delay(30, function()
+				local at = model:GetAttribute("ServerHitAt")
+				if model.Parent and owners[model] ~= hitter and type(at) == "number" and Workspace:GetServerTimeNow() - at >= 29 then
+					pcall(function()
+						model:RemovePersistentPlayer(hitter)
+					end)
+				end
+			end)
+		end
 	end
 end
 
