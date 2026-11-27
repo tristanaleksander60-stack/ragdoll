@@ -123,6 +123,7 @@ type Slot = {
 	scaredAt: number,
 	-- (session v850: wandering the lab on its own)
 	roamHome: Vector3?, -- the current wander spot, or nil (on the row)
+	drawn: boolean?, -- (P1 part 2, SPREAD_LIFE: one of the few drawn toward the player)
 	nextRoamAt: number, -- os.clock to pick the next roam spot
 }
 
@@ -812,6 +813,62 @@ end
 -- (session v850: a slot that has no social trip, is not commanded, is not in a machine and is up
 -- picks a new wander Home every ROAM_EVERY s. We only overwrite Home, not homeAttr — endSocial
 -- and returnHome still reset to the row's slot.)
+-- (P1 part 2) A spread-out goal: the front of a random plan attraction (6-9 studs before its footprint), scored by how
+-- empty it is (other bodies' goals and bodies within 25 studs) and how far from where the body is now.
+local SPREAD_DRAWN_MAX = 8
+local SPREAD_CLUMP = 5
+local function spreadSpot(plot: Plot, slot: Slot, model: Model): Vector3?
+	local okPlan, Plan = pcall(function()
+		return require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("OwnerMapPlan")) :: any
+	end)
+	local pelvis = model:FindFirstChild("LowerTorso")
+	if not (okPlan and Plan and Plan.ITEMS and pelvis and pelvis:IsA("BasePart")) then
+		return nil
+	end
+	local FACE = { N = Vector2.new(0, -1), S = Vector2.new(0, 1), E = Vector2.new(1, 0), W = Vector2.new(-1, 0) }
+	local dummies = Workspace:FindFirstChild("Dummies")
+	local best: Vector3? = nil
+	local bestScore = -math.huge
+	local ids = {}
+	for id in Plan.ITEMS do
+		table.insert(ids, id)
+	end
+	for _ = 1, 10 do
+		local it = Plan.ITEMS[ids[math.random(1, #ids)]]
+		local f = FACE[it.face or "S"] or Vector2.new(0, 1)
+		local depth = if it.size then (if f.X ~= 0 then it.size.X else it.size.Y) / 2 else 6
+		local p2 = it.at + f * (depth + math.random(6, 9)) + Vector2.new(math.random(-4, 4), math.random(-4, 4))
+		local at = plot.origin + Vector3.new(p2.X, 0, p2.Y)
+		local hit = Workspace:Raycast(at + Vector3.new(0, 60, 0), Vector3.new(0, -140, 0), drawnParams)
+		if not (hit and hit.Normal.Y > 0.8 and hit.Material ~= Enum.Material.Water) then
+			continue
+		end
+		local spot = hit.Position + Vector3.new(0, 3, 0)
+		local crowd = 0
+		for _, other in plot.slots do
+			local h = other.roamHome
+			if other ~= slot and h and Vector3.new(h.X - spot.X, 0, h.Z - spot.Z).Magnitude < 25 then
+				crowd += 1
+			end
+		end
+		for _, m in if dummies then dummies:GetChildren() else {} do
+			local pe = m:FindFirstChild("LowerTorso")
+			if m ~= model and pe and pe:IsA("BasePart") and (pe.Position - spot).Magnitude < 25 then
+				crowd += 0.5
+			end
+		end
+		if crowd >= SPREAD_CLUMP then
+			continue
+		end
+		local far = math.min((spot - pelvis.Position).Magnitude, 200)
+		local score = far / 40 - crowd * 2 + math.random()
+		if score > bestScore then
+			best, bestScore = spot, score
+		end
+	end
+	return best
+end
+
 local function roam(plot: Plot, slot: Slot, now: number)
 	local model = slot.model
 	if not model or not model.Parent then
@@ -849,7 +906,24 @@ local function roam(plot: Plot, slot: Slot, now: number)
 		end
 		return
 	end
-	local spot = (if (Config :: any).DRAWN_TO_YOU then drawnSpot(plot, slot, model) else nil) or pickRoamSpot(plot, slot)
+	-- P1 part 2 (Config.SPREAD_LIFE): only DRAWN_MAX bodies a lab are drawn toward the player; the rest live ALL over the
+	-- map: their next goal is an attraction's front from the plan, weighted toward the emptiest and the far ones, never
+	-- where 5 already are within 25 studs.
+	local spread = false
+	if (Config :: any).SPREAD_LIFE then
+		local drawn = 0
+		for _, other in plot.slots do
+			if other ~= slot and other.drawn then
+				drawn += 1
+			end
+		end
+		spread = drawn >= SPREAD_DRAWN_MAX and not slot.drawn
+	end
+	local spot = (if spread then spreadSpot(plot, slot, model) else nil)
+		or (if (Config :: any).DRAWN_TO_YOU and not spread then drawnSpot(plot, slot, model) else nil) or pickRoamSpot(plot, slot)
+	if (Config :: any).SPREAD_LIFE then
+		slot.drawn = not spread
+	end
 	slot.roamHome = spot
 	slot.nextRoamAt = now + math.random(ROAM_EVERY_MIN, ROAM_EVERY_MAX)
 	model:SetAttribute("Home", spot)
