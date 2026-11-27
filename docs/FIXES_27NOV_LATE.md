@@ -52,3 +52,21 @@ Today A2 puts a pale capsule round the limb (on the torso a big glass box), whic
   - FirstUse per machine and animal: keep;
   - add "XrayToggle", "BodyCardHidden", "CPRDone" and "BowlingScore" (bucketed: 0-50, 51-100, 101+).
 - **Test:** none in Studio (it does not log there). List the new funnel names in NOW.md, so the owner knows what to look at in the Creator Hub (Analytics, Funnels).
+
+## 5. Bullet holes and the face ON the skin, never poking through (owner, screenshot: a purple disc half through a body: "Fiks så skudhuller ikke glitcher igennem sådan der, men de SKAL sidde på huden ikke udenpå, det samme gælder ansigtsudtryk skal sidde på ansigtet")
+**The causes:**
+- the holes, their stress rings and chips, and the purple wound discs are flat 3D parts (Cylinders, `BulletHoles.disc`) WELDED TO THE PHYSICS PART. The v6 mesh, though, is drawn from the bone chain every frame (the same wobble the round head had). A flat disc is also wider than the curve of a round limb, so its edges stick out or sink in;
+- the face is a flat SurfaceGui on the round Ball head, so away from the centre it floats off the sphere or cuts into it.
+
+**The fix:**
+1. **No 3D discs on a body:** on a ragdoll the hole, the rim, the chip and the purple wound are ONE thin, small Decal-carrying part (at most 0.35 across on a limb, 0.45 on the torso), 0.005 off the skin. Rings and chips become part of the decal picture. The floor keeps its 3D splats and pools.
+2. **On the visible skin:**
+   - place the hole with a client raycast against an invisible HIT HULL that has exactly the v6 skin's shape: the 15 limb pieces from item 1, CanQuery on, invisible, made once per body and following the bones;
+   - the hole sits at that hit point along the hull's normal;
+   - one asset does both jobs: the X-ray glass and the hit placement.
+3. **Following the mesh, not the physics:** holes (and bandages, plasters, the X-ray pieces) are anchored and moved every frame in `SmoothBody.drive` from their bone, with the offset stored in bone space when they are made. Use `workspace:BulkMoveTo` for all of a body's pieces at once; only bodies within ANIM_REACH; the hole caps per device stay (AUDIT 37).
+4. **The face on the face:**
+   - the round head becomes a sphere MeshPart (Blender, UV-mapped, the face area at the front) in the v6 grey;
+   - the expressions (eyes, pupils, brows, mouth, blinks; FACES_V2 / FaceLife) are drawn as Decals on it, which follow the curve, layered and swapped per expression; no flat SurfaceGui on the head;
+   - check the face from the side: nothing floats off or cuts into the head.
+5. **The check (one Play look, close up):** shoot an arm, a leg and the chest 5 times each and walk round the body: every hole lies flat ON the skin, nothing pokes out or sinks in while it walks, falls or gets up. The face, seen from the front and the side, sits on the head.
