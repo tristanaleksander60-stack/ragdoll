@@ -705,6 +705,7 @@ function VehicleService.start()
 	local overlap = OverlapParams.new()
 	overlap.FilterType = Enum.RaycastFilterType.Include
 	local runAcc = 0
+	local bonked: { [Instance]: number } = setmetatable({}, { __mode = "k" }) :: any -- (3.17: one BONK a body per 2 s)
 	RunService.Heartbeat:Connect(function(dt)
 		runAcc += dt
 		if runAcc < VehicleService.RUN_OVER_STEP then
@@ -731,6 +732,22 @@ function VehicleService.start()
 						seen[node] = true
 						Dummies.setBlame(node, driver.UserId)
 						DummyControl.stampServerHit(node, driver.UserId)
+						if (Config :: any).CAR_10 and os.clock() - (bonked[node] or 0) > 2 then
+							-- 3.17 (docs/MACHINES_10.md "CARS"; Config.CAR_10): "BONK! 48 studs/s" over the body, NEW BEST for the
+							-- driver (CarBest)
+							bonked[node] = os.clock()
+							local speed = math.floor(body.AssemblyLinearVelocity.Magnitude + 0.5)
+							local text = "BONK! " .. tostring(speed) .. " studs/s"
+							local best = (driver:GetAttribute("CarBest") :: number?) or 0
+							if speed > best then
+								driver:SetAttribute("CarBest", speed)
+								text ..= " NEW BEST!"
+							end
+							local at = (part :: BasePart).Position
+							pcall(function()
+								(require(script.Parent:WaitForChild("Playground")) :: any).pop(at + Vector3.new(0, 4, 0), text, Color3.fromRGB(255, 200, 90))
+							end)
+						end
 					end
 				end
 			end
