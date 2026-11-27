@@ -459,6 +459,10 @@ local pools: { [Model]: Pool } = {}
 local oldPools: { Pool } = {}
 
 local BulletHoles: any = nil -- (where a body bleeds from: set by start)
+-- (D12 part 3: Config.DRIPS_V2: the newest holes drip, each on its own clock)
+local DRIPS_V2 = (require(Shared:WaitForChild("Config")) :: any).DRIPS_V2 == true
+local PHONE = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local holeNext: { [BasePart]: number } = setmetatable({}, { __mode = "k" }) :: any
 function BloodFx.useHoles(module: any)
 	BulletHoles = module
 end
@@ -622,7 +626,20 @@ RunService.Heartbeat:Connect(function(dt)
 			if bleeding or oozing or pools[model] then
 				tendPool(model, step_, bleeding or oozing)
 			end
-			if bleeding and rng:NextNumber() < 0.7 then
+			if DRIPS_V2 and BulletHoles and (not PHONE or (chest.Position - eye).Magnitude < 40) then
+				-- D12 part 3 (DAMAGE_12.md 3): only the 2-3 NEWEST holes drip (an older one stops when a newer one starts),
+				-- a drop every 0.6-1.2 s from each, for about 8 s, then it stops. Phones: only within 40 studs.
+				for _, hole in BulletHoles.dripHoles(model, if PHONE then 2 else 3, 8) do
+					local due = holeNext[hole]
+					if not due then
+						holeNext[hole] = now + rng:NextNumber(0.1, 0.4)
+					elseif now >= due then
+						holeNext[hole] = now + rng:NextNumber(0.6, 1.2)
+						BloodFx.drip(hole.Position - Vector3.new(0, 0.1, 0))
+					end
+				end
+			end
+			if not DRIPS_V2 and bleeding and rng:NextNumber() < 0.7 then
 				local holes = if BulletHoles then BulletHoles.openHoles(model) else {}
 				local from = if #holes > 0 then holes[rng:NextInteger(1, #holes)] else chest.Position + rng:NextUnitVector() * 0.5
 				-- (23 Nov 2026, owner: it drips by where it was shot: a little from a limb, a lot from the neck.)

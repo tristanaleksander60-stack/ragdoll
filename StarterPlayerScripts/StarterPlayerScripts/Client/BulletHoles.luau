@@ -455,6 +455,25 @@ function BulletHoles.openHoles(model: Model): { Vector3 }
 	return out
 end
 
+-- D12 part 3 (DRIPS_V2): the holes that drip now: only the newest `n` on the body, each only for `age` seconds.
+function BulletHoles.dripHoles(model: Model, n: number, age: number): { BasePart }
+	local out = {}
+	local list = bodies[model]
+	if list then
+		local now = os.clock()
+		for i = #list, 1, -1 do
+			local h = list[i]
+			if #out >= n or now - h.at >= age then
+				break
+			end
+			if h.part.Parent then
+				table.insert(out, h.part)
+			end
+		end
+	end
+	return out
+end
+
 -- Where a body bleeds from most: its newest open hole (world position), or nil.
 function BulletHoles.newestHole(model: Model): Vector3?
 	local list = bodies[model]
