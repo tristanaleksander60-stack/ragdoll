@@ -108,3 +108,20 @@ Find the real cause with ONE Play (allowed for this item):
    - re-measure the bay widths from the real models (`LabLayout10` ENTRANCE_ROW `w`).
 3. **The SOON plaques:** one clean sign each at the bay's front edge, the same size, readable from the walkway: the name, "SOON", and the price once the pass exists.
 4. **Check (one Play look from the walkway):** 9 different, real-looking vehicles in a neat herringbone row, nothing overlapping, nothing white-sedan.
+
+## 8. The bicycle (owner, screenshot: the rider floats high over the bike, faces backwards, and it makes a car sound: "Man vender den forkerte vej på cykel og flyver over cyklen og den siger en billyd")
+**Cloud code, done:**
+- the bicycle model was turned 180 degrees from where it drives: `flip = true` on Bicycle (`Systems/VehicleService.luau`);
+- no engine sound on the bicycle or the wheelchairs (`Client/VehicleFeel.luau`).
+
+**Left for you:**
+1. **The seat on the saddle:** the bicycle model has no seat part, so our VehicleSeat sits at a fixed spot over the box, high above the saddle. Find the saddle's top on the (flipped) look (the highest point of the look in its rear half, or the saddle mesh by name) and put the seat's top there, with SEAT_SINK, like the cars' `driverSpot`.
+2. **The rider's pose** (BIKE_PEDAL, `Client/BikePedal`):
+   - hips on the saddle;
+   - both hands on the handlebar grips;
+   - feet on the pedals, turning with them;
+   - the body leaning a little forward;
+   - not the car sit with the legs straight out (owner's screenshot).
+3. **The wheels on the ground:** the look is scaled to `b.Z + 1.5` and sits `lift` under the box, and its wheels look half sunk into the grass. Scale it so its wheel radius is right (`spec.wheel / 2`) and its tyres touch the ground exactly.
+4. **Its own sounds:** a soft tyre and chain whir that follows the speed, and the bell on the horn button. No engine.
+5. **Check (one Play):** get on the bike: you face the handlebars, sit on the saddle, your feet pedal, it rides forward, the tyres roll on the grass, and it sounds like a bicycle.

@@ -116,7 +116,10 @@ local function build(model: Model): CarFeel?
 		brake = if brake and brake:IsA("PointLight") then brake else nil,
 		crashAt = 0,
 	}
-	if V.engineSound then
+	-- (27 Nov late, owner: "den siger en billyd" on the bicycle: no engine on what has none, the bicycle and the wheelchairs.)
+	local labKind = if seat then seat:GetAttribute("LabCar") else nil
+	local noEngine = labKind == "Bicycle" or (type(labKind) == "string" and string.sub(labKind, 1, 10) == "Wheelchair")
+	if V.engineSound and not noEngine then
 		local e = sound(V.engineSound, body, true, 0)
 		e.PlaybackSpeed = 0.7
 		f.engine = e

@@ -53,7 +53,7 @@ VehicleService.SPECS = {
 	-- (23 Nov 2026: the owner's bike, a ragdoll rides it round the lab: BikeService.)
 	Bike = { label = "Bike", body = Vector3.new(2.4, 1.6, 6.4), color = Color3.fromRGB(40, 42, 48), wheel = 2.4, lift = 0.85, pad = Vector2.new(27, -12), look = "Bike" } :: Spec,
 	-- (F76: the FREE bicycle, a Creator Store model (V3Assets "Bicycle", 3 meshes, no scripts) on the plan's BikeStand2.)
-	Bicycle = { label = "Bicycle", body = Vector3.new(2.4, 1.2, 6.4), color = Color3.fromRGB(60, 120, 200), wheel = 2.2, lift = 0.9, pad = Vector2.new(30, -14), look = "Bicycle" } :: Spec,
+	Bicycle = { label = "Bicycle", body = Vector3.new(2.4, 1.2, 6.4), color = Color3.fromRGB(60, 120, 200), wheel = 2.2, lift = 0.9, pad = Vector2.new(30, -14), look = "Bicycle", flip = true } :: Spec, -- (27 Nov late, owner: "man vender den forkerte vej på cykel": the model faced backwards)
 	-- (Row 14 WHEELCHAIRS: 3 free wheelchairs in a row by the boxing ring (Creator Store 16829312238, 1 mesh, no scripts; V3Assets
 	-- "Wheelchair"). Drive one yourself; slow, about 18.)
 	Wheelchair = { label = "Wheelchair", body = Vector3.new(2.6, 1, 3.4), color = Color3.fromRGB(40, 40, 44), wheel = 1.6, lift = 0.6, pad = Vector2.new(20, -20), look = "Wheelchair" } :: Spec,
