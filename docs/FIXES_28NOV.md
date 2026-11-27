@@ -95,7 +95,7 @@
     - Give it an idle animation (breathing, a head turn, a roar every 20-40 s) and keep its feeding (DropSpot).
     - The same goes for every other creature or prop made of blocks: list them here and replace them, worst first.
 
-6. **The aquarium stairs:** the platform at the top of the aquarium stairs has a railing ACROSS the stair, so you cannot walk onto it.
+6. **DONE v1420 (`STAIR_OPENING`, LabOwnerMap), SEEN:** the stair-side rail now stops at a post 5 studs short of the stair, so the top step leads straight onto the platform (capture from the stair top: open, rails only on the drop sides). Every stair on the map checked in Play (the space past each top step): the feeding stair, the tower (60 steps), the plaza steps and both lab/plaza stairs are open; the only "blocked" one is the spectator stand, whose top row has its back wall and guard (correct). **The aquarium stairs:** the platform at the top of the aquarium stairs has a railing ACROSS the stair, so you cannot walk onto it.
    - Make a 5-stud opening where the stair lands, and keep the rails only on the open drop sides.
    - Check every stair on the map for the same fault (a rail or wall across a stair landing).
 7. **The parking lot (the owner's screenshot):**

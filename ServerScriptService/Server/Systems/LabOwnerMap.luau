@@ -3085,8 +3085,16 @@ local function realWater(into: Instance, o: Vector3, top: number)
 		end
 		local pz = aq.Z + AD2 / 2 - steps * run - 2.5
 		part(into, "FeedPlatform", Vector3.new(10, 0.6, 5), CFrame.new(Vector3.new(ex, top + rimY - 0.3, pz)), Color3.fromRGB(150, 150, 152), Enum.Material.DiamondPlate)
+		-- (FIXES_28NOV 6, Config.STAIR_OPENING: the stair-side rail ran ACROSS the stair's top step, so nobody could walk
+		-- onto the platform; now it stops at the stair, leaving the 5 studs where the stair lands open, with a post at its end)
+		local open = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).STAIR_OPENING == true
 		for _, sx in { -1, 1 } do
-			part(into, "FeedRail", Vector3.new(10, 0.25, 0.25), CFrame.new(Vector3.new(ex, top + rimY + 3, pz + sx * 2.4)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
+			if sx == 1 and open then
+				part(into, "FeedRail", Vector3.new(5, 0.25, 0.25), CFrame.new(Vector3.new(ex - 2.5, top + rimY + 3, pz + sx * 2.4)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
+				part(into, "FeedPost", Vector3.new(0.3, 3, 0.3), CFrame.new(Vector3.new(ex, top + rimY + 1.5, pz + 2.4)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
+			else
+				part(into, "FeedRail", Vector3.new(10, 0.25, 0.25), CFrame.new(Vector3.new(ex, top + rimY + 3, pz + sx * 2.4)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
+			end
 		end
 		part(into, "FeedRail", Vector3.new(0.25, 0.25, 5), CFrame.new(Vector3.new(ex + 5, top + rimY + 3, pz)), Color3.fromRGB(60, 62, 66), Enum.Material.Metal, true)
 		for _, d in { Vector3.new(-5, 0, -2.4), Vector3.new(-5, 0, 2.4), Vector3.new(5, 0, -2.4), Vector3.new(5, 0, 2.4) } do

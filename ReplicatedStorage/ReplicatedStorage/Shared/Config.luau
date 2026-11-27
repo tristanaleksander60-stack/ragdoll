@@ -155,6 +155,7 @@ local Config = {
 	BONES_V2 = true, -- D12 part 1: every bone has integrity 100; each wound takes base (round 20, blow 14, blast 60) x power x bone factor off it, adding up; HAIRLINE <70, CRACKED <40, BROKEN 0 (a limb breaks for real via BreakReq, guns too), SHATTERED on one huge hit; the card names the stage; a heal resets (Systems/Bones)
 	DRIPS_V2 = true, -- D12 part 3: only the 2-3 newest bullet holes drip (phones 2, within 40 studs), a drop every 0.6-1.2 s each, for 8 s, then stop (Client/BloodFx, BulletHoles.dripHoles)
 	DRIP_TRICKLE = false, -- (owner, 27 Nov late: "ikke lilla striber") the welded purple trickle stick under a dripping hole is off; the 3 newest holes only drip drops (Client/BloodFx)
+	STAIR_OPENING = true, -- FIXES_28NOV 6: the aquarium feeding platform's rail no longer runs across the stair's top step (a 5-stud opening, LabOwnerMap)
 	WORLD_POPS = false, -- (owner 27 Nov late: "Fjern ALLE de her tekster": no floating world texts ("23 stud DROP!", "TAIL SLAP!", "SMASH!", the machines' scores, CRACK!); every pop() returns at once)
 	CARRY_FLOOR_RAY = true, -- (owner 27 Nov late: carried bodies flew onto machine roofs and the tower top: GrabController looked for the floor from 30 studs up and met the roof first; now from just above the body)
 	PLAYER_SWIM = true, -- (owner 27 Nov late: a player fell into the aquarium and was stuck: Client/PlayerSwim: swim in part-water tanks, JUMP at the surface climbs out, a safety net after 25 s / 6 s still)
