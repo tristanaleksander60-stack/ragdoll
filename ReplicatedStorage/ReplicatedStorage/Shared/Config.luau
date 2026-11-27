@@ -102,6 +102,7 @@ local Config = {
 	CAR_WALL = true, -- F48: a car crashing into the brick wall knocks a car-sized hole (by speed x weight class, measured on the server from the car's own movement; the tank ploughs through); the wall rebuilds 12 s after the last hit (Systems/BrickWall)
 	TRY_AUTO = true, -- F81: TRY at a machine = its watcher or the nearest free ragdoll runs there (Pace 2.2), hops in and the machine throws it; no machine near = the old call (MachineDemos.tryAt, SessionStats)
 	EVENTS_V2 = true, -- 1.0 rule 1: an event happens round the player it is for (their own spot; a covered, seated or high spot moves it to the nearest open plaza or walkway crossing within 90 studs; EventService eventSpot)
+	PICK_OUT = true, -- F47: a ragdoll that wakes after being dead or out with bullet holes gets them picked out one by one by a helper that comes over (or by itself), with lines (Systems/PickOut, VitalsService.pickOneOut)
 	HOME_CLEAR = true, -- F75: once the map stands every vehicle home is checked with the vehicle's box and moved to the nearest clear spot when something solid is inside it ([Vehicles] homes moved: n)
 	BIKE_ROUTE = true, -- F69: on the compact map the motorbike rider follows the walkway loop's centre line point to point (a point not reached in 14 s is skipped)
 	REAL_HANDS = true, -- S2 plan B: real hands from rounded parts (palm, 4 fingers of 3 segments, a thumb of 2), posed by state, on this screen only; the hook hand skin is shrunk away (Client/RealHands)

@@ -1152,6 +1152,29 @@ function VitalsService.reviveNow(model: Model): boolean
 end
 
 -- Tests: patch a body up now.
+-- F47 (Systems/PickOut): one bullet picked out: the oldest wound (a hole and its lodged slug) goes from the list, the
+-- shared list is sent again (the hole closes on every screen). Returns how many are left.
+function VitalsService.pickOneOut(model: Model): number
+	local v = vitals[model]
+	if not v then
+		local raw = model:GetAttribute("Wounds")
+		if type(raw) ~= "string" or raw == "" then
+			return 0
+		end
+		local parts = string.split(raw, ";")
+		table.remove(parts, 1)
+		model:SetAttribute("Wounds", table.concat(parts, ";"))
+		return #parts
+	end
+	if #v.wounds == 0 then
+		return 0
+	end
+	table.remove(v.wounds, 1)
+	v.shared = encodeWounds(v, os.clock())
+	model:SetAttribute("Wounds", v.shared)
+	return #v.wounds
+end
+
 function VitalsService.patchUpForTest(model: Model)
 	local v = vitals[model]
 	if v then
