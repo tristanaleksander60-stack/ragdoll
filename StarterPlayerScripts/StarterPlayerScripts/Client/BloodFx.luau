@@ -633,6 +633,19 @@ RunService.Heartbeat:Connect(function(dt)
 					local due = holeNext[hole]
 					if not due then
 						holeNext[hole] = now + rng:NextNumber(0.1, 0.4)
+						-- (D12 part 7: a short thin purple trickle runs down from the hole first, welded on, gone with the drips)
+						local tr = Instance.new("Part")
+						tr.Name = "Trickle"
+						tr.Anchored, tr.CanCollide, tr.CanQuery, tr.CanTouch, tr.CastShadow, tr.Massless = false, false, false, false, false, true
+						tr.Material = Enum.Material.SmoothPlastic
+						tr.Color = RED
+						tr.Size = Vector3.new(0.07, 0.45, 0.07)
+						tr.CFrame = CFrame.lookAt(hole.Position, hole.Position + hole.CFrame.LookVector) * CFrame.new(0, -0.24, 0) * CFrame.new(0, 0, -0.02)
+						local w = Instance.new("WeldConstraint")
+						w.Part0, w.Part1 = hole, tr
+						w.Parent = tr
+						tr.Parent = hole
+						game:GetService("Debris"):AddItem(tr, 8)
 					elseif now >= due then
 						holeNext[hole] = now + rng:NextNumber(0.6, 1.2)
 						BloodFx.drip(hole.Position - Vector3.new(0, 0.1, 0))
