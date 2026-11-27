@@ -149,6 +149,16 @@ local function whistle(player: Player, house: Vector3)
 				d.lastOrder = os.clock()
 				bark(m, 1.15)
 				hearts(m)
+				if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).DOG_10 then
+					-- 3.11: it rolls over on its back, and a GOOD BOY! pop with a heart
+					d.rollUntil = os.clock() + 1.2
+					local at = dogPart(m)
+					if at then
+						pcall(function()
+							lazy("Playground").pop(at.Position + Vector3.new(0, 3, 0), "GOOD BOY! \u{2764}", Color3.fromRGB(255, 140, 180))
+						end)
+					end
+				end
 			end)
 		end
 	end
@@ -262,6 +272,31 @@ local function bite(player: Player, d: Dog)
 		lazy("FxService").hit(limb.Position, 30, "Bat", player.UserId, true)
 	end)
 	bark(d.model, 0.85)
+	if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).DOG_10 then
+		-- 3.11 tooth marks: two little arcs of grey dents on the side of the limb the dog bit (cartoon, 10 s)
+		local face = -dir
+		local up = limb.CFrame.UpVector
+		local right = face:Cross(up)
+		right = if right.Magnitude > 1e-3 then right.Unit else limb.CFrame.RightVector
+		local half = limb.Size.Magnitude * 0.28
+		for _, row in { 0.18, -0.18 } do
+			for k = -2, 2 do
+				local dot = Instance.new("Part")
+				dot.Name = "ToothMark"
+				dot.Shape = Enum.PartType.Ball
+				dot.Size = Vector3.one * 0.13
+				dot.Color = Color3.fromRGB(110, 100, 120)
+				dot.Material = Enum.Material.SmoothPlastic
+				dot.Massless, dot.CanCollide, dot.CanQuery, dot.CanTouch = true, false, false, false
+				dot.CFrame = CFrame.new(limb.Position + face * half + right * k * 0.12 + up * (row + math.abs(k) * 0.03 * (if row > 0 then -1 else 1)))
+				local w = Instance.new("WeldConstraint")
+				w.Part0, w.Part1 = limb, dot
+				w.Parent = dot
+				dot.Parent = limb
+				game:GetService("Debris"):AddItem(dot, 10)
+			end
+		end
+	end
 end
 
 -- F22 (owner, 26 Nov 2026: "hunden skal bevæge sig meget mere realistisk ... vender den forkerte vej når den bider"):
@@ -339,6 +374,12 @@ local function step(dt: number)
 			local b = floorUnder(at - heading * 2, skip)
 			return math.clamp(math.atan2(f - b, 4), -0.5, 0.5)
 		end
+		if d.rollUntil and now < d.rollUntil and d.state ~= "Run" and d.state ~= "Bite" then
+			-- 3.11: petted: a roll over on its back, lifting a little in the middle
+			local t = 1 - (d.rollUntil - now) / 1.2
+			place(d, Vector3.new(here.X, ground(here) + math.sin(t * math.pi) * 0.6, here.Z), d.heading, CFrame.Angles(0, 0, t * math.pi * 2))
+			continue
+		end
 		if d.state == "Run" or d.state == "Bite" then
 			local limb = d.limb
 			if not limb or not limb.Parent or not d.target or (d.target:GetAttribute("Vital") == "Dead" and d.state == "Run") then
@@ -352,6 +393,9 @@ local function step(dt: number)
 				if not d.crouchUntil then
 					d.crouchUntil = now + GuardDog.CROUCH
 					d.v = 0
+					if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).DOG_10 then
+						bark(d.model, 0.55) -- (3.11: a deep growl-woof as it crouches)
+					end
 				end
 				if now < d.crouchUntil then
 					d.heading = turnToward(d.heading, toLimb, GuardDog.TURN * 1.5, dt)
