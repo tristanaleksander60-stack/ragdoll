@@ -64,7 +64,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - add 7-day streak, all weapons, all hats, every machine tried, every animal catch, Legend, the first gold mastery star, the advent finish;
     - re-point "Bullseye" (its bullseye is removed) to the cannon's PERFECT landing.
 16. **A co-op chip:** "Together: 40 KOs in 3 min" for friends in one lab or the multiplayer place, stars and BOLTS for everyone. Not the old mission card.
-17. **A Roblox Premium perk:** a Premium tag, +10% BOLTS, a Premium-only hat; a soft PromptPremiumPurchase on the shop card.
+17. **PART DONE v1417 (`PREMIUM_BOLTS`, EconomyService.give):** Premium members earn 10 % more BOLTS (never on bought or code amounts). LEFT: the Premium tag, the Premium-only hat, the soft PromptPremiumPurchase (UI, by eye). **A Roblox Premium perk:** a Premium tag, +10% BOLTS, a Premium-only hat; a soft PromptPremiumPurchase on the shop card.
 18. **Private servers** (multiplayer place): an owner panel (ragdoll count, a free event every 2 min, a theme). The owner turns private servers on, cheap, on the dashboard.
 19. **5 gentle "SILLY" toys** for the younger players: Rope, Glue, Paint Blaster, Bubble Gun, Magnet Glove. They fill early ladder rungs, so not every unlock is a gun.
 20. **(Owner decision first, in NOW.md) The Game Arena** (`ARENA_ENABLED = false`) as a "challenge of the hour" pad on the map, feeding the weekly boards.

@@ -225,6 +225,7 @@ local Config = {
 	PHONE_TEXT_FLOOR = true, -- AUDIT 25: on phones no fixed-size text under 14 px on screen (Client/TextFloor)
 	BOWL_OWNER = true, -- F91 rest: the bowler's machine runs the pins during the roll (network owner), back to the server after the count (Systems/Bowling)
 	BOWL_SLOWMO = true, -- BOWLING_12 rest: a short slow moment round the pins as the bowled ragdoll bursts out of its ball (Client/SlowMotion watches Curl)
+	PREMIUM_BOLTS = true, -- AUDIT 17: Roblox Premium members earn 10 % more BOLTS (EconomyService.give; never on bought amounts)
 	PERSONA_FACE = true, -- P1 rest: at rest a SCARED ragdoll looks worried 3 s of every 8, a HERO frowns determined 3 s of every 10 (DummyLife)
 	SCARED_HIDE = true, -- P1 rest: after its panic run a SCARED ragdoll hides behind the nearest solid thing (3+ high, within 22 studs), on the far side, and peeks out 5 s (Personas, Poses.peek)
 	RIDER_PEDAL = true, -- row 11: the ragdoll cyclist pedals (hips and knees round, the legs half a turn apart; Poses.ride)

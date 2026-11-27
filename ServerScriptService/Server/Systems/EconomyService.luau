@@ -85,8 +85,12 @@ function EconomyService.give(player: Player, n: number, text: string?, exact: bo
 	local times = if not exact and player:GetAttribute("DoubleBolts") == true then 2 else 1 -- (Shop.OFFERS DoubleBolts)
 	if not exact then
 		times *= DoubleEvent.mult((Config :: any).DOUBLE_EVENT, os.time()) -- (V9-NOW 12: the 2X event; stacks with the pass: 4x)
+		-- (AUDIT 27 Nov 17, Config.PREMIUM_BOLTS: Roblox Premium members earn 10 % more BOLTS; never on a bought amount)
+		if (Config :: any).PREMIUM_BOLTS and player.MembershipType == Enum.MembershipType.Premium then
+			times *= 1.1
+		end
 	end
-	e.bolts += math.floor(n) * times
+	e.bolts += math.floor(math.floor(n) * times)
 	ProgressService.ecoChanged(player)
 	if text then
 		ProgressService.notice(player, text)
