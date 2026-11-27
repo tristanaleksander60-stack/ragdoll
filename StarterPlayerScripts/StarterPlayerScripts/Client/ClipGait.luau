@@ -12,6 +12,17 @@ local KeyframeSequenceProvider = game:GetService("KeyframeSequenceProvider")
 
 local ClipGait = {}
 
+local runPoseOn: boolean? = nil
+local function runPose(): boolean
+	if runPoseOn == nil then
+		local ok, Config = pcall(function()
+			return require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
+		end)
+		runPoseOn = ok and Config.RUN_POSE == true
+	end
+	return runPoseOn == true
+end
+
 ClipGait.CLIPS = { walk = "rbxassetid://913402848", run = "rbxassetid://913376220" }
 ClipGait.STRIDE = { walk = 4.7, run = 9.4 } -- studs a full cycle (two steps)
 ClipGait.RUN_FROM, ClipGait.RUN_FULL = 9, 14
@@ -129,6 +140,14 @@ function ClipGait.blend(speed: number, phase: number): { [string]: CFrame }?
 		local ca = if a then sample(a, phase * walk.length, walk.length) else CFrame.identity
 		local cb = if b then sample(b, phase * run.length, run.length) else CFrame.identity
 		out[jn] = if w <= 0 then ca elseif w >= 1 then cb else ca:Lerp(cb, w)
+	end
+	-- (v6 FIT PASS D, Config.RUN_POSE: a jog that reads as running: the elbows bend towards 90 degrees, pumping with
+	-- the clip's arm swing; grows with the run share w, so a walk is untouched and the switch is eased. No extra lean:
+	-- measured, the run clip already leans the body forward, more than the 10 degrees asked)
+	if w > 0 and runPose() then
+		local bend = CFrame.Angles(math.rad(55) * w, 0, 0)
+		out.RightElbow = out.RightElbow * bend
+		out.LeftElbow = out.LeftElbow * bend
 	end
 	return out
 end
