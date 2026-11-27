@@ -150,6 +150,8 @@ Find the real cause with ONE Play (allowed for this item):
 **If something still blocks it:** look for an invisible collider (a belt wall, a NoGo box, a machine's guard part) in the way of the carried body, and give the carried body a collision group that passes the invisible guards, the same as the player.
 
 ## 10. Falls, collapses and get-ups at 10/10 (owner: "Sørg for de falder realistisk ved skud, ved blodmangel, rejser sig op, fejler, alt det skal være 10/10")
+
+**PART DONE v1370 (`GETUP_FAIL`):** 10.4: a hurt ragdoll (hurt over 0.5 from Blood/Damage, or a broken leg) may fail a get-up: the arms shake and give while it pushes up and it slumps back, or it reaches the knee stage and falls again; at most 3 tries, then 8 s rest; two broken legs crawl (already). Not seen in Play (the test shove did not reach a body this screen simulates): owner check. Already there before: face-down kneel / face-up sit-up get-ups, the leg-round limp, the hurt sway. LEFT: 10.1 hit-place reactions beyond today, 10.2 the staged bleed-out, 10.3 the side get-up and the dizzy hand, 10.5 landings.
 Build on `RAGDOLL_FEEL.md` "The upgrade" and `RAGDOLL_10.md` R4. Finish what is not done; the v6 body and BodyShape are the base. The bar is the big games' "Euphoria" feel: a body REACTS with muscles, it does not just go limp or play a canned clip. Every case below:
 - comes from the per-limb tone (a hit loosens only the struck chain) plus the balance and the protective reflexes;
 - is eased, never a snap;

@@ -819,6 +819,27 @@ local function startRamp(rig: Rig, state: State, duration: number)
 		rig.lift.Position = origin
 		rig.lift.MaxForce = 0
 		rig.lift.Enabled = true
+		-- (FIXES 10.4, Config.GETUP_FAIL: a hurt body (low Blood, heavy damage, a broken leg) may fail to get up: the arms
+		-- give while it pushes up and it slumps back, or it reaches one knee, sways and falls again. At most 3 tries in a
+		-- row; then it rests longer. The chance grows with the hurt.)
+		local R = rig :: any
+		R.getUpFailAt = nil
+		if (GameConfig :: any).GETUP_FAIL and rig.model:GetAttribute("IsDummy") == true then
+			local hurt = hurtOf(rig)
+			local legs = 0
+			for _, joints in LEG_JOINTS do
+				for _, j in joints do
+					if rig.broken[j] then
+						legs += 1
+						break
+					end
+				end
+			end
+			if (hurt > 0.5 or legs >= 1) and (R.getUpTries or 0) < 3 and math.random() < 0.35 + 0.5 * hurt + 0.25 * legs then
+				R.getUpTries = (R.getUpTries or 0) + 1
+				R.getUpFailAt = if math.random() < 0.5 then GETUP_FIRST_STAGE * 0.75 else GETUP_FIRST_STAGE + (GETUP_TIME - GETUP_FIRST_STAGE) * 0.45
+			end
+		end
 	end
 	enter(rig, state)
 end
@@ -827,6 +848,23 @@ end
 -- then rise into the rest pose. Tone, balance and lift ramp up across both.
 local function updateGetUp(rig: Rig)
 	local t = rig.stateTime
+	local R = rig :: any
+	if R.getUpFailAt and t >= R.getUpFailAt then
+		-- (FIXES 10.4: the try fails: the lift lets go and it slumps back down, limp; it tries again after its rest)
+		R.getUpFailAt = nil
+		rig.lift.Enabled = false
+		enter(rig, "Ragdoll")
+		if (R.getUpTries or 0) >= 3 then
+			R.restUntil = os.clock() + 8
+		end
+		return
+	end
+	if R.getUpFailAt and t < GETUP_FIRST_STAGE then
+		-- (the arms shake while they try to push it up)
+		for _, joint in rig.joints do
+			joint.AngularStrength = 0.15 + 0.35 * (t / GETUP_FIRST_STAGE) * (0.7 + 0.3 * math.sin(t * 40))
+		end
+	end
 	local pelvisPos = rig.pelvis.Position
 	local firstHeight = rig.standOffset * (if rig.faceDown then 0.6 else 0.38)
 	local strength: number
@@ -849,13 +887,14 @@ local function updateGetUp(rig: Rig)
 		balanceShare = 0.5 + 0.5 * eased
 		rig.lift.MaxForce = rig.mass * Config.NORMAL_GRAVITY * 4 * math.max(1, timeScaleOf(rig) ^ 2)
 		if a >= 1 then
+			R.getUpTries = 0
 			enter(rig, "Standing")
 			return
 		end
 	end
 
 	for _, joint in rig.joints do
-		joint.AngularStrength = strength
+		joint.AngularStrength = if R.getUpFailAt and t < GETUP_FIRST_STAGE then joint.AngularStrength else strength
 		joint.AngularDamping = 1
 		joint.MaxTorque = MUSCLE_TORQUE
 	end
@@ -2389,7 +2428,7 @@ local function update(dt: number)
 			-- (V9-P fix round 1: the settle assist calms a body sooner; a dummy still lies MIN_DOWN s, as long
 			-- as before, so the fall can be enjoyed. A player's own body gets up as before.)
 			local minDown = if (GameConfig :: any).PHYSICS_V9 and P and P.MIN_DOWN and rig.model:GetAttribute("IsDummy") == true then P.MIN_DOWN else MIN_RAGDOLL_TIME
-			if rig.stateTime > minDown and rig.calmTime > CALM_TIME and awake then
+			if rig.stateTime > minDown and rig.calmTime > CALM_TIME and awake and os.clock() >= ((rig :: any).restUntil or 0) then
 				-- Both legs broken: no getting up, it crawls.
 				if homeOf(rig) and brokenLegs(rig) >= 2 then
 					enter(rig, "Crawling")

@@ -187,6 +187,7 @@ local Config = {
 	BLOCKED_EASE = true, -- PHYSICS_DEEP: a walker pushed back against its own way stops pushing (speed 2) instead of bouncing off the obstacle again and again
 	PHYSICS_PROBE = false, -- PHYSICS_DEEP step 1: logs [PhysProbe] when a walking dummy moves against its own drive, with what it touches (ActiveRagdoll); off by default
 	TOUCH_HOLD = true, -- F92 rest: on a touch screen every prompt without a hold needs 0.3 s, so a tap while walking past never starts a machine (Client/ControlsFX)
+	GETUP_FAIL = true, -- FIXES 10.4: a hurt ragdoll (low Blood, heavy damage, a broken leg) may fail to get up (slumps back, or falls from one knee), at most 3 tries, then rests 8 s (ActiveRagdoll updateGetUp)
 	BOXING_V2 = true, -- FIXES 12: drop ONE ragdoll in the ring, an opponent runs in, they fight close (placed in guard 3.4 apart, so punches land), knockdowns, to the death; the winner stays as champion; a quiet background fight 8-15 s after joining (Systems/BoxingMatch)
 	TALK_TWO = true, -- FIXES_27NOV_LATE 3: at most 2 face and talk to a player at once (the comer + one greeter); the other Friendly ones stay at what they do (Lab startGreeting)
 	CPR_HANDS_TOGETHER = true, -- FIXES_27NOV_LATE 2: CPR hands stacked on the chest (Poses.press), the shoulder cone opened to 155 for CPR only (ActiveRagdoll)
