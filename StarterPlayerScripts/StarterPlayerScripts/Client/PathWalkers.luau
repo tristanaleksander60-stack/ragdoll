@@ -157,6 +157,16 @@ local function step(dt: number)
 	table.clear(parts)
 	table.clear(cfs)
 	for i, w in walkers do
+		if i > ((PathWalkers :: any).LIMIT or 999) then
+			-- (the quality governor shows fewer: the rest stay hidden until it raises the limit)
+			if w.fade < 1 then
+				w.fade = 1
+				for _, pc in w.pieces do
+					pc.part.LocalTransparencyModifier = 1
+				end
+			end
+			continue
+		end
 		local L = lanes[w.lane]
 		w.t += w.dir * w.speed * dt
 		if w.t > L.len or w.t < 0 then

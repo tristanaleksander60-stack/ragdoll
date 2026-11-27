@@ -143,11 +143,14 @@ function PickOut.start()
 		return
 	end
 	local _ = Players
-	local dummies = Workspace:WaitForChild("Dummies")
-	dummies.ChildAdded:Connect(watch)
-	for _, m in dummies:GetChildren() do
-		watch(m)
-	end
+	-- (never hold up the server's start: the Dummies folder comes later)
+	task.spawn(function()
+		local dummies = Workspace:WaitForChild("Dummies")
+		dummies.ChildAdded:Connect(watch)
+		for _, m in dummies:GetChildren() do
+			watch(m)
+		end
+	end)
 end
 
 return PickOut

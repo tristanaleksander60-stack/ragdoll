@@ -188,6 +188,7 @@ safe("MiniBar", function() require(Client:WaitForChild("MiniBar")).start() end) 
 safe("RealHands", function() require(Client:WaitForChild("RealHands")).start() end) -- S2: real hands with fingers, not hooks
 safe("ViewReport", function() require(Client:WaitForChild("ViewReport")).start() end) -- 0.158: the camera report for "in view"
 safe("PathWalkers", function() require(Client:WaitForChild("PathWalkers")).start() end) -- 0.1568: people on every path (client only)
+safe("QualityGovernor", function() require(Client:WaitForChild("QualityGovernor")).start() end) -- 8: the automatic quality governor (FPS)
 safe("PlazaClient", function() require(Client:WaitForChild("PlazaClient")).start() end) -- V9-0d: the town square (stage dance, photo spot, its sounds)
 safe("HudV3", function() require(Client:WaitForChild("HudV3")).start() end) -- LOOK_V3: the big ragdoll games' HUD (squares, key chips, Next pill, LAB window)
 safe("RewardsUI", function() require(Client:WaitForChild("RewardsUI")).start() end) -- REWARDS: daily, play gift, dares, trophies, group (round 5)
