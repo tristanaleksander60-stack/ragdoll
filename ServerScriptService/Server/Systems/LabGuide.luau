@@ -328,7 +328,7 @@ local function tossOne(t: Terminal)
 	elseif os.clock() - t.noticeAt > 5 then
 		t.noticeAt = os.clock()
 		pcall(function()
-			lazy("ProgressService").notice(presser, "No free dummy right now. Try again in a moment!")
+			lazy("ProgressService").notice(presser, "No free ragdoll right now. Try again in a moment!")
 		end)
 	end
 end
@@ -699,7 +699,7 @@ local function addSpot(into: Instance, origin: Vector3, id: string, target: () -
 		playerLast[player] = now
 		if not LabGuide.toss(player, owner, target() + Vector3.new(0, 1.5, 0)) then
 			pcall(function()
-				lazy("ProgressService").notice(player, "No free dummy right now. Try again in a moment!")
+				lazy("ProgressService").notice(player, "No free ragdoll right now. Try again in a moment!")
 			end)
 		end
 	end)

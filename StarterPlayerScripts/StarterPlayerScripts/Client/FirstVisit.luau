@@ -44,9 +44,9 @@ FirstVisit.REVEAL_GAP = 5 -- s between the pieces of the reveal (left, right, th
 FirstVisit.ANSWER_WAIT = 20 -- s: no server answer by then = treated as a returning player
 FirstVisit.PHONE_HELD = { "Shop", "Menu" } -- the phone's launchers held with the rest
 FirstVisit.STEPS = table.freeze({
-	{ id = "Takedown", text = "Knock a dummy over!", pad = "Knock a dummy over! (R2)" },
+	{ id = "Takedown", text = "Knock a ragdoll over!", pad = "Knock a dummy over! (R2)" },
 	-- (NOW 7, owner 26 Nov 2026: grab and throw, and the MAPS board, are tutorial steps too.)
-	{ id = "Throw", text = "GRAB a dummy and THROW it!", pad = "GRAB a dummy (X) and THROW it!", attr = "ClientThrows" },
+	{ id = "Throw", text = "GRAB a ragdoll and THROW it!", pad = "GRAB a dummy (X) and THROW it!", attr = "ClientThrows" },
 	{ id = "Cannon", text = "Fire yourself from the CANNON", target = "CannonPad", glow2 = "CannonModel", attr = "CannonShots" },
 	{ id = "Wrecking", text = "Get hit by the WRECKING BALL", target = "SwingBall", attr = "ThrownBy_SwingBall" },
 	{ id = "Weapons", text = "Open WEAPONS for more", pad = "Open WEAPONS for more (Y)" },

@@ -39,7 +39,7 @@ Advent.DOORS = table.freeze({
 	{ cosmetic = "CrashSuit", hours = 72, bolts = 100, text = "Crash-Test Suit for 3 days + 100 BOLTS", glyph = "\u{1F9BA}" },
 	{ bolts = 300, text = "300 BOLTS", glyph = "\u{1F529}" },
 	{ bolts = 400, text = "400 BOLTS", glyph = "\u{1F529}" },
-	{ bolts = 1000, egg = true, cosmetic = "GoldDummies", hours = 168, text = "CHRISTMAS EVE: 1,000 BOLTS, a weapon egg and Gold Dummies for 7 days", glyph = "\u{1F381}" },
+	{ bolts = 1000, egg = true, cosmetic = "GoldDummies", hours = 168, text = "CHRISTMAS EVE: 1,000 BOLTS, a weapon egg and Gold Ragdolls for 7 days", glyph = "\u{1F381}" },
 } :: { Door })
 
 -- The December day (1..31) at UTC time `t`, or nil outside December of YEAR.

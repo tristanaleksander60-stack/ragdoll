@@ -14,7 +14,7 @@ export type Goal = { kind: Kind, need: number, text: string }
 -- What can be asked, and how much (one of `need` is picked). "max" kinds count the best of the
 -- day (a combo), the others add up.
 DailyGoals.POOL = table.freeze({
-	{ kind = "Takedowns" :: Kind, need = { 15, 25, 40 }, text = "Take down %d dummies" },
+	{ kind = "Takedowns" :: Kind, need = { 15, 25, 40 }, text = "KO %d ragdolls" },
 	{ kind = "Minutes" :: Kind, need = { 10, 15, 20 }, text = "Play %d minutes" },
 	{ kind = "Eggs" :: Kind, need = { 1, 2 }, text = "Open %d egg%s" },
 	{ kind = "Trips" :: Kind, need = { 2, 3 }, text = "Visit %d places" },

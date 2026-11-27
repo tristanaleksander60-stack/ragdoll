@@ -40,13 +40,13 @@ local CreatorUI = {}
 CreatorUI.GIFTS = table.freeze({ "Rose", "TikTok", "Finger Heart", "Doughnut", "Perfume", "Hat", "Hand Hearts", "Galaxy", "Lion", "Universe" })
 -- The STREAMER keys in order, what each does (StreamerService.ACTIONS) and its default gift.
 local GIFT_KEYS = {
-	{ key = "GiftDrop", action = "Drop", text = "Dummies drop in", gift = 1 },
+	{ key = "GiftDrop", action = "Drop", text = "Ragdolls drop in", gift = 1 },
 	{ key = "GiftBoom", action = "Boom", text = "A big boom", gift = 2 },
 	{ key = "GiftSlowmo", action = "Slowmo", text = "Slow-mo bubble", gift = 3 },
-	{ key = "GiftRain", action = "Rain", text = "Dummy rain", gift = 8 },
+	{ key = "GiftRain", action = "Rain", text = "Ragdoll rain", gift = 8 },
 	{ key = "GiftFling", action = "Fling", text = "Fling the streamer", gift = 4 },
 	{ key = "GiftParty", action = "Party", text = "Party pops", gift = 7 },
-	{ key = "GiftGiant", action = "Giant", text = "A giant dummy", gift = 9 },
+	{ key = "GiftGiant", action = "Giant", text = "A giant ragdoll", gift = 9 },
 	{ key = "GiftTool", action = "Tool", text = "Next tool", gift = 5 },
 }
 local MAX_CLIP = 30 -- s (Roblox stops a recording there)
