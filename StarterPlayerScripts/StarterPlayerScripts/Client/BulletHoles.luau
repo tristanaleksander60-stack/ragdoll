@@ -214,7 +214,9 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 	end
 	local list = bodies[model] or {}
 	bodies[model] = list
-	while #list >= BulletHoles.MAX_PER_BODY do
+	-- (AUDIT 27 Nov 37: a phone keeps the newest 24 holes a body, a PC all 80 the owner asked for)
+	local cap = if PHONE and (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).HOLE_CAP_PHONE then 24 else BulletHoles.MAX_PER_BODY
+	while #list >= cap do
 		local oldest = table.remove(list, 1) :: BodyHole
 		release(oldest.part)
 	end

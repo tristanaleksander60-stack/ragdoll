@@ -109,7 +109,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
 
 ## PERFORMANCE (with row 8 / R8)
 36. **Wounds are resent whole** (up to 80 entries, about 2 KB) to every client on every hit: send only the new one (`WoundNew` + a sequence number); the full list only when a body streams in; `WoundsReset` for heals and the pick-out.
-37. **Bullet holes:**
+37. **PART DONE v1315 (`HOLE_CAP_PHONE`):** a phone keeps the newest 24 holes a body (a PC all 80, the owner's choice); the holes were already pooled and massless with no query/touch. **Was:** Bullet holes:
     - capped per device: about 12 on a phone, 30 on a PC per body;
     - only on the nearest bodies, pooled;
     - Massless with CanCollide, CanQuery and CanTouch off.
