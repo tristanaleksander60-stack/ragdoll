@@ -161,7 +161,7 @@ No hitch over 100 ms when machines run, a big event starts or the lab loads.
    - The emitters and lights in FxController and FeelV2 are pooled: made at join, idle in a folder, re-parented and `:Emit()`ed.
    - Splat decals at most 40 on a phone; the oldest fades.
    - Sounds: at most 12 playing on phones, and a far sound is never started.
-7. **PART DONE v1388:** DummyLife: the chat partner kept 0.5 s, foot IK rays at 20 Hz on touch, SIDES hoisted. LEFT: the Active.bind pass over the 66 RenderStepped files. 7. **`LAGFREE_SMALL`:**
+7. **PART DONE v1388:** DummyLife: the chat partner kept 0.5 s, foot IK rays at 20 Hz on touch, SIDES hoisted. Checked v1400 (no change needed): the 10 named loops already cost nothing when idle (GodMode binds only while placing; BuildController and AmmoClient return at once; HospitalCharts and VehicleFeel are throttled 0.1-1 s; MapBoardClient spins only near swirls; Cockpit is one seat check; MechArmsClient has no loop), so no Active helper is needed. DONE. 7. **`LAGFREE_SMALL`:**
    - The DummyLife chat partner is looked up every 0.5 s and kept, not searched every frame.
    - Foot IK rays at 20 Hz on touch devices.
    - The `layers()` table literal is hoisted.
