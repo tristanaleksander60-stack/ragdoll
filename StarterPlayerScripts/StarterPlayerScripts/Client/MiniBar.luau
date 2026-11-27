@@ -64,17 +64,36 @@ function MiniBar.start()
 			hit.Size = UDim2.fromOffset(size.X + 16, math.max(48, size.Y + 8))
 			hit.Position = bar.Position
 		end
+		-- (AUDIT 24 rest: icons only at rest. The slot names, not the short key numbers, hide while the bar is small)
+		local hidden = setmetatable({}, { __mode = "k" }) :: any
+		local function names(show: boolean)
+			if show then
+				for l in hidden do
+					l.Visible = true
+				end
+				table.clear(hidden)
+				return
+			end
+			for _, d in bar:GetDescendants() do
+				if d:IsA("TextLabel") and d.Visible and #d.Text > 2 and d:FindFirstAncestor("Slots") then
+					hidden[d] = true
+					d.Visible = false
+				end
+			end
+		end
 		local function close()
 			open = false
 			if isPhone() then
 				to(MiniBar.SMALL, false)
 				hit.Visible = true
+				names(false)
 			end
 		end
 		local function openIt()
 			open = true
 			lastTap = os.clock()
 			hit.Visible = false
+			names(true)
 			to(1, true)
 		end
 		hit.Activated:Connect(openIt)
@@ -126,10 +145,13 @@ function MiniBar.start()
 					end
 					hit.Visible = false
 					open = false
+					names(true)
 					continue
 				end
 				if not open and not hit.Visible then
 					close()
+				elseif not open then
+					names(false) -- (a slot added while small)
 				end
 				if open then
 					local window = Controller.getCurrent and Controller.getCurrent() ~= nil
@@ -150,6 +172,7 @@ function MiniBar.start()
 		if isPhone() then
 			scale.Scale = MiniBar.SMALL
 			hit.Visible = true
+			names(false)
 		else
 			hit.Visible = false
 		end
