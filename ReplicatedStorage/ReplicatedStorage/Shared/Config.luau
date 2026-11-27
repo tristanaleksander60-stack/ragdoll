@@ -160,6 +160,7 @@ local Config = {
 	LAVA_10 = true, -- 3.23 lava strip: glows and bubbles; a ragdoll in it hops a hot-foot dance, goes soot-black and smoking, jumps out over the kerb after 1.6 s, "HOT FOOT! 1.6 s" + NEW BEST (LavaBest) (MapMachines)
 	MOLE_10 = true, -- 3.24 mole: whack-a-mole: between catches it peeks out of a random hill for 1.2 s; shoot it while up: "WHACK! x3" streak + NEW BEST (MoleBest) (LabCreatures)
 	ANIMALS_10 = true, -- 3.27-3.29 the Animal Cove comes alive: the bear (poke or come close: ROAR, SWAT or BEAR HUG, Zzz), the crocodiles (swim in, SNAP, death roll, toss onto the bank), the T-rex (a lever opens its gate: 30 s of stomping, CHOMP and toss, ROAR shock rings) (Systems/AnimalCove)
+	STRETCH_10 = true, -- 3.19 stretcher: on release the stretch percentage pops ("SPROING! 180%") + NEW BEST for whoever cranked it (StretchBest) (StretchMachine)
 	TURN_EVEN = true, -- F73: the heading rotates at a capped even rate (220 deg/s walking, 360 fleeing), never a lerp whip or 180 degree snap; turning on the spot steps the feet (ActiveRagdoll, DummyLife)
 	NAV_BLOCKCAST = true, -- F72: obstacles are seen with a body-sized Blockcast whose look-ahead grows with speed (2.5-7 studs), and the detour takes the more open side (ActiveRagdoll blocked/clearAhead)
 	NAV_BUMP_LOG = true, -- F72: ActiveRagdoll counts detours, other-side tries and waits for a car, printed once a minute ([NavBump]); a moving car in the way is waited for, not walked round

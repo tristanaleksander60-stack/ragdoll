@@ -133,6 +133,29 @@ local function release(mc: Machine)
 	end
 	if m and m.Parent then
 		mc.skip = m -- (not again until it has left the platform)
+		if (require(Shared:WaitForChild("Config")) :: any).STRETCH_10 and m:GetAttribute("Stretched") == true then
+			-- 3.19 (docs/MACHINES_10.md "STRETCH MACHINE"; Config.STRETCH_10): the stretch percentage pops with a SPROING
+			-- and a NEW BEST for whoever cranked it (StretchBest)
+			local most = 1
+			for limb in Stretch.PARTS do
+				most = math.max(most, Stretch.factorOf(m, limb))
+			end
+			local pct = math.floor(most * 100 + 0.5)
+			if pct > 105 then
+				local text = "SPROING! " .. tostring(pct) .. "%"
+				local who = mc.by or mc.owner
+				if who and who.Parent then
+					local best = (who:GetAttribute("StretchBest") :: number?) or 0
+					if pct > best then
+						who:SetAttribute("StretchBest", pct)
+						text ..= " NEW BEST!"
+					end
+				end
+				pcall(function()
+					lazy("Playground").pop(mc.middle.Position + Vector3.new(0, 7, 0), text, Color3.fromRGB(255, 170, 230))
+				end)
+			end
+		end
 		if LONG and m:GetAttribute("Stretched") == true then
 			local token = ((m:GetAttribute("StretchToken") :: number?) or 0) + 1
 			m:SetAttribute("StretchToken", token)
