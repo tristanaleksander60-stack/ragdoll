@@ -90,35 +90,45 @@ The owner: "sørg for den ikke tester alt selv dybt, men at det er min opgave".
 Everything not listed here is DONE (see the rows). Each line points to its row; build the row's LEFT.
 1. **F90 FIRST:** walking ragdolls VANISH while you hit them (a removal, pool, teleport or hide that skips the never-vanish rule); one `mayRemove` guard for every system, Unstick pushes instead of teleporting in view, path walkers never hide when hit, Atomic streaming, an always-on REMOVAL_LOG (FIXES F90).
 2. **F89:** the new body walks like a bodybuilder with its arms up (a rest-pose mismatch), lumpy and yellow. Rebuild it with the arms down, slim and grey (FIXES F89). **BUILT v1267, waiting for ONE owner step:** the cause was the body's shape (shoulders out to 1.6 studs, a hump) and the torso's yellow test suit, not the drive (bones matched the parts within 1 degree). `art/models/mannequin/build_mannequin_v2.py` makes the slim body (arms down 5 degrees, elbows bent 10, shoulders 2.0 wide, smoothed, grey) as `mannequin_v2.fbx`. SmoothBody V2 (`SMOOTH_BODY_V2`) drives it forward-kinematically and always grey (the legs' shell colour). The owner: Studio, File > Import 3D > `art/models/mannequin/mannequin_v2.fbx`, then save (the server hands a `mannequin_v2` model in workspace to the clients; the next run moves it to ReplicatedStorage.SmoothBodyV2). The MCP upload is refused: the folder is not approved in MCP Permissions.
-3. **The ragdoll itself (PHASE 2):**
+3. **R10, THE RAGDOLLS 4/10 → 10/10 (owner):** one pass in `RAGDOLL_10.md`, built right after F90 and F89:
+   - R1 the slim grey body everywhere, crash-test marks, size variety;
+   - R2 a face that lives (pupils that look, blinking, a talking mouth, expressions);
+   - R3 a walk with weight (S1/F73 rests, secondary motion, persona walks);
+   - R4 hits, falls, landings, get-ups (RAGDOLL_FEEL 1-6);
+   - R5 readable personas (accessories, idles, reactions to others);
+   - R6 body sounds and cartoon voices;
+   - R7 zero bugs, guarded by the logs;
+   - R8 phones.
+   It absorbs the S1, F73 and S2 leftovers below (do not build them twice).
+4. **The ragdoll itself (PHASE 2):**
    - S1's rest: upper-body gesture layers, foot IK, smooth ownership;
    - F73's rest (0.1571): the turn pose, foot friction, curved arrivals, the TURN TWIST detector;
    - F72's rest (0.1572).
-4. **The body (PHASE 3):**
+5. **The body (PHASE 3):**
    - 0.994's rest (the pick-out scene);
    - row 5: the physics hard checks;
    - row 6: holes and bandages fitted to the new body, the injury stages, the puddles;
    - row 7: the impact effects;
    - S2's rest: grip and point poses, a cheaper far version.
-5. **The map (PHASE 4):**
+6. **The map (PHASE 4):**
    - M4's OBJECT BY OBJECT as Blender meshes, THE LOOK 1:1 colour check, the path lint (F82);
    - BOWLING_12's rest: the Blender models, the ragdoll-as-ball show, slow-mo, cheers, phone swipe, turkey, big ball, bumpers, BOLTS and badges;
    - F76's rest: ~~the bicycle's pedalling legs and bell~~ (DONE v1277, `BIKE_PEDAL`: Client/BikePedal + the horn button rings a PSE bell 9125390319); the 5 new vehicles with their features (SOON until the owner's pass ids);
    - F78's rest: ~~the swim animation~~ (DONE v1278, `SWIM_POSE`: panic splash, front crawl + flutter kick, treading water), the drown animation; ~~the croc death roll~~ (3.x ANIMALS_10).
-6. **Life (PHASE 5):**
+7. **Life (PHASE 5):**
    - 0.1 / 0.158: the pool by tier and the "in view" camera report;
    - 0.1567, 0.1568 and P1's rests;
    - row 11: the cyclist and the rest of the idle life.
-7. **Machines and animals (PHASE 6):**
+8. **Machines and animals (PHASE 6):**
    - **A0, the Blender pipeline, THEN every animal and machine remodelled and animated** (CREATURES_ANIM 1-4: idles, signature catches, knockout shows, the markedly better looks), in MACHINES_10's order. This is the biggest job;
    - row 3's last items: boxing bets, the whale spout, the weapon range, 3.32-3.35;
    - 1.0's rest;
    - 13 (the dog);
    - 14 (wheelchairs).
-8. **The first minutes and phones (PHASE 7):**
+9. **The first minutes and phones (PHASE 7):**
    - T1's rest: the one director, the plaza trio facing you, the newcomer-soft first KO, the pistol beat, the gifts, ranks, collection, the daily chest, the notification ask;
    - row 8's rest (phone lag).
-9. **END:** the ONE LONG numbered "Test selv" list of everything (klar).
+10. **END:** the ONE LONG numbered "Test selv" list of everything (klar).
 
 ## THE ORDER (top to bottom; the # is only a name)
 **Why this order:**
@@ -140,6 +150,7 @@ Everything that walks uses this. **S1 first:** real human motion instead of the 
 |---|---|---|---|---|
 | F90 | **Walking ragdolls VANISH while you hit them:** one `RagdollDirector.mayRemove` guard for every removal, hide, pool or teleport (in view, within 60 studs, hit in 30 s, held, in a machine or a show = no); Unstick pushes out instead of teleporting in view; path-walker fakes never hide when hit; Atomic streaming and keep-near; an always-on REMOVAL_LOG naming the system | `FIXES_26NOV.md` F90 | new | all, FIRST |
 | F89 | **The new body walks like a BODYBUILDER (arms up at the shoulders), lumpy and YELLOW:** rebuild the Blender body with the arms DOWN in its rest (matching R15), offsets from both rests, slim tapering proportions, clean weights, grey plastic (never yellow); arms hang and swing naturally | `FIXES_26NOV.md` F89 | new | all, FIRST |
+| R10 | **THE RAGDOLLS 4/10 → 10/10 (owner):** R1 the slim grey body everywhere + crash-test marks + size variety; R2 a face that lives (pupils, blinks, a talking mouth, expressions); R3 a walk with weight (S1/F73 rests, secondary motion, persona walks); R4 hits, falls, landings and get-ups (RAGDOLL_FEEL 1-6); R5 readable personas (Blender accessories, idles, reactions to others); R6 body sounds and voices; R7 zero bugs; R8 phones | `RAGDOLL_10.md` | new | all, right after F89 |
 | F83 | **NO extra walk or run speed (owner: "Fjern hastighed på gå og løbe helt igen også fra standard"):** WalkSpeed back to Roblox's standard 16; the sprint removed (the phone RUN button, Shift, the pad stick, the run FOV and dust) behind `NO_SPEED`; the Settings walk-speed option removed (saved values ignored); the server's speed checks max 16; ragdolls, vehicles and launchers unchanged; replaces F51/F38/MOVE_FAST | `FIXES_26NOV.md` F83 | DONE v1200 (`NO_SPEED`): everyone walks at Roblox's standard 16 (the place's CharacterWalkSpeed; the 30 came from Settings' NORMAL, now off: `WALK_SETTING` false, saved choices ignored); no RUN button, no Shift or stick sprint, no run FOV (Client/Sprint: active() is false, nothing is bound); the weapon slow-down stays (x0.84 of 16). Play: WalkSpeed 13.4 with the minigun | -|
 | F84 | **REMOVE every attraction NAME SIGN (owner: "Fjern alle der her skilte"):** all signV2 boards and posts, old name signs, courtyard signposts and "IN HERE" boards deleted; `NAME_SIGNS = false` so M4 never rebuilds them; leaderboards, dispensers, vehicle ground plaques and machine panels stay | `FIXES_26NOV.md` F84 | DONE v1201 (`NAME_SIGNS` false, LabOwnerMap nameSign + the spawn signpost): no attraction name board, signpost or IN HERE board is built in the lab any more (M4's rebuild never makes them). Play: 0 sign parts in the lab (the 34 left are the shared plaza's edge posts, outside the lab). Kept: leaderboards and plaques, vehicle ground plaques, machine panels | -|
 | F85 | **The FACES spin when ragdolls run:** the atan2 flip (+180/-180) with the neck clamp makes the head whip side to side when the target is behind; no look behind (hysteresis 90/110), no look while running, a damped neck (max ~4 rad/s), ONE owner of the Neck and Waist per frame (a priority list) | `FIXES_26NOV.md` F85 | DONE v1202 (`NO_HEAD_WHIP`, DummyLife): the causes found: the fleeing glance over the shoulder SNAPPED between 0 and 55 degrees (a threshold on a sine), and a noise look at something behind flipped atan2 between +180 and -180 so the -75..75 clamp whipped the head across. Now the glance eases at most 230 deg/s, and a noise look never looks behind (over 100 degrees) and never while running (over 9 studs/s) | one owner of the Neck and Waist per frame (a priority list), if a whip is still seen|
