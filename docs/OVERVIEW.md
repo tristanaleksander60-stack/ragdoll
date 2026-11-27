@@ -103,7 +103,7 @@ Everything not listed here is DONE (see the rows). Each line points to its row; 
 5. **The map (PHASE 4):**
    - M4's OBJECT BY OBJECT as Blender meshes, THE LOOK 1:1 colour check, the path lint (F82);
    - BOWLING_12's rest: the Blender models, the ragdoll-as-ball show, slow-mo, cheers, phone swipe, turkey, big ball, bumpers, BOLTS and badges;
-   - F76's rest: the bicycle's pedalling legs and bell; the 5 new vehicles with their features (SOON until the owner's pass ids);
+   - F76's rest: ~~the bicycle's pedalling legs and bell~~ (DONE v1277, `BIKE_PEDAL`: Client/BikePedal + the horn button rings a PSE bell 9125390319); the 5 new vehicles with their features (SOON until the owner's pass ids);
    - F78's rest: the swim and drown animations, the croc death roll.
 6. **Life (PHASE 5):**
    - 0.1 / 0.158: the pool by tier and the "in view" camera report;

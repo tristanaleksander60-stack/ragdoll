@@ -109,6 +109,7 @@ local Config = {
 	PUDDLE_GLOSS = true, -- row 6: the purple pools are glossy (sheen + a light highlight) with 2-4 star splats on the edge, growing and fading with the pool (Client/BloodFx)
 	INJURY_V2 = true, -- row 6: 3 hurt stages per piece by its hits (1-2 light lavender, 3-4 violet, 5+ deep violet); gauze bandages with offset ridges, a taped loose end and a seep spot at stage 3; a head wrap after 2 head hits (Client/DummySkins)
 	CRATE_BURST = true, -- row 7: a body flung through a crate at 40+ studs/s smashes it (planks fly, a crack, wood dust; the body flies on through); it is back whole with the others (Knockables)
+	BIKE_PEDAL = true, -- F76: a bicycle rider's legs pedal with the speed (Client/BikePedal) and the horn button rings a bell (VehicleService)
 	AUTO_QUALITY = true, -- 8: an FPS governor on each screen: start level by device (PC 3, phone/tablet 2), under 45 FPS for 10 s one step down, over 58 for 30 s one up: particles halved and far walkers slower, then no shadows and nearer lights, then fewer walkers and real hands (Client/QualityGovernor)
 	IDLE_LIFE = true, -- 11: standing ragdolls do small human actions 8-20 s apart, never the same twice in a row: + hands on hips, neck roll, rub eyes, look at nails, sneeze, wave, crack knuckles (Client/DummyLife gestures)
 	HIT_BONE_NAME = true, -- row 4: a round to the trunk names the bone on the hit card (Sternum, Rib, Spine, Shoulder blade, Pelvis, Lower spine), as the X-ray shows (VitalsService)

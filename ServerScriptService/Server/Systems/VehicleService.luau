@@ -690,6 +690,22 @@ function VehicleService.start()
 		local car = seat.Parent
 		local body = car and car:FindFirstChild("Body")
 		local horn = body and body:FindFirstChild("Horn")
+		if (Config :: any).BIKE_PEDAL and seat:GetAttribute("LabCar") == "Bicycle" then
+			-- (F76: the bicycle's horn button rings its bell)
+			local holder = body or seat
+			local bell = holder:FindFirstChild("Bell")
+			if not (bell and bell:IsA("Sound")) then
+				local snd = Instance.new("Sound")
+				snd.Name = "Bell"
+				snd.SoundId = "rbxassetid://9125390319"
+				snd.Volume = 0.9
+				snd.RollOffMaxDistance = 140
+				snd.Parent = holder
+				bell = snd
+			end
+			(bell :: Sound):Play()
+			return
+		end
 		if horn and horn:IsA("Sound") then
 			horn:Play()
 		end
