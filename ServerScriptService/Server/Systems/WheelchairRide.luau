@@ -162,6 +162,9 @@ local function adopt(seat: VehicleSeat)
 			pcall(function()
 				body.AssemblyLinearVelocity = Vector3.new(look.X, 0, look.Z).Unit * WheelchairRide.PUSH
 			end)
+			pcall(function() -- (row 14: the funnel, "Wheelchair" Seat / Push)
+				lazy("Funnels").event(player, "Wheelchair", "Push")
+			end)
 			return
 		end
 		if seat.Occupant then
@@ -211,6 +214,9 @@ local function adopt(seat: VehicleSeat)
 					lazy("RagdollDirector").logRemoval(m, "Wheelchair", "called; ran over and sat in")
 				end)
 				ride(body, seat, m)
+				pcall(function()
+					lazy("Funnels").event(player, "Wheelchair", "Seat")
+				end)
 			else
 				m:SetAttribute("CommandedBy", nil)
 			end
