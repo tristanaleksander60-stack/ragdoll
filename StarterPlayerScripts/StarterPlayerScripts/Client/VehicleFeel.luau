@@ -241,6 +241,30 @@ local function step(f: CarFeel, dt: number, camPos: Vector3)
 	f.lastVel = vel
 end
 
+-- F76: the feature each new vehicle has (mirrors VehicleService.FEATURE) and what it does on this screen.
+VehicleFeel.FEATURE_ACTION = "VehicleFeature"
+local FEATURE: { [string]: string } = { GoKart = "Boost", MonsterTruck = "Jump", Police = "Siren", FireTruck = "Spray", Bulldozer = "Blade" }
+local boundFeature: string? = nil
+local lastFeature = 0
+local function featureNow(feature: string, seat: VehicleSeat)
+	local t = os.clock()
+	if t - lastFeature < (if feature == "Boost" or feature == "Jump" then 1.5 else 0.4) then
+		return
+	end
+	lastFeature = t
+	local body = seat.AssemblyRootPart
+	if body and not body.Anchored then
+		-- (the driver's screen owns the car: Boost and Jump move it here, the server shows the flames)
+		if feature == "Boost" then
+			local look = body.CFrame.LookVector
+			body.AssemblyLinearVelocity += Vector3.new(look.X, 0, look.Z).Unit * 38
+		elseif feature == "Jump" then
+			body.AssemblyLinearVelocity += Vector3.new(0, 58, 0)
+		end
+	end
+	Net.event(Net.Names.VehicleAction):FireServer(feature)
+end
+
 function VehicleFeel.start()
 	if not (V and V.enabled and V.feel) then
 		return
@@ -269,6 +293,28 @@ function VehicleFeel.start()
 		elseif not now and bound then
 			bound = false
 			ContextActionService:UnbindAction(VehicleFeel.HORN_ACTION)
+		end
+		-- F76 (Config.NEW_VEHICLES): the vehicle's feature on F (PC), ButtonY (pad) and ONE big touch button (phone)
+		local c = player.Character
+		local h = c and c:FindFirstChildOfClass("Humanoid")
+		local s = h and h.SeatPart
+		local kind = if now and s then s:GetAttribute("LabCar") else nil
+		local feature = if type(kind) == "string" and (Config :: any).NEW_VEHICLES then FEATURE[kind] else nil
+		if feature ~= boundFeature then
+			if boundFeature then
+				ContextActionService:UnbindAction(VehicleFeel.FEATURE_ACTION)
+			end
+			boundFeature = feature
+			if feature then
+				ContextActionService:BindActionAtPriority(VehicleFeel.FEATURE_ACTION, function(_, state)
+					if state == Enum.UserInputState.Begin then
+						featureNow(feature, s :: VehicleSeat)
+					end
+					return Enum.ContextActionResult.Sink
+				end, true, Enum.ContextActionPriority.High.Value + 200, Enum.KeyCode.F, Enum.KeyCode.ButtonY)
+				ContextActionService:SetTitle(VehicleFeel.FEATURE_ACTION, string.upper(feature))
+				ContextActionService:SetPosition(VehicleFeel.FEATURE_ACTION, UDim2.new(1, -170, 1, -150))
+			end
 		end
 	end)
 	local scanAt = 0

@@ -277,7 +277,7 @@ if Config.LAB_OWNERMAP then
 			LabLayout10.ENTRANCE_ROW = bays
 			LabLayout10.ENTRANCE_YAW = math.rad(135) -- (the noses point south-west: to the walkway and the spine)
 			for _, b in bays do
-				if b.id == "Car" or b.id == "Truck" or b.id == "MuscleCar" then
+				if b.id == "Car" or b.id == "Truck" or b.id == "MuscleCar" or ((Config :: any).NEW_VEHICLES and (b.id == "GoKart" or b.id == "Police" or b.id == "MonsterTruck" or b.id == "Bulldozer" or b.id == "FireTruck")) then
 					LabLayout10.CARS[b.id] = b.at
 					LabLayout10.CAR_YAW = LabLayout10.CAR_YAW or {}
 					LabLayout10.CAR_YAW[b.id] = LabLayout10.ENTRANCE_YAW

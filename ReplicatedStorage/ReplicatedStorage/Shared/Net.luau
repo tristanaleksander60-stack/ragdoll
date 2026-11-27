@@ -39,6 +39,7 @@ Net.Names = table.freeze({
 	Money = "Money", -- both ways: client Buy / Admin / SeenNew / Hello; server Owned / Free / FreeOver / WhatsNew / Admin / Refused
 	Travel = "Travel", -- both ways: client asks to go to a place; server answers Arrived / Refused
 	NpcCommand = "NpcCommand", -- both ways (v4 B4): server Open (talked to) / Done; client Follow / Stay / Attack / Bye
+	VehicleAction = "VehicleAction", -- client -> server: the action string of the vehicle you drive (Boost, Jump, Siren, Spray, Blade); checked in VehicleService (you sit in a lab vehicle whose kind has that feature, 1 every 0.35 s) (F76)
 	Advent = "Advent", -- client -> server: "State" or "Open" (nothing else read; 1 a second); server -> client: "State" {day, opened, next}, "Opened" {door, text}, "Refused" why (AUDIT 27 Nov 2, Systems/AdventService)
 	Cpr = "Cpr", -- server -> client: Start (the body); client -> server: Result (the body, the good beats 0-5); checked in PlayerCPR (your open session, that body, 2.5-15 s after the start, within 15 studs, once) (3.34)
 	VehicleHorn = "VehicleHorn", -- client -> server (v4 C2): the driver honks (server checks the seat, plays the car's Horn)

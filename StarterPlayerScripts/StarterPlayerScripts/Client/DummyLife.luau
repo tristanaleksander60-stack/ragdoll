@@ -957,6 +957,11 @@ local function updateIdle(life: Life, now: number, dt: number)
 	local handsUp = HANDS_UP and threat ~= nil and life.model:GetAttribute("Personality") ~= "Brave"
 		and (life.threatRaised or now - (life.threatSince or now) < GunThreat.CALM_AFTER)
 		and not (greeting and not life.threatRaised)
+	-- (F76: a police siren close by: hands up for 2 s at a time, VehicleService sets HandsUpUntil)
+	local sirenUntil = life.model:GetAttribute("HandsUpUntil")
+	if type(sirenUntil) == "number" and Workspace:GetServerTimeNow() < sirenUntil then
+		handsUp = true
+	end
 	if threat then
 		target = threat
 		wide = true

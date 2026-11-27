@@ -958,7 +958,7 @@ local function entranceRow(into: Instance, o: Vector3, top: number)
 		local VS = require(script.Parent:WaitForChild("VehicleService")) :: any
 		for _, s in signs do
 			local price = VS.PRICES and VS.PRICES[s.id]
-			local driveable = s.id == "Car" or s.id == "Truck" or s.id == "MuscleCar"
+			local driveable = s.id == "Car" or s.id == "Truck" or s.id == "MuscleCar" or (VS.SOON and VS.SOON[s.id] and (VS.PASSES[s.id] or 0) > 0)
 			if driveable and price ~= nil then
 				s.label.Text = if price > 0 then ("R$ " .. tostring(price)) else "FREE"
 				s.label.TextColor3 = if price > 0 then Color3.fromRGB(120, 230, 120) else Color3.fromRGB(255, 255, 255)

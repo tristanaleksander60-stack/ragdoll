@@ -110,6 +110,7 @@ local Config = {
 	BUOYANCY_V2 = true, -- row 5: in the part-water tanks each limb floats by how much of its volume is under (a VectorForce per limb, 1.4x its weight fully under, plus drag), not a velocity write that fought the simulating screen (SwimService)
 	PUDDLE_GLOSS = true, -- row 6: the purple pools are glossy (sheen + a light highlight) with 2-4 star splats on the edge, growing and fading with the pool (Client/BloodFx)
 	INJURY_V2 = true, -- row 6: 3 hurt stages per piece by its hits (1-2 light lavender, 3-4 violet, 5+ deep violet); gauze bandages with offset ridges, a taped loose end and a seep spot at stage 3; a head wrap after 2 head hits (Client/DummySkins)
+	NEW_VEHICLES = true, -- F76 (owner 27 Nov: "build them fully now"): Go-Kart (BOOST), Police Car (SIREN: lights, sound, hands up), Monster Truck (JUMP), Bulldozer (BLADE up/down), Fire Truck (WATER CANNON: ragdolls pushed over, wet) in the entrance row, built from parts; SOON until the owner sends the pass ids (VehicleService, Client/VehicleFeel, Net VehicleAction)
 	CAR_ROCK = true, -- row 7 rest: a ragdoll hitting a car at 22+ studs/s rocks it (a roll/pitch kick and a small shove scaled by the speed and the car's mass; on the simulating screen; Client/CarRock)
 	CRATE_BURST = true, -- row 7: a body flung through a crate at 40+ studs/s smashes it (planks fly, a crack, wood dust; the body flies on through); it is back whole with the others (Knockables)
 	BIKE_PEDAL = true, -- F76: a bicycle rider's legs pedal with the speed (Client/BikePedal) and the horn button rings a bell (VehicleService)
@@ -505,6 +506,11 @@ local Config = {
 		Wheelchair = table.freeze({ speed = 18, reverse = 8, accel = 2, turn = 2.6 }), -- (row 14: the 3 free wheelchairs)
 		Wheelchair2 = table.freeze({ speed = 18, reverse = 8, accel = 2, turn = 2.6 }),
 		Wheelchair3 = table.freeze({ speed = 18, reverse = 8, accel = 2, turn = 2.6 }),
+		GoKart = table.freeze({ speed = 62, reverse = 40, accel = 3.4, turn = 2.4 }), -- (F76: low and fast; BOOST)
+		Police = table.freeze({ speed = 70, reverse = 50, accel = 2.8, turn = 1.9 }), -- (F76: SIREN)
+		MonsterTruck = table.freeze({ speed = 54, reverse = 40, accel = 2.2, turn = 1.6 }), -- (F76: JUMP)
+		Bulldozer = table.freeze({ speed = 26, reverse = 20, accel = 1.6, turn = 1.3 }), -- (F76: the BLADE up/down)
+		FireTruck = table.freeze({ speed = 48, reverse = 34, accel = 2, turn = 1.4 }), -- (F76: the WATER CANNON)
 		MuscleCar = table.freeze({ speed = 68, reverse = 68, accel = 2.8, turn = 1.8 }), -- (session v842: a 70s muscle car, fast and heavy, slightly less nimble than the supercar)
 		flippedReset = 4, -- s an empty flipped or fallen car waits before it goes home
 		idleReset = 30, -- s an empty car left away from its pad waits before it goes home

@@ -59,12 +59,27 @@ VehicleService.SPECS = {
 	Wheelchair = { label = "Wheelchair", body = Vector3.new(2.6, 1, 3.4), color = Color3.fromRGB(40, 40, 44), wheel = 1.6, lift = 0.6, pad = Vector2.new(20, -20), look = "Wheelchair" } :: Spec,
 	Wheelchair2 = { label = "Wheelchair", body = Vector3.new(2.6, 1, 3.4), color = Color3.fromRGB(40, 40, 44), wheel = 1.6, lift = 0.6, pad = Vector2.new(24, -20), look = "Wheelchair" } :: Spec,
 	Wheelchair3 = { label = "Wheelchair", body = Vector3.new(2.6, 1, 3.4), color = Color3.fromRGB(40, 40, 44), wheel = 1.6, lift = 0.6, pad = Vector2.new(28, -20), look = "Wheelchair" } :: Spec,
+	-- F76 (owner 27 Nov: "build them fully now"; Config.NEW_VEHICLES): the 5 new paid vehicles, built from parts in our
+	-- own code (no store scripts), each with its feature on ONE button (VehicleAction): SOON until the owner's pass ids.
+	GoKart = { label = "Go-Kart", body = Vector3.new(4.4, 0.8, 7), color = Color3.fromRGB(255, 120, 20), wheel = 1.7, lift = 0.25, pad = Vector2.new(40, -14) } :: Spec,
+	Police = { label = "Police Car", body = Vector3.new(6.6, 1.6, 15), color = Color3.fromRGB(245, 245, 248), wheel = 2.6, lift = 0.6, pad = Vector2.new(46, -14) } :: Spec,
+	MonsterTruck = { label = "Monster Truck", body = Vector3.new(8.6, 2.2, 15), color = Color3.fromRGB(70, 200, 60), wheel = 5.6, lift = 3.2, pad = Vector2.new(52, -14) } :: Spec,
+	Bulldozer = { label = "Bulldozer", body = Vector3.new(8, 2.6, 12), color = Color3.fromRGB(250, 196, 20), wheel = 2.8, lift = 0.5, pad = Vector2.new(58, -14) } :: Spec,
+	FireTruck = { label = "Fire Truck", body = Vector3.new(7.6, 2.4, 20), color = Color3.fromRGB(215, 30, 30), wheel = 3, lift = 0.8, pad = Vector2.new(64, -14) } :: Spec,
 	MuscleCar = { label = "Panzer Tank", body = Vector3.new(11, 2.6, 23), color = Color3.fromRGB(90, 96, 80), wheel = 3, lift = 0.9, pad = Vector2.new(66, -60), look = "Panzer" } :: Spec,
 }
 
 -- 0.37.12: the game pass that unlocks each vehicle (the owner creates them on the dashboard and sends the ids).
 -- 0 = no pass yet: free to drive until the id is filled in.
 VehicleService.PASSES = { Car = 2092302232, Truck = 0, MuscleCar = 2093220108, Bike = 0, Bicycle = 0, Wheelchair = 0, Wheelchair2 = 0, Wheelchair3 = 0 } -- (24 Nov 2026, owner: they cost Robux again, the Ford is free (its pass: 2092632252); the bike the ragdoll rides stays free) -- (Silvia, Ford, Panzer; owner 22 Nov 2026) :: { [string]: number }
+for _, k in { "GoKart", "Police", "MonsterTruck", "Bulldozer", "FireTruck" } do
+	VehicleService.PASSES[k] = VehicleService.PASSES[k] or 0
+end
+-- (F76: a kind here with pass 0 is SOON: it stands in its bay and cannot be driven until the owner sends its pass id;
+-- never free by mistake. Suggested prices: go-kart 49, police car 99, monster truck 149, bulldozer 149, fire truck 199.)
+VehicleService.SOON = { GoKart = true, Police = true, MonsterTruck = true, Bulldozer = true, FireTruck = true } :: { [string]: boolean }
+-- The feature each kind has (VehicleAction): one button while you drive.
+VehicleService.FEATURE = { GoKart = "Boost", MonsterTruck = "Jump", Police = "Siren", FireTruck = "Spray", Bulldozer = "Blade" } :: { [string]: string }
 local MarketplaceService = game:GetService("MarketplaceService")
 -- (F76: only the bicycle and the dirt bike are free now. The Ford's pass 2092632252 is used when Roblox says it is for
 -- sale; else the Ford stays free as before and the owner is asked (NOW.md).)
@@ -99,7 +114,7 @@ end)
 function VehicleService.mayDrive(player: Player, kind: string): boolean
 	local id = VehicleService.PASSES[kind] or 0
 	if id <= 0 then
-		return true
+		return not VehicleService.SOON[kind] -- (F76: 0 = SOON for the new kinds, never free by mistake)
 	end
 	local mine = owned[player] or {}
 	owned[player] = mine
@@ -200,6 +215,118 @@ function VehicleService.wheelCorner(part: BasePart, body: BasePart): string?
 	return (if at.Z < 0 then "F" else "R") .. (if at.X < 0 then "L" else "R")
 end
 
+-- F76: the look of the 5 new vehicles (parts only, welded to the body; small ones not colliding, no shadow).
+local function decorate(kind: string, model: Model, body: BasePart, home: CFrame, spec: Spec)
+	local b = spec.body
+	local function deco(name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material?, shape: Enum.PartType?): Part
+		local p = piece(model, body, name, size, cf, color, material, shape)
+		p.CanCollide = false
+		p.CastShadow = false
+		p.Massless = true
+		return p
+	end
+	local top = home * CFrame.new(0, b.Y / 2, 0)
+	if kind == "GoKart" then
+		-- low and open: a seat back, a steering column, two exhaust pipes (the BOOST flames come out of them)
+		deco("SeatBack", Vector3.new(2, 2, 0.4), top * CFrame.new(0, 1, 1.4), DARK)
+		deco("Column", Vector3.new(0.3, 1.6, 0.3), top * CFrame.new(0, 0.7, -1.2) * CFrame.Angles(math.rad(-30), 0, 0), DARK)
+		for _, sx in { -1, 1 } do
+			local pipe = deco("Exhaust", Vector3.new(1.2, 0.45, 0.45), home * CFrame.new(sx * 0.9, 0.2, b.Z / 2 + 0.4) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(170, 170, 175), Enum.Material.Metal, Enum.PartType.Cylinder)
+			local fire = Instance.new("Fire")
+			fire.Name = "BoostFlame"
+			fire.Size = 3
+			fire.Heat = 6
+			fire.Enabled = false
+			fire.Parent = pipe
+		end
+		deco("Stripe", Vector3.new(0.6, 0.05, b.Z - 0.4), top * CFrame.new(0, 0.03, 0), Color3.fromRGB(20, 20, 24))
+	elseif kind == "Police" then
+		-- black doors and bonnet, a light bar on the roof (red and blue), POLICE on the sides
+		for _, sx in { -1, 1 } do
+			deco("Door", Vector3.new(0.12, b.Y * 0.8, b.Z * 0.42), home * CFrame.new(sx * (b.X / 2 + 0.05), 0, 0), Color3.fromRGB(20, 22, 28))
+			local plate = deco("Word", Vector3.new(0.1, 0.9, 4), home * CFrame.new(sx * (b.X / 2 + 0.12), 0.1, 0), Color3.fromRGB(20, 22, 28))
+			local g = Instance.new("SurfaceGui")
+			g.Face = if sx > 0 then Enum.NormalId.Right else Enum.NormalId.Left
+			g.CanvasSize = Vector2.new(400, 90)
+			local t = Instance.new("TextLabel")
+			t.BackgroundTransparency = 1
+			t.Size = UDim2.fromScale(1, 1)
+			t.Font = Enum.Font.FredokaOne
+			t.TextScaled = true
+			t.TextColor3 = Color3.new(1, 1, 1)
+			t.Text = "POLICE"
+			t.Parent = g
+			g.Parent = plate
+		end
+		local roofY = b.Y / 2 + 4.4 + 0.35
+		local bar = home * CFrame.new(0, roofY, b.Z * 0.08)
+		deco("LightBarBase", Vector3.new(4.2, 0.3, 1), bar, DARK)
+		deco("SirenRed", Vector3.new(1.8, 0.5, 0.9), bar * CFrame.new(-1, 0.35, 0), Color3.fromRGB(120, 20, 20), Enum.Material.Neon)
+		deco("SirenBlue", Vector3.new(1.8, 0.5, 0.9), bar * CFrame.new(1, 0.35, 0), Color3.fromRGB(20, 40, 120), Enum.Material.Neon)
+	elseif kind == "MonsterTruck" then
+		-- big struts down to the huge wheels, a roll bar, flames painted on the side
+		for _, sx in { -1, 1 } do
+			for _, sz in { -1, 1 } do
+				deco("Strut", Vector3.new(0.6, spec.lift + 0.8, 0.6), home * CFrame.new(sx * (b.X / 2 - 0.6), -b.Y / 2 - spec.lift / 2, sz * (b.Z / 2 - spec.wheel * 0.55)), DARK)
+			end
+			deco("Flame", Vector3.new(0.08, b.Y * 0.5, b.Z * 0.5), home * CFrame.new(sx * (b.X / 2 + 0.04), 0, -b.Z * 0.1), Color3.fromRGB(255, 140, 20), Enum.Material.Neon)
+		end
+	elseif kind == "Bulldozer" then
+		-- tracks along both sides, an exhaust stack, and the BLADE in front (a weld the server lifts and lowers)
+		for _, sx in { -1, 1 } do
+			deco("Track", Vector3.new(1.6, spec.wheel + 0.4, b.Z + 0.6), home * CFrame.new(sx * (b.X / 2 + 0.6), -b.Y / 2 - spec.lift + spec.wheel / 2, 0), Color3.fromRGB(30, 30, 32), Enum.Material.DiamondPlate)
+		end
+		deco("Stack", Vector3.new(0.5, 3, 0.5), top * CFrame.new(b.X * 0.3, 1.5, -b.Z * 0.3), DARK, Enum.Material.Metal)
+		local blade = Instance.new("Part")
+		blade.Name = "Blade"
+		blade.Size = Vector3.new(b.X + 2.4, 3.2, 0.6)
+		blade.Color = Color3.fromRGB(120, 110, 90)
+		blade.Material = Enum.Material.Metal
+		blade.CFrame = home * CFrame.new(0, -b.Y / 2 + 0.9, -b.Z / 2 - 1.6) * CFrame.Angles(math.rad(-10), 0, 0)
+		blade.CustomPhysicalProperties = PhysicalProperties.new(1, 0.3, 0.1, 1, 1)
+		blade.Parent = model
+		local w = Instance.new("Weld")
+		w.Name = "BladeWeld"
+		w.Part0 = body
+		w.Part1 = blade
+		w.C0 = body.CFrame:ToObjectSpace(blade.CFrame)
+		w.Parent = blade
+		w:SetAttribute("Down", true)
+		for _, sx in { -1, 1 } do
+			deco("BladeArm", Vector3.new(0.4, 0.4, 2.4), home * CFrame.new(sx * (b.X / 2 - 0.6), -b.Y / 2 + 1.2, -b.Z / 2 - 0.6), DARK)
+		end
+	elseif kind == "FireTruck" then
+		-- a ladder on the roof, chrome stripes, and the WATER CANNON on top at the front
+		local roofY = b.Y / 2 + 4.4 + 0.4
+		for _, sx in { -1, 1 } do
+			deco("LadderRail", Vector3.new(0.25, 0.25, b.Z * 0.7), home * CFrame.new(sx * 0.9, roofY, b.Z * 0.12), Color3.fromRGB(200, 200, 205), Enum.Material.Metal)
+			deco("Stripe", Vector3.new(0.08, 0.4, b.Z - 1), home * CFrame.new(sx * (b.X / 2 + 0.04), -0.2, 0), Color3.fromRGB(235, 235, 240), Enum.Material.Metal)
+		end
+		for k = 0, 8 do
+			deco("LadderRung", Vector3.new(1.8, 0.15, 0.15), home * CFrame.new(0, roofY, b.Z * 0.12 - b.Z * 0.33 + k * b.Z * 0.0825), Color3.fromRGB(200, 200, 205), Enum.Material.Metal)
+		end
+		local cannon = deco("WaterCannon", Vector3.new(2.4, 0.6, 0.6), home * CFrame.new(0, roofY + 0.5, -b.Z * 0.28) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(200, 200, 205), Enum.Material.Metal, Enum.PartType.Cylinder)
+		local att = Instance.new("Attachment")
+		att.Name = "Nozzle"
+		att.Position = Vector3.new(1.3, 0, 0)
+		att.Parent = cannon
+		local jet = Instance.new("ParticleEmitter")
+		jet.Name = "WaterJet"
+		jet.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		jet.Color = ColorSequence.new(Color3.fromRGB(150, 200, 255))
+		jet.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 1.6) })
+		jet.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 0.9) })
+		jet.Speed = NumberRange.new(60, 75)
+		jet.Lifetime = NumberRange.new(0.45, 0.6)
+		jet.Rate = 160
+		jet.SpreadAngle = Vector2.new(4, 4)
+		jet.Acceleration = Vector3.new(0, -60, 0)
+		jet.EmissionDirection = Enum.NormalId.Right
+		jet.Enabled = false
+		jet.Parent = att
+	end
+end
+
 local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	local spec = VehicleService.SPECS[kind]
 	local model = Instance.new("Model")
@@ -253,6 +380,7 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 			end
 		end
 	end
+	decorate(kind, model, body, home, spec)
 	local seat = Instance.new("VehicleSeat")
 	seat.Name = "Seat"
 	seat.Size = Vector3.new(2, 1, 2)
@@ -279,7 +407,9 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 		-- (0.37.12: locked behind its game pass: Roblox's own buy window instead of the seat.)
 		if not VehicleService.mayDrive(player, kind) then
-			MarketplaceService:PromptGamePassPurchase(player, VehicleService.PASSES[kind])
+			if (VehicleService.PASSES[kind] or 0) > 0 then
+				MarketplaceService:PromptGamePassPurchase(player, VehicleService.PASSES[kind])
+			end
 			return
 		end
 		if humanoid and humanoid.Health > 0 and not seat.Occupant and humanoid.SeatPart == nil then
@@ -297,7 +427,9 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 				sw:Destroy()
 			end
 			h.Sit = false
-			MarketplaceService:PromptGamePassPurchase(p, VehicleService.PASSES[kind])
+			if (VehicleService.PASSES[kind] or 0) > 0 then
+				MarketplaceService:PromptGamePassPurchase(p, VehicleService.PASSES[kind])
+			end
 		end
 	end)
 	-- v3: a real car model over the driving box when the place has one (V3Assets "Car" /
@@ -623,7 +755,7 @@ function VehicleService.build(into: Folder, origin: Vector3)
 	holder.Name = "Vehicles"
 	holder.Parent = into
 	local kinds: { Kind } = { "Car", "Truck" }
-	for _, extra in { "Kart", "Jeep", "MuscleCar", "Bike", "Bicycle", "Wheelchair", "Wheelchair2", "Wheelchair3" } do
+	for _, extra in { "Kart", "Jeep", "MuscleCar", "Bike", "Bicycle", "Wheelchair", "Wheelchair2", "Wheelchair3", "GoKart", "Police", "MonsterTruck", "Bulldozer", "FireTruck" } do
 		if (Config.VEHICLES :: any)[extra] and VehicleService.SPECS[extra] then
 			table.insert(kinds, extra)
 		end
@@ -675,6 +807,122 @@ function VehicleService.start()
 	-- v4 C2: the horn (H, or the HORN button): only from the driver's seat, at most once per HORN_GAP.
 	local Net = require(ReplicatedStorage.Shared.Net)
 	local lastHorn: { [Player]: number } = {}
+	-- F76 (Config.NEW_VEHICLES): the feature button. Checked: the player sits in a lab vehicle whose kind has that
+	-- feature (VehicleService.FEATURE), at most one action every 0.35 s. Boost and Jump move the car on the driver's own
+	-- screen (it owns the car); the server shows the flames for everyone. Siren, Spray and Blade are done here.
+	local lastAction: { [Player]: number } = {}
+	local sirenOn: { [Model]: boolean } = {}
+	Net.event(Net.Names.VehicleAction).OnServerEvent:Connect(function(player: Player, action: unknown)
+		if typeof(action) ~= "string" then
+			return
+		end
+		local now = os.clock()
+		if now - (lastAction[player] or -math.huge) < 0.35 then
+			return
+		end
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local seat = humanoid and humanoid.SeatPart
+		local kind = seat and seat:GetAttribute("LabCar")
+		if not (seat and seat:IsA("VehicleSeat") and type(kind) == "string" and VehicleService.FEATURE[kind] == action) then
+			return
+		end
+		lastAction[player] = now
+		local car = seat.Parent :: Model
+		local body = car:FindFirstChild("Body") :: BasePart?
+		if not body then
+			return
+		end
+		if action == "Boost" then
+			for _, f in car:GetDescendants() do
+				if f:IsA("Fire") and f.Name == "BoostFlame" then
+					f.Enabled = true
+					task.delay(1.2, function()
+						f.Enabled = false
+					end)
+				end
+			end
+		elseif action == "Siren" then
+			sirenOn[car] = not sirenOn[car]
+			local snd = body:FindFirstChild("Siren") :: Sound?
+			if not snd then
+				local s = Instance.new("Sound")
+				s.Name = "Siren"
+				s.SoundId = "rbxassetid://103787335792735" -- (Creator Store "main hi lo", a hi-lo police siren loop)
+				s.Looped = true
+				s.Volume = 0.45
+				s.RollOffMaxDistance = 160
+				s.Parent = body
+				snd = s
+			end
+			if sirenOn[car] then
+				(snd :: Sound):Play()
+				task.spawn(function()
+					local red, blue = car:FindFirstChild("SirenRed", true), car:FindFirstChild("SirenBlue", true)
+					local flip = false
+					while sirenOn[car] and car.Parent and seat.Occupant do
+						flip = not flip
+						if red and red:IsA("BasePart") then
+							red.Color = if flip then Color3.fromRGB(255, 40, 40) else Color3.fromRGB(110, 20, 20)
+						end
+						if blue and blue:IsA("BasePart") then
+							blue.Color = if flip then Color3.fromRGB(20, 40, 110) else Color3.fromRGB(60, 120, 255)
+						end
+						-- ragdolls within 40 studs put their hands up (the hands-up mood, 2 s at a time)
+						local dummies = Workspace:FindFirstChild("Dummies")
+						if dummies and flip then
+							for _, m in dummies:GetChildren() do
+								local pe = m:FindFirstChild("LowerTorso")
+								if pe and pe:IsA("BasePart") and (pe.Position - body.Position).Magnitude < 40 and m:GetAttribute("Mood") == nil then
+									m:SetAttribute("HandsUpUntil", Workspace:GetServerTimeNow() + 2)
+								end
+							end
+						end
+						task.wait(0.35)
+					end
+					sirenOn[car] = nil
+					if snd then
+						snd:Stop()
+					end
+				end)
+			else
+				(snd :: Sound):Stop()
+			end
+		elseif action == "Spray" then
+			local jet = car:FindFirstChild("WaterJet", true)
+			local cannon = car:FindFirstChild("WaterCannon", true)
+			if jet and jet:IsA("ParticleEmitter") and cannon and cannon:IsA("BasePart") then
+				jet.Enabled = true
+				task.delay(1, function()
+					jet.Enabled = false
+				end)
+				-- a cone 36 studs ahead of the truck: every ragdoll in it is pushed over (a water shove, no harm) and wet
+				local from = cannon.Position
+				local dir = body.CFrame.LookVector
+				local DC = require(script.Parent:WaitForChild("DummyControl")) :: any
+				local dummies = Workspace:FindFirstChild("Dummies")
+				for _, m in (if dummies then dummies:GetChildren() else {}) do
+					local pe = m:FindFirstChild("UpperTorso")
+					if m:IsA("Model") and pe and pe:IsA("BasePart") then
+						local to = pe.Position - from
+						local d = to.Magnitude
+						if d < 36 and d > 0.5 and to.Unit:Dot(dir) > 0.86 then
+							pcall(DC.push, m, dir * (48 - d * 0.6) + Vector3.new(0, 12, 0), player)
+							m:SetAttribute("WetUntil", Workspace:GetServerTimeNow() + 20)
+						end
+					end
+				end
+			end
+		elseif action == "Blade" then
+			local blade = car:FindFirstChild("Blade")
+			local w = blade and blade:FindFirstChild("BladeWeld")
+			if w and w:IsA("Weld") then
+				local down = w:GetAttribute("Down") == true
+				w.C0 = w.C0 * CFrame.new(0, if down then 1.6 else -1.6, 0)
+				w:SetAttribute("Down", not down)
+			end
+		end
+	end)
 	Net.event(Net.Names.VehicleHorn).OnServerEvent:Connect(function(player: Player)
 		local now = os.clock()
 		if now - (lastHorn[player] or -math.huge) < VehicleService.HORN_GAP then
