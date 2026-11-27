@@ -71,7 +71,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
 21. **BUILD OF THE WEEK** wall: 3-5 owner-picked share codes; a tap loads a copy.
 
 ## PHONE UI (with T1 / PHASE 7)
-22. **MORE on a phone:**
+22. **PART DONE v1342:** on a phone MORE no longer shows RANK & EGGS (REWARDS holds them there) or FAVORITE. LEFT: a real two-tab REWARDS merge, a home icon for BACK TO SPAWN (none drawn yet). **MORE on a phone:**
     - merge RANK & EGGS into REWARDS (two tabs; they repeat each other);
     - FAVORITE out of phone MORE;
     - BACK TO SPAWN gets a home icon;

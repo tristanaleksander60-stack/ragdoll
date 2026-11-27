@@ -26,14 +26,14 @@ local ENTRIES: { any } = {
 	-- to build; it is back, and a phone's BUILD button now lives here.)
 	{ window = "Sandbox", text = "LAB", role = "go", phoneOnly = true }, -- (V9-2c: the LAB window (TIME, first person, REVIVE, RESET, BUILD); HudMenu.onSandbox without it)
 	{ window = "Rewards", text = "REWARDS", role = "go", phoneOnly = true }, -- (round 5; off a phone: its own launcher)
-	{ window = "Eggs", text = "RANK & EGGS", role = "go" },
+	{ window = "Eggs", text = "RANK & EGGS", role = "go", notPhone = true }, -- (AUDIT 22: a phone's REWARDS has them; MORE keeps 6-7 entries)
 	-- (23 Nov 2026, owner: no missions anywhere.) { window = "Experiments", text = "MISSIONS", role = "go" }, -- (phase 1: a pad reaches the card's window here; owner 21 Nov 2026: everyone, to show hidden missions again)
 	{ window = "Friends", text = "FRIENDS", role = "info" },
 	{ window = "Creator", text = "CLIPS & LIVE", role = "info", notPhone = true }, -- (21 Nov 2026: streaming tools are a computer's; a phone clips from the replay's CLIP IT. Its row went to GOD MODE.)
 	-- (V8-0.9: also wherever the launcher column is hidden, i.e. under HudV3 on PC, tablet and console:
 	-- there SETTINGS had no way in at all.)
 	{ window = "Settings", text = "SETTINGS", role = "neutral", phoneOnly = true, columnToo = true },
-	{ window = "Like", text = "\u{2B50} FAVORITE", role = "go" }, -- (round 4: LikePrompt)
+	{ window = "Like", text = "\u{2B50} FAVORITE", role = "go", notPhone = true }, -- (round 4: LikePrompt; AUDIT 22: out of a phone's MORE)
 	{ window = "Codes", text = "CODES", role = "go", notPhone = true }, -- (V9-0t: codes from the game page: CodesWindow. A phone's MENU is full, LayoutCheck: there it is SHOP's "HAVE A CODE?")
 	{ window = "Controls", text = "KEYS", role = "neutral", keyboardOnly = true },
 }
