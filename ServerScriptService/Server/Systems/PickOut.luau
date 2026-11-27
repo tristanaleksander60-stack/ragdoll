@@ -59,6 +59,66 @@ local function helperFor(patient: Model, at: Vector3): Model?
 	return best
 end
 
+-- (F47 part 2) The props: tweezers in the doer's right hand, a spent bullet that drops from the wound with each pick,
+-- and a plaster on the patient's chest at the end (it goes after PLASTER_FOR s). Pure looks: no collision, no query.
+PickOut.PLASTER_FOR = 25
+local function prop(name: string, size: Vector3, colour: Color3, material: Enum.Material): Part
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = size
+	p.Color = colour
+	p.Material = material
+	p.CanCollide, p.CanQuery, p.CanTouch, p.Massless, p.CastShadow = false, false, false, true, false
+	return p
+end
+local function weldTo(p: BasePart, to: BasePart, at: CFrame)
+	p.CFrame = to.CFrame * at
+	local w = Instance.new("WeldConstraint")
+	w.Part0, w.Part1 = to, p
+	w.Parent = p
+	p.Parent = to
+end
+local function tweezers(doer: Model): Instance?
+	local hand = doer:FindFirstChild("RightHand")
+	if not (hand and hand:IsA("BasePart")) then
+		return nil
+	end
+	local t = prop("PickTweezers", Vector3.new(0.08, 0.08, 0.9), Color3.fromRGB(200, 205, 215), Enum.Material.Metal)
+	weldTo(t, hand, CFrame.new(0, -hand.Size.Y * 0.5, -0.35))
+	return t
+end
+local function dropBullet(patient: Model)
+	local chest = patient:FindFirstChild("UpperTorso")
+	if not (chest and chest:IsA("BasePart")) then
+		return
+	end
+	local b = prop("PickedBullet", Vector3.new(0.18, 0.18, 0.32), Color3.fromRGB(205, 160, 70), Enum.Material.Metal)
+	b.CanCollide = true -- (it lands and rolls; the ragdolls ignore it: it is tiny and massless)
+	b.Massless = false
+	b.CFrame = chest.CFrame * CFrame.new(math.random(-5, 5) / 10, 0, -chest.Size.Z * 0.6)
+	b.Parent = Workspace
+	b.AssemblyLinearVelocity = chest.CFrame.LookVector * 4 + Vector3.new(0, 3, 0)
+	game:GetService("Debris"):AddItem(b, 6)
+end
+local function plaster(patient: Model)
+	local chest = patient:FindFirstChild("UpperTorso")
+	if not (chest and chest:IsA("BasePart")) or chest:FindFirstChild("PickPlaster") then
+		return
+	end
+	local p = prop("PickPlaster", Vector3.new(0.7, 0.3, 0.05), Color3.fromRGB(235, 200, 160), Enum.Material.Fabric)
+	weldTo(p, chest, CFrame.new(chest.Size.X * 0.18, chest.Size.Y * 0.1, -chest.Size.Z * 0.5 - 0.02) * CFrame.Angles(0, 0, math.rad(20)))
+	game:GetService("Debris"):AddItem(p, PickOut.PLASTER_FOR)
+end
+local function mood(m: Model, name: string?, only: string?)
+	if name == nil then
+		if m:GetAttribute("Mood") == only then
+			m:SetAttribute("Mood", nil)
+		end
+	elseif m:GetAttribute("Mood") == nil then
+		m:SetAttribute("Mood", name)
+	end
+end
+
 local function pickOut(patient: Model)
 	if busy[patient] then
 		return
@@ -94,12 +154,21 @@ local function pickOut(patient: Model)
 	end
 	if up(doer) and patient.Parent then
 		say(doer, PickOut.START[math.random(1, #PickOut.START)])
+		-- (F47 part 2: the helper kneels by the patient with tweezers; the patient stands still; alone, it sits down)
+		local tw = tweezers(doer)
+		if helper then
+			mood(helper, "Check")
+			mood(patient, "PatientStill")
+		else
+			mood(patient, "Sit")
+		end
 		for _ = 1, PickOut.MAX do
 			if not (up(doer) and patient.Parent) or patient:GetAttribute("Vital") == "Dead" then
 				break
 			end
 			task.wait(PickOut.STEP)
 			local left = VS.pickOneOut(patient)
+			dropBullet(patient)
 			pcall(function()
 				local p = patient:FindFirstChild("UpperTorso")
 				if p and p:IsA("BasePart") then
@@ -111,6 +180,14 @@ local function pickOut(patient: Model)
 			end
 		end
 		say(doer, PickOut.DONE[math.random(1, #PickOut.DONE)])
+		plaster(patient)
+		if tw then
+			tw:Destroy()
+		end
+		mood(patient, nil, if helper then "PatientStill" else "Sit")
+		if helper then
+			mood(helper, nil, "Check")
+		end
 	end
 	if helper then
 		if helper.Parent and helper:GetAttribute("Watch") == "Aid" then
