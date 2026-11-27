@@ -733,6 +733,32 @@ BUILD.Plant = function(f, at, m)
 			task.spawn(hold, model, function()
 				return head * CFrame.new(0, -1, 0)
 			end, 3)
+			if (Config :: any).PLANT_10 then
+				-- 3.15 PLANT (Config.PLANT_10): a cartoon munch: yellow stars spin out of its jaws while it chews, "MUNCH!"
+				local starAt = Instance.new("Part")
+				starAt.Anchored, starAt.CanCollide, starAt.CanQuery, starAt.CanTouch, starAt.Transparency = true, false, false, false, 1
+				starAt.Size = Vector3.one * 0.2
+				starAt.CFrame = head
+				starAt.Parent = f
+				local st = Instance.new("ParticleEmitter")
+				st.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+				st.Color = ColorSequence.new(Color3.fromRGB(255, 225, 70))
+				st.LightEmission = 0.6
+				st.Size = NumberSequence.new(0.8, 0.3)
+				st.Speed = NumberRange.new(5, 9)
+				st.SpreadAngle = Vector2.new(70, 70)
+				st.RotSpeed = NumberRange.new(-200, 200)
+				st.Lifetime = NumberRange.new(0.6, 1)
+				st.Rate = 14
+				st.Parent = starAt
+				game:GetService("Debris"):AddItem(starAt, 2.2)
+				task.delay(1.9, function()
+					st.Enabled = false
+				end)
+				pcall(function()
+					lazy("Playground").pop(head.Position + Vector3.new(0, 4, 0), "MUNCH!", Color3.fromRGB(170, 230, 90))
+				end)
+			end
 			-- Back up and chew, juice and blood dripping.
 			play(0.3, function(t)
 				setJaws(down:Lerp(head, t), 0)
