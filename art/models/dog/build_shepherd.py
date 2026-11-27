@@ -31,92 +31,110 @@ def e(a, b):
     E.append((a, b))
 
 
-# body (sturdy: a deep chest, a strong neck, a big head; legs shorter than the body is long)
-v("hips", 0, 1.95, 1.25, 0.6, 0.65)
-v("belly", 0, 1.85, 0.05, 0.58, 0.62)
-v("chest", 0, 1.9, -1.1, 0.72, 0.85)
-v("withers", 0, 2.25, -1.5, 0.55, 0.58)
-v("neck", 0, 2.75, -1.95, 0.42, 0.44)
-v("head", 0, 3.15, -2.3, 0.5, 0.5)
-v("snout", 0, 2.95, -2.95, 0.25, 0.26)
-v("nose", 0, 2.93, -3.25, 0.14, 0.14)
-v("jaw", 0, 2.72, -2.85, 0.17, 0.14)
-for a, b in (("hips", "belly"), ("belly", "chest"), ("chest", "withers"), ("withers", "neck"), ("neck", "head"), ("head", "snout"), ("snout", "nose"), ("head", "jaw")):
+# body (a real dog: a DEEP chest, a TUCKED waist, a strong neck, a big wedge head with a long muzzle, thick legs, round paws)
+v("hips", 0, 2.05, 1.25, 0.6, 0.6)
+v("loin", 0, 2.1, 0.55, 0.48, 0.45)   # the tucked waist (high and slim)
+v("belly", 0, 2.05, -0.1, 0.55, 0.62)
+v("chest", 0, 2.0, -0.95, 0.72, 0.72)
+v("brisket", 0, 1.55, -1.05, 0.5, 0.5)   # the deep chest, down between the front legs
+v("withers", 0, 2.35, -1.45, 0.55, 0.62)
+v("neck", 0, 2.8, -1.85, 0.5, 0.5)
+v("head", 0, 3.25, -2.25, 0.5, 0.52)
+v("cheek", 0, 3.05, -2.62, 0.38, 0.36)
+v("snout", 0, 2.95, -3.0, 0.24, 0.26)
+v("nose", 0, 2.98, -3.36, 0.17, 0.15)
+v("jaw", 0, 2.72, -2.9, 0.17, 0.12)
+for a, b in (("hips", "loin"), ("loin", "belly"), ("belly", "chest"), ("chest", "brisket"), ("chest", "withers"), ("withers", "neck"), ("neck", "head"), ("head", "cheek"), ("cheek", "snout"), ("snout", "nose"), ("cheek", "jaw")):
     e(a, b)
 for side, s in (("L", -1), ("R", 1)):
-    v("ear0" + side, 0.28 * s, 3.6, -2.2, 0.17, 0.1)
-    v("ear1" + side, 0.36 * s, 4.1, -2.12, 0.05, 0.04)
+    v("ear0" + side, 0.3 * s, 3.55, -2.15, 0.22, 0.22)
+    v("earm" + side, 0.36 * s, 3.95, -2.1, 0.15, 0.15)
+    v("ear1" + side, 0.42 * s, 4.4, -2.04, 0.09, 0.09)
     e("head", "ear0" + side)
-    e("ear0" + side, "ear1" + side)
-    # front leg
-    v("fs" + side, 0.42 * s, 1.65, -1.25, 0.3)
-    v("fe" + side, 0.44 * s, 1.0, -1.2, 0.21)
-    v("fw" + side, 0.44 * s, 0.4, -1.25, 0.15)
-    v("fp" + side, 0.44 * s, 0.13, -1.45, 0.18, 0.11)
-    for a, b in (("chest", "fs"), ("fs", "fe"), ("fe", "fw"), ("fw", "fp")):
-        e(a if a == "chest" else a + side, b + side)
-    # rear leg: the shepherd's angled hind leg (the stifle forward, the hock back)
-    v("rh" + side, 0.42 * s, 1.7, 1.2, 0.36)
-    v("rk" + side, 0.44 * s, 1.1, 1.05, 0.25)
-    v("rk2" + side, 0.44 * s, 0.55, 1.75, 0.16)
-    v("rp" + side, 0.44 * s, 0.13, 1.6, 0.18, 0.11)
+    e("ear0" + side, "earm" + side)
+    e("earm" + side, "ear1" + side)
+    # front leg: thick, straight, a round paw
+    v("fs" + side, 0.4 * s, 1.85, -1.3, 0.4)
+    v("fe" + side, 0.44 * s, 1.05, -1.25, 0.3)
+    v("fw" + side, 0.44 * s, 0.45, -1.25, 0.25)
+    v("fp" + side, 0.44 * s, 0.17, -1.45, 0.3, 0.2)
+    for a, b in (("withers", "fs"), ("fs", "fe"), ("fe", "fw"), ("fw", "fp")):
+        e(a if a == "withers" else a + side, b + side)
+    # rear leg: a thick thigh, the stifle forward, the hock back, a round paw
+    v("rh" + side, 0.42 * s, 1.8, 1.25, 0.5)
+    v("rk" + side, 0.44 * s, 1.1, 1.05, 0.34)
+    v("rk2" + side, 0.44 * s, 0.55, 1.6, 0.25)
+    v("rp" + side, 0.44 * s, 0.17, 1.42, 0.3, 0.2)
     for a, b in (("hips", "rh"), ("rh", "rk"), ("rk", "rk2"), ("rk2", "rp")):
         e(a if a == "hips" else a + side, b + side)
-v("t1", 0, 2.1, 1.85, 0.17)
-v("t2", 0, 1.75, 2.5, 0.15)
-v("t3", 0, 1.3, 2.95, 0.09)
+v("t1", 0, 2.15, 1.85, 0.19)
+v("t2", 0, 1.8, 2.5, 0.17)
+v("t3", 0, 1.35, 2.95, 0.11)
 for a, b in (("hips", "t1"), ("t1", "t2"), ("t2", "t3")):
     e(a, b)
 
+# ---- the body: ONE smooth signed-distance shape (the LihFolk creature tool: smooth-union round cones along the
+# skeleton's edges + ellipsoids for the deep chest, the haunch and the head), meshed by surface nets, a voxel remesh
+# and QuadriFlow, exactly X-symmetric. (The Skin modifier gave a balloon look with flat patches; rejected.)
+sys.path.append("C:/Users/tristan/LihFolk-Vault-V2/skills/roblox-blender-modeling/scripts")
+import lihfolk_creature as lcr
+
 bpy.ops.wm.read_factory_settings(use_empty=True)
-names = list(V.keys())
-idx = {n: i for i, n in enumerate(names)}
-me = bpy.data.meshes.new("Shepherd")
-me.from_pydata([V[n][0] for n in names], [(idx[a], idx[b]) for a, b in E], [])
-me.update()
-body = bpy.data.objects.new("Shepherd", me)
-bpy.context.scene.collection.objects.link(body)
-sk = body.modifiers.new("Skin", "SKIN")
-sk.use_smooth_shade = True
-sk.branch_smoothing = 0.8
-sv = me.skin_vertices[0].data
-for n in names:
-    sv[idx[n]].radius = (V[n][1], V[n][2])
-sv[idx["belly"]].use_root = True
-sub = body.modifiers.new("Sub", "SUBSURF")
-sub.levels = 2
+parts = []
+for i, (a_, b_) in enumerate(E):
+    pa, pb = V[a_][0], V[b_][0]
+    if pa.x < -1e-4 or pb.x < -1e-4:
+        continue  # the left side is the field's own mirror
+    ra, rb = (V[a_][1] + V[a_][2]) / 2, (V[b_][1] + V[b_][2]) / 2
+    ear = a_.startswith("ear") or b_.startswith("ear")
+    parts.append({"name": "e%d" % i, "type": "cone", "a": list(pa), "b": list(pb), "r": [ra, rb], "k": 0.05 if ear else 0.16})
+
+
+def ell(name, c, r, k=0.25):
+    parts.append({"name": name, "type": "ellipsoid", "c": list(B(*c)), "r": [r[0], r[2], r[1]], "k": k})
+
+
+ell("ribcage", (0, 1.95, -0.85), (0.62, 0.78, 1.05))  # the deep chest (down to the elbows)
+ell("haunch", (0.28, 1.85, 1.15), (0.36, 0.55, 0.6))  # the thick rear thighs
+ell("shoulderblade", (0.3, 2.0, -1.25), (0.3, 0.5, 0.45))
+ell("skull", (0, 3.25, -2.3), (0.46, 0.44, 0.5), 0.2)
+ell("nosetip", (0, 2.99, -3.36), (0.13, 0.11, 0.1), 0.06)
+spec = lcr._merge({"name": "Shepherd", "tris": 9000, "grid": 0.035, "relax": 2, "parts": parts})
+field = lcr.Field(spec)
+body = lcr.build_body(spec, field)
+body.name = "Shepherd"
+me = body.data
+me.name = "Shepherd"
 bpy.context.view_layer.objects.active = body
 body.select_set(True)
-bpy.ops.object.modifier_apply(modifier="Skin")
-bpy.ops.object.modifier_apply(modifier="Sub")
-sm = body.modifiers.new("Smooth", "SMOOTH")
-sm.factor = 0.5
-sm.iterations = 4
-bpy.ops.object.modifier_apply(modifier="Smooth")
-tris = sum(len(p.vertices) - 2 for p in me.polygons)
-if tris > 9500:
-    d = body.modifiers.new("Dec", "DECIMATE")
-    d.ratio = 9500 / tris
-    bpy.ops.object.modifier_apply(modifier="Dec")
 bpy.ops.object.shade_smooth()
 
 # colours: tan, the black saddle over the back, a black muzzle, dark ears, a lighter chest and legs' inside
 col = me.color_attributes.new("Col", "BYTE_COLOR", "CORNER")
+NOSE = (0.02, 0.02, 0.02, 1.0)
+
+
+def ss(e0, e1, x):  # a soft edge (smoothstep), so the colour borders are clean curves, not stair steps
+    t = max(0.0, min(1.0, (x - e0) / (e1 - e0)))
+    return t * t * (3 - 2 * t)
+
+
+def mix(c1, c2, t):
+    return tuple(c1[i] * (1 - t) + c2[i] * t for i in range(4))
+
+
 for poly in me.polygons:
     for li in poly.loop_indices:
         p = me.vertices[me.loops[li].vertex_index].co
         x, y, z = p.x, p.z, -p.y  # Roblox coords
         c = TAN
-        if y > 2.05 and -1.7 < z < 1.95:
-            c = DARK  # the saddle
-        if z < -2.65 and y > 2.7:
-            c = DARK  # the muzzle
-        if y > 3.45:
-            c = DARK  # the ears
-        if y < 1.75 and -1.6 < z < -0.7 and abs(x) < 0.35:
-            c = CREAM  # the chest
-        if z > 2.45 and y < 1.75:
-            c = DARK  # the tail tip
+        c = mix(c, CREAM, ss(1.75, 1.35, y) * ss(-0.4, -0.8, z) * ss(0.5, 0.3, abs(x)))  # the chest
+        saddle = ss(2.05, 2.3, y + 0.12 * math.sin(z * 4.0)) * ss(-1.75, -1.5, z) * ss(2.05, 1.8, z)
+        c = mix(c, DARK, saddle)  # the saddle (a wavy lower edge)
+        c = mix(c, DARK, ss(-2.85, -3.05, z) * ss(2.6, 2.75, y))  # the dark muzzle
+        c = mix(c, NOSE, ss(-3.24, -3.28, z) * ss(2.85, 2.9, y))  # the black nose
+        c = mix(c, DARK, ss(3.55, 3.75, y))  # the ears
+        c = mix(c, DARK, ss(2.4, 2.6, z) * ss(1.85, 1.65, y))  # the tail tip
         col.data[li].color = c
 
 # rig
@@ -137,12 +155,12 @@ def bone(n, a, b, parent=None, deform=True):
 
 
 bone("Root", (0, 0, 0), (0, 0.5, 0), deform=False)
-bone("Spine", "hips", "belly", "Root")
-bone("Chest", "belly", "withers", "Spine")
+bone("Spine", "hips", "loin", "Root")
+bone("Chest", "loin", "withers", "Spine")
 bone("Neck", "withers", "neck", "Chest")
 bone("Head", "neck", "head", "Neck")
-bone("Muzzle", "head", "nose", "Head")
-bone("Jaw", "head", "jaw", "Head")
+bone("Muzzle", "cheek", "nose", "Head")
+bone("Jaw", "cheek", "jaw", "Head")
 for side in ("L", "R"):
     bone("Ear" + side, "ear0" + side, "ear1" + side, "Head")
     bone("FrontUpper" + side, "fs" + side, "fe" + side, "Chest")
@@ -171,7 +189,35 @@ bpy.ops.object.mode_set(mode="EDIT")
 bpy.ops.mesh.select_all(action="SELECT")
 bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.006)
 bpy.ops.object.mode_set(mode="OBJECT")
-img = bpy.data.images.new("shepherd_color", 1024, 1024)
+import bmesh
+bm = bmesh.new()
+bm.from_mesh(me)
+uvl = bm.loops.layers.uv.active
+for f in bm.faces:
+    for l in f.loops:
+        l[uvl].uv.x *= 0.8
+EYES = []
+for k, sx in enumerate((-1, 1)):
+    c = Vector((0.36 * sx, 3.35, -2.5))
+    n = Vector((0.85 * sx, 0.15, -0.5)).normalized()
+    u = Vector((0, 1, 0)).cross(n).normalized()
+    w = n.cross(u).normalized()
+    Rr = 0.2
+    u0, v0, size = 0.82, 0.8 - k * 0.2, 0.16
+    EYES.append({"u0": u0, "v0": v0, "size": size})
+    for f in bm.faces:
+        fc = f.calc_center_median()
+        fc = Vector((fc.x, fc.z, -fc.y))
+        fn = Vector((f.normal.x, f.normal.z, -f.normal.y))
+        if (fc - c).length < Rr * 1.1 and fn.dot(n) > 0.3:
+            for l in f.loops:
+                q = Vector((l.vert.co.x, l.vert.co.z, -l.vert.co.y)) - c
+                a2, b2 = q.dot(u) / (2 * Rr) + 0.5, q.dot(w) / (2 * Rr) + 0.5
+                l[uvl].uv = (u0 + max(0, min(1, a2)) * size, v0 + max(0, min(1, b2)) * size)
+bm.to_mesh(me)
+bm.free()
+json.dump(EYES, open(os.path.join(HERE, "shepherd_eyes.json"), "w"))
+img = bpy.data.images.new("shepherd_color", 2048, 2048)
 mat = bpy.data.materials.new("Bake")
 mat.use_nodes = True
 nt = mat.node_tree
@@ -205,7 +251,7 @@ bpy.context.view_layer.objects.active = body
 baked = True
 try:
     bpy.ops.object.bake(type="EMIT", margin=6)
-    img.filepath_raw = os.path.join(HERE, "shepherd_color.png")
+    img.filepath_raw = os.path.join(HERE, "shepherd_base.png")
     img.file_format = "PNG"
     img.save()
 except Exception as ex:
@@ -228,37 +274,3 @@ stats = {"tris": tris, "bones": len(arm.bones), "baked": baked, "size_studs": [r
 json.dump(stats, open(os.path.join(HERE, "shepherd_stats.json"), "w"), indent=1)
 print("SHEPHERD", json.dumps(stats))
 
-# review renders (the baked colours on a plain material)
-try:
-    rm = bpy.data.materials.new("Review")
-    rm.use_nodes = True
-    bsdf = rm.node_tree.nodes.get("Principled BSDF")
-    t2 = rm.node_tree.nodes.new("ShaderNodeTexImage")
-    t2.image = img
-    rm.node_tree.links.new(t2.outputs["Color"], bsdf.inputs["Base Color"])
-    bsdf.inputs["Roughness"].default_value = 0.7
-    me.materials.clear()
-    me.materials.append(rm)
-    w = bpy.data.worlds.new("W")
-    sc.world = w
-    w.use_nodes = True
-    w.node_tree.nodes["Background"].inputs["Color"].default_value = (0.8, 0.82, 0.85, 1)
-    bpy.ops.object.light_add(type="SUN", location=(3, -4, 6))
-    bpy.context.active_object.data.energy = 3
-    cd = bpy.data.cameras.new("C")
-    cam = bpy.data.objects.new("C", cd)
-    sc.collection.objects.link(cam)
-    sc.camera = cam
-    sc.render.resolution_x = sc.render.resolution_y = 640
-    sc.cycles.samples = 24
-    rd = os.path.join(HERE, "review")
-    os.makedirs(rd, exist_ok=True)
-    for nm, ang in (("side", 90), ("three_quarter", 140), ("front", 180)):
-        a = math.radians(ang)
-        cam.location = Vector((9 * math.sin(a), 9 * math.cos(a), 2.2))
-        d = Vector((0, 0, 1.8)) - cam.location
-        cam.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
-        sc.render.filepath = os.path.join(rd, nm + ".png")
-        bpy.ops.render.render(write_still=True)
-except Exception as ex:
-    print("review failed", ex)
