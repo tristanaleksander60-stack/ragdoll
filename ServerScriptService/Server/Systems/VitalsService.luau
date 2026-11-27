@@ -1148,8 +1148,20 @@ local function tick(dt: number)
 			vitals[model] = nil
 			continue
 		end
+		-- (LAG-FREE 2 item 8: a dead body that sleeps is tended once a second, not 4 times, with the time it missed;
+		-- its timed revive (20-30 s) still comes, a second late at most)
+		local step = dt
+		if v.state == "Dead" and model:GetAttribute("Asleep") == true then
+			local vr: any = v
+			vr.slept = (vr.slept or 0) + dt
+			if vr.slept < 1 then
+				continue
+			end
+			step = vr.slept
+			vr.slept = 0
+		end
 		-- (One body's error never stops the others: it is logged once and the loop goes on.)
-		local ok, err = pcall(tend, model, v, dt, now)
+		local ok, err = pcall(tend, model, v, step, now)
 		if not ok then
 			local key = tostring(err)
 			if not warned[key] then
