@@ -105,6 +105,15 @@ function QualityGovernor.start()
 		while true do
 			frames = 0
 			task.wait(1)
+			-- (row 8: the Settings choice: LOW holds level 0, HIGH holds the device's top; AUTO steps by the frame rate)
+			local choice = player:GetAttribute("QualityChoice")
+			if choice == "Low" or choice == "High" then
+				local want = if choice == "Low" then 0 else top
+				if level ~= want then
+					apply(want)
+				end
+				continue
+			end
 			local fps = frames
 			if fps < QualityGovernor.LOW_FPS then
 				lowFor += 1

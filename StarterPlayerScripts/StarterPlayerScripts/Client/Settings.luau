@@ -30,6 +30,7 @@ export type Values = { sfx: number, blood: boolean, shake: boolean, motion: numb
 
 -- The choices of each multi-way row, in the order a tap cycles them (index 1 is the default).
 Settings.SFX = { { name = "NORMAL", volume = 1 }, { name = "QUIET", volume = 0.4 }, { name = "OFF", volume = 0 } }
+Settings.QUALITY = { { name = "AUTO" }, { name = "LOW" }, { name = "HIGH" } } -- (row 8: the graphics choice; QualityGovernor reads the QualityChoice attribute)
 Settings.MOTION = { { name = "AUTO", reduced = nil :: boolean? }, { name = "LESS", reduced = true :: boolean? }, { name = "FULL", reduced = false :: boolean? } }
 Settings.UI = { { name = "NORMAL", scale = 1 }, { name = "LARGE", scale = 1.15 }, { name = "SMALL", scale = 0.9 } }
 -- (V9-0g: how big and how many notices: AUTO is SMALL on a phone, NORMAL elsewhere; MINIMAL shows only
@@ -43,6 +44,7 @@ Settings.WALK = { { name = "NORMAL", speed = 30 :: number? }, { name = "FAST", s
 local SAVE_AFTER = 0.75 -- s after the last change (one write for a flurry of taps)
 
 local values: Values = { sfx = 1, blood = true, shake = true, motion = 1, ui = 1, deadMon = false, notices = 1, recoil = 1, fpShot = true, fpStart = false, fpTaught = false, walk = 1 }
+;(values :: any).quality = 1 -- (row 8: the graphics choice, AUTO)
 local touched = false -- (changed here before the kept choice arrived: this session's choice wins)
 local loaded = false -- (V9-0w: the kept choices have come from the server)
 local saveToken = 0
@@ -116,10 +118,12 @@ function Settings.clean(raw: unknown): Values
 	v.fpShot = t.fpShot ~= false -- (V9-0w: first person on the first shot, on unless turned off)
 	v.fpStart = t.fpStart == true -- (V9-0w: start in first person)
 	v.fpTaught = t.fpTaught == true -- (V9-0w: the first shot taught it already; once per profile)
+	;(v :: any).quality = pick(t.quality, Settings.QUALITY) or 1 -- (row 8)
 	return v
 end
 
 local function apply()
+	game:GetService("Players").LocalPlayer:SetAttribute("QualityChoice", ({ "Auto", "Low", "High" })[((values :: any).quality :: number?) or 1] or "Auto") -- (row 8)
 	group.Volume = Settings.SFX[values.sfx].volume
 	local player = Players.LocalPlayer
 	-- (A local preference: only this screen draws this player's hit effects. Unset is the game's
@@ -204,6 +208,9 @@ local function build()
 	local window = C.Window({ name = "Settings", title = "Settings", theme = "settings", icon = "settings", size = Vector2.new(640, 650) })
 	local body = window.body
 	local first = choiceRow("Sound effects", "Hits, shots and beeps", "sound", "sfx", Settings.SFX, 1, body)
+	if (Config :: any).AUTO_QUALITY then
+		choiceRow("Graphics", "AUTO adjusts to keep it smooth; LOW for older phones", "settings", "quality", Settings.QUALITY, 9, body) -- (row 8)
+	end
 	local blood = C.SettingRow({
 		label = "Blood",
 		description = "Off: stars and sparks only",
