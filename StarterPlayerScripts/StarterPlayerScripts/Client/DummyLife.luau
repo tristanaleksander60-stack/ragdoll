@@ -61,6 +61,12 @@ if (Config :: any).IDLE_LIFE then
 	end
 	GESTURE_GAP_MIN, GESTURE_GAP_MAX = 8, 20
 end
+if (Config :: any).IDLE_LIFE2 then
+	-- (11 part 2: a foot tap and a kick at a pebble; a hurt body holds its side: picked more often while it has wounds)
+	for _, g in { "FootTap", "Pebble" } do
+		table.insert(GESTURES, g)
+	end
+end
 local MAX_YAW, MAX_PITCH_UP, MAX_PITCH_DOWN = 70, 30, 25
 local LOOK_SMOOTH = 5 -- 1/s
 local AIR_CLEARANCE = require(Shared:WaitForChild("Ragdoll"):WaitForChild("Config")).AIR_CLEARANCE
@@ -695,8 +701,14 @@ local function updateIdle(life: Life, now: number, dt: number)
 		life.nextGestureAt = now + rng:NextNumber(GESTURE_GAP_MIN, GESTURE_GAP_MAX)
 	elseif not life.gesture and not busy and now >= life.nextGestureAt then
 		local pick = GESTURES[rng:NextInteger(1, #GESTURES)]
+		if (Config :: any).IDLE_LIFE2 and rng:NextNumber() < 0.5 then
+			local w = life.model:GetAttribute("Wounds")
+			if (type(w) == "string" and w ~= "") or life.model:GetAttribute("BoneStages") ~= nil then
+				pick = "HoldSide"
+			end
+		end
 		if pick == (life :: any).lastGesture then
-			pick = GESTURES[(table.find(GESTURES, pick) :: number) % #GESTURES + 1] -- (never the same twice in a row)
+			pick = GESTURES[(table.find(GESTURES, pick) or 0) % #GESTURES + 1] -- (never the same twice in a row; HoldSide is not in the list)
 		end
 		(life :: any).lastGesture = pick
 		life.gesture = pick
@@ -940,6 +952,25 @@ local function updateIdle(life: Life, now: number, dt: number)
 		-- waves at whoever is near (the look target) or just waves
 		blend("RightShoulder", ang(20, 0, 145 + 20 * sin(t * 9)))
 		blend("RightElbow", ang(25 + 20 * sin(t * 9 + 0.6), 0, 0))
+	elseif gesture == "FootTap" then
+		-- (11 part 2) taps its right foot, impatient
+		local tap = math.max(0, sin(t * 11))
+		blend("RightHip", ang(-6 * tap, 0, 0)) -- (hip and knee only: the idle joints, reset when it walks)
+		blend("RightKnee", ang(-12 * tap, 0, 0))
+	elseif gesture == "Pebble" then
+		-- (11 part 2) one kick at a pebble in the middle, a look down after it
+		local u = math.clamp((now - life.gestureAt) / life.gestureLength, 0, 1)
+		local kick = if u > 0.35 and u < 0.6 then math.sin((u - 0.35) / 0.25 * math.pi) else 0
+		blend("RightHip", ang(-38 * kick, 0, 0))
+		blend("RightKnee", ang(-20 * kick, 0, 0))
+		blend("Neck", ang(-26, neckYaw * 0.2, 0))
+	elseif gesture == "HoldSide" then
+		-- (11 part 2) hurt: a hand pressed to its side, leaning a little, a wince now and then
+		local wince = math.max(0, sin(t * 1.7)) ^ 6
+		blend("RightShoulder", ang(28, 0, -8))
+		blend("RightElbow", ang(95, 0, 0))
+		blend("Waist", ang(8 + 6 * wince, 0, -6))
+		blend("Neck", ang(-8 - 8 * wince, neckYaw * 0.3, 0))
 	elseif gesture == "Knuckles" then
 		-- cracks its knuckles: hands together in front, a little push
 		local push = 6 * math.max(0, sin(t * 7))
