@@ -285,6 +285,48 @@ local function bowl(lane: Lane, by: Player)
 	end
 	if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BOWL_BALL then
 		ball:SetAttribute("Curl", true) -- (F91: it tucks into a ball for the roll: ActiveRagdoll holds Poses.curl)
+		local pe0 = ball:FindFirstChild("LowerTorso")
+		if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BOWL_SPHERE and pe0 and pe0:IsA("BasePart") then
+			-- (F91 rest, Config.BOWL_SPHERE: an invisible ball round the curled body, welded to its pelvis, so it rolls true
+			-- down the lane like a bowling ball instead of tumbling on its knees; gone when it bursts out at the pins)
+			local sphere = Instance.new("Part")
+			sphere.Name = "BowlSphere"
+			sphere.Shape = Enum.PartType.Ball
+			sphere.Size = Vector3.new(3.4, 3.4, 3.4)
+			sphere.Transparency = 1
+			sphere.CanQuery, sphere.CanTouch, sphere.CastShadow = false, false, false
+			sphere.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.05, 0.1, 100, 1)
+			sphere.CFrame = pe0.CFrame
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = pe0
+			w.Part1 = sphere
+			w.Parent = sphere
+			for _, part in ball:GetChildren() do
+				if part:IsA("BasePart") then
+					local nc = Instance.new("NoCollisionConstraint") -- (the body inside never pushes on its own ball)
+					nc.Part0 = sphere
+					nc.Part1 = part
+					nc.Parent = sphere
+				end
+			end
+			sphere.Parent = ball
+			local conn: RBXScriptConnection? = nil
+			conn = ball:GetAttributeChangedSignal("Curl"):Connect(function()
+				if ball:GetAttribute("Curl") == nil then
+					if conn then
+						conn:Disconnect()
+					end
+					if sphere.Parent then
+						sphere:Destroy()
+					end
+				end
+			end)
+			task.delay(9, function()
+				if sphere.Parent then
+					sphere:Destroy()
+				end
+			end)
+		end
 	end
 	task.wait(0.15)
 	local pelvis = ball:FindFirstChild("LowerTorso")
