@@ -655,7 +655,7 @@ local function step(dt: number)
 					if sa then
 						pcall(function()
 							local tint = body.model:GetAttribute("CrowdTint")
-							(sa :: any).Color = if want > 0 then Color3.fromRGB(52, 74, 150) elseif typeof(tint) == "Color3" then tint:Lerp(Color3.new(1, 1, 1), 0.25) else Color3.new(1, 1, 1)
+							;(sa :: any).Color = if want > 0 then Color3.fromRGB(52, 74, 150) elseif typeof(tint) == "Color3" then tint:Lerp(Color3.new(1, 1, 1), 0.25) else Color3.new(1, 1, 1)
 						end)
 					end
 					if body.ball then
