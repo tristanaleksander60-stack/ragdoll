@@ -110,6 +110,7 @@ local Config = {
 	BUOYANCY_V2 = true, -- row 5: in the part-water tanks each limb floats by how much of its volume is under (a VectorForce per limb, 1.4x its weight fully under, plus drag), not a velocity write that fought the simulating screen (SwimService)
 	PUDDLE_GLOSS = true, -- row 6: the purple pools are glossy (sheen + a light highlight) with 2-4 star splats on the edge, growing and fading with the pool (Client/BloodFx)
 	INJURY_V2 = true, -- row 6: 3 hurt stages per piece by its hits (1-2 light lavender, 3-4 violet, 5+ deep violet); gauze bandages with offset ridges, a taped loose end and a seep spot at stage 3; a head wrap after 2 head hits (Client/DummySkins)
+	CAR_ROCK = true, -- row 7 rest: a ragdoll hitting a car at 22+ studs/s rocks it (a roll/pitch kick and a small shove scaled by the speed and the car's mass; on the simulating screen; Client/CarRock)
 	CRATE_BURST = true, -- row 7: a body flung through a crate at 40+ studs/s smashes it (planks fly, a crack, wood dust; the body flies on through); it is back whole with the others (Knockables)
 	BIKE_PEDAL = true, -- F76: a bicycle rider's legs pedal with the speed (Client/BikePedal) and the horn button rings a bell (VehicleService)
 	SWIM_POSE = true, -- F78: an awake ragdoll in the water splashes in panic for a second, then front-crawls and kicks while it moves, treads water while still (Client/DummyLife swimLayer)
