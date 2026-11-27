@@ -736,7 +736,7 @@ local function dress(model: Model)
 	end
 	folder.Parent = model
 	local hadHoles: { [string]: boolean } = {}
-	local xrays: { [string]: { from: number, till: number } } = {}
+	local xrays: { [string]: { from: number, till: number, n: number? } } = {}
 	local firstLook = true
 	local showHurt: () -> ()
 	function showHurt()
@@ -792,21 +792,28 @@ local function dress(model: Model)
 					xrays[d.Name] = x
 				end
 				x.from = math.min(x.from, n) -- (it was helped: counted anew)
+				-- (owner's test, 27 Nov: "3 hits IN A ROW on one limb": a new hit here starts every other limb's count over,
+				-- unless it is showing right now)
+				local prev = x.n or n
+				x.n = n
+				if n > prev then
+					for other, ox in xrays do
+						if other ~= d.Name and ox.till == 0 then
+							ox.from = ox.n or ox.from
+						end
+					end
+				end
 				if x.till == 0 and n - x.from >= XRAY_SHOTS then
 					x.till = os.clock() + XRAY_TIME
 					local name = d.Name
 					task.delay(XRAY_TIME, function()
-						local count = 0
-						for _, w in Anatomy.parseWounds(model:GetAttribute("Wounds")) do
-							local side, rest = string.match(w.zone.id, "^(%u%l+)(%u.*)$")
-							local piece = rest and BRUISE_AT[rest]
-							if piece and side .. piece == name then
-								count += 1
-							end
-						end
-						x.from, x.till = count, 0
+						-- (owner's test, 27 Nov: the 3 s end for every limb, the torso too: the count starts again from
+						-- the limb's latest count, so it needs 3 NEW hits; the old wound match never matched the torso and
+						-- left its X-ray on for good)
+						x.from, x.till = x.n or 0, 0
 						showHurt()
 					end)
+					local _ = name
 				end
 				local clear = (x.till > 0 and n > 0) or xrayAll[model] == true
 				skin.Transparency = if clear then XRAY_CLEAR else 0

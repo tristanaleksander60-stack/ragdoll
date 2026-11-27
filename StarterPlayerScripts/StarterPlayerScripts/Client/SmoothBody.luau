@@ -94,6 +94,8 @@ type Body = {
 	hidden: { [Instance]: boolean },
 	acc: number,
 	posed: boolean,
+	ball: BasePart?, -- (v6: the round head)
+	face: SurfaceGui?,
 }
 
 local template: Model? = nil
@@ -201,11 +203,59 @@ local function showBlocks(body: Body)
 end
 
 local function drop(body: Body)
+	if body.face and body.face.Parent then
+		body.face.Adornee = nil
+		body.face.Enabled = true
+	end
+	if body.ball and body.ball.Parent then
+		body.ball:Destroy()
+	end
 	showBlocks(body)
 	if body.mesh.Parent then
 		body.mesh:Destroy()
 	end
 	bodies[body.model] = nil
+end
+
+-- THE v6 FIT PASS, owner's test C (27 Nov: "ansigtet matcher ikke kroppen"): a v6 body wears the ROUND head of the
+-- approved renders, in the body's own light grey, instead of the old dark cylinder head; the game's living face
+-- (the Face SurfaceGui that FaceLife drives) is shown on the round head (Adornee), the old head hidden on this screen.
+local GLASS_V6 = V6 and (Config :: any).BODY_FIT == true and ReplicatedStorage:FindFirstChild("SmoothBodyV6") ~= nil
+local HEAD_GREY = Color3.fromRGB(166, 166, 169)
+local HEAD_SIZE = 1.7 -- (BodyShape.HEAD radius 0.84)
+local HEAD_LIFT = 0.15 -- the round head's centre above the physics head's centre (it sits on the short v6 neck)
+local function roundHead(body: Body)
+	if not GLASS_V6 then
+		return
+	end
+	local head = body.model:FindFirstChild("Head")
+	if not (head and head:IsA("BasePart")) then
+		return
+	end
+	local ball = Instance.new("Part")
+	ball.Name = "RoundHead"
+	ball.Shape = Enum.PartType.Ball
+	ball.Size = Vector3.new(HEAD_SIZE, HEAD_SIZE, HEAD_SIZE)
+	ball.Color = HEAD_GREY
+	ball.Material = Enum.Material.SmoothPlastic
+	ball.CanCollide, ball.CanQuery, ball.CanTouch, ball.Massless, ball.Anchored = false, false, false, true, false
+	ball.CastShadow = true
+	ball.CFrame = head.CFrame * CFrame.new(0, HEAD_LIFT, 0)
+	local w = Instance.new("WeldConstraint")
+	w.Part0 = head
+	w.Part1 = ball
+	w.Parent = ball
+	ball.Parent = body.folder
+	body.ball = ball
+	if head.LocalTransparencyModifier ~= 1 then
+		head.LocalTransparencyModifier = 1
+	end
+	body.hidden[head] = true
+	local face = head:FindFirstChild("Face")
+	if face and face:IsA("SurfaceGui") then
+		face.Adornee = ball
+		body.face = face
+	end
 end
 
 local function build(model: Model): Body?
@@ -334,11 +384,11 @@ local function build(model: Model): Body?
 	mesh.CFrame = pelvis.CFrame * body.meshOff
 	mesh.Parent = folder
 	bodies[model] = body
+	roundHead(body)
 	return body
 end
 
 -- Is this body's X-ray look on (its skins see-through)?
-local GLASS_V6 = V6 and (Config :: any).BODY_FIT == true and ReplicatedStorage:FindFirstChild("SmoothBodyV6") ~= nil
 local XRAY_GLASS = 0.78
 local function xrayed(body: Body): boolean
 	for _, s in body.folder:GetChildren() do
@@ -496,6 +546,14 @@ local function step(dt: number)
 				if skin and skin:IsA("BasePart") and body.mesh.Color ~= skin.Color then
 					body.mesh.Color = skin.Color
 				end
+			end
+		end
+		if body.ball then
+			if body.ball.Transparency ~= body.mesh.Transparency then
+				body.ball.Transparency = body.mesh.Transparency
+			end
+			if body.face then
+				body.face.Enabled = body.mesh.Transparency < 1
 			end
 		end
 		local near = (body.pelvis.Position - eye).Magnitude <= SmoothBody.ANIM_REACH

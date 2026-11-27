@@ -78,7 +78,7 @@ local V6_SIZE: { [string]: { x: number?, z: number? } } = {
 	LeftHand = { x = 0.4, z = 0.7 }, RightHand = { x = 0.4, z = 0.7 }, -- the thick palm facing the body
 	LeftUpperLeg = { x = 0.92, z = 0.92 }, RightUpperLeg = { x = 0.92, z = 0.92 }, -- the thigh 0.94
 	LeftLowerLeg = { x = 0.78, z = 0.78 }, RightLowerLeg = { x = 0.78, z = 0.78 }, -- the shin 0.8
-	LeftFoot = { x = 0.72, z = 1.25 }, RightFoot = { x = 0.72, z = 1.25 }, -- the round boot, 1.32 long
+	LeftFoot = { x = 0.72, z = 1.0 }, RightFoot = { x = 0.72, z = 1.0 }, -- the round boot (1.32 long drawn; the physics foot stays near R15's 0.95 so turning feet do not stick-slip)
 }
 local V6_ARM = { upper = 0.77, lower = 0.78 } -- v6 arm lengths / R15 arm lengths
 local function fitV6(model: Model)
