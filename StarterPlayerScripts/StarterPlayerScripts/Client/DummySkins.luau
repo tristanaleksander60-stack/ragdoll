@@ -1083,6 +1083,60 @@ end
 
 -- The X-RAY toggle: on = the nearest bodies in X-ray (looked at again every second), off = back to normal.
 local xrayOn = false
+-- (v6 FIT PASS B, owner 27 Nov late: "samme knogler som de andre ... alle lem": the head has no skin piece, so it had no
+-- bone in X-ray. With the X-RAY toggle on, each X-rayed body now shows a SKULL inside its (glass) head: the cranium, the
+-- two eye sockets, the cheekbones, the jaw and a row of teeth, welded to the Head part, gone when the toggle is off.)
+local function skull(model: Model, show: boolean)
+	local old = model:FindFirstChild("XraySkull")
+	if not show then
+		if old then
+			old:Destroy()
+		end
+		return
+	end
+	local head = model:FindFirstChild("Head")
+	if old or not (head and head:IsA("BasePart")) then
+		return
+	end
+	local holder = Instance.new("Model")
+	holder.Name = "XraySkull"
+	holder:SetAttribute("Worn", true)
+	local r = if model:GetAttribute("BodyV6") == true then 1.7 * 0.5 else math.min(head.Size.X, head.Size.Y, head.Size.Z) * 0.5
+	local function bit(size: Vector3, at: CFrame, colour: Color3, ball: boolean)
+		local p = Instance.new("Part")
+		p.Name = "XrayBone"
+		p:SetAttribute("Of", "Head")
+		p.Shape = if ball then Enum.PartType.Ball else Enum.PartType.Block
+		p.Size = size
+		p.Color = colour
+		p.Material = Enum.Material.SmoothPlastic
+		p.CanCollide, p.CanQuery, p.CanTouch, p.Massless, p.Anchored, p.CastShadow = false, false, false, true, false, false
+		if not ball then
+			local m = Instance.new("SpecialMesh")
+			m.MeshType = Enum.MeshType.Sphere
+			m.Parent = p
+		end
+		p.CFrame = head.CFrame * at
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = head
+		w.Part1 = p
+		w.Parent = p
+		p.Parent = holder
+	end
+	-- (the face is -Z)
+	bit(Vector3.new(r * 1.5, r * 1.45, r * 1.6), CFrame.new(0, r * 0.12, r * 0.05), BONE, false) -- (the cranium)
+	for side = -1, 1, 2 do
+		bit(Vector3.new(r * 0.4, r * 0.4, r * 0.4), CFrame.new(side * r * 0.3, r * 0.05, -r * 0.62), MARROW, true) -- (an eye socket)
+		bit(Vector3.new(r * 0.32, r * 0.22, r * 0.4), CFrame.new(side * r * 0.5, -r * 0.2, -r * 0.48), BONE_END, false) -- (a cheekbone)
+	end
+	bit(Vector3.new(r * 0.16, r * 0.24, r * 0.2), CFrame.new(0, -r * 0.18, -r * 0.7), MARROW, false) -- (the nose hole)
+	bit(Vector3.new(r * 0.95, r * 0.36, r * 0.9), CFrame.new(0, -r * 0.62, -r * 0.2), BONE_END, false) -- (the jaw)
+	for k = -2, 2 do
+		bit(Vector3.new(r * 0.12, r * 0.14, r * 0.1), CFrame.new(k * r * 0.14, -r * 0.44, -r * 0.64 + math.abs(k) * r * 0.04), Color3.fromRGB(236, 230, 214), false) -- (the teeth)
+	end
+	holder.Parent = model
+end
+
 function DummySkins.setXray(on: boolean)
 	if on == xrayOn then
 		return
@@ -1091,6 +1145,7 @@ function DummySkins.setXray(on: boolean)
 	if not on then
 		for model in xrayAll do
 			xrayAll[model] = nil
+			pcall(skull, model, false)
 			local fn = refreshers[model]
 			if fn and model.Parent then
 				pcall(fn)
@@ -1123,6 +1178,7 @@ function DummySkins.setXray(on: boolean)
 				local should = want[model] == true
 				if (xrayAll[model] == true) ~= should then
 					xrayAll[model] = if should then true else nil
+					pcall(skull, model, should)
 					if model.Parent then
 						pcall(fn)
 					end
