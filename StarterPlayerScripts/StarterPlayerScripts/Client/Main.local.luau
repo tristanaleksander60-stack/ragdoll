@@ -63,6 +63,7 @@ task.spawn(function() require(Client:WaitForChild("NoticeState")).start() end) -
 task.spawn(require(Client:WaitForChild("SlowMotion")).start) -- v4 C5: smooth slow motion
 task.spawn(require(Client:WaitForChild("VehicleFeel")).start) -- v4 C2: wheels, lean, lights, engine, horn
 task.spawn(require(Client:WaitForChild("BikePedal")).start) -- F76: riders on a bicycle pedal (Config.BIKE_PEDAL)
+task.spawn(require(Client:WaitForChild("ControlsFX")).start) -- C10: the control kit's prompt, press feedback and states (Config.CONTROLS_V2)
 task.spawn(require(Client:WaitForChild("CarRock")).start) -- row 7: a ragdoll slamming into a car rocks it (Config.CAR_ROCK)
 task.spawn(require(Client:WaitForChild("AdventCalendar")).start) -- AUDIT 27 Nov 2: the advent calendar window (Config.ADVENT)
 task.spawn(require(Client:WaitForChild("CprGame")).start) -- 3.34: the CPR rhythm game (Config.PLAYER_CPR)

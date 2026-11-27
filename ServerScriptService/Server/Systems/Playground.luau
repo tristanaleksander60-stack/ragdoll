@@ -317,7 +317,111 @@ local function buildCannon()
 	local lastHeld: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
 	-- (F7: the glowing load spot right under the muzzle: let a carried ragdoll go here.)
 	local loadAt = Vector3.new(muzzle.Position.X, (at(x, 0, z)).Position.Y, muzzle.Position.Z) + Vector3.new(CANNON_DIRECTION.X, 0, CANNON_DIRECTION.Z).Unit * 1.5
-	if muzzleLoad then
+	-- C10 (docs/CONTROLS_10.md 1; Config.CANNON_HOPPER): a real LOADING HOPPER on the back of the cannon instead of the
+	-- glowing disc: a big round metal funnel (6 wide) with a yellow-black hazard rim, a painted down-arrow and a ragdoll
+	-- pictogram, on a chute into the breech. Drop, throw or let go of a ragdoll anywhere in it: it slides down the chute,
+	-- the barrel clunks shut, 3-2-1, BOOM. The rim glows soft yellow while a ragdoll is carried within 20 studs, red
+	-- while one is inside. Players are never loaded (only lab ragdolls are looked at).
+	local hopper = (Config :: any).CANNON_HOPPER == true
+	local hopperTop: Vector3? = nil
+	local hopperRim: { BasePart } = {}
+	if hopper then
+		local ground = (at(x, 0, z)).Position.Y
+		local back = barrelBase - flat * 7.5
+		local top = Vector3.new(back.X, ground + 5.6, back.Z)
+		hopperTop = top
+		-- the funnel: a cone of 16 tilted steel staves, wide at the top, narrow at the chute
+		for i = 1, 16 do
+			local a = (i - 0.5) / 16 * math.pi * 2
+			local dir = Vector3.new(math.cos(a), 0, math.sin(a))
+			local mid = top + dir * 2.2 + Vector3.new(0, -1.1, 0)
+			local stave = part("HopperStave", Vector3.new(1.0, 2.6, 0.18), CFrame.lookAt(mid, mid + dir) * CFrame.Angles(math.rad(-38), 0, 0), Color3.fromRGB(120, 124, 132), Enum.Material.DiamondPlate)
+			stave.CanCollide = true
+			stave.CanQuery = false
+			local rim = part("HopperRim", Vector3.new(1.25, 0.45, 0.3), CFrame.lookAt(top + dir * 3.05, top + dir * 4), if i % 2 == 0 then Color3.fromRGB(245, 200, 30) else Color3.fromRGB(24, 24, 28), Enum.Material.SmoothPlastic)
+			rim.CanCollide, rim.CanQuery = false, false
+			table.insert(hopperRim, rim)
+		end
+		-- the chute from the funnel's throat into the breech, and the legs
+		local throat = top + Vector3.new(0, -2.4, 0)
+		local breech = barrelBase + Vector3.new(0, 4, 0) - CANNON_DIRECTION * 3.5
+		local chute = part("HopperChute", Vector3.new(1.6, 1.6, (breech - throat).Magnitude + 0.6), CFrame.lookAt((throat + breech) / 2, breech), Color3.fromRGB(70, 74, 82), Enum.Material.Metal)
+		chute.CanCollide, chute.CanQuery = false, false
+		for _, sx in { -1, 1 } do
+			local side = flat:Cross(Vector3.yAxis) * sx
+			local leg = part("HopperLeg", Vector3.new(0.45, ground + 3.4 - ground, 0.45), CFrame.new(throat + side * 1.6 + Vector3.new(0, -1.6, 0)), Color3.fromRGB(40, 40, 44), Enum.Material.Metal)
+			leg.CanQuery = false
+		end
+		-- the painted down-arrow on the far inside wall, and the ragdoll pictogram plate on its side
+		local far = top - flat * 2.0 + Vector3.new(0, -0.9, 0)
+		local arrowPlate = part("HopperArrow", Vector3.new(1.6, 1.8, 0.06), CFrame.lookAt(far, far + flat) * CFrame.Angles(math.rad(-38), 0, 0), Color3.fromRGB(245, 200, 30), Enum.Material.SmoothPlastic)
+		arrowPlate.CanCollide, arrowPlate.CanQuery = false, false
+		for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+			local g = Instance.new("SurfaceGui")
+			g.Face = face
+			g.CanvasSize = Vector2.new(100, 110)
+			local t = Instance.new("TextLabel")
+			t.BackgroundTransparency = 1
+			t.Size = UDim2.fromScale(1, 1)
+			t.Font = Enum.Font.GothamBlack
+			t.TextScaled = true
+			t.TextColor3 = Color3.fromRGB(24, 24, 28)
+			t.Text = "\u{2B07}"
+			t.Parent = g
+			g.Parent = arrowPlate
+		end
+		local sideDir = flat:Cross(Vector3.yAxis)
+		local picAt = top + sideDir * 3.3 + Vector3.new(0, -1.4, 0)
+		local pic = part("HopperPictogram", Vector3.new(1.4, 1.4, 0.08), CFrame.lookAt(picAt, picAt + sideDir), Color3.fromRGB(240, 240, 236), Enum.Material.SmoothPlastic)
+		pic.CanCollide, pic.CanQuery = false, false
+		local pg = Instance.new("SurfaceGui")
+		pg.Face = Enum.NormalId.Front
+		pg.CanvasSize = Vector2.new(100, 100)
+		local pt = Instance.new("TextLabel")
+		pt.BackgroundTransparency = 1
+		pt.Size = UDim2.fromScale(1, 1)
+		pt.TextScaled = true
+		pt.Text = "\u{1F938}"
+		pt.Parent = pg
+		pg.Parent = pic
+		loadAt = top
+		-- the rim's light: yellow while a ragdoll is carried near, red while one is inside, plain otherwise
+		task.spawn(function()
+			local was = ""
+			while padPart.Parent do
+				task.wait(0.25)
+				local want = "off"
+				local dummies = Workspace:FindFirstChild("Dummies")
+				for _, m in if dummies then dummies:GetChildren() else {} do
+					local pe = m:FindFirstChild("LowerTorso")
+					if pe and pe:IsA("BasePart") then
+						if m:GetAttribute("MachineHidden") == true and (pe.Position - barrelCf.Position).Magnitude < 8 then
+							want = "busy"
+							break
+						elseif m:GetAttribute("Held") == true and (pe.Position - top).Magnitude < 20 then
+							want = "carry"
+						end
+					end
+				end
+				if want ~= was then
+					was = want
+					for i, r in hopperRim do
+						if want == "carry" then
+							r.Material = Enum.Material.Neon
+							r.Color = if i % 2 == 0 then Color3.fromRGB(255, 230, 90) else Color3.fromRGB(60, 50, 20)
+						elseif want == "busy" then
+							r.Material = Enum.Material.Neon
+							r.Color = if i % 2 == 0 then Color3.fromRGB(255, 60, 50) else Color3.fromRGB(60, 20, 20)
+						else
+							r.Material = Enum.Material.SmoothPlastic
+							r.Color = if i % 2 == 0 then Color3.fromRGB(245, 200, 30) else Color3.fromRGB(24, 24, 28)
+						end
+					end
+				end
+			end
+		end)
+	end
+	if muzzleLoad and not hopper then
 		local spot = part("CannonLoad", Vector3.new(0.2, 5, 5), CFrame.new(loadAt + Vector3.new(0, 0.12, 0)) * CFrame.Angles(0, 0, math.rad(90)), ORANGE, Enum.Material.Neon, Enum.PartType.Cylinder)
 		spot.CanCollide, spot.CanQuery, spot.CanTouch, spot.CastShadow = false, false, false, false
 		spot.Transparency = 0.35
@@ -351,7 +455,13 @@ local function buildCannon()
 				if m:IsA("Model") and pelvis and pelvis:IsA("BasePart") and not loading[m] and m:GetAttribute("Held") ~= true
 					and m:GetAttribute("Vital") ~= "Dead" and m:GetAttribute("MachineHidden") ~= true then
 					local inZone: boolean
-					if muzzleLoad then
+					if hopper and hopperTop then
+						-- (C10: anywhere in the funnel: a generous volume over its mouth, carried ones only once let go)
+						local ht = hopperTop :: Vector3
+						local flatD = Vector3.new(pelvis.Position.X - ht.X, 0, pelvis.Position.Z - ht.Z).Magnitude
+						local dy = pelvis.Position.Y - ht.Y
+						inZone = flatD < 3.4 and dy > -3 and dy < 6
+					elseif muzzleLoad then
 						-- Only a ragdoll a player just let go (never one that walks by), close under the muzzle.
 						local flat = Vector3.new(pelvis.Position.X - loadAt.X, 0, pelvis.Position.Z - loadAt.Z).Magnitude
 						local dy = pelvis.Position.Y - loadAt.Y
@@ -364,7 +474,22 @@ local function buildCannon()
 						loading[m] = os.clock()
 						task.spawn(function()
 							FxService.hit(padPart.Position + Vector3.new(0, 2, 0), 40, "CannonPad")
-							if muzzleLoad then
+							if hopper and hopperTop then
+								-- (C10: it slides down the funnel and the chute with a whoosh, then the barrel clunks shut)
+								local from = pelvis.CFrame
+								local throat = CFrame.new((hopperTop :: Vector3) + Vector3.new(0, -2.2, 0))
+								for i = 1, 5 do
+									DummyControl.move(m, from:Lerp(throat, i / 5))
+									task.wait(0.05)
+								end
+								local whoosh = Instance.new("Sound")
+								whoosh.SoundId = "rbxassetid://9113480917"
+								whoosh.PlaybackSpeed = 1.6
+								whoosh.Volume = 0.6
+								whoosh.Parent = padPart
+								whoosh:Play()
+								game:GetService("Debris"):AddItem(whoosh, 2)
+							elseif muzzleLoad then
 								-- It slides into the barrel: a few steps from where it is to the muzzle, then inside.
 								local from = pelvis.CFrame
 								local into = CFrame.lookAt(muzzle.Position, muzzle.Position + CANNON_DIRECTION)
