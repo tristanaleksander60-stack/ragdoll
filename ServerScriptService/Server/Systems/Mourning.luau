@@ -708,7 +708,11 @@ local function step()
 				if m ~= body and not jobs[m] and p and free(m) then
 					local d = (p.Position - bp.Position).Magnitude
 					if d <= Mourning.SEE then
-						table.insert(near, { m = m, d = d })
+						-- (P1 part 3, Config.PERSONA_CPR: a HERO comes first and always helps; a SCARED one never does)
+						local persona = if (Config :: any).PERSONA_CPR then m:GetAttribute("Persona") else nil
+						if persona ~= "Scared" then
+							table.insert(near, { m = m, d = d - (if persona == "Hero" then 1000 else 0) })
+						end
 					end
 				end
 			end
@@ -720,7 +724,7 @@ local function step()
 				if taken >= Mourning.PER_BODY or busy >= Mourning.LAB_MAX then
 					break
 				end
-				if math.random() < Mourning.JOIN_CHANCE then
+				if n.d < 0 or math.random() < Mourning.JOIN_CHANCE then -- (a hero always joins)
 					local m = n.m
 					local p = pelvisOf(m) :: BasePart
 					jobs[m] = {
