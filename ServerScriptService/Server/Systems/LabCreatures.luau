@@ -980,18 +980,58 @@ BUILD.Whale = function(f, at, m)
 			local blue = pool.Color
 			local red = if GORE then Color3.fromRGB(150, 18, 24) else Color3.fromRGB(120, 190, 230) -- (gore off: foam, never red)
 			TweenService:Create(pool, TweenInfo.new(0.9), { Color = red, Transparency = 0.15 }):Play()
+			-- 3.12 SHARK (docs/MACHINES_10.md; Config.SHARK_10): a cartoon death roll (two full turns), a random time in the
+			-- jaws that is the score ("CHOMP! 2.1 s in the jaws" + NEW BEST: SharkBest), and the body comes up soaked with bubbles.
+			local shark10 = (Config :: any).SHARK_10 == true
+			local thrash = if shark10 then 1.4 + math.random() * 1.2 else 1.8
 			if shark and basePivot then
 				-- (It bursts up out of the water, jaws first, thrashes, and goes under again.)
 				showFin(false)
-				play(1.8, function(t)
+				play(thrash, function(t)
 					local out = math.sin(math.min(1, t * 1.15) * math.pi)
-					local roll = math.sin(t * math.pi * 6) * 0.4 * out
+					local roll = if shark10 then t * math.pi * 4 else math.sin(t * math.pi * 6) * 0.4 * out
 					shark:PivotTo(basePivot * CFrame.new(math.sin(t * 9) * 1.5, out * 7.5, 0) * CFrame.Angles(out * 0.35, math.sin(t * 7) * 0.4, roll))
 				end)
 				shark:PivotTo(basePivot)
 				showFin(true)
 			else
-				task.wait(1.8)
+				task.wait(thrash)
+			end
+			if shark10 then
+				local held = math.floor(thrash * 10 + 0.5) / 10
+				local text = "CHOMP! " .. string.format("%.1f", held) .. " s in the jaws"
+				local okO, owner = pcall(function()
+					return lazy("Lab").ownerAt(at.Position)
+				end)
+				if okO and owner then
+					local best = (owner:GetAttribute("SharkBest") :: number?) or 0
+					if held > best then
+						owner:SetAttribute("SharkBest", held)
+						text ..= " NEW BEST!"
+					end
+				end
+				pcall(function()
+					lazy("Playground").pop((at * CFrame.new(0, 8, 0)).Position, text, Color3.fromRGB(140, 210, 255))
+				end)
+				task.delay(0.3, function()
+					local torso = model:FindFirstChild("UpperTorso")
+					if torso and torso:IsA("BasePart") then
+						local bubbles = Instance.new("ParticleEmitter")
+						bubbles.Name = "SoakedBubbles"
+						bubbles.Rate = 14
+						bubbles.Lifetime = NumberRange.new(1, 1.6)
+						bubbles.Speed = NumberRange.new(2, 5)
+						bubbles.Acceleration = Vector3.new(0, 4, 0)
+						bubbles.SpreadAngle = Vector2.new(70, 70)
+						bubbles.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 0.4) })
+						bubbles.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 1) })
+						bubbles.Color = ColorSequence.new(Color3.fromRGB(200, 235, 255))
+						bubbles.Parent = torso
+						task.delay(5, function()
+							bubbles:Destroy()
+						end)
+					end
+				end)
 			end
 			burst:Emit(30)
 			-- The spit: bones with meat on, out of the tank and onto the floor round it.

@@ -149,6 +149,7 @@ local Config = {
 	ROCKET_10 = true, -- 3.9 rocket: a 3-2-1 / LIFT OFF! board, fireworks at the top, the body drifts down under a parachute to a random lab spot, "375 studs HIGH!" + NEW BEST (RocketBest), 1 in 20 "TO THE MOON!" gold stars +5 KOs (RocketRide)
 	WALL_10 = true, -- 3.10 brick wall: a ragdoll slamming in leaves a purple cartoon SPLAT (fades in 8 s) and pops "SPLAT! 140 studs/s" + NEW BEST (WallBest) (BrickWall)
 	DOG_10 = true, -- 3.11 guard dog: petted it rolls over with a GOOD BOY! pop, a deep growl-woof as it crouches to bite, tooth marks (grey dents, 10 s) on the bitten limb (GuardDog)
+	SHARK_10 = true, -- 3.12 shark: a cartoon death roll (two full turns), a random time in the jaws as the score ("CHOMP! 2.1 s in the jaws" + NEW BEST: SharkBest), the body comes up soaked with bubbles (LabCreatures)
 	TURN_EVEN = true, -- F73: the heading rotates at a capped even rate (220 deg/s walking, 360 fleeing), never a lerp whip or 180 degree snap; turning on the spot steps the feet (ActiveRagdoll, DummyLife)
 	NAV_BLOCKCAST = true, -- F72: obstacles are seen with a body-sized Blockcast whose look-ahead grows with speed (2.5-7 studs), and the detour takes the more open side (ActiveRagdoll blocked/clearAhead)
 	NAV_BUMP_LOG = true, -- F72: ActiveRagdoll counts detours, other-side tries and waits for a car, printed once a minute ([NavBump]); a moving car in the way is waited for, not walked round
