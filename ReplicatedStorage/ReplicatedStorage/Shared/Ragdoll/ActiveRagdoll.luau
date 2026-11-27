@@ -1206,7 +1206,8 @@ function ActiveRagdoll.seatOf(rig: any): any
 	local body = if link and link:IsA("ObjectValue") then link.Value else nil
 	if body and body:IsA("BasePart") then
 		rig.seatFixed = body
-		return body.CFrame * CFrame.new(0, -0.42, 0.6)
+		local off = (link :: Instance):GetAttribute("Offset") -- (row 14: a wheelchair's own seat point)
+		return body.CFrame * (if typeof(off) == "CFrame" then off else CFrame.new(0, -0.42, 0.6))
 	end
 	rig.seatFixed = nil
 	return rig.model:GetAttribute("Seat")
