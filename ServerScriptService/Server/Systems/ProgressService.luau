@@ -450,6 +450,7 @@ local playBase: { [Player]: number } = {}
 -- for the first, then reads the egg baseline it moved (never adding the same found eggs twice).
 local saveBusy: { [Player]: boolean } = {}
 local SAVE_QUEUE_WAIT = 40 -- s at most a save waits for the one before it
+local pendingSave: { [Player]: boolean } = {} -- (a save that found one in flight after the wait: run again when it ends)
 
 local saveLocked: (Player, Profile) -> boolean
 
@@ -477,8 +478,20 @@ local function save(player: Player, profile: Profile): boolean
 	while saveBusy[player] and waited < SAVE_QUEUE_WAIT do
 		waited += task.wait(0.2)
 	end
+	if saveBusy[player] then
+		-- (audit 27 Nov: never two saves of one player at once; two overlapping saves both added the same
+		-- eggs/takedowns/time since the baseline. The save still in flight saves once more with fresh baselines
+		-- when it ends, so nothing of this one is lost.)
+		pendingSave[player] = true
+		saving -= 1
+		return false
+	end
 	saveBusy[player] = true
 	local ok, result = pcall(saveLocked, player, profile)
+	while pendingSave[player] do
+		pendingSave[player] = nil
+		ok, result = pcall(saveLocked, player, profile)
+	end
 	saveBusy[player] = nil
 	saving -= 1
 	return ok and result == true
@@ -1988,14 +2001,7 @@ function ProgressService.setReadFailedForTest(player: Player, failed: boolean)
 	readFailed[player] = failed or nil
 end
 
--- Saves a player's profile now (yields). False when it could not be saved (or never loaded).
-function ProgressService.saveNow(player: Player): boolean
-	local p = profiles[player]
-	if not p or not loaded[player] or readFailed[player] then
-		return false
-	end
-	return save(player, p)
-end
+-- (audit 27 Nov: the first, shorter saveNow that stood here was overridden by the one further down; removed.)
 
 -- Tests: the weapons a player owns, set (and shown) as given.
 function ProgressService.setOwnedForTest(player: Player, owned: { [string]: boolean })

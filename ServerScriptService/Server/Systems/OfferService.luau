@@ -157,7 +157,16 @@ function OfferService.deliver(player: Player, key: string, purchaseId: string, t
 	end
 	log.info(string.format("%d got %s (%s)", player.UserId, key, purchaseId))
 	if not test then
-		task.spawn(OfferService.complete, player.UserId, purchaseId)
+		-- (audit 27 Nov: the order is completed only after the profile with the BOLTS and the marker is SAVED, like
+		-- WeaponShop.settle; a failed save releases the order so it is delivered again later, never lost)
+		task.spawn(function()
+			if ProgressService.saveNow(player) then
+				OfferService.complete(player.UserId, purchaseId)
+			else
+				log.warn("offer purchase " .. purchaseId .. " not saved yet: released, delivered again later")
+				Purchases.release(player.UserId, { purchaseId })
+			end
+		end)
 	end
 	return "granted"
 end
