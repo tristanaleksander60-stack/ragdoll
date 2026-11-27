@@ -2382,6 +2382,16 @@ function ActiveRagdoll.setup(model: Model): (boolean, string?)
 		arriveTime = 0,
 	}
 	rigs[model] = rig
+	-- (D12 BONES_V2: the server's bone model asks this screen to break a limb for real: BreakReq = "PartName@n")
+	model:GetAttributeChangedSignal("BreakReq"):Connect(function()
+		local v = model:GetAttribute("BreakReq")
+		local r = rigs[model]
+		local name = if type(v) == "string" then string.match(v, "^(%w+)@") else nil
+		local part = name and model:FindFirstChild(name)
+		if r and part and part:IsA("BasePart") then
+			breakLimb(r, part)
+		end
+	end)
 	if model:GetAttribute("Frozen") == true then
 		rig.state = "Frozen"
 		rig.balance.Enabled = false

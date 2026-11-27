@@ -253,6 +253,11 @@ end
 -- quiet: no sparkle here (the Heal tool plays its own where it was used).
 -- keep: the wounds close but stay to be seen (23 Nov 2026, owner: shots stay until it has been dead and is alive again).
 local function patchUp(model: Model, v: Vitals, quiet: boolean?, keep: boolean?)
+	if (Config :: any).BONES_V2 then
+		pcall(function()
+			(require(script.Parent:WaitForChild("Bones")) :: any).reset(model) -- (D12: patched up, every bone whole again)
+		end)
+	end
 	v.blood = 100
 	v.pulse = v.rest
 	if keep then
@@ -811,6 +816,16 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 			then (if math.abs(sx) > 0.75 then "Rib" elseif sz < 0 then (if math.abs(sx) < 0.25 then "Sternum" else "Rib") else (if math.abs(sx) < 0.3 then "Spine" else "Shoulder blade"))
 			else (if sz < 0 then "Pelvis" else "Lower spine")
 		label = label .. " (" .. bone .. ")"
+	end
+	-- (D12 part 1, Config.BONES_V2: the bone it hit loses integrity; a stage change is named on the card: ": CRACKED")
+	if (Config :: any).BONES_V2 and not severed then
+		local kind = if o.zone == Anatomy.zones.Blast then "blast" elseif o.round then "round" else "blow"
+		local okB, word = pcall(function()
+			return (require(script.Parent:WaitForChild("Bones")) :: any).hit(model, part, power, kind)
+		end)
+		if okB and type(word) == "string" then
+			label = label .. ": " .. word
+		end
 	end
 	local line = string.format("%s \u{00B7} %d%% blood \u{00B7} %s", label, math.floor(v.blood + 0.5), if v.state == "Dead" then (if Config.GORE == false then "knocked out" else "no pulse") else "pulse " .. math.floor(v.pulse + 0.5))
 	local killedNow = not wasDead and v.state == "Dead"
