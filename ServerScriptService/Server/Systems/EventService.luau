@@ -576,7 +576,41 @@ local function run(job: Job)
 		if paid then
 			task.spawn(Purchases.complete, paid.userId, paid.purchaseId) -- delivered
 		end
-		task.wait(event.duration)
+		if (Config :: any).EVENT_STATS and job.source ~= "Test" then
+			-- 3.30 (docs/MACHINES_10.md "RED-BUTTON EVENTS"; Config.EVENT_STATS): an end line with its stats: how many
+			-- ragdolls it knocked over in the starter's lab (every lab for an all-labs event), "TORNADO over: 37 ragdolls flung!"
+			local flung: { [Instance]: boolean } = {}
+			local count = 0
+			local t0 = os.clock()
+			while os.clock() - t0 < event.duration do
+				for _, p in Players:GetPlayers() do
+					if job.allLabs or p.UserId == job.hostId then
+						local okL, list = pcall(function()
+							return Lab.dummiesOf(p)
+						end)
+						for _, m in if okL then list else {} do
+							local st = m:GetAttribute("RagdollState")
+							if not flung[m] and (st == "Ragdoll" or st == "Out") then
+								flung[m] = true
+								count += 1
+							end
+						end
+					end
+				end
+				task.wait(0.5)
+			end
+			if count > 0 then
+				for _, p in Players:GetPlayers() do
+					if job.allLabs or p.UserId == job.hostId then
+						pcall(function()
+							(require(script.Parent:WaitForChild("ProgressService")) :: any).notice(p, string.upper(event.name) .. " over: " .. tostring(count) .. " ragdoll" .. (if count == 1 then "" else "s") .. " flung!")
+						end)
+					end
+				end
+			end
+		else
+			task.wait(event.duration)
+		end
 	else
 		-- Ends at once: no banner counting down an event that is not happening.
 		log.warn(event.name .. " failed to start: " .. tostring(err))
