@@ -450,7 +450,7 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	-- (27 Nov late, owner: "Fiks bilerne": the 5 new kinds had no look of their own, so each got the default "Car" model (the
 	-- white sedan), scaled to its length: five white sedans of different sizes. They show their own part-built look
 	-- (decorate) until a real model is set as spec.look.)
-	local look = if VehicleService.FEATURE[kind] and not spec.look then nil else V3Assets.place(role, model, bottom, { size = b.Z + 1.5, collide = false, anchored = false, name = "Look" })
+	local look = if VehicleService.FEATURE[kind] and not spec.look then nil else V3Assets.place(role, model, bottom, { size = b.Z + (if kind == "Bicycle" then 0 else 1.5), collide = false, anchored = false, name = "Look" }) -- (FIXES 8.3: the bicycle was 7.9 long, 4.4 tall: too big for the rider)
 	if look and (Config :: any).VEHICLE_GROUNDED then
 		-- (27 Nov late, owner: "køretøjer ikke stikker igennem ting, fx kørestole igennem jorden": V3Assets.place assumes each
 		-- model's pivot is its bottom middle, but several imports (the wheelchairs, the bicycle) have it elsewhere, so they

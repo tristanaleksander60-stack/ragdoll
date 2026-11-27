@@ -123,7 +123,7 @@ Find the real cause with ONE Play (allowed for this item):
 
 ## 8. The bicycle (owner, screenshot: the rider floats high over the bike, faces backwards, and it makes a car sound: "Man vender den forkerte vej på cykel og flyver over cyklen og den siger en billyd")
 
-**PARKED for an owner look (v1372):** the cloud code (flip, no engine sound) is in Studio. Measured: the look is 7.9 long and 4.4 tall (scaled to `b.Z + 1.5`, too big for a 5-stud avatar), its 3 meshes have Box collision (no ray finds the saddle), the seat sits at body y 1.1 under the frame top 2.46. Fix next: scale the look by the wheel (`spec.wheel`), then seat the hips on the saddle from a measured offset; needs one look with a rider in view (the Studio camera resets in tests).
+**PARKED for an owner look (v1372):** the cloud code (flip, no engine sound) is in Studio. Measured: the look is 7.9 long and 4.4 tall (scaled to `b.Z + 1.5`, too big for a 5-stud avatar), its 3 meshes have Box collision (no ray finds the saddle), the seat sits at body y 1.1 under the frame top 2.46. v1373: the look is sized to the box length (no +1.5), about 19 % smaller. Fix next: seat the hips on the saddle from a measured offset; needs one look with a rider in view (the Studio camera resets in tests).
 **Cloud code, done:**
 - the bicycle model was turned 180 degrees from where it drives: `flip = true` on Bicycle (`Systems/VehicleService.luau`);
 - no engine sound on the bicycle or the wheelchairs (`Client/VehicleFeel.luau`).
