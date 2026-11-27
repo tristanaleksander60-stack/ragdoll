@@ -50,6 +50,9 @@
 - Custom funnels: PlaytimeNew, PlaytimeAll, NewPhone/NewTablet/NewPC/NewConsole, ShopVisit, Vehicles (Pressed, SatFree, PassPrompt, Bought), Multiplayer. Retired: Tutorial, TakedownsNew.
 - Custom events: FirstUse, XrayToggle, BodyCardHidden, CPRDone, BowlingScore (a frame scores at most 30, so the buckets are 0-9 / 10-19 / 20-30, not 0-50/51-100/101+).
 
+## Run end (27 Nov late, v1417)
+Built this run (v1349-1417): FIXES_27NOV_LATE, MILD EXTRAS A+C3, LAG-FREE 2 items 0-10, the v6 FIT PASS rest (skull, run arms), PHASE 2-7 rests (bruises heal/patches, hurt rest, bowling turkey/BOLTS/bumpers/cheers, F82 paths, rider pedal, scared hide, persona faces, wheelchair funnel), AUDIT 5/7/17. PARKED (reasons in OVERVIEW): uploads the MCP refuses (Blender models, X-ray glass, LITE mesh, pictures), looks that need a working Play capture (Play captures render white this session: sling, hero drag, bowling show, big ball, bike seat, AUDIT 9-21 UI), owner ids (badges, passes). DOG3 not done.
+
 ## Questions for the owner (filled in during the run)
 - **Boxing bets (row 3):** the plan has betting BOLTS on a boxer. It reads as gambling in a kid-friendly game (and Roblox is strict on it). DEFAULT: not built. Say if you want it as a free "pick the winner" guess with a small prize instead.
 - **Bowling badges:** make 2 badges on the Creator Hub, "First Strike" and "Turkey!", and send the ids; they go in Shared/Badges.luau. DEFAULT until then: no badge (the strike and the turkey still pay BOLTS).
