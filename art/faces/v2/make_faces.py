@@ -181,6 +181,26 @@ def _(d):
     mouth_wave(d, 78, 9)
 
 
+# R2 FACE_LIFE (docs/RAGDOLL_10.md): the calm face with the pupils looking 5 ways, and 2 talking mouths (Client/DummyLife
+# swaps them: the pupils toward what it looks at, the mouth flapping while a talk bubble is up).
+def calm(d, look=(0, 0), mouth="line"):
+    for s in "LR":
+        brow(d, s, 178, 182, thick=20, arch=-5)
+        eye(d, s, 1.0, 13, look=look)
+    if mouth == "line":
+        mouth_arc(d, 62, 8, y=356, thick=9)
+    elif mouth == "a":
+        mouth_open(d, 40, 14, y=360)
+    else:
+        mouth_open(d, 52, 26, y=364)
+
+
+for _n, _look in (("look_c", (0, 0)), ("look_l", (-26, 0)), ("look_r", (26, 0)), ("look_u", (0, -8)), ("look_d", (0, 8))):
+    FACES[_n] = (lambda lk: (lambda d: calm(d, lk)))(_look)
+FACES["talk_a"] = lambda d: calm(d, (0, 0), "a")
+FACES["talk_b"] = lambda d: calm(d, (0, 0), "b")
+
+
 def main():
     out = []
     for name, fn in FACES.items():

@@ -158,6 +158,7 @@ local Config = {
 	SMOOTH_BODY = true, -- S2: the Blender-made skinned mannequin (ReplicatedStorage.SmoothBody, one connected body, real fingers) on the nearest ragdolls; bones follow the physics parts; block skins hidden (Client/SmoothBody)
 	SMOOTH_BODY_V2 = true, -- F89: the slim body (arms down, no bodybuilder shoulders, always grey) from ReplicatedStorage.SmoothBodyV2, driven forward-kinematically (Client/SmoothBody)
 	HAND_POSES = true, -- S2 rest: the smooth body's hands grip (right hand: the paper, the tweezers, CPR) and point (a fist with the index straight, Mood Point), eased (Client/SmoothBody)
+	FACE_LIFE = true, -- R2 (RAGDOLL_10): within 40 studs the calm face looks with its pupils (5 ways, toward what it looks at, never behind) and its mouth flaps while its talk bubble is up (Client/DummyLife faceLife; Assets.Faces Look*/Talk*)
 	FACES_V2 = true, -- row 6: 7 new v2 faces (worried, pain, angry, sad, relieved, scared, X eyes when dead; art/faces/v2/make_faces.py) chosen by state and mood (DummyLife expressionFor)
 	GYRO_10 = true, -- 3.3 gyro: leather straps, HOLD to spin faster (the prompt ring is the dial), a rising motor whir, flung out along the spin, RPM + G-force pop with NEW BEST (GyroBest), 1 in 20 golden rainbow trail +5 KOs (MapMachines)
 	FAN_10 = true, -- 3.4 giant fan: a 3-speed dial (prompt OFF>1>2>3), the blade spins, a rising roar and a dust cone, nudge / lift / blown tumbling by speed, "BLOWN 74 studs!" + NEW BEST (FanBest), players pushed at 3 (Systems/FanMachine)

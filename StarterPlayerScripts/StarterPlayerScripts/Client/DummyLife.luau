@@ -318,6 +318,43 @@ local function setFace(life: Life, name: string)
 	end
 end
 
+-- R2 FACE_LIFE (docs/RAGDOLL_10.md; Config.FACE_LIFE): the calm face lives. Within FACE_NEAR studs of the camera:
+-- while its talk bubble is up the mouth flaps between closed, open and wide at a syllable rhythm (from the line's
+-- length); otherwise the pupils look toward what it looks at (life.lookTarget, else the camera when it faces it):
+-- left, right, up, down or straight, with a small dead zone so they never flicker. Decal swaps only.
+local FACE_NEAR = 40
+local function faceLife(life: Life, now: number): string
+	local head = life.head
+	local cam = Workspace.CurrentCamera
+	if not head or not cam or (cam.CFrame.Position - head.Position).Magnitude > FACE_NEAR then
+		return "Neutral"
+	end
+	local line = life.line
+	if line and line.Enabled and now < life.lineUntil then
+		local text = life.lineText
+		local n = if text then math.max(4, #text.Text) else 12
+		local beat = math.floor((now + life.seed % 1) * (5 + (n % 4)))
+		local k = beat % 4
+		return if k == 0 then "LookC" elseif k == 2 then "TalkB" else "TalkA"
+	end
+	local target = life.lookTarget or cam.CFrame.Position
+	local rel = head.CFrame:PointToObjectSpace(target)
+	if rel.Magnitude < 0.5 or rel.Z > 0 then
+		return "LookC" -- (behind it: it never looks back with its eyes)
+	end
+	local dir = rel.Unit
+	if dir.X < -0.35 then
+		return "LookL"
+	elseif dir.X > 0.35 then
+		return "LookR"
+	elseif dir.Y > 0.3 then
+		return "LookU"
+	elseif dir.Y < -0.3 then
+		return "LookD"
+	end
+	return "LookC"
+end
+
 local function releaseIdle(life: Life)
 	if not life.idle then
 		return
@@ -2082,7 +2119,8 @@ local function step(life: Life, now: number, dt: number)
 
 	-- Blinking, only when the eyes are open and relaxed.
 	if expression == "Neutral" or expression == "Grumpy" then
-		if life.shown ~= "Neutral" and life.shown ~= "Grumpy" and life.shown ~= "Blink" then
+		local calm = string.sub(life.shown or "", 1, 4) == "Look" or string.sub(life.shown or "", 1, 4) == "Talk" -- (R2: the living calm faces count as open eyes)
+		if life.shown ~= "Neutral" and life.shown ~= "Grumpy" and life.shown ~= "Blink" and not calm then
 			-- Eyes just opened from another expression: don't blink straight away.
 			life.blinkAt = math.max(life.blinkAt, now + rng:NextNumber(0.8, 2))
 		end
@@ -2093,6 +2131,9 @@ local function step(life: Life, now: number, dt: number)
 		if now < life.blinkUntil then
 			expression = "Blink"
 		end
+	end
+	if expression == "Neutral" and (Config :: any).FACE_LIFE then
+		expression = faceLife(life, now)
 	end
 	setFace(life, expression)
 
