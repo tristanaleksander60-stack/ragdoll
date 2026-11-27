@@ -263,6 +263,20 @@ local function hidePrompt(prompt: ProximityPrompt)
 end
 
 function ControlsFX.start()
+	-- (F92 rest, Config.TOUCH_HOLD: on a touch screen a machine's prompt needs a 0.3 s hold, so a tap while walking past
+	-- never starts it; on this screen only, every prompt that had no hold)
+	local UIS = game:GetService("UserInputService")
+	if (Config :: any).TOUCH_HOLD and UIS.TouchEnabled and not UIS.KeyboardEnabled then
+		local function hold(p: Instance)
+			if p:IsA("ProximityPrompt") and p.HoldDuration < 0.3 then
+				p.HoldDuration = 0.3
+			end
+		end
+		for _, p in workspace:GetDescendants() do
+			hold(p)
+		end
+		workspace.DescendantAdded:Connect(hold)
+	end
 	if not Config.CONTROLS_V2 then
 		return
 	end

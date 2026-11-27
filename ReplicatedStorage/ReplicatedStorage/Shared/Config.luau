@@ -181,6 +181,7 @@ local Config = {
 	LEGS_GHOST = true, -- PHYSICS_DEEP: a walking or fleeing dummy's shins and feet do not collide (the lift carries it over kerbs and steps); the probe found walkers bouncing off kerbs, ramps and lamp feet
 	BLOCKED_EASE = true, -- PHYSICS_DEEP: a walker pushed back against its own way stops pushing (speed 2) instead of bouncing off the obstacle again and again
 	PHYSICS_PROBE = false, -- PHYSICS_DEEP step 1: logs [PhysProbe] when a walking dummy moves against its own drive, with what it touches (ActiveRagdoll); off by default
+	TOUCH_HOLD = true, -- F92 rest: on a touch screen every prompt without a hold needs 0.3 s, so a tap while walking past never starts a machine (Client/ControlsFX)
 	BOWL_SPHERE = true, -- F91 rest: an invisible low-friction ball welded round the curled bowled ragdoll, so it rolls true to the pins (Systems/Bowling)
 	CLOSE_ORDER = true, -- AUDIT 40: at server close the boards wait 1 s for the progress saves and are skipped when the write budget is low (Systems/LeaderboardService)
 	GUN_ONCE = true, -- PHYSICS_DEEP check 2: a coward that ran from a gun runs again within GUN_WARY s only if the gun comes clearly closer (no flee-stop-flee ping-pong while you just hold it)
