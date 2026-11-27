@@ -20,6 +20,7 @@ SwimService.LINES_OUT = { "Brr!", "So cold!", "I'm soaked!" }
 
 local since: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
 local SPLASH_FLOAT = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).SPLASH_FLOAT == true
+local BUOYANCY_V2 = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BUOYANCY_V2 == true
 
 local function say(m: Model, line: string)
 	m:SetAttribute("MoodSay", line)
@@ -110,6 +111,55 @@ local function float(box: BasePart, m: Model)
 	end
 end
 
+-- Row 5 (Config.BUOYANCY_V2; RAGDOLL_FEEL "Water: buoyancy by part volume"): in the part-water tanks every limb gets its
+-- own upward force by how much of its volume is under the surface (1.4x its own weight when fully under, so a body
+-- floats about two thirds under, head and arms bobbing on their own), plus water drag on that limb. A VectorForce per
+-- limb, not a velocity write, so it works on whichever screen simulates the body and never fights it. Taken off when
+-- the body leaves the water or is picked up.
+local BUOY_LIFT = 1.4
+local BUOY_DRAG = 1.6
+local function buoyancy(box: BasePart?, m: Model)
+	local top = if box then box.Position.Y + box.Size.Y / 2 else 0
+	for _, pe in m:GetChildren() do
+		if pe:IsA("BasePart") and not pe.Anchored then
+			local force = pe:FindFirstChild("BuoyForce")
+			if not box then
+				if force then
+					force:Destroy()
+					local att = pe:FindFirstChild("BuoyAttachment")
+					if att then
+						att:Destroy()
+					end
+				end
+				continue
+			end
+			local mass = pe:GetMass()
+			if mass <= 0 then
+				continue
+			end
+			if not (force and force:IsA("VectorForce")) then
+				local att = Instance.new("Attachment")
+				att.Name = "BuoyAttachment"
+				att.Parent = pe
+				local vf = Instance.new("VectorForce")
+				vf.Name = "BuoyForce"
+				vf.RelativeTo = Enum.ActuatorRelativeTo.World
+				vf.ApplyAtCenterOfMass = true
+				vf.Attachment0 = att
+				vf.Parent = pe
+				force = vf
+			end
+			local half = pe.Size.Y / 2
+			local under = math.clamp((top - (pe.Position.Y - half)) / math.max(pe.Size.Y, 0.1), 0, 1)
+			local v = pe:GetVelocityAtPosition(pe.Position)
+			local g = Workspace.Gravity
+			local lift = Vector3.new(0, under * mass * g * BUOY_LIFT, 0)
+			local drag = -v * mass * BUOY_DRAG * under
+			;(force :: VectorForce).Force = lift + drag
+		end
+	end
+end
+
 local function step(dummies: Instance)
 	if #CollectionService:GetTagged("WaterVolume") == 0 then
 		return
@@ -121,6 +171,9 @@ local function step(dummies: Instance)
 			continue
 		end
 		local box = boxOf(pe.Position)
+		if BUOYANCY_V2 and (not box or box.Name ~= "AquaWaterVolume" or m:GetAttribute("Held") == true) and pe:FindFirstChild("BuoyForce") then
+			buoyancy(nil, m :: any) -- (out of the tank or picked up: the forces come off)
+		end
 		if not box then
 			if since[m] then
 				since[m] = nil
@@ -139,7 +192,9 @@ local function step(dummies: Instance)
 				say(m, SwimService.LINES_IN[math.random(1, #SwimService.LINES_IN)])
 			end
 		end
-		if SPLASH_FLOAT and box.Name == "AquaWaterVolume" and m:GetAttribute("Held") ~= true then
+		if BUOYANCY_V2 and box.Name == "AquaWaterVolume" and m:GetAttribute("Held") ~= true then
+			buoyancy(box, m :: any)
+		elseif SPLASH_FLOAT and box.Name == "AquaWaterVolume" and m:GetAttribute("Held") ~= true then
 			float(box, m :: any)
 		end
 		local vital = m:GetAttribute("Vital")
