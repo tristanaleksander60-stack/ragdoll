@@ -12,6 +12,16 @@ local LabGuideClient = {}
 LabGuideClient.TAG = "GuideRing"
 LabGuideClient.NEAR = 140 -- studs: rings further away are left alone
 LabGuideClient.CARRY_REACH = 90 -- studs: the ring that lights up while you carry a dummy
+-- (27 Nov late, owner: "Drop Here ... kommer op i den rigtige størrelse, ikke buggy ... 1 maskine ad gangen"; Config.DROP_HERE_V2:
+-- the sign has a fixed size ON SCREEN (it was 8 x 4 studs in the world: huge up close, tiny far off), shows for the ONE
+-- nearest machine within 40 studs, keeps it until another is clearly nearer (no flicker between two), and while you
+-- carry the other rings go quiet so only that machine's ring glows.)
+local V2 = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).DROP_HERE_V2 == true
+if V2 then
+	LabGuideClient.CARRY_REACH = 40
+end
+LabGuideClient.SWITCH_BY = 6 -- studs another ring must be nearer before the sign moves to it
+LabGuideClient.QUIET = 0.8 -- the other rings while you carry
 LabGuideClient.REST = 0.3 -- a ring's pieces at rest (they breathe 0.15 around it)
 
 -- A ring is an invisible part carrying its glowing pieces: they take the look.
@@ -32,11 +42,12 @@ local lit: BasePart? = nil
 local function makeMarker(): BillboardGui
 	local g = Instance.new("BillboardGui")
 	g.Name = "DropHere"
-	g.Size = UDim2.fromScale(8, 4)
-	g.StudsOffsetWorldSpace = Vector3.new(0, 5, 0)
+	local touch = game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").KeyboardEnabled
+	g.Size = if V2 then (if touch then UDim2.fromOffset(120, 60) else UDim2.fromOffset(150, 74)) else UDim2.fromScale(8, 4)
+	g.StudsOffsetWorldSpace = Vector3.new(0, if V2 then 4 else 5, 0)
 	g.AlwaysOnTop = true
 	g.LightInfluence = 0
-	g.MaxDistance = 200
+	g.MaxDistance = if V2 then 60 else 200
 	local text = Instance.new("TextLabel")
 	text.Name = "Words"
 	text.BackgroundTransparency = 1
@@ -91,16 +102,24 @@ function LabGuideClient.start()
 			if ring:IsA("BasePart") then
 				local d = (ring.Position - here).Magnitude
 				if d < LabGuideClient.NEAR then
-					setRing(ring, if LITE then LabGuideClient.REST else LabGuideClient.REST + 0.15 * math.sin(t * 2.6 + ring.Position.X * 0.1))
+					local rest = if V2 and carrying then LabGuideClient.QUIET else LabGuideClient.REST
+					setRing(ring, if LITE or (V2 and carrying) then rest else rest + 0.15 * math.sin(t * 2.6 + ring.Position.X * 0.1))
 					if carrying and d < bestD then
 						best, bestD = ring, d
 					end
 				end
 			end
 		end
+		-- (V2: stay on the ring already lit unless another is SWITCH_BY studs nearer, so the sign never jumps between two.)
+		if V2 and carrying and lit and best and lit ~= best and lit.Parent then
+			local litD = (lit.Position - here).Magnitude
+			if litD < LabGuideClient.CARRY_REACH and litD - bestD < LabGuideClient.SWITCH_BY then
+				best = lit
+			end
+		end
 		-- The ring you would drop into: bright, a little bigger, and DROP HERE! over it.
 		if lit and lit ~= best then
-			setRing(lit, LabGuideClient.REST)
+			setRing(lit, if V2 and carrying then LabGuideClient.QUIET else LabGuideClient.REST)
 			lit = nil
 		end
 		if best then

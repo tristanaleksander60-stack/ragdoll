@@ -133,6 +133,7 @@ local Config = {
 	POLITE_DISTANCE = true, -- 0.1567 rest: the ALWAYS3 comer stops at 5.5 studs, 45 degrees to one side of the player's view; the chatters never stand in the 35 degrees in front of the camera (Lab assignRoles)
 	NO_EMOTE_MENU = true, -- (owner, 27 Nov late) Roblox's emote wheel is off: its "." key took the press, so "." could not hide the body card on a computer (Client/BodyCard)
 	MORE_ROOM = true, -- (owner, 27 Nov late: "alt for mange ragdolls tæt på en, de skal holde lidt mere afstand") the comer stops 9 studs away (not 5.5); within 45 studs at most phone 5, tablet 6, PC 8 living ragdolls (not 7/9/12) (Lab, RagdollDirector)
+	DROP_HERE_V2 = true, -- (owner, 27 Nov late) the DROP HERE sign: a fixed size on screen, only the ONE nearest machine within 40 studs, no flicker between two, the other rings quiet while you carry (Client/LabGuideClient)
 	TIE_SHOE = true, -- row 11 rest: a new idle gesture: it bends down and ties its shoe (4-5 s, right foot forward, hands fiddling) (Client/DummyLife)
 	FILM_PHONE = true, -- P1 rest: half the curious ragdolls that come to look get their phone out and film it (a lit phone held up at face height) (Personas + Client/DummyLife filmLayer)
 	WHALE_10 = true, -- 3.26: a whale in the big pool surfaces under a ragdoll in the water and spouts it sky-high (SPOUT! studs + NEW BEST), and tail-slaps a wave every 25-40 s (Systems/WhaleSpout)
