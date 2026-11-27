@@ -22,6 +22,8 @@ Today A2 puts a pale capsule round the limb (on the torso a big glass box), whic
 - The same goes for the player's own CPR game and for heroes giving CPR.
 
 ## 3. Only 1-2 talk to you; the rest do things with what they are at (owner: "de skal interagere med det de er ved, kun 1-2 står og snakker til brugeren")
+
+**PART DONE v1366 (`TALK_TWO`):** at most 2 face and talk to a player (the comer plus one greeter; measured 1 in 25 s); the other Friendly ones stay where they are. The chat pair already faces each other. LEFT: the activity at each spot (bench paper, pond, bikes, cheering at machines) beyond the existing idles and watchers.
 - **Facing and talking to the player:** at most 2 at a time, the comer and one more; the arrival lines only from these.
 - **All the others never stand facing the player** (at most a 2 s glance when you pass or shoot near them). They do something with where they are:
   - **at a machine:** watch it, react to its events (cheer, flinch, point, film it on the phone);

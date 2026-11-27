@@ -455,6 +455,28 @@ local function startGreeting(plot: Plot, slot: Slot, now: number): boolean
 	if not best or not model then
 		return false
 	end
+	-- (FIXES_27NOV_LATE 3, Config.TALK_TWO; owner: "kun 1-2 står og snakker til brugeren": at most 2 face and talk to a
+	-- player at once, the comer (Role3 "Come") and one greeter; the rest keep at what they are doing.)
+	if (Config :: any).TALK_TWO then
+		local talking = 0
+		local dummies = Workspace:FindFirstChild("Dummies")
+		for _, m in if dummies then dummies:GetChildren() else {} do
+			if m:GetAttribute("Role3") == "Come" or m:GetAttribute("GreetUntil") ~= nil then
+				local pe = m:FindFirstChild("LowerTorso")
+				if pe and pe:IsA("BasePart") and (pe.Position - best.Position).Magnitude < 40 then
+					talking += 1
+				end
+			end
+		end
+		for _, other in plot.slots do
+			if other ~= slot and other.socialKind == "Greet" then
+				talking += 1
+			end
+		end
+		if talking >= 2 then
+			return false
+		end
+	end
 	local from = Vector3.new(slot.position.X, 0, slot.position.Z)
 	local to = Vector3.new(best.Position.X, 0, best.Position.Z)
 	local spot = to - (to - from).Unit * GREET_STOP
