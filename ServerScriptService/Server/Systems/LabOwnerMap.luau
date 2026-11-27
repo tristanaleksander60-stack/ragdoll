@@ -25,7 +25,15 @@ local RAIL = Color3.fromRGB(70, 70, 72)
 local SLEEPER = Color3.fromRGB(100, 72, 48)
 local BALLAST = Color3.fromRGB(120, 118, 115)
 
+-- Row 8 rest (Config.SPREAD_BUILD): the lab is built over several frames, about 8 ms of building a frame, so a join never
+-- stalls the server for the whole map at once (the builder yields between parts; everything else stays in order).
+local SPREAD = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SPREAD_BUILD == true
+local sliceStart = os.clock()
 local function part(into: Instance, name: string, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, deco: boolean?, shape: Enum.PartType?): Part
+	if SPREAD and os.clock() - sliceStart > 0.008 and coroutine.isyieldable() then
+		task.wait()
+		sliceStart = os.clock()
+	end
 	local p = Instance.new("Part")
 	p.Name = name
 	p.Anchored = true
