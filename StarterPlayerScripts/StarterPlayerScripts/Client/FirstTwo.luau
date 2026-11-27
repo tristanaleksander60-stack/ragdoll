@@ -247,6 +247,8 @@ function FirstTwo.start()
 	local near: any = nil -- the untried machine within NEAR, if any
 	local nearInst: Instance? = nil
 	local busyUntil = 0
+	local bikeShown, walked, stillSince = false, 0, os.clock() -- (T1 part 2: the free BIKE hint)
+	local lastPos: Vector3? = nil
 
 	local function press()
 		local m, inst = near, nearInst
@@ -318,6 +320,45 @@ function FirstTwo.start()
 			if not r or not lab then
 				gui.Enabled = false
 				continue
+			end
+			-- (T1 part 2, FTUE_10 fix 7: the BIKE only when useful: the first time you walk about 150 studs in one go (no
+			-- stop longer than 4 s, not seated), the goal line says "Faster: free BIKE" and the nearest free bicycle glows.)
+			if Config.FTUE_10 and not bikeShown then
+				local p = r.Position
+				if seated() then
+					walked = 0
+				elseif lastPos then
+					local step = (Vector3.new(p.X, 0, p.Z) - Vector3.new(lastPos.X, 0, lastPos.Z)).Magnitude
+					if step > 0.5 then
+						walked += step
+						stillSince = os.clock()
+					elseif os.clock() - stillSince > 4 then
+						walked = 0
+					end
+				end
+				lastPos = p
+				if walked > 150 then
+					bikeShown = true
+					local best, bestD = nil :: Instance?, math.huge
+					for _, b in lab:GetDescendants() do
+						if b.Name == "LabBicycle" and b:IsA("Model") then
+							local d = (b:GetPivot().Position - p).Magnitude
+							if d < bestD then
+								best, bestD = b, d
+							end
+						end
+					end
+					if best then
+						say("Faster: free BIKE")
+						local glow = Instance.new("Highlight")
+						glow.FillTransparency = 0.7
+						glow.FillColor = Color3.fromRGB(80, 200, 255)
+						glow.OutlineColor = Color3.fromRGB(80, 200, 255)
+						glow.Adornee = best
+						glow.Parent = player:WaitForChild("PlayerGui")
+						game:GetService("Debris"):AddItem(glow, 15)
+					end
+				end
 			end
 			-- The target: kept until it is tried (no flipping between two machines).
 			if not target or tried(target.kind) or not targetInst or not targetInst.Parent then

@@ -93,6 +93,48 @@ function XRayToggle.start()
 		end
 		return Enum.ContextActionResult.Pass
 	end, false, key, Enum.KeyCode.DPadLeft) -- (B is Build mode: Keybinds "Build"; I is the one free letter)
+	-- T1 part 2 (FTUE_10 "the X-RAY moment"): after the first bone you see break (or at 3:00), the X-RAY button pulses
+	-- once and the goal line says "See the bones!". Once a session, and never while X-ray is already on.
+	if Config.FTUE_10 then
+		local pulsed = false
+		local function pulse()
+			if pulsed or DummySkins.xrayIsOn() then
+				return
+			end
+			pulsed = true
+			pcall(function()
+				(require(script.Parent:WaitForChild("HudV3")) :: any).moment("See the bones! Tap X-RAY", 6)
+			end)
+			local TweenService = game:GetService("TweenService")
+			local big = UDim2.fromOffset(b.Size.X.Offset * 1.3, b.Size.Y.Offset * 1.3)
+			local small = b.Size
+			for _ = 1, 3 do
+				TweenService:Create(b, TweenInfo.new(0.25), { Size = big, BackgroundColor3 = ON }):Play()
+				task.wait(0.3)
+				TweenService:Create(b, TweenInfo.new(0.25), { Size = small, BackgroundColor3 = if DummySkins.xrayIsOn() then ON else OFF }):Play()
+				task.wait(0.3)
+			end
+		end
+		task.delay(180, pulse)
+		task.spawn(function()
+			local dummies = workspace:WaitForChild("Dummies", 60)
+			if not dummies then
+				return
+			end
+			local function watch(m: Instance)
+				m:GetAttributeChangedSignal("BoneStages"):Connect(function()
+					local v = m:GetAttribute("BoneStages")
+					if not pulsed and type(v) == "string" and string.find(v, ":[34]") then
+						task.delay(1, pulse)
+					end
+				end)
+			end
+			for _, m in dummies:GetChildren() do
+				watch(m)
+			end
+			dummies.ChildAdded:Connect(watch)
+		end)
+	end
 end
 
 return XRayToggle
