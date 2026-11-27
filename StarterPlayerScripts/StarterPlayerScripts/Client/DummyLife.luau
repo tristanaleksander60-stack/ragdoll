@@ -323,6 +323,68 @@ end
 -- length); otherwise the pupils look toward what it looks at (life.lookTarget, else the camera when it faces it):
 -- left, right, up, down or straight, with a small dead zone so they never flicker. Decal swaps only.
 local FACE_NEAR = 40
+
+-- R6 BODY_SOUND (docs/RAGDOLL_10.md; Config.BODY_SOUND): the sound of a body, only within SOUND_NEAR studs of the camera.
+-- Footsteps on the gait's footfalls (soft plastic taps: the PSE body-fall thuds, short, quiet and pitched up; louder
+-- when it runs); a cartoon "oof" when it is knocked over and a grunt when it gets up, PSE voices pitched per ragdoll
+-- (0.9-1.1) and per persona (Scared higher, Hero lower). At most 4 sounds a second a body, a voice at most every 1.5 s.
+-- The thud of a landing stays FxController's. One Sound per kind per body, made when first needed.
+local SOUND_NEAR = 40
+local VOICES = {
+	ouch = "rbxassetid://9120416707", -- Video Game Effects 15 (SFX), Pro Sound Effects: fight vocals, getting hit
+	getup = "rbxassetid://9118873681", -- Seahorse Whine 10 (SFX), Pro Sound Effects: a cartoon struggling groan
+}
+local STEP_IDS: { string } = (function()
+	local ok, ids = pcall(function()
+		return (require(Shared:WaitForChild("SoundManifest")) :: any).assetIds("land")
+	end)
+	return if ok and type(ids) == "table" and #ids > 0 then ids else { "rbxassetid://9113480917" }
+end)()
+local PERSONA_PITCH: { [string]: number } = { Scared = 1.12, Hero = 0.9, Chill = 0.95, Curious = 1.04 }
+local function bodySound(life: Life, kind: string, volume: number)
+	local cam = Workspace.CurrentCamera
+	local pelvis = life.pelvis
+	if not cam or not pelvis or (cam.CFrame.Position - pelvis.Position).Magnitude > SOUND_NEAR then
+		return
+	end
+	local now = os.clock()
+	local b: any = life
+	local count = b.sndCount or 0
+	if now - (b.sndWindow or 0) >= 1 then
+		b.sndWindow = now
+		count = 0
+	end
+	if count >= 4 then
+		return
+	end
+	if kind ~= "step" then
+		if now - (b.voiceAt or -math.huge) < 1.5 then
+			return
+		end
+		b.voiceAt = now
+	end
+	b.sndCount = count + 1
+	b.sounds = b.sounds or {}
+	local snd: Sound? = b.sounds[kind]
+	if not snd or not snd.Parent then
+		local new = Instance.new("Sound")
+		new.Name = "Body_" .. kind
+		new.RollOffMode = Enum.RollOffMode.InverseTapered
+		new.RollOffMinDistance = 6
+		new.RollOffMaxDistance = SOUND_NEAR + 10
+		new.SoundId = if kind == "step" then STEP_IDS[(math.floor(life.seed * 7) % #STEP_IDS) + 1] else VOICES[kind]
+		new.Parent = if kind == "step" then pelvis else life.head
+		b.sounds[kind] = new
+		snd = new
+	end
+	local s = snd :: Sound
+	local persona = life.model:GetAttribute("Persona")
+	local voicePitch = (0.9 + (life.seed % 1) * 0.2) * (if type(persona) == "string" then PERSONA_PITCH[persona] or 1 else 1)
+	s.Volume = volume
+	s.PlaybackSpeed = if kind == "step" then 1.7 + math.random() * 0.25 else voicePitch
+	s.TimePosition = 0
+	s:Play()
+end
 local function faceLife(life: Life, now: number): string
 	local head = life.head
 	local cam = Workspace.CurrentCamera
@@ -493,7 +555,11 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 	life.groundSpeed += (speed - life.groundSpeed) * (1 - math.exp(-8 * dt))
 	local limp = state ~= "Crawling" and (life.brokenLeg == 1 or life.brokenLeg == -1)
 	local stride = if state == "Crawling" then STRIDE.Crawling elseif limp then STRIDE.Limp else STRIDE[state] or STRIDE.Walking
+	local phase0 = life.phase
 	life.phase = (life.phase + life.groundSpeed * dt / stride) % 1
+	if (Config :: any).BODY_SOUND and life.groundSpeed > 1 and (life.phase < phase0 or (phase0 < 0.5 and life.phase >= 0.5)) then
+		bodySound(life, "step", 0.05 + math.min(life.groundSpeed, 16) * 0.006)
+	end
 	local p = life.phase * TAU
 	local s, c = sin(p), cos(p)
 	-- Barely moving (setting off, turning on the spot): the cycle fades in.
@@ -2073,6 +2139,13 @@ local function step(life: Life, now: number, dt: number)
 	local model = life.model
 	local state = (model:GetAttribute("RagdollState") :: string?) or "Standing"
 	if state ~= life.state then
+		if (Config :: any).BODY_SOUND then
+			if (state == "Ragdoll" or state == "Flinch" or state == "Stumble") and life.state ~= "Ragdoll" and life.state ~= "Out" then
+				bodySound(life, "ouch", 0.45)
+			elseif state == "GettingUp" then
+				bodySound(life, "getup", 0.35)
+			end
+		end
 		life.previous = life.state
 		life.state = state
 		life.stateSince = now
