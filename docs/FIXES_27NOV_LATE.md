@@ -210,6 +210,8 @@ Build on `RAGDOLL_FEEL.md` "The upgrade" and `RAGDOLL_10.md` R4. Finish what is 
 3. **Riding over kerbs and slopes:** no sinking into a ramp or a kerb; the wheels follow the ground (the screens' wheel welds).
 
 ## 12. The BOXING RING: drop one in, an opponent runs in, they fight to the end (owner, screenshot: two boxers in guard, apart, never hitting: "De slår ikke hinanden og gør så man bare skal tage 1 ragdoll derop og så kommer der en anden ragdoll løbende ind i ringen og så starter kampen og så slås de til døden")
+
+**DONE v1368 (`BOXING_V2`):** drop one ragdoll on the canvas: it is RED; the champion or the nearest free ragdoll (120 studs) runs in as BLUE; the fight places them in guard 3.4 apart and steps in to 2.6 to punch (measured 3-5 studs apart in Play: punches land, stumbles, knockdowns with the count, get-ups), blocks, combos; not up by 10 = the final blow kills the loser (normal death); the winner cheers and stays as CHAMPION (streak on the canvas); a quiet background fight starts 8-15 s after joining (it takes about 25 s more for both to walk there). The START A FIGHT prompt is gone; pick-the-winner prompts for 5 s. LEFT (owner check): hook/uppercut poses and the faces were not added (the existing Box pose and Punch swing are used).
 **Why they never hit** (`Systems/BoxingMatch.luau` ~216-250): a boxer "steps in" only by setting its `Home` 2.4 studs from the other, and a punch lands only within 4.6 studs. The walking rules then keep them apart:
 - the personal-space push (`avoidDummies`, PERSONAL_SPACE 2.6 × 1.6 with NO_OVERLAP);
 - PHYSICS_DEEP's arrive dead zone (once arrived, it stays until the goal moves more than 4 studs) and STATE_CALM (1.5 s least in Standing).
