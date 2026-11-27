@@ -107,6 +107,41 @@ end
 -- (BOWLING_12, Config.BOWL_BUMPERS, "kid mode": after 2 gutters in a row the lane's bumpers rise for the next roll
 -- (padded rails on both edges, tweened up out of the gutter edge), then sink again after it is counted)
 local guttersInRow: { [number]: number } = {}
+
+-- (BOWLING_12, Config.BOWL_CHEERS: on a strike or a spare the standing ragdolls round the lane (35 studs of the
+-- pins) cheer 2.5 s, three of them with a line; never the bowled one, one held, in a machine or with a mood)
+local CHEER_LINES = { "STRIIIKE!", "WOOO!", "What a roll!", "Bowled over!", "Again! Again!" }
+local function cheer(lane: any, ball: Model?)
+	local folder = Workspace:FindFirstChild("Dummies")
+	if not folder then
+		return
+	end
+	local said = 0
+	for _, m in folder:GetChildren() do
+		local pe = m:FindFirstChild("LowerTorso")
+		if m ~= ball and pe and pe:IsA("BasePart") and (pe.Position - lane.deckAt).Magnitude < 35 and m:GetAttribute("Mood") == nil
+			and m:GetAttribute("Vital") ~= "Dead" and m:GetAttribute("Held") ~= true and m:GetAttribute("InMachine") == nil
+			and (m:GetAttribute("RagdollState") == nil or m:GetAttribute("RagdollState") == "Standing" or m:GetAttribute("RagdollState") == "Walking") then
+			m:SetAttribute("Mood", "Cheer")
+			local line: string? = nil
+			if said < 3 then
+				said += 1
+				line = CHEER_LINES[math.random(1, #CHEER_LINES)]
+				m:SetAttribute("MoodSay", line)
+			end
+			task.delay(2.5, function()
+				if m.Parent then
+					if m:GetAttribute("Mood") == "Cheer" then
+						m:SetAttribute("Mood", nil)
+					end
+					if line and m:GetAttribute("MoodSay") == line then
+						m:SetAttribute("MoodSay", nil)
+					end
+				end
+			end)
+		end
+	end
+end
 local function setBumpers(lane: any, up: boolean)
 	local rails = lane.bumpers
 	if not rails or lane.bumpersUp == up then
@@ -548,6 +583,9 @@ local function bowl(lane: Lane, by: Player)
 		if string.sub(word, 1, 6) == "STRIKE" or string.sub(word, 1, 5) == "SPARE" then
 			sound(Bowling.STRIKE_SOUND, lane.deckAt + Vector3.new(0, 3, 0), 1)
 			confetti(lane.deckAt + Vector3.new(0, 4, 0))
+			if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BOWL_CHEERS then
+				cheer(lane, ball)
+			end
 		elseif string.sub(word, 1, 6) == "GUTTER" then
 			sound(Bowling.GUTTER_SOUND, lane.at + Vector3.new(0, 3, 0), 0.8)
 		end

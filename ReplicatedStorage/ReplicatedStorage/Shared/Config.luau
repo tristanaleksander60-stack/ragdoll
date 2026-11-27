@@ -225,6 +225,7 @@ local Config = {
 	PHONE_TEXT_FLOOR = true, -- AUDIT 25: on phones no fixed-size text under 14 px on screen (Client/TextFloor)
 	BOWL_OWNER = true, -- F91 rest: the bowler's machine runs the pins during the roll (network owner), back to the server after the count (Systems/Bowling)
 	BOWL_SLOWMO = true, -- BOWLING_12 rest: a short slow moment round the pins as the bowled ragdoll bursts out of its ball (Client/SlowMotion watches Curl)
+	BOWL_CHEERS = true, -- BOWLING_12: on a strike or spare the standing ragdolls within 35 studs of the pins cheer 2.5 s, three with a line (Systems/Bowling)
 	BOWL_BUMPERS = true, -- BOWLING_12 kid mode: after 2 gutters in a row the lane's bumpers rise for the next roll, then sink (Systems/Bowling)
 	BOWL_BOLTS = true, -- BOWLING_12 rewards: +5 BOLTS a strike, +3 a spare, +15 a turkey, at most 100 a visit (Systems/Bowling)
 	BOWL_TURKEY = true, -- BOWLING_12 rest: 2 strikes in a row show DOUBLE!, 3 a TURKEY! with extra confetti and a shout (Systems/Bowling)
