@@ -97,6 +97,56 @@ local function hurtNear(at: Vector3, dummies: Instance): Model?
 	return best
 end
 
+-- (P1 rest, Config.SCARED_HIDE: after its panic run a SCARED ragdoll hides: it finds the nearest solid thing at
+-- least 3 high and 2 wide within 22 studs (a tree, a crate, a wall, a machine), walks round to its far side from the
+-- noise, crouches there and peeks out (the Peek mood, leaning out one side then the other) for 5 s, then goes on.)
+local SCARED_HIDE = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SCARED_HIDE == true
+local hideParams = OverlapParams.new()
+hideParams.FilterType = Enum.RaycastFilterType.Exclude
+local function hide(m: Model, from: Vector3)
+	local pe = m:FindFirstChild("LowerTorso")
+	if not (m.Parent and pe and pe:IsA("BasePart")) or not free(m) then
+		return
+	end
+	local dummies = Workspace:FindFirstChild("Dummies")
+	hideParams.FilterDescendantsInstances = { dummies :: Instance, Workspace:FindFirstChild("Vehicles") :: Instance }
+	local best: BasePart? = nil
+	local bestD = math.huge
+	for _, p in Workspace:GetPartBoundsInRadius(pe.Position, 22, hideParams) do
+		if p.Anchored and p.CanCollide and p.Size.Y >= 3 and math.max(p.Size.X, p.Size.Z) >= 2 and math.max(p.Size.X, p.Size.Z) <= 30
+			and p.Position.Y - p.Size.Y / 2 < pe.Position.Y + 1 then
+			local d = (p.Position - pe.Position).Magnitude
+			if d < bestD then
+				best, bestD = p, d
+			end
+		end
+	end
+	if not best then
+		return
+	end
+	local away = Vector3.new(best.Position.X - from.X, 0, best.Position.Z - from.Z)
+	if away.Magnitude < 0.1 then
+		return
+	end
+	local reach = math.max(best.Size.X, best.Size.Z) / 2 + 1.8
+	local spot = Vector3.new(best.Position.X, pe.Position.Y, best.Position.Z) + away.Unit * reach
+	m:SetAttribute("Watch", "React")
+	m:SetAttribute("Home", spot)
+	m:SetAttribute("HomeLook", from)
+	m:SetAttribute("Pace", 1.6)
+	task.delay(math.clamp((spot - pe.Position).Magnitude / 9, 1, 4), function()
+		if m.Parent and m:GetAttribute("Watch") == "React" and m:GetAttribute("Mood") == nil then
+			m:SetAttribute("Mood", "Peek")
+			task.delay(5, function()
+				if m.Parent and m:GetAttribute("Mood") == "Peek" then
+					m:SetAttribute("Mood", nil)
+				end
+			end)
+		end
+	end)
+	release(m, 9)
+end
+
 local busyUntil = 0
 local function heard(kind: string, at: Vector3, dummies: Instance)
 	local now = os.clock()
@@ -140,7 +190,11 @@ local function heard(kind: string, at: Vector3, dummies: Instance)
 			n += 1
 			say(m, "Scared")
 			m:SetAttribute("PanicFrom", at)
-			m:SetAttribute("PanicUntil", Workspace:GetServerTimeNow() + 4 + math.random() * 2)
+			local panic = 4 + math.random() * 2
+			m:SetAttribute("PanicUntil", Workspace:GetServerTimeNow() + panic)
+			if SCARED_HIDE then
+				task.delay(panic + 0.2, hide, m, at)
+			end
 		elseif persona == "Hero" then
 			local victim = hurtNear(at, dummies)
 			local vp = victim and victim:FindFirstChild("LowerTorso")

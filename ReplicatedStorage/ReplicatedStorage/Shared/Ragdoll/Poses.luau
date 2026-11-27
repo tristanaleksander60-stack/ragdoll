@@ -511,6 +511,16 @@ function Poses.point(t: number): Pose
 	stand(feelOut, 6, ang(-10, sin(t * 10) * 8, 0), ang(62 + sin(t * 16) * 5, 0, 0), ang(150, 0, -30), 4, 85)
 	return feelOut
 end
+-- (P1, SCARED_HIDE) Hiding behind something and peeking out: knees bent low, hands up by the chest, the body
+-- leaning out to one side with the head turned to look, then slowly to the other side.
+function Poses.peek(t: number): Pose
+	local side = math.clamp(sin(t * 1.1) * 2.2, -1, 1)
+	stand(feelOut, 14, ang(-6, side * 32, side * -8), ang(68, 0, -18), ang(68, 0, 18), 112, 112)
+	feelOut.Waist = ang(14, side * 10, side * 20)
+	feelOut.RightHip, feelOut.LeftHip = ang(28, 0, 6), ang(28, 0, -6)
+	feelOut.RightKnee, feelOut.LeftKnee = ang(-46, 0, 0), ang(-46, 0, 0)
+	return feelOut
+end
 -- Arms up, fists pumping.
 function Poses.cheer(t: number): Pose
 	local s = sin(t * 12)
@@ -638,6 +648,6 @@ function Poses.patientStill(t: number): Pose
 	return patient(t, 0)
 end
 
-Poses.MOODS = { WrapHigh = Poses.wrapHigh, WrapMid = Poses.wrapMid, WrapLow = Poses.wrapLow, PatientLeft = Poses.patientLeft, PatientRight = Poses.patientRight, PatientStill = Poses.patientStill, Sit = Poses.sit, Ride = Poses.ride, Check = Poses.check, Breath = Poses.breath, CPRFast = Poses.cprFast, CPRSlam = Poses.cprSlam, CPROne = Poses.cprOne, Gasp = Poses.gasp, Point = Poses.point, Cheer = Poses.cheer, Relief = Poses.relief, Hug = Poses.hug, Despair = Poses.despair, Sky = Poses.sky, Rage = Poses.rage, Angry = Poses.fists, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr, Dizzy = Poses.dizzy } :: { [string]: (number) -> Pose }
+Poses.MOODS = { WrapHigh = Poses.wrapHigh, WrapMid = Poses.wrapMid, WrapLow = Poses.wrapLow, PatientLeft = Poses.patientLeft, PatientRight = Poses.patientRight, PatientStill = Poses.patientStill, Sit = Poses.sit, Ride = Poses.ride, Check = Poses.check, Breath = Poses.breath, CPRFast = Poses.cprFast, CPRSlam = Poses.cprSlam, CPROne = Poses.cprOne, Gasp = Poses.gasp, Point = Poses.point, Cheer = Poses.cheer, Relief = Poses.relief, Hug = Poses.hug, Despair = Poses.despair, Sky = Poses.sky, Rage = Poses.rage, Angry = Poses.fists, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr, Dizzy = Poses.dizzy, Peek = Poses.peek } :: { [string]: (number) -> Pose }
 
 return Poses
