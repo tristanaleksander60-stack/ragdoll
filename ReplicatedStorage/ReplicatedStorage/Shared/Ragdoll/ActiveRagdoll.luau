@@ -1367,6 +1367,23 @@ function ActiveRagdoll.holdSeat(rig: any, dt: number, limp: boolean): boolean
 end
 
 -- Standing still: decide whether to set off (run from someone, crawl, or walk home).
+-- (PHYSICS_DEEP check 2, Config.GUN_ONCE: a coward backed off from a gun and then fled again every FLEE_REST s while the
+-- gun was still held there: back and forth. Within GUN_WARY s of running from one, it only runs again when the gun
+-- comes clearly closer (inside 60% of the distance it first ran at); otherwise it keeps its distance and stays.)
+local function gunToFlee(rig: Rig, now: number): Vector3?
+	local gun = GunThreat.cowardRunsFrom(rig.chest.Position)
+	if not gun then
+		return nil
+	end
+	local P = rig :: any
+	local d = (gun - rig.chest.Position).Magnitude
+	if (GameConfig :: any).GUN_ONCE and now - rig.gunFledAt < GUN_WARY and P.gunFledDist and d > P.gunFledDist * 0.6 then
+		return nil
+	end
+	P.gunFledDist = d
+	return gun
+end
+
 local function think(rig: Rig)
 	-- (PHYSICS_DEEP 2c: the standing hold follows a body that was set down somewhere else or shoved hard, so the lift
 	-- never drags it back to its old spot)
@@ -1413,7 +1430,7 @@ local function think(rig: Rig)
 	-- (10 Nov 2026, the owner: they must be properly scared: every one but the brave runs from a gun.)
 	local coward = looking and runner(rig) and rig.model:GetAttribute("Personality") ~= "Brave" and rig.model:GetAttribute("Greeter") == nil -- (the greeter walks up to a new player holding the G17: it never runs from it)
 	if coward and now - rig.fledAt > FLEE_REST then
-		local gun = GunThreat.cowardRunsFrom(rig.chest.Position)
+		local gun = gunToFlee(rig, now)
 		if gun then
 			rig.gunFledAt = now
 			startFleeing(rig, gun, now, GUN_FLEE)
@@ -1649,7 +1666,7 @@ local function updateMoving(rig: Rig, dt: number)
 	if state == "Walking" and now >= rig.gunLookAt then
 		rig.gunLookAt = now + 0.25 -- (every walker: the personality is read 4 times a second, not every step)
 		if runner(rig) and rig.model:GetAttribute("Personality") ~= "Brave" and rig.model:GetAttribute("Greeter") == nil then
-			local gun = if now - rig.fledAt > FLEE_REST then GunThreat.cowardRunsFrom(rig.chest.Position) else nil
+			local gun = if now - rig.fledAt > FLEE_REST then gunToFlee(rig, now) else nil
 			if gun then
 				rig.gunFledAt = now
 				startFleeing(rig, gun, now, GUN_FLEE)
