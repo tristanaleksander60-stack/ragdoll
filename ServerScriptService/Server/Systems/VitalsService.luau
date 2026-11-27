@@ -116,6 +116,7 @@ local headBurst: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: an
 local HEAD_BURST_AT = 3
 local infoRemote: RemoteEvent? = nil
 local lastInfo: { [Player]: number } = {}
+local weaponsToday: { [Player]: any } = setmetatable({}, { __mode = "k" }) :: any -- (AUDIT 14: weapons used today)
 -- The last line each player was sent (tests read it; the client only gets the remote).
 VitalsService.lastSent = {} :: { [Player]: { line: string, killed: boolean } }
 local rng = Random.new()
@@ -837,6 +838,23 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 			else (if sz < 0 then "Pelvis" else "Lower spine")
 		label = label .. " (" .. bone .. ")"
 	end
+	-- (AUDIT 14: the "Use N different weapons" daily goal: the different weapons that hit today, a "max" goal)
+	if by and by:IsA("Player") and type(o.toyId) == "string" then
+		local day = math.floor(os.time() / 86400)
+		local w = weaponsToday[by]
+		if not w or w.day ~= day then
+			w = { day = day, set = {}, n = 0 }
+			weaponsToday[by] = w
+		end
+		if not w.set[o.toyId] then
+			w.set[o.toyId] = true
+			w.n += 1
+			local n = w.n
+			pcall(function()
+				(require(script.Parent:WaitForChild("ProgressService")) :: any).goal(by, "Weapons", n)
+			end)
+		end
+	end
 	-- (D12 part 1, Config.BONES_V2: the bone it hit loses integrity; a stage change is named on the card: ": CRACKED")
 	if (Config :: any).BONES_V2 and not severed then
 		local kind = if o.zone == Anatomy.zones.Blast then "blast" elseif o.round then "round" else "blow"
@@ -851,7 +869,7 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 		end)
 		if okB and type(word) == "string" then
 			label = label .. ": " .. word
-			if (word == "BROKEN" or word == "SHATTERED") and by then
+			if (word == "BROKEN" or word == "SHATTERED") and by and by:IsA("Player") then
 				pcall(function() -- (AUDIT 14: the "Break N bones" daily goal)
 					(require(script.Parent:WaitForChild("ProgressService")) :: any).goal(by, "Breaks", 1)
 				end)

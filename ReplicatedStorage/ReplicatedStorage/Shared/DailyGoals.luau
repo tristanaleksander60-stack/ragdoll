@@ -8,7 +8,7 @@
 
 local DailyGoals = {}
 
-export type Kind = "Takedowns" | "Minutes" | "Eggs" | "Trips" | "Combo" | "Arena" | "Strike" | "Breaks"
+export type Kind = "Takedowns" | "Minutes" | "Eggs" | "Trips" | "Combo" | "Arena" | "Strike" | "Breaks" | "Cannon" | "Feed" | "Weapons"
 export type Goal = { kind: Kind, need: number, text: string }
 
 -- What can be asked, and how much (one of `need` is picked). "max" kinds count the best of the
@@ -21,8 +21,11 @@ DailyGoals.POOL = table.freeze({
 	{ kind = "Combo" :: Kind, need = { 5, 8 }, text = "Get a combo of %d" },
 	{ kind = "Arena" :: Kind, need = { 1, 2 }, text = "Play %d arena round%s" },
 	-- (AUDIT 14: goals that use the map; Bowling and VitalsService count them)
-	{ kind = "Strike" :: Kind, need = { 1 }, text = "Bowl %d strike%s" },
+	{ kind = "Strike" :: Kind, need = { 1 }, text = "Bowl a strike" },
 	{ kind = "Breaks" :: Kind, need = { 5, 10 }, text = "Break %d bone%s" },
+	{ kind = "Cannon" :: Kind, need = { 3 }, text = "Fire the cannon %d time%s" },
+	{ kind = "Feed" :: Kind, need = { 2, 3 }, text = "Feed %d animal%s" },
+	{ kind = "Weapons" :: Kind, need = { 3, 4 }, text = "Use %d different weapon%s" },
 })
 -- V9-0s: no arena goals while the Game Arena is hidden (Config.ARENA_ENABLED).
 if not (require(script.Parent:WaitForChild("Config")) :: any).ARENA_ENABLED then
@@ -34,7 +37,7 @@ if not (require(script.Parent:WaitForChild("Config")) :: any).ARENA_ENABLED then
 	end
 	DailyGoals.POOL = table.freeze(kept)
 end
-DailyGoals.MAX_KINDS = table.freeze({ Combo = true }) :: { [string]: boolean }
+DailyGoals.MAX_KINDS = table.freeze({ Combo = true, Weapons = true }) :: { [string]: boolean }
 DailyGoals.COUNT = 3
 DailyGoals.EGGS_PER_GOAL = 1
 DailyGoals.BONUS_EGGS = 1

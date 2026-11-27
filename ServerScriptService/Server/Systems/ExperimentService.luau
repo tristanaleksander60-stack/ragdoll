@@ -218,6 +218,7 @@ ExperimentService.tossComboForTest = tossCombo
 -- Something a card may count happened (kind: Shared\Experiments.KINDS). `what` names the place for
 -- a TOSS COMBO pop ("the LAVA"; release 0.20).
 -- STAY_LONGER 2: the machines and creatures that count for the TRY reward.
+local FEED_KINDS = { Spider = true, Plant = true, Frog = true, Whale = true, Chicken = true, Mole = true }
 local TRY_MACHINES = { Cannon = true, Wrecking = true, Spider = true, Plant = true, Frog = true, Whale = true, Chicken = true, Washer = true, Slingshot = true, Mole = true, Vacuum = true, Tower = true }
 
 function ExperimentService.event(player: Player, kind: string, n: number?, what: string?)
@@ -229,6 +230,12 @@ function ExperimentService.event(player: Player, kind: string, n: number?, what:
 			SessionStats.mark(player, "firstLaunchAt")
 		end
 	end)
+	-- (AUDIT 14: the map's daily goals: the cannon, and a ragdoll given to an animal)
+	if kind == "Cannon" or FEED_KINDS[kind] then
+		pcall(function()
+			(require(script.Parent:WaitForChild("ProgressService")) :: any).goal(player, if kind == "Cannon" then "Cannon" else "Feed", 1)
+		end)
+	end
 	-- (LAB10 R2: the client's TRY ME chain moves on to the next untried machine: Client/LabShowcase.)
 	if Experiments.KINDS[kind] and player:GetAttribute("Tried_" .. kind) ~= true then
 		player:SetAttribute("Tried_" .. kind, true)
