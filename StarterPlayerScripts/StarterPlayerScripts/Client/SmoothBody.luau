@@ -495,7 +495,14 @@ local function drive(body: Body)
 	local headCf: CFrame? = nil
 	local mesh = body.mesh
 	mesh.CFrame = body.pelvis.CFrame * body.meshOff
-	local cfs: { CFrame } = {}
+	-- (LAG-FREE 2 item 3: one table per body, cleared each draw, not a new one every frame)
+	local cfs: { CFrame } = (body :: any).cfs
+	if cfs then
+		table.clear(cfs)
+	else
+		cfs = {}
+		;(body :: any).cfs = cfs
+	end
 	for i, d in body.drives do
 		local cf
 		local p = d.parent
@@ -605,12 +612,13 @@ local function step(dt: number)
 			end
 		end
 	end
+	local xrayOn = Players.LocalPlayer:GetAttribute("XRayOn") == true -- (LAG-FREE 2 item 3: read once a frame, not per body)
 	for _, body in bodies do
 		local hidden = body.model:GetAttribute("MachineHidden") == true
 		if GLASS_V6 and not hidden then
 			-- (THE v6 FIT PASS item 3 + the owner's A2: only the X-RAY toggle turns the whole v6 body to glass; a limb shot 3
 			-- times in a row shows its own bones through a solid body (DummySkins limbGlow), the mesh never changes for it)
-			local want = if xrayed(body) and Players.LocalPlayer:GetAttribute("XRayOn") == true then XRAY_GLASS else 0
+			local want = if xrayOn and xrayed(body) then XRAY_GLASS else 0
 			if body.mesh.Transparency ~= want then
 				body.mesh.Transparency = want
 			end

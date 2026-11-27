@@ -131,7 +131,7 @@ No hitch over 100 ms when machines run, a big event starts or the lab loads.
    - **Waking:** unanchor, then `DummyControl.giveParts(owner)` again. Anchoring drops ownership, so it must be given back, or the server simulates the body and it stutters.
    - **Step 2, phones and tablets at level ≤2 only:** a living body that only stands, more than 40 studs away and off screen for 3 s, sleeps standing. DummyLife leaves it. It wakes when it is within 35 studs, on screen, or targeted.
    - **The rest skip sleeping bodies:** SmoothBody drives it once, then not again. DummyLife, GroundGuard and Unstick skip it.
-3. **PART DONE v1387:** behind/beside the camera (dot < 0.25, past 6 studs) a near body is driven at FAR_RATE only; a sleeping body is drawn once. LEFT: reach/rate by level, attribute caching, the cfs table reuse, the v6 LITE mesh. 3. **`LAGFREE_SKIN`: SmoothBody costs a third.** v6 stays on every body in view.
+3. **PART DONE v1387:** behind/beside the camera (dot < 0.25, past 6 studs) a near body is driven at FAR_RATE only; a sleeping body is drawn once. v1393: reach/rate by level (PERF_LEVELS); v1397: one cfs table per body (cleared, not new each frame), XRayOn read once a frame. PARKED: the v6 LITE mesh (needs a new mesh upload, which the MCP refuses; owner Import 3D). 3. **`LAGFREE_SKIN`: SmoothBody costs a third.** v6 stays on every body in view.
    - Behind or beside the camera (the DummyLife dot test): FAR_RATE only.
    - Asleep: no drive.
    - By level: ANIM_REACH 45/35/28/22, and FAR_RATE 15/12/10/8 Hz for levels 3/2/1/0.
