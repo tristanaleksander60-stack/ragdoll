@@ -1613,6 +1613,79 @@ BUILD.Mole = function(f, at, m)
 			mole:PivotTo(cf)
 		end
 	end
+	-- 3.24 MOLE (docs/MACHINES_10.md; Config.MOLE_10): WHACK-A-MOLE. Between catches the mole peeks out of a random
+	-- hill for 1.2 s; a shot (or a blast) at it while it is up whacks it: it ducks at once, "WHACK! x3" counts a streak
+	-- for the lab's owner (MoleBest); a peek missed ends the streak.
+	if (Config :: any).MOLE_10 and mole then
+		local upAt: Vector3? = nil
+		local hit = false
+		local streak = 0
+		local hills = {}
+		for i = 1, 5 do
+			local a = i * 1.3
+			table.insert(hills, at * CFrame.new(math.cos(a) * 6, 0, math.sin(a) * 6))
+		end
+		local function whack(point: Vector3)
+			if upAt and not hit and (point - upAt).Magnitude < 4.5 then
+				hit = true
+				streak += 1
+				local text = "WHACK! x" .. tostring(streak)
+				local okO, owner = pcall(function()
+					return lazy("Lab").ownerAt(upAt :: Vector3)
+				end)
+				if okO and owner then
+					local best = (owner:GetAttribute("MoleBest") :: number?) or 0
+					if streak > best then
+						owner:SetAttribute("MoleBest", streak)
+						if streak > 1 then
+							text ..= " NEW BEST!"
+						end
+					end
+				end
+				pcall(function()
+					lazy("Playground").pop((upAt :: Vector3) + Vector3.new(0, 4, 0), text, Color3.fromRGB(255, 200, 80))
+				end)
+				spray(f, upAt :: Vector3, { Color3.fromRGB(255, 230, 90), Color3.fromRGB(255, 255, 255) }, 14, 10, 0.4, Vector3.new(0, 1, 0))
+			end
+		end
+		table.insert(lazy("Knockables").listeners, {
+			shot = function(point: Vector3, _from: Vector3)
+				whack(point)
+			end,
+			blast = function(center: Vector3, radius: number)
+				if upAt and (center - upAt).Magnitude < radius + 2 then
+					whack(upAt)
+				end
+			end,
+			reset = function() end,
+		})
+		task.spawn(function()
+			while f.Parent do
+				task.wait(math.random(30, 50) / 10)
+				if not m.busy and f.Parent then
+					local hill = hills[math.random(#hills)]
+					hit = false
+					play(0.15, function(t)
+						setMole(hill * CFrame.new(0, -5 + 5.6 * t, 0))
+					end)
+					upAt = hill.Position + Vector3.new(0, 1, 0)
+					local t0 = os.clock()
+					while os.clock() - t0 < 1.2 and not hit do
+						task.wait(0.05)
+					end
+					upAt = nil
+					if not hit then
+						streak = 0
+					end
+					if not m.busy then
+						play(if hit then 0.08 else 0.2, function(t)
+							setMole(hill * CFrame.new(0, 0.6 - 6 * t, 0))
+						end)
+					end
+				end
+			end
+		end)
+	end
 	return function()
 		if m.busy or os.clock() < nextAt then
 			return

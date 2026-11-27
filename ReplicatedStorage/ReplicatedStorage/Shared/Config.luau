@@ -158,6 +158,7 @@ local Config = {
 	TESLA_10 = true, -- 3.20 tesla coil: a ZAP button; 1 s charge (rising electric growl, faster sparks), a lightning arc to the nearest ragdoll (blue-white flash, soot-black 3 s, smoke puff, a jump), chaining to 2 more; "ZAP! x3 CHAIN" (MapMachines)
 	SWEEP_10 = true, -- 3.22 sweeper: a speed button on the post (SLOW / FAST / CRAZY), ragdolls on the pad are swept off over the edge, players jumping the beam score "JUMPED x5!" + NEW BEST (SweepBest), caught on the ground = knocked off (MapMachines + LabOwnerMap)
 	LAVA_10 = true, -- 3.23 lava strip: glows and bubbles; a ragdoll in it hops a hot-foot dance, goes soot-black and smoking, jumps out over the kerb after 1.6 s, "HOT FOOT! 1.6 s" + NEW BEST (LavaBest) (MapMachines)
+	MOLE_10 = true, -- 3.24 mole: whack-a-mole: between catches it peeks out of a random hill for 1.2 s; shoot it while up: "WHACK! x3" streak + NEW BEST (MoleBest) (LabCreatures)
 	TURN_EVEN = true, -- F73: the heading rotates at a capped even rate (220 deg/s walking, 360 fleeing), never a lerp whip or 180 degree snap; turning on the spot steps the feet (ActiveRagdoll, DummyLife)
 	NAV_BLOCKCAST = true, -- F72: obstacles are seen with a body-sized Blockcast whose look-ahead grows with speed (2.5-7 studs), and the detour takes the more open side (ActiveRagdoll blocked/clearAhead)
 	NAV_BUMP_LOG = true, -- F72: ActiveRagdoll counts detours, other-side tries and waits for a car, printed once a minute ([NavBump]); a moving car in the way is waited for, not walked round
