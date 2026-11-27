@@ -18,6 +18,38 @@ local function lazy(name: string): any
 	return require(script.Parent:WaitForChild(name)) :: any
 end
 
+-- 3.5 TRAMPOLINE part 1 (Config.BOUNCE_SCORE): landings within 12 studs of the plan's Trampoline less than 3 s apart count
+-- as one bounce chain: "BOUNCE x3!" from the second bounce on, and a NEW BEST chain for the lab's owner (BounceBest).
+local chain, chainAt = 0, 0
+local function bounce(at: Vector3): boolean
+	local Lab = lazy("Lab")
+	local owner = Lab.ownerAt(at)
+	local okT, tramp = pcall(function()
+		return (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("PlanSpot")) :: any).at("Trampoline", Vector2.new(50, 100))
+	end)
+	if not (owner and okT) then
+		return false
+	end
+	local o = Lab.originFor(owner)
+	if Vector3.new(at.X - (o.X + tramp.X), 0, at.Z - (o.Z + tramp.Y)).Magnitude > 12 then
+		return false
+	end
+	local now = os.clock()
+	chain = if now - chainAt < 3 then chain + 1 else 1
+	chainAt = now
+	if chain >= 2 then
+		local best = (owner:GetAttribute("BounceBest") :: number?) or 0
+		local newBest = chain > best
+		if newBest then
+			owner:SetAttribute("BounceBest", chain)
+		end
+		pcall(function()
+			lazy("Playground").pop(at, "BOUNCE x" .. chain .. "!" .. (if newBest then " NEW BEST!" else ""), Color3.fromRGB(140, 255, 160))
+		end)
+	end
+	return true
+end
+
 local function heard(at: Vector3, speed: number)
 	local now = os.clock()
 	if now - lastAt < 0.8 then
@@ -59,6 +91,12 @@ function DropScore.start()
 		return
 	end
 	lazy("FxService").onMoment(function(kind: string, at: Vector3, speed: number, _toy: string, _who: number)
+		if kind == "Land" and speed >= 14 and (Config :: any).BOUNCE_SCORE then
+			local okB, was = pcall(bounce, at)
+			if okB and was then
+				return
+			end
+		end
 		if kind == "Land" and speed >= 40 then
 			task.spawn(heard, at, speed)
 		end
