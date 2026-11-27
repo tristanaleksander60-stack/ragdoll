@@ -2032,6 +2032,9 @@ end
 -- "123 studs!" pops (3 s), with NEW BEST for the player who loaded it (attribute CannonBest), and 1 shot in 20 is
 -- GOLDEN (a gold confetti burst, "GOLDEN SHOT!").
 local function pop(at: Vector3, text: string, color: Color3)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).WORLD_POPS == false then
+		return -- (owner 27 Nov late: "Fjern ALLE de her tekster", also from the machines)
+	end
 	local p = Instance.new("Part")
 	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.Transparency = true, false, false, false, 1
 	p.Size = Vector3.one * 0.2

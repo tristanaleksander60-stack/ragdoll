@@ -344,14 +344,14 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 				while os.clock() - t0 < RocketRide.COUNTDOWN do
 					local k = (os.clock() - t0) / RocketRide.COUNTDOWN
 					if board then
-						board.Text = tostring(math.max(1, RocketRide.COUNTDOWN - math.floor(os.clock() - t0)))
+						board.Text = if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).WORLD_POPS == false then "" else tostring(math.max(1, RocketRide.COUNTDOWN - math.floor(os.clock() - t0)))
 					end
 					place(CFrame.new(math.sin(os.clock() * 60) * 0.08 * k, 0, math.cos(os.clock() * 50) * 0.08 * k))
 					RunService.Heartbeat:Wait()
 				end
 				-- Lift-off: faster and faster, a slight wobble.
 				if board then
-					board.Text = "LIFT OFF!"
+					board.Text = if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).WORLD_POPS == false then "" else "LIFT OFF!"
 					task.delay(1.5, function()
 						if board then
 							board.Text = ""

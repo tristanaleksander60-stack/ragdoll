@@ -1,5 +1,7 @@
 # OVERVIEW: the whole plan on one page (read this FIRST on every /klar)
 
+> ## ⚠⚠⚠ NEWEST (owner test 27 Nov evening, angry and rightly so): `docs/FIXES_28NOV.md` FIRST. Batch A, then STOP and give the owner a short test list; wait. Then `docs/RAGDOLL_V7.md` (animated until hit: the end of the jitter, lean and leg bugs) step by step with a STOP after each. Everything below waits.
+
 > ## ⚠⚠ FIRST OF ALL (owner testing, 27 Nov late): `docs/FIXES_27NOV_LATE.md` 0-12 (cloud code into Studio; X-ray glass in the limb's own shape, never a cylinder; CPR hands together; only 1-2 talk to you, the rest do things where they are; funnels for the new game; bullet holes and the face ON the skin, following the mesh). Then `MILD_EXTRAS.md` (11b), then LAG-FREE 2 (`PERF_MOBILE.md` §6, 11c: everything lag-free on phones and tablets). Then THE FINISH LINE.
 
 > ## ⚠⚠ THE FINISH LINE (owner, 27 Nov late): "næste gang jeg ser på min computer skal jeg have et færdig spil, ikke noget 5/10 som det er nu"

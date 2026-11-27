@@ -1694,6 +1694,9 @@ end
 -- comic pop only at "CRACK!" (broken) and "SHATTERED!". The server shares the stages as BoneStages ("Part:stage;...").
 local STAGE_POP = { [3] = "CRACK!", [4] = "SHATTERED!" }
 local function bonePop(part: BasePart, text: string)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).WORLD_POPS == false then
+		return -- (owner 27 Nov late: "Fjern ALLE de her tekster", also from the machines)
+	end
 	local bb = Instance.new("BillboardGui")
 	bb.Size = UDim2.fromOffset(150, 44)
 	bb.StudsOffsetWorldSpace = Vector3.new(0, 1.6, 0)

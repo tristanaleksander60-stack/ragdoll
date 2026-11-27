@@ -30,6 +30,12 @@ Reading is the biggest cost; every re-read after a summary costs it again.
 8. **Better output comes from the quality gate (THE FINISH LINE),** not from more reading: get it right once, at the bar, then move on.
 
 ## THE OWNER'S NEWEST ORDER (27 Nov late, wins where it clashes with the 26 Nov orders below)
+- **27 Nov evening (wins over everything):** `docs/FIXES_28NOV.md` "HOW THIS RUN WORKS":
+  - small batches, then STOP with a short test list and wait for the owner; never a 10-hour run;
+  - DONE = a capture from the owner's angle that shows it working;
+  - NO plain-part art for anything a player looks at;
+  - no stair blocked, no tank or pit without a way out.
+  - Then `RAGDOLL_V7.md` step by step, with a STOP after each step.
 - "næste gang jeg ser på min computer skal jeg have et færdig spil, ikke noget 5/10 som det er nu": follow OVERVIEW "THE FINISH LINE": build until EVERY row is DONE at its 9/10 bar, with ONE Play look (and one capture for looks) per row to check it is at the bar before it counts as DONE; a feature not at the bar by the end is switched OFF and listed.
 - "Sørg for ALT er lagfri på telefon og tablet": build `PERF_MOBILE.md` §6 LAG-FREE 2, items 0-10 (OVERVIEW 11c), after MILD_EXTRAS.
   - Every NEW feature from here on also follows it: pooled (no `Instance.new` on a hit), no per-frame loop while idle, reads its numbers from `PERF_LEVELS`, and skips sleeping bodies.

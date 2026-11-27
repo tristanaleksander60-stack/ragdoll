@@ -128,12 +128,21 @@ local function targetFor(grab: Grab): Vector3
 		if offset.Magnitude > HOLD_REACH then
 			target = root.Position + offset.Unit * HOLD_REACH
 		end
+		-- (CARRY_FLOOR_RAY: the camera is above you, so its ray put the body up at the roof; carried in front of you, never
+		-- more than 3 studs over your middle)
+		if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).CARRY_FLOOR_RAY and target.Y > root.Position.Y + 3 then
+			target = Vector3.new(target.X, root.Position.Y + 3, target.Z)
+		end
 	end
 	-- Never pull a body through the floor.
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = { grab.model, grab.marker, player.Character :: Instance }
-	local hit = Workspace:Raycast(target + Vector3.new(0, 30, 0), Vector3.new(0, -60, 0), params)
+	-- (owner 27 Nov late, 5th time: carried bodies flew to the TOP of machines and up the tower: the ray started 30 studs
+	-- up, met the roof/canopy/upper floor first and lifted the body onto it. CARRY_FLOOR_RAY: look for the floor from just
+	-- above the body itself, so only the floor UNDER it counts, never a roof over it.)
+	local fromY = if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).CARRY_FLOOR_RAY then GROUND_CLEARANCE + 1 else 30
+	local hit = Workspace:Raycast(target + Vector3.new(0, fromY, 0), Vector3.new(0, -60, 0), params)
 	if hit and target.Y < hit.Position.Y + GROUND_CLEARANCE then
 		target = Vector3.new(target.X, hit.Position.Y + GROUND_CLEARANCE, target.Z)
 	end

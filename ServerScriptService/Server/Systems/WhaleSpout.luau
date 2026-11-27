@@ -27,6 +27,9 @@ local function lazy(name: string): any
 end
 
 local function pop(at: Vector3, text: string, color: Color3)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).WORLD_POPS == false then
+		return -- (owner 27 Nov late: "Fjern ALLE de her tekster", also from the machines)
+	end
 	pcall(function()
 		lazy("Playground").pop(at, text, color)
 	end)

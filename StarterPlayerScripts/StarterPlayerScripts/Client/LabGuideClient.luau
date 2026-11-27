@@ -28,6 +28,9 @@ LabGuideClient.REST = 0.3 -- a ring's pieces at rest (they breathe 0.15 around i
 -- (0.50.3, fps: off a computer the rings rest still; every new transparency made the engine rebuild what it draws.)
 local LITE = not game:GetService("UserInputService").KeyboardEnabled
 local function setRing(ring: BasePart, transparency: number)
+	if CollectionService:HasTag(ring, "DropSpot") then
+		return -- (a machine's drop point is an invisible marker: only the DROP HERE sign shows over it)
+	end
 	for _, seg in ring:GetChildren() do
 		if seg:IsA("BasePart") and seg.Transparency ~= transparency then
 			seg.Transparency = transparency
@@ -98,8 +101,15 @@ function LabGuideClient.start()
 		local t = os.clock()
 		local best: BasePart? = nil
 		local bestD = LabGuideClient.CARRY_REACH
-		for _, ring in CollectionService:GetTagged(LabGuideClient.TAG) do
-			if ring:IsA("BasePart") then
+		-- (owner 27 Nov late: "der er slet ingen DROP HERE ved hver maskine": the rings were only at the creatures, the old
+		-- stations and 4 old machine names. Every machine that takes a ragdoll now tags its drop point "DropSpot"
+		-- (Server/Systems/DropSpots.add); those count too, without a ring of their own.)
+		local spots = CollectionService:GetTagged(LabGuideClient.TAG)
+		for _, s in CollectionService:GetTagged("DropSpot") do
+			table.insert(spots, s)
+		end
+		for _, ring in spots do
+			if ring:IsA("BasePart") and ring:IsDescendantOf(workspace) then
 				local d = (ring.Position - here).Magnitude
 				if d < LabGuideClient.NEAR then
 					local rest = if V2 and carrying then LabGuideClient.QUIET else LabGuideClient.REST

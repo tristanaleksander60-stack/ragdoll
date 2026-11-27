@@ -72,9 +72,12 @@ VehicleService.SPECS = {
 -- 0.37.12: the game pass that unlocks each vehicle (the owner creates them on the dashboard and sends the ids).
 -- 0 = no pass yet: free to drive until the id is filled in.
 VehicleService.PASSES = { Car = 2092302232, Truck = 0, MuscleCar = 2093220108, Bike = 0, Bicycle = 0, Wheelchair = 0, Wheelchair2 = 0, Wheelchair3 = 0 } -- (24 Nov 2026, owner: they cost Robux again, the Ford is free (its pass: 2092632252); the bike the ragdoll rides stays free) -- (Silvia, Ford, Panzer; owner 22 Nov 2026) :: { [string]: number }
-for _, k in { "GoKart", "Police", "MonsterTruck", "Bulldozer", "FireTruck" } do
-	VehicleService.PASSES[k] = VehicleService.PASSES[k] or 0
-end
+-- (owner 27 Nov late: the 5 new passes)
+VehicleService.PASSES.GoKart = 2098603396
+VehicleService.PASSES.Police = 2098855450
+VehicleService.PASSES.MonsterTruck = 2099065438
+VehicleService.PASSES.Bulldozer = 2098381516
+VehicleService.PASSES.FireTruck = 2101716732
 -- (F76: a kind here with pass 0 is SOON: it stands in its bay and cannot be driven until the owner sends its pass id;
 -- never free by mistake. Suggested prices: go-kart 49, police car 99, monster truck 149, bulldozer 149, fire truck 199.)
 VehicleService.SOON = { GoKart = true, Police = true, MonsterTruck = true, Bulldozer = true, FireTruck = true } :: { [string]: boolean }
