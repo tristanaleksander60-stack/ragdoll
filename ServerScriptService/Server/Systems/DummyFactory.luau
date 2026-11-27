@@ -80,6 +80,7 @@ local V6_SIZE: { [string]: { x: number?, z: number? } } = {
 	LeftLowerLeg = { x = 0.78, z = 0.78 }, RightLowerLeg = { x = 0.78, z = 0.78 }, -- the shin 0.8
 	LeftFoot = { x = 0.72, z = 1.25 }, RightFoot = { x = 0.72, z = 1.25 }, -- the round boot, 1.32 long
 }
+local V6_ARM = { upper = 0.77, lower = 0.78 } -- v6 arm lengths / R15 arm lengths
 local function fitV6(model: Model)
 	if not ((Config :: any).BODY_FIT and (Config :: any).SMOOTH_BODY_V6 and ReplicatedStorage:FindFirstChild("SmoothBodyV6")) then
 		return
@@ -89,6 +90,28 @@ local function fitV6(model: Model)
 		if p and p:IsA("BasePart") then
 			p.Size = Vector3.new(want.x or p.Size.X, p.Size.Y, want.z or p.Size.Z)
 		end
+	end
+	-- (item 6: the v6 arm is shorter than R15's (shoulder to elbow 0.67 against 0.87, elbow to wrist 0.59 against
+	-- 0.76): the physics arms are shortened to it, every rig point in them moved with it, so the physics hand is where
+	-- the v6 hand is drawn and a held phone or newspaper sits in the fingers, not 0.4 studs below them.)
+	for _, side in { "Left", "Right" } do
+		for name, k in { UpperArm = V6_ARM.upper, LowerArm = V6_ARM.lower } do
+			local p = model:FindFirstChild(side .. name)
+			if p and p:IsA("BasePart") then
+				p.Size = Vector3.new(p.Size.X, p.Size.Y * k, p.Size.Z)
+				for _, a in p:GetChildren() do
+					if a:IsA("Attachment") then
+						a.Position = Vector3.new(a.Position.X, a.Position.Y * k, a.Position.Z)
+					end
+				end
+			end
+		end
+	end
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		pcall(function()
+			humanoid:BuildRigFromAttachments()
+		end)
 	end
 	model:SetAttribute("BodyV6", true)
 end
