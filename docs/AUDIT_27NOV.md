@@ -76,7 +76,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - FAVORITE out of phone MORE;
     - BACK TO SPAWN gets a home icon;
     - at most 6-7 entries in 4 rows.
-23. **PART DONE v1353:** each shop tab has a one-line kid subtitle ("BOLTS: coins for weapons"...). LEFT: one tap opens the detail, BUY only there, CODES in the header. **The shop on touch:**
+23. **PART DONE v1353:** each shop tab has a one-line kid subtitle ("BOLTS: coins for weapons"...). One tap opens the detail and the card price opens it too on phones (BUY only there) DONE v1380 (`SHOP_ONE_TAP`); CODES was already in the tab row. DONE. **The shop on touch:**
     - one tap opens the detail view;
     - the card's price button also opens the detail (BUY only there, so a child always sees what it is);
     - CODES moves to the window header;

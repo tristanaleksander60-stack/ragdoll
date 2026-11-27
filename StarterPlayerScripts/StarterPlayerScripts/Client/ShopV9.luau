@@ -612,6 +612,11 @@ local function makeCard(item: any, parent: Instance, order: number): Card
 		size = UDim2.new(1, -16, 0, 52), -- (52 x 0.85 on a phone = 44 px: the touch floor)
 		parent = root,
 		onActivated = function()
+			-- (AUDIT 23, Config.SHOP_ONE_TAP: on a phone the card's price opens the detail; BUY is only there)
+			if Config.SHOP_ONE_TAP and UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+				openDetail(item)
+				return
+			end
 			buy(item)
 		end,
 	})
@@ -649,7 +654,7 @@ local function makeCard(item: any, parent: Instance, order: number): Card
 	end)
 	hit.Activated:Connect(function(input: InputObject?)
 		local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-		if touch and focused ~= card then
+		if touch and focused ~= card and not Config.SHOP_ONE_TAP then
 			-- (A phone: the first tap focuses, the second opens.)
 			local was = focused
 			if was then
