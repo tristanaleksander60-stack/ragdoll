@@ -51,6 +51,9 @@
 - Custom funnels: PlaytimeNew, PlaytimeAll, NewPhone/NewTablet/NewPC/NewConsole, ShopVisit, Vehicles (Pressed, SatFree, PassPrompt, Bought), Multiplayer. Retired: Tutorial, TakedownsNew.
 - Custom events: FirstUse, XrayToggle, BodyCardHidden, CPRDone, BowlingScore (a frame scores at most 30, so the buckets are 0-9 / 10-19 / 20-30, not 0-50/51-100/101+).
 
+## 28 Nov, round 3 of FIXES_28NOV (v1429): STOPPED for the owner's test
+15 part: the hill cut back round the weapon range (RANGE_CLEAR); 16: a real animated T-rex (REX_ANIM; old one in ServerStorage.OwnerBackup). SAVE THE PLACE: the new T-rex lives in the place file (V3Assets). Next: 8 the gyro as a real model, 15 the range shell as a real model.
+
 ## 28 Nov, round 2 of FIXES_28NOV (v1427): STOPPED for the owner's test
 13 the crowd in v6 + 20 v6 bodies on phones (V6_EVERYONE), 14 bike riders welded (BIKE_WELD), 10 head holes on the round head (HOLES_EVERYWHERE; BRUISE_PATCH off), 11 gauze at the v6 size. A SmoothBody load error from v1425 was found and fixed in v1426. Next round: 15/16/8 the real models (weapon testing building, T-rex, gyro).
 

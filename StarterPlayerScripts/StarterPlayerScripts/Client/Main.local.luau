@@ -166,6 +166,7 @@ safe("StuntHud", function() require(Client:WaitForChild("StuntHud")).start() end
 safe("SpawnKey", function() require(Client:WaitForChild("SpawnKey")).start() end) -- V8-2.5: H drops a dummy of a type where you aim
 safe("GodMode", function() require(Client:WaitForChild("GodMode")).start() end) -- 21 Nov 2026: GOD MODE, the pass that creates life (spawning ragdolls)
 safe("LabGuideClient", function() require(Client:WaitForChild("LabGuideClient")).start() end) -- 21 Nov 2026: the lab guide's rings breathe; DROP HERE! while you carry a dummy
+safe("RexAnim", function() require(Client:WaitForChild("RexAnim")).start() end) -- FIXES_28NOV 16: the real T-rex plays its own idle, walk and roar clips
 safe("PlayerSwim", function() require(Client:WaitForChild("PlayerSwim")).start() end) -- (owner 27 Nov late: swim and climb out of the aquarium, never stuck)
 safe("LavaClient", function() require(Client:WaitForChild("LavaClient")).start() end) -- 21 Nov 2026: the lava pit breathes, flickers and its crust drifts
 safe("NpcGlow", function() require(Client:WaitForChild("NpcGlow")).start() end)

@@ -98,7 +98,7 @@
     - move it onto flat open ground, or cut the hill back, so the whole building and its entrance stand free with a path to the door;
     - replace its plain-part shell with a real model: a proper firing-range building with a sign, doors and a roof (Blender or a checked Creator Store model);
     - check every other building on the map for clipping into hills: one capture per building.
-16. **The T-rex is made of plain blocks with a leaf material.**
+16. **DONE v1429 (`REX_ANIM`), SEEN:** V3Assets "TRex" is now a real skinned T-rex (Creator Store 12948588771, "T REX Dinosaur", 1 MeshPart, 33 bones, NO scripts: malware pass clean; scaled to 38 long to fit the 37 x 47 pen, facing the gate). The old block T-rex is kept in ServerStorage.OwnerBackup.TRex_OldBlocks_28Nov. Client/RexAnim plays the model's own clips on its bones (idle loop, walk while it moves, the roar every 20-40 s); the rampage, feeding and DropSpot work as before (it moves by PivotTo). Captures: a textured dinosaur in the pen, mouth open, head over the gate wall; the head bone moves. **The T-rex is made of plain blocks with a leaf material.**
     - Replace it with a real dinosaur model: Blender with the quality gate ≥ 8.5, or a malware-checked Creator Store T-rex with real proportions and a mesh skin, at the same pen.
     - Give it an idle animation (breathing, a head turn, a roar every 20-40 s) and keep its feeding (DropSpot).
     - The same goes for every other creature or prop made of blocks: list them here and replace them, worst first.
