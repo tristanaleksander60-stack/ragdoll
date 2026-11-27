@@ -176,6 +176,7 @@ local Config = {
 	REAL_HANDS = true, -- S2 plan B: real hands from rounded parts (palm, 4 fingers of 3 segments, a thumb of 2), posed by state, on this screen only; the hook hand skin is shrunk away (Client/RealHands)
 	SMOOTH_BODY = true, -- S2: the Blender-made skinned mannequin (ReplicatedStorage.SmoothBody, one connected body, real fingers) on the nearest ragdolls; bones follow the physics parts; block skins hidden (Client/SmoothBody)
 	SMOOTH_BODY_V6 = true, -- RAGDOLL_10 v6 (APPROVED by the owner 27 Nov): the round chunky toy body, one clean light grey, chest plate + yellow-black marks (build_mannequin_v6.py); ReplicatedStorage.SmoothBodyV6 wins over every older body
+	V6_FAR_BODIES = true, -- THE v6 FIT PASS 10: on a PC the nearest 24 ragdolls within 120 studs wear the v6 mesh (far ones at 15 Hz, no fingers); phones keep 12 within 80
 	BODY_FIT = true, -- RAGDOLL_10 THE v6 FIT PASS: Shared/BodyShape is the v6 shape every attach point reads
 	SMOOTH_BODY_V3 = false, -- RAGDOLL_10 THE LOOK: the chunky toy crash-test dummy (joint rings, chest plate, yellow-black markings; build_mannequin_v3.py) from ReplicatedStorage.SmoothBodyV3 once the owner imports mannequin_v3.fbx; wins over v2 (Client/SmoothBody, Main moves workspace.mannequin_v3)
 	SMOOTH_BODY_V2 = true, -- F89: the slim body (arms down, no bodybuilder shoulders, always grey) from ReplicatedStorage.SmoothBodyV2, driven forward-kinematically (Client/SmoothBody)

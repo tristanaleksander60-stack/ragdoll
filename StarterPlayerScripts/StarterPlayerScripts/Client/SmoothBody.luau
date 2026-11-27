@@ -28,6 +28,17 @@ SmoothBody.DROP_REACH = 110
 SmoothBody.ANIM_REACH = 45
 SmoothBody.MAX_BODIES = 12
 SmoothBody.FAR_RATE = 1 / 15
+-- (THE v6 FIT PASS item 10, Config.V6_FAR_BODIES: on a PC the far ragdolls wear the SAME v6 mesh too, driven at
+-- FAR_RATE without finger poses (the cheap version); a phone keeps 12 within 80 studs.)
+do
+	local UIS = game:GetService("UserInputService")
+	local phone = UIS.TouchEnabled and not UIS.KeyboardEnabled
+	if (Config :: any).V6_FAR_BODIES and (Config :: any).SMOOTH_BODY_V6 and not phone then
+		SmoothBody.MAX_BODIES = 24
+		SmoothBody.BUILD_REACH = 120
+		SmoothBody.DROP_REACH = 150
+	end
+end
 
 local rad = math.rad
 
