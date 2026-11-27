@@ -14,6 +14,7 @@ local Workspace = game:GetService("Workspace")
 
 local Anatomy = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Anatomy"))
 local DummySkins = require(script.Parent:WaitForChild("DummySkins"))
+local BodyShape = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("BodyShape")) :: any
 
 local BulletHoles = {}
 
@@ -241,6 +242,20 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 		local l = skin.CFrame:PointToObjectSpace(at)
 		local a = skin.Size.X / 2 * BulletHoles.SKIN_FIT
 		local b = skin.Size.Z / 2 * BulletHoles.SKIN_FIT
+		-- (THE v6 FIT PASS item 4: on a v6 body the hole sits on v6's own round surface (Shared/BodyShape), not on the
+		-- old skin block's shape, which is hidden under the smooth mesh.)
+		local v6shape = false
+		if model:GetAttribute("BodyV6") == true and BodyShape.active() then
+			local hy = skin.Size.Y / 2
+			local ly = math.clamp(l.Y, -hy, hy)
+			local r = BodyShape.radius(part.Name, (hy - ly) / (2 * hy))
+			if r then
+				a, b, v6shape = r, r, true
+			elseif part.Name == "UpperTorso" or part.Name == "LowerTorso" then
+				local w, d = BodyShape.torsoAt((if part.Name == "UpperTorso" then 0.9 else -0.1) + ly)
+				a, b, v6shape = w, d, true
+			end
+		end
 		local x, z = l.X, l.Z
 		if math.abs(x) < 1e-3 and math.abs(z) < 1e-3 then
 			local back = skin.CFrame:VectorToObjectSpace(worldNormal)
@@ -258,7 +273,7 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 		-- (V10, owner: "the holes still sit as flat circles 2 cm off the ragdoll, and some do not show"): the skins now
 		-- carry their real shape for rays (the DummySkin template's CollisionFidelity, set in the place), so a ray from
 		-- outside in, through the hit point towards the limb's axis, finds the true surface and its normal there.
-		do
+		if not v6shape then
 			local axis = skin.CFrame:PointToWorldSpace(Vector3.new(0, py, 0))
 			local out = worldAt - axis
 			if out.Magnitude > 0.01 then
