@@ -97,6 +97,8 @@ Find the real cause with ONE Play (allowed for this item):
 **The fix:** near a thing, the mouse moves and turns the camera exactly as anywhere else. Prompts never cover the cursor's way: they are not Active except their own small button. No auto lock of the mouse. If it is the frame rate, fix that machine's cost (row 8, AUDIT 36-42).
 
 ## 7. The vehicles (owner, screenshot of the entrance row: "Fiks bilerne")
+
+**PART DONE v1374:** all 5 new kinds have a real model (`spec.look`): GoKart and MonsterTruck (already in V3Assets), PoliceCar (Creator Store 4128343988), Bulldozer (4128281751), FireTruck (14840938144); malware pass: 0 scripts, sounds or remotes; the GoKart's empty TextureID (rbxassetid://0 errors) cleared. One Play look: a police car, a monster truck, a yellow bulldozer and a red fire truck stand in the row. LEFT (owner look): equal 45-degree bays with 1.5 gaps (HOME_CLEAR moves blocked ones), the SOON plaques, the monster truck is white (the model's own colour).
 **What was wrong:**
 - the 5 new kinds (go-kart, police car, monster truck, bulldozer, fire truck) had no `look`, so `VehicleService` gave each the default "Car" model, the white sedan, scaled to its length: five white sedans of different sizes, overlapping their bays;
 - the SOON ones still said "Drive".

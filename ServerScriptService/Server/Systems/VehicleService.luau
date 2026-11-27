@@ -61,11 +61,11 @@ VehicleService.SPECS = {
 	Wheelchair3 = { label = "Wheelchair", body = Vector3.new(2.6, 1, 3.4), color = Color3.fromRGB(40, 40, 44), wheel = 1.6, lift = 0.6, pad = Vector2.new(28, -20), look = "Wheelchair" } :: Spec,
 	-- F76 (owner 27 Nov: "build them fully now"; Config.NEW_VEHICLES): the 5 new paid vehicles, built from parts in our
 	-- own code (no store scripts), each with its feature on ONE button (VehicleAction): SOON until the owner's pass ids.
-	GoKart = { label = "Go-Kart", body = Vector3.new(4.4, 0.8, 7), color = Color3.fromRGB(255, 120, 20), wheel = 1.7, lift = 0.25, pad = Vector2.new(40, -14) } :: Spec,
-	Police = { label = "Police Car", body = Vector3.new(6.6, 1.6, 15), color = Color3.fromRGB(245, 245, 248), wheel = 2.6, lift = 0.6, pad = Vector2.new(46, -14) } :: Spec,
-	MonsterTruck = { label = "Monster Truck", body = Vector3.new(8.6, 2.2, 15), color = Color3.fromRGB(70, 200, 60), wheel = 5.6, lift = 3.2, pad = Vector2.new(52, -14) } :: Spec,
-	Bulldozer = { label = "Bulldozer", body = Vector3.new(8, 2.6, 12), color = Color3.fromRGB(250, 196, 20), wheel = 2.8, lift = 0.5, pad = Vector2.new(58, -14) } :: Spec,
-	FireTruck = { label = "Fire Truck", body = Vector3.new(7.6, 2.4, 20), color = Color3.fromRGB(215, 30, 30), wheel = 3, lift = 0.8, pad = Vector2.new(64, -14) } :: Spec,
+	GoKart = { label = "Go-Kart", body = Vector3.new(4.4, 0.8, 7), color = Color3.fromRGB(255, 120, 20), wheel = 1.7, lift = 0.25, pad = Vector2.new(40, -14), look = "GoKart" } :: Spec,
+	Police = { label = "Police Car", body = Vector3.new(6.6, 1.6, 15), color = Color3.fromRGB(245, 245, 248), wheel = 2.6, lift = 0.6, pad = Vector2.new(46, -14), look = "PoliceCar" } :: Spec,
+	MonsterTruck = { label = "Monster Truck", body = Vector3.new(8.6, 2.2, 15), color = Color3.fromRGB(70, 200, 60), wheel = 5.6, lift = 3.2, pad = Vector2.new(52, -14), look = "MonsterTruck" } :: Spec,
+	Bulldozer = { label = "Bulldozer", body = Vector3.new(8, 2.6, 12), color = Color3.fromRGB(250, 196, 20), wheel = 2.8, lift = 0.5, pad = Vector2.new(58, -14), look = "Bulldozer" } :: Spec,
+	FireTruck = { label = "Fire Truck", body = Vector3.new(7.6, 2.4, 20), color = Color3.fromRGB(215, 30, 30), wheel = 3, lift = 0.8, pad = Vector2.new(64, -14), look = "FireTruck" } :: Spec,
 	MuscleCar = { label = "Panzer Tank", body = Vector3.new(11, 2.6, 23), color = Color3.fromRGB(90, 96, 80), wheel = 3, lift = 0.9, pad = Vector2.new(66, -60), look = "Panzer" } :: Spec,
 }
 
