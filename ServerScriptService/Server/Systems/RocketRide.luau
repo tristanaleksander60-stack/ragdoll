@@ -113,6 +113,95 @@ local function rocketParts(rocket: Model): ({ BasePart }, Vector3?, number, numb
 	return fly, axis, w, bottom, top
 end
 
+-- 3.9 ROCKET (docs/MACHINES_10.md; Config.ROCKET_10): a 3-2-1 board over the pad, fireworks at the top, the body
+-- comes down under a small parachute, drifting to a random spot in the lab, the height pops ("375 studs HIGH!") with a
+-- NEW BEST for the lab's owner (RocketBest), and 1 in 20 is GOLDEN: "TO THE MOON!" with stars and +5 KOs.
+local function on10(): boolean
+	return (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).ROCKET_10 == true
+end
+
+local function fireworks(at: Vector3, golden: boolean)
+	local p = Instance.new("Part")
+	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.Transparency = true, false, false, false, 1
+	p.Size = Vector3.one
+	p.Position = at
+	p.Parent = Workspace
+	local colours = if golden then { Color3.fromRGB(255, 220, 80), Color3.fromRGB(255, 250, 200) } else { Color3.fromRGB(255, 80, 80), Color3.fromRGB(80, 200, 255), Color3.fromRGB(120, 255, 120), Color3.fromRGB(255, 220, 80) }
+	for i, c in colours do
+		local e = Instance.new("ParticleEmitter")
+		e.Color = ColorSequence.new(c)
+		e.LightEmission = 1
+		e.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.9), NumberSequenceKeypoint.new(1, 0.2) })
+		e.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) })
+		e.Speed = NumberRange.new(30, 45)
+		e.Drag = 2
+		e.Acceleration = Vector3.new(0, -8, 0)
+		e.SpreadAngle = Vector2.new(180, 180)
+		e.Lifetime = NumberRange.new(1.2, 2)
+		e.Rate = 0
+		if golden then
+			e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		end
+		e.Parent = p
+		task.delay((i - 1) * 0.25, function()
+			e:Emit(if golden then 80 else 50)
+		end)
+	end
+	task.delay(4, function()
+		p:Destroy()
+	end)
+end
+
+-- The body drifts down under a parachute from `from` to a random spot in the lab round `origin`.
+local function parachute(body: Model, from: Vector3, origin: Vector3)
+	local a = math.random() * math.pi * 2
+	local r = math.random(15, 60)
+	local target = origin + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r)
+	local params = RaycastParams.new()
+	local dummies = Workspace:FindFirstChild("Dummies")
+	params.FilterDescendantsInstances = if dummies then { dummies } else {}
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local hit = Workspace:Raycast(target + Vector3.new(0, 200, 0), Vector3.new(0, -400, 0), params)
+	local ground = if hit then hit.Position.Y else origin.Y
+	local start = Vector3.new(target.X + (from.X - target.X) * 0.25, ground + 70, target.Z + (from.Z - target.Z) * 0.25)
+	local canopy = Instance.new("Part")
+	canopy.Name = "Parachute"
+	canopy.Shape = Enum.PartType.Ball
+	canopy.Size = Vector3.new(7, 7, 7)
+	canopy.Anchored, canopy.CanCollide, canopy.CanQuery, canopy.CanTouch = true, false, false, false
+	canopy.Color = Color3.fromRGB(240, 90, 60)
+	canopy.Material = Enum.Material.Fabric
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Sphere
+	mesh.Scale = Vector3.new(1, 0.45, 1)
+	mesh.Parent = canopy
+	canopy.Parent = Workspace
+	body:SetAttribute("InMachine", "Parachute")
+	local DC = lazy("DummyControl")
+	local t0 = os.clock()
+	local fall = 70 / 9 -- (9 s down)
+	while body.Parent do
+		local t = os.clock() - t0
+		local y = start.Y - fall * t
+		if y <= ground + 3 then
+			break
+		end
+		local k = math.clamp(t / 9, 0, 1)
+		local pos = start:Lerp(Vector3.new(target.X, start.Y, target.Z), k)
+		local sway = math.sin(t * 1.7) * 1.2
+		local at = Vector3.new(pos.X + sway, y, pos.Z)
+		pcall(DC.move, body, CFrame.new(at) * CFrame.Angles(0, 0, math.sin(t * 1.7) * 0.15))
+		canopy.CFrame = CFrame.new(at + Vector3.new(0, 7, 0)) * CFrame.Angles(0, 0, math.sin(t * 1.7) * 0.15)
+		task.wait(0.05)
+	end
+	body:SetAttribute("InMachine", nil)
+	canopy.Anchored = false
+	canopy.CanCollide = false
+	task.delay(2, function()
+		canopy:Destroy()
+	end)
+end
+
 function RocketRide.wire(rocket: Model, origin: Vector3)
 	local home = rocket:GetPivot()
 	local cf, size = rocket:GetBoundingBox()
@@ -175,6 +264,25 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 	prompt.MaxActivationDistance = RocketRide.REACH
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = base
+	local board: TextLabel? = nil
+	if on10() then
+		local gui = Instance.new("BillboardGui")
+		gui.Size = UDim2.fromOffset(160, 80)
+		gui.StudsOffsetWorldSpace = Vector3.new(0, 8, 0)
+		gui.MaxDistance = 140
+		gui.AlwaysOnTop = true
+		gui.Parent = base
+		local l = Instance.new("TextLabel")
+		l.Size = UDim2.fromScale(1, 1)
+		l.BackgroundTransparency = 1
+		l.Font = Enum.Font.FredokaOne
+		l.TextScaled = true
+		l.TextColor3 = Color3.fromRGB(255, 230, 90)
+		l.TextStrokeTransparency = 0.2
+		l.Text = ""
+		l.Parent = gui
+		board = l
+	end
 	local fire = emitter(base, Color3.fromRGB(255, 150, 40), 2, 40, 120, 0.5)
 	local smoke = emitter(base, Color3.fromRGB(200, 200, 200), 4, 18, 60, 2.2)
 	local busy = false
@@ -235,10 +343,21 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 				local t0 = os.clock()
 				while os.clock() - t0 < RocketRide.COUNTDOWN do
 					local k = (os.clock() - t0) / RocketRide.COUNTDOWN
+					if board then
+						board.Text = tostring(math.max(1, RocketRide.COUNTDOWN - math.floor(os.clock() - t0)))
+					end
 					place(CFrame.new(math.sin(os.clock() * 60) * 0.08 * k, 0, math.cos(os.clock() * 50) * 0.08 * k))
 					RunService.Heartbeat:Wait()
 				end
 				-- Lift-off: faster and faster, a slight wobble.
+				if board then
+					board.Text = "LIFT OFF!"
+					task.delay(1.5, function()
+						if board then
+							board.Text = ""
+						end
+					end)
+				end
 				fire.Enabled = true
 				lazy("FxService").hit(base.Position, 160, "CannonPad")
 				t0 = os.clock()
@@ -270,7 +389,28 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 						end
 					end
 				end
-				if body.Parent then
+				if body.Parent and on10() then
+					local golden = math.random(20) == 1
+					fireworks(burstAt, golden)
+					local h = math.floor(height + 0.5)
+					local text = tostring(h) .. " studs HIGH!"
+					if golden then
+						text = "TO THE MOON! " .. text
+						pcall(function()
+							lazy("ProgressService").addTakedowns(owner, 5)
+						end)
+					end
+					local best = (owner:GetAttribute("RocketBest") :: number?) or 0
+					if h > best then
+						owner:SetAttribute("RocketBest", h)
+						text ..= " NEW BEST!"
+					end
+					pcall(function()
+						lazy("Playground").pop(base.Position + Vector3.new(0, 12, 0), text, if golden then Color3.fromRGB(255, 220, 80) else Color3.fromRGB(255, 255, 255))
+					end)
+					body:SetAttribute("MachineHidden", nil)
+					task.spawn(parachute, body, burstAt, origin)
+				elseif body.Parent then
 					lazy("DummyControl").move(body, CFrame.new(burstAt))
 					body:SetAttribute("InMachine", nil)
 					body:SetAttribute("MachineHidden", nil)
@@ -308,7 +448,7 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 					end
 				end
 			end
-			if body.Parent then
+			if body.Parent and body:GetAttribute("InMachine") ~= "Parachute" then
 				body:SetAttribute("InMachine", nil)
 				body:SetAttribute("MachineHidden", nil)
 			end
