@@ -1697,6 +1697,11 @@ local function watchBones(model: Instance)
 						play("noodle", part.Position, 1, 0.8)
 						play("shatter", part.Position, 0.45, 1.4) -- glassy, and a rattle
 					end
+					if name == "Head" and s >= 2 then
+						pcall(function() -- (D12: a cracked skull: dizzy stars)
+							(require(script.Parent:WaitForChild("HitWords")) :: any).stars(model)
+						end)
+					end
 					local word = STAGE_POP[s]
 					if word then
 						bonePop(part, word)

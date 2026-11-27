@@ -113,6 +113,15 @@ function Bones.hit(model: Model, part: BasePart, power: number, kind: string, to
 	end
 	b.stage[name] = newStage
 	share(model, b)
+	-- (D12: broken ribs: it hunches and holds its chest a while, unless it is busy with a mood of its own)
+	if newStage >= 3 and name == "UpperTorso" and model:GetAttribute("Mood") == nil then
+		model:SetAttribute("Mood", "WrapMid")
+		task.delay(6, function()
+			if model:GetAttribute("Mood") == "WrapMid" then
+				model:SetAttribute("Mood", nil)
+			end
+		end)
+	end
 	if newStage >= 3 and Bones.LIMBS[name] then
 		-- the simulating screen breaks the joint for real (ActiveRagdoll watches BreakReq)
 		b.n += 1
