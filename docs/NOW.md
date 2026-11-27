@@ -1,4 +1,4 @@
-# ⚠ OWNER PRIORITY NOW (27 Nov late): BODY v4 was REJECTED by the owner ("nej"). BUILD BODY v5 FIRST with `RAGDOLL_10.md` "v5 FIXES" (real separate fingers, no hook; thicker, 1.6 deep; clean bands as mesh loops; renders WITH the head; a real avatar for scale). Self-check, renders to `art/models/mannequin/review_v5/`, then wait for the owner's OK. Do it before any other row.
+# ⚠ BODY v5 BUILT (27 Nov run 6, commit 6578fa6): renders in `art/models/mannequin/review_v5/`, waiting for the owner's OK ("BODY V5 APPROVED"). v4 was rejected ("nej"). Until the OK, nothing in the game changes; go on with the next unblocked row.
 # The dog (A0) was REBUILT 27 Nov run 6 (SDF body from the LihFolk creature tool: a deep chest, thick legs, round paws, tall ears, crisp eyes, a black nose, soft saddle edges; 8.4k tris, 24 bones). Renders in art/models/dog/review/. Waiting for the owner's OK.
 
 # NOW: the current work list (read this first on every /klar)
