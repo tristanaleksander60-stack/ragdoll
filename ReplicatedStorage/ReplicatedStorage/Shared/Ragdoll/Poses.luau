@@ -534,6 +534,11 @@ function Poses.despair(t: number): Pose
 	stand(feelOut, -20, ang(-18, sin(t * 7) * 28, 0), ang(148, 0, 30), ang(148, 0, -30), 92, 92)
 	return feelOut
 end
+-- (FIXES 10.3: just up after a fall, dizzy: one hand on the head, the head wobbling, a little bent)
+function Poses.dizzy(t: number): Pose
+	stand(feelOut, -6, ang(-8 + sin(t * 3.1) * 4, sin(t * 2.6) * 14, sin(t * 1.9) * 6), ang(6, 0, -6), ang(150, 0, -30), 8, 85)
+	return feelOut
+end
 -- On its knees, arms to the sky.
 function Poses.sky(t: number): Pose
 	local s = sin(t * 14) * 4
@@ -616,6 +621,6 @@ function Poses.patientStill(t: number): Pose
 	return patient(t, 0)
 end
 
-Poses.MOODS = { WrapHigh = Poses.wrapHigh, WrapMid = Poses.wrapMid, WrapLow = Poses.wrapLow, PatientLeft = Poses.patientLeft, PatientRight = Poses.patientRight, PatientStill = Poses.patientStill, Sit = Poses.sit, Ride = Poses.ride, Check = Poses.check, Breath = Poses.breath, CPRFast = Poses.cprFast, CPRSlam = Poses.cprSlam, CPROne = Poses.cprOne, Gasp = Poses.gasp, Point = Poses.point, Cheer = Poses.cheer, Relief = Poses.relief, Hug = Poses.hug, Despair = Poses.despair, Sky = Poses.sky, Rage = Poses.rage, Angry = Poses.fists, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr } :: { [string]: (number) -> Pose }
+Poses.MOODS = { WrapHigh = Poses.wrapHigh, WrapMid = Poses.wrapMid, WrapLow = Poses.wrapLow, PatientLeft = Poses.patientLeft, PatientRight = Poses.patientRight, PatientStill = Poses.patientStill, Sit = Poses.sit, Ride = Poses.ride, Check = Poses.check, Breath = Poses.breath, CPRFast = Poses.cprFast, CPRSlam = Poses.cprSlam, CPROne = Poses.cprOne, Gasp = Poses.gasp, Point = Poses.point, Cheer = Poses.cheer, Relief = Poses.relief, Hug = Poses.hug, Despair = Poses.despair, Sky = Poses.sky, Rage = Poses.rage, Angry = Poses.fists, Box = Poses.box, Shock = Poses.shock, Mourn = Poses.mourn, CPR = Poses.cpr, Dizzy = Poses.dizzy } :: { [string]: (number) -> Pose }
 
 return Poses

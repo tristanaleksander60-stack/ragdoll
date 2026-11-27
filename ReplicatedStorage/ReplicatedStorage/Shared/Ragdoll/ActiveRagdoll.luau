@@ -889,6 +889,16 @@ local function updateGetUp(rig: Rig)
 		if a >= 1 then
 			R.getUpTries = 0
 			enter(rig, "Standing")
+			-- (FIXES 10.3, Config.DIZZY_AFTER: a hurt body that just got up stands dizzy 1.6 s, a hand on its head)
+			if (GameConfig :: any).DIZZY_AFTER and rig.model:GetAttribute("Mood") == nil and hurtOf(rig) > 0.15 then
+				local model = rig.model
+				model:SetAttribute("Mood", "Dizzy")
+				task.delay(1.6, function()
+					if model.Parent and model:GetAttribute("Mood") == "Dizzy" then
+						model:SetAttribute("Mood", nil)
+					end
+				end)
+			end
 			return
 		end
 	end
