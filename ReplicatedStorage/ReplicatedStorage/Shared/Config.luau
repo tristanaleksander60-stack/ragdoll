@@ -155,6 +155,7 @@ local Config = {
 	BONES_V2 = true, -- D12 part 1: every bone has integrity 100; each wound takes base (round 20, blow 14, blast 60) x power x bone factor off it, adding up; HAIRLINE <70, CRACKED <40, BROKEN 0 (a limb breaks for real via BreakReq, guns too), SHATTERED on one huge hit; the card names the stage; a heal resets (Systems/Bones)
 	DRIPS_V2 = true, -- D12 part 3: only the 2-3 newest bullet holes drip (phones 2, within 40 studs), a drop every 0.6-1.2 s each, for 8 s, then stop (Client/BloodFx, BulletHoles.dripHoles)
 	DRIP_TRICKLE = false, -- (owner, 27 Nov late: "ikke lilla striber") the welded purple trickle stick under a dripping hole is off; the 3 newest holes only drip drops (Client/BloodFx)
+	HOLES_EVERYWHERE = true, -- FIXES_28NOV 10: a head hole on a v6 body sits on the round head's surface (it was hidden inside it) (BulletHoles)
 	BIKE_WELD = true, -- FIXES_28NOV 14: the ragdoll cyclist is welded to the saddle and the bike is simulated by the same screen as the rider (no tug of war, no jitter); the ride's end removes the weld (BikeService)
 	V6_EVERYONE = true, -- FIXES_28NOV 13: no old block bodies in view: the crowd people wear the v6 body tinted by role (CrowdTint), and phones draw 20 v6 bodies within 100 studs (was 12 within 80) (SmoothBody, CrowdService)
 	NO_CROWD = true, -- FIXES_28NOV 12: at most 3 ragdolls at one spot (10 studs) and 4 in any 20 x 20 cell: extras pick a new spot every 3 s; spreadSpot skips full spots (Lab)
@@ -210,7 +211,7 @@ local Config = {
 		[3] = { skinReach = 45, skinRate = 15 },
 	},
 	LAGFREE_IPAD = true, -- LAG-FREE 2 item 10: an iPad with a keyboard is still a tablet: no Bloom, SunRays, depth of field or shadows (Client/PhoneDiet)
-	BRUISE_PATCH = true, -- row 6: on a v6 body a bruised limb shows a soft bruise patch (3 stacked fading discs on its front, by stage; Client/DummySkins)
+	BRUISE_PATCH = false, -- (OFF 28 Nov: FIXES_28NOV 10 "never a purple blob": purple only inside the hole picture and the drips) -- row 6: on a v6 body a bruised limb shows a soft bruise patch (3 stacked fading discs on its front, by stage; Client/DummySkins)
 	HURT_REST = true, -- row 6: a ragdoll with 3+ leg wounds kneels to rest 5 s now and then (every 25-40 s; the Breath mood; VitalsService)
 	INJURY_HEAL = true, -- row 6: a bruise heals one stage a minute after its piece's last hit (deep violet, violet, lavender, gone); checked every 15 s (Client/DummySkins)
 	RUN_POSE = true, -- v6 FIT PASS D: running ragdolls pump with the elbows bent towards 90 deg (the run clip already leans forward) (Client/ClipGait.blend; walk untouched)

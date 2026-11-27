@@ -231,6 +231,17 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 	)
 	local worldAt = part.CFrame:PointToWorldSpace(onFace)
 	local worldNormal = part.CFrame:VectorToWorldSpace(normal)
+	-- (FIXES_28NOV 10, Config.HOLES_EVERYWHERE: a hole in the head lay on the small physics head, inside the round v6
+	-- head, so it never showed: on a v6 body it goes on the round head's own surface (radius 0.85, 0.15 over the head's
+	-- middle), right under the hit, facing out.)
+	if part.Name == "Head" and model:GetAttribute("BodyV6") == true
+		and (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).HOLES_EVERYWHERE then
+		local centre = part.Position + part.CFrame.UpVector * 0.15
+		local out = at - centre
+		local dir = if out.Magnitude > 0.01 then out.Unit else part.CFrame.LookVector * -1
+		worldAt = centre + dir * 0.855
+		worldNormal = dir
+	end
 	-- On a dummy's sculpted skin (DummySkins): onto the skin's real surface under that spot, lying
 	-- on it (the block underneath is hidden on this screen).
 	local skin = DummySkins.skinOf(part)
@@ -451,6 +462,9 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 				local holes = bodies[model]
 				if head.Transparency < 1 or not holes then
 					return
+				end
+				if model:GetAttribute("BodyV6") == true then
+					return -- (FIXES_28NOV 10: on a v6 body the round head always hides this one; its holes stay)
 				end
 				for i = #holes, 1, -1 do
 					if holes[i].part:IsDescendantOf(head) then

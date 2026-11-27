@@ -203,6 +203,10 @@ local function bandage(limb: BasePart, folder: Instance, stage: number?)
 		local y0 = if head then 0.18 else 0.4
 		-- (THE v6 FIT PASS item 8: on a v6 body the wrap goes round v6's own round limb at its radius + 0.05)
 		local model = limb.Parent
+		if model and model.Name == "Skins" then
+			model = model.Parent -- (FIXES_28NOV 11: the wrap goes on the skin piece, whose parent is the Skins folder: the
+			-- body is one up; the v6 check never matched, so the gauze was the old thin size, hidden inside the v6 limb)
+		end
 		if not head and model and model:GetAttribute("BodyV6") == true then
 			local ok, BodyShape = pcall(function()
 				return require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("BodyShape")) :: any

@@ -131,11 +131,11 @@
    - real bone shapes in every limb, the head and the hands and feet: a skull with eye holes and a jaw, a ribcage with separate ribs, the spine, the pelvis, two bones in each forearm and shin, and hand and foot bones;
    - the shot limb (3 in a row) fades in over 0.3 s, holds 2 s and fades out over 1 s, as before;
    - check: a capture next to a real X-ray reference image. It must be calm to look at for 10 s.
-10. **Bullet holes everywhere on the skin, never a purple blob:**
+10. **DONE v1427 (`HOLES_EVERYWHERE`), SEEN:** head holes now sit on the round v6 head (they lay on the hidden small physics head, and a "burst head" rule released them every time SmoothBody re-hid it; severing is off, so v6 bodies skip that rule); capture: two dark holes on the round head. BRUISE_PATCH (my purple bruise discs of v1405) is OFF: purple only in the hole picture and the drips. **Bullet holes everywhere on the skin, never a purple blob:**
     - a hole must show at every hit point: the round head, hands, feet, the joints, the back and the sides;
     - the purple 3D discs and blobs are removed completely: purple shows only as the wet inside of the hole picture and the 3 newest holes' drips;
     - check: 20 shots spread over one body, with a capture from the front and the back.
-11. **Plasters and bandages visible:**
+11. **DONE v1427, SEEN:** the gauze looked up its body through limb.Parent, which is the Skins folder, so the v6 size never applied and the rings (0.58-0.74 across) sat inside the v6 limb; now 0.77-0.90 across at v6's radius + 0.05; capture: white gauze on the forearm and the shin. **Plasters and bandages visible:**
     - they sit on the hidden block parts (SmoothBody `hideBlocks`) or inside the thicker v6 skin;
     - draw them on the v6 surface (a ring or patch mesh at the limb's v6 radius, moved with the bone in SmoothBody's drive);
     - check: a capture of a patched-up body.
