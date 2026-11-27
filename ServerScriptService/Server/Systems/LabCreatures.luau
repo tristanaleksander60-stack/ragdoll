@@ -840,6 +840,24 @@ BUILD.Frog = function(f, at, m)
 				stretch(mouth.Position:Lerp(target, t), math.sin(t * 20) * 0.15)
 			end)
 			lazy("FxService").hit(target, 40, "Punch")
+			if (Config :: any).FROG_10 then
+				-- 3.14 FROG (Config.FROG_10): the tongue length is the score, with a NEW BEST for the lab's owner (FrogBest)
+				local reach = math.floor((target - mouth.Position).Magnitude + 0.5)
+				local text = "TONGUE " .. tostring(reach) .. " studs!"
+				local okO, owner = pcall(function()
+					return lazy("Lab").ownerAt(mouth.Position)
+				end)
+				if okO and owner then
+					local best = (owner:GetAttribute("FrogBest") :: number?) or 0
+					if reach > best then
+						owner:SetAttribute("FrogBest", reach)
+						text ..= " NEW BEST!"
+					end
+				end
+				pcall(function()
+					lazy("Playground").pop(target + Vector3.new(0, 3, 0), text, Color3.fromRGB(160, 230, 90))
+				end)
+			end
 			-- Reel it in: the body stuck to the tip.
 			task.spawn(hold, model, function()
 				return CFrame.new(tip.Position)
@@ -917,6 +935,25 @@ BUILD.Frog = function(f, at, m)
 			setFrog(home)
 			if model.Parent then
 				lazy("DummyControl").move(model, CFrame.new(spit))
+				if (Config :: any).FROG_10 then
+					-- covered in green slime: drips off it for 5 s
+					local torso = model:FindFirstChild("UpperTorso")
+					if torso and torso:IsA("BasePart") then
+						local drip = Instance.new("ParticleEmitter")
+						drip.Name = "FrogSlime"
+						drip.Color = ColorSequence.new(Color3.fromRGB(150, 220, 70), Color3.fromRGB(90, 160, 40))
+						drip.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 0.15) })
+						drip.Speed = NumberRange.new(0.5, 1.5)
+						drip.Acceleration = Vector3.new(0, -30, 0)
+						drip.Lifetime = NumberRange.new(0.5, 0.8)
+						drip.SpreadAngle = Vector2.new(180, 180)
+						drip.Rate = 14
+						drip.Parent = torso
+						task.delay(5, function()
+							drip:Destroy()
+						end)
+					end
+				end
 			end
 			return facing.LookVector * 60 + Vector3.new(0, 40, 0)
 		end)
