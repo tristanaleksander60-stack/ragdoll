@@ -568,11 +568,28 @@ function Poses.sit(t: number, bend: number?): Pose
 end
 -- Riding the bike (BikeService): as sitting, leant forward, both hands on the handlebar.
 local rideOut: Pose = {}
+-- (Row 11, Config.RIDER_PEDAL: the ragdoll cyclist's legs go round: each hip swings 22 degrees and its knee 26 about
+-- the sitting pose, the two legs half a turn apart, one turn about every second)
+local RIDER_PEDAL = false
+do
+	local ok, cfg = pcall(function()
+		return require(script.Parent.Parent:WaitForChild("Config")) :: any
+	end)
+	RIDER_PEDAL = ok and cfg and cfg.RIDER_PEDAL == true
+end
 function Poses.ride(t: number, bend: number?): Pose
 	local b = bend or 1
 	local out = rideOut
-	out.RightHip, out.LeftHip = ang(80 * b, 0, 7 * b), ang(80 * b, 0, -7 * b)
-	out.RightKnee, out.LeftKnee = ang(-78 * b, 0, 0), ang(-78 * b, 0, 0)
+	if RIDER_PEDAL then
+		local a = t * 6
+		local r, l = sin(a), sin(a + math.pi)
+		out.RightHip, out.LeftHip = ang((80 + 22 * r) * b, 0, 7 * b), ang((80 + 22 * l) * b, 0, -7 * b)
+		out.RightKnee = ang((-78 - 26 * math.cos(a)) * b, 0, 0)
+		out.LeftKnee = ang((-78 - 26 * math.cos(a + math.pi)) * b, 0, 0)
+	else
+		out.RightHip, out.LeftHip = ang(80 * b, 0, 7 * b), ang(80 * b, 0, -7 * b)
+		out.RightKnee, out.LeftKnee = ang(-78 * b, 0, 0), ang(-78 * b, 0, 0)
+	end
 	out.RightShoulder, out.LeftShoulder = ang(80 * b, 0, 7 * b), ang(80 * b, 0, -7 * b)
 	out.RightElbow, out.LeftElbow = ang(10 * b, 0, 0), ang(10 * b, 0, 0)
 	out.Waist = ang((-20 + sin(t * 5) * 1) * b, 0, 0)
