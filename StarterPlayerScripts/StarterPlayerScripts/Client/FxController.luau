@@ -1641,11 +1641,89 @@ function FxController.predictHit(position: Vector3, speed: number, toyId: string
 	onFx("Hit", position, speed, toyId, nil, direction, byHand == true, true)
 end
 
+-- D12 (DAMAGE_12.md 1 "Feedback"; Config.BONES_V2): each bone stage has its own sound, heavier each step (a tick for a
+-- hairline crack, a crack for cracked, a CRUNCH for broken, a glassy crunch and a rattle for shattered), and a small
+-- comic pop only at "CRACK!" (broken) and "SHATTERED!". The server shares the stages as BoneStages ("Part:stage;...").
+local STAGE_POP = { [3] = "CRACK!", [4] = "SHATTERED!" }
+local function bonePop(part: BasePart, text: string)
+	local bb = Instance.new("BillboardGui")
+	bb.Size = UDim2.fromOffset(150, 44)
+	bb.StudsOffsetWorldSpace = Vector3.new(0, 1.6, 0)
+	bb.AlwaysOnTop = true
+	bb.Adornee = part
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.FredokaOne
+	label.TextScaled = true
+	label.Text = text
+	label.TextColor3 = if text == "SHATTERED!" then Color3.fromRGB(200, 230, 255) else Color3.fromRGB(255, 240, 200)
+	label.TextStrokeTransparency = 0
+	label.TextStrokeColor3 = Color3.fromRGB(60, 20, 80)
+	label.Parent = bb
+	bb.Parent = fxFolder or Workspace
+	TweenService:Create(bb, TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { StudsOffsetWorldSpace = Vector3.new(0, 3.2, 0) }):Play()
+	TweenService:Create(label, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0, false, 0.35), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+	game:GetService("Debris"):AddItem(bb, 0.9)
+end
+local function parseStages(v: any): { [string]: number }
+	local out = {}
+	if type(v) == "string" then
+		for name, s in string.gmatch(v, "(%w+):(%d)") do
+			out[name] = tonumber(s) or 0
+		end
+	end
+	return out
+end
+local function watchBones(model: Instance)
+	if not model:IsA("Model") then
+		return
+	end
+	local last = parseStages(model:GetAttribute("BoneStages"))
+	model:GetAttributeChangedSignal("BoneStages"):Connect(function()
+		local now = parseStages(model:GetAttribute("BoneStages"))
+		local camera = Workspace.CurrentCamera
+		for name, s in now do
+			if s > (last[name] or 0) then
+				local part = model:FindFirstChild(name)
+				if part and part:IsA("BasePart") and camera and (part.Position - camera.CFrame.Position).Magnitude < 90 then
+					if s == 1 then
+						play("noodle", part.Position, 0.25, 1.6) -- a tick
+					elseif s == 2 then
+						play("noodle", part.Position, 0.5, 1.3) -- a crack
+					elseif s == 3 then
+						play("noodle", part.Position, 0.95, 0.9) -- the CRUNCH
+					else
+						play("noodle", part.Position, 1, 0.8)
+						play("shatter", part.Position, 0.45, 1.4) -- glassy, and a rattle
+					end
+					local word = STAGE_POP[s]
+					if word then
+						bonePop(part, word)
+					end
+				end
+			end
+		end
+		last = now
+	end)
+end
+
 function FxController.start()
 	local folder = Instance.new("Folder")
 	folder.Name = "LocalFx"
 	folder.Parent = Workspace
 	fxFolder = folder
+	if (require(Shared:WaitForChild("Config")) :: any).BONES_V2 then
+		task.spawn(function()
+			local dummies = Workspace:WaitForChild("Dummies", 30)
+			if dummies then
+				for _, m in dummies:GetChildren() do
+					watchBones(m)
+				end
+				dummies.ChildAdded:Connect(watchBones)
+			end
+		end)
+	end
 
 	-- Round 4, M10: POOL loaded voices per asset, made now, so the first hit is never late or silent.
 	-- An asset that fails to load (a community upload blocked live) leaves its bank, so the bank
