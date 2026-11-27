@@ -466,6 +466,9 @@ local oldPools: { Pool } = {}
 local BulletHoles: any = nil -- (where a body bleeds from: set by start)
 -- (D12 part 3: Config.DRIPS_V2: the newest holes drip, each on its own clock)
 local DRIPS_V2 = (require(Shared:WaitForChild("Config")) :: any).DRIPS_V2 == true
+-- (Owner, 27 Nov late: "ikke lilla striber": the welded trickle sticks read as purple sticks poking out of the v6 body,
+-- most of all in X-ray; Config.DRIP_TRICKLE false = no trickle, the 3 newest holes only drip drops.)
+local DRIP_TRICKLE = (require(Shared:WaitForChild("Config")) :: any).DRIP_TRICKLE == true
 local PHONE = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 local holeNext: { [BasePart]: number } = setmetatable({}, { __mode = "k" }) :: any
 function BloodFx.useHoles(module: any)
@@ -678,6 +681,8 @@ RunService.Heartbeat:Connect(function(dt)
 					local due = holeNext[hole]
 					if not due then
 						holeNext[hole] = now + rng:NextNumber(0.1, 0.4)
+					end
+					if not due and DRIP_TRICKLE then
 						-- (D12 part 7: a short thin purple trickle runs down from the hole first, welded on, gone with the drips)
 						local tr = Instance.new("Part")
 						tr.Name = "Trickle"
@@ -691,7 +696,7 @@ RunService.Heartbeat:Connect(function(dt)
 						w.Parent = tr
 						tr.Parent = hole
 						game:GetService("Debris"):AddItem(tr, 8)
-					elseif now >= due then
+					elseif due and now >= due then
 						holeNext[hole] = now + rng:NextNumber(0.6, 1.2)
 						BloodFx.drip(hole.Position - Vector3.new(0, 0.1, 0))
 					end
