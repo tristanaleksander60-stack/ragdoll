@@ -96,6 +96,7 @@ safe("BrickWall", function() require(Systems:WaitForChild("BrickWall")).start() 
 safe("RagdollNav", function() require(Systems:WaitForChild("RagdollNav")).start() end) -- OVERVIEW 0.95: ragdolls walk real paths round things
 safe("Unstick", function() require(Systems:WaitForChild("Unstick")).start() end) -- F32: belt walls + unstick ragdolls from trees and walls
 safe("RagdollDirector", function() require(Systems:WaitForChild("RagdollDirector")).start() end) -- OVERVIEW 0.1 B: far ragdolls parked (no simulation cost)
+safe("PathSwap", function() require(Systems:WaitForChild("PathSwap")).start() end) -- F90: a path walker near you in view becomes a real ragdoll (never fades)
 safe("LaunchPads", function() require(Systems:WaitForChild("LaunchPads")).start() end) -- F57: the launch pads launch cars and ragdolls
 safe("TowerCam", function() require(Systems:WaitForChild("TowerCam")).start() end) -- F67: Invisicam inside the tower
 safe("NearbyTwo", function() require(Systems:WaitForChild("NearbyTwo")).start() end) -- 0.1566: the 2 close by

@@ -106,6 +106,56 @@ function RagdollDirector.inView(point: Vector3): boolean
 	return false
 end
 
+-- F90 (owner, 27 Nov: "Ragdolls der går rundt forsvinder bare ud af det blå nogle gange imens man står og slår dem";
+-- Config.NEVER_VANISH): ONE guard every system asks before it moves a ragdoll far, hides it, pools it or removes it.
+-- No when it is in some player's view, within NEAR studs of a player, hit in the last HIT_AGO s, held, in a machine or
+-- hidden by one. Every removal it is told about is logged (REMOVAL_LOG), so a system that still does it in view is named.
+RagdollDirector.GUARD_NEAR = 60
+RagdollDirector.GUARD_HIT_AGO = 30
+function RagdollDirector.nearestPlayer(point: Vector3): number
+	local best = math.huge
+	for _, p in Players:GetPlayers() do
+		local r = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+		if r and r:IsA("BasePart") then
+			best = math.min(best, (r.Position - point).Magnitude)
+		end
+	end
+	return best
+end
+function RagdollDirector.mayRemove(m: Model): boolean
+	local pe = m:FindFirstChild("LowerTorso")
+	if not (pe and pe:IsA("BasePart")) then
+		return true
+	end
+	local hitAt = m:GetAttribute("ServerHitAt")
+	if m:GetAttribute("Held") == true or m:GetAttribute("InMachine") ~= nil or m:GetAttribute("MachineHidden") ~= nil then
+		return false
+	end
+	if type(hitAt) == "number" and workspace:GetServerTimeNow() - hitAt < RagdollDirector.GUARD_HIT_AGO then
+		return false
+	end
+	if RagdollDirector.nearestPlayer(pe.Position) < RagdollDirector.GUARD_NEAR then
+		return false
+	end
+	return not RagdollDirector.inView(pe.Position)
+end
+function RagdollDirector.logRemoval(m: Model, system: string, reason: string)
+	local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
+	if Config.REMOVAL_LOG == false then
+		return
+	end
+	local pe = m:FindFirstChild("LowerTorso")
+	local at = if pe and pe:IsA("BasePart") then pe.Position else Vector3.zero
+	local seen = RagdollDirector.inView(at)
+	local line = string.format("[REMOVAL_LOG] %s %s: %s (nearest player %.0f studs, in view: %s)", system, m.Name, reason,
+		RagdollDirector.nearestPlayer(at), if seen then "YES (bug)" else "no")
+	if seen then
+		warn(line)
+	else
+		print(line)
+	end
+end
+
 -- OVERVIEW 0.158 / docs/RAGDOLL_DIRECTOR.md Part C (owner: "Hvis der er mere end 6-7 i nærheden af en telefonspiller, så skal alle
 -- over 6-7 gå væk, medmindre de er blevet ramt af et skud"; Config.NEARBY_CAP): living ragdolls within 45 studs of a
 -- player, capped by the player's device (phone 7, tablet 9, PC 12). Over it, the extras WALK AWAY (never removed in

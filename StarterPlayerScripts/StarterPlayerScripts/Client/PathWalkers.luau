@@ -23,6 +23,13 @@ PathWalkers.COUNT = { phone = 14, tablet = 20, pc = 30 }
 PathWalkers.SPEED = { 4.2, 5.6 } -- studs/s, per walker
 PathWalkers.HIDE_NEAR, PathWalkers.SHOW_FAR = 26, 30
 PathWalkers.NEAR, PathWalkers.MID = 80, 160 -- studs: every frame / every 3rd / every 6th
+-- F90 (owner, 27 Nov: ragdolls vanished while you walked up to hit them: a walker FADED OUT within 26 studs of the camera).
+-- Now a walker never fades while it is in view: in view and within SWAP_AT studs it asks the server for a REAL ragdoll to
+-- stand in its place (Systems/PathSwap) and hides only when that one is there; refused, it turns round and walks away,
+-- and it fades only once it is out of view. Hidden ones come back only out of view.
+PathWalkers.SWAP_AT = 34
+PathWalkers.VIEW_COS = math.cos(math.rad(55))
+local swapRemote: RemoteEvent? = nil
 
 -- The R15 rest pose (studs from the LowerTorso's middle; our dummy, read in Studio 27 Nov 2026).
 local REST: { [string]: Vector3 } = {
@@ -38,6 +45,7 @@ type Piece = { part: BasePart, name: string, skin: CFrame }
 type Walker = {
 	pieces: { Piece }, lane: number, t: number, dir: number, speed: number, phase: number, side: number,
 	shown: boolean, fade: number, wait: number,
+	pos: Vector3?, askAt: number, turned: boolean, -- (F90: where it stands now; when it last asked for a real twin)
 }
 
 local lanes: { { a: Vector3, b: Vector3, len: number } } = {}
@@ -118,6 +126,7 @@ local function makeWalker(): Walker?
 		pieces = pieces, lane = lane, t = math.random() * lanes[lane].len, dir = if math.random() < 0.5 then 1 else -1,
 		speed = PathWalkers.SPEED[1] + math.random() * (PathWalkers.SPEED[2] - PathWalkers.SPEED[1]),
 		phase = math.random() * math.pi * 2, side = (math.random() - 0.5) * 3, shown = true, fade = 0, wait = 0,
+		pos = nil, askAt = -math.huge, turned = false,
 	}
 end
 
@@ -177,14 +186,38 @@ local function step(dt: number)
 		local along = (L.b - L.a).Unit * w.dir
 		local right = Vector3.new(-along.Z, 0, along.X)
 		local pos = L.a + (L.b - L.a).Unit * w.t + right * w.side
+		w.pos = pos
 		local dist = (pos - eye).Magnitude
 		-- banded rates (the far ones skip frames; their walk still advances by time)
 		local band = if dist < PathWalkers.NEAR then 1 elseif dist < PathWalkers.MID then 3 else 6
 		if (frame + i) % band ~= 0 then
 			continue
 		end
-		-- fade near the camera, back beyond
-		local want = if dist < PathWalkers.HIDE_NEAR then 1 elseif dist > PathWalkers.SHOW_FAR then 0 else w.fade
+		-- F90: never fade in view. Near the camera and in view: ask for a real twin (once every 3 s); refused within
+		-- 1.5 s: turn round once and walk away. Hide (and come back) only out of view.
+		local toPos = pos - eye
+		local inView = Config.NEVER_VANISH ~= false and dist > 0.1 and toPos.Unit:Dot(cam.CFrame.LookVector) > PathWalkers.VIEW_COS
+		local want = w.fade
+		if Config.NEVER_VANISH == false then
+			want = if dist < PathWalkers.HIDE_NEAR then 1 elseif dist > PathWalkers.SHOW_FAR then 0 else w.fade
+		elseif inView then
+			if w.fade < 1 and dist < PathWalkers.SWAP_AT then
+				local now = os.clock()
+				local r = swapRemote
+				if r and now - w.askAt > 3 then
+					w.askAt = now
+					r:FireServer(pos, along)
+				elseif now - w.askAt > 1.5 and now - w.askAt < 3 and not w.turned then
+					w.turned = true
+					w.dir = -w.dir -- (no real twin came: it walks away instead)
+				end
+			end
+		else
+			want = if dist < PathWalkers.HIDE_NEAR then 1 elseif dist > PathWalkers.SHOW_FAR then 0 else w.fade
+			if want == 0 then
+				w.turned = false
+			end
+		end
 		if want ~= w.fade then
 			w.fade += math.clamp(want - w.fade, -dt * band * 3, dt * band * 3)
 			for _, pc in w.pieces do
@@ -271,6 +304,33 @@ function PathWalkers.start()
 				table.insert(walkers, w)
 			end
 			task.wait() -- (one a frame: no hitch)
+		end
+		if Config.NEVER_VANISH ~= false then
+			local Net = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Net")) :: any
+			local r = Net.event(Net.Names.PathSwap)
+			swapRemote = r
+			-- the real ragdoll now stands where a walker was: hide that walker at once and send it to a far lane (it
+			-- shows again only out of view)
+			r.OnClientEvent:Connect(function(at: unknown)
+				if typeof(at) ~= "Vector3" then
+					return
+				end
+				local best, bestD = nil :: Walker?, 10
+				for _, w in walkers do
+					local p = w.pos
+					if p and w.fade < 1 and (p - (at :: Vector3)).Magnitude < bestD then
+						best, bestD = w, (p - (at :: Vector3)).Magnitude
+					end
+				end
+				if best then
+					best.fade = 1
+					for _, pc in best.pieces do
+						pc.part.LocalTransparencyModifier = 1
+					end
+					best.lane = math.random(1, #lanes)
+					best.t = math.random() * lanes[best.lane].len
+				end
+			end)
 		end
 		RunService.Heartbeat:Connect(step)
 	end)

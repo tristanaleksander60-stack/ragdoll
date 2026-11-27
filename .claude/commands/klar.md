@@ -47,6 +47,10 @@ Read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situat
     2. export it as FBX with R15 bone names and skin weights, into `art/models/mannequin/`;
     3. if the MCP cannot import an FBX, put "Studio: File > Import 3D > art/models/mannequin/mannequin.fbx" in the final message as ONE owner step, and finish the hookup in the next run. Meanwhile, build the real hands from parts (S2 plan B) so the hooks are gone.
   - **Without Blender:** S2 plan B (hands from parts, Roblox body bundles). Never park the hands.
+- **Code written by the cloud session:** after `git pull`, list the `.luau` files that commits since your last run changed (`git diff --name-only <your last commit>..HEAD -- "*.luau"`).
+  - Put every one into Studio through the MCP (the length check); new files are created where their folder says.
+  - One quick Play, then fix any error before anything else.
+  - The cloud cannot run Studio, so its code is untested until you do this.
 - **Never change the old map layout:** since M4 every map change is built on the compact plan (OVERVIEW M4).
 
 ## The ONE final message (Danish, short, only when you really stop)

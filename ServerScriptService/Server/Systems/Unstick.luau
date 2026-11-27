@@ -175,7 +175,19 @@ local function step()
 					local to = freePointNear(pe.Position)
 					if to then
 						local DC = require(script.Parent:WaitForChild("DummyControl")) :: any
-						pcall(DC.move, m, CFrame.new(to))
+						local Dir = require(script.Parent:WaitForChild("RagdollDirector")) :: any
+						if Dir.mayRemove == nil or Dir.mayRemove(m) then
+							-- (out of every view and far from players: a quiet move is fine)
+							if Dir.logRemoval then
+								Dir.logRemoval(m, "Unstick", "moved out of a solid part")
+							end
+							pcall(DC.move, m, CFrame.new(to))
+						else
+							-- F90: in view or near a player, never a teleport: a gentle push out toward the free spot
+							local away = Vector3.new(to.X - pe.Position.X, 0, to.Z - pe.Position.Z)
+							local dir = if away.Magnitude > 0.1 then away.Unit else Vector3.new(0, 0, 1)
+							pcall(DC.push, m, dir * 14 + Vector3.new(0, 8, 0))
+						end
 						m:SetAttribute("Home", to)
 					end
 				end
