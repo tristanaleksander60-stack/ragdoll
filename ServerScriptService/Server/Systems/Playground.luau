@@ -572,6 +572,7 @@ local function buildWreckingBall()
 	ball.CustomPhysicalProperties = PhysicalProperties.new(3, 0.3, 0.3)
 	-- 0.37.7: a ragdoll it meets is smashed away hard the way it swings, and may lose a piece (tearOff).
 	local smashed: { [Model]: number } = {}
+	local wreckBy: { player: Player? } = { player = nil } -- (3.6: who pulled the lever last)
 	ball.Touched:Connect(function(other)
 		local m = other:FindFirstAncestorOfClass("Model")
 		if not m or m:GetAttribute("IsDummy") ~= true or m:GetAttribute("Held") == true or m:GetAttribute("MachineHidden") == true then
@@ -585,6 +586,44 @@ local function buildWreckingBall()
 		local v = ball.AssemblyLinearVelocity
 		local flat = Vector3.new(v.X, 0, v.Z)
 		local away = if flat.Magnitude > 2 then flat.Unit else Vector3.new(other.Position.X - ball.Position.X, 0, other.Position.Z - ball.Position.Z).Unit
+		if (Config :: any).WRECK_10 then
+			-- 3.6: the force follows the ball's speed; "SMASH! FORCE 87%" at the hit, the distance where it lands
+			local speed = v.Magnitude
+			if speed < 6 then
+				return -- (a resting ball only bumps)
+			end
+			local k = math.clamp(speed / 60, 0.2, 1)
+			local by = wreckBy.player
+			pcall((require(script.Parent.DummyControl) :: any).push, m, away * (60 + 110 * k) + Vector3.new(0, 35 + 45 * k, 0), by)
+			pcall(function()
+				Playground.pop(other.Position + Vector3.new(0, 4, 0), "SMASH! FORCE " .. tostring(math.floor(k * 100)) .. "%", Color3.fromRGB(255, 170, 90))
+			end)
+			local pe = m:FindFirstChild("LowerTorso")
+			if pe and pe:IsA("BasePart") then
+				local from = pe.Position
+				task.delay(2.6, function()
+					if pe.Parent then
+						local d = math.floor(Vector3.new(pe.Position.X - from.X, 0, pe.Position.Z - from.Z).Magnitude + 0.5)
+						if d >= 8 then
+							local text = tostring(d) .. " studs!"
+							if by and by.Parent then
+								local best = (by:GetAttribute("WreckBest") :: number?) or 0
+								if d > best then
+									by:SetAttribute("WreckBest", d)
+									text ..= " NEW BEST!"
+								end
+							end
+							Playground.pop(pe.Position + Vector3.new(0, 4, 0), text, Color3.fromRGB(255, 220, 120))
+						end
+					end
+				end)
+			end
+			FxService.hit(other.Position, 60 + 100 * k, "CannonPad")
+			m.Destroying:Once(function()
+				smashed[m] = nil
+			end)
+			return
+		end
 		pcall((require(script.Parent.DummyControl) :: any).push, m, away * 120 + Vector3.new(0, 65, 0))
 		FxService.hit(other.Position, 120, "CannonPad")
 		tearOff(m, Playground.TEAR_BALL, other.Position)
@@ -680,8 +719,122 @@ local function buildWreckingBall()
 	hinge.ServoMaxTorque = 5e6
 	hinge.AngularSpeed = math.rad(2 * SWING_ANGLE) / SWING_PERIOD * 1.6
 	hinge.AngularResponsiveness = 30
-	hinge.TargetAngle = SWING_ANGLE
+	hinge.TargetAngle = if (Config :: any).WRECK_10 then 0 else SWING_ANGLE
 	hinge.Parent = arm
+	if (Config :: any).WRECK_10 then
+		-- 3.6 WRECKING BALL (docs/MACHINES_10.md; Config.WRECK_10): it hangs still; a lever pulls it back with ratchet
+		-- clicks while you HOLD (longer = farther = more force; the prompt ring is the gauge), and letting go swings it
+		-- with a heavy whoosh. The hit scales with the ball's speed ("SMASH! FORCE 87%", then the distance and a NEW BEST:
+		-- WreckBest). A stack of 5 crates stands in its path (a body on top is a multi-hit); they stack again after 12 s.
+		local normalSpeed = hinge.AngularSpeed
+		local leverBase = part("LeverBase", Vector3.new(2, 1, 2), at(x + 11, 0.5, z + 5), DARK, Enum.Material.Metal)
+		local handle = part("LeverHandle", Vector3.new(0.5, 4, 0.5), leverBase.CFrame * CFrame.new(0, 2.5, 0), Color3.fromRGB(210, 40, 40), Enum.Material.SmoothPlastic)
+		handle.CanCollide = false
+		local handleRest = handle.CFrame
+		local ratchet = Instance.new("Sound")
+		ratchet.SoundId = "rbxassetid://9116785204" -- (PSE "Metal Ratchet Small Ratchet Clicks 13")
+		ratchet.Volume = 0.7
+		ratchet.Parent = leverBase
+		local whoosh = Instance.new("Sound")
+		whoosh.SoundId = "rbxassetid://9120728815" -- (PSE "Whoosh Heavy Punches 1")
+		whoosh.Volume = 1
+		whoosh.RollOffMaxDistance = 120
+		whoosh.Parent = ball
+		local pp = Instance.new("ProximityPrompt")
+		pp.ActionText = "HOLD to pull back"
+		pp.ObjectText = "Wrecking Ball"
+		pp.HoldDuration = 2
+		pp.MaxActivationDistance = 12
+		pp.RequiresLineOfSight = false
+		pp.Parent = handle
+		local pulling: { [Player]: number } = {}
+		local busyUntil = 0
+		local function release(player: Player, power: number)
+			if os.clock() < busyUntil then
+				return
+			end
+			busyUntil = os.clock() + 3.5
+			wreckBy.player = player
+			handle.CFrame = handleRest
+			hinge.AngularSpeed = math.rad(140 + 160 * power)
+			hinge.TargetAngle = SWING_ANGLE * (0.55 + 0.45 * power)
+			whoosh.PlaybackSpeed = 0.8 + 0.3 * power
+			whoosh:Play()
+			task.delay(1.8, function()
+				hinge.AngularSpeed = normalSpeed * 0.6
+				hinge.TargetAngle = 0
+			end)
+		end
+		pp.PromptButtonHoldBegan:Connect(function(player)
+			if os.clock() < busyUntil then
+				return
+			end
+			local t0 = os.clock()
+			pulling[player] = t0
+			hinge.AngularSpeed = math.rad(35)
+			task.spawn(function()
+				while pulling[player] == t0 do
+					local k = math.min(1, (os.clock() - t0) / pp.HoldDuration)
+					hinge.TargetAngle = -SWING_ANGLE * 1.1 * k
+					handle.CFrame = handleRest * CFrame.new(0, -2, 0) * CFrame.Angles(math.rad(-50 * k), 0, 0) * CFrame.new(0, 2, 0)
+					ratchet:Play()
+					task.wait(0.35)
+				end
+			end)
+		end)
+		pp.PromptButtonHoldEnded:Connect(function(player)
+			local t0 = pulling[player]
+			pulling[player] = nil
+			if t0 and os.clock() - t0 > 0.2 then
+				release(player, math.min(1, (os.clock() - t0) / pp.HoldDuration))
+			end
+		end)
+		pp.Triggered:Connect(function(player)
+			pulling[player] = nil
+			release(player, 1)
+		end)
+		-- the crate stack where it swings through (the release swings toward -Z)
+		local homes: { [BasePart]: CFrame } = {}
+		local spots = { { -3.2, 1.5 }, { 0, 1.5 }, { 3.2, 1.5 }, { -1.6, 4.5 }, { 1.6, 4.5 } }
+		for _, sp in spots do
+			local c = part("WreckCrate", Vector3.new(3, 3, 3), at(x + sp[1], sp[2], z - 9), Color3.fromRGB(150, 105, 60), Enum.Material.WoodPlanks)
+			c.Anchored = false
+			c.CustomPhysicalProperties = PhysicalProperties.new(0.4, 0.5, 0.2)
+			homes[c] = c.CFrame
+		end
+		task.defer(function()
+			for c in homes do
+				pcall(c.SetNetworkOwner, c, nil)
+			end
+		end)
+		task.spawn(function()
+			local movedAt = 0
+			while folder.Parent do
+				task.wait(2)
+				local moved = false
+				for c, home in homes do
+					if c.Parent and (c.Position - home.Position).Magnitude > 1.5 then
+						moved = true
+					end
+				end
+				if moved and movedAt == 0 then
+					movedAt = os.clock()
+				elseif not moved then
+					movedAt = 0
+				end
+				if moved and os.clock() - movedAt > 12 then
+					for c, home in homes do
+						if c.Parent then
+							c.AssemblyLinearVelocity = Vector3.zero
+							c.AssemblyAngularVelocity = Vector3.zero
+							c.CFrame = home
+						end
+					end
+					movedAt = 0
+				end
+			end
+		end)
+	end
 	local noCollide = Instance.new("NoCollisionConstraint")
 	noCollide.Part0 = arm
 	noCollide.Part1 = beam
@@ -709,7 +862,7 @@ local function buildWreckingBall()
 					pcall(arm.SetNetworkOwner, arm, nil)
 				end
 			end
-			if not paused then
+			if not paused and not (Config :: any).WRECK_10 then
 				side = -side
 				hinge.TargetAngle = SWING_ANGLE * side
 			end
