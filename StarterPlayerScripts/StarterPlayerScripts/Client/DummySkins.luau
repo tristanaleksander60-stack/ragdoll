@@ -460,6 +460,9 @@ local function xrayBone(limb: BasePart, skin: BasePart, folder: Instance, key: s
 		end
 	else
 		bone(0, 0, thick * 1.08, len, 1.2)
+		if key == "UpperLeg" then -- (owner's v6 test B: the kneecap in front of the knee)
+			bit(Enum.PartType.Block, Vector3.new(thick * 1.2, thick * 1.3, thick * 0.6), CFrame.new(0, -len * 0.47, -thick * 1.05), BONE_END, true)
+		end
 	end
 	-- (F4, owner 26 Nov 2026: "hver eneste kugle i knoglerne med xray", Config.XRAY_SLUGS): every round that hit this limb
 	-- sits in the bone as a small grey-gold slug at the exact height and side it went in (its BulletHole), at most

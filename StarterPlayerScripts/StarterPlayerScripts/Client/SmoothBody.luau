@@ -95,6 +95,7 @@ type Body = {
 	acc: number,
 	posed: boolean,
 	ball: BasePart?, -- (v6: the round head)
+	skull: { BasePart }?, -- (v6: the skull and jaw inside it, seen in X-ray)
 	face: SurfaceGui?,
 }
 
@@ -208,7 +209,7 @@ local function drop(body: Body)
 		body.face.Enabled = true
 	end
 	if body.ball and body.ball.Parent then
-		body.ball:Destroy()
+		body.ball:Destroy() -- (the skull goes with it)
 	end
 	showBlocks(body)
 	if body.mesh.Parent then
@@ -256,6 +257,32 @@ local function roundHead(body: Body)
 		face.Adornee = ball
 		body.face = face
 	end
+	-- (owner's v6 test B: the whole skeleton in X-ray, the head too: a skull, two dark eye holes and a jaw inside the
+	-- round head, shown only while the body is glass)
+	local skull = {}
+	local function piece(shape: Enum.PartType, size: Vector3, at: CFrame, colour: Color3)
+		local p = Instance.new("Part")
+		p.Name = "XraySkull"
+		p.Shape = shape
+		p.Size = size
+		p.Color = colour
+		p.Material = Enum.Material.SmoothPlastic
+		p.CanCollide, p.CanQuery, p.CanTouch, p.Massless, p.Anchored, p.CastShadow = false, false, false, true, false, false
+		p.Transparency = 1
+		p.CFrame = ball.CFrame * at
+		local pw = Instance.new("WeldConstraint")
+		pw.Part0 = ball
+		pw.Part1 = p
+		pw.Parent = p
+		p.Parent = ball
+		table.insert(skull, p)
+	end
+	local BONE = Color3.fromRGB(236, 226, 200)
+	piece(Enum.PartType.Ball, Vector3.one * 1.22, CFrame.new(0, 0.1, 0.02), BONE)
+	piece(Enum.PartType.Ball, Vector3.one * 0.3, CFrame.new(-0.24, 0.12, -0.5), Color3.fromRGB(60, 52, 48))
+	piece(Enum.PartType.Ball, Vector3.one * 0.3, CFrame.new(0.24, 0.12, -0.5), Color3.fromRGB(60, 52, 48))
+	piece(Enum.PartType.Block, Vector3.new(0.7, 0.24, 0.5), CFrame.new(0, -0.48, -0.22), BONE)
+	body.skull = skull
 end
 
 local function build(model: Model): Body?
@@ -554,6 +581,15 @@ local function step(dt: number)
 			end
 			if body.face then
 				body.face.Enabled = body.mesh.Transparency < 1
+			end
+			if body.skull then
+				local show = body.mesh.Transparency > 0.05 and body.mesh.Transparency < 1
+				local want = if show then 0 else 1
+				if body.skull[1].Transparency ~= want then
+					for _, p in body.skull do
+						p.Transparency = want
+					end
+				end
 			end
 		end
 		local near = (body.pelvis.Position - eye).Magnitude <= SmoothBody.ANIM_REACH
