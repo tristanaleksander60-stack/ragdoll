@@ -411,6 +411,7 @@ end
 -- than the old body's: the medic leans CPR_LIFT degrees less and lifts its straight arms a little, so the stacked
 -- hands land ON the chest plate instead of sinking into it.)
 local CPR_LIFT = 0
+local CPR_HANDS = false
 do
 	local ok, cfg = pcall(function()
 		return require(script.Parent.Parent:WaitForChild("Config")) :: any
@@ -418,6 +419,7 @@ do
 	if ok and cfg and cfg.BODY_FIT and cfg.SMOOTH_BODY_V6 then
 		CPR_LIFT = 13
 	end
+	CPR_HANDS = ok and cfg and cfg.CPR_HANDS_TOGETHER == true and cfg.SMOOTH_BODY_V6 == true
 end
 local function press(out: Pose, t: number, speed: number, depth: number)
 	local beat = t * speed / (2 * math.pi)
@@ -426,8 +428,16 @@ local function press(out: Pose, t: number, speed: number, depth: number)
 	-- (Down in a third of the beat, up in the rest.)
 	local p = if rest then 0 elseif f < 0.34 then math.sin(f / 0.34 * math.pi / 2) else math.cos((f - 0.34) / 0.66 * math.pi / 2)
 	kneeling(out, -43 + CPR_LIFT - depth * p - (if rest then -5 else 0), -10 + depth * 0.5 * p)
-	out.RightShoulder = ang(64 - CPR_LIFT * 0.4 - depth * 0.35 * p, 0, -19)
-	out.LeftShoulder = ang(64 - CPR_LIFT * 0.4 - depth * 0.35 * p, 0, 19)
+	if CPR_HANDS then
+		-- (FIXES_27NOV_LATE 2: the hands stacked on the middle of the chest, the left a little over the right; measured on
+		-- the v6 rig: 1.97 studs apart before, about 0.25 now (the hands are 0.4 wide, so they overlap). ActiveRagdoll opens
+		-- the shoulder cone for CPR so the arms can cross in.)
+		out.RightShoulder = ang(80 - depth * 0.35 * p, 30, -62)
+		out.LeftShoulder = ang(78 - depth * 0.35 * p, -20, 62)
+	else
+		out.RightShoulder = ang(64 - CPR_LIFT * 0.4 - depth * 0.35 * p, 0, -19)
+		out.LeftShoulder = ang(64 - CPR_LIFT * 0.4 - depth * 0.35 * p, 0, 19)
+	end
 	out.RightElbow = ang(if rest then 12 else 2, 0, 0)
 	out.LeftElbow = ang(if rest then 12 else 2, 0, 0)
 end

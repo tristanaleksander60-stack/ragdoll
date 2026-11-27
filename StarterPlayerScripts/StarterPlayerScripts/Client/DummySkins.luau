@@ -549,21 +549,8 @@ local function limbGlow(limb: BasePart, folder: Instance)
 			b.Parent = holder
 		end
 	end
-	local sleeve = Instance.new("Part")
-	sleeve.Name = "XraySleeve"
-	sleeve.Shape = Enum.PartType.Cylinder
-	local r = math.max(limb.Size.X, limb.Size.Z) / 2 + 0.06
-	sleeve.Size = Vector3.new(limb.Size.Y * 0.98, r * 2, r * 2)
-	sleeve.CFrame = limb.CFrame * CFrame.Angles(0, 0, math.rad(90))
-	sleeve.Color = Color3.fromRGB(150, 205, 255)
-	sleeve.Material = Enum.Material.Glass
-	sleeve.Transparency = 0.7
-	sleeve.CanCollide, sleeve.CanQuery, sleeve.CanTouch, sleeve.Massless, sleeve.Anchored, sleeve.CastShadow = false, false, false, true, false, false
-	local w = Instance.new("WeldConstraint")
-	w.Part0 = limb
-	w.Part1 = sleeve
-	w.Parent = sleeve
-	sleeve.Parent = holder
+	-- (FIXES_27NOV_LATE 1, owner: "Fiks x-ray så det ikke bare er en cylinder": no sleeve and no box any more; until the
+	-- limb-shaped glass pieces exist, only the bones show through the skin with the Highlight.)
 	local hl = Instance.new("Highlight")
 	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 	hl.FillColor = Color3.fromRGB(240, 232, 210)
@@ -585,9 +572,8 @@ local function limbGlow(limb: BasePart, folder: Instance)
 		end
 		local fade = TweenInfo.new(1)
 		TweenService:Create(hl, fade, { FillTransparency = 1, OutlineTransparency = 1 }):Play()
-		TweenService:Create(sleeve, fade, { Transparency = 1 }):Play()
 		for _, p in holder:GetDescendants() do
-			if p:IsA("BasePart") and p ~= sleeve then
+			if p:IsA("BasePart") then
 				TweenService:Create(p, fade, { Transparency = 1 }):Play()
 			end
 		end

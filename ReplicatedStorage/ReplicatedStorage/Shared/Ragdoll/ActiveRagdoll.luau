@@ -2171,6 +2171,24 @@ local function update(dt: number)
 				local mood = rig.model:GetAttribute("Mood")
 				local moodRig: any = rig
 				local moodPose = if rig.state == "Standing" and type(mood) == "string" then Poses.MOODS[mood] else nil
+				-- (FIXES_27NOV_LATE 2, owner: "De samler ikke hænderne når de laver cpr": the shoulder joint's cone (110 degrees)
+				-- stopped the straight arms 1.97 studs apart; the stacked-hands pose needs about 146, so it opens for CPR only.)
+				local cprNow = (mood == "CPR" or mood == "CPRFast") and moodPose ~= nil
+				if cprNow ~= (moodRig.cprCone == true) then
+					moodRig.cprCone = cprNow
+					for _, side in { "Right", "Left" } do
+						local arm = rig.model:FindFirstChild(side .. "UpperArm")
+						local bs = arm and arm:FindFirstChild(side .. "ShoulderBallSocket")
+						if bs and bs:IsA("BallSocketConstraint") then
+							if cprNow then
+								bs:SetAttribute("ConeWas", bs:GetAttribute("ConeWas") or bs.UpperAngle)
+								bs.UpperAngle = 155
+							else
+								bs.UpperAngle = (bs:GetAttribute("ConeWas") :: number?) or bs.UpperAngle
+							end
+						end
+					end
+				end
 				if moodPose then
 					applyPose(rig, moodPose(rig.stateTime))
 					moodRig.moodPosed = true

@@ -7,12 +7,16 @@
 - **The head no longer wobbles on the body** (`Client/SmoothBody.luau`): the round head was welded to the physics head, while the mesh's neck is drawn from the bone chain every frame. Now it is anchored and placed from the mesh's own Head bone in the same frame. Check that the face, the X-ray skull and the hats still follow it.
 
 ## 1. X-ray on one limb: NOT a cylinder (owner: "Fiks x-ray så det ikke bare er en cylinder")
+
+**PART DONE v1365:** the glass sleeve (the cylinder, and the big one on the torso) is gone; only the bones show through the skin with the Highlight, 2 s plus a 1 s fade. LEFT: the 15 limb-shaped glass pieces from Blender (also the hit hull for item 5).
 Today A2 puts a pale capsule round the limb (on the torso a big glass box), which reads as a cylinder stuck on the body.
 - **Make the glass the limb's OWN shape:** in Blender, split the approved v6 mesh at its joint planes (the same cuts the v6 build uses) into 15 closed pieces, one per R15 part (each piece = the faces whose strongest bone weight is that part), pushed out 0.015 along the normals. Export them as 15 plain MeshParts named after the parts (`art/models/mannequin/mannequin_v6_xray.fbx`; MCP upload, else ONE owner import step).
 - **In the game:** on the limb hit 3 times in a row, the matching piece is shown welded to that physics part at its rest offset, in light-blue Glass at about 0.55 transparency, with a soft blue edge glow. The bones show through with the Highlight (AlwaysOnTop) as in A2. The timing stays: 2 s, then a 1 s fade.
 - **Until the pieces exist:** NO sleeve and NO box at all; only the bones through the skin with the Highlight. Never a cylinder or a box.
 
 ## 2. CPR: the hands together (owner: "De samler ikke hænderne når de laver cpr")
+
+**DONE v1365 (`CPR_HANDS_TOGETHER`):** the cause: the shoulder ball socket's 110-degree cone held the straight arms 1.97 studs apart. Now the cone opens to 155 for CPR/CPRFast only, and the arms cross in: the hands meet 0.20-0.27 apart on the chest middle, the left a little over the right (measured on the v6 rig). Not changed: CPROne (one hand on the forehead), CPRSlam, the player's own character.
 - The medic's two hands are stacked on the centre of the patient's chest plate: one palm on the chest, the other on top of it, fingers interlaced (the v6 finger bones: a CPR grip pose in `HAND_POSES`), arms straight, the shoulders right over the hands.
 - Each push goes down from the hips, and the hands stay together the whole time (an IK target on the chest point for both wrists, not two separate arm poses).
 - The same goes for the player's own CPR game and for heroes giving CPR.
