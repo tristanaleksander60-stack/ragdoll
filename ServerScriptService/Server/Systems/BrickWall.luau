@@ -27,6 +27,7 @@ BrickWall.CASCADE = 0.07
 BrickWall.MAX_LOOSE = 50
 BrickWall.FADE = 30
 BrickWall.REBUILD = 45
+local splatAt: { [Instance]: number } = setmetatable({}, { __mode = "k" }) :: any -- (3.10: one splat a body per 1.5 s)
 
 local BRICK = Color3.fromRGB(170, 78, 58)
 local CRACKED = Color3.fromRGB(120, 56, 44)
@@ -280,6 +281,53 @@ local function build(src: BasePart, folder: Instance)
 		if v.Magnitude > BrickWall.IMPACT * 0.45 and not other:IsDescendantOf(f) and not other.Anchored then
 			local n = math.clamp(math.floor(v.Magnitude / 8) + 1, 2, 10)
 			hitArea(w, other.Position, n, v * 0.4)
+		end
+		-- 3.10 (docs/MACHINES_10.md "LAUNCH PADS + BRICK WALL"; Config.WALL_10): a ragdoll slamming in leaves a purple
+		-- cartoon SPLAT on the wall (it fades in 8 s) and pops its impact speed, with a NEW BEST for the lab's owner.
+		local body = model
+		while body and body.Parent and body.Parent ~= Workspace:FindFirstChild("Dummies") do
+			body = body.Parent:FindFirstAncestorOfClass("Model")
+		end
+		if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).WALL_10 and body and body:GetAttribute("IsDummy") == true
+			and v.Magnitude > 20 and os.clock() - ((splatAt[body] :: number?) or 0) > 1.5 then
+			splatAt[body] = os.clock()
+			local speed = math.floor(v.Magnitude * 2 + 0.5) -- (the speed was about halved by the bump)
+			-- the face it hit: the part's thinnest axis, on the side the body came from
+			local size = part.Size
+			local axis = if size.X <= size.Y and size.X <= size.Z then Vector3.xAxis elseif size.Z <= size.Y then Vector3.zAxis else Vector3.yAxis
+			local rel = part.CFrame:PointToObjectSpace(other.Position)
+			local side = if rel:Dot(axis) >= 0 then 1 else -1
+			local flat = rel - axis * rel:Dot(axis) + axis * side * (size:Dot(axis) / 2 + 0.06)
+			local at = part.CFrame:PointToWorldSpace(flat)
+			local normal = part.CFrame:VectorToWorldSpace(axis * side)
+			local splat = Instance.new("Part")
+			splat.Name = "WallSplat"
+			splat.Shape = Enum.PartType.Cylinder
+			splat.Anchored, splat.CanCollide, splat.CanQuery, splat.CanTouch = true, false, false, false
+			splat.Color = Color3.fromRGB(150, 70, 210)
+			splat.Material = Enum.Material.SmoothPlastic
+			local r = math.clamp(speed / 25, 2, 5)
+			splat.Size = Vector3.new(0.1, r * 2, r * 2)
+			splat.CFrame = CFrame.lookAt(at, at + normal) * CFrame.Angles(0, math.rad(90), 0)
+			splat.Parent = Workspace
+			game:GetService("TweenService"):Create(splat, TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.In, 0, false, 6), { Transparency = 1 }):Play()
+			task.delay(8.2, function()
+				splat:Destroy()
+			end)
+			local text = "SPLAT! " .. tostring(speed) .. " studs/s"
+			local okO, owner = pcall(function()
+				return (require(script.Parent:WaitForChild("Lab")) :: any).ownerAt(at)
+			end)
+			if okO and owner then
+				local best = (owner:GetAttribute("WallBest") :: number?) or 0
+				if speed > best then
+					owner:SetAttribute("WallBest", speed)
+					text ..= " NEW BEST!"
+				end
+			end
+			pcall(function()
+				(require(script.Parent:WaitForChild("Playground")) :: any).pop(at + normal * 2 + Vector3.new(0, 3, 0), text, Color3.fromRGB(220, 160, 255))
+			end)
 		end
 	end
 	f.DescendantAdded:Connect(function(d)

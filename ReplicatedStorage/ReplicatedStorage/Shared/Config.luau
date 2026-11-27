@@ -147,6 +147,7 @@ local Config = {
 	PRESS_10 = true, -- 3.7 press: a soft hydraulic hiss before the slam (only with a body on the bed), "FLAT x2!" / "FLAT x3!" when pressed again while still flat, NEW BEST (FlatBest) (Compressor)
 	WASHER_10 = true, -- 3.8 washer: a program prompt (DELICATE / NORMAL / TURBO), light purple suds, TURBO walks the machine across its pad, "142 SPINS!" + NEW BEST (WashBest), out with bubbles rising off it (LabCreatures)
 	ROCKET_10 = true, -- 3.9 rocket: a 3-2-1 / LIFT OFF! board, fireworks at the top, the body drifts down under a parachute to a random lab spot, "375 studs HIGH!" + NEW BEST (RocketBest), 1 in 20 "TO THE MOON!" gold stars +5 KOs (RocketRide)
+	WALL_10 = true, -- 3.10 brick wall: a ragdoll slamming in leaves a purple cartoon SPLAT (fades in 8 s) and pops "SPLAT! 140 studs/s" + NEW BEST (WallBest) (BrickWall)
 	TURN_EVEN = true, -- F73: the heading rotates at a capped even rate (220 deg/s walking, 360 fleeing), never a lerp whip or 180 degree snap; turning on the spot steps the feet (ActiveRagdoll, DummyLife)
 	NAV_BLOCKCAST = true, -- F72: obstacles are seen with a body-sized Blockcast whose look-ahead grows with speed (2.5-7 studs), and the detour takes the more open side (ActiveRagdoll blocked/clearAhead)
 	NAV_BUMP_LOG = true, -- F72: ActiveRagdoll counts detours, other-side tries and waits for a car, printed once a minute ([NavBump]); a moving car in the way is waited for, not walked round
