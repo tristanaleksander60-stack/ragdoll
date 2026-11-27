@@ -343,11 +343,11 @@ local function buildTop(onRewards: () -> ())
 	clock.Name = "Clock"
 	clock.AnchorPoint = Vector2.new(0.5, 0)
 	clock.Position = UDim2.new(0.5, 0, 1, -8)
-	clock.Size = UDim2.fromOffset(58, 15)
+	clock.Size = UDim2.fromOffset(64, 20) -- (AUDIT 25: 15 px text on phones)
 	clock.BackgroundColor3 = Color3.fromRGB(255, 200, 60)
 	clock.TextColor3 = Color3.fromRGB(40, 28, 6)
 	clock.Font = if PREMIUM then Enum.Font.BuilderSansExtraBold else Enum.Font.GothamBlack
-	clock.TextSize = 12
+	clock.TextSize = 15
 	clock.Text = ""
 	clock.Visible = false
 	corner(clock, 8)
@@ -931,7 +931,7 @@ function HudV3.start()
 	-- (Owner, 26 Nov 2026: "bare lav det til et ikon i stedet for": the Multiplayer window from a square under Lab, the
 	-- portal in the world hidden behind Config.MP_PORTAL. The word shrinks to fit the square.)
 	if Config.MP_ICON then
-		local mp = card("Multi", "Multiplayer", "friends", left, function()
+		local mp = card("Multi", "ONLINE", "friends", left, function() -- (AUDIT 25: a short word that stays readable on a phone)
 			(require(script.Parent:WaitForChild("PortalUI")) :: any).openHub()
 		end)
 		mp.LayoutOrder = 4
