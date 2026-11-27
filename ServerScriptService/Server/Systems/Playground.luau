@@ -1730,6 +1730,8 @@ local function buildBigButton()
 				local t = g:FindFirstChildWhichIsA("TextLabel")
 				if t and t ~= c then
 					t.Text = "LAB CONTROLS:\nA RANDOM EVENT!"
+					t.TextScaled = true -- (THE FINISH LINE: the words fit the sign, never cut off)
+					t.TextWrapped = true
 				end
 			end
 		end
