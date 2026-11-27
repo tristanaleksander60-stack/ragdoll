@@ -539,7 +539,7 @@ function StretchMachine.build(folder: Instance, floor: CFrame): Model
 	local free = prompt(red, "Stretch machine", "Release", Enum.KeyCode.E)
 	free.GamepadKeyCode = Enum.KeyCode.ButtonY
 	local sound = Instance.new("Sound")
-	sound.SoundId = "rbxassetid://9113480917"
+	sound.SoundId = "rbxassetid://9118773057" -- (PSE motor whine and hum; was a body-fall thud on a loop)
 	sound.Looped = true
 	sound.Volume = 0.35
 	sound.PlaybackSpeed = 0.4

@@ -89,7 +89,7 @@ function FanMachine.setup(m: Model, owner: Player)
 	anchor.CFrame = CFrame.lookAt(mouth, mouth + front)
 	anchor.Parent = m
 	local sound = Instance.new("Sound")
-	sound.SoundId = "rbxassetid://9113480917"
+	sound.SoundId = "rbxassetid://9125742262" -- (PSE "Plasma Trails Constant Airy Whooshing Windy 2": the wind roar)
 	sound.Looped = true
 	sound.RollOffMaxDistance = 100
 	sound.Parent = anchor

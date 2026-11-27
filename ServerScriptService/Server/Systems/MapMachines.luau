@@ -108,7 +108,7 @@ local function spin(m: Model, hub: Vector3, by: Player?, power: number?)
 	local whir: Sound? = nil
 	if live then
 		local s = Instance.new("Sound")
-		s.SoundId = "rbxassetid://9113480917"
+		s.SoundId = "rbxassetid://9118773057" -- (PSE "San Francisco Bart Train 2": a motor whine and hum)
 		s.Looped = true
 		s.Volume = 0.5
 		s.PlaybackSpeed = 0.5
