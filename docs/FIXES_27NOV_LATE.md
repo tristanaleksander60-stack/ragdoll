@@ -208,3 +208,33 @@ Build on `RAGDOLL_FEEL.md` "The upgrade" and `RAGDOLL_10.md` R4. Finish what is 
    - so fit each kind's physics box to its look's real size (from the look's bounds, a little inside it), so it stops where it looks like it touches;
    - each wheel's radius from the look (the existing `Radius` attributes).
 3. **Riding over kerbs and slopes:** no sinking into a ramp or a kerb; the wheels follow the ground (the screens' wheel welds).
+
+## 12. The BOXING RING: drop one in, an opponent runs in, they fight to the end (owner, screenshot: two boxers in guard, apart, never hitting: "De slår ikke hinanden og gør så man bare skal tage 1 ragdoll derop og så kommer der en anden ragdoll løbende ind i ringen og så starter kampen og så slås de til døden")
+**Why they never hit** (`Systems/BoxingMatch.luau` ~216-250): a boxer "steps in" only by setting its `Home` 2.4 studs from the other, and a punch lands only within 4.6 studs. The walking rules then keep them apart:
+- the personal-space push (`avoidDummies`, PERSONAL_SPACE 2.6 × 1.6 with NO_OVERLAP);
+- PHYSICS_DEEP's arrive dead zone (once arrived, it stays until the goal moves more than 4 studs) and STATE_CALM (1.5 s least in Standing).
+
+So they stand in guard about 6-8 studs apart, swing at the air, and nothing lands.
+
+**The new flow** (replace the START A FIGHT prompt and the pick-time as the start; keep "pick the winner" as an optional prompt during the fight):
+1. **You bring ONE ragdoll:** carry or throw a ragdoll into the ring (the ring is a drop zone with the DROP HERE sign, item 0/DROP_HERE_V2). It climbs to the RED corner and raises its fists.
+2. **An opponent RUNS in:**
+   - within 1 s, the nearest free ragdoll (within 120 studs, never one you are holding, never a hurt one) runs to the ring, vaults the ropes into the BLUE corner and taunts;
+   - if none is free, one jogs in from the edge of the map (out of view).
+3. **The bell:** "FIGHT!"; the crowd (watchers) gathers round the ropes.
+4. **They really fight:**
+   - while boxing, both are `InMachine = "Boxing"`: no personal-space push between them, no arrive dead zone, no roaming;
+   - the fight drives their feet: they circle each other at 2.5-3.5 studs, step in to punch, and step back;
+   - **punches:** jabs, hooks and an uppercut (`Poses.punch` sides plus new hook and uppercut poses), aimed at the head or body, about one every 0.6-1.2 s each, sometimes a 2-3 punch combo;
+   - **a hit that lands** (the fist's path really reaches the other body, checked by distance at the punch's peak) does damage: the head snaps back, the body staggers a step (item 10's shot reactions), a "POW";
+   - **blocks:** a guarded punch is blocked (gloves up, a thud, less damage);
+   - **the face:** angry, hurt and dizzy as the damage grows.
+5. **To the end:**
+   - each knockdown, the referee counts; a hurt boxer may get up (the failed get-ups of item 10) and fight on, slower;
+   - the fight ends when one is out cold and cannot get up; the winner gives the final blow, and the loser is DEAD (the game's normal death: CPR, REVIVE ALL and the doctor work on it as everywhere; gore stays off, purple blood).
+6. **After:**
+   - the winner celebrates (arms up, a bow, confetti, "RED WINS!" or "BLUE WINS!");
+   - the winner stays as champion, so the next ragdoll you drop in fights the champion;
+   - the ring's sign keeps the champion's win streak.
+7. **Anyone near can pick the winner** during the first 5 s of the fight (free, no stake, as before; the streak stays).
+8. **Check (a few Play looks allowed for this item):** drop one ragdoll in: an opponent runs in within 2 s, they fight close, punches land and show, knockdowns, the count, and it ends with one dead and the winner celebrating. Then drop another in against the champion.
