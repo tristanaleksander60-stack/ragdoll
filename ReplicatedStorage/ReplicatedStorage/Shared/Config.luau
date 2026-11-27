@@ -189,6 +189,7 @@ local Config = {
 	TOUCH_HOLD = true, -- F92 rest: on a touch screen every prompt without a hold needs 0.3 s, so a tap while walking past never starts a machine (Client/ControlsFX)
 	HOLES_ON_SKIN = true, -- FIXES_27NOV_LATE 5: on a v6 body a bullet hole is small (0.35 limb / 0.45 torso), 0.005 off the skin, with no 3D ring or chip discs (they poked out) (Client/BulletHoles)
 	BLEED_STAGES = true, -- FIXES 10.2: a bleeding ragdoll sinks to its knees (mood Breath) in the last 12 % of Blood before it passes out and tips over (VitalsService.step)
+	LAGFREE_SLEEP = true, -- LAG-FREE 2 item 2: a dead or knocked-out body lying still 1.5 s is anchored by the server (no phone physics, no upload); a hit, push, move, revive, grab or a fast body within 6 studs wakes it (DummyControl)
 	LAGFREE_TELEMETRY = true, -- LAG-FREE 2 item 0: each client sends its minute (FPS p50/p10, hitches, memory, bodies); the server logs Fps_p10 etc. per device (Systems/PerfReport, Client/QualityGovernor)
 	LAGFREE_SERVER_KNOWS = true, -- LAG-FREE 2 item 1: the client's quality level reaches the server (PerfLevel); the near cap drops 1/2 at levels 1/0 (never under 3), no background boxing at 0
 	CRUDE_HUMOR = true, -- MILD_EXTRAS A (owner yes): whoopee cushion on benches, burps at the grill, blegh after the washer/gyro, the go-kart fart boost, the poop-emoji slip; the fart gun (A2) waits; questionnaire crude humour: Mild BEFORE publishing (Systems/CrudeHumor)

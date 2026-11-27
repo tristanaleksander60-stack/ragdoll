@@ -129,6 +129,114 @@ function DummyControl.reassertOwner(model: Model)
 	end
 end
 
+
+-- LAG-FREE 2 item 2 (Config.LAGFREE_SLEEP; PERF_MOBILE §6): a dead or knocked-out body that has lain still 1.5 s
+-- SLEEPS: the server anchors every part in its exact pose, so the phone that simulates the lab stops solving it and
+-- uploading it. Only down bodies sleep (they do not get up by themselves). It WAKES at once on a hit, a push, a move,
+-- a reset or a heal (each of those calls wake first), when its Vital, Held or Mood changes (a revive, a grab, CPR),
+-- and when another body or a player moves fast within 6 studs. Waking unanchors it and hands it back to its owner.
+local asleep: { [Model]: { parts: { BasePart }, conns: { RBXScriptConnection } } } = {}
+local stillFor: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+local SLEEP_CALM = 1.5 -- studs/s: still
+local SLEEP_AFTER = 1.5 -- s lying still before it sleeps
+
+function DummyControl.isAsleep(model: Model): boolean
+	return asleep[model] ~= nil
+end
+
+function DummyControl.wake(model: Model)
+	local a = asleep[model]
+	if not a then
+		return
+	end
+	asleep[model] = nil
+	stillFor[model] = nil
+	for _, c in a.conns do
+		c:Disconnect()
+	end
+	for _, p in a.parts do
+		if p.Parent then
+			p.Anchored = false
+		end
+	end
+	model:SetAttribute("Asleep", nil)
+	if known[model] then
+		giveParts(model, owners[model])
+	end
+end
+
+local function sleep(model: Model)
+	local parts = {}
+	for _, p in model:GetDescendants() do
+		if p:IsA("BasePart") and not p.Anchored then
+			p.AssemblyLinearVelocity = Vector3.zero
+			p.AssemblyAngularVelocity = Vector3.zero
+			p.Anchored = true
+			table.insert(parts, p)
+		end
+	end
+	local conns = {}
+	for _, name in { "Vital", "Held", "Mood", "Seat", "InMachine" } do
+		table.insert(conns, model:GetAttributeChangedSignal(name):Connect(function()
+			DummyControl.wake(model)
+		end))
+	end
+	table.insert(conns, model.AncestryChanged:Connect(function()
+		if not model.Parent then
+			asleep[model] = nil
+		end
+	end))
+	asleep[model] = { parts = parts, conns = conns }
+	model:SetAttribute("Asleep", true)
+end
+
+local function canSleep(model: Model): boolean
+	local vital = model:GetAttribute("Vital")
+	local state = model:GetAttribute("RagdollState")
+	return (vital == "Dead" or vital == "Unconscious") and (state == "Ragdoll" or state == "Out" or state == nil)
+		and model:GetAttribute("Held") ~= true and model:GetAttribute("Seat") == nil and model:GetAttribute("InMachine") == nil
+		and model:GetAttribute("MachineHidden") == nil and ice[model] == nil
+end
+
+local function sleepStep(dt: number)
+	local fast: { Vector3 } = {}
+	for m in known do
+		if not asleep[m] then
+			local pe = m:FindFirstChild("LowerTorso")
+			if pe and pe:IsA("BasePart") and pe.AssemblyLinearVelocity.Magnitude > 12 then
+				table.insert(fast, pe.Position)
+			end
+		end
+	end
+	for _, pl in Players:GetPlayers() do
+		local r = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
+		if r and r:IsA("BasePart") and r.AssemblyLinearVelocity.Magnitude > 20 then
+			table.insert(fast, r.Position)
+		end
+	end
+	for m in known do
+		local pe = m:FindFirstChild("LowerTorso")
+		if not (m.Parent and pe and pe:IsA("BasePart")) then
+			continue
+		end
+		if asleep[m] then
+			for _, at in fast do
+				if (at - pe.Position).Magnitude < 6 then
+					DummyControl.wake(m)
+					break
+				end
+			end
+		elseif canSleep(m) and pe.AssemblyLinearVelocity.Magnitude < SLEEP_CALM then
+			stillFor[m] = (stillFor[m] or 0) + dt
+			if (stillFor[m] :: number) >= SLEEP_AFTER then
+				sleep(m)
+			end
+		else
+			stillFor[m] = nil
+		end
+	end
+end
+
 -- Registers a freshly prepared dummy with its first owner.
 function DummyControl.register(model: Model, owner: Player?)
 	local names = {}
@@ -231,6 +339,7 @@ function DummyControl.hit(model: Model, part: BasePart, impulse: Vector3, positi
 	if not known[model] then
 		return nil
 	end
+	DummyControl.wake(model) -- (LAG-FREE 2 item 2: a sleeping body wakes first)
 	DummyControl.countHit(model)
 	Dummies.setBlame(model, if by then by.UserId else 0)
 	DummyControl.stampServerHit(model, if by then by.UserId else 0)
@@ -288,6 +397,7 @@ function DummyControl.push(model: Model, deltaVelocity: Vector3, by: Player?)
 	if not known[model] then
 		return
 	end
+	DummyControl.wake(model) -- (LAG-FREE 2 item 2: a sleeping body wakes first)
 	Dummies.setBlame(model, if by then by.UserId else 0)
 	DummyControl.stampServerHit(model, if by then by.UserId else 0)
 	pushes[model] = (pushes[model] or Vector3.zero) + deltaVelocity
@@ -302,6 +412,7 @@ local thaw: (model: Model, token: number) -> ()
 -- Teleports a dummy and puts it back to a clean standing state (an ice statue thaws first, so
 -- the server's ice and the simulator agree).
 function DummyControl.reset(model: Model, cframe: CFrame)
+	DummyControl.wake(model) -- (LAG-FREE 2 item 2: a sleeping body wakes first)
 	local frozen = ice[model]
 	if frozen then
 		thaw(model, frozen.token)
@@ -329,6 +440,7 @@ function DummyControl.nudge(model: Model, deltaVelocity: Vector3)
 	if not known[model] then
 		return
 	end
+	DummyControl.wake(model) -- (LAG-FREE 2 item 2: a sleeping body wakes first)
 	pushes[model] = (pushes[model] or Vector3.zero) + deltaVelocity
 	if not pushFlushQueued then
 		pushFlushQueued = true
@@ -341,6 +453,7 @@ function DummyControl.move(model: Model, cframe: CFrame)
 	if not known[model] then
 		return
 	end
+	DummyControl.wake(model) -- (LAG-FREE 2 item 2: a sleeping body wakes first)
 	local owner = owners[model]
 	if owner then
 		send(model, owner, "Move", model, cframe)
@@ -357,6 +470,7 @@ function DummyControl.heal(model: Model)
 	if not known[model] then
 		return
 	end
+	DummyControl.wake(model) -- (LAG-FREE 2 item 2: a sleeping body wakes first)
 	for _, d in model:GetDescendants() do
 		if d.Name == "Plaster" then
 			d:Destroy()
@@ -594,6 +708,17 @@ end
 
 function DummyControl.start()
 	cmd = Net.event(Net.Names.DummyCmd)
+	if (require(Shared:WaitForChild("Config")) :: any).LAGFREE_SLEEP then
+		task.spawn(function()
+			while true do
+				task.wait(0.2) -- (5 Hz: the wake check; sleeping is decided at the same pace)
+				local ok, err = pcall(sleepStep, 0.2)
+				if not ok then
+					warn("[Sleep] " .. tostring(err))
+				end
+			end
+		end)
+	end
 	Net.event(Net.Names.Topology).OnServerEvent:Connect(onTopology)
 	RunService.Heartbeat:Connect(function()
 		for m, report in waitingReports do
