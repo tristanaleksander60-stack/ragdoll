@@ -1574,6 +1574,30 @@ This replaces F51 (NORMAL 30, sprint about 50), F38 (the Walk speed setting) and
    - ragdolls stand and walk with relaxed arms hanging at their sides, like people;
    - grey, slim, smooth bodies, no bodybuilder shoulders, no lumps.
 
+## F90 Walking ragdolls VANISH out of nowhere while you are hitting them (owner, 27 Nov: "Ragdolls der går rundt forsvinder bare ud af det blå nogle gange imens man står og slår dem")
+This breaks the hard rule "nothing vanishes in view" (`RAGDOLL_DIRECTOR.md` Part C, rule 1). Some system still removes, hides, pools or teleports a ragdoll that a player is looking at, even one being hit.
+
+**The suspects** (grep every path that does `Parent = nil`, `:Destroy()`, `PivotTo`, `park`, a pool return, `MachineHidden`, Transparency 1 or a teleport on a ragdoll):
+- the RagdollDirector (park, pool, the nearby cap), with the distance measured from the wrong point (the lab origin or another player);
+- `Unstick`: it TELEPORTS a ragdoll whose pelvis is inside something solid for 1 s, which happens when a beaten body lies against a bench, a wall or another body;
+- the PATH WALKERS swap (LIFE_IDLE 4): a fake that is hit or aimed at hides when the real one is refused (the cap) or late;
+- SmoothBody or RealHands hiding the body's skins while the mesh is not shown;
+- `NearbyTwo`, `Personas`, `RoadWalkers`, `Watchers`, `GoldenRun`, `MachineDemos`, `PickOut`, `EventService`, `Surprises`, `DummySpawn` / `DummyFactory` recycling, `Lab` refills and `AdminTools` clean-ups;
+- streaming: a ragdoll model streamed out on the client (it is not Atomic or persistent, and it walks just past the streaming radius).
+
+**The fix** (`Config.NEVER_VANISH = true`):
+1. **ONE guard for every removal:**
+   - `RagdollDirector.mayRemove(model, reason)` returns false when the body is in any player's view (the camera report), within 60 studs of any player, hit or touched in the last 30 s, held, in a machine, or in a show;
+   - EVERY system above calls it before it removes, hides, pools or teleports a ragdoll. If it is refused, the system waits, or walks the body away out of view first.
+2. **Unstick in view:** a gentle push-out (a small velocity away from the solid part's centre) instead of a teleport. It teleports only when out of every view.
+3. **Path walkers:**
+   - a fake that is hit or aimed at NEVER hides unless its real twin is standing in its place;
+   - if the real cannot be made (the cap), the fake staggers from the hit and walks on;
+   - the fake can never be "hit through" into nothing.
+4. **Streaming:** ragdoll models are `ModelStreamingMode` Atomic, and the client keeps any ragdoll within 120 studs (or one it has hit in the last 30 s) streamed in (`Player:RequestStreamAroundAsync` / persistent for active ones).
+5. **A removal log, always on:** `REMOVAL_LOG` prints, in Studio and to Metrics, every removal, hide, pool or teleport of a ragdoll, with the system's name, the reason, the distance to the nearest player and "in view yes/no". An "in view: yes" line is a bug the log names for the next session.
+6. **Check (the owner):** stand and beat ragdolls for a few minutes at different places (by benches, walls, the walkways). None vanishes or jumps away while you look at it.
+
 ## Answers to Claude Code's questions (owner direction or safe default)
 - **X-RAY key:** I is fine (B is Build). Phone: a small X-RAY toggle button.
 - **The big map (step 7):** YES, do it now.
