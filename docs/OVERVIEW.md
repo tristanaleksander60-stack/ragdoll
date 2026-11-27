@@ -73,7 +73,7 @@ The owner: "sørg for den ikke tester alt selv dybt, men at det er min opgave".
 - **When the context fills up,** it is summarised: keep going from this page.
 
 ## What only the OWNER can do (Claude Code: never wait for these; build around them)
-1. **Step 0:** Alt+P (gore off) and the maturity questionnaire (`MATURITY.md`, `BODY_V2.md` "final answers") before Fri 27 Nov 17:34 UTC.
+1. **Step 0:** DONE 27 Nov (the questionnaire is sent; Roblox rating Mild).
 2. **Game passes for the new vehicles (F76):**
    - go-kart, police car, monster truck, bulldozer and fire truck (suggested 49 / 99 / 149 / 149 / 199 Robux);
    - and confirm the Ford truck's pass 2092632252.
@@ -84,7 +84,7 @@ The owner: "sørg for den ikke tester alt selv dybt, men at det er min opgave".
 
 | # | What | Doc | State | LEFT |
 |---|---|---|---|---|
-| 0 | **Owner:** Alt+P (gore off) and send the maturity questionnaire (deadline Fri 27 Nov 17:34 UTC) | `MATURITY.md`, `BODY_V2.md` "final answers" | waiting for the owner | owner only |
+| 0 | **Owner:** Alt+P (gore off) and send the maturity questionnaire (deadline Fri 27 Nov 17:34 UTC) | `MATURITY.md`, `BODY_V2.md` "final answers" | **QUESTIONNAIRE SENT 27 Nov** (Roblox rating MILD: Blood light/unrealistic, Fear occasional/mild, Violence repeated/mild; IARC higher: ESRB Teen, generic 16+, mainly from "innocent characters killed without penalties" and "often close-up"). It can be re-sent any time; to lower IARC the GAME must change first (owner decision pending: "never dead, only knocked out", no graves/R.I.P.) | owner: decide on "never dead" |
 
 ## WHAT IS LEFT (27 Nov): the next run builds it in THIS order (the owner's ANSWERS to every open question are in `NOW.md` "ANSWERS": read them first)
 Everything not listed here is DONE (see the rows). Each line points to its row; build the row's LEFT.

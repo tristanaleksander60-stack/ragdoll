@@ -54,7 +54,7 @@ Read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situat
 - **Never change the old map layout:** since M4 every map change is built on the compact plan (OVERVIEW M4).
 
 ## The ONE final message (Danish, short, only when you really stop)
-1. **Step 0 reminder** (only if it is not done): "Husk punkt 0: tryk Alt+P i Studio for at udgive gore-off, og send aldersspørgeskemaet med svarene i docs/MATURITY.md."
+1. **Step 0 reminder:** the questionnaire was SENT on 27 Nov (Roblox rating Mild), so do not remind about it again. (Old line, kept for history:) "Husk punkt 0: tryk Alt+P i Studio for at udgive gore-off, og send aldersspørgeskemaet med svarene i docs/MATURITY.md."
 2. **What was built,** phase by phase, one line per row, and what is parked and why.
 3. **How to publish BOTH places** after testing (OVERVIEW PHASE 8).
 4. **ONE LONG "Test selv" list covering EVERYTHING built in the run** (owner, 26 Nov late: "send en lang test liste med alt, så sender jeg hvis der er noget som skal ændres"):
