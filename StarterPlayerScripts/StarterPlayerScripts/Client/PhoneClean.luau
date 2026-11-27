@@ -12,7 +12,7 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 
 local PhoneClean = {}
 
-PhoneClean.HIDE_GUIS = { "BodyCardArrow", "FirstPersonTouch" }
+PhoneClean.HIDE_GUIS = if Config.FP_EYE_PHONE then { "BodyCardArrow" } else { "BodyCardArrow", "FirstPersonTouch" } -- (owner 27 Nov late: "fiks så man kan se first person øjet igen på tlf": the eye stays)
 PhoneClean.HIDE_NAMES = { KeyChip = true, Number = true }
 PhoneClean.HIDE_EVERYWHERE = { KeyChip = true, Key = true } -- (F70: no key letter on any HUD button on a touch screen)
 

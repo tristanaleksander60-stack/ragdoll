@@ -82,6 +82,15 @@ function FirstPerson.set(want: boolean, asked: boolean?)
 	end
 end
 
+-- (owner 27 Nov late, FP_AUTO: a new weapon is a new choice: picking one clears "I chose third person", so the pick and
+-- the shots after it may put you in first person again; V or the eye still takes you out until the next pick.)
+function FirstPerson.clearChoice()
+	choseThird = false
+end
+function FirstPerson.choseThird(): boolean
+	return choseThird
+end
+
 function FirstPerson.toggle()
 	FirstPerson.set(not on, true)
 end
@@ -254,7 +263,7 @@ function FirstPerson.start()
 		local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 		local walking = humanoid ~= nil and humanoid.MoveDirection.Magnitude > 0.05
 		if on and not processed and not walking and next(onStick) == nil and scale < 0.6 then
-			FirstPerson.set(false)
+			FirstPerson.set(false, Config.FP_AUTO == true) -- (FP_AUTO: a pinch out is your choice: the next shot keeps you out)
 		end
 	end)
 	UserInputService.InputChanged:Connect(function(input, processed)
@@ -263,7 +272,7 @@ function FirstPerson.start()
 		end
 		if input.Position.Z < 0 then
 			-- (Out, however it was entered: set(false) puts the camera back behind the head.)
-			FirstPerson.set(false)
+			FirstPerson.set(false, Config.FP_AUTO == true) -- (FP_AUTO: scrolling out is your choice too)
 		end
 	end)
 end

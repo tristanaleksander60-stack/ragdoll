@@ -39,6 +39,9 @@ local switchBack = false -- (the glide just happened: a pad's Select goes back, 
 
 -- Whether this screen has a way back out of first person (V on a keyboard, Select on a pad).
 function FirstShotFP.hasWayBack(): boolean
+	if Config.FP_EYE_PHONE and ViewMode.isTouch() then
+		return true -- (the eye button is the way back on a phone or tablet)
+	end
 	return not ViewMode.isTouch() and (UserInputService.KeyboardEnabled or UserInputService.GamepadEnabled)
 end
 
@@ -172,7 +175,67 @@ function FirstShotFP.takeSwitchBack(): boolean
 	return was
 end
 
+-- FP_AUTO (owner 27 Nov late: "Fiks så man kommer i first person når man skifter våben og når man skyder ... tlf er vores
+-- største brugerbase"): a weapon picked from the bar or the menu glides you into first person; a shot puts you in at
+-- once (the shot still lands). Never in the lab view, seated, building, Director, with the mech arms, or while a window
+-- is open (a pick from the weapons menu waits until it closes, up to 3 s). Taking yourself out (V, the eye, pinch, scroll)
+-- holds until your NEXT weapon pick.
+local function autoEnter(slide: boolean): boolean
+	if not Config.FP_AUTO or busy or player:GetAttribute("MechArms") == true or not FirstShotFP.hasWayBack() then
+		return false
+	end
+	local st = state()
+	if st.on then
+		return true
+	end
+	if st.lab or st.seated or st.building or st.director or st.window or st.guided then
+		return false
+	end
+	if FirstPerson.choseThird() then
+		return true -- (chose third person: nothing more to do until the next pick)
+	end
+	if slide then
+		busy = true
+		task.spawn(function()
+			glide()
+			busy = false
+		end)
+	else
+		FirstPerson.set(true)
+	end
+	return true
+end
+
+local function watchPicks()
+	local Poke = require(Client:WaitForChild("PokeController")) :: any
+	local last = Poke.getSelected()
+	local lastEmpty = Poke.handIsEmpty()
+	local pendingUntil = 0
+	while true do
+		task.wait(0.15)
+		local sel, empty = Poke.getSelected(), Poke.handIsEmpty()
+		if sel ~= last or empty ~= lastEmpty then
+			last, lastEmpty = sel, empty
+			if not empty then
+				FirstPerson.clearChoice()
+				pendingUntil = os.clock() + 3
+			end
+		end
+		if pendingUntil > 0 then
+			if autoEnter(true) or os.clock() > pendingUntil then
+				pendingUntil = 0
+			end
+		end
+	end
+end
+
 function FirstShotFP.start()
+	if Config.FP_AUTO then
+		task.spawn(watchPicks)
+		SessionClient.onShot(function()
+			autoEnter(false)
+		end)
+	end
 	if not Config.FIRST_SHOT_FP then
 		return
 	end

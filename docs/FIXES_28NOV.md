@@ -69,6 +69,22 @@
    - **Now:** the big green DONE shows on every device while building.
    - Check: on PC, phone and tablet, BUILD then DONE. Also add a 1-line hint at the start: "Tap DONE to stop building".
 
+5d. **First person when you switch weapons or shoot, and the eye on phones** (cloud code: `Client/FirstShotFP.luau`, `Client/FirstPerson.luau`, `Client/PhoneClean.luau`, `Client/HudSlots.luau`; `Config.FP_AUTO`, `Config.FP_EYE_PHONE`):
+   - **The causes:**
+     - only the very first shot ever put you in first person, so later shots and weapon picks never did;
+     - `PhoneClean` hid the eye button (`FirstPersonTouch`) on every touch screen.
+   - **Now:**
+     - picking a weapon glides you into first person (0.4 s); a shot puts you in at once, and the shot still lands;
+     - leaving with V, the eye, a pinch out or a scroll out holds until your NEXT weapon pick;
+     - never in the lab view, seated, building, Director, with the mech arms, or while a window is open (a pick from the menu waits until it closes);
+     - the eye is back on phones and tablets: 52 px in the top-right safe corner on a phone, brighter while first person is on.
+   - **Phone check (our biggest group):**
+     - pick a weapon, then shoot;
+     - leave with the eye and shoot again: you stay out;
+     - pick another weapon: you go in;
+     - check that the touch look-drag and SHOOT work in first person;
+     - check that the eye never covers Roblox's own top-right buttons or the X-RAY chip. If it does, move it (HudSlots `Eye`).
+
 ## BATCH A (build now, then STOP for the owner's test)
 15. **WEAPON TESTING is half inside a mountain** (the building by the railway):
     - move it onto flat open ground, or cut the hill back, so the whole building and its entrance stand free with a path to the door;
