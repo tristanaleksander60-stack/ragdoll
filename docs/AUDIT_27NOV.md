@@ -36,7 +36,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
 
 ## BEFORE THE RELEASE (fairness, kids, compliance)
 5. **PART DONE v1306 (`EGG_ODDS`):** what an egg holds and the hat odds shown under OPEN EGG (Rewards); the paid VIP's faster eggs off where PolicyService restricts paid random items (asked in the background, never yields; the free launch VIP keeps it). LEFT: the parked starter pack's "3 weapon eggs" (it is not live). **Was:** Egg odds shown in the egg window (60/28/10/2). The VIP "egg every 50 instead of 75" is a paid speed-up of random rewards: change it to a non-random VIP perk (a VIP-only hat + BOLTS), or gate it with PolicyService `ArePaidRandomItemsRestricted`. The parked starter pack's "3 weapon eggs" must never go live as written.
-6. **Prices:**
+6. **PART DONE v1307:** the Events Pass reads "Every server event, free, for good" (a permanent pass). Single weapons for Robux are OFF today (`WEAPONS_NO_BUY`), so no single price can beat a category pass; when they come back, BUY must show the category pass when it costs the same or less. **Was:** Prices:
    - a single weapon (up to 199 R$) can cost more than "All Guns" (149): when the category pass costs the same or less, BUY shows the pass instead;
    - cap single prices below their category pass;
    - "Events Pass … all season" is a permanent pass: fix the wording.

@@ -338,7 +338,7 @@ Shop.OFFERS = table.freeze({
 	table.freeze({ key = "LabControls", kind = "pass", name = "Lab Controls", robux = 179, id = 2093398948, gives = "BIG RED BUTTON every 8 s in your lab" }),
 	table.freeze({ key = "DoubleBolts", kind = "pass", name = "2x BOLTS", robux = 129, id = 2094556882, gives = "Double BOLTS from everything" }),
 	table.freeze({ key = "VipLab", kind = "pass", name = "VIP Lab", robux = 199, id = 2094598991, gives = "More dummies roaming your lab" }),
-	table.freeze({ key = "EventsPass", kind = "pass", name = "Events Pass", robux = 249, id = 2095884979, gives = "Every server event, free, all season" }),
+	table.freeze({ key = "EventsPass", kind = "pass", name = "Events Pass", robux = 249, id = 2095884979, gives = "Every server event, free, for good" }),
 	table.freeze({ key = "Everything", kind = "pass", name = "Everything", robux = 699, id = 2094550832, gives = "Every toy, 2x BOLTS, VIP Lab and Events Pass" }),
 	-- V6-7: things sold in showcase booths on the maps (MapShopService): `show` is the model on the
 	-- pedestal, `places` where its booths stand, `pitch` the one line under its name. Each has a
