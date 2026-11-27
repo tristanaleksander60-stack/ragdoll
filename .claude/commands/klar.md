@@ -4,6 +4,31 @@ argument-hint: "[optional: what the owner wants first]"
 ---
 Read the "OWNER PRIORITY NOW" banner at the top of `docs/OVERVIEW.md` and `docs/NOW.md` FIRST and do it before anything else. Then read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situation, how to work, what only the owner can do, THE ORDER in 8 phases, DONE). Then read only the doc section of the row you are on. If the owner wrote something after /klar, do that first.
 
+## WORK FAST AND CHEAP (owner, 27 Nov late: "Vi skal også arbejde hurtigere, for mindre credits, bedre output")
+Reading is the biggest cost; every re-read after a summary costs it again.
+1. **Read small.**
+   - `OVERVIEW.md`: read the banners at the top, "WHAT IS LEFT" and only the row you are on (grep -n it).
+   - `NOW.md` is short now: read it once.
+   - Never read `DONE.md`, `NOW_ARCHIVE.md`, `HISTORY.md` or the V8/V9 plans whole; grep them. A `NOW.md "..."` section that is missing from NOW.md is in `NOW_ARCHIVE.md`.
+2. **Code:**
+   - grep -n the function, then read about 80 lines round it; never read a 2,000+ line file (ActiveRagdoll, DummyLife, BloodFx…) top to bottom.
+   - Make the edit with Edit, not by rewriting the file.
+3. **Batch by file:** do every open row that touches the same files in one go. Then:
+   - push all changed scripts into Studio in one MCP pass (the length check);
+   - ONE Play for the whole batch, with one capture that covers the batch's looks;
+   - one commit for the batch.
+4. **Write short:**
+   - a row's State: one line (what, the switch, the version);
+   - no long logs in NOW.md; HISTORY: one line only if a future run needs it;
+   - commit messages one line.
+5. **No double work:**
+   - never re-check or re-measure a DONE row;
+   - never rebuild what a switch already does;
+   - grep before writing a new module (reuse).
+6. **Think in proportion:** mechanical edits (renames, numbers, wiring) need no long planning; save the deep thinking for the hard rows (physics, looks, data safety).
+7. **Captures:** at scale 1, only for rows about looks, one per batch.
+8. **Better output comes from the quality gate (THE FINISH LINE),** not from more reading: get it right once, at the bar, then move on.
+
 ## THE OWNER'S NEWEST ORDER (27 Nov late, wins where it clashes with the 26 Nov orders below)
 - "næste gang jeg ser på min computer skal jeg have et færdig spil, ikke noget 5/10 som det er nu": follow OVERVIEW "THE FINISH LINE": build until EVERY row is DONE at its 9/10 bar, with ONE Play look (and one capture for looks) per row to check it is at the bar before it counts as DONE; a feature not at the bar by the end is switched OFF and listed.
 
