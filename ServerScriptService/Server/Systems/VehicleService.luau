@@ -52,12 +52,14 @@ VehicleService.SPECS = {
 	-- (session v842: 5th slot — 70s muscle car. Look model Phoenix Slayer (8x5x20), script-stripped, chassis-compatible wheel names FL/FR/RL/RR.)
 	-- (23 Nov 2026: the owner's bike, a ragdoll rides it round the lab: BikeService.)
 	Bike = { label = "Bike", body = Vector3.new(2.4, 1.6, 6.4), color = Color3.fromRGB(40, 42, 48), wheel = 2.4, lift = 0.85, pad = Vector2.new(27, -12), look = "Bike" } :: Spec,
+	-- (F76: the FREE bicycle, a Creator Store model (V3Assets "Bicycle", 3 meshes, no scripts) on the plan's BikeStand2.)
+	Bicycle = { label = "Bicycle", body = Vector3.new(2.4, 1.2, 6.4), color = Color3.fromRGB(60, 120, 200), wheel = 2.2, lift = 0.9, pad = Vector2.new(30, -14), look = "Bicycle" } :: Spec,
 	MuscleCar = { label = "Panzer Tank", body = Vector3.new(11, 2.6, 23), color = Color3.fromRGB(90, 96, 80), wheel = 3, lift = 0.9, pad = Vector2.new(66, -60), look = "Panzer" } :: Spec,
 }
 
 -- 0.37.12: the game pass that unlocks each vehicle (the owner creates them on the dashboard and sends the ids).
 -- 0 = no pass yet: free to drive until the id is filled in.
-VehicleService.PASSES = { Car = 2092302232, Truck = 0, MuscleCar = 2093220108, Bike = 0 } -- (24 Nov 2026, owner: they cost Robux again, the Ford is free (its pass: 2092632252); the bike the ragdoll rides stays free) -- (Silvia, Ford, Panzer; owner 22 Nov 2026) :: { [string]: number }
+VehicleService.PASSES = { Car = 2092302232, Truck = 0, MuscleCar = 2093220108, Bike = 0, Bicycle = 0 } -- (24 Nov 2026, owner: they cost Robux again, the Ford is free (its pass: 2092632252); the bike the ragdoll rides stays free) -- (Silvia, Ford, Panzer; owner 22 Nov 2026) :: { [string]: number }
 local MarketplaceService = game:GetService("MarketplaceService")
 -- (F76: only the bicycle and the dirt bike are free now. The Ford's pass 2092632252 is used when Roblox says it is for
 -- sale; else the Ford stays free as before and the owner is asked (NOW.md).)
@@ -616,7 +618,7 @@ function VehicleService.build(into: Folder, origin: Vector3)
 	holder.Name = "Vehicles"
 	holder.Parent = into
 	local kinds: { Kind } = { "Car", "Truck" }
-	for _, extra in { "Kart", "Jeep", "MuscleCar", "Bike" } do
+	for _, extra in { "Kart", "Jeep", "MuscleCar", "Bike", "Bicycle" } do
 		if (Config.VEHICLES :: any)[extra] and VehicleService.SPECS[extra] then
 			table.insert(kinds, extra)
 		end

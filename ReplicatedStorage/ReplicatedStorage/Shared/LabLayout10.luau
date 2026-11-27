@@ -284,6 +284,8 @@ if Config.LAB_OWNERMAP then
 				end
 			end
 		end
+		-- (F76: the free bicycle on its own stand by the tower square, the plan's BikeStand2)
+		set(LabLayout10.CARS, "Bicycle", item("BikeStand2"))
 		-- The weapon range is not in the compact plan: it stands just outside the south edge (its own spot is (0, 154)).
 		LabLayout10.MOVES.ShootingRange = Vector3.new(150, 0, 255 - 154)
 	end
