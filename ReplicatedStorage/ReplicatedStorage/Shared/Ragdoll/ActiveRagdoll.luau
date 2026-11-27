@@ -690,9 +690,26 @@ end
 
 local footFriction: { [BasePart]: any } = setmetatable({}, { __mode = "k" }) :: any
 local GAME_TURN_STEP_EARLY = (require(script.Parent.Parent:WaitForChild("Config")) :: any).TURN_STEP == true
+-- (PHYSICS_DEEP, Config.LEGS_GHOST: the probe found walkers bouncing back off kerbs, steps, ramps, lamp feet and posts
+-- (their feet hit the edge while the drive kept pushing). While it walks or flees, the lift carries the body over the
+-- ground under its pelvis, so its shins and feet do not collide; in every other state they do (it lands on them).)
+local GHOST_LEGS = { "LeftLowerLeg", "RightLowerLeg", "LeftFoot", "RightFoot" }
+local function ghostLegs(rig: Rig, on: boolean)
+	if not (GameConfig :: any).LEGS_GHOST or rig.model:GetAttribute("IsDummy") ~= true then
+		return
+	end
+	for _, name in GHOST_LEGS do
+		local p = rig.model:FindFirstChild(name)
+		if p and p:IsA("BasePart") and p.CanCollide == on then
+			p.CanCollide = not on
+		end
+	end
+end
+
 local function enter(rig: Rig, state: State)
 	local was = rig.state
 	rig.state = state
+	ghostLegs(rig, state == "Walking" or state == "Fleeing")
 	rig.stateTime = 0
 	rig.calmTime = 0
 	if not isMoving(state) then
@@ -1848,7 +1865,45 @@ local function updateMoving(rig: Rig, dt: number)
 	-- (V9-2c: inside a time bubble it walks at the bubble's time: TimeScale, set on this screen by
 	-- Client/SlowMotion; its lift holds the bubble's gravity.)
 	local ts = timeScaleOf(rig)
+	ghostLegs(rig, state ~= "Crawling") -- (every step: a hand-off or a re-prepare can turn the legs solid again)
+	if (GameConfig :: any).BLOCKED_EASE and rig.speed > 2 then
+		-- (PHYSICS_DEEP: pushed back against its own way (it walked into something): stop pushing, so it does not
+		-- bounce off it again and again; the stuck logic then takes it round)
+		local v = rig.pelvis.AssemblyLinearVelocity
+		local hv = Vector3.new(v.X, 0, v.Z)
+		if hv.Magnitude > 0.5 and hv.Unit:Dot(rig.heading) < -0.3 then
+			rig.speed = 2
+			rig.stuckTime += 0.25
+		end
+	end
 	rig.drive.VectorVelocity = rig.heading * rig.speed * ts
+	if (GameConfig :: any).PHYSICS_PROBE and rig.model:GetAttribute("IsDummy") == true then
+		-- (PHYSICS_DEEP probe, off by default: the body moving AGAINST its own drive (pushed back), with why)
+		local v = rig.pelvis.AssemblyLinearVelocity
+		local hv = Vector3.new(v.X, 0, v.Z)
+		local P = rig :: any
+		if hv.Magnitude > 0.5 and rig.speed > 0.5 and hv.Unit:Dot(rig.heading) < -0.3 and os.clock() - (P.probeAt or 0) > 1 then
+			P.probeAt = os.clock()
+			local touching = {}
+			for _, p in rig.parts do
+				if p ~= rig.root then
+					for _, q in p:GetTouchingParts() do
+						if not q:IsDescendantOf(rig.model) then
+							local owner = q:FindFirstAncestorOfClass("Model")
+							touching[p.Name .. ">" .. (if owner then owner.Name .. "." else "") .. q.Name .. string.format("(%.1f)", q.Size.Y)] = true
+						end
+					end
+				end
+			end
+			local list = {}
+			for k in touching do
+				table.insert(list, k)
+			end
+			print(("[PhysProbe] %s state=%s speed=%.1f v=%.1f back=%.2f fleeing=%s nav=%s touching=%s"):format(
+				rig.model:GetAttribute("PersonName") or rig.model.Name, state, rig.speed, hv.Magnitude, hv.Unit:Dot(rig.heading),
+				tostring(fleeing), tostring(rig.model:GetAttribute("NavHome") ~= nil), table.concat(list, ",", 1, math.min(#list, 5))))
+		end
+	end
 	if ts > 1 and rig.lift.Enabled then
 		rig.lift.MaxAxesForce = Vector3.new(0, rig.mass * Config.NORMAL_GRAVITY * 4 * ts * ts, 0)
 	end
@@ -2513,8 +2568,15 @@ function ActiveRagdoll.setup(model: Model): (boolean, string?)
 		else
 			part.CanCollide = true
 			table.insert(connections, part:GetPropertyChangedSignal("CanCollide"):Connect(function()
-				if not part.CanCollide and rigs[model] then
-					part.CanCollide = true
+				local r = rigs[model]
+				if not part.CanCollide and r then
+					-- (PHYSICS_DEEP LEGS_GHOST: a walking or fleeing body's own ghost legs stay off; any other part, or in any
+					-- other state, is put back on at once)
+					local ghost = (GameConfig :: any).LEGS_GHOST and (r.state == "Walking" or r.state == "Fleeing")
+						and table.find(GHOST_LEGS, part.Name) ~= nil
+					if not ghost then
+						part.CanCollide = true
+					end
 				end
 			end))
 		end
