@@ -33,9 +33,23 @@ local Anatomy = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("A
 local BRUISE = Color3.fromRGB(142, 112, 206)
 local BRUISE_BAD = Color3.fromRGB(66, 40, 128)
 local BAD_AT = 0.58 -- bleed (%/s, all its wounds) a piece is badly hurt from
+-- Row 6 (Config.INJURY_V2; BODY_V2 4b): STAGES per piece, counted from its hits: 1 bruised (1-2 hits, a light lavender),
+-- 2 hurt (3-4, a stronger violet), 3 badly hurt (5+, deep violet); the bandage is a gauze wrap with offset ridges, a
+-- taped loose end and, at stage 3, a violet seep spot; a head hit twice gets a head wrap.
+local INJURY_V2 = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).INJURY_V2 == true
+local GAUZE = Color3.fromRGB(235, 232, 222)
+local GAUZE_DARK = Color3.fromRGB(221, 217, 205)
 local function shade(color: Color3, hurt: number?): Color3
 	if not hurt or hurt <= 0 then
 		return color
+	end
+	if INJURY_V2 then
+		if hurt >= 3 then
+			return color:Lerp(BRUISE_BAD, 0.92)
+		elseif hurt >= 2 then
+			return color:Lerp(BRUISE, 0.9)
+		end
+		return color:Lerp(BRUISE, 0.45)
 	end
 	return color:Lerp(if hurt >= 2 then BRUISE_BAD else BRUISE, 0.9)
 end
@@ -75,13 +89,28 @@ local function hurtOf(model: Model): ({ [string]: number }, { [string]: string }
 					-- (23 Nov 2026, owner: only the struck piece, not the whole limb.)
 					local n = count[side .. piece] or 0
 					if n > 0 then
-						tint[side .. piece] = if (flow[side .. piece] or 0) >= BAD_AT then 2 else 1
+						if INJURY_V2 then
+							tint[side .. piece] = if n >= 5 then 3 elseif n >= 3 then 2 else 1
+						else
+							tint[side .. piece] = if (flow[side .. piece] or 0) >= BAD_AT then 2 else 1
+						end
 					end
 				end
 				if (count[side .. limb[2]] or 0) >= 2 then
-					wrap[side .. limb[2]] = worst
+					wrap[side .. limb[2]] = if INJURY_V2 then tostring(tint[side .. worst] or 1) else worst
 				end
 			end
+		end
+	end
+	if INJURY_V2 then
+		local head = 0
+		for _, w in Anatomy.parseWounds(model:GetAttribute("Wounds")) do
+			if w.zone.id == "Brain" or w.zone.id == "Jaw" then
+				head += 1
+			end
+		end
+		if head >= 2 then
+			wrap.Head = if head >= 5 then "3" elseif head >= 3 then "2" else "1"
 		end
 	end
 	-- (23 Nov 2026, owner: no bandage on a limb that is seen through.)
@@ -93,7 +122,57 @@ local function hurtOf(model: Model): ({ [string]: number }, { [string]: string }
 	return tint, wrap, shots
 end
 -- White wraps round the top of a forearm or a shin.
-local function bandage(limb: BasePart, folder: Instance)
+local function bandage(limb: BasePart, folder: Instance, stage: number?)
+	if INJURY_V2 then
+		local function stick(r: BasePart)
+			r.Material = Enum.Material.Fabric
+			r.CanCollide, r.CanQuery, r.CanTouch, r.Massless, r.Anchored, r.CastShadow = false, false, false, true, false, false
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = limb
+			w.Part1 = r
+			w.Parent = r
+			r.Parent = folder
+		end
+		local head = limb.Name == "Head"
+		local wide = math.max(limb.Size.X, limb.Size.Z) * (if head then 1.06 else 1.18)
+		local thick = limb.Size.Y * (if head then 0.2 else 0.14)
+		local y0 = if head then 0.18 else 0.4
+		-- three overlapping gauze rings, each a little offset and tilted (wrap ridges)
+		for i = 0, 2 do
+			local r = Instance.new("Part")
+			r.Name = "Bandage"
+			r.Shape = Enum.PartType.Cylinder
+			r.Size = Vector3.new(thick, wide * (1 - i * 0.012), wide * (1 - i * 0.012))
+			r.Color = if i % 2 == 0 then GAUZE else GAUZE_DARK
+			r.CFrame = limb.CFrame * CFrame.new(0, limb.Size.Y * (y0 - i * thick / limb.Size.Y * 0.72), 0)
+				* CFrame.Angles(math.rad(if i == 1 then 4 else -3), 0, math.rad(90 + (if i % 2 == 0 then 5 else -6)))
+			stick(r)
+		end
+		-- the loose end with a strip of tape
+		local tail = Instance.new("Part")
+		tail.Name = "Bandage"
+		tail.Size = Vector3.new(0.05, thick * 1.3, thick * 0.9)
+		tail.Color = GAUZE
+		tail.CFrame = limb.CFrame * CFrame.new(wide / 2 + 0.02, limb.Size.Y * (y0 - 0.1) - thick * 0.5, 0) * CFrame.Angles(0, 0, math.rad(-12))
+		stick(tail)
+		local tape = Instance.new("Part")
+		tape.Name = "Bandage"
+		tape.Size = Vector3.new(0.06, thick * 0.35, thick * 0.95)
+		tape.Color = Color3.fromRGB(246, 244, 238)
+		tape.CFrame = tail.CFrame * CFrame.new(0.005, thick * 0.35, 0)
+		stick(tape)
+		-- stage 3: a violet seep spot on the front of the wrap
+		if (stage or 0) >= 3 then
+			local seep = Instance.new("Part")
+			seep.Name = "Bandage"
+			seep.Shape = Enum.PartType.Cylinder
+			seep.Size = Vector3.new(0.04, thick * 0.9, thick * 0.75)
+			seep.Color = Color3.fromRGB(122, 60, 190)
+			seep.CFrame = limb.CFrame * CFrame.new(0, limb.Size.Y * (y0 - 0.06), -wide / 2 - 0.01) * CFrame.Angles(0, math.rad(90), 0)
+			stick(seep)
+		end
+		return
+	end
 	for i = 0, 3 do
 		local r = Instance.new("Part")
 		r.Name = "Bandage"
@@ -774,9 +853,9 @@ local function dress(model: Model)
 		end
 		firstLook = false
 		local sign = ""
-		for _, name in { "LeftLowerArm", "RightLowerArm", "LeftLowerLeg", "RightLowerLeg" } do
+		for _, name in { "LeftLowerArm", "RightLowerArm", "LeftLowerLeg", "RightLowerLeg", "Head" } do
 			if wrap[name] then
-				sign ..= name
+				sign ..= name .. (if INJURY_V2 then tostring(wrap[name]) else "")
 			end
 		end
 		if folder:GetAttribute("Wraps") == sign then
@@ -788,10 +867,10 @@ local function dress(model: Model)
 				b:Destroy()
 			end
 		end
-		for name in wrap do
+		for name, how in wrap do
 			local limb = model:FindFirstChild(name)
 			if limb and limb:IsA("BasePart") then
-				bandage(skins[limb] or limb, folder)
+				bandage(skins[limb] or limb, folder, if INJURY_V2 then tonumber(how) else nil)
 			end
 		end
 	end
