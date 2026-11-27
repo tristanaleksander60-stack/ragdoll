@@ -1592,6 +1592,61 @@ BUILD.Slingshot = function(f, at, m)
 				bands(pad.Position + Vector3.new(0, 3, 0))
 			end)
 			spray(f, back.Position, { Color3.fromRGB(150, 120, 80) }, 18, 10, 0.5)
+			if (Config :: any).SLING_10 then
+				-- 3.25 SLINGSHOT (docs/MACHINES_10.md; Config.SLING_10): it aims at the archery target (a ballistic shot with
+				-- a little random spread) and scores the ring it came closest to: BULLSEYE 50 / 30 / 20 / 10 / MISS, with a NEW
+				-- BEST for the lab's owner (SlingBest).
+				local face: BasePart? = nil
+				local fd = 260
+				local labRoot: Instance = (f.Parent and f.Parent.Parent) or workspace -- (the lab only: no whole-world scan)
+				for _, d in labRoot:GetDescendants() do
+					if d.Name == "TargetFace" and d:IsA("BasePart") and d.Size.Y < 3 and (d.Position - back.Position).Magnitude < fd then
+						face, fd = d, (d.Position - back.Position).Magnitude
+					end
+				end
+				if face then
+					local aim = face.Position + Vector3.new(math.random(-30, 30) / 10, math.random(-30, 30) / 10, math.random(-30, 30) / 10)
+					local flight = math.clamp(fd / 75, 0.8, 2.6)
+					local v = (aim - back.Position) / flight + Vector3.new(0, 0.5 * workspace.Gravity * flight, 0)
+					local centre = face.Position
+					task.spawn(function()
+						local best = math.huge
+						local t0 = os.clock()
+						while os.clock() - t0 < flight + 0.8 do
+							local pe = model:FindFirstChild("UpperTorso")
+							if pe and pe:IsA("BasePart") then
+								best = math.min(best, (pe.Position - centre).Magnitude)
+							end
+							task.wait(0.04)
+						end
+						local pts, name = 0, "MISS"
+						if best < 1.4 then
+							pts, name = 50, "BULLSEYE!"
+						elseif best < 2.6 then
+							pts, name = 30, "30"
+						elseif best < 3.8 then
+							pts, name = 20, "20"
+						elseif best < 5 then
+							pts, name = 10, "10"
+						end
+						local text = if pts > 0 then name .. " (+" .. pts .. ")" else "MISS"
+						local okO, owner = pcall(function()
+							return lazy("Lab").ownerAt(back.Position)
+						end)
+						if okO and owner and pts > 0 then
+							local bestPts = (owner:GetAttribute("SlingBest") :: number?) or 0
+							if pts > bestPts then
+								owner:SetAttribute("SlingBest", pts)
+								text ..= " NEW BEST!"
+							end
+						end
+						pcall(function()
+							lazy("Playground").pop(centre + Vector3.new(0, 6, 0), text, if pts >= 50 then Color3.fromRGB(255, 220, 60) else Color3.fromRGB(255, 255, 255))
+						end)
+					end)
+					return v
+				end
+			end
 			return at.LookVector * 150 + Vector3.new(0, 75, 0) -- (a long flight toward the lab)
 		end)
 	end
