@@ -551,6 +551,33 @@ function SlowMotion.start()
 			end
 		end
 	end)
+	if (Config :: any).BOWL_SLOWMO then
+		-- (BOWLING_12 rest, Config.BOWL_SLOWMO: the bowled ragdoll bursts out of its ball into the pins (the server clears
+		-- its Curl right there): a short slow moment round the pins, so the strike reads)
+		task.spawn(function()
+			local curled: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+			while true do
+				task.wait(0.15)
+				local folder = Workspace:FindFirstChild("Dummies")
+				if folder then
+					for _, m in folder:GetChildren() do
+						if m:IsA("Model") then
+							local on = m:GetAttribute("Curl") == true
+							if on then
+								curled[m] = true
+							elseif curled[m] then
+								curled[m] = nil
+								local pe = m:FindFirstChild("LowerTorso")
+								if pe and pe:IsA("BasePart") and pe.AssemblyLinearVelocity.Magnitude > 12 and not calmMotion() then
+									SlowMotion.moment(pe.Position, 14, 1.2)
+								end
+							end
+						end
+					end
+				end
+			end
+		end)
+	end
 	FeelBus.on("BigHit", function(data: any)
 		if type(data) ~= "table" or typeof(data.position) ~= "Vector3" then
 			return
