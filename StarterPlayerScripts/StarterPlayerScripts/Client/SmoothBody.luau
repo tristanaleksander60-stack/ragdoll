@@ -265,6 +265,39 @@ local function roundHead(body: Body)
 		face.Adornee = ball
 		body.face = face
 	end
+	-- (THE FINISH LINE, round-head accessories: a hat, a cap, a sweatband or headphones welded on the old smaller head by
+	-- the server would sink into the bigger round one: on this screen everything welded on above the head's middle is
+	-- lifted to the round head's top, now and when it comes later.)
+	local lift = (HEAD_LIFT + HEAD_SIZE / 2) - head.Size.Y / 2
+	local lifted: { [Instance]: boolean } = {}
+	local function raise(w: Instance)
+		if lifted[w] or lift <= 0.02 then
+			return
+		end
+		if w:IsA("WeldConstraint") then
+			local other = if w.Part0 == head then w.Part1 elseif w.Part1 == head then w.Part0 else nil
+			if other and other ~= ball and not other:IsDescendantOf(ball) and other.Parent ~= body.model and head.CFrame:PointToObjectSpace(other.Position).Y > 0.25 then
+				lifted[w] = true
+				w.Enabled = false
+				other.CFrame = other.CFrame + head.CFrame.UpVector * lift
+				w.Enabled = true
+			end
+		elseif (w:IsA("Weld") or w:IsA("Motor6D")) and w.Part0 == head and w.Part1 and w.Part1.Parent ~= body.model and w.C0.Position.Y > 0.25 then
+			lifted[w] = true
+			w.C0 = w.C0 + Vector3.new(0, lift, 0)
+		elseif w:IsA("Weld") and w.Part1 == head and w.Part0 and w.Part0.Parent ~= body.model and w.C1.Position.Y > 0.25 then
+			lifted[w] = true -- (an Accessory's weld: Handle to Head)
+			w.C1 = w.C1 + Vector3.new(0, lift, 0)
+		end
+	end
+	for _, d in body.model:GetDescendants() do
+		raise(d)
+	end
+	body.model.DescendantAdded:Connect(function(d)
+		if body.ball and body.ball.Parent then
+			task.defer(raise, d)
+		end
+	end)
 	-- (owner's v6 test B: the whole skeleton in X-ray, the head too: a skull, two dark eye holes and a jaw inside the
 	-- round head, shown only while the body is glass)
 	local skull = {}
