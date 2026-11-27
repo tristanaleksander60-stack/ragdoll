@@ -71,9 +71,47 @@ function SandboxService.run(player: Player, action: unknown): string?
 		return if ok then "slowmo" else nil
 	elseif action == "Revive" then
 		local n = 0
+		local wave = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).REVIVE_WAVE == true
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if wave and root and root:IsA("BasePart") then
+			-- 3.34 REVIVE ALL (docs/MACHINES_10.md "PLAYER ACTIONS"; Config.REVIVE_WAVE): a sparkling green ring sweeps out
+			-- from you across the lab, and every body it brings back gets a burst of sparkles
+			local ring = Instance.new("Part")
+			ring.Name = "ReviveWave"
+			ring.Shape = Enum.PartType.Cylinder
+			ring.Material = Enum.Material.Neon
+			ring.Color = Color3.fromRGB(120, 255, 170)
+			ring.Anchored, ring.CanCollide, ring.CanQuery, ring.CanTouch, ring.CastShadow = true, false, false, false, false
+			ring.Size = Vector3.new(0.3, 2, 2)
+			ring.Transparency = 0.2
+			ring.CFrame = CFrame.new(root.Position - Vector3.new(0, 2.6, 0)) * CFrame.Angles(0, 0, math.rad(90))
+			ring.Parent = workspace
+			game:GetService("TweenService"):Create(ring, TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = Vector3.new(0.3, 240, 240), Transparency = 1 }):Play()
+			game:GetService("Debris"):AddItem(ring, 1)
+		end
 		for _, model in Lab.dummiesOf(labPlayer(player)) do
 			if VitalsService.reviveNow(model) then
 				n += 1
+				local torso = model:FindFirstChild("UpperTorso")
+				if wave and torso and torso:IsA("BasePart") then
+					local d = if root and root:IsA("BasePart") then (torso.Position - root.Position).Magnitude else 0
+					task.delay(math.clamp(d / 130, 0, 0.9), function()
+						if torso.Parent then
+							local e = Instance.new("ParticleEmitter")
+							e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+							e.Color = ColorSequence.new(Color3.fromRGB(150, 255, 190))
+							e.LightEmission = 1
+							e.Size = NumberSequence.new(0.9, 0.1)
+							e.Speed = NumberRange.new(4, 9)
+							e.SpreadAngle = Vector2.new(180, 180)
+							e.Lifetime = NumberRange.new(0.6, 1)
+							e.Rate = 0
+							e.Parent = torso
+							e:Emit(24)
+							game:GetService("Debris"):AddItem(e, 1.5)
+						end
+					end)
+				end
 			end
 		end
 		notice(player, if n > 0 then "Everyone is back on their feet!" else "Nobody needs a doctor")

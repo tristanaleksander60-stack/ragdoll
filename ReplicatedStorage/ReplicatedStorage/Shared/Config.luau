@@ -164,6 +164,7 @@ local Config = {
 	SHRED_10 = true, -- 3.21 shredder: spat out with "FOLDED x4!" + NEW BEST for whoever pressed (ShredBest) (MapMachines)
 	SLING_10 = true, -- 3.25 slingshot: aims at the archery target (ballistic, a little spread) and scores the ring: BULLSEYE 50 / 30 / 20 / 10 / MISS + NEW BEST (SlingBest) (LabCreatures)
 	EVENT_STATS = true, -- 3.30 red-button events: an end line with stats for the starter (every player for an all-labs event): "TORNADO over: 37 ragdolls flung!" (EventService)
+	REVIVE_WAVE = true, -- 3.34 REVIVE ALL: a sparkling green ring sweeps out from you across the lab and every body it brings back bursts with sparkles (SandboxService)
 	TURN_EVEN = true, -- F73: the heading rotates at a capped even rate (220 deg/s walking, 360 fleeing), never a lerp whip or 180 degree snap; turning on the spot steps the feet (ActiveRagdoll, DummyLife)
 	NAV_BLOCKCAST = true, -- F72: obstacles are seen with a body-sized Blockcast whose look-ahead grows with speed (2.5-7 studs), and the detour takes the more open side (ActiveRagdoll blocked/clearAhead)
 	NAV_BUMP_LOG = true, -- F72: ActiveRagdoll counts detours, other-side tries and waits for a car, printed once a minute ([NavBump]); a moving car in the way is waited for, not walked round
