@@ -246,6 +246,21 @@ function FirstTwo.start()
 	local targetInst: Instance? = nil
 	local near: any = nil -- the untried machine within NEAR, if any
 	local nearInst: Instance? = nil
+	-- (T1 part 4, Config.FTUE_LATER: two quiet lines later in the session, once each: at 8 min "Play with friends", at 12 min
+	-- the DAY 2 chest; they wait while a TRY or a show runs)
+	if Config.FTUE_LATER then
+		for _, beat in { { 480, "Play with friends: tap MULTIPLAYER" }, { 720, "Come back tomorrow: DAY 2 chest!" } } do
+			task.delay(beat[1], function()
+				for _ = 1, 30 do
+					if player:GetAttribute("TryBusy") == nil and player:GetAttribute("GoldenUntil") == nil then
+						break
+					end
+					task.wait(2)
+				end
+				say(beat[2])
+			end)
+		end
+	end
 	-- (T1 part 3: the golden ragdoll: a countdown on the goal line while it runs, then the result)
 	if Config.GOLDEN_RUN then
 		player:GetAttributeChangedSignal("GoldenUntil"):Connect(function()

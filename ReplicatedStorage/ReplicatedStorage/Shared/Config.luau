@@ -130,6 +130,7 @@ local Config = {
 	IDLE_LIFE2 = true, -- 11 part 2: idle gestures FootTap and Pebble (a kick at a pebble); a body with wounds or cracked bones often holds its side instead (DummyLife)
 	BOWLING_FX = true, -- F88 part 2: a strike or spare plays a pin crash with confetti over the pins; a gutter plays a sad trombone (Bowling)
 	GOLDEN_RUN = true, -- T1 part 3: once a session at about 2:00 a free ragdoll nearby turns GOLDEN and runs; knock it down within 10 s for +10 KOs; a countdown on the goal line (GoldenRun, FirstTwo)
+	FTUE_LATER = true, -- T1 part 4: at 8 min "Play with friends: tap MULTIPLAYER", at 12 min "Come back tomorrow: DAY 2 chest!", once each on the goal line (FirstTwo)
 	HOME_CLEAR = true, -- F75: once the map stands every vehicle home is checked with the vehicle's box and moved to the nearest clear spot when something solid is inside it ([Vehicles] homes moved: n)
 	BIKE_ROUTE = true, -- F69: on the compact map the motorbike rider follows the walkway loop's centre line point to point (a point not reached in 14 s is skipped)
 	REAL_HANDS = true, -- S2 plan B: real hands from rounded parts (palm, 4 fingers of 3 segments, a thumb of 2), posed by state, on this screen only; the hook hand skin is shrunk away (Client/RealHands)
