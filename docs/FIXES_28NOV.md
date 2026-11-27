@@ -94,7 +94,7 @@
 
 ## BATCH A (build now, then STOP for the owner's test)
 **Round 1 done (v1418-1423), STOPPED for the owner's test:** cloud code in Studio (20 files + FP_AUTO, a Config syntax break fixed), 4 DROP HERE, 6 stairs, 7 parking lot, 9 X-ray, 12 crowding. **Next round:** 10-11 holes and bandages on the v6 skin, 13 no block ragdolls, 14 bike riders welded, then 15/16/8 the real models (weapon testing building, T-rex, gyro).
-15. **WEAPON TESTING is half inside a mountain** (the building by the railway):
+15. **PART DONE v1428 (`RANGE_CLEAR`, ShootingRange), SEEN:** the range stands just outside the compact plan where the hills begin (terrain y 7 to 40 across its depth); 10 s and 25 s after start (after the landscape fills the hills) the terrain round it (its box + 6 studs, floor up 90) is made air; captures: the whole facade and the open entrance stand free, inside a concrete firing line with a grass backstop where the hill was cut. LEFT: the plain-part shell -> a real model (next step). **WEAPON TESTING is half inside a mountain** (the building by the railway):
     - move it onto flat open ground, or cut the hill back, so the whole building and its entrance stand free with a path to the door;
     - replace its plain-part shell with a real model: a proper firing-range building with a sign, doors and a roof (Blender or a checked Creator Store model);
     - check every other building on the map for clipping into hills: one capture per building.

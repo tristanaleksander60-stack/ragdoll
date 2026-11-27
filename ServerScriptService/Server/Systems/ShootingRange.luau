@@ -237,6 +237,22 @@ function ShootingRange.buildLab(folder: Instance, origin: Vector3): (Model, { St
 		end
 	end
 	model.Parent = folder
+	-- (FIXES_28NOV 15, Config.RANGE_CLEAR: the range stands just outside the compact plan, where the hills begin, and it
+	-- sat half inside the slope. The terrain is cut back round it once it stands: the building's box plus 6 studs every
+	-- side, from the floor up 90 studs, made air (the terrain left ends at the floor). The entrance (north) is flat.)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).RANGE_CLEAR then
+		task.spawn(function()
+			for _, wait in { 10, 15 } do -- (after the landscape's hills are filled in; once more in case they came late)
+				task.wait(wait)
+				pcall(function()
+				local cf, size = model:GetBoundingBox()
+				local floorY = at.Position.Y
+				local terrain = workspace.Terrain
+				terrain:FillBlock(CFrame.new(cf.Position.X, floorY + 45, cf.Position.Z), Vector3.new(size.X + 12, 90, size.Z + 12), Enum.Material.Air)
+				end)
+			end
+		end)
+	end
 	task.spawn(tend, model, stands, (at * CFrame.new(0, 3, D / 2 - 4)).Position)
 	return model, stands
 end

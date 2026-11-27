@@ -155,6 +155,7 @@ local Config = {
 	BONES_V2 = true, -- D12 part 1: every bone has integrity 100; each wound takes base (round 20, blow 14, blast 60) x power x bone factor off it, adding up; HAIRLINE <70, CRACKED <40, BROKEN 0 (a limb breaks for real via BreakReq, guns too), SHATTERED on one huge hit; the card names the stage; a heal resets (Systems/Bones)
 	DRIPS_V2 = true, -- D12 part 3: only the 2-3 newest bullet holes drip (phones 2, within 40 studs), a drop every 0.6-1.2 s each, for 8 s, then stop (Client/BloodFx, BulletHoles.dripHoles)
 	DRIP_TRICKLE = false, -- (owner, 27 Nov late: "ikke lilla striber") the welded purple trickle stick under a dripping hole is off; the 3 newest holes only drip drops (Client/BloodFx)
+	RANGE_CLEAR = true, -- FIXES_28NOV 15: the hill is cut back round the weapon range (its box + 6 studs made air, the floor flat grass), so it no longer stands half inside the slope (ShootingRange)
 	HOLES_EVERYWHERE = true, -- FIXES_28NOV 10: a head hole on a v6 body sits on the round head's surface (it was hidden inside it) (BulletHoles)
 	BIKE_WELD = true, -- FIXES_28NOV 14: the ragdoll cyclist is welded to the saddle and the bike is simulated by the same screen as the rider (no tug of war, no jitter); the ride's end removes the weld (BikeService)
 	V6_EVERYONE = true, -- FIXES_28NOV 13: no old block bodies in view: the crowd people wear the v6 body tinted by role (CrowdTint), and phones draw 20 v6 bodies within 100 studs (was 12 within 80) (SmoothBody, CrowdService)
