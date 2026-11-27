@@ -1864,7 +1864,7 @@ LabCreatures.REVENGE_GAP = 6 -- s before the same creature comes for someone aga
 LabCreatures.REVENGE_REACH = 22 -- studs from the creature's edge: nearer than that, a shot makes it come for you
 LabCreatures.WASTED_HOLD = 2.6 -- s on the WASTED screen before the respawn
 local creatures: { { machine: Machine, model: Model } } = {}
-local lastRevenge: { [Model]: number } = {}
+local lastRevenge: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any -- AUDIT 41: a removed creature drops out
 local wastedRemote: RemoteEvent? = nil
 local function wasted(): RemoteEvent
 	local r = wastedRemote

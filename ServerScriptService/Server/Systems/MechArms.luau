@@ -314,6 +314,7 @@ local function onTear(player: Player, kind: unknown, target: unknown, asked: unk
 		if r and r:IsA("BasePart") and p and p:IsA("BasePart") and (p.Position - r.Position).Magnitude <= MechArms.REACH
 			and Zones.mayEnter(player, Zones.plotAt(p.Position)) and not held[model] and model:GetAttribute("CommandedBy") == nil then
 			held[model] = { by = player, home = model:GetAttribute("Home"), look = model:GetAttribute("HomeLook"), at = os.clock() }
+			model.Destroying:Once(function() held[model] = nil end) -- AUDIT 41: no entry left for a destroyed body
 			model:SetAttribute("CommandedBy", -3)
 			model:SetAttribute("Home", p.Position)
 			model:SetAttribute("HomeLook", r.Position)
