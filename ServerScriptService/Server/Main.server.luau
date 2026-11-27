@@ -90,6 +90,7 @@ safe("LaunchPads", function() require(Systems:WaitForChild("LaunchPads")).start(
 safe("TowerCam", function() require(Systems:WaitForChild("TowerCam")).start() end) -- F67: Invisicam inside the tower
 safe("NearbyTwo", function() require(Systems:WaitForChild("NearbyTwo")).start() end) -- 0.1566: the 2 close by
 safe("PickOut", function() require(Systems:WaitForChild("PickOut")).start() end) -- F47: a helper picks the bullets out after a ragdoll wakes
+safe("Personas", function() require(Systems:WaitForChild("Personas")).start() end) -- P1: curious, scared, hero and chill ragdolls react to shots
 safe("BackToSpawn", function() require(Systems:WaitForChild("BackToSpawn")).start() end) -- F80: BACK TO SPAWN
 safe("SwimService", function() require(Systems:WaitForChild("SwimService")).start() end) -- F78: ragdolls in the real water
 safe("MechArms", function() require(Systems:WaitForChild("MechArms")).start() end) -- mechanical arms to tear ragdolls apart
