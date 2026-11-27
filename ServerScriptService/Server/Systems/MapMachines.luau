@@ -603,6 +603,107 @@ local function wireSweeper(pad: BasePart, beam: BasePart, post: BasePart?)
 	end)
 end
 
+-- 3.23 LAVA STRIP (docs/MACHINES_10.md; Config.LAVA_10): the strip glows and bubbles; a ragdoll in it does a hot-foot
+-- dance (quick hops), goes soot-black and smoking, and after HOT_TIME s jumps out over the nearer kerb: "HOT FOOT! 1.6 s"
+-- (the time it danced) with a NEW BEST for the lab's owner (LavaBest). Cartoon only.
+MapMachines.HOT_TIME = 1.6
+local function wireLava(lava: BasePart)
+	local bub = Instance.new("ParticleEmitter")
+	bub.Name = "LavaBubbles"
+	bub.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	bub.Color = ColorSequence.new(Color3.fromRGB(255, 170, 60), Color3.fromRGB(255, 80, 20))
+	bub.LightEmission = 0.8
+	bub.Size = NumberSequence.new(0.6, 0.1)
+	bub.Speed = NumberRange.new(2, 6)
+	bub.Lifetime = NumberRange.new(0.5, 1)
+	bub.Rate = 18
+	bub.EmissionDirection = Enum.NormalId.Top
+	bub.Parent = lava
+	local glow = Instance.new("PointLight")
+	glow.Color = Color3.fromRGB(255, 120, 40)
+	glow.Range = 18
+	glow.Brightness = 1.5
+	glow.Parent = lava
+	local inSince: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+	local hopAt: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+	task.spawn(function()
+		while lava.Parent do
+			task.wait(0.15)
+			local dummies = Workspace:FindFirstChild("Dummies")
+			local now = os.clock()
+			for _, m in if dummies then dummies:GetChildren() else {} do
+				local pe = m:IsA("Model") and pelvisOf(m)
+				if pe and not busy[m] and m:GetAttribute("Held") ~= true then
+					local rel = lava.CFrame:PointToObjectSpace(pe.Position)
+					local inside = math.abs(rel.X) < lava.Size.X / 2 + 0.5 and math.abs(rel.Z) < lava.Size.Z / 2 + 0.5 and rel.Y < 5 and rel.Y > -2
+					if inside then
+						if not inSince[m] then
+							inSince[m] = now
+							local sootGlow = Instance.new("Highlight")
+							sootGlow.Name = "LavaSoot"
+							sootGlow.FillColor = Color3.fromRGB(35, 30, 30)
+							sootGlow.OutlineColor = Color3.fromRGB(255, 120, 40)
+							sootGlow.FillTransparency = 0.35
+							sootGlow.Parent = m
+							task.delay(5, function()
+								sootGlow:Destroy()
+							end)
+							local smoke = Instance.new("ParticleEmitter")
+							smoke.Texture = "rbxasset://textures/particles/smoke_main.dds"
+							smoke.Color = ColorSequence.new(Color3.fromRGB(70, 70, 72))
+							smoke.Size = NumberSequence.new(0.8, 2.4)
+							smoke.Transparency = NumberSequence.new(0.3, 1)
+							smoke.Speed = NumberRange.new(2, 4)
+							smoke.Lifetime = NumberRange.new(0.8, 1.4)
+							smoke.Rate = 10
+							smoke.Parent = pe
+							task.delay(5, function()
+								smoke:Destroy()
+							end)
+							m:SetAttribute("MoodSay", "HOT HOT HOT!")
+							task.delay(2.5, function()
+								if m:GetAttribute("MoodSay") == "HOT HOT HOT!" then
+									m:SetAttribute("MoodSay", nil)
+								end
+							end)
+						end
+						if now - (hopAt[m] or 0) > 0.35 then
+							hopAt[m] = now
+							pcall(control().nudge, m, Vector3.new(math.random(-6, 6), 34, math.random(-6, 6)))
+						end
+						if now - inSince[m] >= MapMachines.HOT_TIME then
+							local danced = math.floor((now - inSince[m]) * 10 + 0.5) / 10
+							inSince[m] = nil
+							busy[m] = true
+							task.delay(1.5, function()
+								busy[m] = nil
+							end)
+							local out = lava.CFrame.RightVector * (if rel.X >= 0 then 1 else -1)
+							pcall(control().push, m, out * 55 + Vector3.new(0, 60, 0))
+							local text = "HOT FOOT! " .. string.format("%.1f", danced) .. " s"
+							local okO, owner = pcall(function()
+								return require(script.Parent:WaitForChild("Lab")).ownerAt(pe.Position)
+							end)
+							if okO and owner then
+								local best = (owner:GetAttribute("LavaBest") :: number?) or 0
+								if danced > best then
+									owner:SetAttribute("LavaBest", danced)
+									text ..= " NEW BEST!"
+								end
+							end
+							pcall(function()
+								require(script.Parent:WaitForChild("Playground")).pop(pe.Position + Vector3.new(0, 4, 0), text, Color3.fromRGB(255, 150, 60))
+							end)
+						end
+					else
+						inSince[m] = nil
+					end
+				end
+			end
+		end
+	end)
+end
+
 function MapMachines.start()
 	local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
 	if not Config.MAP_MACHINES_LIVE or not Config.LAB_OWNERMAP then
@@ -623,6 +724,11 @@ function MapMachines.start()
 					if pit and pit:IsA("BasePart") and not wired[pit] then
 						wired[pit] = true
 						wireShredder(pit)
+					end
+					local lavaStrip = om:FindFirstChild("LavaStrip")
+					if Config.LAVA_10 and lavaStrip and lavaStrip:IsA("BasePart") and not wired[lavaStrip] then
+						wired[lavaStrip] = true
+						wireLava(lavaStrip)
 					end
 					local sPad, sBeam = om:FindFirstChild("SweeperPad"), om:FindFirstChild("SweeperBeam")
 					if Config.SWEEP_10 and sPad and sBeam and sPad:IsA("BasePart") and sBeam:IsA("BasePart") and not wired[sPad] then
