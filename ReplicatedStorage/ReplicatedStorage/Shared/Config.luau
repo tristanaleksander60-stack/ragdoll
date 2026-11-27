@@ -93,6 +93,7 @@ local Config = {
 	STATUE_SKIN = true, -- F77: the #1 statues keep the player's own skin and clothes, stand with their feet on the plinth (scaled to 7 x 5), on a gold-trimmed plinth BESIDE the board (LabOwnerMap)
 	SMOOTH_MOTION = true, -- S1: ragdolls walk and run with Roblox's real R15 clips (KeyframeSequenceProvider, blended by ground speed, phase tied to distance: no sliding), eased in (Client/ClipGait, DummyLife gaitPose)
 	IDLE_WEIGHT_SHIFT = true, -- S1: standing ragdolls shift their weight from leg to leg (slow, eased; Client/DummyLife updateIdle)
+	GESTURE_LAYERS = true, -- S1: strolling ragdolls do an upper-body gesture over the walk clip every 8-16 s (phone, brow, scratch, watch, shoulder roll); standing feet tilt to the ground within 40 studs (foot IK) (Client/DummyLife layers)
 	CAVE_V2 = true, -- F79: the bear cave is a Terrain rock hill with a carved arched opening, a tunnel, a dark chamber with blinking eyes, a Ground yard with half-buried rocks, a log and a stump (LabOwnerMap caveV2); no ball parts, no black slab
 	ENTRANCE_ROW = true, -- F76: the herringbone vehicle row north of the CrossN walkway by the spawn (LabLayout10.ENTRANCE_ROW, LabOwnerMap entranceRow): Silvia, Ford and Panzer moved there; plaques with FREE, the price, or SOON; the Ford uses its pass when it is for sale
 	VIEW_REPORT = true, -- 0.158: every screen reports its camera twice a second (Net CameraView, unreliable, validated, 4/s); RagdollDirector.inView(point) sends extras away out of view first

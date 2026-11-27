@@ -1752,6 +1752,108 @@ local function liftTalk(life: Life)
 	end
 end
 
+-- S1 GESTURE LAYERS + FOOT IK (Config.GESTURE_LAYERS; RAGDOLL_FEEL "SMOOTH AND REAL"):
+--   * walking at a stroll, every 8-16 s a body does one upper-body gesture ON TOP of the walk clip (the legs keep
+--     walking): a look at the phone in its hand, a wipe of the brow, a scratch of the head, a check of the watch, a
+--     shoulder roll. Faded in and out over 0.3 s, dropped (faded) the moment it speeds up, stops or gets a mood;
+--   * standing within 40 studs of this screen, each foot tilts to the ground under it (a slope, a step's edge, a kerb),
+--     at most 25 degrees, eased: no foot hovers on its toe or digs its heel into a ramp.
+local WALK_GESTURES = { "Phone", "Brow", "Scratch", "Watch", "Roll" }
+local FOOT_IK_REACH = 40
+local function layers(life: Life, state: string, now: number, dt: number)
+	if not (Config :: any).GESTURE_LAYERS then
+		return
+	end
+	local L = life :: any
+	local model = life.model
+	local j: any = life.joints
+	local walking = state == "Walking" and life.groundSpeed > 2 and life.groundSpeed < 9 and model:GetAttribute("Mood") == nil
+		and model:GetAttribute("Paper") ~= true and not life.handsUp
+	if walking then
+		if not L.wgAt then
+			L.wgAt = now + 4 + (life.seed % 7)
+		end
+		if not L.wg and now >= L.wgAt then
+			L.wg = WALK_GESTURES[rng:NextInteger(1, #WALK_GESTURES)]
+			L.wgStart = now
+			L.wgLen = rng:NextNumber(2.5, 4)
+		end
+	end
+	if L.wg then
+		local e = now - L.wgStart
+		if not walking then
+			L.wgLen = math.min(L.wgLen, e + 0.3) -- (fade out now)
+		end
+		if e >= L.wgLen then
+			L.wg = nil
+			L.wgAt = now + rng:NextNumber(8, 16)
+		else
+			local w = math.clamp(math.min(e, L.wgLen - e) / 0.3, 0, 1)
+			w = w * w * (3 - 2 * w)
+			local function put(name: string, cf: CFrame)
+				local joint = j[name]
+				if joint and not life.loose[name] then
+					joint.Transform = joint.Transform:Lerp(cf, w)
+				end
+			end
+			local t = now + life.seed
+			local g = L.wg
+			if g == "Phone" then
+				put("RightShoulder", ang(38, 0, 6))
+				put("RightElbow", ang(98 + 3 * sin(t * 2), 0, 0))
+				put("Neck", ang(-22, 0, 0))
+			elseif g == "Brow" then
+				put("RightShoulder", ang(125, 0, 22 + 10 * sin(t * 5)))
+				put("RightElbow", ang(118, 0, 0))
+				put("Neck", ang(-4, 0, 0))
+			elseif g == "Scratch" then
+				put("RightShoulder", ang(130, 0, 40 + 6 * sin(t * 16)))
+				put("RightElbow", ang(120, 0, 0))
+				put("Neck", ang(-6, 0, 12))
+			elseif g == "Watch" then
+				put("LeftShoulder", ang(55, 0, -22))
+				put("LeftElbow", ang(100, 0, 0))
+				put("Neck", ang(-26, 18, 0))
+			elseif g == "Roll" then
+				local r = sin(t * 4)
+				put("RightShoulder", ang(-8 + 10 * r, 0, 10 + 6 * r))
+				put("LeftShoulder", ang(-8 - 10 * r, 0, -10 - 6 * r))
+				put("Neck", ang(4, 0, 14 * r))
+			end
+		end
+	end
+	-- Foot IK while standing, near this screen only.
+	if state == "Standing" and model:GetAttribute("Frozen") ~= true then
+		local cam = Workspace.CurrentCamera
+		local near = cam ~= nil and (life.pelvis.Position - cam.CFrame.Position).Magnitude <= FOOT_IK_REACH
+		local k = 1 - math.exp(-8 * dt)
+		for _, side in { "Right", "Left" } do
+			local ankle = j[side .. "Ankle"]
+			local foot = model:FindFirstChild(side .. "Foot")
+			if ankle and foot and foot:IsA("BasePart") and not life.loose[side .. "Ankle"] then
+				local want = Vector2.zero
+				if near then
+					local hit = Workspace:Raycast(foot.Position + Vector3.new(0, 0.6, 0), Vector3.new(0, -1.8, 0), life.rayParams)
+					if hit then
+						-- the ground's normal in the shin's frame: the tilt that turns the foot's sole onto it
+						local shin = model:FindFirstChild(side .. "LowerLeg")
+						local ref = if shin and shin:IsA("BasePart") then shin.CFrame else foot.CFrame
+						local n = ref:VectorToObjectSpace(hit.Normal)
+						want = Vector2.new(math.clamp(deg(math.atan2(n.Z, n.Y)), -25, 25), math.clamp(deg(math.atan2(-n.X, n.Y)), -25, 25))
+					end
+				end
+				local key = "ik" .. side
+				local cur: Vector2 = L[key] or Vector2.zero
+				cur += (want - cur) * k
+				L[key] = cur
+				if cur.Magnitude > 0.2 or want.Magnitude > 0 then
+					ankle.Transform = ang(cur.X, 0, cur.Y)
+				end
+			end
+		end
+	end
+end
+
 local function step(life: Life, now: number, dt: number)
 	local model = life.model
 	local state = (model:GetAttribute("RagdollState") :: string?) or "Standing"
@@ -1837,6 +1939,7 @@ local function step(life: Life, now: number, dt: number)
 			end
 		end
 	end
+	layers(life, state, now, dt)
 	freeLoose(life)
 	if not MOVING[state] then
 		life.lastPosition = life.pelvis.Position
