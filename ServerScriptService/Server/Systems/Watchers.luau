@@ -72,6 +72,15 @@ local function release(m: Model?)
 	end
 end
 
+local GROUPS = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).WATCH_GROUPS == true
+local function groupSpot(id: string): boolean
+	local sum = 0
+	for i = 1, #id do
+		sum += string.byte(id, i)
+	end
+	return sum % 3 == 0
+end
+
 local function step()
 	local WatchSpots = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("WatchSpots")) :: any
 	local dummies = Workspace:FindFirstChild("Dummies")
@@ -90,13 +99,20 @@ local function step()
 			local d = (Vector3.new(w.X, 0, w.Z) - Vector3.new(root.Position.X, 0, root.Position.Z)).Magnitude
 			if d < Watchers.REACH then
 				table.insert(ranked, { s = s, w = w, d = d })
+				-- (0.7 part 3, Config.WATCH_GROUPS: a third of the spots get a pair: a second watcher 2.6 studs to the side)
+				if GROUPS and groupSpot(s.id) then
+					local look = Vector2.new(s.look.X - s.at.X, s.look.Y - s.at.Y)
+					local side = if look.Magnitude > 0.1 then Vector2.new(-look.Y, look.X).Unit * 2.6 else Vector2.new(2.6, 0)
+					local s2 = { id = s.id .. "#2", at = s.at + side, look = s.look }
+					table.insert(ranked, { s = s2, w = Vector3.new(o.X + s2.at.X, o.Y, o.Z + s2.at.Y), d = d + 0.01 })
+				end
 			end
 		end
 		table.sort(ranked, function(a, b)
 			return a.d < b.d
 		end)
 		local want: { [string]: boolean } = {}
-		for i = 1, math.min(Watchers.NEAR, #ranked) do
+		for i = 1, math.min((if GROUPS then Watchers.NEAR + 1 else Watchers.NEAR), #ranked) do
 			local r = ranked[i]
 			want[r.s.id] = true
 			local m = mine[r.s.id]

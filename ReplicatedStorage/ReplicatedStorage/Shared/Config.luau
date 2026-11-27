@@ -126,6 +126,7 @@ local Config = {
 	DOG_PET = true, -- row 13 part 2: the guard dog barks (coming out, biting) and its owner can Pet it (F): a happy bark and pink hearts (GuardDog)
 	FTUE_10 = true, -- T1 part 1: the bowling lane is the ONE machine shown (the goal line "Bowl a STRIKE!", the guide line, TRY bowls); a new player's first roll is always a STRIKE; after it free play: nothing is pointed at, TRY shows at any machine you walk up to (Client/FirstTwo, Bowling)
 	MP_PHONE = true, -- row 15: on a phone the Multiplayer window fits the screen (lower, the body scrolls) instead of shrinking (PortalUI)
+	WATCH_GROUPS = true, -- 0.7 part 3: a third of the watch spots get a PAIR of watchers side by side; up to 4 watched spots near you (Watchers)
 	HOME_CLEAR = true, -- F75: once the map stands every vehicle home is checked with the vehicle's box and moved to the nearest clear spot when something solid is inside it ([Vehicles] homes moved: n)
 	BIKE_ROUTE = true, -- F69: on the compact map the motorbike rider follows the walkway loop's centre line point to point (a point not reached in 14 s is skipped)
 	REAL_HANDS = true, -- S2 plan B: real hands from rounded parts (palm, 4 fingers of 3 segments, a thumb of 2), posed by state, on this screen only; the hook hand skin is shrunk away (Client/RealHands)
