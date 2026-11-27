@@ -111,6 +111,7 @@ local Config = {
 	CRATE_BURST = true, -- row 7: a body flung through a crate at 40+ studs/s smashes it (planks fly, a crack, wood dust; the body flies on through); it is back whole with the others (Knockables)
 	BIKE_PEDAL = true, -- F76: a bicycle rider's legs pedal with the speed (Client/BikePedal) and the horn button rings a bell (VehicleService)
 	SWIM_POSE = true, -- F78: an awake ragdoll in the water splashes in panic for a second, then front-crawls and kicks while it moves, treads water while still (Client/DummyLife swimLayer)
+	POLITE_DISTANCE = true, -- 0.1567 rest: the ALWAYS3 comer stops at 5.5 studs, 45 degrees to one side of the player's view; the chatters never stand in the 35 degrees in front of the camera (Lab assignRoles)
 	AUTO_QUALITY = true, -- 8: an FPS governor on each screen: start level by device (PC 3, phone/tablet 2), under 45 FPS for 10 s one step down, over 58 for 30 s one up: particles halved and far walkers slower, then no shadows and nearer lights, then fewer walkers and real hands (Client/QualityGovernor)
 	IDLE_LIFE = true, -- 11: standing ragdolls do small human actions 8-20 s apart, never the same twice in a row: + hands on hips, neck roll, rub eyes, look at nails, sneeze, wave, crack knuckles (Client/DummyLife gestures)
 	HIT_BONE_NAME = true, -- row 4: a round to the trunk names the bone on the hit card (Sternum, Rib, Spine, Shoulder blade, Pelvis, Lower spine), as the X-ray shows (VitalsService)

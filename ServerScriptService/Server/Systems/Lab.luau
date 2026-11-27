@@ -1031,6 +1031,16 @@ local function assignRoles(player: Player, root: BasePart, near: { Model }, now:
 		r = fresh
 		-- The chatters: a spot 8-14 studs off, side by side, facing each other.
 		local a = math.random() * math.pi * 2
+		if (Config :: any).POLITE_DISTANCE then
+			-- (0.1567: never in front of the camera: the chatters' spot keeps out of the 35 degrees each side of where the
+			-- player looks)
+			local look = root.CFrame.LookVector
+			local la = math.atan2(look.Z, look.X)
+			local off = (a - la + math.pi) % (2 * math.pi) - math.pi
+			if math.abs(off) < math.rad(35) then
+				a = la + (if off >= 0 then 1 else -1) * math.rad(35 + math.random(0, 50))
+			end
+		end
 		local d = 8 + math.random() * 6
 		local mid = root.Position + Vector3.new(math.cos(a) * d, 0, math.sin(a) * d)
 		local side = Vector3.new(-math.sin(a), 0, math.cos(a)) * 1.7
@@ -1051,6 +1061,14 @@ local function assignRoles(player: Player, root: BasePart, near: { Model }, now:
 		local pelvis = comer:FindFirstChild("LowerTorso")
 		local y = if pelvis and pelvis:IsA("BasePart") then pelvis.Position.Y else root.Position.Y
 		local front = root.Position + root.CFrame.LookVector * 4
+		if (Config :: any).POLITE_DISTANCE then
+			-- (0.1567: the comer stops at a polite 5.5 studs and 45 degrees to one side of the player's view (its side kept
+			-- for the role), never right in front of the camera)
+			local R = r :: any
+			R.comerSide = R.comerSide or (if math.random() < 0.5 then 1 else -1)
+			local dir = CFrame.Angles(0, math.rad(45) * R.comerSide, 0):VectorToWorldSpace(root.CFrame.LookVector)
+			front = root.Position + Vector3.new(dir.X, 0, dir.Z).Unit * 5.5
+		end
 		setRole(comer, "Come", Vector3.new(front.X, y, front.Z), Vector3.new(root.Position.X, y, root.Position.Z))
 	end
 	-- The chatters take turns: one line every 4-6 s.
