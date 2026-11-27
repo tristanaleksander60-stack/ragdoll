@@ -505,6 +505,104 @@ local function wireTesla(base: BasePart, top: BasePart)
 	end)
 end
 
+-- 3.22 SWEEPER (docs/MACHINES_10.md; Config.SWEEP_10): a button on its centre post steps the beam's speed SLOW > FAST >
+-- CRAZY; a ragdoll standing on the pad that the beam passes is swept off over the edge; a player on the pad who is in the
+-- air as the beam passes under them scores a jump ("JUMPED x5!", NEW BEST: SweepBest); one it catches on the ground is
+-- knocked off and the streak starts again.
+MapMachines.SWEEP_SPEEDS = { 0.5, 1.1, 1.9 }
+local function wireSweeper(pad: BasePart, beam: BasePart, post: BasePart?)
+	local level = 1
+	beam:SetAttribute("SweepSpeed", MapMachines.SWEEP_SPEEDS[1])
+	if post then
+		local pp = Instance.new("ProximityPrompt")
+		pp.ActionText = "Speed: FAST"
+		pp.ObjectText = "Sweeper: SLOW"
+		pp.HoldDuration = 0
+		pp.MaxActivationDistance = 12
+		pp.RequiresLineOfSight = false
+		pp.Parent = post
+		local names = { "SLOW", "FAST", "CRAZY" }
+		pp.Triggered:Connect(function()
+			level = level % 3 + 1
+			beam:SetAttribute("SweepSpeed", MapMachines.SWEEP_SPEEDS[level])
+			pp.ObjectText = "Sweeper: " .. names[level]
+			pp.ActionText = "Speed: " .. names[level % 3 + 1]
+		end)
+	end
+	local centre = pad.Position
+	local radius = math.max(pad.Size.Y, pad.Size.Z) / 2
+	local swept: { [Instance]: number } = setmetatable({}, { __mode = "k" }) :: any
+	local streak: { [Player]: number } = {}
+	local lastSide: { [Instance]: number } = setmetatable({}, { __mode = "k" }) :: any
+	task.spawn(function()
+		while pad.Parent and beam.Parent do
+			task.wait(0.08)
+			local ang = (beam:GetAttribute("SweepAngle") :: number?) or 0
+			local speed = (beam:GetAttribute("SweepSpeed") :: number?) or 0.5
+			local dir = beam.CFrame.RightVector -- (the beam's long axis)
+			local function side(p: Vector3): (number, number)
+				local rel = Vector3.new(p.X - centre.X, 0, p.Z - centre.Z)
+				return dir:Cross(rel).Y, rel.Magnitude -- (which side of the beam line, distance from the post)
+			end
+			local _ = ang
+			-- ragdolls
+			local dummies = Workspace:FindFirstChild("Dummies")
+			for _, m in if dummies then dummies:GetChildren() else {} do
+				local pe = m:IsA("Model") and pelvisOf(m)
+				if pe and math.abs(pe.Position.Y - centre.Y) < 6 then
+					local s0, r = side(pe.Position)
+					if r < radius and r > 3 then
+						local before = lastSide[m]
+						lastSide[m] = s0
+						if before and (before > 0) ~= (s0 > 0) and os.clock() - (swept[m] or 0) > 1.5 and m:GetAttribute("Held") ~= true then
+							swept[m] = os.clock()
+							local out = Vector3.new(pe.Position.X - centre.X, 0, pe.Position.Z - centre.Z).Unit
+							local tangent = Vector3.new(0, 1, 0):Cross(out) * (if speed > 0 then 1 else -1)
+							pcall(control().push, m, tangent * (40 + 40 * speed) + out * 50 + Vector3.new(0, 35, 0))
+						end
+					else
+						lastSide[m] = nil
+					end
+				end
+			end
+			-- players: a jump over it counts, a catch on the ground knocks them off
+			for _, pl in Players:GetPlayers() do
+				local root = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
+				if root and root:IsA("BasePart") then
+					local s0, r = side(root.Position)
+					local onPad = r < radius and r > 3 and root.Position.Y - centre.Y < 12
+					local before = lastSide[pl]
+					lastSide[pl] = if onPad then s0 else nil
+					if onPad and before and (before > 0) ~= (s0 > 0) then
+						local airborne = root.Position.Y - centre.Y > 5.2
+						if airborne then
+							streak[pl] = (streak[pl] or 0) + 1
+							local n = streak[pl]
+							local text = "JUMPED x" .. tostring(n) .. "!"
+							local best = (pl:GetAttribute("SweepBest") :: number?) or 0
+							if n > best then
+								pl:SetAttribute("SweepBest", n)
+								if n > 1 then
+									text ..= " NEW BEST!"
+								end
+							end
+							pcall(function()
+								require(script.Parent:WaitForChild("Playground")).pop(root.Position + Vector3.new(0, 4, 0), text, Color3.fromRGB(255, 200, 80))
+							end)
+						else
+							streak[pl] = 0
+							local out = Vector3.new(root.Position.X - centre.X, 0, root.Position.Z - centre.Z).Unit
+							pcall(function()
+								require(script.Parent:WaitForChild("PlayerRagdoll")).launch(pl, out * 70 + Vector3.new(0, 40, 0))
+							end)
+						end
+					end
+				end
+			end
+		end
+	end)
+end
+
 function MapMachines.start()
 	local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
 	if not Config.MAP_MACHINES_LIVE or not Config.LAB_OWNERMAP then
@@ -525,6 +623,12 @@ function MapMachines.start()
 					if pit and pit:IsA("BasePart") and not wired[pit] then
 						wired[pit] = true
 						wireShredder(pit)
+					end
+					local sPad, sBeam = om:FindFirstChild("SweeperPad"), om:FindFirstChild("SweeperBeam")
+					if Config.SWEEP_10 and sPad and sBeam and sPad:IsA("BasePart") and sBeam:IsA("BasePart") and not wired[sPad] then
+						wired[sPad] = true
+						local post = om:FindFirstChild("SweeperPost")
+						wireSweeper(sPad, sBeam, if post and post:IsA("BasePart") then post else nil)
 					end
 					local tBase, tTop = om:FindFirstChild("TeslaBase"), om:FindFirstChild("TeslaTop")
 					if Config.TESLA_10 and tBase and tTop and tBase:IsA("BasePart") and tTop:IsA("BasePart") and not wired[tBase] then

@@ -1347,9 +1347,15 @@ local function south(into: Instance, o: Vector3, top: number)
 	local beamPart = part(into, "SweeperBeam", Vector3.new(26, 2.4, 2.4), CFrame.new(sw + Vector3.new(0, 2.4, 0)), Color3.fromRGB(230, 120, 30), Enum.Material.Metal)
 	beamPart.CanCollide = true
 	task.spawn(function()
-		local t0 = os.clock()
+		-- (3.22 SWEEP_10: the speed comes from the beam's SweepSpeed attribute, set by MapMachines' button; the angle is
+		-- added up step by step so a speed change never makes it jump; the angle is shared as SweepAngle)
+		local ang, last = 0, os.clock()
 		while into.Parent do
-			beamPart.CFrame = CFrame.new(sw + Vector3.new(0, 2.4, 0)) * CFrame.Angles(0, (os.clock() - t0) * 0.5, 0)
+			local now = os.clock()
+			ang += (now - last) * ((beamPart:GetAttribute("SweepSpeed") :: number?) or 0.5)
+			last = now
+			beamPart:SetAttribute("SweepAngle", ang)
+			beamPart.CFrame = CFrame.new(sw + Vector3.new(0, 2.4, 0)) * CFrame.Angles(0, ang, 0)
 			task.wait(0.05)
 		end
 	end)
