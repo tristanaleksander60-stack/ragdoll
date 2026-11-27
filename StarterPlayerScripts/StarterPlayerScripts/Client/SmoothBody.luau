@@ -106,6 +106,8 @@ local restWorld: { [string]: CFrame } = {}
 local restFrame = CFrame.identity
 local restLeg = 1
 local bodies: { [Model]: Body } = {}
+local meshPool: { MeshPart } = {} -- (AUDIT 38: dropped body meshes, reused)
+local POOL_MAX = 8
 local refused: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
 
 function SmoothBody.has(model: Instance): boolean
@@ -213,7 +215,12 @@ local function drop(body: Body)
 	end
 	showBlocks(body)
 	if body.mesh.Parent then
-		body.mesh:Destroy()
+		if #meshPool < POOL_MAX and body.mesh.Name == "SmoothBody" then
+			body.mesh.Parent = nil -- (AUDIT 38: kept for the next body, no clone/destroy at the edge)
+			table.insert(meshPool, body.mesh)
+		else
+			body.mesh:Destroy()
+		end
 	end
 	bodies[body.model] = nil
 end
@@ -319,7 +326,7 @@ local function build(model: Model): Body?
 		refused[model] = os.clock()
 		return nil
 	end
-	local mesh = mesh0:Clone()
+	local mesh = table.remove(meshPool) or mesh0:Clone()
 	mesh.Name = "SmoothBody"
 	mesh.Anchored = true
 	mesh.CanCollide = false

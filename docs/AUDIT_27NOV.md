@@ -113,7 +113,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - capped per device: about 12 on a phone, 30 on a PC per body;
     - only on the nearest bodies, pooled;
     - Massless with CanCollide, CanQuery and CanTouch off.
-38. **SmoothBody:** pool the meshes (no clone/destroy at the edge), a phone tier (`MAX_BODIES` 4-6), one shared candidate list with RealHands.
+38. **PART DONE v1339:** SmoothBody keeps up to 8 dropped meshes in a pool and reuses them (no clone/destroy at the reach edge). LEFT: the phone tier (kept 12: the owner wants v6 everywhere), one shared candidate list with RealHands. **SmoothBody:** pool the meshes (no clone/destroy at the edge), a phone tier (`MAX_BODIES` 4-6), one shared candidate list with RealHands.
 39. **The server loops:** one body scheduler in the RagdollDirector tick; systems register a callback with a rate and a time slice (N bodies a frame).
 40. **The DataStore budget:**
     - at close, save Progress first, then Orders; skip SessionStats and leaderboard writes when the budget is low;
