@@ -237,4 +237,9 @@ So they stand in guard about 6-8 studs apart, swing at the air, and nothing land
    - the winner stays as champion, so the next ragdoll you drop in fights the champion;
    - the ring's sign keeps the champion's win streak.
 7. **Anyone near can pick the winner** during the first 5 s of the fight (free, no stake, as before; the streak stays).
-8. **Check (a few Play looks allowed for this item):** drop one ragdoll in: an opponent runs in within 2 s, they fight close, punches land and show, knockdowns, the count, and it ends with one dead and the winner celebrating. Then drop another in against the champion.
+8. **A background fight in the first 15 s** (owner: "indenfor de første 15 sekunder af man joiner så går der 2 ragdolls derop og starter en boksekamp, det er bare i baggrunden"):
+   - 8-15 s after a player joins (once per visit), 2 free ragdolls walk up to the ring by themselves, climb in and start a fight (steps 3-6, the same fight);
+   - it is pure background life: no camera move, no pop-up, no prompt in your face, no sound louder than the ambience at the spawn; it never interrupts the bowling hook (FTUE);
+   - the ring sits where a new player can glance at it from the spawn area (if it is out of sight, the fight still runs: it is there when they walk past);
+   - if the ring is busy (a player's fight), it is skipped.
+9. **Check (a few Play looks allowed for this item):** drop one ragdoll in: an opponent runs in within 2 s, they fight close, punches land and show, knockdowns, the count, and it ends with one dead and the winner celebrating. Then drop another in against the champion.
