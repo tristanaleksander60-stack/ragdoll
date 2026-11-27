@@ -197,6 +197,7 @@ local Config = {
 		[3] = { skinReach = 45, skinRate = 15 },
 	},
 	LAGFREE_IPAD = true, -- LAG-FREE 2 item 10: an iPad with a keyboard is still a tablet: no Bloom, SunRays, depth of field or shadows (Client/PhoneDiet)
+	BRUISE_PATCH = true, -- row 6: on a v6 body a bruised limb shows a soft bruise patch (3 stacked fading discs on its front, by stage; Client/DummySkins)
 	HURT_REST = true, -- row 6: a ragdoll with 3+ leg wounds kneels to rest 5 s now and then (every 25-40 s; the Breath mood; VitalsService)
 	INJURY_HEAL = true, -- row 6: a bruise heals one stage a minute after its piece's last hit (deep violet, violet, lavender, gone); checked every 15 s (Client/DummySkins)
 	RUN_POSE = true, -- v6 FIT PASS D: running ragdolls pump with the elbows bent towards 90 deg (the run clip already leans forward) (Client/ClipGait.blend; walk untouched)

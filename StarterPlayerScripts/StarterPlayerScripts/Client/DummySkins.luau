@@ -54,6 +54,60 @@ local function shade(color: Color3, hurt: number?): Color3
 	end
 	return color:Lerp(if hurt >= 2 then BRUISE_BAD else BRUISE, 0.9)
 end
+-- (Row 6, Config.BRUISE_PATCH: the v6 body is one smooth mesh, so tinting the hidden limb skins never showed a
+-- bruise on it. On a v6 body each bruised piece gets a SOFT bruise patch on its front, on v6's own round surface
+-- (Shared/BodyShape radius): three stacked discs, the inner one darkest, the outer ones fading, so the edge is soft;
+-- bigger and darker with the stage (lavender, violet, deep violet), gone when it heals. Welded to the limb.)
+local BRUISE_PATCH = INJURY_V2 and (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BRUISE_PATCH == true
+local BodyShapeMod: any = nil
+local function bruisePatches(model: Model, tint: { [string]: number })
+	BodyShapeMod = BodyShapeMod or require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("BodyShape"))
+	local holder = model:FindFirstChild("BruisePatches")
+	local sign = ""
+	for name, stage in tint do
+		sign ..= name .. stage .. ";"
+	end
+	if holder and holder:GetAttribute("Sign") == sign then
+		return
+	end
+	if holder then
+		holder:Destroy()
+	end
+	if sign == "" then
+		return
+	end
+	local h = Instance.new("Model")
+	h.Name = "BruisePatches"
+	h:SetAttribute("Worn", true)
+	h:SetAttribute("Sign", sign)
+	for name, stage in tint do
+		local limb = model:FindFirstChild(name)
+		local r = if limb and limb:IsA("BasePart") and BodyShapeMod.active() then BodyShapeMod.radius(name, 0.45) else nil
+		if limb and limb:IsA("BasePart") and r then
+			local colour = if stage >= 3 then BRUISE_BAD elseif stage >= 2 then BRUISE:Lerp(BRUISE_BAD, 0.45) else BRUISE
+			local size = r * (0.9 + 0.25 * stage)
+			local y = limb.Size.Y * 0.05
+			for k, ring in { { 1, 0.72 }, { 0.72, 0.5 }, { 0.45, 0.25 } } do
+				local p = Instance.new("Part")
+				p.Name = "Bruise"
+				p.Shape = Enum.PartType.Cylinder
+				p.Size = Vector3.new(0.02, size * ring[1], size * ring[1])
+				p.Color = colour
+				p.Transparency = ring[2]
+				p.Material = Enum.Material.SmoothPlastic
+				p.CanCollide, p.CanQuery, p.CanTouch, p.Massless, p.Anchored, p.CastShadow = false, false, false, true, false, false
+				-- (the front of a limb part is -Z; the disc's axis X points out of the skin)
+				p.CFrame = limb.CFrame * CFrame.new(0, y, -(r + 0.006 + k * 0.004)) * CFrame.Angles(0, math.rad(90), 0)
+				local w = Instance.new("WeldConstraint")
+				w.Part0 = limb
+				w.Part1 = p
+				w.Parent = p
+				p.Parent = h
+			end
+		end
+	end
+	h.Parent = model
+end
 local XRAY_TIME = 3 -- s the x-ray shows
 local XRAY_SHOTS = 3 -- hits on one piece of a limb until it is seen through
 local BRUISE_AT: { [string]: string } = { UpperArm = "UpperArm", ArmStump = "UpperArm", Forearm = "LowerArm", Hand = "Hand",
@@ -839,6 +893,9 @@ local function dress(model: Model)
 				end
 				hadHoles[d.Name] = hurt
 			end
+		end
+		if BRUISE_PATCH and model:GetAttribute("BodyV6") == true then
+			pcall(bruisePatches, model, tint)
 		end
 		for _, d in model:GetChildren() do
 			local skin = if d:IsA("BasePart") then skins[d] else nil
