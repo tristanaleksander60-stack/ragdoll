@@ -215,6 +215,15 @@ local function showBlocks(body: Body)
 end
 
 local function drop(body: Body)
+	local fg = (body :: any).faceGui
+	if fg and fg.Parent then
+		fg.Enabled = true
+		for _, g in fg.Parent:GetChildren() do
+			if g:IsA("SurfaceGui") and g.Name == "CrashMark" then
+				g.Adornee = nil
+			end
+		end
+	end
 	if body.face and body.face.Parent then
 		body.face.Adornee = nil
 		body.face.Enabled = true
@@ -275,6 +284,8 @@ local function roundHead(body: Body)
 			-- head like a card. FACE_ON_SKIN: the same face picture as a Decal on the ball itself, which Roblox draws ON
 			-- the round surface; it follows every expression change; the flat gui is switched off on this screen.)
 			face.Enabled = false
+			local B0 = body :: any
+			B0.faceGui = face -- (drop() switches it back on: a far body keeps its face)
 			local img = face:FindFirstChildWhichIsA("ImageLabel")
 			local decal = Instance.new("Decal")
 			decal.Name = "FaceSkin"

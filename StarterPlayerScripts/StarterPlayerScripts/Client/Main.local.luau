@@ -168,6 +168,7 @@ safe("GodMode", function() require(Client:WaitForChild("GodMode")).start() end) 
 safe("LabGuideClient", function() require(Client:WaitForChild("LabGuideClient")).start() end) -- 21 Nov 2026: the lab guide's rings breathe; DROP HERE! while you carry a dummy
 safe("RexAnim", function() require(Client:WaitForChild("RexAnim")).start() end) -- FIXES_28NOV 16: the real T-rex plays its own idle, walk and roar clips
 safe("PlayerSwim", function() require(Client:WaitForChild("PlayerSwim")).start() end) -- (owner 27 Nov late: swim and climb out of the aquarium, never stuck)
+safe("BoardScroll", function() require(Client:WaitForChild("BoardScroll")).start() end) -- (owner 27 Nov late: the leaderboards scroll)
 safe("LavaClient", function() require(Client:WaitForChild("LavaClient")).start() end) -- 21 Nov 2026: the lava pit breathes, flickers and its crust drifts
 safe("NpcGlow", function() require(Client:WaitForChild("NpcGlow")).start() end)
 safe("PortalUI", function() require(Client:WaitForChild("PortalUI")).start() end) -- SINGLEPLAYER / MULTIPLAYER portals, the server list (round 5)

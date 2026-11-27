@@ -108,6 +108,9 @@ local function fill(player: Player)
 		return
 	end
 	want = math.min(want, math.max(0, EventService.dummyRoom() - VisitorService.ROOM_KEEP))
+	if (Config :: any).SPAWN_ROOM then
+		want = math.min(want, (require(script.Parent:WaitForChild("RagdollDirector")) :: any).room(player)) -- (SPAWN_V2: no visitor beyond the near cap)
+	end
 	-- (V9-0l: and within the lab's one body budget, which GOD MODE bodies share.)
 	want = math.min(want, VisitorService.capFor(player) - #VisitorService.bodiesOf(player) - (require(script.Parent:WaitForChild("DummySpawn")) :: any).pendingFor(player))
 	if want <= 0 then

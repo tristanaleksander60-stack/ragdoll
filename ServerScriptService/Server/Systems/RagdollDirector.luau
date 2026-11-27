@@ -355,6 +355,38 @@ local function capStepV2()
 	end
 end
 
+-- SPAWN_V2 step 1 (docs/SPAWN_V2.md): how many more living bodies may come within NEAR of this player right now (the
+-- cap minus the ones there or on their way). Every system that spawns a body near a player or calls one to a player asks
+-- this first and sends at most that many; 0 = none.
+function RagdollDirector.room(player: Player): number
+	local r = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if not (r and r:IsA("BasePart") and dummies) then
+		return 0
+	end
+	local me = r.Position
+	local cap = RagdollDirector.CAP[tostring(player:GetAttribute("Device"))] or RagdollDirector.CAP_PC
+	local lvl = player:GetAttribute("PerfLevel")
+	if type(lvl) == "number" and lvl <= 1 then
+		cap = math.max(3, cap - (if lvl <= 0 then 2 else 1))
+	end
+	local count = 0
+	for _, m in dummies:GetChildren() do
+		local pe = m:FindFirstChild("LowerTorso")
+		local vital = m:GetAttribute("Vital")
+		if m:IsA("Model") and pe and pe:IsA("BasePart") and vital ~= "Dead" and vital ~= "Unconscious" and m:GetAttribute("Parked") ~= true then
+			local d = Vector3.new(pe.Position.X - me.X, 0, pe.Position.Z - me.Z).Magnitude
+			local h = m:GetAttribute("Home")
+			local s = shooTo[m]
+			local leaving = s ~= nil and os.clock() <= s.untilAt
+			if not leaving and (d < RagdollDirector.NEAR or (typeof(h) == "Vector3" and Vector3.new(h.X - me.X, 0, h.Z - me.Z).Magnitude < RagdollDirector.NEAR)) then
+				count += 1
+			end
+		end
+	end
+	return math.max(0, cap - count)
+end
+
 function RagdollDirector.start()
 	local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
 	if Config.VIEW_REPORT then

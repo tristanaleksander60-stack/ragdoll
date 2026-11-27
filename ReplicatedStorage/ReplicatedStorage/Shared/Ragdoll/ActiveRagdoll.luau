@@ -2730,7 +2730,11 @@ function ActiveRagdoll.setup(model: Model): (boolean, string?)
 		chestBalance.Parent = chest
 		table.insert(created, chestBalance)
 		local function follow()
-			chestBalance.Enabled = balance.Enabled and balance.MaxTorque > 0
+			-- (only while it WALKS (the drive on): a pose that bends at the waist on purpose, CPR, a bench, the newspaper,
+			-- the boxing crouch, keeps its bend; walking is where the chest hung back)
+			local drv = pelvis:FindFirstChild("Drive")
+			local walking = drv ~= nil and drv:IsA("LinearVelocity") and drv.Enabled
+			chestBalance.Enabled = balance.Enabled and balance.MaxTorque > 0 and walking
 			chestBalance.MaxTorque = balance.MaxTorque * 0.5
 			chestBalance.CFrame = balance.CFrame
 		end
@@ -2740,6 +2744,13 @@ function ActiveRagdoll.setup(model: Model): (boolean, string?)
 			end
 		end)
 		follow()
+		task.defer(function()
+			local drv = pelvis:FindFirstChild("Drive")
+			if drv then
+				drv:GetPropertyChangedSignal("Enabled"):Connect(follow)
+			end
+			follow()
+		end)
 	end
 
 	local liftAttachment = Instance.new("Attachment")
