@@ -801,6 +801,17 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 	local label = if severed then (((Anatomy.cutOf(severed :: string) :: any).label) .. " severed")
 		elseif Config.MILD_TEXT then Anatomy.mildLabel(zone.id) -- (phase 0: a body region, no organs)
 		else zone.label
+	-- (row 4 / F59 LEFT, Config.HIT_BONE_NAME: a round to the trunk names the bone it reaches, as the X-ray shows it:
+	-- the chest front = Sternum (middle) or Rib, the back = Spine (middle) or Shoulder blade, the sides = Rib; the belly
+	-- front = Pelvis, its back = Lower spine)
+	if (Config :: any).HIT_BONE_NAME and o.round and not severed and (part.Name == "UpperTorso" or part.Name == "LowerTorso") then
+		local l = part.CFrame:PointToObjectSpace(position)
+		local sx, sz = l.X / (part.Size.X / 2), l.Z / (part.Size.Z / 2)
+		local bone = if part.Name == "UpperTorso"
+			then (if math.abs(sx) > 0.75 then "Rib" elseif sz < 0 then (if math.abs(sx) < 0.25 then "Sternum" else "Rib") else (if math.abs(sx) < 0.3 then "Spine" else "Shoulder blade"))
+			else (if sz < 0 then "Pelvis" else "Lower spine")
+		label = label .. " (" .. bone .. ")"
+	end
 	local line = string.format("%s \u{00B7} %d%% blood \u{00B7} %s", label, math.floor(v.blood + 0.5), if v.state == "Dead" then (if Config.GORE == false then "knocked out" else "no pulse") else "pulse " .. math.floor(v.pulse + 0.5))
 	local killedNow = not wasDead and v.state == "Dead"
 	-- (24 Nov 2026: it may get mad at who hit it, the more the nearer it is to dying: Mourning.provoke.)
