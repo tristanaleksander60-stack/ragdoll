@@ -155,6 +155,7 @@ local Config = {
 	PLANT_10 = true, -- 3.15 plant: yellow cartoon stars spin out of its jaws while it chews, "MUNCH!" (LabCreatures)
 	CHICKEN_10 = true, -- 3.16 chicken: when the egg hatches a little yellow chick follows the lab owner for 60 s, hopping behind them (LabCreatures)
 	CAR_10 = true, -- 3.17 cars: a car hitting a ragdoll pops "BONK! 48 studs/s" with a NEW BEST for the driver (CarBest) (VehicleService)
+	TESLA_10 = true, -- 3.20 tesla coil: a ZAP button; 1 s charge (rising electric growl, faster sparks), a lightning arc to the nearest ragdoll (blue-white flash, soot-black 3 s, smoke puff, a jump), chaining to 2 more; "ZAP! x3 CHAIN" (MapMachines)
 	TURN_EVEN = true, -- F73: the heading rotates at a capped even rate (220 deg/s walking, 360 fleeing), never a lerp whip or 180 degree snap; turning on the spot steps the feet (ActiveRagdoll, DummyLife)
 	NAV_BLOCKCAST = true, -- F72: obstacles are seen with a body-sized Blockcast whose look-ahead grows with speed (2.5-7 studs), and the detour takes the more open side (ActiveRagdoll blocked/clearAhead)
 	NAV_BUMP_LOG = true, -- F72: ActiveRagdoll counts detours, other-side tries and waits for a car, printed once a minute ([NavBump]); a moving car in the way is waited for, not walked round

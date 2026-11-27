@@ -364,6 +364,147 @@ local function wireShredder(pit: BasePart)
 	end)
 end
 
+-- 3.20 TESLA COIL (docs/MACHINES_10.md; Config.TESLA_10): a ZAP button on its base. A 1 s charge (a rising electric
+-- growl, the sparks crawl faster), then a jagged lightning arc to the nearest free ragdoll within ZAP_REACH: it flashes
+-- blue-white (the cartoon X-ray moment), goes soot-black for 3 s with a smoke puff and jumps; the arc chains on to up to
+-- 2 more ragdolls within CHAIN_REACH of the last one. "ZAP! x3 CHAIN".
+MapMachines.ZAP_REACH = 28
+MapMachines.CHAIN_REACH = 16
+
+local function arc(a: Vector3, b: Vector3)
+	local pts = { a }
+	local n = 7
+	for i = 1, n - 1 do
+		local p = a:Lerp(b, i / n)
+		table.insert(pts, p + Vector3.new(math.random() - 0.5, math.random() - 0.5, math.random() - 0.5) * 2.4)
+	end
+	table.insert(pts, b)
+	local made = {}
+	for i = 1, #pts - 1 do
+		local p0, p1 = pts[i], pts[i + 1]
+		local seg = Instance.new("Part")
+		seg.Name = "ZapArc"
+		seg.Material = Enum.Material.Neon
+		seg.Color = Color3.fromRGB(170, 220, 255)
+		seg.Anchored, seg.CanCollide, seg.CanQuery, seg.CanTouch, seg.CastShadow = true, false, false, false, false
+		seg.Size = Vector3.new(0.25, 0.25, (p1 - p0).Magnitude)
+		seg.CFrame = CFrame.lookAt((p0 + p1) / 2, p1)
+		seg.Parent = Workspace
+		table.insert(made, seg)
+	end
+	task.delay(0.3, function()
+		for _, seg in made do
+			seg:Destroy()
+		end
+	end)
+end
+
+local function zapBody(m: Model, by: Player?)
+	local glow = Instance.new("Highlight")
+	glow.Name = "ZapGlow"
+	glow.FillColor = Color3.fromRGB(170, 225, 255)
+	glow.OutlineColor = Color3.fromRGB(255, 255, 255)
+	glow.FillTransparency = 0.05
+	glow.Parent = m
+	task.delay(0.3, function()
+		glow.FillColor = Color3.fromRGB(30, 30, 34) -- (soot-black)
+		glow.OutlineColor = Color3.fromRGB(60, 60, 64)
+		glow.FillTransparency = 0.25
+	end)
+	task.delay(3, function()
+		glow:Destroy()
+	end)
+	local pe = pelvisOf(m)
+	if pe then
+		local puff = Instance.new("ParticleEmitter")
+		puff.Texture = "rbxasset://textures/particles/smoke_main.dds"
+		puff.Color = ColorSequence.new(Color3.fromRGB(60, 60, 64))
+		puff.Size = NumberSequence.new(1, 3)
+		puff.Transparency = NumberSequence.new(0.3, 1)
+		puff.Speed = NumberRange.new(3, 6)
+		puff.Lifetime = NumberRange.new(0.8, 1.4)
+		puff.Rate = 0
+		puff.Parent = pe
+		puff:Emit(16)
+		game:GetService("Debris"):AddItem(puff, 2)
+	end
+	pcall(control().push, m, Vector3.new(math.random(-10, 10), 70, math.random(-10, 10)), by)
+end
+
+local function wireTesla(base: BasePart, top: BasePart)
+	local pp = Instance.new("ProximityPrompt")
+	pp.ActionText = "ZAP!"
+	pp.ObjectText = "Tesla Coil"
+	pp.HoldDuration = 0
+	pp.MaxActivationDistance = 14
+	pp.RequiresLineOfSight = false
+	pp.Parent = base
+	local hum = Instance.new("Sound")
+	hum.SoundId = "rbxassetid://9114524003" -- (PSE "Force Field Constant Sci Fi 2": a growling electric charge)
+	hum.Volume = 0.5
+	hum.RollOffMaxDistance = 90
+	hum.Parent = top
+	local zap = Instance.new("Sound")
+	zap.SoundId = "rbxassetid://9114277757" -- (PSE "Electric Zaps 12")
+	zap.Volume = 1
+	zap.RollOffMaxDistance = 120
+	zap.Parent = top
+	local sparks = top:FindFirstChildWhichIsA("ParticleEmitter")
+	local charging = false
+	pp.Triggered:Connect(function(player)
+		if charging then
+			return
+		end
+		charging = true
+		pp.Enabled = false
+		task.spawn(function()
+			hum.PlaybackSpeed = 0.6
+			hum:Play()
+			local t0 = os.clock()
+			while os.clock() - t0 < 1 do
+				local k = os.clock() - t0
+				hum.PlaybackSpeed = 0.6 + k * 1.2
+				if sparks then
+					sparks.Rate = 12 + 90 * k
+				end
+				task.wait(0.05)
+			end
+			hum:Stop()
+			if sparks then
+				sparks.Rate = 12
+			end
+			zap:Play()
+			local from = top.Position
+			local hits = 0
+			for _ = 1, 3 do
+				local m = nearestFree(if hits == 0 then base.Position else from, if hits == 0 then MapMachines.ZAP_REACH else MapMachines.CHAIN_REACH)
+				if not m then
+					break
+				end
+				busy[m] = true
+				local pe = pelvisOf(m)
+				local to = if pe then pe.Position else from
+				arc(from, to)
+				zapBody(m, player)
+				hits += 1
+				from = to
+				task.delay(1, function()
+					busy[m] = nil
+				end)
+				task.wait(0.12)
+			end
+			if hits > 0 then
+				pcall(function()
+					require(script.Parent:WaitForChild("Playground")).pop(top.Position + Vector3.new(0, 4, 0), if hits > 1 then "ZAP! x" .. hits .. " CHAIN" else "ZAP!", Color3.fromRGB(170, 225, 255))
+				end)
+			end
+			task.wait(3)
+			charging = false
+			pp.Enabled = true
+		end)
+	end)
+end
+
 function MapMachines.start()
 	local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
 	if not Config.MAP_MACHINES_LIVE or not Config.LAB_OWNERMAP then
@@ -384,6 +525,11 @@ function MapMachines.start()
 					if pit and pit:IsA("BasePart") and not wired[pit] then
 						wired[pit] = true
 						wireShredder(pit)
+					end
+					local tBase, tTop = om:FindFirstChild("TeslaBase"), om:FindFirstChild("TeslaTop")
+					if Config.TESLA_10 and tBase and tTop and tBase:IsA("BasePart") and tTop:IsA("BasePart") and not wired[tBase] then
+						wired[tBase] = true
+						wireTesla(tBase, tTop)
 					end
 				end
 			end
