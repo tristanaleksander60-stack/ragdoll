@@ -138,7 +138,7 @@ No hitch over 100 ms when machines run, a big event starts or the lab loads.
    - Attributes (`MachineHidden`, `XRayOn`, the X-ray state) are cached with `GetAttributeChangedSignal`, not read every frame.
    - The `cfs` table is reused, and the Head drive index is worked out once.
    - **A v6 LITE mesh** from Blender: the same shape, UV, colours and bones, about half the triangles, at most 2 bone influences per vertex. It is used beyond 25 studs or at level ≤1, so it looks the same and is cheap. Write the triangle counts here: v6 near target ≤4k, lite ≤2k.
-4. **`LAGFREE_BUDGET`: one budget table for everything.**
+4. **PART DONE v1393:** `Config.PERF_LEVELS` (skin reach/rate per level, read by `QualityGovernor.get`, `.Changed`), smarter steps (5 s under 40 or 3 hitches in 5 s down, 45 s over 58 up, no steps in the first 30 s, a phone over 1200 MB starts at 1). LEFT: move the other modules' numbers into PERF_LEVELS. 4. **`LAGFREE_BUDGET`: one budget table for everything.**
    - `Config.PERF_LEVELS[0..3]` holds every number:
      - skin reach and rate;
      - DummyLife LOD_NEAR, LOD_FAR and MID_RATE;

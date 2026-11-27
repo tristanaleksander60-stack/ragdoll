@@ -20,6 +20,15 @@ local QualityGovernor = {}
 
 QualityGovernor.LOW_FPS, QualityGovernor.LOW_FOR = 45, 10
 QualityGovernor.HIGH_FPS, QualityGovernor.HIGH_FOR = 58, 30
+-- (LAG-FREE 2 item 4, Config.LAGFREE_BUDGET: smarter steps: down after 5 s under 40, or 3 frames over 50 ms within 5 s;
+-- up only after 45 s over 58. Every number by level is in Config.PERF_LEVELS; get(key) reads it, Changed fires.)
+local BUDGET = Config.LAGFREE_BUDGET == true
+if BUDGET then
+	QualityGovernor.LOW_FPS, QualityGovernor.LOW_FOR = 40, 5
+	QualityGovernor.HIGH_FOR = 45
+end
+local changed = Instance.new("BindableEvent")
+QualityGovernor.Changed = changed.Event
 
 local level = 3
 local top = 3
@@ -97,6 +106,16 @@ local function apply(l: number)
 	if guard then
 		guard.LIGHT_RANGE = if l <= 1 then 80 else 140
 	end
+	-- (LAG-FREE 2 items 3-4: the smooth skin's reach and far rate by level)
+	if BUDGET and Config.PERF_LEVELS and Config.PERF_LEVELS[l] then
+		local row = Config.PERF_LEVELS[l]
+		local sb = client("SmoothBody")
+		if sb and row.skinReach then
+			sb.ANIM_REACH = row.skinReach
+			sb.FAR_RATE = 1 / row.skinRate
+		end
+	end
+	changed:Fire(l)
 	-- (0) fewer real hands
 	local hands = client("RealHands")
 	if hands then
@@ -107,6 +126,13 @@ end
 
 function QualityGovernor.level(): number
 	return level
+end
+
+-- A number for this level from Config.PERF_LEVELS (nil when there is none).
+function QualityGovernor.get(key: string): any
+	local levels = Config.PERF_LEVELS
+	local row = levels and levels[level]
+	return row and row[key]
 end
 
 function QualityGovernor.start()
@@ -124,7 +150,12 @@ function QualityGovernor.start()
 		end
 		local dev = tostring(player:GetAttribute("Device"))
 		top = if dev == "phone" or dev == "tablet" then 2 else 3
-		apply(top)
+		-- (LAG-FREE 2 item 4: a phone already over 1200 MB at join starts one level lower; never in Studio)
+		local startAt = top
+		if BUDGET and dev == "phone" and not RunService:IsStudio() and game:GetService("Stats"):GetTotalMemoryUsageMb() > 1200 then
+			startAt = math.min(top, 1)
+		end
+		apply(startAt)
 		local frames = 0
 		local hitches = 0
 		RunService.RenderStepped:Connect(function(dt)
@@ -165,6 +196,9 @@ function QualityGovernor.start()
 			end)
 		end
 		local lowFor, highFor = 0, 0
+		local hitchWindow: { number } = {}
+		local hitchSeen = 0
+		local bornAt, hitchStepAt = os.clock(), 0
 		while true do
 			frames = 0
 			task.wait(1)
@@ -190,7 +224,28 @@ function QualityGovernor.start()
 			else
 				lowFor, highFor = 0, 0
 			end
-			if lowFor >= QualityGovernor.LOW_FOR and level > 0 then
+			-- (LAG-FREE 2 item 4: 3 hitches (frames over 50 ms) within 5 s also step down, not only a low average)
+			if hitches < hitchSeen then
+				hitchSeen = 0 -- (the 60 s report reset the count)
+			end
+			table.insert(hitchWindow, hitches - hitchSeen)
+			hitchSeen = hitches
+			if #hitchWindow > 5 then
+				table.remove(hitchWindow, 1)
+			end
+			local recent = 0
+			for _, n in hitchWindow do
+				recent += n
+			end
+			-- (not in the first 30 s: loading the world hitches on every device; and at most one hitch step per 10 s)
+			if BUDGET and recent >= 3 and level > 0 and os.clock() - bornAt > 30 and os.clock() - hitchStepAt > 10 then
+				hitchStepAt = os.clock()
+				apply(level - 1)
+				table.clear(hitchWindow)
+				lowFor, highFor = 0, 0
+				continue
+			end
+			if lowFor >= QualityGovernor.LOW_FOR and level > 0 and (not BUDGET or os.clock() - bornAt > 30) then
 				apply(level - 1)
 				lowFor = 0
 			elseif highFor >= QualityGovernor.HIGH_FOR and level < top then
