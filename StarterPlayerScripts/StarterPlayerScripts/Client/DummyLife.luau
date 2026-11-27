@@ -54,6 +54,13 @@ local SHOT_HEARD = 120 -- the guns: a shot is heard across the lab and the plaza
 local ROW_HEARD = 40 -- any hit is heard at least this far (a lab's row of six is 25 wide)
 local GESTURE_GAP_MIN, GESTURE_GAP_MAX = 5, 13 -- s between two idle gestures
 local GESTURES = { "Stretch", "Scratch", "Watch", "LookAround", "Arms", "Shrug" }
+if (Config :: any).IDLE_LIFE then
+	-- (11 IDLE LIFE, docs/LIFE_IDLE.md 1: more small human actions; 8-20 s apart, never the same twice in a row)
+	for _, g in { "Hips", "NeckRoll", "RubEyes", "Nails", "Sneeze", "Wave", "Knuckles" } do
+		table.insert(GESTURES, g)
+	end
+	GESTURE_GAP_MIN, GESTURE_GAP_MAX = 8, 20
+end
 local MAX_YAW, MAX_PITCH_UP, MAX_PITCH_DOWN = 70, 30, 25
 local LOOK_SMOOTH = 5 -- 1/s
 local AIR_CLEARANCE = require(Shared:WaitForChild("Ragdoll"):WaitForChild("Config")).AIR_CLEARANCE
@@ -632,7 +639,12 @@ local function updateIdle(life: Life, now: number, dt: number)
 		life.gesture = nil
 		life.nextGestureAt = now + rng:NextNumber(GESTURE_GAP_MIN, GESTURE_GAP_MAX)
 	elseif not life.gesture and not busy and now >= life.nextGestureAt then
-		life.gesture = GESTURES[rng:NextInteger(1, #GESTURES)]
+		local pick = GESTURES[rng:NextInteger(1, #GESTURES)]
+		if pick == (life :: any).lastGesture then
+			pick = GESTURES[(table.find(GESTURES, pick) :: number) % #GESTURES + 1] -- (never the same twice in a row)
+		end
+		(life :: any).lastGesture = pick
+		life.gesture = pick
 		life.gestureAt = now
 		life.gestureLength = rng:NextNumber(2.2, 3.4)
 	end
@@ -837,6 +849,50 @@ local function updateIdle(life: Life, now: number, dt: number)
 		blend("RightElbow", ang(70, 0, 0))
 		blend("LeftElbow", ang(70, 0, 0))
 		blend("Neck", ang(4, neckYaw, 8 * s))
+	elseif gesture == "Hips" then
+		-- (11 IDLE LIFE) hands on the hips
+		blend("RightShoulder", ang(-12, 0, 42))
+		blend("LeftShoulder", ang(-12, 0, -42))
+		blend("RightElbow", ang(95, 0, 0))
+		blend("LeftElbow", ang(95, 0, 0))
+	elseif gesture == "NeckRoll" then
+		-- rolls its neck round and lifts the shoulders
+		local u = (now - life.gestureAt) * 2.2
+		blend("Neck", ang(14 * math.sin(u), 0, 22 * math.cos(u)))
+		blend("RightShoulder", ang(4, 0, 8 + 6 * math.max(0, math.sin(u * 2))))
+		blend("LeftShoulder", ang(4, 0, -8 - 6 * math.max(0, math.sin(u * 2))))
+	elseif gesture == "RubEyes" then
+		-- rubs its eyes with one hand
+		local r = 5 * sin(t * 12)
+		blend("RightShoulder", ang(118 + r, 0, -18))
+		blend("RightElbow", ang(128, 0, 0))
+		blend("Neck", ang(-10, 0, 0))
+	elseif gesture == "Nails" then
+		-- looks at its fingernails
+		blend("LeftShoulder", ang(62, 0, -12))
+		blend("LeftElbow", ang(112, 0, 0))
+		blend("Neck", ang(-24, 14, 0))
+	elseif gesture == "Sneeze" then
+		-- a sneeze: the build-up, then a sharp jerk forward at the middle
+		local u = math.clamp((now - life.gestureAt) / life.gestureLength, 0, 1)
+		local jerk = if u > 0.45 and u < 0.6 then math.sin((u - 0.45) / 0.15 * math.pi) else 0
+		local build = if u <= 0.45 then u / 0.45 else 0
+		blend("Waist", ang(-4 * build + 14 * jerk, 0, 0))
+		blend("Neck", ang(10 * build - 22 * jerk, 0, 0))
+		blend("RightShoulder", ang(70, 0, -20))
+		blend("RightElbow", ang(115, 0, 0))
+	elseif gesture == "Wave" then
+		-- waves at whoever is near (the look target) or just waves
+		blend("RightShoulder", ang(20, 0, 145 + 20 * sin(t * 9)))
+		blend("RightElbow", ang(25 + 20 * sin(t * 9 + 0.6), 0, 0))
+	elseif gesture == "Knuckles" then
+		-- cracks its knuckles: hands together in front, a little push
+		local push = 6 * math.max(0, sin(t * 7))
+		blend("RightShoulder", ang(55 + push, 0, -26))
+		blend("LeftShoulder", ang(55 + push, 0, 26))
+		blend("RightElbow", ang(100, 0, 0))
+		blend("LeftElbow", ang(100, 0, 0))
+		blend("Neck", ang(-12, neckYaw * 0.3, 0))
 	end
 	-- Personalities (CrowdService): a laugh, a shaken fist, a doze, a clown's little dance.
 	if moodOn(model, "LaughUntil") then
