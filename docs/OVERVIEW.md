@@ -1,5 +1,8 @@
 # OVERVIEW: the whole plan on one page (read this FIRST on every /klar)
 
+> ## ⚠⚠ OWNER PRIORITY #1 NOW (27 Nov late): `docs/PHYSICS_DEEP.md`. THE RAGDOLLS JITTER BACK AND FORTH AND STAND WRONG ("3/10 physics ... det her taber mig så mange penge")
+> Do it before anything else (it includes the walk and run of the owner's test D). The owner's order allows measuring in Play with the probe for THIS item. Then A-E's rest, then THE ORDER.
+
 > ## ⚠ OWNER PRIORITY NOW (27 Nov late): THE OWNER TESTED v6, FIX `RAGDOLL_10.md` "THE v6 FIT PASS: the OWNER'S TEST" A-E FIRST
 > A: X-ray only after 3 hits IN A ROW on one limb, for 3 s (toggle ON = always); the torso X-ray bug that never goes away. B: the whole skeleton in EVERY limb, fixed inside the body. C: the round grey head with the face instead of the old cylinder head. D: a real walk and run (arms down; find the bone-rest cause). E: the rounds only inside on the bone in X-ray, only our nice holes on the skin, only the 3 newest holes bleed. Do these before the fit pass's leftovers and every other row. (Keep this banner until A-E are DONE.)
 >
