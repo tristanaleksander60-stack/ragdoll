@@ -39,7 +39,7 @@ The spawn is on the raised plaza facing south. Right below the stair: RAGDOLL BO
 | **after the bowling: FREE PLAY** (owner, 26 Nov late: "Kun vis 1 maskine så ved de selv resten, så kan de selv tage det i den rækkefølge de vil, nogle vil også bare dræbe") | The bowling is the ONE machine that is shown. After it, NO tour and NO pointing at machines: the player goes where they want. Every machine shows its TRY button when you walk up to it (F81), so explorers find them by themselves, and players who just want to fight keep fighting. | the goal line shows the next WEAPON ("3 KOs to the BOW"), not a machine | the machines' own shows (CREATURES_ANIM) are the reward for exploring |
 | **about 2:00** | The first SURPRISE: a GOLDEN RAGDOLL runs past (it is worth 10 KOs), with a 10 s countdown on the goal line. | "Catch the GOLDEN one!" | only when no beat runs |
 | **2:30-3:30** | **The X-RAY moment:** after the first bone break (or at 3:00), the X-RAY button pulses once. Tap it: the cracked bones show. | "See the bones!" | the pulse only once, ever |
-| **after the tour** | **The BIKE, only when useful** (fix 7): the first time the next goal is more than 150 studs away, the goal line says "Faster: free BIKE" and points to the NEAREST free bicycle (a second free bicycle stand at the tower square, so it is never a walk back to the spawn) | "Faster: free BIKE" | the paid vehicles in the entrance row are seen on the way out of the spawn, never pushed |
+| **any time** | **The BIKE, only when useful** (fix 7): the first time the player walks more than about 150 studs in one go, the goal line says "Faster: free BIKE" and points to the NEAREST free bicycle (a second free bicycle stand at the tower square, so it is never a walk back to the spawn) | "Faster: free BIKE" | the paid vehicles in the entrance row are seen on the way out of the spawn, never pushed |
 | **any time** | Machines tried are counted quietly ("Tried 3" pops after each first TRY). At 6 tried, the TRY REWARD (a free egg or crate) without ever having been told to do it | - | |
 | **4:00-5:00** | the 3 min and 5 min gifts (their beats wait for the shows) | - | |
 | **5-10 min** | **The world takes over:** the personalities (P1), the animals' idles and catches, the 2-minute surprises (a ragdoll rain, a giant ragdoll, the free red-button event), the next weapons close together (6 unlocks by about 25 KOs), "NEW BEST" moments (bowling, cannon, slide). | the goal line always shows the next weapon ("3 KOs to the BOW") or the next untried machine | one goal at a time |
@@ -48,10 +48,10 @@ The spawn is on the raised plaza facing south. Right below the stair: RAGDOLL BO
 | **Day 2+** | The DAILY CHEST on the spawn plaza (a streak, day 1-7, growing), and the next goal where they stopped | "Claim DAY 2!" | |
 
 ## The deep review: problems found in this plan, and how they are solved (26 Nov late)
-1. **Two beats at once:** the pistol unlock, the gift, the golden ragdoll and the tour can all fire in the same minute.
-   - **Fix:** the director has a QUEUE with priorities (a show playing > the tour step > the unlock pop > the gift > a surprise).
+1. **Two beats at once:** the pistol unlock, the gift and the golden ragdoll can all fire in the same minute.
+   - **Fix:** the director has a QUEUE with priorities (a show playing > the bowling beat > the unlock pop > the gift > a surprise).
    - Unlocks and gifts are earned at once but SHOWN when the queue reaches them.
-   - Surprises only start between tour steps, never during a show.
+   - Surprises never start during a show or a fight in progress.
    - The goal line swaps to a surprise and back.
 2. **Frustration at the start:** a SCARED ragdoll flees at the first hit, and the angry shove (ANGRY_FIRST) knocks a 10-year-old over in their first 20 seconds.
    - **Fix:** for a new player's first 3 minutes, the 3 near are CURIOUS, CHILL or HERO only, and do not flee; there are no angry shoves; the hero only says "Hey!" and stands up for the victim.
@@ -70,12 +70,12 @@ The spawn is on the raised plaza facing south. Right below the stair: RAGDOLL BO
 7. **The bike was a detour.** **Fix:**
    - a SECOND free bicycle stand at the tower square;
    - the bike beat only the first time a player has walked more than about 150 studs in one go, pointing to the nearest stand.
-8. **TRY is once per machine (F1):** after the tour a player might not know how to run a machine again.
+8. **TRY is once per machine (F1):** after its TRY a player might not know how to run a machine again.
    - **Fix:** at the end of every TRY show, the machine's own button or lever glows once ("Again? Press it!", 2 words).
    - The bowling lane has its lever.
 9. **The golden ragdoll on a phone** is hard to catch while running.
    - **Fix:** in the first session it jogs (not sprints) in a circle round the player's area for 15 s, and any hit counts.
-10. **Rewards must be safe:** the gifts, the tour reward and the daily chest are claimed through validated `Net` remotes. The server checks the time, the tries and the day, never the client.
+10. **Rewards must be safe:** the gifts, the TRY reward and the daily chest are claimed through validated `Net` remotes. The server checks the time, the tries and the day, never the client.
 11. **Returning players:** they must never see the beginner rules. **Fix:**
     - each beat is a saved flag;
     - a returning player gets the FULL HUD, the normal personas and the angry shoves;
