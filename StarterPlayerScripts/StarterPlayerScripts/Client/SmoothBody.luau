@@ -17,6 +17,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
@@ -555,10 +556,12 @@ local function step(dt: number)
 	end
 	for _, body in bodies do
 		local hidden = body.model:GetAttribute("MachineHidden") == true
-		if xrayed(body) and not hidden and GLASS_V6 then
-			-- (THE v6 FIT PASS item 3: in X-ray the v6 body itself is the glass shell round the bones; the block skins stay hidden)
-			if body.mesh.Transparency ~= XRAY_GLASS then
-				body.mesh.Transparency = XRAY_GLASS
+		if GLASS_V6 and not hidden then
+			-- (THE v6 FIT PASS item 3 + the owner's A2: only the X-RAY toggle turns the whole v6 body to glass; a limb shot 3
+			-- times in a row shows its own bones through a solid body (DummySkins limbGlow), the mesh never changes for it)
+			local want = if xrayed(body) and Players.LocalPlayer:GetAttribute("XRayOn") == true then XRAY_GLASS else 0
+			if body.mesh.Transparency ~= want then
+				body.mesh.Transparency = want
 			end
 			hideBlocks(body)
 		elseif xrayed(body) or hidden then

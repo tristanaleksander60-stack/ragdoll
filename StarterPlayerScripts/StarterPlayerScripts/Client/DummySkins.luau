@@ -533,6 +533,75 @@ end
 
 local template: Instance? = nil
 local template: Instance? = nil
+-- (Owner's A2, 27 Nov late: with the X-RAY toggle off, a limb shot 3 times in a row shows ITS bones only, through the
+-- solid v6 body: its bone parts go in one model with a Highlight drawn on top (pale bone fill, soft blue outline), and a
+-- thin glass sleeve wraps that limb alone; shown 2 s, faded out over 1 s. At most 4 at once (2 on a phone).)
+local glows: { Model } = {}
+local GLOW_MAX = if game:GetService("UserInputService").TouchEnabled and not game:GetService("UserInputService").KeyboardEnabled then 2 else 4
+local function limbGlow(limb: BasePart, folder: Instance)
+	local TweenService = game:GetService("TweenService")
+	local holder = Instance.new("Model")
+	holder.Name = "XrayLimb"
+	holder:SetAttribute("Of", limb.Name)
+	for _, b in folder:GetChildren() do
+		if (b.Name == "XrayBone" or b.Name == "XraySlug") and b:GetAttribute("Of") == limb.Name then
+			b.Parent = holder
+		end
+	end
+	local sleeve = Instance.new("Part")
+	sleeve.Name = "XraySleeve"
+	sleeve.Shape = Enum.PartType.Cylinder
+	local r = math.max(limb.Size.X, limb.Size.Z) / 2 + 0.06
+	sleeve.Size = Vector3.new(limb.Size.Y * 0.98, r * 2, r * 2)
+	sleeve.CFrame = limb.CFrame * CFrame.Angles(0, 0, math.rad(90))
+	sleeve.Color = Color3.fromRGB(150, 205, 255)
+	sleeve.Material = Enum.Material.Glass
+	sleeve.Transparency = 0.7
+	sleeve.CanCollide, sleeve.CanQuery, sleeve.CanTouch, sleeve.Massless, sleeve.Anchored, sleeve.CastShadow = false, false, false, true, false, false
+	local w = Instance.new("WeldConstraint")
+	w.Part0 = limb
+	w.Part1 = sleeve
+	w.Parent = sleeve
+	sleeve.Parent = holder
+	local hl = Instance.new("Highlight")
+	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	hl.FillColor = Color3.fromRGB(240, 232, 210)
+	hl.FillTransparency = 0.15
+	hl.OutlineColor = Color3.fromRGB(140, 200, 255)
+	hl.OutlineTransparency = 0.25
+	hl.Parent = holder
+	holder.Parent = folder
+	table.insert(glows, holder)
+	while #glows > GLOW_MAX do
+		local old = table.remove(glows, 1)
+		if old and old.Parent then
+			old:Destroy()
+		end
+	end
+	task.delay(2, function()
+		if not holder.Parent then
+			return
+		end
+		local fade = TweenInfo.new(1)
+		TweenService:Create(hl, fade, { FillTransparency = 1, OutlineTransparency = 1 }):Play()
+		TweenService:Create(sleeve, fade, { Transparency = 1 }):Play()
+		for _, p in holder:GetDescendants() do
+			if p:IsA("BasePart") and p ~= sleeve then
+				TweenService:Create(p, fade, { Transparency = 1 }):Play()
+			end
+		end
+		task.delay(1.05, function()
+			local i = table.find(glows, holder)
+			if i then
+				table.remove(glows, i)
+			end
+			if holder.Parent then
+				holder:Destroy()
+			end
+		end)
+	end)
+end
+
 local skins: { [BasePart]: MeshPart } = {}
 
 -- The sculpted surface over a limb, if it has one (BulletHoles puts holes on it).
@@ -861,12 +930,15 @@ local function dress(model: Model)
 							return
 						end
 						for _, b in folder:GetChildren() do
-							if b.Name == "XrayBone" and b:GetAttribute("Of") == limb.Name then
+							if (b.Name == "XrayBone" or b.Name == "XrayLimb") and b:GetAttribute("Of") == limb.Name then
 								b:Destroy()
 							end
 						end
 						if clear then
 							xrayBone(limb, skin, folder, key, n)
+							if not xrayAll[model] and model:GetAttribute("BodyV6") == true then
+								limbGlow(limb, folder) -- (A2: this limb only, through the solid body)
+							end
 						end
 					end)
 				end
