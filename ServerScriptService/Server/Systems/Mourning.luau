@@ -254,6 +254,9 @@ local function bury(m: Model, job: Job, target: Player)
 	local a: any = job
 	a.phase, a.since = "Bury", os.clock()
 	burying[job.owner] = true
+	pcall(function() -- (row 17: the burial funnel, step 1 of 2)
+		lazy("Funnels").used(job.owner, "BurialStarted")
+	end)
 	local corpse = job.corpse
 	local cp = pelvisOf(corpse)
 	local spot = if cp then cp.Position else (pelvisOf(m) or { Position = Vector3.zero } :: any).Position
@@ -328,6 +331,9 @@ local function bury(m: Model, job: Job, target: Player)
 		return
 	end
 	-- Revenge: one cringe line, then it comes for the player.
+	pcall(function() -- (row 17: the burial funnel, step 2 of 2)
+		lazy("Funnels").used(job.owner, "BurialRevenge")
+	end)
 	m:SetAttribute("MoodSay", Mourning.REVENGE_LINES[math.random(1, #Mourning.REVENGE_LINES)])
 	task.delay(3, function()
 		if m.Parent then
