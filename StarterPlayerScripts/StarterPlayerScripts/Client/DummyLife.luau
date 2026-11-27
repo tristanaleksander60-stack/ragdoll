@@ -31,6 +31,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Assets = require(Shared:WaitForChild("Assets"))
 local GunThreat = require(Shared:WaitForChild("GunThreat"))
 local Config = require(Shared:WaitForChild("Config"))
+local SIDES = { "Right", "Left" } -- (LAG-FREE 2 item 7: one table, not a new one each call)
+local TOUCH_IK = game:GetService("UserInputService").TouchEnabled and (Config :: any).LAGFREE_SMALL == true
 local ClipGait = require(script.Parent:WaitForChild("ClipGait")) -- (S1: real walk and run clips)
 local DummyLines = require(Shared:WaitForChild("DummyLines"))
 local TalkLines = require(Shared:WaitForChild("TalkLines"))
@@ -713,7 +715,7 @@ local function gaitPose(life: Life, state: string, now: number, dt: number)
 					if tw > 0.01 then
 						local sp = sin(L.clipPhase * TAU)
 						local sign = L.turnSign or 1
-						for _, side in { "Right", "Left" } do
+						for _, side in SIDES do
 							local lift = math.max(0, if side == "Right" then sp else -sp)
 							local hip, knee = life.joints[side .. "Hip"], life.joints[side .. "Knee"]
 							if hip and not life.loose[side .. "Hip"] then
@@ -1070,7 +1072,7 @@ local function updateIdle(life: Life, now: number, dt: number)
 	if life.handsW > 0 then
 		local w = life.handsW * life.handsW * (3 - 2 * life.handsW)
 		local shake = 2 * sin(t * 17)
-		for _, side in { "Right", "Left" } do
+		for _, side in SIDES do
 			local sign = if side == "Right" then 1 else -1
 			local shoulder, elbow = j[side .. "Shoulder"], j[side .. "Elbow"]
 			if shoulder and not life.loose[side .. "Shoulder"] then
@@ -1929,16 +1931,24 @@ local function lookWhileTalking(life: Life, state: string, now: number)
 	local model = life.model
 	local target: Vector3? = nil
 	if model:GetAttribute("Role3") == "Chat" then
-		local dummies = model.Parent
-		local best = 16
-		for _, d in if dummies then dummies:GetChildren() else {} do
-			local h = d ~= model and d:GetAttribute("Role3") == "Chat" and d:FindFirstChild("Head")
-			if h and h:IsA("BasePart") then
-				local dist = (h.Position - life.head.Position).Magnitude
-				if dist < best then
-					best, target = dist, h.Position
+		-- (LAG-FREE 2 item 7: the chat partner is looked up every 0.5 s and kept, not searched for every frame)
+		if now - (lf.chatAt or -10) > 0.5 or not (lf.chatHead and lf.chatHead.Parent) then
+			lf.chatAt = now
+			lf.chatHead = nil
+			local dummies = model.Parent
+			local best = 16
+			for _, d in if dummies then dummies:GetChildren() else {} do
+				local h = d ~= model and d:GetAttribute("Role3") == "Chat" and d:FindFirstChild("Head")
+				if h and h:IsA("BasePart") then
+					local dist = (h.Position - life.head.Position).Magnitude
+					if dist < best then
+						best, lf.chatHead = dist, h
+					end
 				end
 			end
+		end
+		if lf.chatHead then
+			target = (lf.chatHead :: BasePart).Position
 		end
 	end
 	if not target then
@@ -2093,12 +2103,18 @@ local function layers(life: Life, state: string, now: number, dt: number)
 		local cam = Workspace.CurrentCamera
 		local near = cam ~= nil and (life.pelvis.Position - cam.CFrame.Position).Magnitude <= FOOT_IK_REACH
 		local k = 1 - math.exp(-8 * dt)
-		for _, side in { "Right", "Left" } do
+		for _, side in SIDES do
 			local ankle = j[side .. "Ankle"]
 			local foot = model:FindFirstChild(side .. "Foot")
 			if ankle and foot and foot:IsA("BasePart") and not life.loose[side .. "Ankle"] then
 				local want = Vector2.zero
-				if near then
+				local ikKey = "ikWant" .. side
+				-- (LAG-FREE 2 item 7: on touch devices the foot rays run at 20 Hz; between them the last answer is kept)
+				local reuse = TOUCH_IK and near and L[ikKey] ~= nil and os.clock() - (L["ikAt" .. side] or 0) < 0.05
+				if reuse then
+					want = L[ikKey]
+				elseif near then
+					L["ikAt" .. side] = os.clock()
 					local hit = Workspace:Raycast(foot.Position + Vector3.new(0, 0.6, 0), Vector3.new(0, -1.8, 0), life.rayParams)
 					if hit then
 						-- the ground's normal in the shin's frame: the tilt that turns the foot's sole onto it
@@ -2107,6 +2123,7 @@ local function layers(life: Life, state: string, now: number, dt: number)
 						local n = ref:VectorToObjectSpace(hit.Normal)
 						want = Vector2.new(math.clamp(deg(math.atan2(n.Z, n.Y)), -25, 25), math.clamp(deg(math.atan2(-n.X, n.Y)), -25, 25))
 					end
+					L[ikKey] = want
 				end
 				local key = "ik" .. side
 				local cur: Vector2 = L[key] or Vector2.zero
