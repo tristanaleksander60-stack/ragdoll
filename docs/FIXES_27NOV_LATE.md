@@ -72,7 +72,9 @@ Today A2 puts a pale capsule round the limb (on the torso a big glass box), whic
    - check the face from the side: nothing floats off or cuts into the head.
 5. **The check (one Play look, close up):** shoot an arm, a leg and the chest 5 times each and walk round the body: every hole lies flat ON the skin, nothing pokes out or sinks in while it walks, falls or gets up. The face, seen from the front and the side, sits on the head.
 
-## 6. The mouse "cannot move" near many things (owner, PC: "Man kan ikke bevæge musen i nærheden af mange af tingene fiks det")
+## 6. The mouse "cannot move" near many things
+**DONE v1362 (`WORLD_GUI_PASS`, Client/WorldGuiPass):** the cause, found in one Play: 181 world GUIs (166 sign/label SurfaceGuis, the 9 ragdoll faces, the boards) were Active with no button, so they caught the mouse (no camera turn, lost clicks). The mouse was never locked; no screen panel covered it. Now every world GUI without a button is inactive (0 left). Owner check: on PC, turn the camera and shoot near the cannon, the boards and a ragdoll head.
+ (owner, PC: "Man kan ikke bevæge musen i nærheden af mange af tingene fiks det")
 Find the real cause with ONE Play (allowed for this item):
 - walk the mouse player past 8 things: the cannon, bowling, the gyro, the shredder, the fan, a bench, the bikes and the fountain;
 - at each, log `UserInputService.MouseBehavior`, `MouseIconEnabled`, `player.CameraMode`, `FirstPerson.isOn()`, the GuiObjects under the cursor (`PlayerGui:GetGuiObjectsAtPosition`: which are Active or Modal), the open ProximityPrompts and ControlsFX prompts, and the FPS.

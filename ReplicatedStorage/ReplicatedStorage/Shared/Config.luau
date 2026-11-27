@@ -185,6 +185,7 @@ local Config = {
 	BLOCKED_EASE = true, -- PHYSICS_DEEP: a walker pushed back against its own way stops pushing (speed 2) instead of bouncing off the obstacle again and again
 	PHYSICS_PROBE = false, -- PHYSICS_DEEP step 1: logs [PhysProbe] when a walking dummy moves against its own drive, with what it touches (ActiveRagdoll); off by default
 	TOUCH_HOLD = true, -- F92 rest: on a touch screen every prompt without a hold needs 0.3 s, so a tap while walking past never starts a machine (Client/ControlsFX)
+	WORLD_GUI_PASS = true, -- FIXES_27NOV_LATE 6: world SurfaceGuis/BillboardGuis without a button are not Active, so they never catch the mouse (Client/WorldGuiPass)
 	FONT_SWEEP = true, -- AUDIT 33: texts on FredokaOne, Gotham or SourceSans get the kit BuilderSans (Client/FontSweep)
 	LEGEND_STARS = true, -- AUDIT 11: after Legend a LEGEND STAR every 500 KOs with 150 BOLTS; the rank bar fills to the next star (Shared/Progress.starsOf)
 	PHONE_TEXT_FLOOR = true, -- AUDIT 25: on phones no fixed-size text under 14 px on screen (Client/TextFloor)

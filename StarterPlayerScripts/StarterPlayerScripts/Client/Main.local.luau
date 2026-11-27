@@ -192,6 +192,7 @@ safe("LegJitter", function() require(Client:WaitForChild("LegJitter")).start() e
 safe("MiniBar", function() require(Client:WaitForChild("MiniBar")).start() end) -- F71: the phone hotbar is small until tapped
 safe("TextFloor", function() require(Client:WaitForChild("TextFloor")).start() end) -- AUDIT 25: phone text at least 14 px
 safe("FontSweep", function() require(Client:WaitForChild("FontSweep")).start() end) -- AUDIT 33: one house font
+safe("WorldGuiPass", function() require(Client:WaitForChild("WorldGuiPass")).start() end) -- FIXES_27NOV_LATE 6: signs never eat the mouse
 safe("RealHands", function() require(Client:WaitForChild("RealHands")).start() end) -- S2: real hands with fingers, not hooks
 safe("SmoothBody", function() require(Client:WaitForChild("SmoothBody")).start() end) -- S2: the smooth skinned body from Blender
 safe("ViewReport", function() require(Client:WaitForChild("ViewReport")).start() end) -- 0.158: the camera report for "in view"
