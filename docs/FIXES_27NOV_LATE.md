@@ -142,3 +142,52 @@ Find the real cause with ONE Play (allowed for this item):
 - the same at the shredder, the gyro cage and the stretcher.
 
 **If something still blocks it:** look for an invisible collider (a belt wall, a NoGo box, a machine's guard part) in the way of the carried body, and give the carried body a collision group that passes the invisible guards, the same as the player.
+
+## 10. Falls, collapses and get-ups at 10/10 (owner: "Sørg for de falder realistisk ved skud, ved blodmangel, rejser sig op, fejler, alt det skal være 10/10")
+Build on `RAGDOLL_FEEL.md` "The upgrade" and `RAGDOLL_10.md` R4. Finish what is not done; the v6 body and BodyShape are the base. The bar is the big games' "Euphoria" feel: a body REACTS with muscles, it does not just go limp or play a canned clip. Every case below:
+- comes from the per-limb tone (a hit loosens only the struck chain) plus the balance and the protective reflexes;
+- is eased, never a snap;
+- shows on the face (BODY_V2 4b).
+
+1. **Shot, by where and by what:**
+   - a leg round: the knee buckles, it hops or limps, a grab at the leg; a second leg round: down on one knee, then the hands;
+   - an arm round: the arm jerks back and hangs, the other hand grabs it, the body keeps standing;
+   - the chest or belly: a step back from the push (the round's direction), a hunch, the hands to the wound;
+   - the head: the head snaps back, and a heavy round knocks it out.
+
+   **The fall** (when the damage says fall):
+   - the knees go first, the body folds;
+   - the arms reach out to break it (the protective reflex, toward the fall);
+   - it keeps its speed into a roll or a slump;
+   - never a stiff plank tipping over.
+2. **Blood loss** (VitalsService "Bleeding", Blood falling):
+   - **stages, slow and readable:** pale and slow → it sways, the steps go wobbly, a hand to the head → it sinks to its knees, one hand on the ground → it tips onto its side and lies still, breathing;
+   - over 5-10 s, never a sudden drop;
+   - the face goes pale, tired, eyes half shut.
+3. **Getting up:**
+   - chosen by how it lies: face down (push up, a knee under, kneel, stand), face up (sit up, roll to one side, kneel, stand), on its side (an elbow, a knee, stand);
+   - every stage driven by the tones, so it looks heavy and real;
+   - the feet planted where the body is, with no snapping into a pose;
+   - 1-2 s of dizzy wobble after, a hand on the head.
+4. **Failing to get up:**
+   - when hurt (a broken leg, low Blood, just knocked out) the get-up FAILS:
+     - it pushes up, the arms shake, and it slumps back;
+     - or it gets to one knee, sways, and falls again;
+     - or it gets up and stumbles 2-3 steps and drops;
+   - it tries again after 2-4 s, with at most 3 tries; then it waits for help (CPR, a bandage) or rests longer;
+   - a broken leg: it crawls instead (Crawling).
+5. **Landing after a throw or a fall from height:**
+   - the legs cycle in the air;
+   - it lands on what hits first and keeps its speed: it slides or rolls, relaxes over 0.4 s, 1-2 twitches, then breathes.
+6. **Never:**
+   - a limb through the body or the floor;
+   - jitter while lying;
+   - a T-pose or snap;
+   - a body standing up through another body or a wall.
+7. **The check (the quality gate, a few Play looks allowed for THIS item):**
+   - shoot a leg, an arm, the chest and the head of 4 ragdolls;
+   - let one bleed out;
+   - knock 3 down and watch them get up;
+   - break a leg and watch it fail and crawl.
+
+   Each must read like a real body at first sight; fix any that do not.
