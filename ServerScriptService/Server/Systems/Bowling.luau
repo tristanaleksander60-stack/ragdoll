@@ -104,6 +104,33 @@ local function deco(p: BasePart)
 	p.CanCollide, p.CanQuery, p.CanTouch, p.CastShadow = false, false, false, false
 end
 
+-- (BOWLING_12, Config.BOWL_BUMPERS, "kid mode": after 2 gutters in a row the lane's bumpers rise for the next roll
+-- (padded rails on both edges, tweened up out of the gutter edge), then sink again after it is counted)
+local guttersInRow: { [number]: number } = {}
+local function setBumpers(lane: any, up: boolean)
+	local rails = lane.bumpers
+	if not rails or lane.bumpersUp == up then
+		return
+	end
+	lane.bumpersUp = up
+	local TweenService = game:GetService("TweenService")
+	for _, r in rails do
+		local home = r:GetAttribute("Home") :: CFrame
+		r.CanCollide = up
+		r.Transparency = 0
+		local tw = TweenService:Create(r, TweenInfo.new(0.35, Enum.EasingStyle.Back, if up then Enum.EasingDirection.Out else Enum.EasingDirection.In),
+			{ CFrame = if up then home else home * CFrame.new(0, -2.3, 0) })
+		tw:Play()
+		if not up then
+			tw.Completed:Once(function()
+				if not lane.bumpersUp then
+					r.Transparency = 1
+				end
+			end)
+		end
+	end
+end
+
 -- One giant pin (about 5 high): a cylinder body, a ball belly and a ball head, 2 red neck stripes, welded; unanchored.
 local function makePin(into: Instance, at: CFrame): Model
 	local m = Instance.new("Model")
@@ -565,6 +592,24 @@ local function bowl(lane: Lane, by: Player)
 		end
 	end
 	showBoard(lane, by, word)
+	if (lane :: any).bumpers and by then
+		-- (the bumpers were up for this roll: they sink again; two gutters in a row raise them for the next one)
+		setBumpers(lane, false)
+		if string.sub(word, 1, 6) == "GUTTER" then
+			guttersInRow[by.UserId] = (guttersInRow[by.UserId] or 0) + 1
+		else
+			guttersInRow[by.UserId] = nil
+		end
+		if (guttersInRow[by.UserId] or 0) >= 2 then
+			guttersInRow[by.UserId] = nil
+			task.delay(1.4, function()
+				setBumpers(lane, true)
+			end)
+			pcall(function()
+				(require(script.Parent:WaitForChild("ProgressService")) :: any).notice(by, "Bumpers up! Kid mode for your next roll.")
+			end)
+		end
+	end
 	if frameDone then
 		task.wait(1.2) -- (the pin-setter)
 		resetPins(lane)
@@ -599,6 +644,7 @@ function Bowling.build(into: Instance, origin: Vector3)
 	-- The lane runs along X: the pins at the west end (-X), the approach at the east end (+X), so it faces east.
 	local dir = Vector3.new(-1, 0, 0)
 	local laneW = math.min(8, W - 4)
+	local bumperRails: { BasePart }? = nil
 	local top = y + 0.6
 	local function at(x: number, z: number, h: number): CFrame
 		return CFrame.new(mid.X + x, top + h, mid.Z + z)
@@ -612,6 +658,14 @@ function Bowling.build(into: Instance, origin: Vector3)
 		g.Shape = Enum.PartType.Cylinder
 		g.CFrame = at(-1, s * (laneW / 2 + 1), -0.35)
 		g.Size = Vector3.new(L - 10, 1.3, 1.3)
+		if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BOWL_BUMPERS then
+			local home = at(-1, s * (laneW / 2 + 0.25), 1.2)
+			local r = part(f, "Bumper", Vector3.new(L - 14, 2, 0.5), home * CFrame.new(0, -2.3, 0), Color3.fromRGB(255, 196, 64), Enum.Material.SmoothPlastic)
+			r:SetAttribute("Home", home)
+			r.CanCollide, r.CastShadow, r.Transparency = false, false, 1
+			bumperRails = bumperRails or {}
+			table.insert(bumperRails :: { BasePart }, r)
+		end
 	end
 	for k = -3, 3 do -- the 7 aiming arrows
 		local a = part(f, "Arrow", Vector3.new(1.2, 0.05, 0.35), at(L / 2 - 14 - math.abs(k) * 0.9, k * laneW / 8, 0.22), DARK_WOOD)
@@ -737,6 +791,7 @@ function Bowling.build(into: Instance, origin: Vector3)
 		first = 0,
 		golden = nil,
 	}
+	;(laneState :: any).bumpers = bumperRails
 	resetPins(laneState)
 	showBoard(laneState, nil, nil)
 	prompt.Triggered:Connect(function(player: Player)
