@@ -95,6 +95,11 @@ function GroundGuard.check(model: Model): boolean
 	if model:GetAttribute("InMachine") ~= nil or model:GetAttribute("MachineHidden") ~= nil then
 		return false
 	end
+	-- (27 Nov late, owner: carried into the tower, a body was "sent to the top of the machine": a carried body is the
+	-- player's, never lifted; Config.GROUND_INSIDE_ONLY below.)
+	if model:GetAttribute("Held") == true then
+		return false
+	end
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.IgnoreWater = true
@@ -143,7 +148,25 @@ function GroundGuard.check(model: Model): boolean
 		params.FilterDescendantsInstances = skip
 		local from = part.Position + Vector3.new(0, GroundGuard.LOOK_UP, 0)
 		local hit = solidHit(from, Vector3.new(0, -GroundGuard.LOOK_UP - 1, 0), params)
-		if hit and hit.Position.Y > part.Position.Y + GroundGuard.BURIED_BY then
+		-- (GROUND_INSIDE_ONLY: a floor, stair or beam ABOVE a body inside a building (the tower's next storey) is a ceiling,
+		-- not ground it is buried in: it counts only when the part's middle is really inside that solid.)
+		local inside = true
+		if hit and (require(game:GetService("ReplicatedStorage").Shared.Config) :: any).GROUND_INSIDE_ONLY then
+			local op = OverlapParams.new()
+			op.FilterType = Enum.RaycastFilterType.Exclude
+			op.FilterDescendantsInstances = skip
+			inside = false
+			for _, h in Workspace:GetPartBoundsInRadius(part.Position, 0.35, op) do
+				if isGround(h) then
+					inside = true
+					break
+				end
+			end
+			if not inside and (hit :: RaycastResult).Instance:IsA("Terrain") then
+				inside = true -- (terrain over a body is ground it sank into)
+			end
+		end
+		if hit and inside and hit.Position.Y > part.Position.Y + GroundGuard.BURIED_BY then
 			local up = hit.Position.Y - part.Position.Y + 3
 			lift(model, up)
 			GroundGuard.lifted += 1

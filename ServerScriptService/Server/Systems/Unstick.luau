@@ -101,7 +101,12 @@ local function freePointNear(pos: Vector3): Vector3?
 		for k = 0, 7 do
 			local a = k / 8 * math.pi * 2 + r
 			local p = pos + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r)
-			local hit = Workspace:Raycast(p + Vector3.new(0, 30, 0), Vector3.new(0, -60, 0), ray)
+			-- (27 Nov late, owner: bodies in the tower were sent to its top: from 30 studs up the ray met the roof first.
+			-- GROUND_INSIDE_ONLY: look from just above the body first, so it stays on its own floor; the sky only if that fails.)
+			local hit = if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).GROUND_INSIDE_ONLY
+				then Workspace:Raycast(p + Vector3.new(0, 4, 0), Vector3.new(0, -12, 0), ray)
+				else nil
+			hit = hit or Workspace:Raycast(p + Vector3.new(0, 30, 0), Vector3.new(0, -60, 0), ray)
 			if hit and hit.Normal.Y > 0.8 then
 				local stand = hit.Position + Vector3.new(0, 3.2, 0)
 				if not solidAt(stand, Vector3.new(2.5, 4.5, 2.5)) then

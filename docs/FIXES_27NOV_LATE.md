@@ -127,3 +127,16 @@ Find the real cause with ONE Play (allowed for this item):
 3. **The wheels on the ground:** the look is scaled to `b.Z + 1.5` and sits `lift` under the box, and its wheels look half sunk into the grass. Scale it so its wheel radius is right (`spec.wheel / 2`) and its tyres touch the ground exactly.
 4. **Its own sounds:** a soft tyre and chain whir that follows the speed, and the bell on the horn button. No engine.
 5. **Check (one Play):** get on the bike: you face the handlebars, sit on the saddle, your feet pedal, it rides forward, the tyres roll on the grass, and it sounds like a bicycle.
+
+## 9. Ragdolls carried into the tower (or any building or machine) are "sent to the top" (owner, screenshot inside the tower)
+**The causes (both found in code, fixed by the cloud, `Config.GROUND_INSIDE_ONLY`):**
+- `GroundGuard` counted ANY floor, stair or beam within 3 studs ABOVE a body as "buried in the ground" and lifted the body on top of it, every 2 s, storey by storey, up to the roof. It even did this to a body the player was CARRYING (it never checked `Held`). **Now:**
+  - a carried body is never lifted;
+  - a body counts as buried only when its middle is really inside a solid part (or terrain); a storey above is a ceiling.
+- `Unstick` looked for a free spot by casting down from 30 studs up, which inside a building meets the roof first, so the "free spot" was on the top. **Now** it looks from just above the body first, on its own floor.
+
+**Push into Studio** (`Systems/GroundGuard.luau`, `Systems/Unstick.luau`, `Shared/Config.luau`), then **check (one Play):**
+- carry a ragdoll up the tower stairs and drop it on the DROP HERE ring inside: it stays there;
+- the same at the shredder, the gyro cage and the stretcher.
+
+**If something still blocks it:** look for an invisible collider (a belt wall, a NoGo box, a machine's guard part) in the way of the carried body, and give the carried body a collision group that passes the invisible guards, the same as the player.
