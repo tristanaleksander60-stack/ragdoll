@@ -637,7 +637,7 @@ local function buildLab()
 		return b
 	end
 	local function keyed(id: string, line: string): string
-		local k = keyOf(id)
+		local k = if ViewMode.showKeys() then keyOf(id) else nil -- (AUDIT 27 Nov 26: no key letters on touch screens)
 		return if k then line .. "  (" .. k .. ")" else line
 	end
 	row(1, if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "Time" else "Slow-mo", keyed("SlowMo", if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "Faster or slower time round you" else "A slow-motion bubble over your lab"), "motion", if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TIME_DIAL then "TIME" else "SLOW", "info", function()

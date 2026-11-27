@@ -97,7 +97,7 @@ local function openConfirm(id: string)
 end
 
 local function buildConfirm()
-	local window = C.Window({ name = "MapGo", title = "Maps", theme = "codes", icon = "map", size = Vector2.new(520, 470), scroll = false })
+	local window = C.Window({ name = "MapGo", title = "Go to a map", theme = "codes", icon = "map", size = Vector2.new(520, 470), scroll = false })
 	local body = window.body
 	-- (Fix round 1: the window's body already lays its children out in a list; one layout only.)
 	local img = Instance.new("ImageLabel")

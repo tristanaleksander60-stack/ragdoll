@@ -88,7 +88,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - the caption minimum `ceil(14 / scale)`;
     - "ONLINE" instead of "Multiplayer" on the tile;
     - the gift clock 15-16 px in a 64x20 box.
-26. **Key letters left on phones:** the LAB window's `keyed()` uses `ViewMode.showKeys()`.
+26. **DONE v1313:** the LAB window's key letters show only where keys are shown (ViewMode.showKeys). **Was:** Key letters left on phones: the LAB window's `keyed()` uses `ViewMode.showKeys()`.
 27. **Settings:**
     - hide Notices while COUNTERS_ONLY;
     - on phones only Sound, Graphics, Camera shake, UI size, Body card;
@@ -105,7 +105,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
 32. **Icons:** MORE gets a dots/grid icon (not the settings cog), Multiplayer a globe, Eggs an egg, Codes a ticket.
 33. **One font helper:** `KitStyle.font("display"|"body")` for the 21 modules still on FredokaOne, Gotham or SourceSans.
 34. **The CPR game:** rebuilt as a kit panel, an 88 px PUSH on the right thumb, a SKIP, the hotbar kept visible.
-35. **Window titles:** "Go to a map" and "Maps", "Shared lab" and "Multiplayer" no longer share titles.
+35. **DONE v1313:** the map board's window is "Go to a map", the shared one "Shared lab". **Was:** Window titles: "Go to a map" and "Maps", "Shared lab" and "Multiplayer" no longer share titles.
 
 ## PERFORMANCE (with row 8 / R8)
 36. **Wounds are resent whole** (up to 80 entries, about 2 KB) to every client on every hit: send only the new one (`WoundNew` + a sequence number); the full list only when a body streams in; `WoundsReset` for heals and the pick-out.

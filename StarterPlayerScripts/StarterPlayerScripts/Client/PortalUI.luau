@@ -221,7 +221,7 @@ local function build()
 	Controller.register(solo)
 
 	-- (V11 C10, owner: "multiplayer = everyone in one lab"): MULTIPLAYER's window: one button to the shared lab.
-	local shared = C.Window({ name = "Shared", title = "Multiplayer", theme = "rebirth", icon = "friends", size = Vector2.new(440, 300) })
+	local shared = C.Window({ name = "Shared", title = "Shared lab", theme = "rebirth", icon = "friends", size = Vector2.new(440, 300) })
 	C.Text("title", "Play together?", { scaled = true, size = UDim2.new(1, 0, 0, 32), layoutOrder = 1, parent = shared.body })
 	C.Text("body", "A server where everyone shares ONE lab: the same ragdolls, the same machines. Come back any time through SINGLEPLAYER.", { wrap = true, autoY = true, layoutOrder = 2, parent = shared.body })
 	local goShared = C.Button({ text = "PLAY TOGETHER", role = "go", size = UDim2.new(1, 0, 0, Theme.Size.buttonH), layoutOrder = 3, parent = shared.body, onActivated = function()
