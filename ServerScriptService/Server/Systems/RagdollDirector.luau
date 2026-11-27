@@ -224,6 +224,137 @@ local function capStep()
 	end
 end
 
+-- NEARBY_CAP_V2 (owner 27 Nov late: "Der er stadig ALT for mange ragdolls lige i nærheden af en"). Why the first cap did
+-- nothing: (1) almost everyone near was exempt: a body running TO you (Pace >= 1.4 or faster than 6 studs/s), anyone shot
+-- in the last 60 s (you shoot everything round you), every Role3 and every watcher; (2) a body sent away was called back
+-- by one of ~35 systems that write "Home" (and was free again after 15 s). Now:
+--   * counted: every living body within NEAR studs, PLUS every one on its way to you (its Home within NEAR of you);
+--   * kept: held, in a machine or the ring, a machine demo/TRY, shot in the last 8 s, and the 2 nearest Role3 (the 1-2
+--     that come to talk to you, owner's rule); every other one is movable, watchers too;
+--   * over the cap: the unseen first, then the incoming, then the farthest walk 90 studs away at a walk (Pace 1), lose
+--     their Role3/Watch job, and for SHOO_FOR s any Home a system sets near a player is put back to the away point.
+RagdollDirector.NEAR = 45
+RagdollDirector.SHOO_FOR = 30
+local shooTo: { [Model]: { at: Vector3, untilAt: number } } = setmetatable({}, { __mode = "k" }) :: any
+local watching: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+local function nearAnyPlayer(at: Vector3): boolean
+	for _, p in Players:GetPlayers() do
+		local r = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+		if r and r:IsA("BasePart") and (Vector3.new(r.Position.X - at.X, 0, r.Position.Z - at.Z)).Magnitude < RagdollDirector.NEAR then
+			return true
+		end
+	end
+	return false
+end
+local function shoo(m: Model, to: Vector3)
+	shooTo[m] = { at = to, untilAt = os.clock() + RagdollDirector.SHOO_FOR }
+	m:SetAttribute("Role3", nil)
+	m:SetAttribute("Watch", nil)
+	m:SetAttribute("Pace", 1)
+	m:SetAttribute("HomeLook", nil)
+	m:SetAttribute("Home", to)
+	if not watching[m] then
+		watching[m] = true
+		m:GetAttributeChangedSignal("Home"):Connect(function()
+			local s = shooTo[m]
+			if not s or os.clock() > s.untilAt or m:GetAttribute("Held") == true or m:GetAttribute("InMachine") ~= nil then
+				return
+			end
+			local h = m:GetAttribute("Home")
+			if typeof(h) == "Vector3" and (h - s.at).Magnitude > 1 and nearAnyPlayer(h) then
+				m:SetAttribute("Home", s.at) -- (a system called it back to a player: it keeps walking away)
+			end
+		end)
+	end
+end
+local function keptV2(m: Model): boolean
+	local watch = m:GetAttribute("Watch")
+	local hitAt = m:GetAttribute("ServerHitAt")
+	return m:GetAttribute("Held") == true or m:GetAttribute("InMachine") ~= nil or m:GetAttribute("MachineHidden") ~= nil
+		or watch == "Demo" or watch == "NeverZero" or m:GetAttribute("TryFor") ~= nil or m:GetAttribute("BoxSide") ~= nil
+		or (type(hitAt) == "number" and workspace:GetServerTimeNow() - hitAt < 8)
+end
+local function capStepV2()
+	local dummies = Workspace:FindFirstChild("Dummies")
+	if not dummies then
+		return
+	end
+	local now = os.clock()
+	for _, p in Players:GetPlayers() do
+		local r = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+		if not (r and r:IsA("BasePart")) then
+			continue
+		end
+		local me = r.Position
+		local cap = RagdollDirector.CAP[tostring(p:GetAttribute("Device"))] or RagdollDirector.CAP_PC
+		local lvl = p:GetAttribute("PerfLevel")
+		if type(lvl) == "number" and lvl <= 1 then
+			cap = math.max(3, cap - (if lvl <= 0 then 2 else 1))
+		end
+		local count = 0
+		local talkers: { { m: Model, d: number } } = {}
+		local movable: { { m: Model, d: number, at: Vector3, seen: boolean, coming: boolean } } = {}
+		for _, m in dummies:GetChildren() do
+			local pe = m:FindFirstChild("LowerTorso")
+			local vital = m:GetAttribute("Vital")
+			if not (m:IsA("Model") and pe and pe:IsA("BasePart")) or vital == "Dead" or vital == "Unconscious" or m:GetAttribute("Parked") == true then
+				continue
+			end
+			local flat = Vector3.new(pe.Position.X - me.X, 0, pe.Position.Z - me.Z)
+			local d = flat.Magnitude
+			local h = m:GetAttribute("Home")
+			local coming = d >= RagdollDirector.NEAR and d < 160 and typeof(h) == "Vector3"
+				and Vector3.new(h.X - me.X, 0, h.Z - me.Z).Magnitude < RagdollDirector.NEAR
+			if d < RagdollDirector.NEAR or coming then
+				count += 1
+				local s = shooTo[m]
+				if s and now <= s.untilAt then
+					continue -- (already walking away)
+				end
+				if keptV2(m) then
+					continue
+				end
+				if m:GetAttribute("Role3") ~= nil and not coming then
+					table.insert(talkers, { m = m, d = d })
+					continue
+				end
+				table.insert(movable, { m = m, d = d, at = pe.Position, seen = false, coming = coming })
+			end
+		end
+		-- (the 2 nearest talkers stay; any more are movable like the rest)
+		table.sort(talkers, function(a, b)
+			return a.d < b.d
+		end)
+		for i = 3, #talkers do
+			local t = talkers[i]
+			local pe = t.m:FindFirstChild("LowerTorso") :: BasePart
+			table.insert(movable, { m = t.m, d = t.d, at = pe.Position, seen = false, coming = false })
+		end
+		local over = count - cap
+		if over <= 0 then
+			continue
+		end
+		for _, e in movable do
+			e.seen = RagdollDirector.inView(e.at)
+		end
+		table.sort(movable, function(a, b)
+			if a.seen ~= b.seen then
+				return not a.seen
+			end
+			if a.coming ~= b.coming then
+				return a.coming
+			end
+			return a.d > b.d
+		end)
+		for i = 1, math.min(over, #movable) do
+			local e = movable[i]
+			local away = Vector3.new(e.at.X - me.X, 0, e.at.Z - me.Z)
+			local dir = if away.Magnitude > 0.1 then away.Unit else Vector3.xAxis
+			shoo(e.m, e.at + dir * 90)
+		end
+	end
+end
+
 function RagdollDirector.start()
 	local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
 	if Config.VIEW_REPORT then
@@ -237,7 +368,9 @@ function RagdollDirector.start()
 		while true do
 			task.wait(0.5)
 			pcall(step)
-			if Config.NEARBY_CAP then
+			if Config.NEARBY_CAP_V2 then
+				pcall(capStepV2)
+			elseif Config.NEARBY_CAP then
 				pcall(capStep)
 			end
 		end
