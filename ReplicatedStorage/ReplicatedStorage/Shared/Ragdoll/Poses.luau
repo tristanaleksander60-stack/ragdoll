@@ -407,15 +407,27 @@ end
 -- Presses (24 Nov 2026, owner: it must look like CPR, not like humping): the knees and hips are dead still, the body
 -- leans over the chest and stays there, the arms are locked straight with the hands on top of each other, and only the
 -- shoulders drop a little: a quick short push, a full let-up, some 110 a minute, with a small breather now and then.
+-- (THE v6 FIT PASS item 5, Config.BODY_FIT: the v6 patient is 1.6 deep, so its chest lies about 0.55 studs higher
+-- than the old body's: the medic leans CPR_LIFT degrees less and lifts its straight arms a little, so the stacked
+-- hands land ON the chest plate instead of sinking into it.)
+local CPR_LIFT = 0
+do
+	local ok, cfg = pcall(function()
+		return require(script.Parent.Parent:WaitForChild("Config")) :: any
+	end)
+	if ok and cfg and cfg.BODY_FIT and cfg.SMOOTH_BODY_V6 then
+		CPR_LIFT = 13
+	end
+end
 local function press(out: Pose, t: number, speed: number, depth: number)
 	local beat = t * speed / (2 * math.pi)
 	local rest = (beat % 18) > 16.2
 	local f = beat % 1
 	-- (Down in a third of the beat, up in the rest.)
 	local p = if rest then 0 elseif f < 0.34 then math.sin(f / 0.34 * math.pi / 2) else math.cos((f - 0.34) / 0.66 * math.pi / 2)
-	kneeling(out, -43 - depth * p - (if rest then -5 else 0), -10 + depth * 0.5 * p)
-	out.RightShoulder = ang(64 - depth * 0.35 * p, 0, -19)
-	out.LeftShoulder = ang(64 - depth * 0.35 * p, 0, 19)
+	kneeling(out, -43 + CPR_LIFT - depth * p - (if rest then -5 else 0), -10 + depth * 0.5 * p)
+	out.RightShoulder = ang(64 - CPR_LIFT * 0.4 - depth * 0.35 * p, 0, -19)
+	out.LeftShoulder = ang(64 - CPR_LIFT * 0.4 - depth * 0.35 * p, 0, 19)
 	out.RightElbow = ang(if rest then 12 else 2, 0, 0)
 	out.LeftElbow = ang(if rest then 12 else 2, 0, 0)
 end
@@ -434,7 +446,7 @@ function Poses.cprSlam(t: number): Pose
 	local c = t % 2.4
 	local up = if c < 0.5 then c / 0.5 elseif c < 0.95 then 1 elseif c < 1.1 then 1 - (c - 0.95) / 0.15 else 0
 	up = up * up * (3 - 2 * up)
-	kneeling(cprOut, -42 + 8 * up, -10 + 6 * up)
+	kneeling(cprOut, -42 + CPR_LIFT + 8 * up, -10 + 6 * up)
 	cprOut.RightShoulder = ang(62 + 46 * up, 0, -12)
 	cprOut.RightElbow = ang(6 + 62 * up, 0, 0)
 	cprOut.LeftShoulder = ang(62, 0, 19)
