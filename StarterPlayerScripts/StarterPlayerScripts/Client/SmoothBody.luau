@@ -29,6 +29,7 @@ SmoothBody.DROP_REACH = 110
 SmoothBody.ANIM_REACH = 45
 SmoothBody.MAX_BODIES = 12
 SmoothBody.FAR_RATE = 1 / 15
+local SKIN_CHEAP = Config.LAGFREE_SKIN == true -- (LAG-FREE 2 item 3)
 -- (THE v6 FIT PASS item 10, Config.V6_FAR_BODIES: on a PC the far ragdolls wear the SAME v6 mesh too, driven at
 -- FAR_RATE without finger poses (the cheap version); a phone keeps 12 within 80 studs.)
 do
@@ -568,6 +569,7 @@ local function step(dt: number)
 		return
 	end
 	local eye = camera.CFrame.Position
+	local camLook = camera.CFrame.LookVector
 	farAcc += dt
 	local farTick = farAcc >= SmoothBody.FAR_RATE
 	if farTick then
@@ -651,9 +653,24 @@ local function step(dt: number)
 				end
 			end
 		end
-		local near = (body.pelvis.Position - eye).Magnitude <= SmoothBody.ANIM_REACH
+		local toBody = body.pelvis.Position - eye
+		local near = toBody.Magnitude <= SmoothBody.ANIM_REACH
+		-- (LAG-FREE 2 item 3, Config.LAGFREE_SKIN: a near body behind or beside the camera is driven at FAR_RATE only;
+		-- a sleeping body (DummyControl's Asleep) is drawn once and then left still)
+		if SKIN_CHEAP and near and toBody.Magnitude > 6 and toBody.Unit:Dot(camLook) < 0.25 then
+			near = false
+		end
+		local B = body :: any
+		if SKIN_CHEAP and body.model:GetAttribute("Asleep") == true then
+			if B.sleptDrawn then
+				continue
+			end
+			B.sleptDrawn = true
+		elseif B.sleptDrawn then
+			B.sleptDrawn = nil
+		end
 		body.acc += dt
-		if near or farTick then
+		if near or farTick or B.sleptDrawn then
 			drive(body)
 			if near then
 				poseFingers(body, body.acc)
