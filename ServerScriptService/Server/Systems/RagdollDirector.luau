@@ -161,8 +161,9 @@ end
 -- player, capped by the player's device (phone 7, tablet 9, PC 12). Over it, the extras WALK AWAY (never removed in
 -- view): the farthest free ones first; never one that was shot in the last 60 s, is held, in a machine, one of the 3
 -- near (Role3), a watcher, a demo or a runner. They walk 90 studs straight away from the player and roam on from there.
-RagdollDirector.CAP = { phone = 7, tablet = 9 }
-RagdollDirector.CAP_PC = 12
+local MORE_ROOM = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).MORE_ROOM == true
+RagdollDirector.CAP = if MORE_ROOM then { phone = 5, tablet = 6 } else { phone = 7, tablet = 9 }
+RagdollDirector.CAP_PC = if MORE_ROOM then 8 else 12 -- (MORE_ROOM, owner 27 Nov late: fewer close by)
 local sentAway: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
 local function capStep()
 	local dummies = Workspace:FindFirstChild("Dummies")

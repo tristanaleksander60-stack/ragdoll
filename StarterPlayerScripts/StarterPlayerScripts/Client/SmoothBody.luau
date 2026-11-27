@@ -247,13 +247,12 @@ local function roundHead(body: Body)
 	ball.Size = Vector3.new(HEAD_SIZE, HEAD_SIZE, HEAD_SIZE)
 	ball.Color = HEAD_GREY
 	ball.Material = Enum.Material.SmoothPlastic
-	ball.CanCollide, ball.CanQuery, ball.CanTouch, ball.Massless, ball.Anchored = false, false, false, true, false
+	-- (27 Nov late, owner: "Hovedet bugger på kroppen": welded to the physics head, the ball moved with the physics
+	-- while the mesh's neck is drawn from the bone chain every frame, so the head wobbled on the neck. Now it is
+	-- anchored and placed in drive() from the mesh's own Head bone, in the same frame as the body.)
+	ball.CanCollide, ball.CanQuery, ball.CanTouch, ball.Massless, ball.Anchored = false, false, false, true, true
 	ball.CastShadow = true
 	ball.CFrame = head.CFrame * CFrame.new(0, HEAD_LIFT, 0)
-	local w = Instance.new("WeldConstraint")
-	w.Part0 = head
-	w.Part1 = ball
-	w.Parent = ball
 	ball.Parent = body.folder
 	body.ball = ball
 	if head.LocalTransparencyModifier ~= 1 then
@@ -486,7 +485,13 @@ local function hideBlocks(body: Body)
 	end
 end
 
+local function d0Head(body: Body): CFrame
+	local h = body.model:FindFirstChild("Head")
+	return if h and h:IsA("BasePart") then h.CFrame else body.pelvis.CFrame
+end
+
 local function drive(body: Body)
+	local headCf: CFrame? = nil
 	local mesh = body.mesh
 	mesh.CFrame = body.pelvis.CFrame * body.meshOff
 	local cfs: { CFrame } = {}
@@ -500,6 +505,17 @@ local function drive(body: Body)
 		end
 		cfs[i] = cf
 		d.bone.WorldCFrame = cf
+		if d.part.Name == "Head" and d.bone.Name == "Head" then
+			headCf = cf
+		end
+	end
+	local ball = body.ball
+	if ball and headCf then
+		local B = body :: any
+		if not B.ballOff then
+			B.ballOff = headCf:Inverse() * (d0Head(body) * CFrame.new(0, HEAD_LIFT, 0))
+		end
+		ball.CFrame = headCf * B.ballOff
 	end
 end
 

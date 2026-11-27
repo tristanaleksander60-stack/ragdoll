@@ -1072,7 +1072,7 @@ local function assignRoles(player: Player, root: BasePart, near: { Model }, now:
 			local R = r :: any
 			R.comerSide = R.comerSide or (if math.random() < 0.5 then 1 else -1)
 			local dir = CFrame.Angles(0, math.rad(45) * R.comerSide, 0):VectorToWorldSpace(root.CFrame.LookVector)
-			front = root.Position + Vector3.new(dir.X, 0, dir.Z).Unit * 5.5
+			front = root.Position + Vector3.new(dir.X, 0, dir.Z).Unit * (if (Config :: any).MORE_ROOM then 9 else 5.5) -- (MORE_ROOM, owner 27 Nov late: more room)
 		end
 		setRole(comer, "Come", Vector3.new(front.X, y, front.Z), Vector3.new(root.Position.X, y, root.Position.Z))
 	end

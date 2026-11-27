@@ -1,5 +1,7 @@
 # OVERVIEW: the whole plan on one page (read this FIRST on every /klar)
 
+> ## ⚠⚠ FIRST OF ALL (owner testing, 27 Nov late): `docs/FIXES_27NOV_LATE.md` 0-4 (cloud code into Studio; X-ray glass in the limb's own shape, never a cylinder; CPR hands together; only 1-2 talk to you, the rest do things where they are; funnels for the new game). Then THE FINISH LINE.
+
 > ## ⚠⚠ THE FINISH LINE (owner, 27 Nov late): "næste gang jeg ser på min computer skal jeg have et færdig spil, ikke noget 5/10 som det er nu"
 > **This run does not stop until the game is FINISHED:** every row in THE ORDER DONE (or PARKED only for a real outside block: a missing pass id or a Roblox limit), every row at the 9/10 bar of its doc, not "part 1".
 > 1. **First:** `RAGDOLL_10.md` A2 (X-ray: only the limb shot 3 times in a row, 2 s, then a 1 s fade; the rest of the body stays solid; the toggle shows all). Then the rest of A-E and the fit pass leftovers (ride grips, head balance, round-head accessories).

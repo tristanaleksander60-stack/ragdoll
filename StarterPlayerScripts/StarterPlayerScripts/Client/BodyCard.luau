@@ -21,6 +21,21 @@ function BodyCard.toggleHidden()
 	local Settings = require(script.Parent:WaitForChild("Settings")) :: any
 	Settings.set("hideCard", not Settings.cardHidden())
 end
+-- (27 Nov late, owner: "Fiks \".\" keybind så den lukker hospitalmenu igen på computer": "." is also the key of Roblox's
+-- emote wheel, which took the press; Config.NO_EMOTE_MENU turns that wheel off, so "." always hides and shows the card.)
+if ((require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).NO_EMOTE_MENU) then
+	task.spawn(function()
+		for _ = 1, 10 do
+			local ok = pcall(function()
+				game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.EmotesMenu, false)
+			end)
+			if ok then
+				break
+			end
+			task.wait(1)
+		end
+	end)
+end
 game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
 	-- (24 Nov 2026: "." is also Roblox's emote key, so the press came in as already taken; only a text box keeps it now.)
 	local typing = game:GetService("UserInputService"):GetFocusedTextBox() ~= nil
