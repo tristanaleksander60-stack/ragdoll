@@ -61,11 +61,16 @@ local POSES: { [string]: { number } } = {
 	Loose = { 5, 7, 4, 3, 3, 1.2 },
 	Spread = { 0, 2, 0, 0, 0, 2.2 },
 	Fist = { 85, 95, 70, 35, 50, 0.4 },
+	-- (S2 rest, Config.HAND_POSES: holding something in the right hand (the paper, the tweezers, CPR hands) and pointing:
+	-- a fist with the index straight)
+	Grip = { 55, 68, 48, 28, 38, 0.8 },
+	Point = { 85, 95, 70, 35, 50, 0.4 },
 }
+local HAND_POSES = Config.HAND_POSES == true
 local LANE: { [string]: number } = { Index = 1.5, Middle = 0.5, Ring = -0.5, Pinky = -1.5 }
 
 type Drive = { bone: Bone, part: BasePart, off: CFrame, parent: number?, localPos: Vector3, rot: CFrame }
-type Digit = { bone: Bone, rest: CFrame, curlAxis: Vector3, spreadAxis: Vector3, seg: number, lane: number, thumb: boolean }
+type Digit = { bone: Bone, rest: CFrame, curlAxis: Vector3, spreadAxis: Vector3, seg: number, lane: number, thumb: boolean, left: boolean? }
 type Body = {
 	model: Model,
 	folder: Instance,
@@ -102,6 +107,14 @@ local function poseOf(model: Model): string
 		return "Spread"
 	end
 	local mood = model:GetAttribute("Mood")
+	if HAND_POSES then
+		if mood == "Point" then
+			return "Point"
+		end
+		if model:GetAttribute("Paper") == true or mood == "Check" or mood == "CPR" or mood == "CPRFast" or mood == "CPRSlam" or mood == "CPROne" then
+			return "Grip"
+		end
+	end
 	local angry = model:GetAttribute("AngryUntil")
 	if mood == "Rage" or mood == "Box" or (type(angry) == "number" and angry > Workspace:GetServerTimeNow()) then
 		return "Fist"
@@ -278,6 +291,7 @@ local function build(model: Model): Body?
 				seg = n,
 				lane = LANE[finger] or 0,
 				thumb = finger == "Thumb",
+				left = side == "Left",
 			})
 		end
 	end
@@ -347,9 +361,18 @@ local function drive(body: Body)
 end
 
 local function poseFingers(body: Body, dt: number)
-	local target = POSES[poseOf(body.model)] or POSES.Relaxed
+	local name = poseOf(body.model)
+	local target = POSES[name] or POSES.Relaxed
 	local k = 1 - math.exp(-10 * dt)
 	local moved = false
+	-- (the pointing index straightens and the gripping is the right hand's only: both eased like the rest)
+	local B = body :: any
+	local pointW, gripW = B.pointW or 0, B.gripW or 0
+	B.pointW = pointW + ((if name == "Point" then 1 else 0) - pointW) * k
+	B.gripW = gripW + ((if name == "Grip" then 1 else 0) - gripW) * k
+	if math.abs(B.pointW - pointW) > 0.002 or math.abs(B.gripW - gripW) > 0.002 then
+		moved = true
+	end
 	for i = 1, 6 do
 		local c = body.curl[i] + (target[i] - body.curl[i]) * k
 		if math.abs(c - body.curl[i]) > 0.05 then
@@ -362,7 +385,14 @@ local function poseFingers(body: Body, dt: number)
 	end
 	body.posed = true
 	for _, g in body.digits do
-		local curl = if g.thumb then body.curl[3 + math.min(g.seg, 2)] else body.curl[math.min(g.seg, 3)]
+		local idx = if g.thumb then 3 + math.min(g.seg, 2) else math.min(g.seg, 3)
+		local curl = body.curl[idx]
+		if g.left and B.gripW > 0 then
+			curl += (POSES.Relaxed[idx] - curl) * B.gripW -- (the left hand stays relaxed while the right one holds)
+		end
+		if g.lane == 1.5 and not g.thumb and B.pointW > 0 then
+			curl *= 1 - B.pointW -- (the index points)
+		end
 		local cf = g.rest * CFrame.fromAxisAngle(g.curlAxis, rad(curl))
 		if g.seg == 1 and not g.thumb then
 			cf *= CFrame.fromAxisAngle(g.spreadAxis, rad(g.lane * 5 * (body.curl[6] - 1)))
