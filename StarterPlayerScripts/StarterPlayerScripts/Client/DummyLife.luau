@@ -1747,9 +1747,19 @@ local function step(life: Life, now: number, dt: number)
 			clutch(life, 1)
 		end
 	elseif MOVING[state] then
-		updateGait(life, state, now, dt)
-		if state == "Walking" then
-			moodPose(life, now, dt, true)
+		-- (F86, Config.MOOD_LEGS: a kneeling mood (CPR, mourning) owns the body: the ground-speed noise of the pumping arms
+		-- must not start and stop a walk cycle on the legs; only a real walk (over 2 studs/s) runs the gait)
+		local mood = model:GetAttribute("Mood")
+		local kneeling = (Config :: any).MOOD_LEGS and state == "Walking" and type(mood) == "string"
+			and (mood == "CPR" or mood == "CPRFast" or mood == "CPRSlam" or mood == "CPROne" or mood == "Mourn" or mood == "Check" or mood == "Breath")
+			and life.groundSpeed < 2
+		if kneeling then
+			moodPose(life, now, dt, false)
+		else
+			updateGait(life, state, now, dt)
+			if state == "Walking" then
+				moodPose(life, now, dt, true)
+			end
 		end
 	end
 	freeLoose(life)

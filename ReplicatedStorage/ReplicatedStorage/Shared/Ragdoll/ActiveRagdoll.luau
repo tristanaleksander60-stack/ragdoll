@@ -1375,6 +1375,9 @@ end
 -- Something solid in the way a little ahead, at knee height (crawling: just off the floor)?
 local GAME_BLOCKCAST = (require(script.Parent.Parent:WaitForChild("Config")) :: any).NAV_BLOCKCAST == true
 local GAME_NO_FREEZE = (require(script.Parent.Parent:WaitForChild("Config")) :: any).NO_DEATH_FREEZE == true -- (F46)
+local GAME_MOOD_LEGS = (require(script.Parent.Parent:WaitForChild("Config")) :: any).MOOD_LEGS == true -- (F86)
+local KNEEL_MOODS: { [string]: boolean } = { Mourn = true, CPR = true, CPRFast = true, CPRSlam = true, CPROne = true, Check = true, Breath = true, WrapHigh = true, WrapMid = true, WrapLow = true }
+local KNEEL_DROP = 1.3 -- studs the pelvis goes down for a kneel (the knee on the ground)
 -- (F72: how far a body-sized box (2.2 wide, knee to chest) can go in this direction before it meets something solid
 -- that is not a ragdoll; the look-ahead grows with the speed. math.huge = clear.)
 local function clearAhead(rig: Rig, direction: Vector3, groundY: number, reach: number): number
@@ -1923,6 +1926,33 @@ local function update(dt: number)
 					moodRig.moodPosed = nil
 					if rig.state == "Standing" then
 						applyPose(rig, Poses.REST)
+					end
+				end
+				-- F86 (owner: "Benene bugger STADIG når de giver cpr"; Config.MOOD_LEGS): a kneeling mood (CPR, mourning, checking,
+				-- wrapping a wound) used to bend the legs into a kneel while the lift still held the pelvis at STANDING height, so
+				-- the legs fought it. Now the lift's target drops to kneeling height (the knee on the ground) over 0.5 s and comes
+				-- back up over 0.6 s when the mood ends; the drive stays zero (Standing).
+				if GAME_MOOD_LEGS and rig.state == "Standing" then
+					local want = if type(mood) == "string" and KNEEL_MOODS[mood] then 1 else 0
+					local w = moodRig.kneelW or 0
+					if w ~= want then
+						local dt = 1 / 30
+						w = math.clamp(w + (if want > w then dt / 0.5 else -dt / 0.6), 0, 1)
+						moodRig.kneelW = w
+					end
+					if w > 0 or moodRig.kneelSet then
+						if not moodRig.kneelGround then
+							-- (the ground right under it now: the getup's groundY may be from somewhere else)
+							local hit = Workspace:Raycast(rig.pelvis.Position + Vector3.new(0, 1, 0), Vector3.new(0, -(rig.standOffset + 4), 0), rig.rayParams)
+							moodRig.kneelGround = if hit then hit.Position.Y else rig.pelvis.Position.Y - rig.standOffset
+						end
+						local e = w * w * (3 - 2 * w)
+						local p = rig.lift.Position
+						rig.lift.Position = Vector3.new(p.X, moodRig.kneelGround + rig.standOffset - KNEEL_DROP * e, p.Z)
+						moodRig.kneelSet = w > 0 or nil
+						if w <= 0 then
+							moodRig.kneelGround = nil
+						end
 					end
 				end
 				-- (V9-P3: hurt, it sways on its feet; whole, it stands still as before.)
