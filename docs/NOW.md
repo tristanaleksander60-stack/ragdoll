@@ -531,6 +531,7 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - 0.7 a real watcher at every machine (WATCH_EVERY, LAB_DUMMIES_PC 40). Row 7 cars rock (CAR_ROCK). F76 the 5 new vehicles (NEW_VEHICLES, SOON). 3.18 boxing (BOXING_MATCH). C10 part 1 control kit + cannon hopper (CONTROLS_V2, CANNON_HOPPER). F92 machines call ragdolls, never snatch (MACHINE_SAFE). F91 bowling always reaches the pins + curl (BOWL_BALL). F93 CPR givers kneel still (CPR_STILL). Row 14 ragdoll rides a wheelchair (WHEELCHAIR_RIDE).
 
 ## Questions for the owner (filled in during the run)
+- (27 Nov, run 6) **The German Shepherd (A0):** look at `art/models/dog/review/` (side, three-quarter, front). Say OK or what to change; then import `art/models/dog/shepherd.fbx` and I animate it in code. Default: wait.
 - (27 Nov, run 5) **Ragdolls per lab (WATCH_EVERY):** a real watcher at every machine needs more bodies: your lab now holds 40 on PC, 20 console, 14 tablet, 9 phone (`LAB_DUMMIES_PC`). If a PC drops frames, say a lower number. Default: 40.
 - (27 Nov, run 5) **Body v3:** look at `art/models/mannequin/review_v3/` (front, side, posed, knocked down, next to a player). Say "BODY V3 APPROVED" or what to change. Default: wait (nothing in the game changes until you import it).
 - (27 Nov, run 5) **Police siren:** a community upload ("main hi lo", 103787335792735), no PSE siren found. Default: keep it.
