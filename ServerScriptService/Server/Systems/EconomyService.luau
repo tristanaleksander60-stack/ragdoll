@@ -304,7 +304,23 @@ function EconomyService.start()
 		end
 	end)
 	-- lihfolk-ignore: remote-unvalidated-args (kind is only compared with fixed strings; arg is type- and length-checked)
+	-- (AUDIT 27 Nov 7: a token bucket per player: 4 calls a second at most, a burst of 8; the rest is dropped and counted)
+	local bucket: { [Player]: { n: number, t: number } } = setmetatable({}, { __mode = "k" }) :: any
+	local dropped = 0
 	;(remote :: RemoteEvent).OnServerEvent:Connect(function(player: Player, kind: unknown, arg: unknown)
+		local now = os.clock()
+		local bk = bucket[player] or { n = 8, t = now }
+		bk.n = math.min(8, bk.n + (now - bk.t) * 4)
+		bk.t = now
+		bucket[player] = bk
+		if bk.n < 1 or typeof(kind) ~= "string" then
+			dropped += 1
+			if dropped % 50 == 1 then
+				warn("[Economy] dropped " .. dropped .. " requests over the limit (last: " .. player.Name .. ")")
+			end
+			return
+		end
+		bk.n -= 1
 		if kind == "Hello" then
 			EconomyService.send(player)
 		elseif kind == "BuyNext" then

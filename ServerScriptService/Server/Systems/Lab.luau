@@ -2172,10 +2172,7 @@ function Lab.build()
 
 	local function onJoin(player: Player)
 		-- (V11 C10: a player sent by the MULTIPLAYER portal makes this a shared-lab server.)
-		local okJoin, join = pcall(function()
-			return player:GetJoinData()
-		end)
-		local data = if okJoin and type(join) == "table" then (join :: any).TeleportData else nil
+		local data = (require(script.Parent:WaitForChild("JoinSign")) :: any).data(player) -- (AUDIT 8: only our own signed TeleportData)
 		if type(data) == "table" and data.from == "Shared" then
 			Workspace:SetAttribute("SharedLab", true)
 		end

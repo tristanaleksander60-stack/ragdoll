@@ -180,7 +180,7 @@ function PortalService.spectateSolo(owner: Player, userId: number): string?
 	end
 	local options = Instance.new("TeleportOptions")
 	options.ReservedServerAccessCode = entry.code
-	options:SetTeleportData({ from = "Spectate", target = userId })
+	options:SetTeleportData((require(script.Parent:WaitForChild("JoinSign")) :: any).sign({ from = "Spectate", target = userId })) -- (AUDIT 8: signed)
 	remote:FireClient(owner, "Going", { kind = "Join" })
 	local sent = pcall(TeleportService.TeleportAsync, TeleportService, if MULTI ~= 0 then START_PLACE else game.PlaceId, { owner }, options)
 	if not sent then
@@ -258,7 +258,7 @@ local function go(player: Player, how: string, target: Entry?, auto: boolean?)
 		task.wait(0.05)
 	end
 	local options = Instance.new("TeleportOptions")
-	options:SetTeleportData({ from = how })
+	options:SetTeleportData((require(script.Parent:WaitForChild("JoinSign")) :: any).sign({ from = how })) -- (AUDIT 8: signed)
 	local ok, err = pcall(function()
 		local place = multiPlace
 		if how == "Solo" and MULTI ~= 0 then
@@ -332,7 +332,7 @@ local function goShared(player: Player)
 		end
 		local options = Instance.new("TeleportOptions")
 		options.ReservedServerAccessCode = code
-		options:SetTeleportData({ from = "Shared", code = code })
+		options:SetTeleportData((require(script.Parent:WaitForChild("JoinSign")) :: any).sign({ from = "Shared", code = code })) -- (AUDIT 8: signed)
 		TeleportService:TeleportAsync(multiPlace, { player }, options)
 	end)
 	if not ok then
@@ -654,10 +654,7 @@ function PortalService.start()
 		-- through the portal"): a player who comes in through Roblox's Play onto a public server (the multiplayer
 		-- servers) goes straight on to a server of their own. Arrivals through the multiplayer portal stay.
 		if MULTI == 0 and isPublic() and not RunService:IsStudio() then
-			local okJ, join = pcall(function()
-				return player:GetJoinData()
-			end)
-			local data = if okJ and type(join) == "table" then (join :: any).TeleportData else nil
+			local data = (require(script.Parent:WaitForChild("JoinSign")) :: any).data(player) -- (AUDIT 8: only our own signed TeleportData)
 			local from = if type(data) == "table" then data.from else nil
 			if from ~= "Multi" and from ~= "Shared" and player.FollowUserId == 0 then -- (a friend who joined someone through Roblox stays with them)
 				-- (Owner: "you still come into multiplayer for a second": no body here meanwhile, and the same
@@ -678,10 +675,7 @@ function PortalService.start()
 			end
 		elseif not RunService:IsStudio() then
 			-- The owner come to watch someone in their own server (checked here, not by what the data says).
-			local okJ, join = pcall(function()
-				return player:GetJoinData()
-			end)
-			local data = if okJ and type(join) == "table" then (join :: any).TeleportData else nil
+			local data = (require(script.Parent:WaitForChild("JoinSign")) :: any).data(player) -- (AUDIT 8: only our own signed TeleportData)
 			local Owner = require(script.Parent:WaitForChild("Owner")) :: any
 			if type(data) == "table" and data.from == "Spectate" and type(data.target) == "number" and Owner.isOwner(player) then
 				player:SetAttribute("SpectateTarget", data.target)
