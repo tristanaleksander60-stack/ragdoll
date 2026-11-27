@@ -326,7 +326,9 @@ function BikeService.start()
 		while true do
 			task.wait(1)
 			for _, car in lazy("VehicleService").carsForTest() do
-				if car.kind ~= "Bike" then
+				-- (row 11, Config.CYCLIST: a ragdoll also pedals the free BICYCLE round the lab now and then; hit it and it comes off,
+				-- then the bicycle is yours to ride)
+				if car.kind ~= "Bike" and not (car.kind == "Bicycle" and (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).CYCLIST) then
 					continue
 				end
 				local owner = lazy("Lab").ownerAt(car.origin)
