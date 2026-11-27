@@ -330,6 +330,22 @@ local function shred(m: Model, pit: BasePart, by: Player?)
 		task.wait(0.1) -- (the move lands first, then the throw: as MachineDemos)
 		pcall(DC.push, m, Vector3.new(math.random(-20, 20), 150, side * 60), by)
 		confetti(pit.Position + Vector3.new(0, 3, 0))
+		if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SHRED_10 then
+			-- 3.21 (docs/MACHINES_10.md "SHREDDER PIT"; Config.SHRED_10): the folds it came out with, a NEW BEST for whoever
+			-- pressed (ShredBest)
+			local folds = math.random(1, 6)
+			local text = "FOLDED x" .. tostring(folds) .. "!"
+			if by then
+				local best = (by:GetAttribute("ShredBest") :: number?) or 0
+				if folds > best then
+					by:SetAttribute("ShredBest", folds)
+					text ..= " NEW BEST!"
+				end
+			end
+			pcall(function()
+				require(script.Parent:WaitForChild("Playground")).pop(pit.Position + Vector3.new(0, 6, 0), text, Color3.fromRGB(240, 240, 255))
+			end)
+		end
 	end
 	task.delay(2, function()
 		busy[m] = nil
