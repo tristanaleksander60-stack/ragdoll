@@ -287,12 +287,21 @@ local function build()
 		fpShot.toggle.set(values.fpShot, true)
 		fpStart.toggle.set(values.fpStart, true)
 	end)
-	choiceRow("Motion", "Auto follows your device. Less: menus just appear", "motion", "motion", Settings.MOTION, 4, body)
-	choiceRow("UI size", "Buttons and windows bigger or smaller", "scale", "ui", Settings.UI, 5, body)
-	choiceRow("Notices", "Auto: small on a phone. Minimal: only what matters", "eye", "notices", Settings.NOTICES, 9, body)
-	choiceRow("Recoil", "How much your shots kick the camera", "shake", "recoil", Settings.RECOIL, 10, body)
-	if Config.WALK_SETTING then
-		choiceRow("Walk speed", "How fast you walk. Sprint is 1.5x that", "motion", "walk", Settings.WALK, 11, body)
+	-- (AUDIT 27: a phone shows only Sound, Graphics, Camera shake, UI size and the body card; Notices only where notices
+	-- exist (not with COUNTERS_ONLY); short kid words.)
+	local phone = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+	if not phone then
+		choiceRow("Motion", "Less: menus just pop up", "motion", "motion", Settings.MOTION, 4, body)
+	end
+	choiceRow("UI size", "Make buttons bigger or smaller", "scale", "ui", Settings.UI, 5, body)
+	if not Config.COUNTERS_ONLY then
+		choiceRow("Notices", "Auto: small on a phone. Minimal: only what matters", "eye", "notices", Settings.NOTICES, 9, body)
+	end
+	if not phone then
+		choiceRow("Recoil", "How much your gun kicks", "shake", "recoil", Settings.RECOIL, 10, body)
+		if Config.WALK_SETTING then
+			choiceRow("Walk speed", "How fast you walk", "motion", "walk", Settings.WALK, 11, body)
+		end
 	end
 	window.defaultSelection = first.hit
 	Controller.register(window)

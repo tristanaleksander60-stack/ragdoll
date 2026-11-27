@@ -89,7 +89,7 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - "ONLINE" instead of "Multiplayer" on the tile;
     - the gift clock 15-16 px in a 64x20 box.
 26. **DONE v1313:** the LAB window's key letters show only where keys are shown (ViewMode.showKeys). **Was:** Key letters left on phones: the LAB window's `keyed()` uses `ViewMode.showKeys()`.
-27. **Settings:**
+27. **DONE v1338 (mostly):** Notices hidden while COUNTERS_ONLY; a phone shows only Sound, Graphics, Camera shake, UI size and the body card (Motion, Recoil and Walk speed hidden); shorter kid words. LEFT: the WALK leftovers in code. **Settings:**
     - hide Notices while COUNTERS_ONLY;
     - on phones only Sound, Graphics, Camera shake, UI size, Body card;
     - kid wording;
