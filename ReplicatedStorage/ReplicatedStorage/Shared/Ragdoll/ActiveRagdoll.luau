@@ -724,7 +724,7 @@ local function enter(rig: Rig, state: State)
 		local lift = rig.lift
 		lift.ForceLimitMode = Enum.ForceLimitMode.PerAxis
 		local g = rig.mass * Config.NORMAL_GRAVITY
-		lift.MaxAxesForce = Vector3.new(g * 1.2, g * 4, g * 1.2)
+		lift.MaxAxesForce = Vector3.new(g * 3, g * 4, g * 3) -- (1.2 g let the idle legs push it 0.06-0.28 studs off its spot in 10 s)
 		lift.Position = rig.pelvis.Position - Vector3.new(0, WALK_HOVER - 0.02, 0)
 		lift.Enabled = true
 		-- (with the feet off the floor nothing stops it turning: the balance holds the way it faces too, or it spins)
