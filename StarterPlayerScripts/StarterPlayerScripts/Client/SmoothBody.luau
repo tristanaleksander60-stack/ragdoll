@@ -327,6 +327,8 @@ local function build(model: Model): Body?
 end
 
 -- Is this body's X-ray look on (its skins see-through)?
+local GLASS_V6 = V6 and (Config :: any).BODY_FIT == true and ReplicatedStorage:FindFirstChild("SmoothBodyV6") ~= nil
+local XRAY_GLASS = 0.78
 local function xrayed(body: Body): boolean
 	for _, s in body.folder:GetChildren() do
 		if s:IsA("BasePart") and s ~= body.mesh and JOINT[s.Name] and s.Transparency > 0.01 then
@@ -458,7 +460,13 @@ local function step(dt: number)
 	end
 	for _, body in bodies do
 		local hidden = body.model:GetAttribute("MachineHidden") == true
-		if xrayed(body) or hidden then
+		if xrayed(body) and not hidden and GLASS_V6 then
+			-- (THE v6 FIT PASS item 3: in X-ray the v6 body itself is the glass shell round the bones; the block skins stay hidden)
+			if body.mesh.Transparency ~= XRAY_GLASS then
+				body.mesh.Transparency = XRAY_GLASS
+			end
+			hideBlocks(body)
+		elseif xrayed(body) or hidden then
 			-- (the X-ray look shows the glass skins and the bones; a machine hides everything)
 			if body.mesh.Transparency ~= 1 then
 				body.mesh.Transparency = 1
