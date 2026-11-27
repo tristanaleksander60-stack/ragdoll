@@ -125,7 +125,7 @@ Everything not listed here is DONE (see the rows). Each line points to its row; 
    - R8 phones;
    - R9 everything fits the new body (holes, splash, drips, X-ray, bandages, physics parts matched to the mesh).
    It absorbs the S1, F73 and S2 leftovers below (do not build them twice).
-5. **The ragdoll itself (PHASE 2):**
+5. **DONE (checked v1402): The ragdoll itself (PHASE 2):** every rest is already behind a switch: F73 (TURN_STEP: turn pose with stepping feet, low upright foot friction, curved arrivals, the TURN TWIST detector, seen logging), F72 (NAV_SNAP, NAV_BLOCKCAST), S1 (SMOOTH_MOTION clips, IDLE_WEIGHT_SHIFT, GESTURE_LAYERS, foot IK, the DummyLife LOD rates 24/70 phone and 50/130 PC, by level since LAGFREE_BUDGET), RAGDOLL_FEEL 1-6 (DUMMY_TONE per limb, Stumble, the brace, LANDING_TWITCH, get-ups with DIZZY_AFTER and GETUP_FAIL, the clutch of a broken arm, the limp). OWNER CHECK: walk, turn and run feel. Was:
    - S1's rest: upper-body gesture layers, foot IK, smooth ownership;
    - F73's rest (0.1571): the turn pose, foot friction, curved arrivals, the TURN TWIST detector;
    - F72's rest (0.1572).
