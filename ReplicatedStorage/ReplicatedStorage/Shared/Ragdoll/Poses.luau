@@ -284,6 +284,23 @@ function Poses.kneel(t: number): Pose
 	return out
 end
 
+-- F91 (BOWLING_12 0): the bowling ball: tucked tight, knees to the chest, arms round the shins, head down.
+local curlOut: Pose = {}
+function Poses.curl(_t: number): Pose
+	local out = curlOut
+	out.RightHip = ang(118, 0, 0)
+	out.LeftHip = ang(118, 0, 0)
+	out.RightKnee = ang(-135, 0, 0)
+	out.LeftKnee = ang(-135, 0, 0)
+	out.Waist = ang(-38, 0, 0)
+	out.Neck = ang(-30, 0, 0)
+	out.RightShoulder = ang(75, 0, -10)
+	out.LeftShoulder = ang(75, 0, 10)
+	out.RightElbow = ang(115, 0, 0)
+	out.LeftElbow = ang(115, 0, 0)
+	return out
+end
+
 -- Getting up from lying face up: sitting with legs out, hands behind on the ground.
 local sitUpOut: Pose = {}
 function Poses.sitUp(t: number): Pose

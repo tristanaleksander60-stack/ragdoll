@@ -283,6 +283,9 @@ local function bowl(lane: Lane, by: Player)
 		-- The ball: put on the approach, curled (a ragdoll on its side), then a real push down the lane.
 		ball:PivotTo(CFrame.lookAt(lane.at + Vector3.new(0, 3, 0), lane.at + Vector3.new(0, 3, 0) + lane.dir) * CFrame.Angles(math.rad(-80), 0, 0))
 	end
+	if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).BOWL_BALL then
+		ball:SetAttribute("Curl", true) -- (F91: it tucks into a ball for the roll: ActiveRagdoll holds Poses.curl)
+	end
 	task.wait(0.15)
 	local pelvis = ball:FindFirstChild("LowerTorso")
 	if pelvis and pelvis:IsA("BasePart") then
@@ -323,6 +326,9 @@ local function bowl(lane: Lane, by: Player)
 				end
 				local along = (pe.Position - lane.at):Dot(lane.dir)
 				if along >= deckAlong - 3 then
+					-- (it bursts out of the curl into the pins, its speed kept and a little more)
+					ball:SetAttribute("Curl", nil)
+					pcall(DC2.push, ball, lane.dir * 10 + Vector3.new(0, 6, 0), nil)
 					break
 				end
 				local speed = pe.AssemblyLinearVelocity:Dot(lane.dir)
@@ -330,6 +336,7 @@ local function bowl(lane: Lane, by: Player)
 					pcall(DC2.push, ball, lane.dir * (40 - math.max(speed, 0)), nil)
 				end
 			end
+			ball:SetAttribute("Curl", nil)
 			reached:Fire()
 		end)
 	else

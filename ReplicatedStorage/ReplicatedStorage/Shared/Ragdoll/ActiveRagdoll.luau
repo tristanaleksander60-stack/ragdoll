@@ -180,6 +180,7 @@ local GetAbout = Config.GetAbout
 local WALK_SPEED = GetAbout.WALK_SPEED
 local GAME_PERSONA_WALK = (GameConfig :: any).PERSONA_WALK == true -- R3
 local GAME_CPR_STILL = (GameConfig :: any).CPR_STILL == true -- F93
+local GAME_BOWL_BALL = (GameConfig :: any).BOWL_BALL == true -- F91
 local LIMP_SPEED = GetAbout.LIMP_SPEED
 local CRAWL_SPEED = GetAbout.CRAWL_SPEED
 local FLEE_SPEED = GetAbout.FLEE_SPEED
@@ -2156,6 +2157,24 @@ local function update(dt: number)
 						joint.IsKinematic = false
 					end
 				end
+			end
+			-- F91 (Config.BOWL_BALL): rolled down the bowling lane, it holds a tight BALL (Poses.curl with standing tone on
+			-- every joint, no balance) until Bowling clears Curl at the pins; then it is limp again and bursts into them.
+			local cr: any = rig
+			if GAME_BOWL_BALL and rig.model:GetAttribute("Curl") == true then
+				if not cr.curled then
+					cr.curled = true
+					for name, joint in rig.joints do
+						local t = Tone.get("Standing", name)
+						if t and name ~= "Root" then
+							setJoint(joint, t, true)
+						end
+					end
+				end
+				applyPose(rig, Poses.curl(rig.stateTime))
+			elseif cr.curled then
+				cr.curled = nil
+				applyProfile(rig, rig.limpProfile or "Ragdoll")
 			end
 			checkImpact(rig)
 			local flying = isAirborne(rig)
