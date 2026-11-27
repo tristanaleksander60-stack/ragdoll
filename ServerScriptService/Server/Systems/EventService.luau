@@ -597,6 +597,36 @@ local function run(job: Job)
 						end
 					end
 				end
+				-- 1.0 rule 5 (Config.EVENT_MIN_FLUNG; docs/OVERVIEW 1.0 "so nobody feels scammed"): at 70 % of the event, if
+				-- fewer than EVENT_MIN_FLUNG bodies went flying in the host's lab, the event catches the nearest standing ones
+				-- round the host (a few a beat) and throws them too, so every paid event flings at least that many.
+				local MIN = tonumber((Config :: any).EVENT_MIN_FLUNG) or 0
+				if MIN > 0 and not job.allLabs and os.clock() - t0 > event.duration * 0.7 and count < MIN then
+					local host = Players:GetPlayerByUserId(job.hostId)
+					local root = host and host.Character and host.Character:FindFirstChild("HumanoidRootPart")
+					if host and root and root:IsA("BasePart") then
+						local okL, list = pcall(function()
+							return Lab.dummiesOf(host)
+						end)
+						local pool = {}
+						for _, m in if okL then list else {} do
+							local pe = m:FindFirstChild("LowerTorso")
+							local st = m:GetAttribute("RagdollState")
+							if not flung[m] and pe and pe:IsA("BasePart") and (st == nil or st == "Standing" or st == "Walking") and m:GetAttribute("Held") ~= true then
+								table.insert(pool, { m = m, d = (pe.Position - root.Position).Magnitude, pe = pe })
+							end
+						end
+						table.sort(pool, function(x, y)
+							return x.d < y.d
+						end)
+						for i = 1, math.min(3, MIN - count, #pool) do
+							local e = pool[i]
+							local away = Vector3.new(e.pe.Position.X - root.Position.X, 0, e.pe.Position.Z - root.Position.Z)
+							local dir = if away.Magnitude > 0.1 then away.Unit else Vector3.xAxis
+							pcall(DummyControl.push, e.m, dir * math.random(25, 45) + Vector3.new(0, math.random(45, 70), 0), host)
+						end
+					end
+				end
 				task.wait(0.5)
 			end
 			if count > 0 then
