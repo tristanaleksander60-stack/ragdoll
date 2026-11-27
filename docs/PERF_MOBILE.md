@@ -152,7 +152,7 @@ No hitch over 100 ms when machines run, a big event starts or the lab loads.
      - step down after 5 s under 40 fps, or 3 frames over 50 ms within 5 s (hitches, not only the average);
      - step up only after 45 s over 58;
      - a phone that already uses over 700 MB at join starts at level 1.
-5. **`LAGFREE_HIGHLIGHT`: one Highlight pool.**
+5. **PART DONE v1389 (Client/HighlightCap):** every Highlight in the place is watched; at most 3/5/10 drawn by priority (held, X-ray, dog, rest), off-screen ones off; only its own CapOff ones are turned back on (seen: an off-screen one switched off). LEFT: Neon X-ray bones on phones instead of a Highlight. 5. **`LAGFREE_HIGHLIGHT`: one Highlight pool.**
    - At most 3 at once on phones, 5 on tablets and 10 on PC.
    - Priority: what you hold or aim at, then the shot limb's X-ray bones, then the dog, then glows and hints.
    - One Highlight per model (Adornee = the model), never one per part. Off screen means off.
