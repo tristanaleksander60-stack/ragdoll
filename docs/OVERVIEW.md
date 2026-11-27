@@ -90,7 +90,7 @@ The owner: "sørg for den ikke tester alt selv dybt, men at det er min opgave".
 Everything not listed here is DONE (see the rows). Each line points to its row; build the row's LEFT.
 1. ~~**F90**~~ **DONE v1288:** the cloud code is in Studio (mayRemove, REMOVAL_LOG, Unstick push, PathWalkers/PathSwap); NearbyTwo, Watchers, Lab FAST_THREE and DummySpawn recycling now ask `mayRemove` and log; a body you hit stays streamed in for you 30 s (PersistentPerPlayer). Ragdolls are Atomic already.
 2. ~~**F89**~~ **DONE v1287:** the owner imported `mannequin_v2.fbx`; it now lives at ReplicatedStorage.SmoothBodyV2 (anchored, no collision); the clients use it (grey, slim, arms down).
-3. **AUDIT 27 Nov, URGENT** (`AUDIT_27NOV.md` 1-4): the Lab Controls pass's button for its buyers + a pass lint; the CHRISTMAS ADVENT CALENDAR (live 1 Dec); a session lock + safe merge for the profile; takedowns the server confirms. (The cloud already fixed 7 things in code: see the doc's first section; push them into Studio first.)
+3. ~~**AUDIT 27 Nov, URGENT**~~ **DONE v1289-v1291** (`AUDIT_27NOV.md` 1-4): the Lab Controls button for its buyers + PassLint; the advent calendar (ADVENT); the profile lock + safe eco merge (PROFILE_LOCK); one takedown per server hit + 120 a minute (TAKEDOWN_GUARD). The cloud's 7 fixes are in Studio.
 4. **R10, THE RAGDOLLS 4/10 → 10/10 (owner):** one pass in `RAGDOLL_10.md`, built right after F90 and F89:
    - R1 the slim grey body everywhere, crash-test marks, size variety;
    - R2 a face that lives (pupils that look, blinking, a talking mouth, expressions);

@@ -24,12 +24,12 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
    - fixed rewards shown in advance: BOLTS, Christmas-only hats and trails, and a big day 24 (a snowball launcher toy and a Santa sleigh event);
    - a festive calendar window opened from the gift chip in December;
    - it must be in the build the owner publishes before 1 Dec.
-3. **DATA SAFETY: a session lock on the profile:**
+3. **DONE v1291 (`PROFILE_LOCK`, ProgressService):** a lock {job, t} taken in UpdateAsync before the read (another server's fresh lock: wait up to 10 s for its leave save, then read anyway), refreshed by every save, cleared by the leave/close save (which now always goes out); the eco merges as changes: BOLTS a delta since the last save (boltBase), codes/journal/got unions, perks/counts the larger. **Was:** DATA SAFETY: a session lock on the profile:
    - today `m.eco = session.eco or stored.eco` (ProgressService ~356) lets BOLTS and codes come back or get lost on a fast hop between the two places;
    - take a lock `{job, t}` in UpdateAsync on load (retry about 10 s; a lock older than 2 min is stale), clear it on leave and close;
    - also merge safely: BOLTS as a change since the last save (a `boltBase`, like eggs), `eco.codes` and `eco.got` as unions, `perks` as the larger value;
    - use the `roblox-datastore-safety` skill.
-4. **Takedowns must not be farmable by a hacked client:**
+4. **DONE v1291 (`TAKEDOWN_GUARD`):** each server-stamped hit makes at most one takedown (a client toggling Down/Standing needs a new real hit), and at most 120 takedowns a minute a player (over: refused, Metrics "TakedownCap"). (No separate force threshold: every stamp already comes from a real server hit.) **Was:** Takedowns must not be farmable by a hacked client:
    - credit a takedown only when the server's own hit would knock the body down (HitMath's threshold, stored by `stampServerHit`);
    - refuse a `Standing` report sooner than MIN_DOWN after a fall;
    - cap takedowns per player per minute (anything over the cap goes to Metrics).

@@ -111,7 +111,7 @@ local V8_MOVED: { [string]: number } = { Poke = 3, Shove = 6, Slap = 7, Heal = 8
 local OLD_UNLOCK: { [string]: number } = { Crossbow = 10, NailGun = 20, Slime = 30, Shrink = 50, Chicken = 75, Float = 100, Slowmo = 125, Portal = 150 }
 -- Every field this version writes (anything else stored is kept as it is: keepUnknown).
 local KNOWN_FIELDS: { [string]: boolean } = {}
-for _, key in { "takedowns", "eggs", "hats", "hat", "best", "lastDay", "noPranks", "freeDay", "seen", "radio", "keys", "gifts", "freeUntil", "streak", "owned", "pending", "ladder", "bought", "oldEggs", "playSeconds", "settings", "goals", "eco", "freezeWeek" } do
+for _, key in { "takedowns", "eggs", "hats", "hat", "best", "lastDay", "noPranks", "freeDay", "seen", "radio", "keys", "gifts", "freeUntil", "streak", "owned", "pending", "ladder", "bought", "oldEggs", "playSeconds", "settings", "goals", "eco", "freezeWeek", "lock" } do
 	KNOWN_FIELDS[key] = true
 end
 local BOUGHT_KEPT = 30
@@ -138,6 +138,12 @@ local lastDown: { [Model]: number } = {}
 -- Round 4, M10: when a body was last credited (server time): once it is dead, one takedown at most
 -- for the kill and whatever is done to the body after (a knock-down while alive never blocks the kill).
 local creditedAt: { [Model]: number } = {}
+-- AUDIT 27 Nov 4 (Config.TAKEDOWN_GUARD): a hacked client must not farm takedowns. Each server-stamped hit
+-- (ServerHitAt) can make at most ONE takedown (a body toggled Down/Standing by its simulating client needs a new real
+-- hit every time), and a player gets at most TAKEDOWN_CAP a minute; anything over is refused and sent to Metrics.
+local creditedHit: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+local creditWindow: { [Player]: { t: number, n: number, warned: boolean } } = {}
+ProgressService.TAKEDOWN_CAP = 120 -- a minute (the busiest legit chaos, an event in a full lab, stays well under)
 local remote: RemoteEvent
 local rng = Random.new()
 local saving = 0
@@ -418,12 +424,70 @@ local function retry<T>(fn: () -> T): (boolean, T?)
 	return false, nil
 end
 
+-- AUDIT 27 Nov 3 (Config.PROFILE_LOCK): a session lock on the profile. On join the server writes lock = {job, t}
+-- before it reads; a lock of ANOTHER server younger than LOCK_STALE s means that server has not saved the player's
+-- leave yet (a fast hop between our two places): wait for it (every 2 s, up to LOCK_WAIT s), then read. Every save
+-- refreshes the lock; the save on the way out clears it. Never blocks for good: after the wait the read goes on (the
+-- save merges everything as changes since the last save, so even then nothing is lost or given twice).
+local LOCK_STALE = 360 -- s (longer than the 300 s play save, so a quiet session's lock is never taken for stale)
+local LOCK_WAIT = 10
+local lockHeld: { [number]: boolean } = {}
+local leavingIds: { [number]: boolean } = {}
+local function takeLock(ds: DataStore, userId: number)
+	leavingIds[userId] = nil
+	if (Config :: any).PROFILE_LOCK == false then
+		return
+	end
+	local deadline = os.clock() + LOCK_WAIT
+	while true do
+		local took, busy = false, false
+		local ok = pcall(function()
+			ds:UpdateAsync(tostring(userId), function(old)
+				took, busy = false, false
+				if type(old) ~= "table" then
+					return nil -- (nothing stored yet: nothing to lock)
+				end
+				local l = (old :: any).lock
+				if type(l) == "table" and l.job ~= game.JobId and type(l.t) == "number" and os.time() - l.t < LOCK_STALE then
+					busy = true
+					return nil
+				end
+				(old :: any).lock = { job = game.JobId, t = os.time() }
+				took = true
+				return old, { userId }
+			end)
+		end)
+		if ok and took then
+			lockHeld[userId] = true
+			return
+		end
+		if not busy or os.clock() >= deadline then
+			if busy then
+				log.warn("profile " .. userId .. " still locked by another server after " .. LOCK_WAIT .. " s: read anyway (the save merges)")
+			end
+			return
+		end
+		task.wait(2)
+	end
+end
+-- The lock a save writes: ours (refreshed) while we hold it, none on the way out; another server's is left alone.
+local function lockFor(userId: number, old: unknown): any
+	if lockHeld[userId] then
+		if leavingIds[userId] then
+			return nil
+		end
+		return { job = game.JobId, t = os.time() }
+	end
+	return if type(old) == "table" then (old :: any).lock else nil
+end
+
 local function load(userId: number): (boolean, Profile?)
 	local ds = store
 	if not ds then
 		local m = memory[userId]
 		return true, if m then clean(m) else nil
 	end
+	takeLock(ds, userId)
 	local ok, raw = retry(function()
 		-- (23 Nov 2026: never the server's own cached copy, seconds old: a hop between our two places reads what was just saved.)
 		local options = Instance.new("DataStoreGetOptions")
@@ -445,6 +509,7 @@ local eggBase: { [Player]: number } = {}
 -- old count, and the smaller of the two visits was lost. Now both takedowns and time played are saved as what this visit
 -- added since the last save, as eggs are.)
 local tdBase: { [Player]: number } = {}
+local boltBase: { [Player]: number } = {} -- (AUDIT 27 Nov 3: BOLTS are saved as the change since the last save, like eggs)
 local playBase: { [Player]: number } = {}
 -- One save per player at a time: a second one (leaving while an overdue one still retries) waits
 -- for the first, then reads the egg baseline it moved (never adding the same found eggs twice).
@@ -505,11 +570,56 @@ function saveLocked(player: Player, profile: Profile): boolean
 	local tdNow, playNow = profile.takedowns, profile.playSeconds
 	local tdFrom, playFrom = tdBase[player] or tdNow, playBase[player] or playNow
 	local total, totalPlay = tdNow, playNow
+	local sessionEco = profile.eco
+	local boltsNow = if sessionEco then sessionEco.bolts else 0
+	local boltFrom = boltBase[player] or boltsNow
+	local totalBolts = boltsNow
+	local mergedEco: any = nil
 	local function withEggs(stored: Profile, merged: Profile): Profile
 		merged.eggs = math.clamp(stored.eggs + (eggsNow - base), 0, Progress.MAX_EGGS)
 		merged.takedowns = math.max(0, stored.takedowns + (tdNow - tdFrom))
 		merged.playSeconds = math.max(0, stored.playSeconds + (playNow - playFrom))
 		total, totalPlay = merged.takedowns, merged.playSeconds
+		-- AUDIT 27 Nov 3: the economy merged safely (was: this session's copy won, so BOLTS or a redeemed code came back
+		-- or got lost on a fast hop): BOLTS as the change since the last save; codes, bought ids and journal pages as
+		-- unions; timed perks and counts as the larger value.
+		local se, st = sessionEco, stored.eco
+		if se and st and (Config :: any).PROFILE_LOCK ~= false then
+			local e = table.clone(se) :: any
+			e.bolts = math.max(0, st.bolts + (boltsNow - boltFrom))
+			for _, field in { "codes", "journal" } do
+				local u = table.clone((se :: any)[field])
+				for k, v in (st :: any)[field] do
+					if v then
+						u[k] = true
+					end
+				end
+				e[field] = u
+			end
+			local perks = table.clone(se.perks)
+			for k, v in st.perks do
+				perks[k] = math.max(perks[k] or 0, v)
+			end
+			e.perks = perks
+			local counts = table.clone(se.counts)
+			for k, v in st.counts do
+				counts[k] = math.max(counts[k] or 0, v)
+			end
+			e.counts = counts
+			local got = table.clone(se.got)
+			for _, id in st.got do
+				if not table.find(got, id) then
+					table.insert(got, id)
+				end
+			end
+			while #got > Economy.GOT_KEPT do
+				table.remove(got, 1)
+			end
+			e.got = got
+			merged.eco = e
+			mergedEco = e
+			totalBolts = e.bolts
+		end
 		return merged
 	end
 	if not ds then
@@ -549,6 +659,7 @@ function saveLocked(player: Player, profile: Profile): boolean
 				settings = merged.settings,
 				goals = merged.goals,
 				eco = merged.eco, -- (phase 2: bolts, journal, daily, codes; release fix: it was never written)
+				lock = lockFor(userId, old), -- (AUDIT 27 Nov 3)
 			}), { userId }
 		end)
 	end)
@@ -561,6 +672,35 @@ function saveLocked(player: Player, profile: Profile): boolean
 		tdBase[player], playBase[player] = total, totalPlay
 		if total ~= tdNow and player.Parent then
 			ProgressService.refreshCount(player)
+		end
+		-- (AUDIT 27 Nov 3: what another server added meanwhile now shows here too)
+		local e, me = profile.eco, mergedEco
+		if e and me then
+			e.bolts += totalBolts - boltsNow
+			for k in me.codes do
+				e.codes[k] = true
+			end
+			for k in me.journal do
+				e.journal[k] = true
+			end
+			for k, v in me.perks do
+				e.perks[k] = math.max(e.perks[k] or 0, v)
+			end
+			for _, id in me.got do
+				if not table.find(e.got, id) then
+					table.insert(e.got, id)
+				end
+			end
+			boltBase[player] = totalBolts
+			if totalBolts ~= boltsNow and player.Parent then
+				task.spawn(function()
+					pcall(function()
+						(require(script.Parent:WaitForChild("EconomyService")) :: any).send(player)
+					end)
+				end)
+			end
+		elseif e then
+			boltBase[player] = e.bolts
 		end
 	end
 	return ok
@@ -589,6 +729,7 @@ local function saveOnto(player: Player, session: Profile): boolean
 				owned = m.owned, pending = m.pending, ladder = m.ladder, bought = m.bought,
 				oldEggs = math.min(m.oldEggs, m.eggs),
 				playSeconds = m.playSeconds, settings = m.settings, goals = m.goals, eco = m.eco,
+				lock = lockFor(userId, old), -- (AUDIT 27 Nov 3)
 			}), { userId }
 		end)
 	end)
@@ -1074,6 +1215,12 @@ local function onDown(model: Model, state: string, retried: boolean?)
 	if not player then
 		return
 	end
+	if (Config :: any).TAKEDOWN_GUARD ~= false and type(seen) == "number" then
+		if creditedHit[model] == seen then
+			return -- (AUDIT 27 Nov 4: this server hit already made its takedown)
+		end
+		creditedHit[model] = seen
+	end
 	SessionStats.count(player, "knocks")
 	credit(player, model, now)
 end
@@ -1090,6 +1237,24 @@ function ProgressService.greeterHit(player: Player, model: Model)
 end
 
 function credit(player: Player, model: Model, now: number)
+	if (Config :: any).TAKEDOWN_GUARD ~= false then
+		-- (AUDIT 27 Nov 4: at most TAKEDOWN_CAP a minute a player)
+		local w = creditWindow[player]
+		if not w or now - w.t >= 60 then
+			w = { t = now, n = 0, warned = false }
+			creditWindow[player] = w
+		end
+		assert(w)
+		w.n += 1
+		if w.n > ProgressService.TAKEDOWN_CAP then
+			if not w.warned then
+				w.warned = true
+				log.warn(player.Name .. " over " .. ProgressService.TAKEDOWN_CAP .. " takedowns a minute: the rest refused")
+				pcall(Metrics.event, player, "TakedownCap", w.n)
+			end
+			return
+		end
+	end
 	lastDown[model] = now
 	creditedAt[model] = Workspace:GetServerTimeNow()
 	if not model:GetAttribute("DestroyHooked") then
@@ -1898,6 +2063,7 @@ local function onJoin(player: Player)
 	tdBase[player] = if stored then stored.takedowns else 0
 	playBase[player] = if stored then stored.playSeconds else 0
 	eggBase[player] = if stored then stored.eggs else 0 -- (eggs are saved as the change from here)
+	boltBase[player] = if stored and stored.eco then stored.eco.bolts else (if profile.eco then profile.eco.bolts else 0) -- (AUDIT 27 Nov 3)
 	if told then
 		remote:FireClient(player, "Notice", "Your progress is back!")
 	end
@@ -2076,6 +2242,11 @@ function ProgressService.start(labOrigin: Vector3)
 	Players.PlayerRemoving:Connect(function(player)
 		local p = profiles[player]
 		countPlay(player)
+		-- (AUDIT 27 Nov 3: the save on the way out clears our profile lock, so it always goes out)
+		leavingIds[player.UserId] = true
+		if p and lockHeld[player.UserId] then
+			dirty[player] = dirty[player] or 1
+		end
 		if p and (playUnsaved[player] or 0) > 0 then
 			dirty[player] = dirty[player] or 1 -- (the time played this visit is saved on the way out)
 		end
@@ -2099,6 +2270,12 @@ function ProgressService.start(labOrigin: Vector3)
 				pranksChanged[player] = nil
 				eggBase[player] = nil
 				tdBase[player] = nil
+				boltBase[player] = nil
+				creditWindow[player] = nil
+				if not Players:GetPlayerByUserId(player.UserId) then
+					lockHeld[player.UserId] = nil
+					leavingIds[player.UserId] = nil
+				end
 				playBase[player] = nil
 				dirtySince[player] = nil
 				pendingNoPranks[player] = nil
@@ -2112,6 +2289,10 @@ function ProgressService.start(labOrigin: Vector3)
 		for player, p in profiles do
 			if player.Parent then
 				countPlay(player)
+			end
+			leavingIds[player.UserId] = true -- (AUDIT 27 Nov 3: clear the lock)
+			if lockHeld[player.UserId] then
+				dirty[player] = dirty[player] or 1
 			end
 			if (playUnsaved[player] or 0) > 0 then
 				dirty[player] = dirty[player] or 1

@@ -306,6 +306,8 @@ local Config = {
 	--   sleigh ramp in every lab while the season is on; ADVENT: a daily advent experiment 1-24 Dec.
 	CHRISTMAS_FROM_DEC1 = true,
 	CHRISTMAS_LAB = true,
+	TAKEDOWN_GUARD = true, -- AUDIT 27 Nov 4: one takedown per server-stamped hit (a client toggling Down/Standing needs a new real hit each time) and at most 120 takedowns a minute a player, the rest to Metrics (ProgressService)
+	PROFILE_LOCK = true, -- AUDIT 27 Nov 3: a session lock on the player profile (a fast hop waits up to 10 s for the other server's leave save) and the economy merged safely (BOLTS as a change since the last save, codes/got/journal unions, perks/counts the larger) (ProgressService)
 	ADVENT = true,
 	-- Update rhythm: what the title shows in an update week, and the days updates go out. The newest
 	-- entry of Shop.WHATS_NEW must carry Config.Version (T66 checks it).
