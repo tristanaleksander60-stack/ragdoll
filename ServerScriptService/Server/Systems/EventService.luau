@@ -478,12 +478,58 @@ local function giveBack(jobs: { Job }, failedStart: boolean?)
 	end
 end
 
+-- 1.0 rule 3 (Config.EVENT_CROWD): before the peak up to CROWD free ragdolls within 160 studs run into a ring 10-24 studs
+-- round the event's middle and look at it ("What's that?!"); they are let go 25 s later.
+local CROWD = 12
+local function crowdIn(center: Vector3)
+	local dummies = workspace:FindFirstChild("Dummies")
+	if not dummies then
+		return
+	end
+	local lines = { "What's that?!", "Look up!", "Uh oh...", "Whoa!" }
+	local n = 0
+	for _, m in dummies:GetChildren() do
+		if n >= CROWD then
+			break
+		end
+		local pe = m:FindFirstChild("LowerTorso")
+		local st = m:GetAttribute("RagdollState")
+		if m:IsA("Model") and pe and pe:IsA("BasePart") and (st == "Standing" or st == "Walking") and m:GetAttribute("Vital") ~= "Dead"
+			and m:GetAttribute("Watch") == nil and m:GetAttribute("Role3") == nil and m:GetAttribute("TryFor") == nil
+			and m:GetAttribute("CommandedBy") == nil and m:GetAttribute("InMachine") == nil and m:GetAttribute("Held") ~= true
+			and (pe.Position - center).Magnitude < 160 then
+			n += 1
+			local a = math.random() * math.pi * 2
+			local r = math.random(10, 24)
+			m:SetAttribute("Watch", "Event")
+			m:SetAttribute("Home", center + Vector3.new(math.cos(a) * r, 3, math.sin(a) * r))
+			m:SetAttribute("HomeLook", center)
+			m:SetAttribute("Pace", 1.8)
+			if n <= 4 then
+				m:SetAttribute("MoodSay", lines[n])
+			end
+			task.delay(25, function()
+				if m.Parent and m:GetAttribute("Watch") == "Event" then
+					m:SetAttribute("Watch", nil)
+					m:SetAttribute("Home", nil)
+					m:SetAttribute("HomeLook", nil)
+					m:SetAttribute("Pace", nil)
+					m:SetAttribute("MoodSay", nil)
+				end
+			end)
+		end
+	end
+end
+
 local function run(job: Job)
 	local event = Events.byId[job.id]
 	current = job
 	log.info(string.format("%s: %s (%s)", event.name, job.by, job.source))
 	-- (Phase D, 23 Nov 2026, owner: "events more realistic: a short warning before"): the lab's player (every player
 	-- for an all-labs event) sees "INCOMING!" 1.5 s before it starts. Not for self-tests.
+	if job.source ~= "Test" and (Config :: any).EVENT_CROWD and not job.allLabs then
+		pcall(crowdIn, labCenter(job))
+	end
 	if job.source ~= "Test" then
 		for _, p in Players:GetPlayers() do
 			if job.allLabs or p.UserId == job.hostId then
