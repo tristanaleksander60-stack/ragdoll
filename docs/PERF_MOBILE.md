@@ -157,7 +157,7 @@ No hitch over 100 ms when machines run, a big event starts or the lab loads.
    - Priority: what you hold or aim at, then the shot limb's X-ray bones, then the dog, then glows and hints.
    - One Highlight per model (Adornee = the model), never one per part. Off screen means off.
    - On phones the X-ray bones use a bright Neon material on the bone parts instead of a Highlight: the same look, no extra pass.
-6. **`LAGFREE_POOLS`: no `Instance.new` on a hit.**
+6. **PART DONE v1390:** the FeelV2 shot light is pooled (12 kept), the FxController gold sparks are one emitter moved; FeelV2 emitters were already pooled (the ~560 PointLight is dead code). LEFT: splat cap 40 and the 12-sound cap on phones. 6. **`LAGFREE_POOLS`: no `Instance.new` on a hit.**
    - The emitters and lights in FxController and FeelV2 are pooled: made at join, idle in a folder, re-parented and `:Emit()`ed.
    - Splat decals at most 40 on a phone; the oldest fades.
    - Sounds: at most 12 playing on phones, and a far sound is never started.

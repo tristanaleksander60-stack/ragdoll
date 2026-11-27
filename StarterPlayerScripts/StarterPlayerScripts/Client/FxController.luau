@@ -1529,7 +1529,16 @@ function FxController.dryFire(toyId: string)
 end
 
 -- Round 5: gold sparks (the Golden Deagle's head shot), and a blade's cut in the air.
+local goldHolder: Part? = nil -- (LAG-FREE 2 item 6: one gold-spark emitter, made once and moved)
 function FxController.goldBurst(at: Vector3)
+	if (require(Shared:WaitForChild("Config")) :: any).LAGFREE_POOLS and goldHolder and goldHolder.Parent then
+		goldHolder.CFrame = CFrame.new(at)
+		local pe = goldHolder:FindFirstChildOfClass("ParticleEmitter")
+		if pe then
+			pe:Emit(40)
+		end
+		return
+	end
 	local holder = Instance.new("Part")
 	holder.Anchored = true
 	holder.CanCollide = false
@@ -1551,6 +1560,10 @@ function FxController.goldBurst(at: Vector3)
 	e.Parent = holder
 	holder.Parent = workspace:FindFirstChild("LocalFx") or workspace
 	e:Emit(40)
+	if (require(Shared:WaitForChild("Config")) :: any).LAGFREE_POOLS then
+		goldHolder = holder
+		return
+	end
 	task.delay(1, function()
 		holder:Destroy()
 	end)

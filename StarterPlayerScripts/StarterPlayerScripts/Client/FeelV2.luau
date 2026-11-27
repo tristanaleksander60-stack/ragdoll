@@ -761,6 +761,7 @@ FeelV2.GUN_LIGHT = {
 	Sniper = "sniper", DMR = "sniper", LaserRifle = "laser", Railgun = "rail", FlareGun = "flare", NailGun = "small",
 } :: { [string]: string }
 local liveLights = 0
+local lightPool: { { p: Part, l: PointLight } } = {} -- (LAG-FREE 2 item 6)
 function FeelV2.light(at: Vector3, spec: LightSpec, own: boolean)
 	local tierLow = (FeelV2.caps.flashes or 0) <= 1
 	if tierLow and reducedMotion() then
@@ -770,26 +771,41 @@ function FeelV2.light(at: Vector3, spec: LightSpec, own: boolean)
 		return
 	end
 	liveLights += 1
-	local p = Instance.new("Part")
-	p.Name = "ShotLight"
-	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch, p.CastShadow = true, false, false, false, false
-	p.Transparency = 1
-	p.Size = Vector3.new(0.2, 0.2, 0.2)
+	-- (LAG-FREE 2 item 6, Config.LAGFREE_POOLS: the shot light comes from a pool, made once, not new on every shot)
+	local entry = table.remove(lightPool)
+	if not entry then
+		local np = Instance.new("Part")
+		np.Name = "ShotLight"
+		np.Anchored, np.CanCollide, np.CanQuery, np.CanTouch, np.CastShadow = true, false, false, false, false
+		np.Transparency = 1
+		np.Size = Vector3.new(0.2, 0.2, 0.2)
+		local nl = Instance.new("PointLight")
+		nl.Shadows = false
+		nl.Parent = np
+		np.Parent = folder()
+		entry = { p = np, l = nl }
+	end
+	local p, l = entry.p, entry.l
+	if not p.Parent then
+		p.Parent = folder()
+	end
 	p.Position = at
-	local l = Instance.new("PointLight")
 	l.Color = spec.color
 	l.Range = spec.range
 	l.Brightness = spec.bright
-	l.Shadows = false
-	l.Parent = p
-	p.Parent = folder()
+	l.Enabled = true
 	local hold = spec.time * 0.4
 	task.delay(hold, function()
 		TweenService:Create(l, TweenInfo.new(math.max(0.02, spec.time - hold)), { Brightness = 0 }):Play()
 	end)
 	task.delay(spec.time + 0.05, function()
 		liveLights -= 1
-		p:Destroy()
+		l.Enabled = false
+		if (Config :: any).LAGFREE_POOLS and #lightPool < 12 then
+			table.insert(lightPool, entry)
+		else
+			p:Destroy()
+		end
 	end)
 end
 
