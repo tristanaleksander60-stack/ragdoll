@@ -1977,6 +1977,61 @@ local function swimLayer(life: Life, state: string, now: number, dt: number)
 	put("LeftKnee", ang(-10 - 8 * math.max(0, -sin(k)), 0, 0))
 end
 
+-- P1 rest (Config.FILM_PHONE): a curious ragdoll that got its phone out (Filming, Systems/Personas) holds it up in its
+-- right hand at face height, screen lit, pointed at what happened; the phone (a small client-only part) goes away with
+-- the attribute. Eased in and out.
+local function filmLayer(life: Life, state: string, now: number, dt: number)
+	if not (Config :: any).FILM_PHONE then
+		return
+	end
+	local L = life :: any
+	local model = life.model
+	local on = model:GetAttribute("Filming") == true and (state == "Standing" or state == "Walking")
+	L.filmW = math.clamp((L.filmW or 0) + (if on then dt else -dt) / 0.35, 0, 1)
+	local hand = model:FindFirstChild("RightHand")
+	if L.filmW > 0.5 and not L.phone and hand and hand:IsA("BasePart") then
+		local phone = Instance.new("Part")
+		phone.Name = "FilmPhone"
+		phone.Size = Vector3.new(0.1, 0.62, 0.34)
+		phone.Color = Color3.fromRGB(28, 28, 32)
+		phone.Material = Enum.Material.SmoothPlastic
+		phone.CanCollide, phone.CanQuery, phone.CanTouch, phone.Massless, phone.CastShadow = false, false, false, true, false
+		local screen = Instance.new("Part")
+		screen.Name = "FilmScreen"
+		screen.Size = Vector3.new(0.02, 0.54, 0.28)
+		screen.Color = Color3.fromRGB(150, 200, 255)
+		screen.Material = Enum.Material.Neon
+		screen.CanCollide, screen.CanQuery, screen.CanTouch, screen.Massless, screen.CastShadow = false, false, false, true, false
+		phone.CFrame = hand.CFrame * CFrame.new(0, -0.45, -0.1) * CFrame.Angles(0, math.rad(90), 0)
+		screen.CFrame = phone.CFrame * CFrame.new(0.06, 0, 0)
+		local w1 = Instance.new("WeldConstraint")
+		w1.Part0, w1.Part1 = hand, phone
+		w1.Parent = phone
+		local w2 = Instance.new("WeldConstraint")
+		w2.Part0, w2.Part1 = phone, screen
+		w2.Parent = screen
+		screen.Parent = phone
+		phone.Parent = model
+		L.phone = phone
+	elseif L.filmW <= 0.5 and L.phone then
+		L.phone:Destroy()
+		L.phone = nil
+	end
+	local w = L.filmW
+	if w <= 0 then
+		return
+	end
+	w = w * w * (3 - 2 * w)
+	local j: any = life.joints
+	local wobble = 2 * sin((now + life.seed) * 3)
+	for name, cf in { RightShoulder = ang(92 + wobble, 0, -14), RightElbow = ang(58, 0, 0), Neck = ang(-4, 0, 0) } do
+		local joint = j[name]
+		if joint and not life.loose[name] then
+			joint.Transform = joint.Transform:Lerp(cf, w)
+		end
+	end
+end
+
 local function step(life: Life, now: number, dt: number)
 	local model = life.model
 	local state = (model:GetAttribute("RagdollState") :: string?) or "Standing"
@@ -2064,6 +2119,7 @@ local function step(life: Life, now: number, dt: number)
 	end
 	layers(life, state, now, dt)
 	swimLayer(life, state, now, dt)
+	filmLayer(life, state, now, dt)
 	freeLoose(life)
 	if not MOVING[state] then
 		life.lastPosition = life.pelvis.Position

@@ -13,6 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Personas = {}
+local FILM_PHONE = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).FILM_PHONE == true
 
 Personas.SHARES = { { "Curious", 35 }, { "Scared", 30 }, { "Hero", 15 }, { "Chill", 20 } }
 Personas.REST = 18
@@ -67,6 +68,9 @@ end
 
 local function release(m: Model, after: number)
 	task.delay(after, function()
+		if m.Parent then
+			m:SetAttribute("Filming", nil)
+		end
 		if m.Parent and m:GetAttribute("Watch") == "React" then
 			m:SetAttribute("Watch", nil)
 			m:SetAttribute("Home", nil)
@@ -125,6 +129,10 @@ local function heard(kind: string, at: Vector3, dummies: Instance)
 			m:SetAttribute("Home", Vector3.new(stand.X, pe.Position.Y, stand.Z))
 			m:SetAttribute("HomeLook", at)
 			m:SetAttribute("Pace", 1.3)
+			if FILM_PHONE and math.random() < 0.5 then
+				-- (P1 rest: half the curious ones get their phone out and film it, Client/DummyLife filmLayer)
+				m:SetAttribute("Filming", true)
+			end
 			say(m, "Curious")
 			release(m, math.random(10, 15))
 		elseif persona == "Scared" then
