@@ -154,6 +154,10 @@ function ChaseService.start(player: Player, count: number?): Chase?
 	local most = math.max(ChaseService.CHASE_MIN, math.min(ChaseService.CHASE_MAX, DeviceTier.caps(DeviceTier.of(record and record.plat)).chasers))
 	local fair = (Config :: any).CHASE_V8 == true
 	local n = math.min(count or (if fair then (Config :: any).CHASE_V8_COUNT else math.random(ChaseService.CHASE_MIN, most)), EventService.dummyRoom())
+	-- (LAG-FREE 2 item 1: a phone at quality 0 gets at most 4 chasers)
+	if (Config :: any).LAGFREE_SERVER_KNOWS and player:GetAttribute("PerfLevel") == 0 then
+		n = math.min(n, 4)
+	end
 	if n < (if fair then 1 else ChaseService.CHASE_MIN) and not count then
 		return nil
 	end

@@ -447,6 +447,11 @@ function VisitorService.keepTargets(player: Player): number
 	end
 	local tier = tierOf(player)
 	local want = ((Config :: any).LAB_MIN_TARGETS :: any)[tier] or 5
+	-- (LAG-FREE 2 item 1: a phone that has stepped down to quality 1 or 0 gets one visitor fewer, never under 3)
+	local perf = player:GetAttribute("PerfLevel")
+	if (Config :: any).LAGFREE_SERVER_KNOWS and type(perf) == "number" and perf <= 1 then
+		want = math.max(3, want - 1)
+	end
 	local cap = ((Config :: any).FX_CAPS :: any)[tier].ragdolls
 	local bodies = VisitorService.bodiesOf(player)
 	local facing, rootAt = facingOf(player)

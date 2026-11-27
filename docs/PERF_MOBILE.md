@@ -114,7 +114,7 @@ No hitch over 100 ms when machines run, a big event starts or the lab loads.
    - The remote is `Perf.Report` (validator: numbers clamped and integer, rate 1 per 30 s).
    - The server logs `AnalyticsService:LogCustomEvent` (`Fps_p10`, `Fps_p50`, `Hitches`, `MemoryMb`) with the device as a custom field, so the Creator Hub shows them per device.
    - The same remote carries item 1's level.
-1. **DONE v1385:** the level reaches the server (PerfLevel, seen 2 in Studio); RagdollDirector near cap -1/-2 at levels 1/0 (never under 3); no background boxing at 0. LEFT: visitors and chasers by level. **`LAGFREE_SERVER_KNOWS`: the server follows the real FPS.**
+1. **DONE v1385:** the level reaches the server (PerfLevel, seen 2 in Studio); RagdollDirector near cap -1/-2 at levels 1/0 (never under 3); no background boxing at 0; v1395: visitors -1 at levels 1/0 (never under 3, VisitorService), chasers at most 4 at level 0 (ChaseService). **`LAGFREE_SERVER_KNOWS`: the server follows the real FPS.**
    - The client sends its level (0-3) only when it changes, at most once per 5 s. The server stores it as the player's `PerfLevel` and decides with it.
    - Levels 3 and 2: the device caps as now.
    - Level 1: the near cap -1 and visitors -1.
