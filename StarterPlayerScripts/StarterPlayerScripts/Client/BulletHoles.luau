@@ -340,9 +340,20 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 		local stretch = math.clamp(1 / math.max(facing, 0.45), 1, 1.8) * (0.88 + math.random() * 0.24)
 		tall, across = size * stretch, size
 	end
+	-- (FIXES_27NOV_LATE 5, Config.HOLES_ON_SKIN; owner: "skudhuller ... SKAL sidde på huden ikke udenpå": on the round
+	-- v6 skin a flat picture wider than the limb's curve sticks out at its edges; the hole is kept small (0.35 on a limb,
+	-- 0.45 on the torso), lies 0.005 off the skin, and the 3D ring and chip discs are not made (they poked out).)
+	local onV6 = model:GetAttribute("BodyV6") == true and (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).HOLES_ON_SKIN == true
+	if onV6 then
+		local cap = if part.Name == "UpperTorso" or part.Name == "LowerTorso" then 0.45 else 0.35
+		local big = math.max(tall, across)
+		if big > cap then
+			tall, across = tall * cap / big, across * cap / big
+		end
+	end
 	hole.Shape = Enum.PartType.Block
 	hole.Size = Vector3.new(0.02, tall, across)
-	hole.CFrame = flatOn(worldAt, worldNormal, 0.02) * CFrame.Angles(math.random() * math.pi * 2, 0, 0)
+	hole.CFrame = flatOn(worldAt, worldNormal, if onV6 then 0.005 else 0.02) * CFrame.Angles(math.random() * math.pi * 2, 0, 0)
 	hole.Transparency = 1
 	local art = Instance.new("Decal")
 	local big = (scale or 1) >= 1.35
@@ -371,7 +382,7 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 	weld.Part1 = hole
 	weld.Parent = hole
 	hole.Parent = part
-	if vary and skin and not PHONE and not noWhite then
+	if vary and skin and not PHONE and not noWhite and not onV6 then
 		-- The pale stress ring round it (plastic goes white where it bends), its own size and strength.
 		local ringSize = math.max(tall, across) * (1.35 + math.random() * 0.4)
 		local ring = disc(ringSize, Color3.fromRGB(196, 198, 202), flatOn(worldAt, worldNormal, 0.012), 0.55 + math.random() * 0.25)

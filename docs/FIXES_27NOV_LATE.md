@@ -63,6 +63,8 @@ Today A2 puts a pale capsule round the limb (on the torso a big glass box), whic
 - **Test:** none in Studio (it does not log there). List the new funnel names in NOW.md, so the owner knows what to look at in the Creator Hub (Analytics, Funnels).
 
 ## 5. Bullet holes and the face ON the skin, never poking through (owner, screenshot: a purple disc half through a body: "Fiks så skudhuller ikke glitcher igennem sådan der, men de SKAL sidde på huden ikke udenpå, det samme gælder ansigtsudtryk skal sidde på ansigtet")
+
+**PART DONE v1372 (`HOLES_ON_SKIN`):** the hole was already one Decal-carrying part; the purple 3D discs poking through were the chip (BODY_HOLE colour) and the stress ring, both Cylinders welded to the limb: on a v6 body they are not made, the hole is capped at 0.35 (limb) / 0.45 (torso) and lies 0.005 off the BodyShape skin. LEFT: the hit hull and the bone-space follow (need the Blender pieces of item 1), the face as decals on a sphere mesh.
 **The causes:**
 - the holes, their stress rings and chips, and the purple wound discs are flat 3D parts (Cylinders, `BulletHoles.disc`) WELDED TO THE PHYSICS PART. The v6 mesh, though, is drawn from the bone chain every frame (the same wobble the round head had). A flat disc is also wider than the curve of a round limb, so its edges stick out or sink in;
 - the face is a flat SurfaceGui on the round Ball head, so away from the centre it floats off the sphere or cuts into it.
