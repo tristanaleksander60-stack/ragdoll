@@ -71,7 +71,15 @@ function DropSpots.scan(lab: Instance)
 		at("Shredder", find(om, "ShredderPit"))
 		at("Seesaw", find(om, "SeesawPlank"))
 		at("TRex", find(om, "TRexGround"))
-		at("Bear", find(om, "BearPoke"), -1)
+		-- (the bear: the DROP HERE sign sat ON the bear (its box middle); now on the ground in front of its mouth)
+		local bearModel = om:FindFirstChild("Bear", true)
+		if bearModel and bearModel:IsA("Model") then
+			local bcf, bsize = bearModel:GetBoundingBox()
+			local front = bcf.Position + bearModel:GetPivot().LookVector * (bsize.Z / 2 + 4)
+			DropSpots.add(bearModel, Vector3.new(front.X, bcf.Position.Y - bsize.Y / 2 + 1, front.Z), "Bear")
+		else
+			at("Bear", find(om, "BearPoke"), -1)
+		end
 		local whale = om:FindFirstChild("PoolWhale")
 		if whale and whale:IsA("Model") then
 			DropSpots.add(whale, whale:GetPivot().Position + Vector3.new(0, 2, 0), "Whale")

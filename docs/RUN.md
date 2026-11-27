@@ -86,6 +86,34 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
 - **Cause found:** a SurfaceGui in the Workspace gets no input. Every `Board` gui is now moved into the PlayerGui, adorned to its panel.
 - **Proof:** scroll each board with the wheel on PC and by drag on a phone. Captures before and after the scroll.
 
+### 1.8 Animals really take ragdolls in the mouth: CLOUD (`CREATURE_GRIP`, Systems/CreatureGrip + AnimalCove, DropSpots)
+- **Causes found** (`AnimalCove.luau`):
+  - the bear's HUG and the T-rex's bite teleported the body to a guessed point every 0.1 s (`DummyControl.move`) while the lab player's screen simulated it, so it jittered behind the animal;
+  - no wound was ever given;
+  - the bear "shook" by tilting its whole anchored model;
+  - the bear's DROP HERE sat on its box middle (`DropSpots.scan` "BearPoke"), on top of the bear.
+- **Now:**
+  - `CreatureGrip.grab` finds the animal's real mouth (a part or Bone named Jaw / LowerJaw / Mouth / Snout / Head) and joins the bitten limb to an anchored grip in the mouth with a BallSocket. The server simulates the body while held, so it dangles and swings;
+  - real bite wounds (VitalsService, mild, no severing);
+  - `release` throws it and gives it back to its player's screen;
+  - the bear: half the time a MAUL (lunge, chest in the mouth, 3 shakes, thrown), else a SWAT with claw wounds;
+  - the T-rex: head down, the waist in its jaws, lifted, whipped left and right 4 times, tossed;
+  - the bear's DROP HERE is on the ground in front of its mouth.
+- **Check:**
+  - the mouth is found on both models (print which part or Bone is used; if it is the wrong one, name the right one in `MOUTH_NAMES`);
+  - the body never sits inside or behind the animal.
+- **Proof:** captures mid-maul and mid-whip from the side, and the wounds after.
+- **NEXT for 9/10:**
+  - **Every killer gets its own real animated choreography:**
+    - rigged models (Bones or Motor6D for the head, jaw, legs, tail) and AnimationController clips: idle, walk, charge, rear, bite-shake, roar, eat;
+    - the bear stands on its hind legs, swipes, mauls and drags the body into its cave;
+    - the T-rex stalks, roars, bites, sometimes gulps and spits the body out later;
+    - the crocodile does a death roll with a leg in its jaws and drags the body under;
+    - the spider wraps the body in a cocoon;
+    - the plant chews.
+  - Each one unique, with wounds, bone breaks (2.3) and sounds.
+  - List every machine and animal that "kills", and give each its own choreography, worst first.
+
 ---
 
 ## BATCH 2 (after the owner's test of batch 1)

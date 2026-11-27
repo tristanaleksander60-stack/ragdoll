@@ -129,7 +129,30 @@ local function wireBear(bear: Model)
 				local pe = pelvisOf(target)
 				local dir = if pe then flat(pe.Position - cf.Position) else home.LookVector
 				dir = if dir.Magnitude > 0.1 then dir.Unit else home.LookVector
-				if math.random(4) == 1 then
+				local GRIP = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).CREATURE_GRIP
+				if GRIP and math.random(2) == 1 then
+					-- (CREATURE_GRIP: the MAUL. The bear lunges, takes the ragdoll IN ITS MOUTH by the chest (a real joint: it
+					-- dangles), shakes it side to side three times with real bite wounds, then flings it away. Before, the
+					-- body was teleported 10 times a second to a guessed point behind the bear and let go unhurt.)
+					target:SetAttribute("MoodSay", "AAAH!")
+					glide(bear, (home + dir * 2.5) * CFrame.Angles(math.rad(12), 0, 0), 0.18)
+					local g = lazy("CreatureGrip").grab(bear, target, "UpperTorso", by)
+					if g then
+						local base = home + dir * 2.5
+						for shakeN = 1, 3 do
+							local t0 = os.clock()
+							while os.clock() - t0 < 0.45 and target.Parent do
+								local k = (os.clock() - t0) / 0.45
+								bear:PivotTo(base * CFrame.Angles(math.rad(8), math.sin(k * math.pi * 2) * math.rad(28), math.sin(k * math.pi * 2) * math.rad(10)))
+								task.wait(0.03)
+							end
+							lazy("CreatureGrip").bite(target, g.limb, by, 1)
+							shake(cf.Position, 60 + shakeN * 20)
+						end
+						lazy("CreatureGrip").release(g, dir * 45 + Vector3.new(0, 35, 0), by)
+					end
+					target:SetAttribute("MoodSay", nil)
+				elseif not GRIP and math.random(4) == 1 then
 					-- the BEAR HUG: held close a few seconds, then it dozes off again
 					pop(cf.Position + Vector3.new(0, size.Y / 2 + 3, 0), "BEAR HUG!", Color3.fromRGB(255, 170, 200))
 					target:SetAttribute("MoodSay", "Let me goooo!")
@@ -144,6 +167,12 @@ local function wireBear(bear: Model)
 				else
 					-- the SWAT: a lunge and a big arc
 					glide(bear, (home + dir * 2) * CFrame.Angles(math.rad(10), 0, 0), 0.15)
+					if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).CREATURE_GRIP then
+						local hit = target:FindFirstChild("UpperTorso")
+						if hit and hit:IsA("BasePart") then
+							lazy("CreatureGrip").bite(target, hit, by, 2) -- (the claws leave real marks)
+						end
+					end
 					pcall(lazy("DummyControl").push, target, dir * 110 + Vector3.new(0, 85, 0), by)
 					shake(cf.Position + dir * 3, 90)
 					pop(cf.Position + dir * 3 + Vector3.new(0, 5, 0), "SWAT!", Color3.fromRGB(255, 200, 90))
@@ -351,16 +380,42 @@ local function wireRex(rex: Model, ground: BasePart, gate: BasePart)
 							-- the bite: up in its jaws, shaken, tossed high
 							busy[target] = true
 							pop(pe.Position + Vector3.new(0, 6, 0), "CHOMP!", Color3.fromRGB(255, 200, 90))
-							local jaw = here * CFrame.new(0, rsize.Y * 0.7, -rsize.Z * 0.45)
-							local b0 = os.clock()
-							while os.clock() - b0 < 1.2 and target.Parent do
-								local k = os.clock() - b0
-								rex:PivotTo(here * CFrame.Angles(0, math.sin(k * 20) * 0.15, 0))
-								pcall(lazy("DummyControl").move, target, jaw * CFrame.new(math.sin(k * 20) * 1.5, 0, 0))
-								task.wait(0.05)
+							if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).CREATURE_GRIP then
+								-- (CREATURE_GRIP: the T-rex lowers its head, takes the ragdoll IN ITS JAWS by the waist (a real
+								-- joint: it flails), lifts it up, whips it left and right with real bite wounds, then tosses it.)
+								local g = lazy("CreatureGrip").grab(rex, target, "LowerTorso", player)
+								if g then
+									local lift = os.clock()
+									while os.clock() - lift < 0.4 do
+										local k = (os.clock() - lift) / 0.4
+										rex:PivotTo(here * CFrame.Angles(math.rad(-14) * k, 0, 0))
+										task.wait(0.03)
+									end
+									for whip = 1, 4 do
+										local w0 = os.clock()
+										while os.clock() - w0 < 0.35 and target.Parent do
+											local k = (os.clock() - w0) / 0.35
+											rex:PivotTo(here * CFrame.Angles(math.rad(-14), math.sin(k * math.pi) * math.rad(35) * (if whip % 2 == 0 then -1 else 1), 0))
+											task.wait(0.03)
+										end
+										lazy("CreatureGrip").bite(target, g.limb, player, 1)
+										shake(here.Position, 70)
+									end
+									rex:PivotTo(here)
+									lazy("CreatureGrip").release(g, look * 40 + Vector3.new(0, 110, 0), player)
+								end
+							else
+								local jaw = here * CFrame.new(0, rsize.Y * 0.7, -rsize.Z * 0.45)
+								local b0 = os.clock()
+								while os.clock() - b0 < 1.2 and target.Parent do
+									local k = os.clock() - b0
+									rex:PivotTo(here * CFrame.Angles(0, math.sin(k * 20) * 0.15, 0))
+									pcall(lazy("DummyControl").move, target, jaw * CFrame.new(math.sin(k * 20) * 1.5, 0, 0))
+									task.wait(0.05)
+								end
+								rex:PivotTo(here)
+								pcall(lazy("DummyControl").push, target, look * 40 + Vector3.new(0, 120, 0), player)
 							end
-							rex:PivotTo(here)
-							pcall(lazy("DummyControl").push, target, look * 40 + Vector3.new(0, 120, 0), player)
 							task.delay(2, function()
 								busy[target] = nil
 							end)
