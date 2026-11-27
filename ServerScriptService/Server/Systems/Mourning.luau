@@ -483,8 +483,21 @@ local function attack(m: Model, job: Job, now: number)
 	end
 	-- (NOW 6: the planned first anger: one funny shove, or only a scolding, then it runs off.)
 	if a.harmless and inReach and facing and (state == "Standing" or state == "Walking") and m:GetAttribute("Held") ~= true and now >= a.nextHit then
-		a.nextHit = math.huge
+		-- F26 (Config.SHOVE_SERIES): a random 1-3 shoves, each with its own line and a short wind-up; it follows if the
+		-- player backs off (Home stays on the player); a hit that knocks it over ends the series. Then it flees.
+		local series = (Config :: any).SHOVE_SERIES == true
+		if series and not a.shoves then
+			a.shoves = math.random(1, 3)
+			a.shoved = 0
+		end
+		a.shoved = (a.shoved or 0) + 1
+		local last = not series or a.shoved >= a.shoves
+		a.nextHit = if last then math.huge else now + Mourning.HIT_LANDS + 1.1
 		local shove = (Config :: any).ANGRY_SHOVE ~= false
+		if series then
+			local lines = { "Hey!", "Stop that!", "How do YOU like it?" }
+			m:SetAttribute("MoodSay", lines[math.min(a.shoved, #lines)])
+		end
 		if shove then
 			m:SetAttribute("Punch", ((m:GetAttribute("Punch") :: number?) or 0) + 1)
 		end
@@ -492,12 +505,22 @@ local function attack(m: Model, job: Job, now: number)
 			if jobs[m] ~= job then
 				return
 			end
-			if shove and root.Parent and flat(root.Position - pelvis.Position).Magnitude <= Mourning.REACH + 1 then
+			local st = m:GetAttribute("RagdollState")
+			local knocked = series and st ~= "Standing" and st ~= "Walking"
+			if knocked then
+				last = true -- (knocked over mid-series: no more shoves)
+				a.nextHit = math.huge
+			end
+			if shove and not knocked and root.Parent and flat(root.Position - pelvis.Position).Magnitude <= Mourning.REACH + 1 then
 				root.AssemblyLinearVelocity += dir * Mourning.FUNNY_SHOVE + Vector3.new(0, Mourning.FUNNY_LIFT, 0)
 				pcall(function()
 					lazy("FxService").hit(root.Position, 30, "Punch")
 				end)
 			end
+			if not last then
+				return
+			end
+			m:SetAttribute("MoodSay", nil)
 			stop(m, nil)
 			m:SetAttribute("PanicFrom", root.Position)
 			m:SetAttribute("PanicUntil", workspace:GetServerTimeNow() + 4)
