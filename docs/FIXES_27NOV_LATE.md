@@ -8,7 +8,7 @@
 
 ## 1. X-ray on one limb: NOT a cylinder (owner: "Fiks x-ray så det ikke bare er en cylinder")
 
-**PART DONE v1365:** the glass sleeve (the cylinder, and the big one on the torso) is gone; only the bones show through the skin with the Highlight, 2 s plus a 1 s fade. LEFT: the 15 limb-shaped glass pieces from Blender (also the hit hull for item 5).
+**PART DONE v1365:** the glass sleeve (the cylinder, and the big one on the torso) is gone; only the bones show through the skin with the Highlight, 2 s plus a 1 s fade. The 15 pieces are BUILT (`mannequin_v6_xray.glb`, 348-2281 tris each, every bone group mapped); the upload was refused (folder not approved): owner step in NOW.md questions. LEFT: import, align to the template, hook into limbGlow and the hit hull.
 Today A2 puts a pale capsule round the limb (on the torso a big glass box), which reads as a cylinder stuck on the body.
 - **Make the glass the limb's OWN shape:** in Blender, split the approved v6 mesh at its joint planes (the same cuts the v6 build uses) into 15 closed pieces, one per R15 part (each piece = the faces whose strongest bone weight is that part), pushed out 0.015 along the normals. Export them as 15 plain MeshParts named after the parts (`art/models/mannequin/mannequin_v6_xray.fbx`; MCP upload, else ONE owner import step).
 - **In the game:** on the limb hit 3 times in a row, the matching piece is shown welded to that physics part at its rest offset, in light-blue Glass at about 0.55 transparency, with a soft blue edge glow. The bones show through with the Highlight (AlwaysOnTop) as in A2. The timing stays: 2 s, then a 1 s fade.
