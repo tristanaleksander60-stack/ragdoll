@@ -2481,6 +2481,8 @@ local function onRender(dt: number)
 			if life.line then
 				life.line:Destroy()
 			end
+		elseif (Config :: any).LAGFREE_SLEEP and model:GetAttribute("Asleep") == true and not life.stars then
+			continue -- (LAG-FREE 2 item 2: a sleeping body lies still; its face and pose wait where they were)
 		else
 			-- Up close every frame; further off a few times a second; far away and off screen not
 			-- at all (its face and pose wait where they were).
