@@ -994,6 +994,8 @@ local function brokenLegs(rig: Rig): (number, number)
 	return count, side
 end
 
+local GAME_NAV_SNAP = (require(script.Parent.Parent:WaitForChild("Config")) :: any).NAV_SNAP == true
+local NavTarget = require(script.Parent:WaitForChild("NavTarget"))
 local function homeOf(rig: Rig): Vector3?
 	-- (F72, Config.NAV_ALWAYS: Systems/RagdollNav's next waypoint, when it is leading this walk, comes before Home)
 	local nav = rig.model:GetAttribute("NavHome")
@@ -1001,6 +1003,10 @@ local function homeOf(rig: Rig): Vector3?
 		return nav
 	end
 	local home = rig.model:GetAttribute("Home")
+	if typeof(home) == "Vector3" and GAME_NAV_SNAP and rig.model:GetAttribute("Seat") == nil then
+		-- (F72 step 4: never a goal inside or against something solid; cached per spot, see NavTarget)
+		return NavTarget.snap(home)
+	end
 	return if typeof(home) == "Vector3" then home else nil
 end
 
@@ -1483,7 +1489,7 @@ end
 
 -- F72 NAV_BUMP_LOG: a cheap always-on count of detours and give-ups, printed once a minute when there were any.
 local NAV_BUMP_LOG = (require(script.Parent.Parent:WaitForChild("Config")) :: any).NAV_BUMP_LOG == true
-local bumpCount, bumpGiveUps, bumpCars, bumpSince = 0, 0, 0, os.clock()
+local bumpCount, bumpGiveUps, bumpCars, bumpTouch, bumpSince = 0, 0, 0, 0, os.clock()
 local function bumpLog(kind: string)
 	if not NAV_BUMP_LOG then
 		return
@@ -1492,13 +1498,15 @@ local function bumpLog(kind: string)
 		bumpCount += 1
 	elseif kind == "car" then
 		bumpCars += 1
+	elseif kind == "touch" then
+		bumpTouch += 1
 	else
 		bumpGiveUps += 1
 	end
 	local now = os.clock()
 	if now - bumpSince >= 60 then
-		print(string.format("[NavBump] last %d s: %d detours, %d other side, %d waits for a car", now - bumpSince, bumpCount, bumpGiveUps, bumpCars))
-		bumpCount, bumpGiveUps, bumpCars, bumpSince = 0, 0, 0, now
+		print(string.format("[NavBump] last %d s: %d detours, %d other side, %d waits for a car, %d touches", now - bumpSince, bumpCount, bumpGiveUps, bumpCars, bumpTouch))
+		bumpCount, bumpGiveUps, bumpCars, bumpTouch, bumpSince = 0, 0, 0, 0, now
 	end
 end
 
@@ -1668,6 +1676,22 @@ local function updateMoving(rig: Rig, dt: number)
 				end
 			end
 			local direction = offset.Unit
+			if GAME_NAV_SNAP and not fleeing and state == "Walking" then
+				-- (F72 step 5: touching = react at once: wanting to walk but moving under 30 % of its speed for 0.4 s
+				-- (pressed against something) takes the more open side now, not after the long stuck timer)
+				local R = rig :: any
+				local v = flat(rig.pelvis.AssemblyLinearVelocity).Magnitude
+				if rig.speed > 2 and v < 0.3 * rig.speed and ((rig :: any).waitCar or 0) <= now then
+					R.slowFor = (R.slowFor or 0) + dt
+				else
+					R.slowFor = 0
+				end
+				if R.slowFor > 0.4 and rig.stuckTime <= STUCK_DETOUR and now >= rig.steerUntil then
+					R.slowFor = 0
+					rig.stuckTime = STUCK_DETOUR + 0.01
+					bumpLog("touch")
+				end
+			end
 			if now < rig.steerUntil then
 				-- Keep to the detour it chose for a moment (or it walks straight back into it).
 				direction = CFrame.Angles(0, rig.steer, 0):VectorToWorldSpace(direction)
