@@ -558,7 +558,7 @@ end
 --   guarded  the server could not see the spot from the hitter (HitService): no zone that kills
 --            or bleeds out fast (GUARDED)
 --   round    a gun's round (Toys: gun): any of it to the head kills at once (HEADSHOT)
-export type WoundOptions = { sever: number?, zone: Anatomy.Zone?, blunt: boolean?, guarded: boolean?, round: boolean?, boost: number?, strike: boolean?, burst: boolean? }
+export type WoundOptions = { sever: number?, zone: Anatomy.Zone?, blunt: boolean?, guarded: boolean?, round: boolean?, boost: number?, strike: boolean?, burst: boolean?, toyId: string?, charge: number? }
 -- The head gone in pieces: hidden (it comes back when the body is put together again), bits of it fly.
 function VitalsService.burstHead(model: Model)
 	local head = model:FindFirstChild("Head")
@@ -821,7 +821,13 @@ function VitalsService.wound(model: Model, part: BasePart, position: Vector3, by
 	if (Config :: any).BONES_V2 and not severed then
 		local kind = if o.zone == Anatomy.zones.Blast then "blast" elseif o.round then "round" else "blow"
 		local okB, word = pcall(function()
-			return (require(script.Parent:WaitForChild("Bones")) :: any).hit(model, part, power, kind)
+			local range: number? = nil
+			local ch = by and by.Character
+			local hrp = ch and ch:FindFirstChild("HumanoidRootPart")
+			if hrp and hrp:IsA("BasePart") then
+				range = (hrp.Position - position).Magnitude
+			end
+			return (require(script.Parent:WaitForChild("Bones")) :: any).hit(model, part, power, kind, o.toyId, o.charge, range)
 		end)
 		if okB and type(word) == "string" then
 			label = label .. ": " .. word
