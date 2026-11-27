@@ -345,6 +345,46 @@ end
 local BUILD: { [string]: (Folder, CFrame, Machine) -> ((() -> ())?) } = {}
 
 -- SPIDER: a web in the yard's east corner; hunger meter on a small sign.
+-- 3.13 SPIDER (docs/MACHINES_10.md; Config.SPIDER_10): the cocoon that drops stays 10 s and can be SHOT open: it bursts
+-- in white silk, the body inside comes out with web strands on it for 8 s and "FREED!" pops.
+local cocoons: { [BasePart]: { model: Model } } = {}
+local cocoonListener = false
+local function freeCocoon(c: BasePart)
+	local entry = cocoons[c]
+	cocoons[c] = nil
+	if not entry or not c.Parent then
+		return
+	end
+	local at = c.Position
+	spray(c.Parent :: Instance, at, { Color3.fromRGB(250, 250, 255), Color3.fromRGB(230, 230, 240) }, 40, 16, 0.8, Vector3.new(0, 1, 0))
+	c:Destroy()
+	local model = entry.model
+	if model.Parent then
+		for _, name in { "LeftUpperArm", "RightUpperArm", "UpperTorso", "LeftUpperLeg", "RightLowerLeg" } do
+			local limb = model:FindFirstChild(name)
+			if limb and limb:IsA("BasePart") then
+				local strand = Instance.new("Part")
+				strand.Name = "WebStrand"
+				strand.Size = Vector3.new(0.08, limb.Size.Y * 1.1, 0.08)
+				strand.Color = Color3.fromRGB(245, 245, 250)
+				strand.Material = Enum.Material.Neon
+				strand.Transparency = 0.3
+				strand.Massless, strand.CanCollide, strand.CanQuery, strand.CanTouch = true, false, false, false
+				strand.CFrame = limb.CFrame * CFrame.new(limb.Size.X * 0.45, 0, 0) * CFrame.Angles(0, 0, math.rad(math.random(-30, 30)))
+				local w = Instance.new("WeldConstraint")
+				w.Part0, w.Part1 = limb, strand
+				w.Parent = strand
+				strand.Parent = limb
+				game:GetService("Debris"):AddItem(strand, 8)
+			end
+		end
+		pcall(lazy("DummyControl").push, model, Vector3.new(0, 30, 0))
+	end
+	pcall(function()
+		lazy("Playground").pop(at + Vector3.new(0, 4, 0), "FREED!", Color3.fromRGB(240, 240, 255))
+	end)
+end
+
 BUILD.Spider = function(f, at, m)
 	local web = part(f, "SpiderWeb", Vector3.new(26, 26, 0.4), at * CFrame.new(0, 14, 0), Color3.fromRGB(235, 235, 240), Enum.Material.SmoothPlastic)
 	web.Transparency = 1 -- (only the threads show)
@@ -579,7 +619,33 @@ BUILD.Spider = function(f, at, m)
 			end)
 			pcall(lazy("DummyControl").move, model, floorCf)
 			hideBody(model, false)
-			task.delay(2.5, function()
+			local keep = if (Config :: any).SPIDER_10 then 10 else 2.5
+			if (Config :: any).SPIDER_10 then
+				cocoon.CanQuery = true
+				cocoons[cocoon] = { model = model }
+				if not cocoonListener then
+					cocoonListener = true
+					table.insert(lazy("Knockables").listeners, {
+						shot = function(point: Vector3, _from: Vector3)
+							for c in cocoons do
+								if c.Parent and (c.Position - point).Magnitude < math.max(c.Size.X, c.Size.Y) * 0.6 + 0.5 then
+									freeCocoon(c)
+								end
+							end
+						end,
+						blast = function(center: Vector3, radius: number)
+							for c in cocoons do
+								if c.Parent and (c.Position - center).Magnitude < radius + 2 then
+									freeCocoon(c)
+								end
+							end
+						end,
+						reset = function() end,
+					})
+				end
+			end
+			task.delay(keep, function()
+				cocoons[cocoon] = nil
 				if cocoon.Parent then
 					cocoon:Destroy()
 				end
