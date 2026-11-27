@@ -49,6 +49,7 @@ Plan.INNER = {
 	{ zone = "Lab", to = "Sweeper", points = { Vector2.new(0, 120), Vector2.new(0, 139) } },
 	{ zone = "Lab", to = "LavaStrip", points = { Vector2.new(150, 30), Vector2.new(172, 30) } },
 	{ zone = "Lab", to = "RagdollBowling", points = { Vector2.new(-25, -80), Vector2.new(-25, -100), Vector2.new(-25, -103), Vector2.new(-24, -103) } },
+	{ zone = "Lab", to = "BikeStand2", points = { Vector2.new(20, 15), Vector2.new(25, 15), Vector2.new(25, 20), Vector2.new(24, 20) } },
 	{ zone = "Lab", to = "Cannon", points = { Vector2.new(-125, 120), Vector2.new(-125, 145) } },
 	{ zone = "Lab", to = "Sandcastle", points = { Vector2.new(0, -30), Vector2.new(20, -30), Vector2.new(20, -32), Vector2.new(26, -32) } },
 	{ zone = "Lab", to = "StretchMachine", points = { Vector2.new(100, 40), Vector2.new(100, 14) } },
@@ -122,6 +123,7 @@ Plan.ITEMS = {
 	Mole = { zone = "Lab", at = Vector2.new(-25, -22), size = Vector2.new(12, 12), face = "E", what = "the mole" },
 	RagdollBowling = { zone = "Lab", at = Vector2.new(-58, -103), size = Vector2.new(46, 12), face = "E", what = "THE HOOK by the spawn (owner: replace the chicken): a short bowling lane, 10 giant pins at the west end, a scoreboard; TRY rolls a ragdoll down it (F88)" },
 	PicnicGrill = { zone = "Lab", at = Vector2.new(-195, -95), size = Vector2.new(22, 14), face = "E", what = "picnic tables + grill" },
+	BikeStand2 = { zone = "Lab", at = Vector2.new(40, 20), size = Vector2.new(10, 6), face = "W", what = "a second FREE bicycle stand by the tower square (FTUE fix 7)" },
 	ChickenCoop = { zone = "Lab", at = Vector2.new(-30, 160), size = Vector2.new(16, 14), face = "W", what = "the chicken's coop and little fenced run (moved away from the spawn, F88)" },
 	DuckPond = { zone = "Lab", at = Vector2.new(-75, 200), size = Vector2.new(22, 12), face = "N", what = "the small duck pond" },
 }

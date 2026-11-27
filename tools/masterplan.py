@@ -106,6 +106,7 @@ ITEMS += [
     ("Mole",           "Lab",         -25,  -22, 12, 12, "E", "the mole"),
     ("RagdollBowling", "Lab",         -58, -103, 46, 12, "E", "THE HOOK by the spawn (owner: replace the chicken): a short bowling lane, 10 giant pins at the west end, a scoreboard; TRY rolls a ragdoll down it (F88)"),
     ("PicnicGrill",    "Lab",         -195, -95, 22, 14, "E", "picnic tables + grill"),
+    ("BikeStand2",     "Lab",          40,   20, 10, 6,  "W", "a second FREE bicycle stand by the tower square (FTUE fix 7)"),
     ("ChickenCoop",    "Lab",         -30, 160, 16, 14, "W", "the chicken's coop and little fenced run (moved away from the spawn, F88)"),
     ("DuckPond",       "Lab",         -75,  200, 22, 12, "N", "the small duck pond"),
     ("TrainingYard",   "Lab",        -100,  -98, 1, 1,  "S", "PLACEHOLDER"),
