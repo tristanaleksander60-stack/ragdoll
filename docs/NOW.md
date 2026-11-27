@@ -506,7 +506,7 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - Not published yet: the owner presses Alt+P (no publish action over MCP; Open Cloud cannot upload .rbxl).
 
 ## BODY V3 approval (owner gate)
-- **BODY V3: waiting for the owner's OK** (built v1296, 27 Nov): renders in `art/models/mannequin/review_v3/` (front, three_quarter, side, back, posed_front, knocked_down, next_to_player: the blue block is a 5.2-stud player). Chunky toy crash-test dummy: chest 2.0 wide, thick limbs, 13 dark joint rings, a chest plate with 4 bolts, yellow-black quarter-circle marks on the plate, knees and upper arms, baked AO; 14.5k tris; no head in the mesh (the dummy keeps its Head with the living faces). The fit pass (R9 + the list in RAGDOLL_10) is PARKED until "BODY V3 APPROVED". Nothing in the game uses v3 until the owner imports it.
+- **BODY V3 (v1296): NOT APPROVED by the owner** (27 Nov: "det der er helt ude og skide"). Build **v4** with the fixes below. Judge it YOURSELF harshly against the bar in `RAGDOLL_10.md` "v4 FIXES" (render, look, fix, render again, until it truly passes), THEN push the renders and wait for the owner's OK. Do not show the owner a body that fails your own checklist.
 
 ## ANSWERS (cloud session for the owner, 27 Nov): use these, do not ask again
 1. **X-RAY on I, REVIVE ALL on X:** yes, keep both.

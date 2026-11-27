@@ -69,6 +69,36 @@ The ragdolls ARE the game. This doc is the one umbrella for making them 10/10. I
    - **phones:** the same with the device caps.
 5. In that pass, every item is checked by reading where it attaches (a bone or part, an offset from BodyShape). Nothing may float off or sink into the new body.
 
+**v4 FIXES: the owner rejected v3** (27 Nov: "helt ude og skide"). The cloud's review of the v3 renders found:
+1. **The markings are pixelated and smeared:**
+   - the colour map is too low resolution, or the UVs are stretched over the round chest plate;
+   - **fix:** clean UVs (a planar projection per marking area), a 2048 colour map, the black-and-yellow quarter circles drawn as crisp VECTOR shapes into the texture (Pillow or Blender's own image painting from code, anti-aliased), with a thin black outline.
+2. **The rings look like loose donuts stuck on, sticking far out at the shoulders:**
+   - **fix:** the joint rings become part of the body: a shallow GROOVE plus a slim, flush band (sticking out at most 0.04 studs), modelled into the surface at the neck, shoulders, elbows, wrists, hips, knees and ankles;
+   - no separate torus objects.
+3. **The hands are tiny, thin and realistic on a chunky toy:**
+   - **fix:** BIG, round, soft toy hands (the palm about 0.55 wide), 4 thick sausage fingers and a thick thumb, rounded tips; mitten-like, but with fingers;
+   - the size of the hand reads clearly next to the forearm.
+4. **The feet are flat plates:**
+   - **fix:** rounded boot-shaped feet (a round toe, a heel, a thick soft sole blended into the foot), about 1.4 long, joined to the ankle with a groove ring.
+5. **It reads as a robot or a diving suit, not a cute toy:**
+   - **fix:** softness everywhere. Every part rounded (no flat faces, no hard edges anywhere), a slightly bigger round belly and chest, softly tapering limbs, smooth blends at the shoulders and hips (no sharp joins), the chest plate a soft rounded oval set INTO the chest;
+   - the target is the soft, friendly volume of Fall Guys and Gang Beasts, with crash-test details on top.
+6. **Also:**
+   - the arms hang a little away from the body (they never touch it);
+   - the whole body is ONE smooth merged mesh;
+   - the shading is smooth (auto smooth plus weighted normals);
+   - a subtle AO bake.
+
+**The bar before the owner sees it** (Claude Code judges its own renders against this, harshly, and repeats until every line is true):
+- the markings are crisp at full size, no pixels or smears;
+- no part sticks out like a separate object; the rings are flush bands;
+- the hands are big and round, and clearly toy hands;
+- the feet are round boots;
+- nothing is flat, sharp or robotic; it looks soft, chunky, friendly and fun;
+- it looks like it belongs in a top Roblox game next to a player avatar;
+- the renders: front, side, three-quarter, back, knocked down (a starfish pose), next to a player, and a CLOSE-UP of a hand and a marking.
+
 **More life:**
 - **The stance:** upright and relaxed, never hunched or hand-clasped by default;
 - **the face:** R2, living eyes, blinks and a talking mouth;
