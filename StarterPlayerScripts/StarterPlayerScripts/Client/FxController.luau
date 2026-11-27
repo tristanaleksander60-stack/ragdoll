@@ -1639,6 +1639,27 @@ function FxController.predictHit(position: Vector3, speed: number, toyId: string
 		table.remove(queue, 1)
 	end
 	onFx("Hit", position, speed, toyId, nil, direction, byHand == true, true)
+	-- F28 (Config.XRAY_TRACER): with X-ray on, a short bright line shows the round's path through the glass body for
+	-- 1 s: from 3 studs before the hit point to 1.5 studs past it, along the shot.
+	if direction and direction.Magnitude > 0.01 and not byHand and (require(Shared:WaitForChild("Config")) :: any).XRAY_TRACER then
+		local okX, on = pcall(function()
+			return (require(script.Parent:WaitForChild("DummySkins")) :: any).xrayIsOn()
+		end)
+		if okX and on then
+			local d = direction.Unit
+			local a, b = position - d * 3, position + d * 1.5
+			local line = Instance.new("Part")
+			line.Name = "XrayTracer"
+			line.Anchored, line.CanCollide, line.CanQuery, line.CanTouch, line.CastShadow = true, false, false, false, false
+			line.Material = Enum.Material.Neon
+			line.Color = Color3.fromRGB(255, 235, 150)
+			line.Size = Vector3.new(0.07, 0.07, (b - a).Magnitude)
+			line.CFrame = CFrame.lookAt((a + b) / 2, b)
+			line.Parent = fxFolder or Workspace
+			TweenService:Create(line, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Transparency = 1 }):Play()
+			game:GetService("Debris"):AddItem(line, 1.1)
+		end
+	end
 end
 
 -- D12 (DAMAGE_12.md 1 "Feedback"; Config.BONES_V2): each bone stage has its own sound, heavier each step (a tick for a
