@@ -27,6 +27,7 @@ local navs: { [Model]: Nav } = setmetatable({}, { __mode = "k" }) :: any
 local mine: { [Model]: boolean } = setmetatable({}, { __mode = "k" }) :: any -- (we are setting Home ourselves)
 local lastOutside: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any -- (F65: when a system last set Home itself)
 local budget = RagdollNav.RATE
+local pending: { [Model]: Vector3 } = setmetatable({}, { __mode = "k" }) :: any -- (PHYSICS_DEEP NAV_QUEUE: walks that missed the budget)
 -- (F72, Config.NAV_ALWAYS: the waypoint goes in its OWN attribute NavHome, which the active ragdoll follows before Home; Home is
 -- never overwritten, so a system that sets Home every tick (a moving goal: the newspaper route, a chase, FirstAid, a
 -- runner) no longer fights the path, and every walk gets one: re-planned only when the goal moved 4 studs, at most 1/s)
@@ -84,11 +85,19 @@ local function start(m: Model, goal: Vector3)
 		drop(m)
 		return
 	end
+	local broke = budget <= 0
 	local pts = compute(m, pe.Position, goal)
 	if not pts or #pts < 2 then
 		drop(m)
+		if broke and Config.NAV_QUEUE then
+			-- (PHYSICS_DEEP: the probe found walkers with no path walking into bike racks, fences and lamp posts: the path
+			-- budget (shared by every lab) was spent, so they walked straight and never got one. Now they wait in a queue
+			-- for the next refill and get their path then.)
+			pending[m] = goal
+		end
 		return -- (no path or no budget: it walks straight as before)
 	end
+	pending[m] = nil
 	local look = m:GetAttribute("HomeLook")
 	navs[m] = { goal = goal, look = look, points = pts, idx = 2, lastPos = pe.Position, lastAt = os.clock(), fails = 0, plannedAt = os.clock() }
 	if look ~= nil then
@@ -290,7 +299,18 @@ function RagdollNav.start()
 			acc += dt
 			if acc >= 1 then
 				acc = 0
-				budget = RagdollNav.RATE
+				budget = if Config.NAV_QUEUE then RagdollNav.RATE * 2 else RagdollNav.RATE
+				if Config.NAV_QUEUE then
+					for m, goal in pending do
+						if budget <= 0 then
+							break
+						end
+						pending[m] = nil
+						if m.Parent and m:GetAttribute("Home") == goal and not navs[m] then
+							pcall(start, m, goal)
+						end
+					end
+				end
 			end
 			scan += dt
 			if scan > 5 then
