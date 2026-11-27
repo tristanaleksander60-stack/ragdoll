@@ -84,6 +84,43 @@ The ragdolls ARE the game. This doc is the one umbrella for making them 10/10. I
 - the cheap mesh far;
 - at least 30 fps on a low phone and 60 on a mid phone with 7 ragdolls near.
 
+**R9. Everything fits the NEW body** (owner, 27 Nov: "Fiks så at den nye krop og ben passer til skudhuller, x-ray, blod osv. Alt ved den ragdoll skal være 10/10, så vi har de BEDSTE physics"; `Config.BODY_FIT = true`)
+
+Today the holes, the splatter, the X-ray, the bandages and the physics were made for the old 15 BLOCKS. On the slim v2 body they float off the skin, sit inside it, or the hit lands where there is no body. Everything must match the body you SEE:
+1. **ONE body shape table** (`Shared/BodyShape.luau`, written by the Blender script from the v2 mesh):
+   - for every bone, its length and its radius profile along the length (shoulder, mid, elbow…);
+   - for the torso, the front/back depth and the width at chest, waist and hips.
+
+   Every system below reads it. Change the mesh, re-export the table, and everything follows.
+2. **The physics matches the look:**
+   - the 15 invisible physics parts are resized from BodyShape to fit inside the visible limbs (slim arms, tapering legs, a real chest and waist), so a shot that visibly hits the arm hits it, a shot past the slim arm misses, and feet stand flat on the ground (no floating, no sinking);
+   - the masses are re-set to the RAGDOLL_FEEL shares (torso about 40 %, head 8 %, each leg 16 %, each arm 5 %);
+   - the joint attachments are moved to the mesh's real joint centres (no gap or overlap at the shoulders and hips);
+   - the collision between body parts stays on except at joints.
+3. **BULLET HOLES on the skin:**
+   - each hole goes on the VISIBLE surface: the client raycasts along the shot against the SmoothBody mesh (a raycast-only query) and places the hole at that exact point, along the surface normal;
+   - it is welded to the physics part under it (which the bone follows), so it moves with the body;
+   - an exit hole on the far side for the guns that go through (D12), on the surface too;
+   - the X-ray slug sits on the bone on that same line.
+4. **SPLASH, DRIPS, POOLS:**
+   - the splash bursts from the surface point along the normal;
+   - the 2-3 dripping holes run a thin trickle DOWN the skin (along the part's down direction) and drop from the lowest point of that limb;
+   - pools form under the hole that is lowest on a lying body.
+5. **X-RAY:**
+   - the shell is the v2 mesh itself made see-through (glass, a blue rim), never the old blocks;
+   - the skeleton is scaled to BodyShape (the bones along the mesh's limb centre lines, the ribcage inside the real chest), so cracks, breaks, shatters, slugs and the bullet path (F28 tracer) are INSIDE the body you see;
+   - the hand bones in the real hands.
+6. **BANDAGES, SLINGS, SPLINTS, PLASTERS:** wrapped round the slim limb at BodyShape's radius at that point (plus 0.05), never floating or sunk; the pick-out plaster on the hole's surface point.
+7. **BRUISES, SOOT, WET, PAINT, the crash-test marks:**
+   - small surface decal patches at hit points (bruises fade);
+   - whole-body tints for soot, wet and paint (a temporary colour on the mesh, eased back);
+   - the crash-test marks on the mesh's temples, chest and knees.
+8. **STRETCH (F74) on the skinned body:** move the child bones out along the limb (the skin stretches between the bones, rubbery), and grow the physics parts to match (from BodyShape × the stretch factor).
+9. **The HANDS:** one set only: the v2 mesh's finger bones, posed by state (RealHands' parts hidden where the mesh is shown).
+10. **FAR bodies:** the cheap version of the same mesh (R1) gets the same hole, splash and tint rules (no finger poses, holes capped per device: AUDIT 37).
+11. **Damage at the right spot:** HitService and the bone system (D12) read the part hit by the server ray. With the physics parts now matching the mesh, the bone, the hole and the X-ray slug all agree.
+12. **Cost:** one extra client raycast per visible hole (pooled); BodyShape is a small static table; nothing per frame.
+
 ## Check (the owner, phone first)
 Stand among the ragdolls for a minute, then hit some:
 1. they look like slim grey crash-test dummies with small persona accessories and slightly different sizes;
@@ -91,4 +128,5 @@ Stand among the ragdolls for a minute, then hit some:
 3. they walk like people;
 4. a light hit makes them stumble and recover; a big one makes them fall with their arms out, slide, and get up the right way, dizzy;
 5. you hear their steps and their "oof";
-6. none vanishes, spins its head, jitters or walks into things.
+6. none vanishes, spins its head, jitters or walks into things;
+7. shoot one on the new body: the hole sits ON the skin where it was hit, the splash comes from there, the drip runs down the limb, X-ray shows the bone and the slug inside the body you see, a bandage wraps the slim limb.
