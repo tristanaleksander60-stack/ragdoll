@@ -83,3 +83,28 @@ Find the real cause with ONE Play (allowed for this item):
 3. the frame rate falls near busy machines (effects, lights, many parts), so the mouse stutters.
 
 **The fix:** near a thing, the mouse moves and turns the camera exactly as anywhere else. Prompts never cover the cursor's way: they are not Active except their own small button. No auto lock of the mouse. If it is the frame rate, fix that machine's cost (row 8, AUDIT 36-42).
+
+## 7. The vehicles (owner, screenshot of the entrance row: "Fiks bilerne")
+**What was wrong:**
+- the 5 new kinds (go-kart, police car, monster truck, bulldozer, fire truck) had no `look`, so `VehicleService` gave each the default "Car" model, the white sedan, scaled to its length: five white sedans of different sizes, overlapping their bays;
+- the SOON ones still said "Drive".
+
+**Cloud code, done** (`Systems/VehicleService.luau`):
+- the new kinds no longer get the sedan; they show their own part-built look (`decorate`) until a real model is set;
+- a SOON vehicle's prompt says "Coming soon".
+
+**Left for you:**
+1. **A real model for each of the 5**, from the Creator Store, in ONE matching style with the Silvia, Ford and Panzer (malware pass; keep only the model; no scripts):
+   - a go-kart (open, low, a roll bar);
+   - a police car (light bar, POLICE livery);
+   - a monster truck (huge wheels, a lifted body);
+   - a bulldozer (a yellow body, a front blade, tracks);
+   - a fire truck (red, a ladder, a hose).
+
+   Add each to V3Assets and set `spec.look`. Size them to the avatar: a car door at the player's hip, the kart seat at knee height.
+2. **The bays:**
+   - each vehicle centred in its own painted bay, turned the same 45 degrees, with a clear gap (at least 1.5 studs) to the next one;
+   - nothing overlaps, and no two noses touch;
+   - re-measure the bay widths from the real models (`LabLayout10` ENTRANCE_ROW `w`).
+3. **The SOON plaques:** one clean sign each at the bay's front edge, the same size, readable from the walkway: the name, "SOON", and the price once the pass exists.
+4. **Check (one Play look from the walkway):** 9 different, real-looking vehicles in a neat herringbone row, nothing overlapping, nothing white-sedan.

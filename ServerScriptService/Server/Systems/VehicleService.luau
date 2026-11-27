@@ -396,7 +396,7 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	weld(body, seat)
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "Drive"
-	prompt.ActionText = "Drive"
+	prompt.ActionText = if VehicleService.SOON[kind] and (VehicleService.PASSES[kind] or 0) == 0 then "Coming soon" else "Drive" -- (owner 27 Nov late: a SOON vehicle never says Drive)
 	prompt.ObjectText = spec.label
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.MaxActivationDistance = 12
@@ -441,7 +441,10 @@ local function make(kind: Kind, home: CFrame): (Model, BasePart, VehicleSeat)
 	if spec.flip then
 		bottom *= CFrame.Angles(0, math.pi, 0) -- (0.37.13, owner: "you drive the Ford and the Silvia backwards")
 	end
-	local look = V3Assets.place(role, model, bottom, { size = b.Z + 1.5, collide = false, anchored = false, name = "Look" })
+	-- (27 Nov late, owner: "Fiks bilerne": the 5 new kinds had no look of their own, so each got the default "Car" model (the
+	-- white sedan), scaled to its length: five white sedans of different sizes. They show their own part-built look
+	-- (decorate) until a real model is set as spec.look.)
+	local look = if VehicleService.FEATURE[kind] and not spec.look then nil else V3Assets.place(role, model, bottom, { size = b.Z + 1.5, collide = false, anchored = false, name = "Look" })
 	if look then
 		-- (22 Nov 2026, owner: "sit the right way in the go-kart"): the model's own seats never take a
 		-- rider (the kart's faced backwards); only our Seat does, and it faces where the car drives.
