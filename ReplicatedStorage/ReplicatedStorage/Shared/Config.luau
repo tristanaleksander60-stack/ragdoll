@@ -197,6 +197,7 @@ local Config = {
 		[3] = { skinReach = 45, skinRate = 15 },
 	},
 	LAGFREE_IPAD = true, -- LAG-FREE 2 item 10: an iPad with a keyboard is still a tablet: no Bloom, SunRays, depth of field or shadows (Client/PhoneDiet)
+	HURT_REST = true, -- row 6: a ragdoll with 3+ leg wounds kneels to rest 5 s now and then (every 25-40 s; the Breath mood; VitalsService)
 	INJURY_HEAL = true, -- row 6: a bruise heals one stage a minute after its piece's last hit (deep violet, violet, lavender, gone); checked every 15 s (Client/DummySkins)
 	RUN_POSE = true, -- v6 FIT PASS D: running ragdolls pump with the elbows bent towards 90 deg (the run clip already leans forward) (Client/ClipGait.blend; walk untouched)
 	LAGFREE_SERVER_TICK = true, -- LAG-FREE 2 item 8: GroundGuard checks the bodies in 10 slices over its 2 s, not all in one burst; sleeping bodies skipped

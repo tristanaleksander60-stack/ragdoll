@@ -987,6 +987,34 @@ function VitalsService.step(model: Model, v: Vitals, dt: number)
 			end
 		end
 	end
+	-- (Row 6, Config.HURT_REST: a ragdoll with 3 or more wounds in its legs, awake and not bleeding out, sinks to its
+	-- knees to rest now and then: the kneeling Breath mood for 5 s, every 25-40 s, then it gets up and goes on)
+	if (Config :: any).HURT_REST and model:GetAttribute("IsDummy") == true then
+		local vr: any = v
+		local mood = model:GetAttribute("Mood")
+		if vr.restUntil and now >= vr.restUntil then
+			vr.restUntil = nil
+			if mood == "Breath" and model:GetAttribute("RestMood") == true then
+				model:SetAttribute("Mood", nil)
+			end
+			model:SetAttribute("RestMood", nil)
+		elseif not vr.restUntil and v.state == "Alive" and mood == nil and model:GetAttribute("InMachine") == nil
+			and model:GetAttribute("Held") ~= true and now >= (vr.restNext or 0) then
+			local legs = 0
+			for _, w in v.wounds do
+				local id = w.zone.id
+				if string.find(id, "Thigh", 1, true) or string.find(id, "Shin", 1, true) or string.find(id, "Foot", 1, true) or string.find(id, "Femoral", 1, true) then
+					legs += 1
+				end
+			end
+			vr.restNext = now + 25 + math.random() * 15
+			if legs >= 3 then
+				vr.restUntil = now + 5
+				model:SetAttribute("RestMood", true)
+				model:SetAttribute("Mood", "Breath")
+			end
+		end
+	end
 	-- Out cold, dead, or back.
 	local dead = v.blood <= Anatomy.DEAD_AT or (v.lethalAt ~= nil and now >= (v.lethalAt :: number)) or (not BLOOD_KILLS and v.pulse < Anatomy.DEAD_PULSE and target < Anatomy.DEAD_PULSE)
 	if dead then
