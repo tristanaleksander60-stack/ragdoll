@@ -124,6 +124,28 @@ The ragdolls ARE the game. This doc is the one umbrella for making them 10/10. I
 3. **No black stripes:** remove ALL the dark joint bands (neck, shoulders, elbows, wrists, hips, knees, ankles), so the body is one clean light grey. The chest plate, the yellow-black marks and the dark boot soles stay.
 4. **The bar:** the v5 bar, minus the bands, plus: a close-up of the neck, a shoulder and a hand next to the thigh, with zero overlaps, slivers or spikes. Judge harshly and fix before showing the owner.
 
+**BODY V6 APPROVED by the owner (27 Nov late: "Ja, sørg nu for alt virker med den nye krop, dem der holder telefoner, cykler, avis, x-ray, knogler, vægt, physics og alting. - cpr osv").** v6 is THE body; every other body version (v1, v2, v3) is retired (no work on them, ever).
+
+**THE v6 FIT PASS (now the top priority, one pass, `Config.SMOOTH_BODY_V6 = true` + `Config.BODY_FIT = true`):**
+0. **Hookup:**
+   - in `Main.server.luau`, the same hook as SmoothBodyV3: `workspace.mannequin_v6` → `ReplicatedStorage.SmoothBodyV6`, with its colour map (`mannequin_v6_color.png`: upload it through the MCP if it can, else ONE owner step);
+   - `Client/SmoothBody` uses V6 and wins over every older version; the old body switches are turned off;
+   - the owner's step (File > Import 3D > `art/models/mannequin/mannequin_v6.fbx`, then save) goes in the final message if it has not happened; until it has, build everything from `mannequin_v6_stats.json` and the rig's bone names, so it works the moment the model lands.
+1. **BodyShape from v6** (R9.1): written by a script from the v6 mesh (every bone's length and radius profile, the torso's depth and width at chest, belly and hips). Every item below reads it.
+2. **Weight and physics** (R9.2): the 15 physics parts resized to sit just inside v6's round limbs and deep torso; the masses from v6's volumes in the RAGDOLL_FEEL shares (torso about 40 %, head 8 %, each leg 16 %, each arm 5 %), so the heavier, chunkier body falls, rolls and gets up with weight; the joint centres at v6's real joints; the feet flat on the ground (no float, no sink); the big head balanced so it does not tip over.
+3. **Bones and X-ray** (R9.5, D12): the skeleton scaled to v6 (the ribcage inside the deep chest, the skull in the round head, the hand bones in the new fingers); the shell is the v6 mesh in glass; breaks, cracks, shatters, slugs and the tracer all INSIDE the body.
+4. **Holes, splash, drips, pools, bruises** (R9.3, 9.4, 9.7): on the v6 surface by the client raycast; exits on the far side; the hole caps per device kept (AUDIT 37).
+5. **CPR** (both the ragdoll medic and a down patient): the medic kneels beside the patient with both knees on the ground, its hands stacked on the patient's chest plate, arms straight, the pumps from the hips; the patient lies flat; **no leg jitter (F93)**: the medic's legs are welded in the kneel while it pumps; the doctor's hands the same.
+6. **Held props in the NEW fingers** (the v6 hand bones, posed by state, HAND_POSES):
+   - the PHONE: held in the right hand, the screen to the face (filming: held up, the arm bent), the fingers wrapped round it;
+   - the NEWSPAPER: held open in BOTH hands at reading height, the paper route throw from the right hand;
+   - the tweezers, the shovel (both hands on the shaft), the lasso and the grab points, the persona accessories (sweatband, cap, glasses, headphones, the egg hats) sized to the round v6 head.
+7. **Rides and poses:** the BICYCLE (the seat under the pelvis, both hands on the grips, the feet on the pedals and turning with them), the wheelchairs, the seesaw, the benches (sitting with the bigger thighs, never sunk into the seat), the rocket strap, the stretcher (F74), the cannon hopper load, the bowling ball curl (the tight ball with v6's round volumes), every machine's grip and hold point.
+8. **Care:** bandages, slings, splints and plasters wrapped round v6's thicker limbs at BodyShape radius + 0.05; the pick-out plaster on the hole point.
+9. **Face and marks:** the face on the v6 head (living eyes, blinks, the talking mouth, the expressions); the marks on the upper arms, thighs and chest as on the renders; soot, wet and paint tints on the one mesh.
+10. **Stretch (F74), far bodies (R1/R10 LOD) and phones:** stretch moves the v6 bones and grows the physics parts; the far cheap version is the SAME v6 mesh; the device caps stay.
+11. **The check, done by reading each item's attach point** (a bone or part plus an offset from BodyShape): nothing floats off, sinks in or pokes through the v6 body. One quick Play for errors only (NO TESTING rule); the owner tests it all at the end (the final test list gets one line per item above).
+
 **More life:**
 - **The stance:** upright and relaxed, never hunched or hand-clasped by default;
 - **the face:** R2, living eyes, blinks and a talking mouth;
