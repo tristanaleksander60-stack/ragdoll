@@ -37,7 +37,7 @@
      - carry a ragdoll into the bowling lane under its canopy;
      - carry one up the tower stairs to each floor;
      - carry one into 3 other roofed machines.
-4. **DROP HERE at EVERY machine** (`Systems/DropSpots.luau` new, `Client/LabGuideClient.luau`).
+4. **BUILT v1419 (DropSpots.scan, started in Main):** 18 spots per lab, found by each machine's load part (Stretch, Boxing canvas, Press bed, Fan mouth, Rocket/Gyro/Sweeper pads, Shredder pit, Seesaw, T-rex ground, Bear, Whale, Tesla, the tower's top floor, the bowling lane start, 3 wheelchairs); heights checked in Play. The sign itself shows only while carrying: OWNER CHECK. **DROP HERE at EVERY machine** (`Systems/DropSpots.luau` new, `Client/LabGuideClient.luau`).
    - **The cause:** the sign only knew the old guide rings (the creatures, the old StationPads and 4 old machine names), and none of the new map's machines had one.
    - **Now:** any part tagged `DropSpot` counts. TO DO in this batch: call `DropSpots.add(machineModel, exactLoadPoint, name)` in EVERY machine that takes a carried ragdoll, at the point where a dropped body is taken:
      - Bowling (the lane start);

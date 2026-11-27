@@ -199,6 +199,7 @@ safe("Lab", function() Lab.setPlaygroundBuilder(Playground.build) end) -- and on
 safe("WorldMaps", function() WorldMaps.build(workspace:GetAttribute("LabOrigin") or Vector3.zero) end) -- the places (before their crowds)
 safe("MapActivities", function() require(Systems:WaitForChild("MapActivities")).start(WorldMaps.folder() or workspace) end) -- v3: the open-air maps' launchers
 safe("GroundGuard", function() require(Systems:WaitForChild("GroundGuard")).start() end) -- v4 A2: lifts buried bodies onto the ground
+safe("DropSpots", function() require(Systems:WaitForChild("DropSpots")).start() end) -- FIXES_28NOV 4: DROP HERE at every machine (a scan per lab)
 safe("NpcCommand", function() require(Systems:WaitForChild("NpcCommand")).start() end) -- v4 B4: talk to NPCs and command them
 safe("LabZones", function() require(Systems:WaitForChild("LabZones")).start() end) -- v4 C1: today's machine and NEW tags follow the UTC day
 do -- LOOK_V3: grass, hills and trees round the labs (after WorldMaps: it repaints the baseplate)
