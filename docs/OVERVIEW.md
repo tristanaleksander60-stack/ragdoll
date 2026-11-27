@@ -1,5 +1,13 @@
 # OVERVIEW: the whole plan on one page (read this FIRST on every /klar)
 
+> ## ⚠⚠ THE FINISH LINE (owner, 27 Nov late): "næste gang jeg ser på min computer skal jeg have et færdig spil, ikke noget 5/10 som det er nu"
+> **This run does not stop until the game is FINISHED:** every row in THE ORDER DONE (or PARKED only for a real outside block: a missing pass id or a Roblox limit), every row at the 9/10 bar of its doc, not "part 1".
+> 1. **First:** `RAGDOLL_10.md` A2 (X-ray: only the limb shot 3 times in a row, 2 s, then a 1 s fade; the rest of the body stays solid; the toggle shows all). Then the rest of A-E and the fit pass leftovers (ride grips, head balance, round-head accessories).
+> 2. **The quality gate (the owner's newest order wins over "NO TESTING" where they clash):** a row is DONE only when ONE Play look (and one capture for looks) shows it at 9/10 against its doc's bar: no jitter, no floating or sunk props, no overlaps, no placeholder boxes, no debug text, no key letters on phones. If it is below, fix it now, not later. Still no long suites, benches or reviewers.
+> 3. **Never leave a half-built feature on:** a feature that is not at the bar by the end goes behind its Config switch OFF, and is listed in the final message.
+> 4. **Polish before new content:** what a new player sees in the first 3 minutes (the spawn, the bowling hook, the ragdolls standing and walking, shooting, X-ray, the phone HUD) comes first and must be the best part of the game.
+> 5. **The final message:** the long numbered "Test selv" list, and the passes reminder (NOW.md "ANSWERS 2").
+
 > ## PHYSICS_DEEP DONE (27 Nov late, v1328-v1334): waiting for the owner's test
 > Standing still (0.000-0.025 studs in 10 s), no self-collision, calm states, no bounce off kerbs and steps, path queue, v6 arms in, run form, a coward backs off a gun once. Numbers in NOW.md. Go on with the next rows.
 

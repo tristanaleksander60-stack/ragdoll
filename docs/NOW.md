@@ -1,3 +1,4 @@
+# ⚠ OWNER (27 Nov late): "næste gang jeg ser på min computer skal jeg have et færdig spil, ikke noget 5/10". Read OVERVIEW "THE FINISH LINE" and follow it for the rest of the run. First: `RAGDOLL_10.md` A2 (X-ray only on the shot limb, 2 s + a 1 s fade; the whole v6 mesh must never turn to glass from one limb).
 # PHYSICS_DEEP DONE (27 Nov late, v1328-v1334): every probe goal met or close (standing still 0.000-0.025 studs in 10 s, no self-contact, no state flapping, no bounce off kerbs, 87% of walks on a path, run form, gun back-off once). The owner tests it (PHYSICS_DEEP "Check"). Then go on with the next rows.
 
 ## PHYSICS_DEEP probe numbers (27 Nov late, run 6, v1328; client probe, 8-12 nearest v6 bodies, 10-12 s)
@@ -548,6 +549,15 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - AUDIT 1 Lab Controls button for buyers + PassLint; 2 advent calendar (ADVENT); 3 profile lock + safe eco merge (PROFILE_LOCK); 4 takedown guard; 5 egg odds + VIP egg PolicyService gate (EGG_ODDS); 6 Events Pass wording; 7 Economy rate limit; 8 signed TeleportData (JOIN_SIGN, key = ServerStorage attribute JoinSignSecret in the place file).
 - R10: R2 living faces (FACE_LIFE), R6 body sounds (BODY_SOUND), R5 persona idles (PERSONA_IDLE), R3 persona walks (PERSONA_WALK); THE LOOK v3 body built in Blender, waiting for the owner's OK (review_v3).
 - 0.7 a real watcher at every machine (WATCH_EVERY, LAB_DUMMIES_PC 40). Row 7 cars rock (CAR_ROCK). F76 the 5 new vehicles (NEW_VEHICLES, SOON). 3.18 boxing (BOXING_MATCH). C10 part 1 control kit + cannon hopper (CONTROLS_V2, CANNON_HOPPER). F92 machines call ragdolls, never snatch (MACHINE_SAFE). F91 bowling always reaches the pins + curl (BOWL_BALL). F93 CPR givers kneel still (CPR_STILL). Row 14 ragdoll rides a wheelchair (WHEELCHAIR_RIDE).
+
+## ANSWERS 2 (cloud, for the owner, 27 Nov late): the open questions below are ANSWERED; do not ask them again
+- **Body v3, v4, v5, v6 and the dog:** settled. v6 is APPROVED and imported; the dog is approved FOR NOW (row DOG3 at the very end).
+- **Ragdolls per lab (40 on PC):** keep 40, but `DeviceTier` lowers it by itself when the frame rate drops under 50 for 5 s (to 30, then 24). Phones 9, tablets 14, console 20 stay.
+- **The police siren (a community sound):** keep it.
+- **The body voices (PSE "oof" and the grunt):** keep them, pitched per ragdoll.
+- **The control kit (C10):** yes, build on: the Blender look for the button, lever, crank and dial, then move ALL the ~39 machine prompts onto it (CONTROLS_10).
+- **Keys, the angry shove, the colour, maturity, death effects, Script Sync, publishing both places, REVIVE ALL on X, the German Shepherd, F68 water, the smooth body import:** all answered in "ANSWERS" (27 Nov) and since. Nothing is waiting on the owner but the PASSES below.
+- **The passes the owner still has to make** (until then: SOON, never free by mistake): go-kart 49, police car 99, monster truck 149, bulldozer 149, fire truck 199 Robux; and the Ford's pass 2092632252 put on sale. The bicycle and the dirt bike are FREE (they must never show SOON).
 
 ## Questions for the owner (filled in during the run)
 - **BODY V6 APPROVED (27 Nov late)**: do THE v6 FIT PASS. (Old:) (27 Nov, run 6) **BODY V6 is ready for your OK:** `art/models/mannequin/review_v6/` (as v5, plus closeup_neck, closeup_shoulder, closeup_hand_thigh). A short thin neck, no dark bands (one clean light grey), the marks on the upper arms and thighs away from the joints, no specks, slivers or holes (checked: one closed shell). 14.5k tris, 44 bones. Say "BODY V6 APPROVED" or what to change. Default: wait.

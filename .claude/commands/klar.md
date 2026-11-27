@@ -4,6 +4,9 @@ argument-hint: "[optional: what the owner wants first]"
 ---
 Read the "OWNER PRIORITY NOW" banner at the top of `docs/OVERVIEW.md` and `docs/NOW.md` FIRST and do it before anything else. Then read `CLAUDE.md`, then `docs/OVERVIEW.md` (the one-page plan: the owner's situation, how to work, what only the owner can do, THE ORDER in 8 phases, DONE). Then read only the doc section of the row you are on. If the owner wrote something after /klar, do that first.
 
+## THE OWNER'S NEWEST ORDER (27 Nov late, wins where it clashes with the 26 Nov orders below)
+- "næste gang jeg ser på min computer skal jeg have et færdig spil, ikke noget 5/10 som det er nu": follow OVERVIEW "THE FINISH LINE": build until EVERY row is DONE at its 9/10 bar, with ONE Play look (and one capture for looks) per row to check it is at the bar before it counts as DONE; a feature not at the bar by the end is switched OFF and listed.
+
 ## THE OWNER'S ORDERS (26 Nov 2026)
 - "Gør så den laver alt nu uden at stoppe så jeg bare skal teste alt til sidst"
 - "Sørg for den ikke tester alt selv dybt, men at det er min opgave, den skal bare lave det bedst mulige produkt og så tester jeg når alt er færdigt"
@@ -65,7 +68,8 @@ Read the "OWNER PRIORITY NOW" banner at the top of `docs/OVERVIEW.md` and `docs/
    - no length limit;
    - numbered, so the owner can answer "12: ...".
 5. **The "Questions for the owner" list:** each with the default you chose.
-6. **Reminder (owner, 27 Nov late: "husk mig på"):** if OVERVIEW row DOG3 is not DONE, write: "Husk: hunden er kun godkendt for nu, den skal gøres bedre til sidst (række DOG3)."
+6. **The passes the owner must still make** (NOW.md "ANSWERS 2"): go-kart 49, police car 99, monster truck 149, bulldozer 149, fire truck 199 Robux, and the Ford pass 2092632252 on sale.
+7. **Reminder (owner, 27 Nov late: "husk mig på"):** if OVERVIEW row DOG3 is not DONE, write: "Husk: hunden er kun godkendt for nu, den skal gøres bedre til sidst (række DOG3)."
 
 **Keep `docs/OVERVIEW.md` true:** update a row's State and LEFT whenever you finish or start it.
 
