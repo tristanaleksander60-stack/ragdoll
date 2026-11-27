@@ -53,6 +53,51 @@ local function sendHome(player: Player)
 	player:SetAttribute("DogOut", nil)
 end
 
+-- Row 13 part 2 (Config.DOG_PET): the dog barks (when it comes out and when it bites), and its owner can PET it (a
+-- "Pet" prompt on the dog): a happy bark, a burst of pink hearts, and its idle clock starts again.
+GuardDog.BARK_ID = "rbxassetid://99723552215501" -- (Creator Store "Dog bark")
+local function dogPart(m: Model): BasePart?
+	if m.PrimaryPart then
+		return m.PrimaryPart
+	end
+	return m:FindFirstChildWhichIsA("BasePart", true)
+end
+local function bark(m: Model, pitch: number?)
+	if not (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).DOG_PET then
+		return
+	end
+	local p = dogPart(m)
+	if not p then
+		return
+	end
+	local s = Instance.new("Sound")
+	s.SoundId = GuardDog.BARK_ID
+	s.Volume = 0.7
+	s.PlaybackSpeed = pitch or (0.95 + math.random() * 0.15)
+	s.RollOffMaxDistance = 90
+	s.Parent = p
+	s:Play()
+	game:GetService("Debris"):AddItem(s, 3)
+end
+local function hearts(m: Model)
+	local p = dogPart(m)
+	if not p then
+		return
+	end
+	local e = Instance.new("ParticleEmitter")
+	e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	e.Color = ColorSequence.new(Color3.fromRGB(255, 120, 170))
+	e.Size = NumberSequence.new(0.7, 0.2)
+	e.Speed = NumberRange.new(4, 7)
+	e.SpreadAngle = Vector2.new(40, 40)
+	e.Lifetime = NumberRange.new(0.8, 1.2)
+	e.EmissionDirection = Enum.NormalId.Top
+	e.Enabled = false
+	e.Parent = p
+	e:Emit(16)
+	game:GetService("Debris"):AddItem(e, 2)
+end
+
 local function whistle(player: Player, house: Vector3)
 	if dogs[player] then
 		sendHome(player)
@@ -84,6 +129,29 @@ local function whistle(player: Player, house: Vector3)
 	dogs[player] = { model = m, lift = lift, state = "Follow", target = nil, limb = nil, biteAt = 0, lastBite = 0, lastOrder = os.clock(), house = house }
 	;(dogs[player] :: any).yaw = (template:GetAttribute("ForwardYaw") :: number?) or 0 -- (F22: the head is not on the LookVector)
 	player:SetAttribute("DogOut", true)
+	bark(m)
+	if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).DOG_PET then
+		local at = dogPart(m)
+		if at then
+			local pet = Instance.new("ProximityPrompt")
+			pet.ActionText = "Pet"
+			pet.ObjectText = "Good boy"
+			pet.HoldDuration = 0
+			pet.MaxActivationDistance = 9
+			pet.RequiresLineOfSight = false
+			pet.KeyboardKeyCode = Enum.KeyCode.F
+			pet.Parent = at
+			pet.Triggered:Connect(function(who: Player)
+				local d = dogs[player]
+				if who ~= player or not d or d.model ~= m then
+					return
+				end
+				d.lastOrder = os.clock()
+				bark(m, 1.15)
+				hearts(m)
+			end)
+		end
+	end
 	pcall(function()
 		lazy("Funnels").used(player, "DogWhistled")
 	end)
@@ -193,6 +261,7 @@ local function bite(player: Player, d: Dog)
 	pcall(function()
 		lazy("FxService").hit(limb.Position, 30, "Bat", player.UserId, true)
 	end)
+	bark(d.model, 0.85)
 end
 
 -- F22 (owner, 26 Nov 2026: "hunden skal bevæge sig meget mere realistisk ... vender den forkerte vej når den bider"):
