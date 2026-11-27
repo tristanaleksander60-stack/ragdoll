@@ -186,6 +186,7 @@ safe("LagGuard", function() require(Client:WaitForChild("LagGuard")).start() end
 safe("LegJitter", function() require(Client:WaitForChild("LegJitter")).start() end) -- F65: the always-on leg jitter detector
 safe("MiniBar", function() require(Client:WaitForChild("MiniBar")).start() end) -- F71: the phone hotbar is small until tapped
 safe("RealHands", function() require(Client:WaitForChild("RealHands")).start() end) -- S2: real hands with fingers, not hooks
+safe("SmoothBody", function() require(Client:WaitForChild("SmoothBody")).start() end) -- S2: the smooth skinned body from Blender
 safe("ViewReport", function() require(Client:WaitForChild("ViewReport")).start() end) -- 0.158: the camera report for "in view"
 safe("PathWalkers", function() require(Client:WaitForChild("PathWalkers")).start() end) -- 0.1568: people on every path (client only)
 safe("QualityGovernor", function() require(Client:WaitForChild("QualityGovernor")).start() end) -- 8: the automatic quality governor (FPS)

@@ -20,6 +20,9 @@ local Workspace = game:GetService("Workspace")
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
 
 local RealHands = {}
+RealHands.skip = function(_model: Instance): boolean -- (SmoothBody: bodies wearing the smooth mesh have its fingers)
+	return false
+end
 
 RealHands.BUILD_REACH = 70
 RealHands.DROP_REACH = 100
@@ -258,7 +261,7 @@ local function step(dt: number)
 				end
 			end
 		end
-		if gone or ((pelvis :: BasePart).Position - eye).Magnitude > RealHands.DROP_REACH then
+		if gone or RealHands.skip(model) or ((pelvis :: BasePart).Position - eye).Magnitude > RealHands.DROP_REACH then
 			dropBody(body)
 		end
 	end
@@ -271,7 +274,7 @@ local function step(dt: number)
 		end
 		if count < RealHands.MAX_BODIES then
 			for _, m in folder:GetChildren() do
-				if m:IsA("Model") and not bodies[m] then
+				if m:IsA("Model") and not bodies[m] and not RealHands.skip(m) then
 					local pelvis = m:FindFirstChild("LowerTorso")
 					if pelvis and pelvis:IsA("BasePart") then
 						local d = (pelvis.Position - eye).Magnitude
