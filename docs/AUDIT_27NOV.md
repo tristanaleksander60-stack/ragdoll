@@ -119,4 +119,4 @@ Three parallel reviews by the cloud session: gameplay and content, phone UI, and
     - at close, save Progress first, then Orders; skip SessionStats and leaderboard writes when the budget is low;
     - later, fold the small per-player stores into the profile (one read on join, one write on close).
 41. **DONE v1316:** LabCreatures `lastRevenge` has weak keys; MechArms clears `held` on the body's Destroying; PurchaseChat already cleared `last` on PlayerRemoving. **Was:** **Small leaks:** PurchaseChat `last[userId]` (clear on PlayerRemoving), LabCreatures `lastRevenge` (weak keys), MechArms `held` (clear on Destroying).
-42. **HitService on your own dummy:** check the tap point against the server's part with a 6-stud margin and log misses.
+42. **DONE v1317 (`HIT_OWN_MARGIN`):** a tap on your own simulated dummy more than 6 studs outside the server's part box is refused as Missed and logged (once per 10 s a player). **Was:** **HitService on your own dummy:** check the tap point against the server's part with a 6-stud margin and log misses.

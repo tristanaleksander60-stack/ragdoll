@@ -379,6 +379,7 @@ function HitService.bowDrawForTest(player: Player, claimed: number): number
 	return bowDraw(player, claimed)
 end
 
+local ownMissLog: { [Player]: number } = setmetatable({}, { __mode = "k" }) :: any
 local function onRequest(player: Player, part: unknown, position: unknown, direction: unknown, toyId: unknown, byHand: unknown, draw: unknown)
 	if typeof(part) ~= "Instance" or not (part :: Instance):IsA("BasePart") then
 		return
@@ -406,6 +407,20 @@ local function onRequest(player: Player, part: unknown, position: unknown, direc
 	-- client has already applied the hit or grab): no "Missed" contradicting what they saw.
 	local tappedDummy = dummyOf(p)
 	local ownDummy = tappedDummy ~= nil and DummyControl.ownerOf(tappedDummy) == player
+	if ownDummy and (Config :: any).HIT_OWN_MARGIN and not p:IsA("Terrain") then
+		-- AUDIT 42: the client simulates its own dummy, but the tap must still be near the server's part
+		local l = p.CFrame:PointToObjectSpace(pos)
+		local half = p.Size / 2 + Vector3.new(6, 6, 6)
+		if math.abs(l.X) > half.X or math.abs(l.Y) > half.Y or math.abs(l.Z) > half.Z then
+			local now = os.clock()
+			if now - (ownMissLog[player] or -math.huge) > 10 then
+				ownMissLog[player] = now
+				warn(("[Hit] own-dummy tap %.1f studs off %s (%s)"):format((pos - p.Position).Magnitude, p.Name, player.Name))
+			end
+			refuse(player, toy, "Missed")
+			return
+		end
+	end
 	if not ownDummy and not onPart(p, pos) then
 		refuse(player, toy, "Missed") -- the client already showed the tap: say why nothing came of it
 		return
