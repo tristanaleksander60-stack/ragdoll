@@ -540,7 +540,12 @@ Status: **GO** (owner, 26 Nov 2026). Build EVERYTHING in this list in one run be
 - Later in the same run (v1229-v1239): 0.7 watcher pairs, 11 foot tap/pebble/hold-side idles, F88 strike crash + confetti and gutter trombone, D12 trickle, T1 golden ragdoll (~2:00) and the 8/12 min lines, 1.0 rule 3 event crowd, P1 heroes give CPR first, 3.1 cannon targets, 3.2 tower drop score, 3.5 trampoline bounce chain.
 - Next /klar: row 3 from 3.3 (gyro: straps, hold-to-spin dial, G-force score), 3.4 fan, 3.6 wrecking ball...; then S1/F73/F72 leftovers, F81 dispenser, 0.1568 swap, F76 vehicles (pass ids), A0 (Blender), S2 (owner FBX import).
 
-## Done in the run of 27 Nov, part 3 (start place v1240-v1264; Script Sync OFF: every script through the MCP, checked by length)
+## Done in the run of 27 Nov, part 4 (v1267-v1286)
+- F89 slim grey body v2 (`SMOOTH_BODY_V2`; waiting for the owner to import art/models/mannequin/mannequin_v2.fbx), S1 gesture layers + foot IK, F73 turn steps (`TURN_STEP`), F72 NavTarget.snap + touch reaction (`NAV_SNAP`), F47 DEATH_HEAL, BUOYANCY_V2, PUDDLE_GLOSS, INJURY_V2, CRATE_BURST, HAND_POSES, BIKE_PEDAL, SWIM_POSE, POLITE_DISTANCE, TIE_SHOE, FILM_PHONE, WHALE_10, TARGET_RUN, SEESAW_10, PLAYER_CPR, EVENT_MIN_FLUNG.
+- Parked: 3.18 boxing (question), row 14 ragdoll-in-chair (needs a ride-welded state).
+- Left (big): A0 Blender remodel of every animal and machine, T1 rest, row 8 join hitch, M4 object meshes, BOWLING_12 rest, F76 new vehicles (pass ids), the lasso, 3.33 rest, 3.35 weapons pass.
+
+Done in the run of 27 Nov, part 3 (start place v1240-v1264; Script Sync OFF: every script through the MCP, checked by length)
 Owner's wishes first: Pillow installed (13.0), the imported Blender body hooked up.
 - S2 v1240 `SMOOTH_BODY` (Client/SmoothBody): the Blender body (now ReplicatedStorage.SmoothBody, place file only) on the nearest 12 ragdolls; bones follow the physics parts; fingers posed by state; block skins hidden; X-ray/machines show the old look.
 - Row 6 v1241 `FACES_V2`: 7 new faces drawn with Pillow (art/faces/v2/make_faces.py) and uploaded: dead X eyes, pain, angry, worried, sad, relieved, scared.
