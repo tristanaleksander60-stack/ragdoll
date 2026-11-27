@@ -170,7 +170,7 @@ No hitch over 100 ms when machines run, a big event starts or the lab loads.
    - One body scheduler in the RagdollDirector tick. GroundGuard, Unstick, the vitals checks and Creatures each register a callback with a rate (2-5 Hz) and a slice (N bodies a frame, 2 ms a frame in all), round-robin.
    - Sleeping bodies are skipped.
    - The server Heartbeat time goes into item 0's report.
-9. **`LAGFREE_MEMORY` and the join:**
+9. **PART CHECKED v1390 (no change needed):** StreamingEnabled on, target radius 400, min 64, Opportunistic stream-out; no lab or map model is Persistent (only the 40 bodies PersistentPerPlayer for their simulating owner, and 1 other); LoadCover already calls RequestStreamAroundAsync at the lab on join. LEFT: texture sizes, background sound preload, 2 ragdolls a frame in big moments. 9. **`LAGFREE_MEMORY` and the join:**
    - PlotPrivacy takes other labs off the screen (no drawing, no physics), but they stay in memory. Check that `StreamingEnabled` streams far labs out: no lab model set to Persistent, `StreamingTargetRadius` set to the lab size, and `RequestStreamAroundAsync` at your lab on join.
    - Hole, face and decal pictures at 256-512, never 1024.
    - Preload only the first minute's sounds; the rest in the background.
