@@ -673,6 +673,11 @@ local function setLabThing(p: Player, fx: Fx, which: string, on: boolean)
 			fx.tramp = m
 		else
 			fx.fan = m
+			if Config.FAN_10 then
+				pcall(function()
+					lazy("FanMachine").setup(m, p) -- (3.4: the dial, the blade, the roar, the dust cone, the score)
+				end)
+			end
 		end
 	elseif not on and have then
 		have:Destroy()
@@ -754,7 +759,7 @@ local function labMachines(p: Player, fx: Fx)
 		end
 	end
 	local f = fx.fan
-	if f and f.Parent then
+	if f and f.Parent and not (Config.FAN_10 and lazy("FanMachine").active(f)) then
 		local cf = f:GetPivot()
 		local blowAt = CFrame.new(cf.Position + Vector3.new(0, 5, 30))
 		for _, m in bodies(blowAt, Vector3.new(30, 10, 50)) do
