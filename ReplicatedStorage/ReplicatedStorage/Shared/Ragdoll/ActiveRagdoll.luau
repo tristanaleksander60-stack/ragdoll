@@ -2254,6 +2254,12 @@ local function update(dt: number)
 				local mood = rig.model:GetAttribute("Mood")
 				local moodRig: any = rig
 				local moodPose = if rig.state == "Standing" and type(mood) == "string" then Poses.MOODS[mood] else nil
+				local rideArms = rig.model:GetAttribute("RideArms")
+				if mood == "Ride" and moodPose and typeof(rideArms) == "Vector2" then
+					moodPose = function(t: number, b: number?)
+						return Poses.ride(t, b, rideArms)
+					end
+				end
 				-- (FIXES_27NOV_LATE 2, owner: "De samler ikke hænderne når de laver cpr": the shoulder joint's cone (110 degrees)
 				-- stopped the straight arms 1.97 studs apart; the stacked-hands pose needs about 146, so it opens for CPR only.)
 				local cprNow = (mood == "CPR" or mood == "CPRFast") and moodPose ~= nil

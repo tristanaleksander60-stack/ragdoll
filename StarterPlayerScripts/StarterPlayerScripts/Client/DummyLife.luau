@@ -1842,6 +1842,12 @@ local function moodPose(life: Life, now: number, dt: number, moving: boolean): b
 	local model = life.model
 	local mood = model:GetAttribute("Mood")
 	local pose = if type(mood) == "string" then Poses.MOODS[mood] else nil
+	local rideArms = model:GetAttribute("RideArms")
+	if mood == "Ride" and typeof(rideArms) == "Vector2" then
+		pose = function(t: number, b: number?)
+			return Poses.ride(t, b, rideArms)
+		end
+	end
 	local own: any = life
 	if not pose then
 		own.moodAt2 = nil

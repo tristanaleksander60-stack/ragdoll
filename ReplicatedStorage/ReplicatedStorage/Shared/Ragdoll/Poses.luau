@@ -588,7 +588,10 @@ do
 	end)
 	RIDER_PEDAL = ok and cfg and cfg.RIDER_PEDAL == true
 end
-function Poses.ride(t: number, bend: number?): Pose
+-- (RIDE_ARMS_FIT: `arms` = (shoulder, elbow) degrees for this vehicle's handlebar, from the model's "RideArms"
+-- attribute (BikeService): the bicycle's bar is lower and nearer than the motorbike's, so one fixed reach put the
+-- hands in the air past it)
+function Poses.ride(t: number, bend: number?, arms: Vector2?): Pose
 	local b = bend or 1
 	local out = rideOut
 	if RIDER_PEDAL then
@@ -601,8 +604,9 @@ function Poses.ride(t: number, bend: number?): Pose
 		out.RightHip, out.LeftHip = ang(80 * b, 0, 7 * b), ang(80 * b, 0, -7 * b)
 		out.RightKnee, out.LeftKnee = ang(-78 * b, 0, 0), ang(-78 * b, 0, 0)
 	end
-	out.RightShoulder, out.LeftShoulder = ang(80 * b, 0, 7 * b), ang(80 * b, 0, -7 * b)
-	out.RightElbow, out.LeftElbow = ang(10 * b, 0, 0), ang(10 * b, 0, 0)
+	local sh, el = if arms then arms.X else 80, if arms then arms.Y else 10
+	out.RightShoulder, out.LeftShoulder = ang(sh * b, 0, 7 * b), ang(sh * b, 0, -7 * b)
+	out.RightElbow, out.LeftElbow = ang(el * b, 0, 0), ang(el * b, 0, 0)
 	out.Waist = ang((-20 + sin(t * 5) * 1) * b, 0, 0)
 	out.Neck = ang(14 * b, 0, 0)
 	return out

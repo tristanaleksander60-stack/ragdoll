@@ -28,6 +28,7 @@ local function free(m: Model): boolean
 		and m:GetAttribute("Severed") == nil and m:GetAttribute("CommandedBy") == nil and m:GetAttribute("Mood") == nil
 		and m:GetAttribute("Greeter") == nil and m:GetAttribute("Seat") == nil and m:GetAttribute("InMachine") == nil
 		and m:GetAttribute("Held") ~= true
+		and m:GetAttribute("Paper") ~= true -- (RIDE_ARMS_FIT: never the one carrying the newspaper: it rode off holding it)
 end
 
 -- The next spot of the round: on over the grass round the spawn circle (never across it: KEEP_OUT), each a bit further
@@ -177,6 +178,10 @@ local function ride(car: any, owner: Player, rider: Model)
 	turn.Parent = body
 	rider:SetAttribute("CommandedBy", MINE)
 	rider:SetAttribute("Mood", "Ride")
+	-- (RIDE_ARMS_FIT: the bicycle's handlebar is lower and nearer than the motorbike's: a lower, more bent reach)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).RIDE_ARMS_FIT then
+		rider:SetAttribute("RideArms", if string.find(car.model.Name, "Bicycle", 1, true) then Vector2.new(52, 34) else nil)
+	end
 	rider:SetAttribute("MachineCool", os.clock() + 1e6) -- (no creature takes it off the saddle)
 	local link = Instance.new("ObjectValue")
 	link.Name = "SeatOn"
@@ -340,6 +345,7 @@ local function ride(car: any, owner: Player, rider: Model)
 	end
 	if rider.Parent then
 		rider:SetAttribute("MachineCool", os.clock() + 3)
+		rider:SetAttribute("RideArms", nil)
 		if rider:GetAttribute("Mood") == "Ride" then
 			rider:SetAttribute("Mood", nil)
 		end

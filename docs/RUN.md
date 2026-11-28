@@ -76,7 +76,8 @@ Group the items that touch the same files and do them together:
 
 ## BATCH 1 (do now)
 
-### 1.1 First-person arms: BUILT, not proven (`FP_REAL_ARMS`, Viewmodel)
+### 1.1 First-person arms: DONE on PC (`FP_REAL_ARMS`, Viewmodel)
+- **State (PC, 28 Nov, v1434):** captures fp_arms_sky (pistol) and fp_arms_bow show the player's own dark R15 arms: the right hand on the grip, the left under the barrel or by the bow; the weapon low right and clear of the middle. Phone: OWNER CHECK (the emulator was off in this run).
 - **State (PC, 28 Nov, v1433):** built as written:
   - the player's own R15 arm and hand MeshParts, cloned at 0.6 (phone 0.52), in the viewmodel Model with a Humanoid, BodyColors and the Shirt;
   - two-bone IK, with each shoulder placed behind and below its hand at 92% of reach, so it always reaches;
@@ -131,7 +132,8 @@ Group the items that touch the same files and do them together:
 - **Watch for this risk:** ALWAYS3 may pick a body that was just sent away and keep re-picking it. If it does, make its picker skip a model with an active send-away (expose `RagdollDirector.leaving(m)`).
 - **Proof:** stand 2 minutes at the spawn, at a machine and at the ring; one capture each, counted. Never more than the cap (phone 5 / tablet 6 / PC 8) plus the machine's own bodies.
 
-### 1.6 The bike and motorbike rider: FAILED (`BIKE_WELD` built), now CLOUD (`BIKE_SEAT_FIT`, BikeService)
+### 1.6 The bike and motorbike rider: DONE (`BIKE_SEAT_FIT` + PC `RIDE_ARMS_FIT`)
+- **State (PC, 28 Nov, v1434):** Motorbike capture bike_follow: on the saddle, hands on the bars, feet on the pegs. Bicycle: the cause of hands in the air past the bar was Poses.ride's one fixed reach (shoulder 80, elbow 10). Fixed: RideArms (52, 34) for the bicycle, read by DummyLife and ActiveRagdoll. Capture bicycle_arms shows the hands at the grips. Also found: the newspaper carrier could be picked as a rider (BikeService.free did not check Paper) and rode off holding the paper; now excluded.
 - **Cause found:** the rider was welded at a fixed offset (0, 2.4, 1.1) from the physics box, which is behind the saddle on these models. Now the pelvis sits on the vehicle's own seat part.
 - **Also check:**
   - the seat part is at the saddle on the bicycle AND the motorbike: VehicleService's seat may sit in the middle of the physics box. Find the saddle in the LOOK model (a part named Seat or Saddle, else the highest part between the two wheels) and move the seat part to its top, then capture it;
@@ -195,7 +197,8 @@ Group the items that touch the same files and do them together:
   - Prove it again.
 
 
-### 1.10 Standing ragdolls suddenly leaning far back: CLOUD (`UPRIGHT_POSES`; DummyLife, Poses)
+### 1.10 Standing ragdolls suddenly leaning far back: DONE (`UPRIGHT_POSES`)
+- **State (PC, 28 Nov, v1434):** in the toast_v2 and banner captures every standing ragdoll stands upright; none leans back.
 - **Cause found:** a positive Waist X bends BACKWARDS (CPR leans forward with -43). Several standing poses had the wrong sign or far too much:
   - the Scared persona: +14, ALWAYS while standing still, the main culprit;
   - the LookBack and HoldSide gestures, meant as a hunch;
@@ -250,7 +253,8 @@ Group the items that touch the same files and do them together:
   1. **Half inside the arm:** a v6 arm is round with radius 0.3-0.375, and a flat 0.35 hole picture lay only 0.005 off it, so its rim was about 0.05 studs inside the arm. Now the picture is at most 0.8 x the radius across and lifted by the curve's sag, so its rim touches the skin all round (the round head too).
   2. **Not shown at all:** a v6 body WITHOUT the old skins (the crowd, V6_EVERYONE) got the hole on the physics block's flat face, inside the round limb. Now it goes on the v6 limb's round surface round the part's axis.
 - **Proof:** 5 shots on each arm and each leg of a lab ragdoll AND a crowd person; captures from 3 studs, front and side.
-### 1.14 The spawn arch banners half inside the pillars: CLOUD (`BANNER_CLEAR`, LabOwnerMap spawnSet)
+### 1.14 The spawn arch banners half inside the pillars: DONE (`BANNER_CLEAR`)
+- **State (PC, 28 Nov, v1434):** capture banner_side: the banner hangs from its rod, clear of the pillar's face.
 - **Cause found:** the banner hung 0.075 studs off the pillar, and its "Swing" (0.06 rad round its top) moved its bottom about 0.5 studs, into the stone.
 - **Now:** it hangs from a steel rod 0.5 studs out and sways at 0.02 rad.
 - **Also:** check every other part tagged "Swing" (flags and banners) the same way: gap > Amp x length + 0.1.
@@ -266,7 +270,8 @@ Group the items that touch the same files and do them together:
 - **Then remove them at their source** behind `Config.NO_ORANGE_BOXES` (never delete from the place file).
 - **Proof:** the printed list empty, and captures of the spots.
 
-### 1.16 The man-eating plant: CLOUD part (`PLANT_REAL`, `PLANT_YAW`; LabCreatures BUILD.Plant)
+### 1.16 The man-eating plant: DONE (`PLANT_REAL`)
+- **State (PC, 28 Nov, v1434):** capture plant_front: only the real plant model, no floating part jaws. PLANT_YAW is left at 0: OWNER CHECK whether the mouth should face the path more.
 - **Causes found:**
   - plain-part jaws (green boxes, a red inside, white teeth) floated 14 studs above the real plant model: the ugly plant;
   - the real model was placed with a fixed yaw of 180, so it faced the wrong way.
@@ -322,7 +327,8 @@ Group the items that touch the same files and do them together:
 - **The extra "More" gear** (`MORE_GEAR_PC_ONLY`): on phones and tablets the round More gear in the top bar duplicated Menu in the left stack, so it now shows on computers only. Check that `gearGui` is not used to place anything else on touch screens (it is disabled there, not removed).
 - **Proof:** phone captures of the top-left buttons and the hotbar at rest, opened and with each slot selected.
 
-### 1.21 Notices ("EARTHQUAKE: +5 KOs!" and the rest): centred and good-looking: CLOUD (`TOAST_V2`, Toast)
+### 1.21 Notices: DONE on PC (`TOAST_V2`)
+- **State (PC, 28 Nov, v1434):** capture toast_v2: "EARTHQUAKE +5 KOs" centred under the top bar, as a rounded pill, the reward in gold.
 - **Cause found:**
   - `HudSlots.toastBox` placed the middle between the old chaos meter and the View/Replay slots, so it was off centre;
   - the card had a coloured strip down its left edge.
