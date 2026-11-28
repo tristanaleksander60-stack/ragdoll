@@ -171,6 +171,10 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Proof:** kill a ragdoll next to a bench: its friend kneels on the open side.
 
 ### 0.11 Bandages and plasters can't be seen; they hang in the air: CLOUD (`WRAP_ON_SKIN`, `PLASTER_SKIN`, SmoothBody `stick`/`drive`/`plasterOn`)
+- **PC 28 Nov, STAGED: FAILED, LEFT for the cloud.** On the server `VitalsService.wound(body, limb, limb.Position, nil, 0.3)` twice each on a living body's LeftLowerArm, RightLowerLeg and Head (it stayed Alive). On the client 10 Bandage parts were made within 1 s: rings on the left forearm and the right shin, about 1.0-1.1 across, 0.3-0.4 studs from the PHYSICS limb parts, anchored (WRAP_ON_SKIN took them over). No head wrap.
+  - Capture bandage_forearm: the white ring hangs in front of the body's chin and chest, facing out like a disc, NOT round the drawn forearm.
+  - Likely cause: with RAGDOLL_V7 on, the drawn forearm lies on its BONE (the physics part times the bone offset `d.off`), not on the physics part. The wrap's `rec.off` is taken from the physics limb, and the `r.xray` frame turns the ring with the bone axis from `boneCf`, while its offset still comes from the physics block. So it sits off the skin and turned.
+  - NEXT (cloud): build the wrap's offset in the bone/drawn frame (or skip `rec.off` and place the ring at a point along `boneCf` A to B at the wound's t, radius from BodyShape, axis along the bone), then the PC stages it again.
 - **PC 28 Nov: OWNER CHECK.** No body in the lab had a bandage in 60 s of Play. 2 shots each on a forearm and a shin killed the body, and no bandage came in 25 s: the wraps are drawn from a LIVING wounded body after first aid, which a test cannot stage quickly. The code (`WRAP_ON_SKIN`, `PLASTER_SKIN`) is pushed and the Play is clean.
 - **Causes found (cloud), three:**
   1. DummySkins welds a bandage to the old SKIN piece (the Skins folder), not to the body's limb. SmoothBody took it over with that skin piece as its limb, but the drawn frames are keyed by the physics parts, so it was anchored once and never moved: left hanging in the air.
