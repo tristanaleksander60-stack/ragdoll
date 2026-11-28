@@ -499,7 +499,12 @@ For each: one capture showing it working, and the switch. If it is broken, find 
   - **Cause:** the hole opened under the body and `hideBody` made it vanish at once.
   - **Now:** the mole bites it by the LEFT FOOT (CreatureGrip, a real wound) and sinks over 1.8 s, pulling it down feet first into the hole. The body's collision is off meanwhile, so the earth lets it through; it gets it back when it bursts out elsewhere. Only then is it hidden for the trip underground, and the burst-out is as before.
   - **Proof:** the trace of one drag: foot 1.8 to -2.1, head 6.3 to 2.3 (half the body under the ground) before it was hidden. Capture mole_drag3: the mole up out of its hole, biting, the HUD "Left foot, 96 % health". The drag was 1.1 s, too fast to see; it is now 1.8 s.
-  - Worst left (they still use hideBody): Vacuum, Washer.
+- **State (PC, 28 Nov): 4 of 5 DONE, the WASHER (`WASHER_PULL`, LabCreatures BUILD.Washer).**
+  - **Cause:** the body vanished the moment the door opened, and a small puppet spun in the drum.
+  - **Now:** the drum takes the body by the chest at the open door (a real joint, server-simulated, Held) and pulls it in over 0.8 s. Its collision is off and comes back when it is spat out. Then the spin cycle with the puppet runs as before (the real body is too big for the drum).
+  - **Proof:** caught 0.7 s after it was put at the door, chest at z 92.4 on its way from the door (91.5) to the drum (95.6). Capture washer_pull: the ragdoll at the washer's open front.
+- **The VACUUM (`VACUUM_SUCK`): built, NOT proven.** The nozzle catches the body by the foot (a real wound) and sucks it in feet first while the robot shakes, then the spin and spit-out as before. But this map has NO vacuum robot (the CreatureYard holds Spider, Frog, Plant, Chicken, Whale, Washer, Compressor, Mole and Slingshot), so it cannot be seen here. It stays behind its switch for a map that has one.
+- Next for the 5th: the Plant (swallows and spits out bones).
 
 ### 2.7 No more plain-part machines or creatures: STARTED
 - **PC 28 Nov (v1439), the GYRO: DONE (`GYRO_MODELS`).** Studio's generate_mesh makes good meshes in the place (no upload step), so it is the pipeline for the rest of 2.7:

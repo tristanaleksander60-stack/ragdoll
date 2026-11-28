@@ -1527,6 +1527,51 @@ BUILD.Washer = function(f, at, m)
 			play(0.25, function(t)
 				setDoor(t)
 			end)
+			-- (WASHER_PULL, RUN 2.6: the body vanished the moment the door opened. Now the drum takes it by the chest at
+			-- the door (a real joint) and pulls it in through the open door, its collision off; then it is inside and the
+			-- spin cycle runs as before.)
+			local chest = model:FindFirstChild("UpperTorso")
+			local solid: { [BasePart]: boolean } = {}
+			if (Config :: any).WASHER_PULL and chest and chest:IsA("BasePart") then
+				local DC = lazy("DummyControl")
+				local okO, wasOwner = pcall(DC.ownerOf, model)
+				pcall(DC.wake, model)
+				pcall(DC.setOwner, model, nil)
+				for _, p in model:GetDescendants() do
+					if p:IsA("BasePart") and p.CanCollide then
+						solid[p] = true
+						p.CanCollide = false
+					end
+				end
+				local mouthAt = door * CFrame.new(0, 0, -2.5)
+				local hook = Instance.new("Part")
+				hook.Name = "WasherHook"
+				hook.Size = Vector3.one * 0.4
+				hook.Transparency = 1
+				hook.Anchored, hook.CanCollide, hook.CanQuery, hook.CanTouch = true, false, false, false
+				hook.CFrame = mouthAt
+				hook.Parent = f
+				table.insert(m.temp, hook)
+				model:PivotTo(model:GetPivot() + (mouthAt.Position - chest.Position))
+				local a0 = Instance.new("Attachment")
+				a0.Parent = hook
+				local a1 = Instance.new("Attachment")
+				a1.Name = "WasherStuck"
+				a1.Parent = chest
+				local j = Instance.new("BallSocketConstraint")
+				j.Attachment0, j.Attachment1 = a0, a1
+				j.Parent = hook
+				model:SetAttribute("Held", true)
+				play(0.8, function(t)
+					hook.CFrame = mouthAt:Lerp(drum, t * t)
+				end)
+				hook:Destroy()
+				a1:Destroy()
+				model:SetAttribute("Held", nil)
+				if okO and wasOwner then
+					pcall(DC.setOwner, model, wasOwner)
+				end
+			end
 			hideBody(model, true)
 			task.spawn(hold, model, function()
 				return base * CFrame.new(0, 6, 0)
@@ -1610,6 +1655,11 @@ BUILD.Washer = function(f, at, m)
 				end)
 			end)
 			hideBody(model, false)
+			for p in solid do
+				if p.Parent then
+					p.CanCollide = true -- (WASHER_PULL: solid again once it is out)
+				end
+			end
 			if model.Parent then
 				lazy("DummyControl").move(model, door * CFrame.new(0, -1, -3))
 			end
@@ -1947,6 +1997,55 @@ BUILD.Vacuum = function(f, at, m)
 		end
 		swallow(m, body, function(model)
 			local here = bot:GetPivot()
+			-- (VACUUM_SUCK, RUN 2.6: the body vanished the moment the robot touched it. Now its nozzle catches the body by
+			-- the foot (a real joint, a real wound) and sucks it in feet first over 1.2 s while the robot shakes; the body's
+			-- collision is off meanwhile so it slides into the robot. Then it is inside: the spin and the spit-out as before.)
+			local foot = model:FindFirstChild("LeftFoot")
+			local solid: { [BasePart]: boolean } = {}
+			if (Config :: any).VACUUM_SUCK and foot and foot:IsA("BasePart") then
+				local DC = lazy("DummyControl")
+				local okO, wasOwner = pcall(DC.ownerOf, model)
+				pcall(DC.wake, model)
+				pcall(DC.setOwner, model, nil)
+				for _, p in model:GetDescendants() do
+					if p:IsA("BasePart") and p.CanCollide then
+						solid[p] = true
+						p.CanCollide = false
+					end
+				end
+				local front = here * CFrame.new(0, 0.6, -2.4)
+				local nozzle = Instance.new("Part")
+				nozzle.Name = "VacuumNozzle"
+				nozzle.Size = Vector3.one * 0.4
+				nozzle.Transparency = 1
+				nozzle.Anchored, nozzle.CanCollide, nozzle.CanQuery, nozzle.CanTouch = true, false, false, false
+				nozzle.CFrame = front
+				nozzle.Parent = f
+				table.insert(m.temp, nozzle)
+				model:PivotTo(model:GetPivot() + (front.Position - foot.Position))
+				local a0 = Instance.new("Attachment")
+				a0.Parent = nozzle
+				local a1 = Instance.new("Attachment")
+				a1.Name = "VacuumStuck"
+				a1.Parent = foot
+				local j = Instance.new("BallSocketConstraint")
+				j.Attachment0, j.Attachment1 = a0, a1
+				j.Parent = nozzle
+				model:SetAttribute("Held", true)
+				pcall(lazy("CreatureGrip").bite, model, foot, m.owner(), 1)
+				local inside = here * CFrame.new(0, -1.5, 0)
+				play(1.2, function(t)
+					nozzle.CFrame = front:Lerp(inside, t * t)
+					bot:PivotTo(here * CFrame.new(math.sin(t * 70) * 0.12, math.abs(math.sin(t * 50)) * 0.1, 0))
+				end)
+				spray(f, front.Position, { Color3.fromRGB(150, 150, 150), Color3.fromRGB(200, 200, 200) }, 25, 10, 0.5)
+				nozzle:Destroy()
+				a1:Destroy()
+				model:SetAttribute("Held", nil)
+				if okO and wasOwner then
+					pcall(DC.setOwner, model, wasOwner)
+				end
+			end
 			task.spawn(hold, model, function()
 				return here * CFrame.new(0, 1.5, 0)
 			end, 1.0)
@@ -1955,6 +2054,11 @@ BUILD.Vacuum = function(f, at, m)
 				bot:PivotTo(here * CFrame.Angles(0, t * math.pi * 4, 0))
 			end)
 			hideBody(model, false)
+			for p in solid do
+				if p.Parent then
+					p.CanCollide = true
+				end
+			end
 			return m.toLab * 90 + Vector3.new(0, 50, 0)
 		end)
 	end
