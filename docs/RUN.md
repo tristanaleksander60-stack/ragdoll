@@ -165,6 +165,10 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Proof:** the range from the plaza and from its door: whole facade, roof and sides free.
 
 ### 0.9 CPR kneeling into a bench: CLOUD (`CPR_CLEAR`, Mourning `freeKneel`)
+- **PC 28 Nov, STAGED twice: LEFT.** For the test JOIN_CHANCE and CPR_CHANCE were set to 1 in the Studio source (put back to 0.85 and 0.5 after; Mourning matches disk again, 32975).
+  - **Try 1:** a body 2.2 studs in front of a ParkBench and 2 friends set 6 studs from it, killed with `VitalsService.wound` (no killer). It died, but no friend mourned in 30 s; only one body stayed within 30 studs, with no mood.
+  - **Try 2:** the same with the friends 5 studs off, Home held, the player 12 studs away shooting it through the real HitRequest (Blaster, up to 12 shots). It went Unconscious, not Dead, and no mood started.
+  - So mourning did not start in either staged case. NEXT (cloud): name the exact start condition in Mourning (a death by a player? the lab owner near? the friends' own state?) so the PC can stage it, e.g. a `Mourning.startFor(body, friend)` test hook.
 - **PC 28 Nov: OWNER CHECK.** I killed a body 2.2 studs in front of a ParkBench (at 1038, 173). No mourner came within 40 s (mourning only starts by chance), so the kneel spot could not be seen. The code (`CPR_CLEAR`, `freeKneel`) is pushed and the Play is clean.
 - **Cause found (cloud):** the kneel spot was always 1.6 studs off the chest on the near side, whatever stood there; the kneeling legs were posed into the bench and thrown out.
 - **Now:** a knee-sized box must be free of anything solid; else the other side, then the head end; else no CPR there.
