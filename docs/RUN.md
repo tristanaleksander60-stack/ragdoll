@@ -716,6 +716,9 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 - `CARRY_FLOOR_RAY`: carry a ragdoll under the bowling canopy and up every tower floor; it stays in front of you, never on a roof.
 - DROP HERE (`DropSpots`): ONE sign at each machine when carrying, the bear's in front of its mouth.
 - `PLAYER_SWIM`: fall into the aquarium, swim, and jump out on every side; the 25 s safety net.
+ **PC 28 Nov (2): the safety net TICKED.** The player was set in AquaWaterVolume (39 x 12.5 x 25) and left alone. They sank to the bottom in 2 s and were set outside after 7.8 s (the 6 s "still on the bottom" net), 16.7 studs out, on the floor.
+  - Capture `swim_out`: the player beside the aquarium, the shark swimming in the glass tank behind.
+  - Swimming with the stick and jumping out over a side need held input: an OWNER CHECK.
 - `STAIR_OPENING`: walk up the aquarium stairs onto the platform.
 - `PARKING_STRAIGHT`: a top-down capture of the lot; each plaque in front of its vehicle.
  **PC 28 Nov (v1441):** the tank (LabMuscleCar, 12.8 wide) had an 11 bay; it was pushed into the Ford and rode up on it, tilted 13 degrees. `PANZER_BAY_FIT` gives it 13.5, and it now stands flat (1 degree). Capture parking_top: every vehicle over its own plaque, straight.
