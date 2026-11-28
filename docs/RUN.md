@@ -272,6 +272,7 @@ Group the items that touch the same files and do them together:
   1. **Half inside the arm:** a v6 arm is round with radius 0.3-0.375, and a flat 0.35 hole picture lay only 0.005 off it, so its rim was about 0.05 studs inside the arm. Now the picture is at most 0.8 x the radius across and lifted by the curve's sag, so its rim touches the skin all round (the round head too).
   2. **Not shown at all:** a v6 body WITHOUT the old skins (the crowd, V6_EVERYONE) got the hole on the physics block's flat face, inside the round limb. Now it goes on the v6 limb's round surface round the part's axis.
 - **Proof:** 5 shots on each arm and each leg of a lab ragdoll AND a crowd person; captures from 3 studs, front and side.
+- **Owner 28 Nov: still not seen on legs and arms.** Cause found (cloud): ON_SKIN anchored the holes and moved them in SmoothBody, but with V7 step 1 they were placed from the old FK chain the skin no longer follows, so they hung off or inside the limbs. Fixed by `V7_SAME_FRAME`, and under V7 the holes stay welded. Prove it again: 5 shots per arm and leg, captures from 3 studs while it walks.
 ### 1.14 The spawn arch banners half inside the pillars: DONE (`BANNER_CLEAR`)
 - **State (PC, 28 Nov, v1434):** capture banner_side: the banner hangs from its rod, clear of the pillar's face.
 - **Cause found:** the banner hung 0.075 studs off the pillar, and its "Swing" (0.06 rad round its top) moved its bottom about 0.5 studs, into the stone.
@@ -588,23 +589,18 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 ---
 
 ## BATCH 3 and on
-- **`RAGDOLL_V7.md`:** V7 step 1 is ON (v1450: the engine skins v6 from the physics parts). Go straight on with V7-2: animated walking until hit, the switch to physics at the same pose, the stagger and the get-up by orientation.
-  - Build it behind `Config.RAGDOLL_V7_ANIMATED` and prove it: captures, plus the SMOKE ROUND.
-  - **State (PC, 28 Nov, v1451): V7-2 slice 1 ON (`RAGDOLL_V7_ANIMATED`, ActiveRagdoll state change).** An upright dummy (Standing, Walking, Fleeing) is no longer balanced on forces: its Balance and ChestBalance are RIGID (exact upright and heading), and its six leg parts do not collide (the lift carries it; the feet were 0.02 over the floor anyway). Any other state (a flinch, a fall, a hit, held, a seat) lets go of all of it at once, and the legs collide again.
-    - LegJitter, 75 s, same spot as the runs before: the spins while standing are gone (13-19 rad/s TURN TWIST while Standing: 3 before, 0 now; one slow 1.7 rad/s left). Knee events 2 → 1. The walking-turn foot slips are unchanged (5 events, 5-10 a second): that is the drawn foot, slice 2.
-    - Hits still work: 3 Blaster hits left a body standing at 68 % health (flinches), 9 knocked it out: it went Ragdoll and slumped, legs colliding again (captures v7a_hit, v7a_hit2; the bodies around it stand upright and calm).
-    - NEXT, slice 2: the walking feet (DummyLife's footstep planting against the root's turn), then the stagger and the get-up by orientation.
-  - **State (PC, 28 Nov): slice 2 needs no change.**
-    - The walking "foot stick-slips" are normal steps. LegJitter counts a foot crossing 0.5 and 3 studs/s more than 4 times a second while the pelvis turns. At walking speed (about 8 studs/s, STRIDE 4.2) the cycle runs about 2 times a second, so each foot swings and plants about 4-6 times a second: the 5-7 reported, with a hip twist of only 0-14 degrees. Not a fault.
-    - The stagger and the get-up already exist in physics form: the Flinch/Stumble tone profiles (3 Blaster hits = flinches, the body stays up) and the get-up height from face-down or face-up (`standOffset`, `faceDown`).
-    - V7-3 (everything that holds a body): with the V7 skin a hit body gets its holes (3 BulletHoles; the left-arm one 0.50 from the limb's centre, on the skin). The close-up capture missed (the body walked off), so the holes are not proven yet. NEXT: a capture of a hole and of the X-ray on a V7 body (key I through user_keyboard_input with `actions` and `datamodel_type`).
-  - **State (PC, 28 Nov): V7-3 checked on a knocked-out V7 body (10 Blaster hits, 4 BulletHoles, Dead, lying still).**
-    - Capture v7_holes_ko2: the body lies whole (no torn skin), the X-eyes face on the round head, dark hole marks on the torso, purple blood beside it.
-    - Capture v7_xray_ko (key I): the glass body with the whole skeleton inside (skull, ribs, spine, arm bones) in exactly the body's lying pose.
-    - Not captured separately: grab and carry, the machines, CPR, the bike and wheelchair. They pose the same physics parts the skin now follows, so they need no change; they go in the owner's test list.
-    - V7-4 (the clean-up) is NOT done on purpose: SmoothBody still places the mesh, the round head and the holes, and the old balance stays as the physics for hits. Removing it is only safe after the owner has played with V7.
-  - Leave it ON only if the proof passes (no jitter standing, upright walking, hits still knock bodies over); else OFF and LEFT with the reason.
-  - Then V7-3 and V7-4 the same way. NEVER stop for an owner test: everything goes in the one final list.
+- **`RAGDOLL_V7.md`:** V7 step 1 is ON (the engine skins v6 from the physics parts).
+  - **Cloud fix 28 Nov (`V7_SAME_FRAME`, SmoothBody):** the round head, the holes and the bandages now use the PHYSICS parts too. The head hung off the walking body, and holes slid off or into the limbs, because SmoothBody still placed them from the old FK chain the skin no longer follows. Under V7, holes stay welded (ON_SKIN does nothing).
+  - **`RAGDOLL_V7_ANIMATED` is OFF:** slice 1 held walking bodies rigid with their legs off the floor, carried by the lift, so the legs froze in one pose and the body GLIDED (the owner's test). The balancing walk with UPRIGHT_WALK and LEG_ONE_WRITER is back until the real thing works.
+  - **V7-2 done right (the least laggy walk that looks real on every device):**
+    1. An `AnimationController` + `Animator` in every dummy.
+    2. REAL walk and run clips: made in the Animation Editor or Blender, or the official Roblox R15 walk and run animations (they fit R15 names), published as assets the game owns.
+    3. While Standing, Walking or Fleeing, the Motor6D-style pose comes from the clip through the AnimationConstraints (`Transform` from the Animator's pose: sample the playing track's pose each frame into the joint targets), speed-matched: clip speed = ground speed / the clip's stride speed, so the feet do not slide.
+    4. The feet stay planted: the legs collide again; foot IK keeps each planted foot on the ground.
+    5. The root is moved by the drive at the real walking speed (no glide): stride length x step rate = speed.
+    6. Every screen plays the clip locally from the replicated speed and state, so the network sends no joint data and phones pay only for the clip.
+    7. A hit switches to physics at the same pose (as now).
+  - **Proof:** a side capture series of a walk and a run (feet planted, no sliding, no glide, the head on the neck), FPS on a phone, and the SMOKE ROUND. Only then `RAGDOLL_V7_ANIMATED = true`.
 - **`PERF_MOBILE.md` §6:** lag-free 2, the items not yet built.
   - **State (PC, 28 Nov):** checked against §6: items 0, 1 and 10 are DONE; 2-9 are PART DONE v1386-v1400 (sleep, the off-screen skin rate, PERF_LEVELS, HighlightCap, the pools, the loop checks, the GroundGuard slices). What is left needs a phone: the standing sleep for far living bodies (item 2 step 2) and the v6 LITE mesh (item 3, PARKED). The owner's phone and iPad test in the final list is the proof.
 - **`MILD_EXTRAS.md`:** finishing.

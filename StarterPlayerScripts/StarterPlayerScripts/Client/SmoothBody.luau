@@ -232,6 +232,9 @@ local function stick(body: Body, inst: Instance)
 	if not (inst:IsA("BasePart") and (STICK_NAMES[inst.Name] or inst:GetAttribute("OnSkin") == true)) then
 		return
 	end
+	if (body :: any).v7 then
+		return -- (RAGDOLL_V7: the skin follows the physics parts, so a hole WELDED to its limb is already on the skin; never anchor it)
+	end
 	task.defer(function()
 		local weld = inst:FindFirstChildOfClass("WeldConstraint")
 		local limb = weld and (if weld.Part0 == inst then weld.Part1 else weld.Part0)
@@ -714,7 +717,12 @@ local function drive(body: Body)
 	for i, d in body.drives do
 		local cf
 		local p = d.parent
-		if p and cfs[p] then
+		if (body :: any).v7 then
+			-- (V7_SAME_FRAME: with RAGDOLL_V7 the engine draws the skin from the PHYSICS parts, so the round head, the holes and
+			-- the bandages must use the physics parts too. They used the old FK chain, which the skin no longer follows: the
+			-- head hung off the body when it walked, and holes slid off or into the limbs.)
+			cf = d.part.CFrame * d.off
+		elseif p and cfs[p] then
 			cf = CFrame.new(cfs[p]:PointToWorldSpace(d.localPos)) * (d.part.CFrame.Rotation * d.rot)
 		else
 			cf = d.part.CFrame * d.off
