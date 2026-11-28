@@ -81,6 +81,7 @@ Group the items that touch the same files and do them together:
 All cloud code below is pushed (`c3ab25e` and the commit after it). For each item: push the files, one Play, confirm the cause in that Play, then the proof. A cause that turns out wrong: write the real one in the State and fix that.
 
 ### 0.1 Ragdolls bug about and fly round everywhere: CLOUD (`CALM_GUARD`, ActiveRagdoll `calmGuard`)
+- **PC 28 Nov (preflight: all 21 cloud files pushed, lengths match, Play clean):** CALM_GUARD caught 2 flings in about 5 min of Play, both "Standing, 42-43 studs/s sideways, vy 0, no hit": one touching OwnerGrass, OwnerRim and BaseplateEast (the map's edge), one OwnerRailPost, OwnerPlaza and OwnerGrass. Lab also logged "dummy 1/9 moving impossibly fast; sent home". So the fling source is bodies at the map's rim and by the plaza rail posts being pushed out sideways. NEXT: find what presses them there (the rim's collision or a Home set inside a post) and fix it at the source. The 2-minute capture series is not made yet.
 - **What the owner sees:** standing and walking ragdolls suddenly jump and fly off with nothing hitting them.
 - **Cause: NOT found yet (cloud could not see it without Studio).** No single cause was found in the code (GroundGuard, the lift, poses and props are all suspects). So the cloud built a guard that catches it AND names the cause:
   - an upright living body (Standing, Walking, Fleeing) that nothing hit, shoved, held, rides or has in a machine, and that goes over 25 studs/s sideways or 16 up, is stopped and put back where it last stood calmly;
@@ -94,20 +95,24 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Proof:** punch one 5 times, walk after it for 20 s: it never walks or slides away from you (capture series); stand at the spawn 60 s: the count within 45 studs stays at the cap, and nobody walks off in view.
 
 ### 0.3 The gyro: bodies bounce up and down and fly out; it needs E: CLOUD (`GYRO_RIDE`, `GYRO_AUTO`, MapMachines `spin`/`wireGyro`, Client/GyroRideClient)
+- **PC 28 Nov: DONE.** A ragdoll put on the gyro's pad from the server was taken by itself 0.2 s later (GyroRide set, no prompt) and held at the hub (y 18.6). Capture gyro_ride2: the ragdoll in the middle of the rings, no E prompt anywhere.
 - **Cause found (cloud):** `spin()` teleported the client-simulated body to the hub 20 times a second (`DummyControl.move`), while its own screen let gravity pull it between the teleports: it bounced and was thrown out. And it never sat in the seat: the rings and the seat turn only on each screen (GateMotion "Spin").
 - **Now:** the server anchors the body for the ride (`GyroRide` attribute) and every screen holds it in the nearest turning `GyroSeat` (Client/GyroRideClient), so it turns WITH the rings. No E prompt: the gyro takes every ragdoll dropped on its pad or walked in (`GYRO_AUTO`).
 - **Proof:** a capture series of a dropped ragdoll riding in the seat, turning with the rings, then flung out; no prompt visible; on the phone too.
 
 ### 0.4 TRY removed completely: CLOUD (`TRY_OFF`, FirstTwo, LabShowcase, SessionStats)
+- **PC 28 Nov: DONE.** Standing by 5 machines (their DropSpots) for 2.5 s each: no TRY button, no "Try ..." line and no "TRY!" in any visible GUI. Capture try_gone: the HUD without TRY.
 - No TRY button, no E for it, no "Try CANNON 0/6" goal line; the server ignores a "Try". The bowling FTUE line stays. Item 1.9 and the SMOKE ROUND's step 4 are replaced by 0.3's drop test.
 - **Proof:** walk past 5 machines on PC and phone: no TRY anywhere.
 
 ### 0.5 The head floats up in the compressor: CLOUD (`PRESS_HOLD`, Compressor `pancake`; DummyLife: no speech while MachineHidden)
+- **PC 28 Nov: DONE (trace).** A body on the bed, `Compressor.press` called on the server: for the whole press (4.8 s) all 16 of its parts were anchored and it was MachineHidden; after, all 16 parts were unanchored and whole. So nothing can be squeezed up through the plate. (The capture press_hold shows the press from the side.)
 - **Cause found (cloud):** under the pancake copy the real body stayed a live physics body; the plate squeezed it and the solver pushed its parts up through the thin plate, where the head was left floating; its speech bubble floated there too.
 - **Now:** the hidden body is frozen where it lay (anchored, no collision, invisible on every screen) for the whole press, and let go after (owner reasserted); a hidden body says nothing.
 - **Proof:** press 3 ragdolls: nothing above the bed during the press; each comes back whole after.
 
 ### 0.6 The old block ragdoll when the spider takes one: CLOUD (`SPIDER_REAL_BODY`, LabCreatures `BUILD.Spider`)
+- **PC 28 Nov: PART (data).** A body put in the web was caught (InMachine Spider) and its REAL parts pinned in the web at the catch spot, visible (Transparency 0). The old block copy is no longer made. From both sides the spider sat in front of it, so the capture spider_real_body does not show the body clearly. The washer and the chick were not captured.
 - **Cause found (cloud):** the still copy in the web was cloned from the body's physics parts, which on a v6 body are the hidden OLD blocks.
 - **Now:** the real body hangs in the web, anchored in its caught pose (its own v6 skin, face, holes); hidden only when the cocoon closes; let go if the sequence fails.
 - **Also (PC):** the same old-block look in two more places: the washer's spinning drum shows a block `puppet` and the egg hatches a block `puppet` chick (LabCreatures `puppet`). Replace both: the washer spins the REAL body anchored in the drum (same method as the spider: anchored, turned by the server, or by each screen like the gyro), the chick is a small real chick model (Creator Store, malware pass). Search for any other copy made from body parts (`Instance.new("Part")` with `p.Size` of a body part) and fix it the same way.
@@ -119,6 +124,7 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Proof:** shoot an upper arm, a forearm, a thigh and a shin 3 times each (X-ray off, then on), standing and lying: every hole on the skin, every bone inside its limb along it; captures from 2 m.
 
 ### 0.8 Weapon testing still in the mountain: CLOUD (`KEEP_CLEAR`, new Systems/TerrainClear, Landscape, ShootingRange)
+- **PC 28 Nov: DONE.** Capture range_clear (from the plaza side, 70 studs out): the WEAPON TESTING building stands free, facade, roof and sides clear, open grass round it, the hill only further back.
 - **Cause found (cloud):** the range stands just outside the compact plan, inside the ring of grass hills round the map (LabOwnerMap `hills`, balls up to 100 studs wide). RANGE_CLEAR cut only 6 studs round its walls, so the hill still rose against its sides and roof; on the old map the slow Landscape fill even put the hill back after the cut.
 - **Now:** the range is tagged `KeepTerrainClear`: it stands in an open terraced site (flat 14 studs round it, then 5 terraces stepping up 5 studs every 9 studs), cut at once and again at 4/20/60/120 s; Landscape never fills there and puts no trees there.
 - **Also (PC):** tag every other building that touches a hill (walk the map edge: one capture per building) and give the range its real model (1.19). Make sure the path to its door is clear of trees (the owner could not get in because trees covered it).
