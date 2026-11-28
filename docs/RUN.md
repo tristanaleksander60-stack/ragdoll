@@ -331,6 +331,13 @@ The owner said things were skipped. This is the full list from the chat since 26
     - Capture `bear_cave2`, from the bear's yard: a grassy rock hill with a dark arched opening, rocks and a log in front, the bear before it, no flat black wall, no puddle.
   - **"boxing: 2 ragdolls start a fight" (BOXING_V2): SEEN running.** At the start 2 bodies were already boxing; capture `boxing_v2` shows the two in guard, close, in the middle of the ring.
     - A third body dropped in did not join: one fight at a time, by design. So the "drop ONE in, an opponent runs in" path was not staged separately this run.
+  - **"the stretcher stretches limbs long, lets go, the long limb shrinks back": LEFT after 2 staging tries, for the cloud.**
+    - The code path reads right: after the release a limb holds 30 s (`HOLD_LONG`), then shrinks over 10 s (`SHRINK`, eased); the owner asked for 30 s.
+    - Staged in Play: a client-simulated body let go on DropSpot_Stretch (`Held` set on the server) was locked (`InMachine = Stretch`, 4 springs on), then "Pull all four" was fired from the client next to it.
+    - After 10 s every limb's `StretchK` was still 1.00. Capture `stretch_long`: the body STANDING upright in the middle of the machine, its cables on, saying "Just stretching my legs".
+    - Likely cause: the trunk is not held down and lifted (HOLD/LIFT) while the standing balance keeps the body upright, so the body walks with the claws and the joint-to-claw distance never grows. Or `may(player)` / phase refused the press; there is no log line to tell which.
+    - NEXT (cloud): a `[Stretch]` debug line for phase, pulling and K each second, and make sure a locked body is put in `Ragdoll` state (lying, held at LIFT) before the arms pull.
+    - Try 1 was spoiled by me: I fired every prompt, Release included.
 
 
 ## BATCH 1 (do now)
