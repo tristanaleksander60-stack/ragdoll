@@ -239,7 +239,61 @@ if V7_ON_AXIS then
 end
 -- A hole or bandage welded to a body limb is taken over: its weld is switched off, it is anchored, and drive() moves it
 -- with the drawn limb (kept relative to the limb exactly as it was welded).
-local function stick(body: Body, inst: Instance)
+local stick: (Body, Instance) -> ()
+-- (PLASTER_SKIN, owner: "you can't even see the plaster". The cause: the server's plaster strips are the old block size
+-- and are switched off (PLASTER_VISIBLE false), so nothing showed on a v6 body. Now each screen puts its own plaster ON
+-- the drawn limb: two crossed beige strips on the front of the limb at the v6 skin, carried like the holes; it goes when
+-- the server's (invisible) plaster goes.)
+local PLASTER_SKIN = (Config :: any).PLASTER_SKIN == true
+local function plasterOn(body: Body, marker: BasePart)
+	local limb = marker.Parent
+	if not (limb and limb:IsA("BasePart") and limb.Parent == body.model) or limb:FindFirstChild("PlasterSkinMark") then
+		return
+	end
+	local mark = Instance.new("BoolValue")
+	mark.Name = "PlasterSkinMark"
+	mark.Parent = limb
+	local r = BodyShapeMod.radius(limb.Name, 0.5)
+	local front: number
+	if r then
+		front = r
+	elseif limb.Name == "UpperTorso" or limb.Name == "LowerTorso" then
+		local _, d = BodyShapeMod.torsoAt(if limb.Name == "UpperTorso" then 0.9 else -0.1)
+		front = d
+	else
+		front = limb.Size.Z / 2
+	end
+	local made: { BasePart } = {}
+	for _, angle in { 40, -40 } do
+		local strip = Instance.new("Part")
+		strip.Name = "PlasterSkin"
+		strip.Size = Vector3.new(0.78, 0.24, 0.03)
+		strip.Color = Color3.fromRGB(236, 206, 168)
+		strip.Material = Enum.Material.Fabric
+		strip.CanCollide, strip.CanQuery, strip.CanTouch, strip.Massless, strip.CastShadow = false, false, false, true, false
+		strip:SetAttribute("OnSkin", true)
+		strip.CFrame = limb.CFrame * CFrame.new(0, 0, -(front + 0.012)) * CFrame.Angles(0, 0, math.rad(angle))
+		local w = Instance.new("WeldConstraint")
+		w.Part0 = limb
+		w.Part1 = strip
+		w.Parent = strip
+		strip.Parent = body.model
+		table.insert(made, strip)
+	end
+	marker.AncestryChanged:Connect(function()
+		if not marker:IsDescendantOf(limb) then
+			for _, p in made do
+				p:Destroy()
+			end
+			mark:Destroy()
+		end
+	end)
+end
+function stick(body: Body, inst: Instance)
+	if PLASTER_SKIN and inst.Name == "Plaster" and inst:IsA("BasePart") then
+		task.defer(plasterOn, body, inst)
+		return
+	end
 	if not (inst:IsA("BasePart") and (STICK_NAMES[inst.Name] or inst:GetAttribute("OnSkin") == true)) then
 		return
 	end
@@ -258,7 +312,40 @@ local function stick(body: Body, inst: Instance)
 		end
 		local B = body :: any
 		B.stuck = B.stuck or {}
+		-- (WRAP_ON_SKIN, owner 28 Nov: "bandages and plasters still can't be seen, they stay in the same place in the air".
+		-- The cause: DummySkins welds a bandage to the old SKIN piece (Skins folder), not to the body's limb. Taken over
+		-- here, its limb was that skin piece, which has no drawn frame (drive() keys by the physics parts), so it was
+		-- anchored once and never moved again: left hanging in the air. Now it is carried by the body part of the same
+		-- name, on the drawn limb's axis, and its rings are made as wide as the drawn limb (HOLE_AXIS_SCALE).)
+		local WRAP = (Config :: any).WRAP_ON_SKIN == true
+		local skinPiece = limb
+		if WRAP and limb.Parent ~= body.model then
+			local real = body.model:FindFirstChild(limb.Name)
+			if real and real:IsA("BasePart") then
+				limb = real
+			end
+		end
 		local rec: any = { limb = limb, off = limb.CFrame:ToObjectSpace(inst.CFrame), weld = weld }
+		local _ = skinPiece
+		local ball = body.ball
+		if WRAP and limb.Name == "Head" and ball and (inst.Name == "Bandage" or inst.Name == "PlasterSkin") then
+			-- (a head wrap goes round the ROUND head, not the hidden head block: as wide as the ball, a little above its middle)
+			local rel = limb.CFrame:ToObjectSpace(inst.CFrame)
+			local scale = ball.Size.X / math.max(limb.Size.X, 0.1)
+			rec.ball = ball
+			rec.off = CFrame.new(rel.Position * scale + Vector3.new(0, ball.Size.Y * 0.08, 0)) * rel.Rotation
+			if inst.Name == "Bandage" and inst:IsA("Part") and inst.Shape == Enum.PartType.Cylinder and inst.Size.Y > 0.3 then
+				inst.Size = Vector3.new(inst.Size.X, ball.Size.Y * 1.04, ball.Size.Z * 1.04)
+			end
+		end
+		if WRAP and NEXT_JOINT[limb.Name] and (inst.Name == "Bandage" or inst.Name == "PlasterSkin") then
+			rec.xray = true -- (carried onto the drawn axis like the X-ray bones)
+			local k = Workspace:GetAttribute("HoleAxisScale") or (Config :: any).HOLE_AXIS_SCALE or 1
+			rec.radial = k
+			if inst.Name == "Bandage" and inst:IsA("Part") and inst.Shape == Enum.PartType.Cylinder and inst.Size.Y > 0.3 then
+				inst.Size = Vector3.new(inst.Size.X, inst.Size.Y * k, inst.Size.Z * k) -- (a ring as wide as the drawn limb)
+			end
+		end
 		if HOLE_ON_AXIS and NEXT_JOINT[limb.Name] and (inst.Name == "BulletHole" or inst.Name == "BulletStress") then
 			local lp = rec.off.Position
 			local hy = limb.Size.Y / 2
@@ -784,8 +871,16 @@ local function drive(body: Body)
 				else
 					local at = B1.drawn[rec.limb]
 					local r: any = rec
+					if r.ball then
+						if r.ball.Parent then
+							at = nil
+							r.placed = true
+							table.insert(parts, inst)
+							table.insert(cframes, r.ball.CFrame * rec.off)
+						end
+					end
 					local bc = B1.boneCf
-					if r.xray and bc then
+					if r.xray and bc and not r.ball then
 						local XA, XB = bc[rec.limb.Name], bc[NEXT_JOINT[rec.limb.Name]]
 						if XA and XB then
 							local a, b = XA.Position, XB.Position
@@ -798,9 +893,11 @@ local function drive(body: Body)
 								local frame = CFrame.fromMatrix((a + b) / 2, right, up)
 								local o = rec.off
 								local k = len / math.max(rec.limb.Size.Y, 0.1)
+								local rk = r.radial or 1
 								at = nil
+								r.placed = true
 								table.insert(parts, inst)
-								table.insert(cframes, frame * CFrame.new(o.X, o.Y * k, o.Z) * o.Rotation)
+								table.insert(cframes, frame * CFrame.new(o.X * rk, o.Y * k, o.Z * rk) * o.Rotation)
 							end
 						end
 					end
@@ -828,7 +925,12 @@ local function drive(body: Body)
 					if at then
 						table.insert(parts, inst)
 						table.insert(cframes, at * rec.off)
+					elseif not r.placed and not (A and Bn) and rec.limb.Parent then
+						-- (WRAP_ON_SKIN: no drawn frame for its limb: it follows the limb itself; never left hanging)
+						table.insert(parts, inst)
+						table.insert(cframes, rec.limb.CFrame * rec.off)
 					end
+					r.placed = nil
 				end
 			end
 			if #parts > 0 then

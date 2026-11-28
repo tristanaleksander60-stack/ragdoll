@@ -129,6 +129,14 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Now:** a knee-sized box must be free of anything solid; else the other side, then the head end; else no CPR there.
 - **Proof:** kill a ragdoll next to a bench: its friend kneels on the open side.
 
+### 0.11 Bandages and plasters can't be seen; they hang in the air: CLOUD (`WRAP_ON_SKIN`, `PLASTER_SKIN`, SmoothBody `stick`/`drive`/`plasterOn`)
+- **Causes found (cloud), three:**
+  1. DummySkins welds a bandage to the old SKIN piece (the Skins folder), not to the body's limb. SmoothBody took it over with that skin piece as its limb, but the drawn frames are keyed by the physics parts, so it was anchored once and never moved: left hanging in the air.
+  2. It sat on the physics axis with BodyShape's radius, about 25 % smaller than the drawn mesh (the PC found `HOLE_AXIS_SCALE` 1.25 for the holes), so it was inside the limb.
+  3. The plasters are the server's block-sized strips and are switched off (`PLASTER_VISIBLE = false`): nothing showed.
+- **Now:** a bandage is carried by the body part of the same name on the DRAWN limb axis, its rings as wide as the drawn limb (x HOLE_AXIS_SCALE), a head wrap round the round head; nothing is ever left without a frame (it follows its limb at worst). Each screen puts a plaster ON the drawn limb (two crossed beige strips at the skin) wherever the server marked one, and removes it with it.
+- **Proof:** a patched-up forearm, shin and head and a plastered (broken) limb, standing, walking and lying, from 3 m and 10 m, PC and phone. If the rings look too thick or thin, tune `HoleAxisScale` live (workspace attribute) and write the value in Config.
+
 ### 0.10 The plan doc itself (PC, at the end of the run)
 - Every item you touch: the State line says DONE + the capture line, or LEFT + the exact reason. No "PART" without saying exactly what is missing.
 
@@ -551,7 +559,7 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 - **Also check** the real bench sitting (BenchService). Its seat height comes from the OLD limb sizes. On the thicker v6 body, check in a side capture that the hips are on the planks and the back is not inside the backrest; if not, add the v6 hip depth to `seatHeight` and move the seat point 0.25 studs forward.
 - **Proof:** a scared ragdoll hiding behind a wall or tree; 3 benches with sitters, from the front and the side.
 
-### 2.2 Bandages and plasters that sit right and can be seen: FAILED (FIXES_28NOV 11 built) (now done as 1.13)
+### 2.2 Bandages and plasters that sit right and can be seen: see 0.11 (cause found 28 Nov)
 - **Find the cause:** the capture shows a gauze floating as a flat box off the arm, and no plaster at all.
 - **Build:**
   - **the bandage:** a ring mesh around the v6 limb, its axis along the bone, its radius the v6 limb radius at that point (BodyShape) + 0.02, moved with the bone in SmoothBody's drive;
