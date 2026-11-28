@@ -319,6 +319,13 @@ The owner said things were skipped. This is the full list from the chat since 26
     - Capture `slide_top`: the chute leaving the roof edge by the SLIDE sign.
     - Capture `slide_ride`: the player half way down the green chute.
     - Note for proofs: `Humanoid:Move` from execute_luau does nothing (the game's control code resets it each frame); drive the root's velocity instead.
+  - **"you are never kicked out of a car while driving": TICKED.**
+    - Under CAR_STAY a driven car counts as "off" only when it falls out of the world or is over 700 studs from its home. The farthest map corner from any vehicle's home is 565 studs (FireTruck), so the map never reaches that edge.
+    - Test: the player sat in LabCar, which was moved 484 studs to the farthest corner, and after 4 s was still its driver.
+    - Capture `car_far_corner`: the driver HUD (speedometer, gear N, INSIDE) at the map's far corner.
+  - **"no Multipla": a Studio artifact, not a phone bug.** The caption reads "Online" when the player's `Device` is phone or tablet.
+    - After the MCP sent key presses, Studio's emulator reported a keyboard too (`TouchEnabled` and `KeyboardEnabled`), so `Device` became "pc" and the caption "Multiplayer", cut to "Multipla" in the narrow phone layout.
+    - A real phone has no keyboard: "phone", "Online" (as in this run's earlier captures).
 
 
 ## BATCH 1 (do now)
