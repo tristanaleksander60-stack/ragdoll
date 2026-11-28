@@ -65,6 +65,17 @@ local PROP = {
 }
 -- A park bench: 6 long, seat 1.6 high and 1.6 deep, back to 3.2; 3 seat slats and 2 back slats with gaps, 2 cast-iron
 -- side frames (leg, seat support, back post). `cf` = the ground point under the seat's middle, facing the way one sits.
+-- (PROP_MODELS, RUN 2.7: the park lamps and benches were built from plain blocks (63 lamps, 32 benches round the map).
+-- Now a real cast-iron park lamp and a real slatted park bench (V3Assets "ParkLamp", "ParkBench"; Studio-generated
+-- meshes) are drawn over them; the old blocks stay as the invisible parts BenchService sits on and the lamp's light.)
+local function propModel(name: string): Model?
+	if not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).PROP_MODELS then
+		return nil
+	end
+	local V = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
+	local src = V and V:FindFirstChild(name)
+	return if src and src:IsA("Model") then src:Clone() else nil
+end
 local function benchModel(into: Instance, cf: CFrame)
 	local m = Instance.new("Model")
 	m.Name = "Bench"
@@ -80,6 +91,27 @@ local function benchModel(into: Instance, cf: CFrame)
 		part(m, "BenchLeg", Vector3.new(0.18, 1.5, 0.18), cf * CFrame.new(x, 0.75, 0.6), PROP.iron, Enum.Material.Metal, true)
 		part(m, "BenchSupport", Vector3.new(0.18, 0.18, 1.6), cf * CFrame.new(x, 1.45, 0), PROP.iron, Enum.Material.Metal, true)
 		part(m, "BenchPost", Vector3.new(0.18, 1.8, 0.18), cf * CFrame.new(x, 2.4, 0.9) * CFrame.Angles(math.rad(-12), 0, 0), PROP.iron, Enum.Material.Metal, true)
+	end
+	local look = propModel("ParkBench")
+	if look then
+		for _, d in m:GetChildren() do
+			if d:IsA("BasePart") then
+				d.Transparency = 1
+				d.CastShadow = false
+			end
+		end
+		local _, ls = look:GetBoundingBox()
+		local kx = 6.2 / ls.X -- (stretched along the seat only: the real bench is 6 long and 3.2 high)
+		local pv = look:GetPivot()
+		for _, d in look:GetDescendants() do
+			if d:IsA("BasePart") then
+				local o = pv:ToObjectSpace(d.CFrame)
+				d.Size = Vector3.new(d.Size.X * kx, d.Size.Y, d.Size.Z)
+				d.CFrame = pv * CFrame.new(o.X * kx, o.Y, o.Z) * o.Rotation
+			end
+		end
+		look:PivotTo(cf)
+		look.Parent = m
 	end
 	m.Parent = into
 	return m
@@ -1688,6 +1720,19 @@ local function lamp(into: Instance, at: Vector3)
 	glow.Color = Color3.fromRGB(255, 226, 180)
 	glow.Shadows = false
 	glow.Parent = head
+	local look = propModel("ParkLamp")
+	if look then
+		for _, n in { "LampPost", "LampFoot", "LampCap", "LampHead" } do
+			for _, d in into:GetChildren() do
+				if d.Name == n and d:IsA("BasePart") and (Vector3.new(d.Position.X, at.Y, d.Position.Z) - at).Magnitude < 0.1 then
+					d.Transparency = 1
+					d.CastShadow = false
+				end
+			end
+		end
+		look:PivotTo(CFrame.new(at))
+		look.Parent = into
+	end
 end
 local function fill(into: Instance, o: Vector3, top: number)
 	local S = LabOwnerMap.S
