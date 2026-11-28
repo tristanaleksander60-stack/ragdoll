@@ -1443,6 +1443,18 @@ local function chickFollow(owner: Player, from: Vector3, into: Instance)
 		eye:SetAttribute("X", x)
 		eye.Parent = chick
 	end
+	-- (CHICK_REAL: the follower is the real chick model, carried by the hidden ball.)
+	local real = if (Config :: any).CHICK_REAL then place(chick, "MChick", from, 0, 1.3) else nil
+	local lift = 0
+	if real then
+		local cfb, sb = real:GetBoundingBox()
+		lift = real:GetPivot().Position.Y - (cfb.Position.Y - sb.Y / 2)
+		for _, p in { chick, beak, table.unpack(chick:GetChildren()) } do
+			if p:IsA("BasePart") then
+				p.Transparency = 1
+			end
+		end
+	end
 	chick.Parent = into
 	chickOf[owner] = chick
 	pcall(function()
@@ -1465,6 +1477,9 @@ local function chickFollow(owner: Player, from: Vector3, into: Instance)
 				local face = if step.Magnitude > 0.3 then CFrame.lookAt(pos, pos + Vector3.new(step.X, 0, step.Z)) else CFrame.lookAt(pos, Vector3.new(root.Position.X, pos.Y, root.Position.Z))
 				local cf = face + Vector3.new(0, hop, 0)
 				chick.CFrame = cf
+				if real then
+					real:PivotTo(cf * CFrame.new(0, lift - 0.55, 0))
+				end
 				beak.CFrame = cf * CFrame.new(0, 0, -0.6)
 				for _, e in chick:GetChildren() do
 					if e.Name == "Eye" and e:IsA("BasePart") then
@@ -1566,11 +1581,24 @@ BUILD.Chicken = function(f, at, m)
 			egg:Destroy()
 			spray(f, eggAt, { Color3.fromRGB(250, 246, 236), Color3.fromRGB(230, 225, 210) }, 30, 16, 0.6)
 			lazy("FxService").hit(eggAt, 80, "Punch")
-			local chick = puppet(f, 0.45)
+			-- (CHICK_REAL, RUN 0.6: a block `puppet` hatched, the old ragdoll look. Now a real chick model (V3Assets.MChick,
+			-- Creator Store "Baby Chick", malware-checked: one MeshPart, no scripts) pops out, spins up and drops back.)
+			local baby = if (Config :: any).CHICK_REAL then place(f, "MChick", eggAt, 0, 2) else nil
+			local chick = if baby then nil else puppet(f, 0.45)
 			play(0.6, function(t)
-				chick.set(CFrame.new(eggAt + Vector3.new(0, t * 3, 0)) * CFrame.Angles(0, t * 6, 0), t * 3)
+				local cf = CFrame.new(eggAt + Vector3.new(0, math.sin(t * math.pi) * 3, 0)) * CFrame.Angles(0, t * 6, 0)
+				if baby then
+					baby:PivotTo(cf)
+				elseif chick then
+					chick.set(cf, t * 3)
+				end
 			end)
-			chick.remove()
+			if baby then
+				baby:Destroy()
+			end
+			if chick then
+				chick.remove()
+			end
 			hideBody(model, false)
 			if (Config :: any).CHICKEN_10 then
 				local okO, owner = pcall(function()
@@ -1593,6 +1621,21 @@ BUILD.Washer = function(f, at, m)
 	local base = if washer then washer:GetPivot() else at
 	local door = base * CFrame.new(0, 6, -6)
 	local drum = door * CFrame.new(0, 0, 1.6)
+	-- (WASHER_DOOR_FIT, RUN 0.6: the model's pivot is its MIDDLE (12 tall), not its foot, so the door at (0, 6, -6) sat on
+	-- the top front edge: the glass disc floated over the machine, the drum (and the body spun in it) lay ON TOP, and
+	-- the take-box missed bodies standing on the floor. Now the door sits on the model's own round glass and the drum
+	-- 2.2 behind it; our glass replaces the model's, so the door can swing open.)
+	if (Config :: any).WASHER_DOOR_FIT and washer then
+		for _, d in washer:GetDescendants() do
+			if d:IsA("BasePart") and string.find(d.Name, "Glass") then
+				local o = base:ToObjectSpace(d.CFrame)
+				door = base * CFrame.new(o.Position.X, o.Position.Y, o.Position.Z - 0.15)
+				drum = door * CFrame.new(0, 0, 2.2)
+				d.Transparency = 1
+				break
+			end
+		end
+	end
 	local glass = part(f, "WasherGlass", Vector3.new(0.2, 5.4, 5.4), door * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(190, 220, 235), Enum.Material.Glass, Enum.PartType.Cylinder)
 	glass.Transparency = 0.55
 	local hinge = door * CFrame.new(-2.8, 0, 0)
@@ -1676,24 +1719,52 @@ BUILD.Washer = function(f, at, m)
 					pcall(DC.setOwner, model, wasOwner)
 				end
 			end
-			hideBody(model, true)
-			task.spawn(hold, model, function()
-				return base * CFrame.new(0, 6, 0)
-			end, 3.6)
+			-- (WASHER_REAL_BODY, RUN 0.6: the drum showed a block `puppet`, the old ragdoll look. Now the REAL body
+			-- tumbles in the drum: every part anchored by the server at its place round the pelvis, pulled in to 0.7 so
+			-- it fits the drum, and the whole pose turned with the spin; its own skin, face and holes show. The parts
+			-- carry SpiderPin, so the failure path lets them go too.)
+			local realWash = (Config :: any).WASHER_REAL_BODY == true
+			local washPins: { [BasePart]: CFrame } = {}
+			local washPelvis = model:FindFirstChild("LowerTorso")
+			if realWash and washPelvis and washPelvis:IsA("BasePart") then
+				local from = washPelvis.CFrame
+				for _, d in model:GetDescendants() do
+					if d:IsA("BasePart") and not d.Anchored then
+						local o = from:ToObjectSpace(d.CFrame)
+						washPins[d] = CFrame.new(o.Position * 0.55) * o.Rotation
+						d:SetAttribute("SpiderPin", true)
+						d.Anchored = true
+						d.AssemblyLinearVelocity = Vector3.zero
+					end
+				end
+			else
+				realWash = false
+				hideBody(model, true)
+				task.spawn(hold, model, function()
+					return base * CFrame.new(0, 6, 0)
+				end, 3.6)
+			end
 			play(0.25, function(t)
 				setDoor(1 - t)
 			end)
 			local water = part(f, "WasherWater", Vector3.new(0.3, 0.2, 5), drum * CFrame.new(0, -2.2, 0) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(80, 150, 220), Enum.Material.Glass, Enum.PartType.Cylinder)
 			water.Transparency = 0.35
 			table.insert(m.temp, water)
-			local doll = puppet(f, 0.6)
+			local doll = if realWash then nil else puppet(f, 0.6)
 			local blue, red = Color3.fromRGB(80, 150, 220), if GORE then Color3.fromRGB(150, 20, 28) elseif wash10 then Color3.fromRGB(200, 170, 240) else Color3.fromRGB(120, 200, 240)
 			local k = if wash10 then PROGRAMS[program].k else 1
 			local turbo = wash10 and k >= 2
 			local walk = if turbo then Vector3.new(math.random(-10, 10) / 10, 0, math.random(-10, 10) / 10) * 2.5 else Vector3.zero
 			play(3.0, function(t)
 				local spin = t * t * 40 * k
-				doll.set(drum * CFrame.Angles(0, 0, spin) * CFrame.new(0, 1, 0) * CFrame.Angles(spin * 0.7, 0, 0), t * 6)
+				local at = drum * CFrame.Angles(0, 0, spin) * CFrame.new(0, 0.5, 0) * CFrame.Angles(spin * 0.7, 0, 0)
+				if doll then
+					doll.set(at * CFrame.new(0, 0.5, 0), t * 6)
+				else
+					for d, o in washPins do
+						d.CFrame = at * o
+					end
+				end
 				local level = math.min(1, t * 2)
 				water.Size = Vector3.new(0.3, 0.2 + level * 4.6, 5)
 				water.CFrame = drum * CFrame.new(0, -2.2 + level * 2.3, 0) * CFrame.Angles(0, math.rad(90), 0)
@@ -1747,7 +1818,14 @@ BUILD.Washer = function(f, at, m)
 					end)
 				end
 			end
-			doll.remove()
+			if doll then
+				doll.remove()
+			end
+			for d in washPins do
+				d.CFrame = door * CFrame.new(0, 0, -2.5) * CFrame.Angles(0, math.pi, 0) * (washPins[d] :: CFrame)
+				d.Anchored = false
+				d:SetAttribute("SpiderPin", nil)
+			end
 			play(0.15, function(t)
 				setDoor(t)
 			end)

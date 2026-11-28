@@ -143,6 +143,19 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Proof:** press 3 ragdolls: nothing above the bed during the press; each comes back whole after.
 
 ### 0.6 The old block ragdoll when the spider takes one: CLOUD (`SPIDER_REAL_BODY`, LabCreatures `BUILD.Spider`)
+- **PC 28 Nov (2): DONE, all three in the phone emulator.**
+  - **The washer (`WASHER_REAL_BODY` + `WASHER_DOOR_FIT`).** Two causes:
+    - the drum spun a block `puppet`;
+    - the washer model's pivot is its MIDDLE (12 tall), so the door at `base * (0, 6, -6)` sat on the top front edge. The glass disc floated over the machine, the drum lay ON TOP of it, and the take-box was too high for bodies standing on the floor.
+
+    Now the door sits on the model's own round glass (`(0, -0.8, -3.6)`), with the drum 2.2 behind it. The REAL body is anchored, pulled in to 0.55, and turns with the spin, then is let go 2.5 studs out of the door. Pins use `SpiderPin`, so the failure path frees them too.
+    - Capture `washer_real_body3`: a body taken from the floor, its v6 skin, face and emblem tumbling behind the glass.
+    - After the cycle: 0 pins, no puppet parts, the body 12 studs out in front.
+  - **The chick (`CHICK_REAL`).** The egg hatched a block `puppet` and the follower was plain balls.
+    - Now both are a real chick model, `ServerStorage.V3Assets.MChick`: the Creator Store "Baby Chick" 87231622565290 by cube3D. Malware pass: one MeshPart, 0 scripts, 0 remotes. **Save the place.**
+    - Hatch seen on the server (the MChick was made in the yard).
+    - Capture `chick_follow`: the real chick on the grass behind the player.
+  - **The spider.** Capture `spider_real_body2`: the caught body behind the spider in the web is the v6 skin (white skin, crash-test emblem), not blocks. 16 parts pinned.
 - **PC 28 Nov: PART (data).** A body put in the web was caught (InMachine Spider) and its REAL parts pinned in the web at the catch spot, visible (Transparency 0). The old block copy is no longer made. From both sides the spider sat in front of it, so the capture spider_real_body does not show the body clearly. The washer and the chick were not captured.
 - **Cause found (cloud):** the still copy in the web was cloned from the body's physics parts, which on a v6 body are the hidden OLD blocks.
 - **Now:** the real body hangs in the web, anchored in its caught pose (its own v6 skin, face, holes); hidden only when the cocoon closes; let go if the sequence fails.
