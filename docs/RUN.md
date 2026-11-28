@@ -486,6 +486,13 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 **Proof:** 4 captures per killer, worst first; at least 5 in this run.
 
 ### 2.7 No more plain-part machines or creatures: STARTED
+- **PC 28 Nov (v1439), the GYRO: DONE (`GYRO_MODELS`).** Studio's generate_mesh makes good meshes in the place (no upload step), so it is the pipeline for the rest of 2.7:
+  - V3Assets.GyroPlatform: a round steel deck with a yellow railing and a gate, scaled to 24 wide;
+  - V3Assets.GyroBooth: a red and white striped control booth with its desk and red button;
+  - the stands are now painted round yellow posts;
+  - the old pad and button are invisible gameplay parts.
+
+  Capture gyro_models: the rings on the railed platform with the booth beside it. SAVE THE PLACE. NEXT: the stretcher, the range shell, the compressor.
 - **State (PC, 28 Nov, v1438):** the yard cones are done (1.15).
   - Creator Store search for the gyro's booth and fence gave only junk: "Fireball" is 180 loose plain parts; a ticket booth carried two 614 KB "LED SCRIPT V5" scripts and broke without them; a cube3D fence is a generator placeholder box without its scripts. All were deleted, none used.
   - The compressor capture (m_compressor) shows a plain-part press that reads as a press.

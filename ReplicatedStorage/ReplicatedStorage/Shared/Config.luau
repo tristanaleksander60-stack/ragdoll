@@ -201,6 +201,7 @@ local Config = {
 	FACE_SHOOTER = true, -- a ragdoll that is not scared turns to the player who shot it, from up to 160 studs (ActiveRagdoll standsFirm)
 	ANGRY_MORE = true, -- a shot ragdoll gets mad more often: 15 % fresh to 60 % near death (was 3-35 %), up to 3 mad at once in a lab (Mourning.chanceOf)
 	HOLE_CURVE_FIT = true, -- a bullet hole on a round v6 limb is at most 0.8 x its radius across and lifted by the curve's sag, so its rim touches the skin all round (never half inside the arm) (BulletHoles)
+	GYRO_MODELS = true, -- RUN 2.7: the gyro stands on a real ride platform with a railing and gate, with a striped control booth (V3Assets GyroPlatform, GyroBooth; Studio-generated meshes), painted round stands; the old pad and button are invisible gameplay parts (LabOwnerMap)
 	PANZER_BAY_FIT = true, -- the tank (LabMuscleCar, 12.8 wide) gets a 13.5 bay; in its 11 bay it rode up on the truck, tilted (LabLayout10)
 	HOLE_ON_AXIS = true, -- RUN 1.13: a hole on a v6 arm or leg is redrawn each frame on the drawn limb's axis (joint bone to next joint bone) at the v6 radius, so it never floats beside the arm (SmoothBody)
 	HOLE_AXIS_SCALE = 1.25, -- the drawn v6 limb surface against BodyShape.radius, for HOLE_ON_AXIS (tuned by eye; workspace attribute HoleAxisScale overrides it live)

@@ -1348,6 +1348,65 @@ local function east(into: Instance, o: Vector3, top: number)
 		local _ = i
 	end
 	part(into, "GyroButton", Vector3.new(0.8, 3, 3), CFrame.new(gc + Vector3.new(0, 1, -12)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(210, 40, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+	-- (GYRO_MODELS, RUN 2.7: the gyro stood on a grey concrete disc between two plain blocks, with a plain red cylinder
+	-- for its button. Now a real ride platform (a round steel deck with a yellow railing and a gate: V3Assets
+	-- "GyroPlatform"), a striped control booth with its desk and red button (V3Assets "GyroBooth") at the old button,
+	-- and painted steel stands. The old pad and button stay as the invisible gameplay parts (the pad's spot, the prompt).)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).GYRO_MODELS then
+		local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
+		local function put(name: string, at: CFrame): Model?
+			local src = assets and assets:FindFirstChild(name)
+			if not (src and src:IsA("Model")) then
+				return nil
+			end
+			local m = src:Clone()
+			for _, d in m:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.Anchored = true
+					d.CanQuery = false
+					d.CanTouch = false
+				elseif d:IsA("LuaSourceContainer") then
+					d:Destroy()
+				end
+			end
+			m:PivotTo(at)
+			m.Parent = into
+			return m
+		end
+		local deck = put("GyroPlatform", CFrame.new(gc + Vector3.new(0, -0.6, 0)) * CFrame.Angles(0, math.pi, 0))
+		if deck then
+			for _, d in deck:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.CanCollide = false -- (the railing is drawn only: ragdolls are thrown in and out over it)
+				end
+			end
+			for _, n in { "GyroPad" } do
+				for _, p in into:GetChildren() do
+					if p.Name == n and p:IsA("BasePart") and (p.Position - gc).Magnitude < 2 then
+						p.Transparency = 1
+					end
+				end
+			end
+		end
+		local booth = put("GyroBooth", CFrame.lookAt(gc + Vector3.new(0, 0, -16), gc + Vector3.new(0, 0, -1)))
+		if booth then
+			for _, p in into:GetChildren() do
+				if p.Name == "GyroButton" and p:IsA("BasePart") and (p.Position - (gc + Vector3.new(0, 1, -12))).Magnitude < 1 then
+					p.Transparency = 1
+				end
+			end
+		end
+		for _, p in into:GetChildren() do
+			if p.Name == "GyroStand" and p:IsA("BasePart") and (p.Position - gc).Magnitude < 12 then
+				p.Shape = Enum.PartType.Cylinder
+				p.Size = Vector3.new(10, 1.4, 1.4)
+				p.CFrame = CFrame.new(p.Position) * CFrame.Angles(0, 0, math.rad(90))
+				p.Color = Color3.fromRGB(246, 186, 40)
+				p.Material = Enum.Material.SmoothPlastic
+				p.Reflectance = 0.1
+			end
+		end
+	end
 	task.spawn(function()
 		local t0 = os.clock()
 		while into.Parent and not gyroClient do
