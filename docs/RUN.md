@@ -472,6 +472,7 @@ For each: one capture showing it working, and the switch. If it is broken, find 
   - **Wired to:** VisitorService (a visitor's goal is a free watch slot, looking at the machine).
   - **Found:** on the OWNER MAP VisitorService never walks anyone in. Its `floorAt` needs an old lab plot: `Lab.originFor` is (0,0,0) and `Lab.ownerAt` is nil there, so every spot fails (0 visitors in Play).
   - NEXT (step 3): ask Slots from the systems that DO place bodies on this map (Lab rounds, Watchers, EventService), then the capture of spread-out watchers.
+- **State (PC, 28 Nov): step 3 LEFT.** Watchers already use their own authored places (`Shared/WatchSpots`: one body a spot, pairs 2.6 studs apart), so they need no Slots. The real step 3, moving the 8 systems to `RagdollDirector.request/release`, is a rewrite of how every system gets its bodies; it is left for its own run. The near cap (step 1) keeps the crowding down meanwhile: 2-4 living bodies near the player in 60 s, cap 5.
 
 ### 2.6 Every killer has its own real, creative death: DONE for 5 in this run (`CHICKEN_GRIP`, `FROG_TONGUE_JOINT`, `MOLE_DRAG`, `WASHER_PULL`, `PLANT_LIFT`; `VACUUM_SUCK` not on this map)
 **The killers:**

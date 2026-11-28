@@ -58,6 +58,12 @@
 - Custom funnels: PlaytimeNew, PlaytimeAll, NewPhone/NewTablet/NewPC/NewConsole, ShopVisit, Vehicles (Pressed, SatFree, PassPrompt, Bought), Multiplayer. Retired: Tutorial, TakedownsNew.
 - Custom events: FirstUse, XrayToggle, BodyCardHidden, CPRDone, BowlingScore (a frame scores at most 30, so the buckets are 0-9 / 10-19 / 20-30, not 0-50/51-100/101+).
 
+## 28 Nov night, /klar loop (v1451): STOPPED, every RUN item DONE / LEFT / PART; DOG3 not started
+- V7: step 1 (native skin) and step 2 slice 1 (rigid upright, legs off the floor) ON; V7-3 checked (holes, face, X-ray).
+- 2.6: CHICKEN_GRIP, FROG_TONGUE_JOINT, MOLE_DRAG, WASHER_PULL, PLANT_LIFT ON (VACUUM_SUCK: no vacuum on this map).
+- 2.5: SPAWN_ROOM in Lab/Greeter/NearbyTwo; the Slots module (SPAWN_SLOTS); step 3 LEFT. VisitorService never walks anyone in on the owner map (floorAt needs an old lab plot).
+- 1.12 LEFT (3 tries; FEET_GLIDE off). DOG3 next run.
+
 ## 28 Nov late, /klar loop (v1450): STOPPED for the owner's test of V7 step 1
 - RAGDOLL_V7 step 1 is ON: the engine draws the v6 skin from the physics parts (SmoothBody v7Attach). Owner tests: a fall, standing and walking bodies, holes, plasters, X-ray.
 - STANDING_RUN_GAIT on; 1.12 LEFT (the knee events left are bodies falling onto another body).
