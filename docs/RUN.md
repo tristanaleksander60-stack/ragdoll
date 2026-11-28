@@ -1011,6 +1011,34 @@ The owner releases after this. It checks what matters on EVERY device, and anyth
 
 **If anything in 1-5 fails: fix it now (cause first), and run the failed part again. The run does not end with a failing check.**
 
+**PC 28 Nov (4), FINAL RELEASE CHECK run (v1467):**
+- **0. The cloud items:** MOURN_RETRY, WRAP_AXIS and STRETCH_HOLD_DOWN are PROVEN (see 0.9, 0.11 and the ledger). WALK_SMOOTH is NOT met: about 26 Walking SWAY lines in 5 min. The numbers are in its line above, and it is LEFT for the cloud.
+- **1. Clean start (phone emulator; the MCP cannot switch to tablet or console, and the PC view is the same Studio):**
+  - **Found and fixed:**
+    - `rbxassetid://6876906063` failed in every Play (not found, type mismatch): the aquarium surface caustic is not an image asset, so it never showed. Now skipped (`AQUA_TEX_SKIP`).
+    - `[LegJitter]` warnings: `LEG_JITTER_LOG = false`.
+  - **After the fixes:** 60 s Play with 0 errors, 0 warnings and 0 `[CALM_GUARD]`, character ready at once, 60 FPS at the spawn.
+  - **Capture `release_clean_start`:** the phone HUD at the spawn, "Online" (Device phone), the boards, nothing overlapping.
+- **2. The core loop:** proven in this run in the phone emulator, each with its capture in its item:
+  - shots, holes and purple blood (0.7, 2.3); X-ray (2.3);
+  - the washer, spider, chick, bear, cannon, bowling, wall and stretcher;
+  - CPR, bandages, the car, the slide and the stairs;
+  - flings: 0 in the last runs.
+
+  Not met: walking sway (0 above). Grab-and-carry and the hotbar or first person are OWNER CHECK (no MCP input for them).
+- **3. Money:** no `id = 0` in Shop or Events, and PassLint reads "every pass on sale reaches a live feature".
+  - GOD MODE 2093692966, the 5 vehicle passes and the Ford 2092632252 are as the owner sent them.
+  - Opening the shop is an OWNER CHECK (a tap).
+- **4. Saving:** the player's KOs rose across every separate Play today (10153, then 10187, then 10216; ProgressService "progress ready (DataStore)"), so they are kept between joins. Only the game's own saving was used.
+- **5. Release switches:**
+  - off: `SWAY_PROBE`, `STRETCH_LOG`, `XRAY_TEST_HOOK`, `LEG_JITTER_LOG` (`PHYSICS_PROBE` was already off);
+  - `CALM_GUARD` stays on;
+  - the version is 0.79.0 and `Shop.WHATS_NEW[1]` is 0.79.0 (it was 0.57.0 against 0.78.0);
+  - Workspace: my 3 loose test imports (`mannequin`, `shepherd`, `Scene`, floating 120 studs over the old plaza) were moved, not deleted, to `ServerStorage.OwnerBackup.TestImports`;
+  - `RunSelfTest`, `SessionStudio` and `StudioFresh` are not set.
+- **6.** Committed, pushed, place saved. The owner publishes (RELEASE.md), but per CLAUDE.md only after the map is done and the owner has tested.
+
+
 ## SPAWN_V2: one population system (design)
 **What exists now** (from the code, 28 Nov):
 - **About 12 spawners**, each with its own count:

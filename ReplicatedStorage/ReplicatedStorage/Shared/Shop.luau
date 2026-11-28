@@ -68,6 +68,14 @@ Shop.STARTER_PACK_TEXT = "The Revolver + 300 BOLTS" -- (AUDIT 27 Nov 5: no paid 
 -- What changed, newest first (the What's New window shows the top entry once per version).
 Shop.WHATS_NEW = table.freeze({
 	{
+		version = "0.79.0",
+		lines = {
+			"Ragdolls go INTO the washer, the web and the cannon",
+			"The bear grabs ragdolls, friends give CPR",
+			"Bandages on arms and legs, a stretch machine that stretches",
+		},
+	},
+	{
 		version = "0.57.0",
 		lines = {
 			"Gifts for playing every few minutes, on every device",

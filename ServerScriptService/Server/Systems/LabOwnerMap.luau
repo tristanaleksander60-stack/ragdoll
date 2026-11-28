@@ -3178,7 +3178,9 @@ local function realWater(into: Instance, o: Vector3, top: number)
 		local surf = part(into, "AquaSurface", Vector3.new(inner.X, 0.1, inner.Z), wcf * CFrame.new(0, inner.Y / 2 + 0.05, 0), Color3.fromRGB(120, 200, 225), Enum.Material.Glass, true)
 		surf.Transparency = 0.35
 		surf.CanCollide = false
-		for i, speed in { 1.2, -0.8 } do
+		-- (AQUA_TEX_SKIP, FINAL RELEASE CHECK 1: this id is not an image asset ("not found" / "type does not match" in
+		-- every Play's output), so the caustic never showed; it is skipped, nothing visible changes)
+		for i, speed in if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).AQUA_TEX_SKIP then {} else { 1.2, -0.8 } do
 			local tex = Instance.new("Texture")
 			tex.Texture = "rbxassetid://6876906063" -- (a soft water caustic)
 			tex.Face = Enum.NormalId.Top
