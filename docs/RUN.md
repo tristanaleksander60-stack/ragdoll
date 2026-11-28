@@ -306,7 +306,12 @@ Group the items that touch the same files and do them together:
 - On a computer, X-RAY is already in the bottom-left list (the I key), so the round button now shows on touch screens only.
 - **Proof:** a PC capture without it, and a phone capture with it.
 
-### 1.18 The rocket: LEFT (cloud part not proven; PILOT not built)
+### 1.18 The rocket: PART: the cloud part DONE (`ROCKET_WHOLE`, `ROCKET_WALK`), the PILOT not built
+- **State (PC, 28 Nov late): ROCKET_WHOLE and ROCKET_WALK proven.**
+  - **Why the earlier tries failed:** the prompt was OFF while a demo flight ran. It is `Enabled = false` only while `busy`, and 30 s later it was on again.
+  - **The press:** with the character next to it, `InputHoldBegin/End` on the client fired it; the prompt went off, so a flight started. Capture rocket_walkup: a ragdoll at the rocket's foot.
+  - **The flight:** 17 strap and body-copy parts rode with it, 119 studs up after 1 s. Capture rocket_liftoff: the WHOLE rocket in the air, the nose and capsule on top included, the ragdoll strapped on.
+  - The PILOT (steering, the chase camera, BOOM) is a new system and stays TODO.
 - **State (PC, 28 Nov, v1436):** the rocket's "Strap a ragdoll on" prompt could not be fired from the MCP (two tries: the E key and InputHoldBegin; Triggered never fired on the server), so ROCKET_WHOLE and ROCKET_WALK are unproven. The PILOT (steering, chase camera, BOOM remote) is not built this run: a new client and server system. OWNER CHECK: press E at the rocket.
 - **Causes found** (`RocketRide.luau`):
   - `rocketParts` only took parts within 0.8 column widths, narrower than 1.5 widths and below 1.6 x the stack, so the capsule and nose on top stayed on the tower;
