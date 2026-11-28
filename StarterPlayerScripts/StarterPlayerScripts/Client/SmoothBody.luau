@@ -285,8 +285,48 @@ function SmoothBody.watchSkin(body: Body)
 	end)
 end
 
+-- RAGDOLL_V7 (V7-1 spike proven 28 Nov, captures v7_limp_front / v7_limp_fall): the engine skins the v6 mesh by itself
+-- when its R15 bones hang on the ragdoll's own physics parts (joined by its BallSockets/constraints). So instead of
+-- writing 44 bone CFrames every frame, build() moves each R15 bone ONCE onto its physics part at its rest offset; the
+-- fingers go with the hand. drive() then only places the mesh, the round head and the holes; the skin has no lag.
+local V7 = (Config :: any).RAGDOLL_V7 == true
+local function v7Attach(body: Body)
+	local moved = {}
+	for _, d in body.drives do
+		local b = d.bone
+		if b.Name == d.part.Name or b.Name == "HumanoidRootPart" then
+			table.insert(moved, { bone = b, parent = b.Parent, rest = b.CFrame, d = d })
+		end
+	end
+	for _, m in moved do
+		m.bone.Parent = m.d.part
+		m.bone.CFrame = m.d.off
+	end
+	;(body :: any).v7 = moved
+end
+-- Puts every moved bone back under the mesh (reverse order: children first). False when a bone went with a destroyed
+-- part: then the mesh is broken and is not pooled.
+local function v7Detach(body: Body): boolean
+	local moved = (body :: any).v7
+	if not moved then
+		return true
+	end
+	;(body :: any).v7 = nil
+	local whole = true
+	for i = #moved, 1, -1 do
+		local m = moved[i]
+		local ok = m.bone.Parent ~= nil and pcall(function()
+			m.bone.Parent = m.parent
+			m.bone.CFrame = m.rest
+		end)
+		whole = whole and ok
+	end
+	return whole and body.mesh:FindFirstChild("HumanoidRootPart", true) ~= nil
+end
+
 local function drop(body: Body)
 	unstickAll(body)
+	local whole = v7Detach(body)
 	local fg = (body :: any).faceGui
 	if fg and fg.Parent then
 		fg.Enabled = true
@@ -305,7 +345,7 @@ local function drop(body: Body)
 	end
 	showBlocks(body)
 	if body.mesh.Parent then
-		if #meshPool < POOL_MAX and body.mesh.Name == "SmoothBody" then
+		if whole and #meshPool < POOL_MAX and body.mesh.Name == "SmoothBody" then
 			body.mesh.Parent = nil -- (AUDIT 38: kept for the next body, no clone/destroy at the edge)
 			table.insert(meshPool, body.mesh)
 		else
@@ -608,6 +648,9 @@ local function build(model: Model): Body?
 	}
 	mesh.CFrame = pelvis.CFrame * body.meshOff
 	mesh.Parent = folder
+	if V7 then
+		v7Attach(body)
+	end
 	bodies[model] = body
 	roundHead(body)
 	SmoothBody.watchSkin(body) -- (ON_SKIN: holes and bandages move with the drawn limb)
@@ -677,7 +720,9 @@ local function drive(body: Body)
 			cf = d.part.CFrame * d.off
 		end
 		cfs[i] = cf
-		d.bone.WorldCFrame = cf
+		if not (body :: any).v7 then
+			d.bone.WorldCFrame = cf
+		end
 		if d.part.Name == "Head" and d.bone.Name == "Head" then
 			headCf = cf
 		end
