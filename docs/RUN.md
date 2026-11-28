@@ -90,6 +90,12 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 
 ### 0.1 Ragdolls bug about and fly round everywhere: CLOUD (`CALM_GUARD`, ActiveRagdoll `calmGuard`)
 - **PC 28 Nov (preflight: all 21 cloud files pushed, lengths match, Play clean):** CALM_GUARD caught 2 flings in about 5 min of Play, both "Standing, 42-43 studs/s sideways, vy 0, no hit": one touching OwnerGrass, OwnerRim and BaseplateEast (the map's edge), one OwnerRailPost, OwnerPlaza and OwnerGrass. Lab also logged "dummy 1/9 moving impossibly fast; sent home". So the fling source is bodies at the map's rim and by the plaza rail posts being pushed out sideways. NEXT: find what presses them there (the rim's collision or a Home set inside a post) and fix it at the source. The 2-minute capture series is not made yet.
+- **PC 28 Nov, try 2: LEFT, with the findings for the cloud.**
+  - **Built anyway, ON (`SETDOWN_FREE`, `RagdollDirector.setDownSpot`):** the 3 set-downs behind a player (Lab FAST_THREE, NearbyTwo, Watchers' runner) now go only onto level floor with room to stand (5 tries, else it walks in). FAST_THREE took ANY ray hit before.
+  - **After it, 2.5 min of Play:** still 3 CALM_GUARD flings (33, 47, 42 studs/s). So the set-downs were not the main cause.
+  - **"touch=OwnerRim" is not a clue:** OwnerRim is ONE ground slab under the whole map (857 x 2 x 800, top at -0.1), so every body standing on the ground touches it.
+  - **The best lead:** SWAY_PROBE logged a Standing body with `liftMoved=61.44`, its lift's target moved 61 studs within one second while it stayed "Standing". A STAND_HOLD lift (AlignPosition, MaxVelocity 30, horizontal force 3 g) pulled to a far new spot drags the body sideways at 30-47 studs/s: exactly the flings' speed, vy 0, no hit. NEXT (cloud): find which caller moves `lift.Position` of a Standing body far (a Home change while Standing?) and make it walk instead.
+  - **CALM_GUARD fault:** it stopped a body hit by a car (`touch=LabTruck.Bumper,Body,Headlight,Wheel`, v=33). A vehicle hit must count as a hit.
 - **Cloud 28 Nov, cause found from that log (`SHOO_TO_SLOT`, RagdollDirector `capStepV2`/`slotAway`):** the near cap (NEARBY_CAP_V2) sent each extra body 90 studs STRAIGHT away from the player with no check of where that is: into the map's rim, the railway, fences and the plaza rails. The lift and drive pressed it against them until the solver threw it out sideways at 40+ studs/s (exactly the two logged spots). Now it goes to a free watch slot by a machine (Slots: checked level floor, free cell) far from every player; if none is free it stays where it is. **PC:** Play 5 min again; no `[CALM_GUARD]` line at the rim or rails. Any other line: fix its source the same way.
 - **What the owner sees:** standing and walking ragdolls suddenly jump and fly off with nothing hitting them.
 - **Cause: NOT found yet (cloud could not see it without Studio).** No single cause was found in the code (GroundGuard, the lift, poses and props are all suspects). So the cloud built a guard that catches it AND names the cause:
@@ -163,6 +169,12 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **The probe** samples each upright body every step and, when its sideways speed flips 3+ times in 1 s, warns `[SWAY] <name> flips= amp= state= stateSwitches= liftMoved= headTurn= drive= pose= mood= firm= chestBal= feet=` (also the attribute `SwayWhy`).
 - **Your job (PC):** Play 5 minutes in the lab with 18 bodies; collect every `[SWAY]` line. The writer with the large number is the cause (for example `stateSwitches=4`: Standing/Walking toggling; `headTurn=70 firm=yes`: turning to the player; `liftMoved=1.4`: the stand hold re-set; `feet=Dummy.LeftFoot`: standing on another body). Fix THAT writer at its source; then Play again until no `[SWAY]` line comes in 5 minutes. Write each cause and fix in the State. Then `SWAY_PROBE = false`.
 - **Proof:** the `[SWAY]` list before and after, and a 60 s side capture of 5 standing bodies with no sway.
+- **PC 28 Nov: the probe's list, 2 runs of about 2.5 min each (35 `[SWAY]` lines).**
+  - **The biggest group, half of them, is the BOXERS:** Standing, `mood=Box`, `feet=BoxingRing.RingCanvas`, chestBal off, liftMoved 0, amplitude 2-18 studs/s. The background boxing match is the main standing sway; their footwork is not held. Once `liftMoved=61.44`.
+  - **Next, WALKERS turning:** Walking, `headTurn` 42-151 degrees, drive 4-12, chestBal on. A walking turn swings the hips side to side.
+  - **One bike rider:** `mood=Ride`, liftMoved 9.7.
+  - **No standing body outside the ring swayed with stateSwitches > 1:** the state toggle is NOT the cause.
+  - NEXT (cloud): the boxers' sideways footwork (BoxingMatch) and the turn rate while walking. The 60 s side capture comes after that fix.
 
 ### 0.10 The plan doc itself (PC, at the end of the run)
 - Every item you touch: the State line says DONE + the capture line, or LEFT + the exact reason. No "PART" without saying exactly what is missing.

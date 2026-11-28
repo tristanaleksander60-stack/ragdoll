@@ -1260,12 +1260,16 @@ local function alwaysThree(plot: Plot, now: number)
 			params.FilterDescendantsInstances = { character :: Instance, Workspace:FindFirstChild("Dummies") :: Instance }
 			local hit = Workspace:Raycast(at + Vector3.new(0, 40, 0), Vector3.new(0, -120, 0), params)
 			local Dir = require(script.Parent:WaitForChild("RagdollDirector")) :: any
-			if hit and (Dir.mayRemove == nil or Dir.mayRemove(pick.model)) then -- F90: never pulled away from where someone sees it
+			local setAt: CFrame? = if hit then CFrame.lookAt(hit.Position + Vector3.new(0, 3.2, 0), Vector3.new(root.Position.X, hit.Position.Y + 3.2, root.Position.Z)) else nil
+			if (Config :: any).SETDOWN_FREE then
+				setAt = Dir.setDownSpot(root, 35, { character :: Instance, Workspace:FindFirstChild("Dummies") :: Instance }) -- (RUN 0.1: free level floor only)
+			end
+			if setAt and (Dir.mayRemove == nil or Dir.mayRemove(pick.model)) then -- F90: never pulled away from where someone sees it
 				if Dir.logRemoval then
 					Dir.logRemoval(pick.model, "Lab", "FAST_THREE set down behind a player")
 				end
 				pick.model:SetAttribute("Parked", nil)
-				pcall(DummyControl.move, pick.model, CFrame.lookAt(hit.Position + Vector3.new(0, 3.2, 0), Vector3.new(root.Position.X, hit.Position.Y + 3.2, root.Position.Z)))
+				pcall(DummyControl.move, pick.model, setAt)
 			end
 		end
 		pick.model:SetAttribute("Home", spot)

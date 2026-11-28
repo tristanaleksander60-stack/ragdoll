@@ -140,14 +140,26 @@ local function step(dummies: Instance)
 					local at = root.Position + back * math.random(55, 70)
 					local hit = Workspace:Raycast(at + Vector3.new(0, 40, 0), Vector3.new(0, -120, 0), params)
 					local Dir = require(script.Parent:WaitForChild("RagdollDirector")) :: any
-					if hit and hit.Normal.Y > 0.8 and (Dir.mayRemove == nil or Dir.mayRemove(far)) then -- F90: never pulled away from where someone sees it
+					local setAt: CFrame? = nil
+					if hit then
+						setAt = CFrame.lookAt(hit.Position + Vector3.new(0, 3.2, 0), Vector3.new(root.Position.X, hit.Position.Y + 3.2, root.Position.Z))
+					end
+					if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SETDOWN_FREE then
+						local sk: { Instance } = { dummies }
+						if player.Character then
+							table.insert(sk, player.Character)
+						end
+						setAt = Dir.setDownSpot(root, math.random(55, 70), sk) -- (RUN 0.1: free level floor only)
+						hit = if setAt then hit else nil
+					end
+					if hit and setAt and hit.Normal.Y > 0.8 and (Dir.mayRemove == nil or Dir.mayRemove(far)) then -- F90: never pulled away from where someone sees it
 						if Dir.logRemoval then
 							Dir.logRemoval(far, "NearbyTwo", "set down behind a player")
 						end
 						setDownAt[player] = now + 8
 						far:SetAttribute("Parked", nil)
 						local DC = require(script.Parent:WaitForChild("DummyControl")) :: any
-						pcall(DC.move, far, CFrame.lookAt(hit.Position + Vector3.new(0, 3.2, 0), Vector3.new(root.Position.X, hit.Position.Y + 3.2, root.Position.Z)))
+						pcall(DC.move, far, setAt)
 						far:SetAttribute("Watch", "Close")
 						far:SetAttribute("CloseFor", player.UserId)
 						table.insert(list, { m = far, nextMove = 0, side = if #list == 0 then 1 else -1 })

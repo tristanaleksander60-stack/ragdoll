@@ -278,13 +278,16 @@ local function neverZero()
 					params.FilterDescendantsInstances = { dummies, char :: Instance }
 					local hit = Workspace:Raycast(at + Vector3.new(0, 40, 0), Vector3.new(0, -120, 0), params)
 					local Dir = require(script.Parent:WaitForChild("RagdollDirector")) :: any
-					if hit and (Dir.mayRemove == nil or Dir.mayRemove(best)) then -- F90: else it runs the whole way
+					local setAt: CFrame? = if hit then CFrame.lookAt(hit.Position + Vector3.new(0, 3.2, 0), Vector3.new(root.Position.X, hit.Position.Y + 3.2, root.Position.Z)) else nil
+					if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).SETDOWN_FREE then
+						setAt = Dir.setDownSpot(root, 55, { dummies, char :: Instance }) -- (RUN 0.1: free level floor only)
+					end
+					if setAt and (Dir.mayRemove == nil or Dir.mayRemove(best)) then -- F90: else it runs the whole way
 						if Dir.logRemoval then
 							Dir.logRemoval(best, "Watchers", "NEVER ZERO runner set down behind a player")
 						end
 						local DummyControl = require(script.Parent:WaitForChild("DummyControl")) :: any
-						local p = hit.Position + Vector3.new(0, 3.2, 0)
-						pcall(DummyControl.move, best, CFrame.lookAt(p, Vector3.new(root.Position.X, p.Y, root.Position.Z)))
+						pcall(DummyControl.move, best, setAt)
 					end
 				end
 				best:SetAttribute("Home", root.Position + root.CFrame.RightVector * 4 + root.CFrame.LookVector * 3)

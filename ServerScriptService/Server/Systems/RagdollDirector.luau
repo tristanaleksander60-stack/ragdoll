@@ -474,6 +474,41 @@ function RagdollDirector.room(player: Player): number
 	return math.max(0, cap - count)
 end
 
+-- (SETDOWN_FREE, RUN 0.1: CALM_GUARD's log showed every "flung with no hit" right after a set-down behind a player, the
+-- body touching OwnerRim, a rail post or the entrance row. The cause: FAST_THREE took ANY ray hit (the top of the rim, a
+-- post, a wall), and NearbyTwo and Watchers only checked the slope, so the body was set down inside or on top of solid
+-- parts and the engine shot it out sideways at 27-43 studs/s. Now a set-down spot must be level floor with room for a
+-- standing body; else the next try (further back, then to either side); none free: no set-down, it walks in.)
+function RagdollDirector.setDownSpot(root: BasePart, dist: number, skip: { Instance }): CFrame?
+	local back = -root.CFrame.LookVector * Vector3.new(1, 0, 1)
+	back = if back.Magnitude > 0.1 then back.Unit else Vector3.zAxis
+	local side = Vector3.new(-back.Z, 0, back.X)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = skip
+	local overlap = OverlapParams.new()
+	overlap.FilterType = Enum.RaycastFilterType.Exclude
+	overlap.FilterDescendantsInstances = skip
+	for _, off in { back * dist, back * (dist + 10), back * dist + side * 10, back * dist - side * 10, back * (dist - 8) } do
+		local at = root.Position + off
+		local hit = Workspace:Raycast(at + Vector3.new(0, 40, 0), Vector3.new(0, -120, 0), params)
+		if hit and hit.Normal.Y > 0.85 and not string.find(hit.Instance.Name, "Lava") and not string.find(hit.Instance.Name, "Water") then
+			local clear = true
+			for _, p in Workspace:GetPartBoundsInBox(CFrame.new(hit.Position + Vector3.new(0, 3.2, 0)), Vector3.new(3, 5, 3), overlap) do
+				if p.CanCollide and p ~= hit.Instance then
+					clear = false
+					break
+				end
+			end
+			if clear then
+				local p = hit.Position + Vector3.new(0, 3.2, 0)
+				return CFrame.lookAt(p, Vector3.new(root.Position.X, p.Y, root.Position.Z))
+			end
+		end
+	end
+	return nil
+end
+
 function RagdollDirector.start()
 	local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any
 	if Config.VIEW_REPORT then
