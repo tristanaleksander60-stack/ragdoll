@@ -1533,6 +1533,44 @@ local function south(into: Instance, o: Vector3, top: number)
 	part(into, "SweeperPost", Vector3.new(6, 6, 6), CFrame.new(sw + Vector3.new(0, 3, 0)), Color3.fromRGB(70, 72, 78), Enum.Material.Metal)
 	local beamPart = part(into, "SweeperBeam", Vector3.new(26, 2.4, 2.4), CFrame.new(sw + Vector3.new(0, 2.4, 0)), Color3.fromRGB(230, 120, 30), Enum.Material.Metal)
 	beamPart.CanCollide = true
+	-- (SWEEPER_MODEL, RUN 2.7: the sweeper was a grey 6-stud cube and an orange block beam. Now a real motor hub (V3Assets
+	-- "SweeperHub": a steel housing with fins, bolts and hazard stripes) and a striped steel arm with a rubber bumper
+	-- (4 x V3Assets "SweeperArmPiece" end to end), turned with the beam; the old post and beam are hidden, the beam still
+	-- the part that hits.)
+	local armVisual: Model? = nil
+	do
+		local V = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
+		local hubSrc = V and V:FindFirstChild("SweeperHub")
+		local pieceSrc = V and V:FindFirstChild("SweeperArmPiece")
+		if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SWEEPER_MODEL and hubSrc and pieceSrc then
+			local hub = hubSrc:Clone()
+			hub:PivotTo(CFrame.new(sw))
+			hub.Parent = into
+			local arm = Instance.new("Model")
+			arm.Name = "SweeperArm"
+			local _, ps = pieceSrc:GetBoundingBox()
+			local n = math.max(1, math.floor(26 / ps.Z + 0.5))
+			for k = 1, n do
+				local piece = pieceSrc:Clone()
+				piece:PivotTo(beamPart.CFrame * CFrame.new((k - (n + 1) / 2) * ps.Z, 0, 0) * CFrame.Angles(0, math.pi / 2, 0))
+				for _, d in piece:GetDescendants() do
+					if d:IsA("BasePart") then
+						d.Parent = arm
+					end
+				end
+				piece:Destroy()
+			end
+			arm.WorldPivot = beamPart.CFrame
+			arm.Parent = into
+			armVisual = arm
+			beamPart.Transparency = 1
+			for _, p in into:GetChildren() do
+				if p.Name == "SweeperPost" and p:IsA("BasePart") and (p.Position - sw).Magnitude < 5 then
+					p.Transparency = 1
+				end
+			end
+		end
+	end
 	task.spawn(function()
 		-- (3.22 SWEEP_10: the speed comes from the beam's SweepSpeed attribute, set by MapMachines' button; the angle is
 		-- added up step by step so a speed change never makes it jump; the angle is shared as SweepAngle)
@@ -1543,6 +1581,9 @@ local function south(into: Instance, o: Vector3, top: number)
 			last = now
 			beamPart:SetAttribute("SweepAngle", ang)
 			beamPart.CFrame = CFrame.new(sw + Vector3.new(0, 2.4, 0)) * CFrame.Angles(0, ang, 0)
+			if armVisual then
+				armVisual:PivotTo(beamPart.CFrame)
+			end
 			task.wait(0.05)
 		end
 	end)
