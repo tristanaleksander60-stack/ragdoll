@@ -71,6 +71,17 @@ function XRayToggle.start()
 	if workspace.CurrentCamera then
 		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(place)
 	end
+	-- (XRAY_BUTTON_TOUCH_ONLY: on a computer X-RAY is already in the bottom-left list (the I key), so the round button
+	-- shows on touch screens only; the I key still works everywhere.)
+	if Config.XRAY_BUTTON_TOUCH_ONLY then
+		local UIS = game:GetService("UserInputService")
+		local function show()
+			gui.Enabled = UIS.TouchEnabled and not UIS.KeyboardEnabled
+		end
+		show()
+		UIS:GetPropertyChangedSignal("KeyboardEnabled"):Connect(show)
+		UIS:GetPropertyChangedSignal("TouchEnabled"):Connect(show)
+	end
 	gui.Parent = player:WaitForChild("PlayerGui")
 	local function toggle()
 		local on = not DummySkins.xrayIsOn()

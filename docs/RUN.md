@@ -181,6 +181,32 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
 - **Also:** check every other part tagged "Swing" (flags and banners) the same way: gap > Amp x length + 0.1.
 - **Proof:** captures of all 4 banners from the side, 10 s apart.
 
+### 1.15 Orange boxes round the map: TODO (remove them)
+- Plain orange box props stand round the map; the owner's capture shows one with 2 bullet holes.
+- **Find every one:**
+  1. In Play, list every BasePart in the lab and plaza whose colour is orange (hue 20-40 degrees, saturation > 0.5) and whose shape is a box 2-6 studs, with its full name.
+  2. Candidates:
+     - WorldDress `V2Crate` (`crate(..., C.orange)`);
+     - LabDress `Crate` (V3Assets);
+     - Knockables;
+     - BuildService crates.
+- **Remove them** behind `Config.NO_ORANGE_BOXES`, at the source (never by deleting from the place file).
+- **Proof:** a capture of the 3 places where one stood, and the list printed empty.
+
+### 1.16 The man-eating plant: CLOUD part (`PLANT_REAL`, `PLANT_YAW`; LabCreatures BUILD.Plant)
+- **Causes found:**
+  - plain-part jaws (green boxes, a red inside, white teeth) floated 14 studs above the real plant model: the ugly plant;
+  - the real model was placed with a fixed yaw of 180, so it faced the wrong way.
+- **Now:** the part jaws are hidden when the model exists, and the model faces its spot's direction plus `PLANT_YAW`.
+- **TO DO:**
+  - set `PLANT_YAW` so its mouth faces the path, using a capture from the path;
+  - make the model itself do the bite: lean down over the body (PivotTo), `CreatureGrip.grab` into its real mouth, chew (small squeezes), spit it out.
+- **Proof:** captures from the path, and mid-bite.
+
+### 1.17 The round X-RAY button on PC: CLOUD (`XRAY_BUTTON_TOUCH_ONLY`, XRayToggle)
+- On a computer, X-RAY is already in the bottom-left list (the I key), so the round button now shows on touch screens only.
+- **Proof:** a PC capture without it, and a phone capture with it.
+
 ---
 
 ## BATCH 2 (after the owner's test of batch 1)

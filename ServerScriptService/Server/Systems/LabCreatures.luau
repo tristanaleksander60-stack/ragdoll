@@ -671,7 +671,16 @@ end
 
 -- PLANT: chomps a dummy at its feet (a squeeze of the whole plant) and spits it up high.
 BUILD.Plant = function(f, at, m)
-	local plant = place(f, "MPlant", at.Position, 180, 22)
+	-- (PLANT_REAL: the real plant model faced away (a fixed yaw of 180); now it faces the same way as its spot, toward the
+	-- path. The plain-part jaws that floated 14 studs above it are hidden when the real model is there: they only keep
+	-- the bite's timing; the model itself is the plant.)
+	local REAL = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).PLANT_REAL == true
+	local plant = place(f, "MPlant", at.Position, if REAL then (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).PLANT_YAW or 0 else 180, 22)
+	if REAL and plant then
+		local _, yawAt = at:ToOrientation()
+		local _, cur = plant:GetPivot():ToOrientation()
+		plant:PivotTo(CFrame.new(plant:GetPivot().Position) * CFrame.Angles(0, yawAt + (cur - 0), 0))
+	end
 	local base = if plant then plant:GetPivot() else at
 	-- (Phase D, 23 Nov 2026): the plant lunges down over the body and two big jaws (green, red inside, white
 	-- teeth) snap shut on it; it chews, juice and blood drip from the jaws, then it rears back and spits the bones
@@ -691,6 +700,12 @@ BUILD.Plant = function(f, at, m)
 	end
 	local upper, upperBits = jaw("JawTop")
 	local lower, lowerBits = jaw("JawBottom")
+	if REAL and plant then
+		for _, b in { upper, lower, table.unpack(upperBits), table.unpack(lowerBits) } do
+			b.Transparency = 1
+			b.CastShadow = false
+		end
+	end
 	local function setJaws(at0: CFrame, open: number)
 		-- open: 0 shut, 1 wide (75 degrees each way, hinged at the back edge)
 		local a = math.rad(75 * open)
