@@ -2485,7 +2485,15 @@ local function yards(into: Instance, o: Vector3, top: number)
 					if q == 1 then
 						crateModel(into, CFrame.new(p + Vector3.new(0, 1.5, 0)) * CFrame.Angles(0, rng:NextNumber() * 6, 0), 3)
 					elseif q == 2 then
-						part(into, "YardCone", Vector3.new(1.4, 2.4, 1.4), CFrame.new(p + Vector3.new(0, 1.2, 0)), Color3.fromRGB(255, 120, 40), Enum.Material.Plastic, true)
+						-- (YARD_CONE_MODEL, RUN 1.15 "orange boxes round the map": the yard cones were plain 1.4 x 2.4 x 1.4 orange
+						-- blocks; now a real traffic cone model (V3Assets "TrafficCone", Creator Store, no scripts))
+						local coneModel = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).YARD_CONE_MODEL == true
+							and game:GetService("ServerStorage"):FindFirstChild("V3Assets") and game:GetService("ServerStorage").V3Assets:FindFirstChild("TrafficCone")
+						if coneModel then
+							placeModel(into, "TrafficCone", p, Vector3.new(math.cos(rng:NextNumber() * 6), 0, math.sin(rng:NextNumber() * 6)))
+						else
+							part(into, "YardCone", Vector3.new(1.4, 2.4, 1.4), CFrame.new(p + Vector3.new(0, 1.2, 0)), Color3.fromRGB(255, 120, 40), Enum.Material.Plastic, true)
+						end
 					else
 						barrelModel(into, p, rng:NextNumber() * 6, false)
 					end

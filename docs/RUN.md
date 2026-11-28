@@ -237,7 +237,8 @@ Group the items that touch the same files and do them together:
 - **If events remain:** the log names the state, role and Home changes; fix that cause.
 - **Proof:** the two counts, and a capture series of an angry ragdoll walking with steady legs.
 
-### 1.13 Bullet holes and bandages shown wrong: CLOUD (`ON_SKIN`, SmoothBody `watchSkin`/`drive`)
+### 1.13 Bullet holes and bandages shown wrong: PART (`ON_SKIN`, `HOLE_CURVE_FIT`)
+- **State (PC, 28 Nov, v1436):** 4 holes made on a v6 body (BulletHoles.body); all 4 are taken over by ON_SKIN (anchored, weld off). Capture holes_on_skin: the holes on the left forearm, the back and the right thigh sit on the skin; the one on the right UPPER ARM floats about half a stud outside it. So the drawn upper arm is not where the physics upper arm is near the shoulder. NEXT: compare drawn[RightUpperArm] with the mesh bone frame (SmoothBody d.off for the upper arms).
 - **Cause found (cloud):** the "two bodies" problem.
   - Holes, stress rings and bandages are WELDED to the hidden physics limb.
   - The visible v6 mesh is drawn from an FK bone chain, so the drawn limb is often a few centimetres to tenths of a stud away from the physics limb.
@@ -261,7 +262,8 @@ Group the items that touch the same files and do them together:
 - **Also:** check every other part tagged "Swing" (flags and banners) the same way: gap > Amp x length + 0.1.
 - **Proof:** captures of all 4 banners from the side, 10 s apart.
 
-### 1.15 Orange boxes round the map: TODO (the source is not in the code the cloud could find: find it in Play)
+### 1.15 Orange boxes round the map: DONE (`YARD_CONE_MODEL`)
+- **State (PC, 28 Nov, v1436):** found in Play with a ray through the capture's pixel: they are "YardCone", plain 1.4 x 2.4 x 1.4 orange blocks from LabOwnerMap's yard props. Now a real traffic cone (Creator Store 8952512774, 3 meshes, no scripts) in V3Assets.TrafficCone. Capture cone_model shows a real cone; 6 placed, 0 blocks left. SAVE THE PLACE (the model is in the place file).
 - **The cloud checked:** WorldDress crates, the LabOwnerMap crates (brown wood), Breakables (wood), Knockables, Surprises and ToyService. None is a plain orange cube, so it is most likely a placed model (V3Assets or LabDress) or a player-built Crate (BuildService).
 - **Find it** by pasting this in the command bar during Play:
 
@@ -287,7 +289,8 @@ Group the items that touch the same files and do them together:
 - On a computer, X-RAY is already in the bottom-left list (the I key), so the round button now shows on touch screens only.
 - **Proof:** a PC capture without it, and a phone capture with it.
 
-### 1.18 The rocket: the whole rocket flies, a ragdoll walks to it, and YOU steer it: CLOUD part + TODO
+### 1.18 The rocket: LEFT (cloud part not proven; PILOT not built)
+- **State (PC, 28 Nov, v1436):** the rocket's "Strap a ragdoll on" prompt could not be fired from the MCP (two tries: the E key and InputHoldBegin; Triggered never fired on the server), so ROCKET_WHOLE and ROCKET_WALK are unproven. The PILOT (steering, chase camera, BOOM remote) is not built this run: a new client and server system. OWNER CHECK: press E at the rocket.
 - **Causes found** (`RocketRide.luau`):
   - `rocketParts` only took parts within 0.8 column widths, narrower than 1.5 widths and below 1.6 x the stack, so the capsule and nose on top stayed on the tower;
   - the nearest dummy was never walked over: a still copy was strapped on at once;
