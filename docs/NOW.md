@@ -56,6 +56,10 @@
 - Custom funnels: PlaytimeNew, PlaytimeAll, NewPhone/NewTablet/NewPC/NewConsole, ShopVisit, Vehicles (Pressed, SatFree, PassPrompt, Bought), Multiplayer. Retired: Tutorial, TakedownsNew.
 - Custom events: FirstUse, XrayToggle, BodyCardHidden, CPRDone, BowlingScore (a frame scores at most 30, so the buckets are 0-9 / 10-19 / 20-30, not 0-50/51-100/101+).
 
+## 28 Nov, /klar run (v1448): batch 2.7 models + batch 3 checked
+- Done: real models for the gyro, the press, the stretcher, the Tesla coil, the archery target, the sweeper, 63 lamps, 34 benches, 27 crates, 15 barrels, 30 bins, the shredder control box, and the FartGun weapon (all in the place file). LabProps split off LabOwnerMap (Studio's 200000-char cap).
+- Left: the shredder's pit is closed, so its rollers cannot be seen; the range shell, the tower rails and the spider web are still plain (the generated web came out as a ball). V7-1 needs the Blender split (the v6 skin follows only bones under its own mesh: v7_bone_test3-6). PERF §6: a phone test. DOG3 last.
+
 ## 28 Nov, round 3 of FIXES_28NOV (v1429): STOPPED for the owner's test
 15 part: the hill cut back round the weapon range (RANGE_CLEAR); 16: a real animated T-rex (REX_ANIM; old one in ServerStorage.OwnerBackup). SAVE THE PLACE: the new T-rex lives in the place file (V3Assets). 8 part (v1430, GYRO_STYLE): round painted gyro rings, bulbs, a seat with straps. Next: the gyro platform/fence/booth, 15 the range shell as a real model.
 
