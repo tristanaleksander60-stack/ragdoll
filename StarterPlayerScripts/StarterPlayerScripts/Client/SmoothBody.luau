@@ -330,20 +330,44 @@ function stick(body: Body, inst: Instance)
 		local ball = body.ball
 		if WRAP and limb.Name == "Head" and ball and (inst.Name == "Bandage" or inst.Name == "PlasterSkin") then
 			-- (a head wrap goes round the ROUND head, not the hidden head block: as wide as the ball, a little above its middle)
-			local rel = limb.CFrame:ToObjectSpace(inst.CFrame)
-			local scale = ball.Size.X / math.max(limb.Size.X, 0.1)
+			local rel = skinPiece.CFrame:ToObjectSpace(inst.CFrame)
 			rec.ball = ball
-			rec.off = CFrame.new(rel.Position * scale + Vector3.new(0, ball.Size.Y * 0.08, 0)) * rel.Rotation
-			if inst.Name == "Bandage" and inst:IsA("Part") and inst.Shape == Enum.PartType.Cylinder and inst.Size.Y > 0.3 then
+			local ring = inst.Name == "Bandage" and inst:IsA("Part") and inst.Shape == Enum.PartType.Cylinder and inst.Size.Y > 0.3
+			if ring then
+				-- (round the ball a little above its middle, level: the cylinder's axis X turned to up)
+				rec.off = CFrame.new(0, ball.Size.Y * 0.12 + math.clamp(rel.Position.Y, -0.3, 0.3) * 0.3, 0) * CFrame.Angles(0, 0, math.rad(90))
 				inst.Size = Vector3.new(inst.Size.X, ball.Size.Y * 1.04, ball.Size.Z * 1.04)
+			else
+				local flatRel = Vector3.new(rel.Position.X, 0, rel.Position.Z)
+				local dir = if flatRel.Magnitude > 1e-3 then flatRel.Unit else Vector3.new(0, 0, -1)
+				local pos = dir * (ball.Size.X / 2 + 0.02) + Vector3.new(0, ball.Size.Y * 0.12, 0)
+				rec.off = CFrame.lookAt(pos, pos + dir) * CFrame.Angles(0, math.rad(90), 0)
 			end
 		end
-		if WRAP and NEXT_JOINT[limb.Name] and (inst.Name == "Bandage" or inst.Name == "PlasterSkin") then
+		if WRAP and NEXT_JOINT[limb.Name] and inst.Name == "PlasterSkin" then
 			rec.xray = true -- (carried onto the drawn axis like the X-ray bones)
+			rec.radial = Workspace:GetAttribute("HoleAxisScale") or (Config :: any).HOLE_AXIS_SCALE or 1
+		end
+		if WRAP and NEXT_JOINT[limb.Name] and inst.Name == "Bandage" then
+			-- (WRAP_AXIS, the PC's capture 28 Nov: the ring hung in front of the chin and chest like a disc. Its offset came
+			-- from the old SKIN piece, which sits shifted and turned against the physics limb, and that offset was carried
+			-- onto the drawn axis. Now only WHERE along the limb (t) and WHICH WAY round (dir) are kept, read in the skin
+			-- piece's own frame; the ring is put round the DRAWN axis there, its axis along the limb, as wide as the drawn
+			-- limb; the tape and seep pieces lie on the drawn skin at that point.)
+			local ref = skinPiece
+			local lp = ref.CFrame:PointToObjectSpace(inst.Position)
+			local hy = ref.Size.Y / 2
+			rec.wrapT = math.clamp((hy - lp.Y) / (2 * hy), 0.05, 0.95)
+			local worldDir = ref.CFrame:VectorToWorldSpace(Vector3.new(lp.X, 0, lp.Z))
+			local d = limb.CFrame:VectorToObjectSpace(worldDir)
+			d = Vector3.new(d.X, 0, d.Z)
+			rec.wrapDir = if d.Magnitude > 1e-3 then d.Unit else Vector3.new(0, 0, -1)
 			local k = Workspace:GetAttribute("HoleAxisScale") or (Config :: any).HOLE_AXIS_SCALE or 1
-			rec.radial = k
-			if inst.Name == "Bandage" and inst:IsA("Part") and inst.Shape == Enum.PartType.Cylinder and inst.Size.Y > 0.3 then
-				inst.Size = Vector3.new(inst.Size.X, inst.Size.Y * k, inst.Size.Z * k) -- (a ring as wide as the drawn limb)
+			rec.wrapRing = inst:IsA("Part") and inst.Shape == Enum.PartType.Cylinder and inst.Size.Y > 0.3
+			rec.wrapTilt = math.rad(((rec.wrapT * 1000) % 7) - 3)
+			if rec.wrapRing then
+				local r0 = (BodyShapeMod.radius(limb.Name, rec.wrapT) or 0.35) * k + 0.05
+				inst.Size = Vector3.new(inst.Size.X, r0 * 2, r0 * 2) -- (a ring as wide as the drawn limb there)
 			end
 		end
 		if HOLE_ON_AXIS and NEXT_JOINT[limb.Name] and (inst.Name == "BulletHole" or inst.Name == "BulletStress") then
@@ -969,6 +993,32 @@ local function drive(body: Body)
 						end
 					end
 					local bc = B1.boneCf
+					if r.wrapT and bc and not r.ball then
+						local WA, WB = bc[rec.limb.Name], bc[NEXT_JOINT[rec.limb.Name]]
+						if WA and WB then
+							local a, b = WA.Position, WB.Position
+							local along = b - a
+							if along.Magnitude > 0.05 then
+								local down = along.Unit
+								local side = rec.limb.CFrame:VectorToWorldSpace(r.wrapDir)
+								side = side - down * side:Dot(down)
+								side = if side.Magnitude > 1e-3 then side.Unit else WA.RightVector
+								local centre = a + along * r.wrapT
+								local cfW: CFrame
+								if r.wrapRing then
+									cfW = CFrame.fromMatrix(centre, down, side) * CFrame.Angles(r.wrapTilt, 0, 0) -- (the ring's axis along the limb)
+								else
+									local k = Workspace:GetAttribute("HoleAxisScale") or (Config :: any).HOLE_AXIS_SCALE or 1
+									local rad = (BodyShapeMod.radius(rec.limb.Name, r.wrapT) or 0.35) * k + 0.07
+									cfW = CFrame.fromMatrix(centre + side * rad, side, down) -- (flat on the skin, facing out)
+								end
+								at = nil
+								r.placed = true
+								table.insert(parts, inst)
+								table.insert(cframes, cfW)
+							end
+						end
+					end
 					if r.xray and bc and not r.ball then
 						local XA, XB = bc[rec.limb.Name], bc[NEXT_JOINT[rec.limb.Name]]
 						if XA and XB then

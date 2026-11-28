@@ -455,6 +455,30 @@ local function run(mc: Machine)
 				release(mc) -- (gone, grabbed, healed whole, or too long)
 				return
 			end
+			if (require(Shared:WaitForChild("Config")) :: any).STRETCH_HOLD_DOWN and (mc.phase == "Ready" or mc.phase == "Grab") then
+				-- (STRETCH_HOLD_DOWN, the PC's staged test 28 Nov: the locked body STOOD in the machine and walked ("Just
+				-- stretching my legs"), so the claws pulled nothing and every StretchK stayed 1. Something gave it back to a
+				-- screen or stood it up after the lock. Now, every step it is in the machine, it is kept server-owned and
+				-- lying (Ragdoll, stay down); and once a second a [Stretch] line says phase, state, owner and each arm's K.)
+				local control = lazy("DummyControl")
+				if control.ownerOf(m) ~= nil then
+					pcall(control.setOwner, m, nil)
+				end
+				local st = ActiveRagdoll.getState(m)
+				if st ~= nil and st ~= "Ragdoll" then
+					ActiveRagdoll.setState(m, "Ragdoll")
+					ActiveRagdoll.setStayDown(m, true)
+				end
+				local M: any = mc
+				if (require(Shared:WaitForChild("Config")) :: any).STRETCH_LOG and os.clock() - (M.logAt or 0) >= 1 then
+					M.logAt = os.clock()
+					local ks = {}
+					for _, a in mc.arms do
+						table.insert(ks, string.format("%s:%s%.2f", a.spec.limb, if a.pulling then "+" else "", Stretch.factorOf(m, a.spec.limb)))
+					end
+					print(string.format("[Stretch] phase=%s state=%s owner=%s sim=%s %s", mc.phase, tostring(st), tostring(control.ownerOf(m)), tostring(ActiveRagdoll.isSimulating(m)), table.concat(ks, " ")))
+				end
+			end
 			if mc.phase == "Ready" then
 				pull(mc, step)
 			end

@@ -40,6 +40,9 @@ Do every item in `RUN.md`: batch 1, then batch 2, then batch 3 and on, top to bo
 
 When the context fills up it is summarised: keep going from RUN.md.
 
+## 3b. The FINAL RELEASE CHECK (RUN.md), always last
+After every batch and the ledger: run RUN.md's FINAL RELEASE CHECK on every device. Fix whatever fails in the same run and check again. Only then the final message.
+
 ## 4. The ONE final message (only when you really stop), in Danish, short
 1. **One line per item:** DONE / LEFT, and what the capture showed or why it is left.
 2. **"Test selv":** ONE numbered list for everything built in this run, phone first, each line with where to go and what must happen.

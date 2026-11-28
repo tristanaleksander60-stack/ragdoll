@@ -2148,9 +2148,26 @@ local function updateMoving(rig: Rig, dt: number)
 		-- (F73: an even turn at a capped rate, never a lerp whip or a 180 degree snap: the heading ROTATES toward the
 		-- goal at most 220 degrees a second walking, 360 fleeing, slower as it gets close, so the legs can step round)
 		local cur = rig.heading
+		-- (WALK_SMOOTH, the PC's SWAY_PROBE 28 Nov: walking bodies swayed side to side, headTurn 42-151 degrees within
+		-- 1 s while Walking. The wanted way flips left and right as the dodges and path steps change it step by step,
+		-- and the heading followed every flip at up to 220 degrees a second, so the drive swung the hips from side to
+		-- side. Now the wanted way itself is smoothed (about 0.35 s) unless it changes a lot (a real new direction), and
+		-- a walk turns at most 140 degrees a second.)
+		local smooth = (GameConfig :: any).WALK_SMOOTH == true and not fleeing
+		if smooth then
+			local R: any = rig
+			local prev: Vector3? = R.wantSmooth
+			if prev and prev:Dot(wantHeading) > -0.2 then
+				local blend = prev:Lerp(wantHeading, 1 - math.exp(-dt / 0.35))
+				if blend.Magnitude > 0.05 then
+					wantHeading = blend.Unit
+				end
+			end
+			R.wantSmooth = wantHeading
+		end
 		local a0, a1 = math.atan2(cur.Z, cur.X), math.atan2(wantHeading.Z, wantHeading.X)
 		local diff = (a1 - a0 + math.pi) % (2 * math.pi) - math.pi
-		local cap = math.rad(if fleeing then 360 else 220) * dt
+		local cap = math.rad(if fleeing then 360 elseif smooth then 140 else 220) * dt
 		local stepA = math.clamp(diff * (1 - math.exp(-(if fleeing then 9 else 5) * dt)) * 2, -cap, cap)
 		if math.abs(diff) < math.rad(1) then
 			stepA = diff

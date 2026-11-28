@@ -962,6 +962,41 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 
 ---
 
+## FINAL RELEASE CHECK (the LAST thing in every /klar run, after every batch and the ledger; nothing is published until it passes)
+The owner releases after this. It checks what matters on EVERY device, and anything it finds is FIXED in the same run (then the check is run again), not listed for later.
+
+**0. Before it: cloud items from 28 Nov to prove first** (pushed, need a Play):
+- `MOURN_RETRY` + `CPR_CLEAR` ground fix (0.9): stage with `MournTest = true` on the body to be killed, friends 6 studs off: a friend comes, kneels on the free side of a bench, CPR. Cause found: the pass looked once, at the death, while the friends were still FirstAid helpers; and the kneel box counted the ground slab as an obstacle.
+- `WRAP_ON_SKIN` (WRAP_AXIS, 0.11): stage 2 low wounds on a living forearm (see How to stage): the ring goes ROUND the drawn forearm, its axis along the arm; the head wrap round the round head.
+- `STRETCH_HOLD_DOWN` (stretcher): stage it again; read the `[Stretch]` lines (phase, state, owner, each arm's K): the body lies, K grows to 1.5+ while pulling, then shrinks after 30 s.
+- `WALK_SMOOTH` (0.13): 5 min Play, the `[SWAY]` lines for Walking must be gone or rare (amp under 2). The bike rider (`mood=Ride`): if it still sways, weld the rider's pelvis to the saddle for the ride (one assembly, RAGDOLL_V7.md 3.5) behind `BIKE_RIDER_WELD`.
+
+**1. Clean start (each device: PC, phone emulator, tablet emulator, console emulator if the MCP has it):**
+- one Play: 0 errors and 0 warnings from our scripts in the output (read it all; fix every one);
+- time from join to playable, and FPS at the spawn (phone at least 30, PC at least 60);
+- the first 60 s as a new player: what shows, nothing overlaps, nothing cut off, no keyboard letters on touch.
+
+**2. The core loop, every device (one capture each):**
+- shoot a ragdoll: holes on the skin (arm, leg, chest, head), purple blood, it reacts and falls;
+- X-ray: limb glow after 3 shots, the toggle, bones inside the limbs;
+- grab and carry, drop into 5 different machines (DROP HERE, each takes it, no old block ragdoll anywhere, no floating text);
+- first person in and out, weapons switch, the hotbar on the phone;
+- a vehicle: get in, drive 20 s, a launch pad, get out;
+- the gyro, the press, the spider, the washer, the bowling;
+- ragdolls near you: at most the cap, none walking off in view, none flying, none swaying (read `[CALM_GUARD]`/`[SWAY]`: 0 lines in 5 minutes).
+
+**3. Money (no real purchase; Studio test purchases only):**
+- every pass and product shown prompts the right id (Shop.luau, Events.luau, the 5 vehicle passes, GOD MODE 2093692966);
+- PassLint clean; no id 0 visible; the shop opens on phone and PC.
+
+**4. Saving:** join, earn something, leave, join again (Studio with API access): it is kept. Never write to live DataStores beyond the game's own saving.
+
+**5. Release switches:** `SWAY_PROBE = false`, `STRETCH_LOG = false`, `PHYSICS_PROBE` false, no test hooks or test bodies left in Workspace, `RunSelfTest`/`SessionStudio`/`StudioFresh` off, `Config.Version` bumped and `Shop.WHATS_NEW[1]` matching (RELEASE.md section 1). `CALM_GUARD` stays ON (it is a safety net).
+
+**6. Then:** commit, push, save the place, and in the final message: the owner's release steps (RELEASE.md: backup, publish both places, never restart servers) and the maturity questionnaire if not done.
+
+**If anything in 1-5 fails: fix it now (cause first), and run the failed part again. The run does not end with a failing check.**
+
 ## SPAWN_V2: one population system (design)
 **What exists now** (from the code, 28 Nov):
 - **About 12 spawners**, each with its own count:

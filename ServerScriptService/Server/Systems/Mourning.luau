@@ -22,6 +22,8 @@ Mourning.SEE = 25 -- studs
 Mourning.PER_BODY = 1 -- (23 Nov 2026, owner: "only 1 ragdoll goes to give CPR")
 Mourning.LAB_MAX = 3
 Mourning.JOIN_CHANCE = 0.85
+Mourning.MOURN_WINDOW = 10 -- s after a death the pass keeps looking for a free friend (MOURN_RETRY)
+local deadAt: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
 Mourning.CPR_CHANCE = 0.5
 Mourning.SAVE_CHANCE = 0.33
 Mourning.ANGRY_CHANCE = 0.77 -- of the ones that fail
@@ -81,7 +83,7 @@ end
 -- the kneeling legs were pressed into the bench by the pose and the solver threw them out. Now the spot must be free
 -- (nothing solid but the ground and bodies in a knee-sized box); else the other side, then the head end; none free: no
 -- CPR there, it mourns standing.)
-local function kneelFree(spot: Vector3, groundY: number): boolean
+local function kneelFree(spot: Vector3, _groundY: number): boolean
 	local params = OverlapParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	local ex: { Instance } = {}
@@ -89,15 +91,30 @@ local function kneelFree(spot: Vector3, groundY: number): boolean
 	if d then
 		table.insert(ex, d)
 	end
+	for _, p in Players:GetPlayers() do
+		if p.Character then
+			table.insert(ex, p.Character)
+		end
+	end
 	params.FilterDescendantsInstances = ex
+	-- (the real ground under the spot; the box starts above it, so the floor itself never counts as "in the way")
+	local rp = RaycastParams.new()
+	rp.FilterType = Enum.RaycastFilterType.Exclude
+	rp.FilterDescendantsInstances = ex
+	local hit = workspace:Raycast(spot + Vector3.new(0, 3, 0), Vector3.new(0, -9, 0), rp)
+	if not hit then
+		return false
+	end
+	local ground = hit.Position.Y
 	local ok, hits = pcall(function()
-		return workspace:GetPartBoundsInBox(CFrame.new(spot.X, groundY + 1.6, spot.Z), Vector3.new(2.4, 2.6, 2.4), params)
+		return workspace:GetPartBoundsInBox(CFrame.new(spot.X, ground + 1.8, spot.Z), Vector3.new(2.4, 2.6, 2.4), params)
 	end)
 	if not ok then
 		return true
 	end
 	for _, h in hits :: { BasePart } do
-		if h.CanCollide and h.Transparency < 1 and not h:IsDescendantOf(workspace.Terrain) then
+		local top = h.Position.Y + h.Size.Y / 2
+		if h.CanCollide and h.Transparency < 1 and not h:IsDescendantOf(workspace.Terrain) and top > ground + 0.45 then
 			return false
 		end
 	end
@@ -777,7 +794,22 @@ local function step()
 			if not bp then
 				continue
 			end
-			mourned[body] = true
+			-- (MOURN_RETRY, the PC's staged tests 28 Nov: CPR never started. The cause: this pass looked at a new body ONCE,
+			-- the moment it died, and marked it mourned even when no friend was free; its friends were often still busy as
+			-- FirstAid helpers (CommandedBy -6) of the same body, which stop only on the death. Now it keeps looking for
+			-- MOURN_WINDOW s after the death and marks it only when a mourner is taken. The attribute MournTest = true on
+			-- the body makes everyone near join and do CPR, for tests.)
+			local RETRY = (Config :: any).MOURN_RETRY == true
+			if RETRY then
+				deadAt[body] = deadAt[body] or now
+				if now - deadAt[body] > Mourning.MOURN_WINDOW then
+					mourned[body] = true
+					continue
+				end
+			else
+				mourned[body] = true
+			end
+			local sure = body:GetAttribute("MournTest") == true
 			local near: { { m: Model, d: number } } = {}
 			for _, m in dummies do
 				local p = pelvisOf(m)
@@ -800,7 +832,7 @@ local function step()
 				if taken >= Mourning.PER_BODY or busy >= Mourning.LAB_MAX then
 					break
 				end
-				if n.d < 0 or math.random() < Mourning.JOIN_CHANCE then -- (a hero always joins)
+				if sure or n.d < 0 or math.random() < Mourning.JOIN_CHANCE then -- (a hero always joins)
 					local m = n.m
 					local p = pelvisOf(m) :: BasePart
 					jobs[m] = {
@@ -823,6 +855,11 @@ local function step()
 					taken += 1
 					busy += 1
 				end
+			end
+			if taken > 0 then
+				mourned[body] = true
+			elseif RETRY and #near > 0 then
+				mourned[body] = true -- (friends were free and none chose to join: that was the chance, do not roll again)
 			end
 		end
 	end
