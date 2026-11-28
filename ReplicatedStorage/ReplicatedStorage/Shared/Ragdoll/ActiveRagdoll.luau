@@ -686,6 +686,32 @@ local function calmGuard(rig: Rig)
 	if across < CALM_FLING_SPEED and v.Y < CALM_FLING_VY then
 		return -- (falling is gravity, not a fling: only sideways or UP counts)
 	end
+	-- (CALM_GUARD_CARS: a vehicle right by it is a real hit (the PC saw one stopped with "touch=LabTruck.Bumper,Body"): a
+	-- car's model holds a VehicleSeat; then this fling is the car's, and the body flies as it should.)
+	if (GameConfig :: any).CALM_GUARD_CARS then
+		local carHit = false
+		pcall(function()
+			local params = OverlapParams.new()
+			params.FilterType = Enum.RaycastFilterType.Exclude
+			params.FilterDescendantsInstances = { m }
+			for _, part in Workspace:GetPartBoundsInRadius(rig.pelvis.Position, 3.5, params) do
+				local owner = part:FindFirstAncestorOfClass("Model")
+				while owner and not carHit do
+					if owner:FindFirstChildWhichIsA("VehicleSeat", true) then
+						carHit = true
+					end
+					owner = owner.Parent and owner.Parent:FindFirstAncestorOfClass("Model")
+				end
+				if carHit then
+					break
+				end
+			end
+		end)
+		if carHit then
+			r.calmAt = nil
+			return
+		end
+	end
 	-- Flung with no cause of ours: note why, stop it, put it back.
 	ActiveRagdoll.calmFlings += 1
 	local touched = {}
