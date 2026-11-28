@@ -163,6 +163,11 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Proof:** a capture of the spider's catch in the web (the new body), the washer drum mid-spin, the chick.
 
 ### 0.7 X-ray bones turned wrong in arms and legs; holes not seen on arms and legs: CLOUD (`V7_ON_AXIS`, SmoothBody `stick`/`drive`)
+- **PC 28 Nov (2): the side capture of a hole LEFT after 2 tries.** 6 Blaster shots from the body's right side gave 4 BulletHole parts on RightLowerArm and 2 on RightUpperLeg, 0.42 studs from the forearm part's centre, decal facing Right.
+  - Capture 1 (`hole_arm_side`) was taken from behind the body.
+  - Capture 2 was taken along the hole's normal and saw the inside of something.
+
+  The X-ray part stays DONE.
 - **PC 28 Nov: the X-ray DONE, the holes PART.** A body killed with 8 chest shots, then 3 shots each on the right upper arm, forearm, thigh and shin. Only the 4 newest holes stayed, all on the thigh (holes fade after 4 shots), 0.74 studs from the thigh's centre: on the drawn skin, not inside it.
   - Capture xray_thigh_top (X-ray on, from above): the whole skeleton inside the lying body, the arm bones along the drawn arms to the hand bones, nothing turned or sticking out.
   - Capture hole_thigh_top: from above the thigh holes face down and are not seen. A capture of a hole on an arm or a leg from its own side is still missing.
@@ -178,6 +183,7 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Proof:** the range from the plaza and from its door: whole facade, roof and sides free.
 
 ### 0.9 CPR kneeling into a bench: CLOUD (`CPR_CLEAR`, Mourning `freeKneel`)
+- **PC 28 Nov (2): why try 1 failed.** `VitalsService.wound` called from execute_luau runs in execute_luau's own require cache, whose Mourning never started (`running = false`), so no mourning could begin. The cloud's code is not at fault there. Stage it again by killing the body through the client's HitRequest (head shots).
 - **PC 28 Nov, STAGED twice: LEFT.** For the test JOIN_CHANCE and CPR_CHANCE were set to 1 in the Studio source (put back to 0.85 and 0.5 after; Mourning matches disk again, 32975).
   - **Try 1:** a body 2.2 studs in front of a ParkBench and 2 friends set 6 studs from it, killed with `VitalsService.wound` (no killer). It died, but no friend mourned in 30 s; only one body stayed within 30 studs, with no mood.
   - **Try 2:** the same with the friends 5 studs off, Home held, the player 12 studs away shooting it through the real HitRequest (Blaster, up to 12 shots). It went Unconscious, not Dead, and no mood started.
@@ -590,6 +596,10 @@ The owner said things were skipped. This is the full list from the chat since 26
 - **Proof:** captures of 3 different notices on PC and on a phone (upright too).
 
 ### 1.22 The angry friend punches the air instead of you: OWNER CHECK (`ANGRY_HITS_REAL`, `ANGRY_MORE`)
+- **PC 28 Nov, STAGED through the real shot path: WORKS by data, capture missed.** The player shot bodies twice each through HitRequest (the planned first anger, ANGRY_FIRST).
+  - The angry one went Ragdoll, then GettingUp, Standing and Walking, and came from 8 to 2 studs. It switched to Box (punching), and the player's health went 100 -> 77. It backed off and came again (6, 5, 4 studs).
+  - The capture came 1 s late: by then it had run ("It got away!"), so no picture of the punch.
+  - **Staging lesson:** `require(Mourning)` inside execute_luau is a SEPARATE copy (its own `running = false`), so `Mourning.provoke` and `VitalsService.wound` called from execute_luau never reach the live Mourning. Stage through the client's HitRequest instead.
 - **State (PC, 28 Nov, v1436):** in Studio, no error; not triggered from the MCP (the anger is a dice roll on the server's own shot handling).
 - **Causes found:**
   1. NEARBY_CAP_V2 counted the revenge attacker as an extra near you and sent it away, and for 30 s put its Home back away from you, so it stood off and punched the air. Now any body with a Mood (angry, mourning, CPR...) or CommandedBy is kept.
