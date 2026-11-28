@@ -305,6 +305,15 @@ The owner said things were skipped. This is the full list from the chat since 26
     - Cause: roads share end points, and each road laid its own disc at every point, so 8 of the 16 discs lay on another disc at exactly the same height and flickered (z-fighting).
     - Now there is one disc a point (the widest): 12 discs, 0 on another.
     - Capture `junction_once`: a junction by the spawn, clean and even.
+  - **"never walk into things or each other; never stuck in hedges or walls": TICKED (a 60 s check).**
+    - Every walking body was sampled every 6 s for 60 s; stuck means moving under 1 stud while its Home was over 5 studs away.
+    - Result: 1 stuck once, by the spawn plaza's edge, and the next sample had it standing 2.7 studs from its Home.
+    - Capture `busy_spot`: the spawn plaza and the bowling lane from above, the bodies apart, none in a wall.
+  - **"the cannon: the ragdoll goes INTO the cannon, the plate never launches the player": TICKED.**
+    - Launch plate: `CANNON_MUZZLE_LOAD` leaves no plate; the old pad is invisible and has no touch.
+    - Loading (`CANNON_HOPPER`): a body the player let go over the funnel slid down it, was hidden in the barrel, and fired at 173 studs/s, flying 157 studs. The player stayed put.
+    - Capture `cannon_hopper`: the cannon with its striped funnel.
+    - **Staging lesson:** do NOT call `DummyControl.setOwner` from execute_luau (it is a copy). The live module still thinks the client owns the body, so the cannon's push went to the client while the server owned the physics, and the body stuck in the barrel. Move a client-simulated body from the CLIENT instead, with `Held` set on the server.
 
 
 ## BATCH 1 (do now)
