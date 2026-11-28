@@ -125,6 +125,46 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
   - Bowling and the map machines look 70-80 studs out, allow one by you and give it 16 s, and Bowling hops onto the lane instead of teleporting.
 - **Proof:** TRY at 4 machines, each with one ragdoll standing by you; captures of the walk and the hop. No "No ragdoll near" with one in 40 studs.
 
+### 1.10 Standing ragdolls suddenly leaning far back: CLOUD (`UPRIGHT_POSES`; DummyLife, Poses)
+- **Cause found:** a positive Waist X bends BACKWARDS (CPR leans forward with -43). Several standing poses had the wrong sign or far too much:
+  - the Scared persona: +14, ALWAYS while standing still, the main culprit;
+  - the LookBack and HoldSide gestures, meant as a hunch;
+  - shock, gasp, peek and point;
+  - the head flinch: Waist +14 with Neck +42.
+- **Now:**
+  - the hunches bend forward;
+  - shock, gasp and point stay upright;
+  - the head flinch snaps the head back but the body only 3 degrees.
+- **The previous proof missed this:** it measured walking bodies only.
+- **Proof:** side captures of a standing Scared persona, a LookBack, a shocked one (BOO), a gasp, a peek, a point and a head flinch (shoot the head). Also count, over 60 s, the standing bodies whose chest is more than 6 degrees back: it must be 0.
+
+### 1.11 Heavy lag on a good PC, not every ragdoll drawn: CLOUD part (`LAB_DUMMIES_PC` 40 -> 18; SmoothBody PC 28 bodies within 200)
+- **Causes found:**
+  - the PC simulated 40 balancing ragdolls itself (each lab's bodies belong to its player's computer);
+  - only the nearest 24 within 120 studs got the v6 body; the rest showed the old block body ("not all load in").
+- **Now:** 18 lab ragdolls on a PC, and every one in view (up to 28 within 200 studs) wears v6.
+- **TO DO:**
+  - one MicroProfiler capture at the spawn on PC and in the phone emulator, before and after: name the top 5 costs in the item's State and fix the biggest;
+  - check `LAGFREE_SLEEP` really anchors still bodies (count the asleep ones);
+  - telemetry `Fps_p10` by device.
+- **Proof:** the profiler numbers and an FPS counter capture at the spawn with every ragdoll in view drawn in v6.
+
+### 1.12 The legs still bug: TODO (cause not found yet)
+- **First** catch it: watch 10 standing and walking ragdolls for 60 s, and capture the moment a leg bugs (snaps, shakes, twists or folds).
+- **Name the cause in the code.** Candidates to check:
+  - DummyLife's gait and foot IK fighting ActiveRagdoll's joint targets;
+  - LegJitter;
+  - the limb guard;
+  - a broken or loose leg joint while standing;
+  - SmoothBody drawing a leg bone from a stale part.
+- **Fix that cause only.** RAGDOLL_V7 (animated until hit) is the lasting cure; this item is the stopgap.
+- **Proof:** the same 60 s watch with no leg bug, as a capture series.
+
+### 1.13 Bullet holes and bandages shown wrong: FAILED (moved up from 2.2: same item, do it now)
+- **See 2.2.** Holes must sit ON the v6 skin at the hit point (never under it, never floating, never a purple blob) on every limb, the round head, the hands and the feet, and follow the body as it moves. Bandages are a ring at the v6 limb radius; plasters are a patch on the skin.
+- **First find the cause:** where each hole is parented and how its CFrame is set (the hidden block part, or the v6 surface). Show a capture of a wrong one with the cause named.
+- **Proof:** 20 shots spread over one body, captures from the front, the back and while it walks; a patched-up body.
+
 ---
 
 ## BATCH 2 (after the owner's test of batch 1)
@@ -133,7 +173,7 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
 - **Find the cause** in BenchService: how the sit point is computed, and that it does not use the bench model's real seat. **Fix:** every bench gets seat slots from its seat surface (a free slot per 2 studs of seat), and the pelvis is placed on the seat top, facing out, with the v6 hip height.
 - **Proof:** captures of 3 benches with sitters, from the front and the side.
 
-### 2.2 Bandages and plasters that sit right and can be seen: FAILED (FIXES_28NOV 11 built)
+### 2.2 Bandages and plasters that sit right and can be seen: FAILED (FIXES_28NOV 11 built) (now done as 1.13)
 - **Find the cause:** the capture shows a gauze floating as a flat box off the arm, and no plaster at all.
 - **Build:**
   - **the bandage:** a ring mesh around the v6 limb, its axis along the bone, its radius the v6 limb radius at that point (BodyShape) + 0.02, moved with the bone in SmoothBody's drive;

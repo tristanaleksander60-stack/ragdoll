@@ -14,6 +14,7 @@ export type Pose = { [string]: CFrame }
 local rad = math.rad
 local sin = math.sin
 
+local UPRIGHT_POSES = (require(script.Parent.Parent:WaitForChild("Config")) :: any).UPRIGHT_POSES == true -- (a positive Waist X bends BACK)
 local function ang(x: number, y: number, z: number): CFrame
 	return CFrame.Angles(rad(x), rad(y), rad(z))
 end
@@ -69,8 +70,8 @@ end
 function Poses.flinch(region: Region, side: number, limbSide: number, t: number): Pose
 	if region == "head" then
 		return {
-			Neck = ang(42, -18 * side, 8 * side), -- (V9-NOW: snaps further back, it reads from the shooter)
-			Waist = ang(14, 0, 0),
+			Neck = ang(if UPRIGHT_POSES then 24 else 42, -18 * side, 8 * side), -- (V9-NOW: snaps further back, it reads from the shooter)
+			Waist = ang(if UPRIGHT_POSES then 3 else 14, 0, 0), -- (UPRIGHT_POSES: the head snaps back, the body hardly)
 			RightShoulder = ang(140, 0, 25),
 			LeftShoulder = ang(140, 0, -25),
 			RightElbow = ang(120, 0, 0),
@@ -332,8 +333,8 @@ function Poses.shock(t: number): Pose
 	out.LeftShoulder = ang(150 - shake, 0, -35)
 	out.RightElbow = ang(80, 0, 0)
 	out.LeftElbow = ang(80, 0, 0)
-	out.Waist = ang(10, 0, 0)
-	out.Neck = ang(12, 0, 0)
+	out.Waist = ang(if UPRIGHT_POSES then -3 else 10, 0, 0) -- (UPRIGHT_POSES: shocked, it stays upright)
+	out.Neck = ang(if UPRIGHT_POSES then 6 else 12, 0, 0)
 	return out
 end
 local mournOut: Pose = {}
@@ -503,12 +504,12 @@ end
 -- Hands over the mouth.
 function Poses.gasp(t: number): Pose
 	local s = sin(t * 18) * 3
-	stand(feelOut, 8, ang(4, 0, 0), ang(78 + s, 0, -22), ang(78 - s, 0, 22), 118, 118)
+	stand(feelOut, if UPRIGHT_POSES then -4 else 8, ang(4, 0, 0), ang(78 + s, 0, -22), ang(78 - s, 0, 22), 118, 118)
 	return feelOut
 end
 -- Pointing at the body, the other hand on the head.
 function Poses.point(t: number): Pose
-	stand(feelOut, 6, ang(-10, sin(t * 10) * 8, 0), ang(62 + sin(t * 16) * 5, 0, 0), ang(150, 0, -30), 4, 85)
+	stand(feelOut, if UPRIGHT_POSES then 0 else 6, ang(-10, sin(t * 10) * 8, 0), ang(62 + sin(t * 16) * 5, 0, 0), ang(150, 0, -30), 4, 85)
 	return feelOut
 end
 -- (P1, SCARED_HIDE) Hiding behind something and peeking out: knees bent low, hands up by the chest, the body
@@ -516,7 +517,7 @@ end
 function Poses.peek(t: number): Pose
 	local side = math.clamp(sin(t * 1.1) * 2.2, -1, 1)
 	stand(feelOut, 14, ang(-6, side * 32, side * -8), ang(68, 0, -18), ang(68, 0, 18), 112, 112)
-	feelOut.Waist = ang(14, side * 10, side * 20)
+	feelOut.Waist = ang(if UPRIGHT_POSES then -6 else 14, side * 10, side * 20)
 	feelOut.RightHip, feelOut.LeftHip = ang(28, 0, 6), ang(28, 0, -6)
 	feelOut.RightKnee, feelOut.LeftKnee = ang(-46, 0, 0), ang(-46, 0, 0)
 	return feelOut

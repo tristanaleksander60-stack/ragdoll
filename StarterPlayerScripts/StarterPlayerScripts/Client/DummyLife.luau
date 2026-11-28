@@ -31,6 +31,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Assets = require(Shared:WaitForChild("Assets"))
 local GunThreat = require(Shared:WaitForChild("GunThreat"))
 local Config = require(Shared:WaitForChild("Config"))
+local UPRIGHT_POSES = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).UPRIGHT_POSES == true -- (standing poses never bend backwards by mistake)
 local SIDES = { "Right", "Left" } -- (LAG-FREE 2 item 7: one table, not a new one each call)
 local TOUCH_IK = game:GetService("UserInputService").TouchEnabled and (Config :: any).LAGFREE_SMALL == true
 local ClipGait = require(script.Parent:WaitForChild("ClipGait")) -- (S1: real walk and run clips)
@@ -113,7 +114,9 @@ local function personaWalk(life: any, now: number)
 		add("LeftShoulder", CFrame.Angles(0, 0, rad(-4)))
 	elseif persona == "Scared" then
 		local glance = math.sin(t * 1.3) ^ 9 * 35
-		add("Waist", CFrame.Angles(rad(14), 0, 0))
+		-- (UPRIGHT_POSES: a positive Waist X bends BACK (CPR leans forward with -43); the "hunched" scared ones leaned back 14
+		-- degrees whenever they stood still. Now a real hunch: forward.)
+		add("Waist", CFrame.Angles(rad(if UPRIGHT_POSES then -9 else 14), 0, 0))
 		add("Neck", CFrame.Angles(rad(-10), rad(glance), 0))
 		add("RightShoulder", CFrame.Angles(rad(10), 0, rad(-6)))
 		add("LeftShoulder", CFrame.Angles(rad(10), 0, rad(6)))
@@ -126,7 +129,7 @@ local function personaWalk(life: any, now: number)
 	elseif persona == "Curious" then
 		local look = math.sin(t * 0.7) * 22
 		add("Neck", CFrame.Angles(rad(-6), rad(look), 0))
-		add("Waist", CFrame.Angles(rad(4), 0, 0))
+		add("Waist", CFrame.Angles(rad(if UPRIGHT_POSES then -2 else 4), 0, 0))
 	end
 end
 
@@ -1196,7 +1199,7 @@ local function updateIdle(life: Life, now: number, dt: number)
 		local wince = math.max(0, sin(t * 1.7)) ^ 6
 		blend("RightShoulder", ang(28, 0, -8))
 		blend("RightElbow", ang(95, 0, 0))
-		blend("Waist", ang(8 + 6 * wince, 0, -6))
+		blend("Waist", if UPRIGHT_POSES then ang(-6 - 6 * wince, 0, -6) else ang(8 + 6 * wince, 0, -6))
 		blend("Neck", ang(-8 - 8 * wince, neckYaw * 0.3, 0))
 	elseif gesture == "TieShoe" then
 		local f = 9 * sin(t * 9)
@@ -1236,7 +1239,7 @@ local function updateIdle(life: Life, now: number, dt: number)
 	elseif gesture == "LookBack" then
 		-- R5 SCARED: a quick nervous look back over the shoulder, hunched
 		local twitch = 4 * sin(t * 13)
-		blend("Waist", ang(10, 38 + twitch, 0))
+		blend("Waist", ang(if UPRIGHT_POSES then -6 else 10, 38 + twitch, 0))
 		blend("Neck", ang(-4, 46 + twitch, 0))
 		blend("RightShoulder", ang(25, 0, -12))
 		blend("LeftShoulder", ang(25, 0, 12))

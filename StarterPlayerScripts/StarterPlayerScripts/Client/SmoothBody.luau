@@ -36,9 +36,9 @@ do
 	local UIS = game:GetService("UserInputService")
 	local phone = UIS.TouchEnabled and not UIS.KeyboardEnabled
 	if (Config :: any).V6_FAR_BODIES and (Config :: any).SMOOTH_BODY_V6 and not phone then
-		SmoothBody.MAX_BODIES = 24
-		SmoothBody.BUILD_REACH = 120
-		SmoothBody.DROP_REACH = 150
+		SmoothBody.MAX_BODIES = 28 -- (the lab's 18 + visitors, crowd and events: every one in view wears v6)
+		SmoothBody.BUILD_REACH = 200
+		SmoothBody.DROP_REACH = 230
 	elseif (Config :: any).V6_EVERYONE and (Config :: any).SMOOTH_BODY_V6 and phone then
 		-- (FIXES_28NOV 13: old block bodies showed past 80 studs on phones: 20 within 100 now; the far ones are driven at
 		-- FAR_RATE and a sleeping body is drawn once, so the cost stays low)
