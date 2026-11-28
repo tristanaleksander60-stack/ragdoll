@@ -286,6 +286,7 @@ Group the items that touch the same files and do them together:
 - **The hotbar icon:**
   - **cause:** a slot whose word was not empty put its picture at the left (`placePicture`'s else branch), small, in the top-left of the selected box;
   - **now:** on touch screens every picture is centred. Also measure the slot gaps at rest and open (at least 6 px apart; the ammo chip inside its slot). If they still overlap, find the cause in `PokeController.plan` (the cell and GAP at the MiniBar's 0.6 scale) and fix it.
+- **The extra "More" gear** (`MORE_GEAR_PC_ONLY`): on phones and tablets the round More gear in the top bar duplicated Menu in the left stack, so it now shows on computers only. Check that `gearGui` is not used to place anything else on touch screens (it is disabled there, not removed).
 - **Proof:** phone captures of the top-left buttons and the hotbar at rest, opened and with each slot selected.
 
 ### 1.19 Carried over from FIXES_28NOV: re-check each one (they were built, the owner did not confirm them all)

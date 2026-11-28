@@ -191,6 +191,7 @@ local Config = {
 	REVIVE_OVER_SHOP = true, -- the phone REVIVE button sits centred right above the Shop and Weapon buttons (HudV3)
 	MP_SHORT_LABEL = true, -- the Multiplayer launcher reads "Online" on a phone instead of a cut-off "Multipla" (PortalUI)
 	HOTBAR_ICON_CENTER = true, -- on a touch screen every hotbar picture sits centred in its box, selected or not (PokeController placePicture)
+	MORE_GEAR_PC_ONLY = true, -- the round "More" gear in the top bar shows on a computer only; phones and tablets have Menu in the left stack (HudV3)
 	PLANT_YAW = 0, -- degrees added to the plant model's facing; the PC sets it so the mouth faces the path (check with a capture)
 	SHOVE_SERIES = true, -- F26: the angry dummy shoves a random 1-3 times, a line before each ("Hey!", "Stop that!", "How do YOU like it?"), a short wind-up, following if you back off; knocked over ends it; then it flees (Mourning attack)
 	XRAY_TRACER = true, -- F28: with X-ray on, your round leaves a short bright line through the glass body for 1 s, along the shot (FxController.predictHit)

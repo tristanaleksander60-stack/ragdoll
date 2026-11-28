@@ -943,6 +943,17 @@ function HudV3.start()
 		end
 		GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(place)
 		place()
+		-- (MORE_GEAR_PC_ONLY: on a phone or tablet the left stack already has Menu, so the extra round "More" gear in the
+		-- top bar is a second way to the same window: it shows on a computer only)
+		if (Config :: any).MORE_GEAR_PC_ONLY then
+			local UIS = game:GetService("UserInputService")
+			local function show()
+				gg.Enabled = not (UIS.TouchEnabled and not UIS.KeyboardEnabled)
+			end
+			show()
+			UIS:GetPropertyChangedSignal("KeyboardEnabled"):Connect(show)
+			UIS:GetPropertyChangedSignal("TouchEnabled"):Connect(show)
+		end
 		gg.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 		gearGui = gg
 	else
