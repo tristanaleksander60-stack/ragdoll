@@ -101,6 +101,16 @@ function XRayToggle.start()
 		end
 	end
 	XRayToggle.toggle = toggle
+	-- (XRAY_TEST_HOOK, RUN 2.3: the MCP's key, click and its own require copy cannot reach the X-ray in the phone
+	-- emulator, so no X-ray proof could be taken. A local player attribute "XRayWant" (true/false) now turns it on/off
+	-- exactly as the button does. Client-only: it changes only this player's own view.)
+	if Config.XRAY_TEST_HOOK then
+		player:GetAttributeChangedSignal("XRayWant"):Connect(function()
+			if (player:GetAttribute("XRayWant") == true) ~= DummySkins.xrayIsOn() then
+				toggle()
+			end
+		end)
+	end
 	-- (F21: the key comes from Keybinds "XRay" (I); a pad uses D-pad left.)
 	local key = Enum.KeyCode.I
 	pcall(function()

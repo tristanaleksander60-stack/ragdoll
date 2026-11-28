@@ -688,6 +688,15 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 - **Proof:** a patched-up arm, leg, chest and head from 3 m and 10 m.
 
 ### 2.3 Bones break by weapon and by number of hits: PART (`BONES_RETUNE`)
+- **PC 28 Nov (2): the break PROVEN in Play by the real shot path; the X-ray crack line is an OWNER CHECK.**
+  - Blaster through the client's HitRequest on a living body:
+    - try 1, 3 shots on the right lower leg: `BrokenJoints = RightHip`, the card "Right leg: CRACKED", the body Ragdoll;
+    - try 2, 4 shots on the left lower leg: `BrokenJoints = LeftHip`, the card "Left leg: SHATTERED", and the body still Walking, Alive at 73 %.
+  - Capture `bone_broken_xray5` (X-ray on, phone emulator): the skeleton inside the walking body.
+    - A crack line on the shin bone can't be told apart at this size, so the CRACKED and BROKEN look is the owner's check.
+  - **New, `XRAY_TEST_HOOK` (XRayToggle):** a local player attribute `XRayWant` true/false turns this player's X-ray on and off like the button.
+    - Why: the MCP's I key, a mouse click on the X-RAY button and its own `require(DummySkins)` copy all failed to switch the X-ray in the phone emulator.
+    - For proofs: `game.Players.LocalPlayer:SetAttribute("XRayWant", true)`.
 - **State (PC, 28 Nov, v1438):** Bones.CLASS retuned as the table. Hits counted to the break on a fresh right lower leg (Bones.hit, Play): Blaster 3, Deagle 2, SMG 6, DMR 2, Shotgun 1, Bat at full charge 2, Punch at full 6; each sets BreakReq. NOT proven by capture: the crack line and broken bone in X-ray, the dangle and the limp (the capture was unclear; the body still walked with BoneStages 4).
 - **Cause found (cloud):** the bone system works (`Systems/Bones.luau`, BONES_V2): 0 integrity means BROKEN, `BreakReq` set, and the joint broken. But with the current numbers a body dies or is revived before a bone breaks:
   - a light pistol (`Blaster` 18 x factor about 1.1) needs about 5 shots on one lower leg;
