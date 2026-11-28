@@ -367,6 +367,16 @@ The owner said things were skipped. This is the full list from the chat since 26
 - **Proof:** scroll each board with the wheel on PC and by drag on a phone. Captures before and after the scroll.
 
 ### 1.8 Animals really take ragdolls in the mouth: PART (`CREATURE_GRIP` + PC MouthBone)
+- **PC 28 Nov (2): the bear DONE (phone emulator), plus a new cause fixed (`DROPSPOT_STABLE`).**
+  - **Cause:** the bear's DROP HERE stood **53 studs** from the bear (its reach is 16), so a body dropped there was never taken.
+    - `DropSpots.scan` runs several times and parents each spot inside the machine's model.
+    - Every later scan's `GetBoundingBox` took the old spot in, so the spot crept 4+ studs further out each time. The stretch machine's spot crept up the same way.
+  - **Now:** a model is measured without its own DropSpot children (`boxOf`).
+    - After 40 s of scans the bear's spot is 7.6 studs from the bear, and the stretch spot stays 1.0 over the top.
+  - **The bear, staged:** bodies set on its DROP HERE, the BearPoke prompt fired from the client.
+    - Woken, it either swats (claw wounds, the body Ragdoll) or mauls.
+    - Capture `bear_maul3`: the maul, the body held up at the bear's mouth ("My heart!", purple blood), its v6 skin.
+  - The T-rex's whip keeps its earlier `rex_grip` state (MouthBone fixed); a mid-whip capture is still missing.
 - **State (PC, 28 Nov, v1435):** cause found: CreatureGrip.mouthOf matched only parts or bones named Jaw/Mouth/Head, but the real T-rex's bones are "Bone.008" and the like, so the grip fell to the box's front and the body hung at its chest (capture rex_grip). Fixed: a "MouthBone" attribute (TRex = Bone.023, the jaw tip) plus "MouthOffset" (0, -1.5, -3.5), set on V3Assets.TRex in the place file. Capture rex_grip3: the body is held at the open jaws. The bear is NOT re-checked.
 - **Causes found** (`AnimalCove.luau`):
   - the bear's HUG and the T-rex's bite teleported the body to a guessed point every 0.1 s (`DummyControl.move`) while the lab player's screen simulated it, so it jittered behind the animal;

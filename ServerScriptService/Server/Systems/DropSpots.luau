@@ -41,6 +41,28 @@ local function find(root: Instance, name: string): BasePart?
 	local d = root:FindFirstChild(name, true)
 	return if d and d:IsA("BasePart") then d else nil
 end
+-- (DROPSPOT_STABLE, RUN 1.8: scan() runs a few times, and a spot is a child of its machine's model, so the next scan's
+-- GetBoundingBox took the spot in too: the bear's DROP HERE crept out 4 studs and more each scan (53 studs off the
+-- bear, far past its 16-stud reach, so a body dropped there was never taken) and the stretch machine's crept up.
+-- Now a model is measured without its own DropSpot children.)
+local function boxOf(m: Model): (CFrame, Vector3)
+	local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
+	if not Config.DROPSPOT_STABLE then
+		return m:GetBoundingBox()
+	end
+	local away: { Instance } = {}
+	for _, c in m:GetChildren() do
+		if string.sub(c.Name, 1, 9) == "DropSpot_" then
+			table.insert(away, c)
+			c.Parent = nil
+		end
+	end
+	local cf, size = m:GetBoundingBox()
+	for _, c in away do
+		c.Parent = m
+	end
+	return cf, size
+end
 function DropSpots.scan(lab: Instance)
 	local om = lab:FindFirstChild("OwnerMap")
 	local function at(name: string, part: BasePart?, up: number?)
@@ -50,7 +72,7 @@ function DropSpots.scan(lab: Instance)
 	end
 	local stretch = lab:FindFirstChild("StretchMachine")
 	if stretch and stretch:IsA("Model") then
-		local cf, size = stretch:GetBoundingBox()
+		local cf, size = boxOf(stretch)
 		DropSpots.add(stretch, cf.Position + Vector3.new(0, size.Y / 2 + 1, 0), "Stretch")
 	end
 	at("Boxing", find(lab, "RingCanvas"))
@@ -74,7 +96,7 @@ function DropSpots.scan(lab: Instance)
 		-- (the bear: the DROP HERE sign sat ON the bear (its box middle); now on the ground in front of its mouth)
 		local bearModel = om:FindFirstChild("Bear", true)
 		if bearModel and bearModel:IsA("Model") then
-			local bcf, bsize = bearModel:GetBoundingBox()
+			local bcf, bsize = boxOf(bearModel)
 			local front = bcf.Position + bearModel:GetPivot().LookVector * (bsize.Z / 2 + 4)
 			DropSpots.add(bearModel, Vector3.new(front.X, bcf.Position.Y - bsize.Y / 2 + 1, front.Z), "Bear")
 		else
