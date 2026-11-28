@@ -258,7 +258,7 @@ if Config.LAB_OWNERMAP then
 				{ id = "Bicycle", label = "BICYCLE", w = 3 },
 				{ id = "Car", label = "SILVIA", w = 6.4 },
 				{ id = "Truck", label = "FORD TRUCK", w = 8.4 },
-				{ id = "MuscleCar", label = "PANZER", w = 11 },
+				{ id = "MuscleCar", label = "PANZER", w = if (Config :: any).PANZER_BAY_FIT then 13.5 else 11 }, -- (PANZER_BAY_FIT: the tank is 12.8 wide; in an 11 bay its home was pushed into the truck and it rode up on it, tilted 13 degrees)
 				{ id = "GoKart", label = "GO-KART", w = 5 },
 				{ id = "Police", label = "POLICE CAR", w = 7 },
 				{ id = "MonsterTruck", label = "MONSTER TRUCK", w = 10 },

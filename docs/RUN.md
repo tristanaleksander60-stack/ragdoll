@@ -385,7 +385,7 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 - DROP HERE (`DropSpots`): ONE sign at each machine when carrying, the bear's in front of its mouth.
 - `PLAYER_SWIM`: fall into the aquarium, swim, and jump out on every side; the 25 s safety net.
 - `STAIR_OPENING`: walk up the aquarium stairs onto the platform.
-- `PARKING_STRAIGHT`: a top-down capture of the lot; each plaque in front of its vehicle.
+- `PARKING_STRAIGHT`: a top-down capture of the lot; each plaque in front of its vehicle. **PC 28 Nov (v1441):** the tank (LabMuscleCar, 12.8 wide) had an 11 bay; it was pushed into the Ford and rode up on it, tilted 13 degrees. `PANZER_BAY_FIT` gives it 13.5, and it now stands flat (1 degree). Capture parking_top: every vehicle over its own plaque, straight.
 - The 5 vehicle passes:
   - each prompts the right pass id;
   - each plaque shows its price;
