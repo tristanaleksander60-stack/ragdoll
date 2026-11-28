@@ -798,7 +798,10 @@ local function enter(rig: Rig, state: State)
 				if upright and saved == nil then
 					footFriction[f] = f.CustomPhysicalProperties or false
 					local cur = f.CurrentPhysicalProperties
-					f.CustomPhysicalProperties = PhysicalProperties.new(cur.Density, 0.25, cur.Elasticity, 3, cur.ElasticityWeight)
+					-- (FEET_GLIDE, RUN 1.12 TURN TWIST: at 0.25 the feet still gripped and slipped 5-6 times a second in every
+					-- walking turn; the lift carries the body, so upright feet need no grip at all)
+					local glide = (GameConfig :: any).FEET_GLIDE == true
+					f.CustomPhysicalProperties = PhysicalProperties.new(cur.Density, if glide then 0 else 0.25, cur.Elasticity, if glide then 100 else 3, cur.ElasticityWeight)
 				elseif not upright and saved ~= nil then
 					f.CustomPhysicalProperties = if saved then saved else nil
 					footFriction[f] = nil
