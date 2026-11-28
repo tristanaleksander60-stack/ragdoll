@@ -201,6 +201,7 @@ local Config = {
 	FACE_SHOOTER = true, -- a ragdoll that is not scared turns to the player who shot it, from up to 160 studs (ActiveRagdoll standsFirm)
 	ANGRY_MORE = true, -- a shot ragdoll gets mad more often: 15 % fresh to 60 % near death (was 3-35 %), up to 3 mad at once in a lab (Mourning.chanceOf)
 	HOLE_CURVE_FIT = true, -- a bullet hole on a round v6 limb is at most 0.8 x its radius across and lifted by the curve's sag, so its rim touches the skin all round (never half inside the arm) (BulletHoles)
+	ARCHERY_MODEL = true, -- RUN 2.7: the archery target is a real straw target with a ring face on an easel (V3Assets ArcheryTarget, Studio-generated); the plain legs and faces are invisible hit parts (LabOwnerMap)
 	TESLA_MODEL = true, -- RUN 2.7: the Tesla coil is a real model (V3Assets TeslaTower: metal base, copper column, horizontal toroid; Studio-generated); the plain base, column and disc are invisible gameplay parts (LabOwnerMap)
 	STRETCH_MODEL = true, -- RUN 2.7: the stretcher stands in a real steel gantry (V3Assets StretchFrame, Studio-generated) on its four corners; the plain posts, bands, motors and rails are hidden (StretchMachine)
 	STRETCH_FRAME_SPREAD = 1.55, -- how far the StretchFrame mesh is spread so its posts stand on the machine's corners (tuned by capture)

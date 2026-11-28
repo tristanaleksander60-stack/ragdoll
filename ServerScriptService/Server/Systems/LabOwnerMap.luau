@@ -1267,6 +1267,34 @@ local function east(into: Instance, o: Vector3, top: number)
 	for i, ring in { { 9, Color3.fromRGB(240, 240, 240) }, { 6.6, Color3.fromRGB(30, 30, 30) }, { 4.4, Color3.fromRGB(240, 240, 240) }, { 2.2, Color3.fromRGB(210, 40, 40) } } do
 		part(into, "TargetFace", Vector3.new(0.3 + i * 0.05, ring[1], ring[1]), CFrame.new(tg + Vector3.new(0, 8, -i * 0.06)) * CFrame.Angles(0, math.rad(90), 0), ring[2], Enum.Material.SmoothPlastic, i > 1, Enum.PartType.Cylinder)
 	end
+	-- (ARCHERY_MODEL, RUN 2.7: the target was 2 sticks and 4 flat coloured cylinders. Now a real archery target (a straw boss
+	-- with a printed ring face on a wooden easel: V3Assets "ArcheryTarget", a Studio-generated mesh), facing the same way;
+	-- the old legs and faces stay as the invisible parts the hit checks and TargetRun look for.)
+	do
+		local src = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).ARCHERY_MODEL
+			and game:GetService("ServerStorage"):FindFirstChild("V3Assets") and game:GetService("ServerStorage").V3Assets:FindFirstChild("ArcheryTarget")
+		if src then
+			local t = src:Clone()
+			for _, d in t:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.Anchored = true
+					d.CanCollide = false
+					d.CanQuery = false
+					d.CanTouch = false
+				elseif d:IsA("LuaSourceContainer") then
+					d:Destroy()
+				end
+			end
+			t:PivotTo(CFrame.lookAt(tg, tg - Vector3.zAxis))
+			t.Parent = into
+			for _, p in into:GetChildren() do
+				if (p.Name == "TargetLeg" or p.Name == "TargetFace") and p:IsA("BasePart") and (Vector3.new(p.Position.X, tg.Y, p.Position.Z) - tg).Magnitude < 4 then
+					p.Transparency = 1
+					p.CastShadow = false
+				end
+			end
+		end
+	end
 	-- The wooden seesaw.
 	local ss = planAt(o, top, "Seesaw")
 	part(into, "SeesawPivot", Vector3.new(3, 2.4, 2.4), CFrame.new(ss + Vector3.new(0, 1.2, 0)), Color3.fromRGB(70, 74, 80), Enum.Material.Metal, false, Enum.PartType.Cylinder)
