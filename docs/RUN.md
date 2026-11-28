@@ -289,6 +289,20 @@ Group the items that touch the same files and do them together:
 - **The extra "More" gear** (`MORE_GEAR_PC_ONLY`): on phones and tablets the round More gear in the top bar duplicated Menu in the left stack, so it now shows on computers only. Check that `gearGui` is not used to place anything else on touch screens (it is disabled there, not removed).
 - **Proof:** phone captures of the top-left buttons and the hotbar at rest, opened and with each slot selected.
 
+### 1.21 Notices ("EARTHQUAKE: +5 KOs!" and the rest): centred and good-looking: CLOUD (`TOAST_V2`, Toast)
+- **Cause found:**
+  - `HudSlots.toastBox` placed the middle between the old chaos meter and the View/Replay slots, so it was off centre;
+  - the card had a coloured strip down its left edge.
+- **Now:**
+  - always the screen's middle;
+  - a rounded dark pill with a thin edge in the message's colour;
+  - centred text;
+  - "NAME: +N KOs!" reads "NAME  +N KOs", with the reward in gold.
+- **Also check:**
+  - every other notice still fits (long lines wrap, 14 px at the least);
+  - it never covers the KO pill at the top or the hotbar.
+- **Proof:** captures of 3 different notices on PC and on a phone (upright too).
+
 ### 1.19 Carried over from FIXES_28NOV: re-check each one (they were built, the owner did not confirm them all)
 For each: one capture showing it working, and the switch. If it is broken, find the cause and fix it here. A line per item in the final message.
 - `WORLD_POPS` off: no floating texts at any machine (DROP, SMASH, TAIL SLAP, RPM, CRACK, the rocket countdown).

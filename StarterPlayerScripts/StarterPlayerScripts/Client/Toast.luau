@@ -111,6 +111,13 @@ function showNext()
 	local P = Theme.Palette
 	local ctx = HudSlots.context(false, false)
 	local centre, width, boxTop = HudSlots.toastBox(g.AbsoluteSize, ctx)
+	-- (TOAST_V2: toastBox moved the middle between the old chaos meter and the View/Replay slots, so notices like
+	-- "EARTHQUAKE: +5 KOs!" sat off centre. Now always the screen's middle.)
+	local V2T = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TOAST_V2 == true
+	if V2T then
+		centre = g.AbsoluteSize.X / 2
+		width = math.min(width, g.AbsoluteSize.X - 24)
+	end
 	local tallest = if ctx.portrait then PORTRAIT_HEIGHT_MAX elseif ctx.phone then PHONE_HEIGHT_MAX else HEIGHT_MAX
 	local compact = NoticeState.compact()
 	if compact then
@@ -141,6 +148,16 @@ function showNext()
 	outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	outline.Parent = label
 	label.Text = item.text
+	if V2T then
+		-- (a clean centred line: the name in white, the reward in gold, e.g. "EARTHQUAKE  +5 KOs")
+		label.TextXAlignment = Enum.TextXAlignment.Center
+		local name, n = string.match(item.text, "^(.-):%s*%+(%d+) KOs!?$")
+		if name and n then
+			label.RichText = true
+			label.TextColor3 = Color3.new(1, 1, 1)
+			label.Text = string.format('%s  <font color="#FFD24A">+%s KOs</font>', name, n)
+		end
+	end
 	-- Phase 0 ("Play 2 more min for a", "Daily egg! Come" were cut): a text that still does not
 	-- fit the box at its size steps down until it does (14 px at the least).
 	task.defer(function()
@@ -217,7 +234,17 @@ function showNext()
 		shine.Parent = label
 		label.TextStrokeTransparency = 0.1
 		-- (21 Nov 2026: a strip of the message's own colour down its left edge, and a soft shadow.)
+		-- (TOAST_V2: no strip; a rounded pill with a thin edge in the message's colour instead)
 		local accent = Instance.new("Frame")
+		if V2T then
+			accent.Visible = false
+			corner.CornerRadius = UDim.new(0, 16)
+			outline.Color = item.color
+			outline.Transparency = 0.35
+			outline.Thickness = 2
+			label.BackgroundColor3 = Color3.fromRGB(22, 26, 38)
+			label.BackgroundTransparency = 0.12
+		end
 		accent.Name = "Accent"
 		accent.BorderSizePixel = 0
 		accent.BackgroundColor3 = item.color
