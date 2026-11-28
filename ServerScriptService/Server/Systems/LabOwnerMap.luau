@@ -10,6 +10,7 @@
 local Workspace = game:GetService("Workspace")
 
 local LabOwnerMap = {}
+local LabProps = require(script.Parent:WaitForChild("LabProps")) :: any -- (RUN 2.7 model dressing, kept out of this file: Studio caps a script at 200000 characters)
 
 LabOwnerMap.S = 1.3 -- (M4: Plan.K) the R3.2 plan's distances are multiplied by this (was 3.2 on the big round-3 map)
 LabOwnerMap.SIZE = Vector2.new(980, 850) -- (M4: set from Plan.BOUNDS below, plus the edge band)
@@ -1328,34 +1329,7 @@ local function east(into: Instance, o: Vector3, top: number)
 	for i, ring in { { 9, Color3.fromRGB(240, 240, 240) }, { 6.6, Color3.fromRGB(30, 30, 30) }, { 4.4, Color3.fromRGB(240, 240, 240) }, { 2.2, Color3.fromRGB(210, 40, 40) } } do
 		part(into, "TargetFace", Vector3.new(0.3 + i * 0.05, ring[1], ring[1]), CFrame.new(tg + Vector3.new(0, 8, -i * 0.06)) * CFrame.Angles(0, math.rad(90), 0), ring[2], Enum.Material.SmoothPlastic, i > 1, Enum.PartType.Cylinder)
 	end
-	-- (ARCHERY_MODEL, RUN 2.7: the target was 2 sticks and 4 flat coloured cylinders. Now a real archery target (a straw boss
-	-- with a printed ring face on a wooden easel: V3Assets "ArcheryTarget", a Studio-generated mesh), facing the same way;
-	-- the old legs and faces stay as the invisible parts the hit checks and TargetRun look for.)
-	do
-		local src = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).ARCHERY_MODEL
-			and game:GetService("ServerStorage"):FindFirstChild("V3Assets") and game:GetService("ServerStorage").V3Assets:FindFirstChild("ArcheryTarget")
-		if src then
-			local t = src:Clone()
-			for _, d in t:GetDescendants() do
-				if d:IsA("BasePart") then
-					d.Anchored = true
-					d.CanCollide = false
-					d.CanQuery = false
-					d.CanTouch = false
-				elseif d:IsA("LuaSourceContainer") then
-					d:Destroy()
-				end
-			end
-			t:PivotTo(CFrame.lookAt(tg, tg - Vector3.zAxis))
-			t.Parent = into
-			for _, p in into:GetChildren() do
-				if (p.Name == "TargetLeg" or p.Name == "TargetFace") and p:IsA("BasePart") and (Vector3.new(p.Position.X, tg.Y, p.Position.Z) - tg).Magnitude < 4 then
-					p.Transparency = 1
-					p.CastShadow = false
-				end
-			end
-		end
-	end
+	LabProps.archery(into, tg) -- (RUN 2.7: the real model; Systems/LabProps)
 	-- The wooden seesaw.
 	local ss = planAt(o, top, "Seesaw")
 	part(into, "SeesawPivot", Vector3.new(3, 2.4, 2.4), CFrame.new(ss + Vector3.new(0, 1.2, 0)), Color3.fromRGB(70, 74, 80), Enum.Material.Metal, false, Enum.PartType.Cylinder)
@@ -1437,65 +1411,7 @@ local function east(into: Instance, o: Vector3, top: number)
 		local _ = i
 	end
 	part(into, "GyroButton", Vector3.new(0.8, 3, 3), CFrame.new(gc + Vector3.new(0, 1, -12)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(210, 40, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
-	-- (GYRO_MODELS, RUN 2.7: the gyro stood on a grey concrete disc between two plain blocks, with a plain red cylinder
-	-- for its button. Now a real ride platform (a round steel deck with a yellow railing and a gate: V3Assets
-	-- "GyroPlatform"), a striped control booth with its desk and red button (V3Assets "GyroBooth") at the old button,
-	-- and painted steel stands. The old pad and button stay as the invisible gameplay parts (the pad's spot, the prompt).)
-	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).GYRO_MODELS then
-		local assets = game:GetService("ServerStorage"):FindFirstChild("V3Assets")
-		local function put(name: string, at: CFrame): Model?
-			local src = assets and assets:FindFirstChild(name)
-			if not (src and src:IsA("Model")) then
-				return nil
-			end
-			local m = src:Clone()
-			for _, d in m:GetDescendants() do
-				if d:IsA("BasePart") then
-					d.Anchored = true
-					d.CanQuery = false
-					d.CanTouch = false
-				elseif d:IsA("LuaSourceContainer") then
-					d:Destroy()
-				end
-			end
-			m:PivotTo(at)
-			m.Parent = into
-			return m
-		end
-		local deck = put("GyroPlatform", CFrame.new(gc + Vector3.new(0, -0.6, 0)) * CFrame.Angles(0, math.pi, 0))
-		if deck then
-			for _, d in deck:GetDescendants() do
-				if d:IsA("BasePart") then
-					d.CanCollide = false -- (the railing is drawn only: ragdolls are thrown in and out over it)
-				end
-			end
-			for _, n in { "GyroPad" } do
-				for _, p in into:GetChildren() do
-					if p.Name == n and p:IsA("BasePart") and (p.Position - gc).Magnitude < 2 then
-						p.Transparency = 1
-					end
-				end
-			end
-		end
-		local booth = put("GyroBooth", CFrame.lookAt(gc + Vector3.new(0, 0, -16), gc + Vector3.new(0, 0, -1)))
-		if booth then
-			for _, p in into:GetChildren() do
-				if p.Name == "GyroButton" and p:IsA("BasePart") and (p.Position - (gc + Vector3.new(0, 1, -12))).Magnitude < 1 then
-					p.Transparency = 1
-				end
-			end
-		end
-		for _, p in into:GetChildren() do
-			if p.Name == "GyroStand" and p:IsA("BasePart") and (p.Position - gc).Magnitude < 12 then
-				p.Shape = Enum.PartType.Cylinder
-				p.Size = Vector3.new(10, 1.4, 1.4)
-				p.CFrame = CFrame.new(p.Position) * CFrame.Angles(0, 0, math.rad(90))
-				p.Color = Color3.fromRGB(246, 186, 40)
-				p.Material = Enum.Material.SmoothPlastic
-				p.Reflectance = 0.1
-			end
-		end
-	end
+	LabProps.gyro(into, gc) -- (RUN 2.7: the real model; Systems/LabProps)
 	task.spawn(function()
 		local t0 = os.clock()
 		while into.Parent and not gyroClient do
@@ -1539,33 +1455,7 @@ local function east(into: Instance, o: Vector3, top: number)
 	part(into, "TeslaBase", Vector3.new(10, 3, 10), CFrame.new(tc + Vector3.new(0, 1.5, 0)), Color3.fromRGB(60, 62, 70), Enum.Material.Metal)
 	part(into, "TeslaColumn", Vector3.new(18, 4.4, 4.4), CFrame.new(tc + Vector3.new(0, 12, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(180, 120, 60), Enum.Material.Metal, false, Enum.PartType.Cylinder)
 	local top2 = part(into, "TeslaTop", Vector3.new(3, 11, 11), CFrame.new(tc + Vector3.new(0, 22.5, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 204, 210), Enum.Material.Metal, false, Enum.PartType.Cylinder)
-	-- (TESLA_MODEL, RUN 2.7: the Tesla coil was a dark block, an orange cylinder and a grey disc. Now a real Tesla coil (a
-	-- metal base, a tall copper-wound column and a horizontal toroid ring: V3Assets "TeslaTower", a Studio-generated mesh);
-	-- the old three parts stay as the invisible gameplay parts (the base's spot, the top's sparks).)
-	do
-		local src = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TESLA_MODEL
-			and game:GetService("ServerStorage"):FindFirstChild("V3Assets") and game:GetService("ServerStorage").V3Assets:FindFirstChild("TeslaTower")
-		if src then
-			local tower = src:Clone()
-			for _, d in tower:GetDescendants() do
-				if d:IsA("BasePart") then
-					d.Anchored = true
-					d.CanQuery = false
-					d.CanTouch = false
-				elseif d:IsA("LuaSourceContainer") then
-					d:Destroy()
-				end
-			end
-			tower:PivotTo(CFrame.new(tc))
-			tower.Parent = into
-			for _, p in into:GetChildren() do
-				if (p.Name == "TeslaBase" or p.Name == "TeslaColumn" or p.Name == "TeslaTop") and p:IsA("BasePart") and (Vector3.new(p.Position.X, tc.Y, p.Position.Z) - tc).Magnitude < 2 then
-					p.Transparency = 1
-					p.CastShadow = false
-				end
-			end
-		end
-	end
+	LabProps.tesla(into, tc) -- (RUN 2.7: the real model; Systems/LabProps)
 	local spark = Instance.new("ParticleEmitter")
 	spark.Texture = "rbxasset://textures/particles/sparkles_main.dds"
 	spark.Color = ColorSequence.new(Color3.fromRGB(150, 210, 255))
@@ -1666,6 +1556,7 @@ local function south(into: Instance, o: Vector3, top: number)
 	part(into, "ShredderLeverBox", Vector3.new(3, 4, 3), CFrame.new(sp + Vector3.new(PW / 2 + 5, 2, 0)), Color3.fromRGB(240, 200, 40), Enum.Material.Metal)
 	part(into, "ShredderLever", Vector3.new(0.5, 4, 0.5), CFrame.new(sp + Vector3.new(PW / 2 + 5, 5.5, 0)) * CFrame.Angles(math.rad(25), 0, 0), Color3.fromRGB(40, 40, 44), Enum.Material.Metal, true)
 	part(into, "ShredderButton", Vector3.new(0.8, 3, 3), CFrame.new(sp + Vector3.new(PW / 2 + 5, 1, 4)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(210, 40, 40), Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+	LabProps.shredder(into, sp, PW) -- (RUN 2.7: the real model; Systems/LabProps)
 end
 
 -- M8: trees, pines, boulders and benches in the open grass (plan coordinates; times S).

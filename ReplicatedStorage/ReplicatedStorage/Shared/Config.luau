@@ -201,6 +201,7 @@ local Config = {
 	FACE_SHOOTER = true, -- a ragdoll that is not scared turns to the player who shot it, from up to 160 studs (ActiveRagdoll standsFirm)
 	ANGRY_MORE = true, -- a shot ragdoll gets mad more often: 15 % fresh to 60 % near death (was 3-35 %), up to 3 mad at once in a lab (Mourning.chanceOf)
 	HOLE_CURVE_FIT = true, -- a bullet hole on a round v6 limb is at most 0.8 x its radius across and lifted by the curve's sag, so its rim touches the skin all round (never half inside the arm) (BulletHoles)
+	SHREDDER_MODEL = true, -- RUN 2.7: the shredder has real toothed rollers in its pit and a real control box with lever and red button (V3Assets ShredderRollers, ShredderControl; Studio-generated) (LabOwnerMap)
 	PROP_MODELS = true, -- RUN 2.7: the park lamps and benches are real models (V3Assets ParkLamp, ParkBench; Studio-generated) over invisible block parts (BenchService still sits on them; the lamp light stays) (LabOwnerMap)
 	SWEEPER_MODEL = true, -- RUN 2.7: the sweeper has a real motor hub and a striped steel arm with a rubber bumper (V3Assets SweeperHub, SweeperArmPiece x4; Studio-generated), turned with the beam; the plain cube and beam are hidden (LabOwnerMap)
 	ARCHERY_MODEL = true, -- RUN 2.7: the archery target is a real straw target with a ring face on an easel (V3Assets ArcheryTarget, Studio-generated); the plain legs and faces are invisible hit parts (LabOwnerMap)
