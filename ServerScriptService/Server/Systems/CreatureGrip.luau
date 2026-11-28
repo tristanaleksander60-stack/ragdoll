@@ -24,6 +24,24 @@ local MOUTH_NAMES = { "jaw", "lowerjaw", "jaw_lower", "mouth", "snout", "muzzle"
 
 -- The mouth's world CFrame now (a Bone's live frame, a part's frame, or the box's front top).
 function CreatureGrip.mouthOf(creature: Model): () -> CFrame
+	-- (MOUTH_BONE: a skinned model names its jaw bone in a "MouthBone" attribute (the T-rex's bones are "Bone.008" and
+	-- the like, so no name matched and the grip fell back to the box's front, at its chest). Only a real Bone counts:
+	-- the model's AnimSaves hold Poses with the same names.)
+	local named = creature:GetAttribute("MouthBone")
+	if type(named) == "string" then
+		for _, d in creature:GetDescendants() do
+			if d:IsA("Bone") and d.Name == named then
+				local bone = d
+				-- (MouthOffset, in the creature's own frame: where the body hangs from the jaw bone; the screen animates the
+				-- head (RexAnim) while the server sees the rest pose, so the body hangs a little in front of the teeth)
+				local off = creature:GetAttribute("MouthOffset")
+				local o: Vector3 = if typeof(off) == "Vector3" then off else Vector3.zero
+				return function()
+					return bone.TransformedWorldCFrame + creature:GetPivot():VectorToWorldSpace(o)
+				end
+			end
+		end
+	end
 	local best: Instance? = nil
 	local bestRank = math.huge
 	for _, d in creature:GetDescendants() do

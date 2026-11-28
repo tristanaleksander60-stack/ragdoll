@@ -146,7 +146,8 @@ Group the items that touch the same files and do them together:
 - **Cause found:** a SurfaceGui in the Workspace gets no input. Every `Board` gui is now moved into the PlayerGui, adorned to its panel.
 - **Proof:** scroll each board with the wheel on PC and by drag on a phone. Captures before and after the scroll.
 
-### 1.8 Animals really take ragdolls in the mouth: CLOUD (`CREATURE_GRIP`, Systems/CreatureGrip + AnimalCove, DropSpots)
+### 1.8 Animals really take ragdolls in the mouth: PART (`CREATURE_GRIP` + PC MouthBone)
+- **State (PC, 28 Nov, v1435):** cause found: CreatureGrip.mouthOf matched only parts or bones named Jaw/Mouth/Head, but the real T-rex's bones are "Bone.008" and the like, so the grip fell to the box's front and the body hung at its chest (capture rex_grip). Fixed: a "MouthBone" attribute (TRex = Bone.023, the jaw tip) plus "MouthOffset" (0, -1.5, -3.5), set on V3Assets.TRex in the place file. Capture rex_grip3: the body is held at the open jaws. The bear is NOT re-checked.
 - **Causes found** (`AnimalCove.luau`):
   - the bear's HUG and the T-rex's bite teleported the body to a guessed point every 0.1 s (`DummyControl.move`) while the lab player's screen simulated it, so it jittered behind the animal;
   - no wound was ever given;
