@@ -244,8 +244,16 @@ Group the items that touch the same files and do them together:
 - **If events remain:** the log names the state, role and Home changes; fix that cause.
 - **Proof:** the two counts, and a capture series of an angry ragdoll walking with steady legs.
 
-### 1.13 Bullet holes and bandages shown wrong: PART (`ON_SKIN`, `HOLE_CURVE_FIT`)
-- **State (PC, 28 Nov, v1436):** 4 holes made on a v6 body (BulletHoles.body); all 4 are taken over by ON_SKIN (anchored, weld off). Capture holes_on_skin: the holes on the left forearm, the back and the right thigh sit on the skin; the one on the right UPPER ARM floats about half a stud outside it. So the drawn upper arm is not where the physics upper arm is near the shoulder. NEXT: compare drawn[RightUpperArm] with the mesh bone frame (SmoothBody d.off for the upper arms).
+### 1.13 Bullet holes and bandages shown wrong: DONE for holes (`ON_SKIN` + PC `HOLE_V6_GRAZE`, `HOLE_ON_AXIS`, `HOLE_AXIS_SCALE` 1.25)
+- **State (PC, 28 Nov, v1440):** measured: the floating upper-arm hole was 0.67-0.83 studs from the DRAWN arm's axis (shoulder bone to elbow bone) where the v6 radius is 0.36. Causes:
+  - (1) ON_SKIN carried the hole's offset from the physics limb, but the drawn upper arm runs about 0.5 off the physics one;
+  - (2) on a skinned body, a graze step moved the hole onto the OLD thicker skin.
+
+  Now:
+  - a limb hole is kept as (how far down, which way round) and redrawn each frame on the drawn axis at the v6 radius x 1.25 (the mesh surface);
+  - the graze step is skipped on v6.
+
+  Measured on the axis: 0.36 vs r 0.35. Capture holes_axis_fixed: holes on the upper arm, forearm and thigh, all on the skin. Bandages keep the old ON_SKIN way (not re-checked).
 - **Cause found (cloud):** the "two bodies" problem.
   - Holes, stress rings and bandages are WELDED to the hidden physics limb.
   - The visible v6 mesh is drawn from an FK bone chain, so the drawn limb is often a few centimetres to tenths of a stud away from the physics limb.

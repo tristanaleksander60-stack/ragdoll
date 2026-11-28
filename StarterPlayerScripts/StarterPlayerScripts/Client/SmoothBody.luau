@@ -215,6 +215,16 @@ local function showBlocks(body: Body)
 end
 
 local ON_SKIN = (Config :: any).ON_SKIN == true
+-- (HOLE_ON_AXIS, RUN 1.13: a hole on an arm or leg is kept as (how far down the limb, which way round, its turn) and
+-- redrawn each frame ON the drawn limb's own axis, from its joint bone to the next one, at the v6 radius there. Before,
+-- its offset from the hidden physics limb was carried over, and on the upper arms (whose drawn axis runs 0.4-0.5 studs
+-- from the physics one) it floated beside the arm.)
+local HOLE_ON_AXIS = (Config :: any).HOLE_ON_AXIS == true
+local BodyShapeMod = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("BodyShape")) :: any
+local NEXT_JOINT = {
+	LeftUpperArm = "LeftLowerArm", RightUpperArm = "RightLowerArm", LeftLowerArm = "LeftHand", RightLowerArm = "RightHand",
+	LeftUpperLeg = "LeftLowerLeg", RightUpperLeg = "RightLowerLeg", LeftLowerLeg = "LeftFoot", RightLowerLeg = "RightFoot",
+} :: { [string]: string }
 local STICK_NAMES = { BulletHole = true, BulletStress = true, Bandage = true, Plaster = true, Gauze = true, BruisePatch = true }
 -- A hole or bandage welded to a body limb is taken over: its weld is switched off, it is anchored, and drive() moves it
 -- with the drawn limb (kept relative to the limb exactly as it was welded).
@@ -230,7 +240,16 @@ local function stick(body: Body, inst: Instance)
 		end
 		local B = body :: any
 		B.stuck = B.stuck or {}
-		B.stuck[inst] = { limb = limb, off = limb.CFrame:ToObjectSpace(inst.CFrame), weld = weld }
+		local rec: any = { limb = limb, off = limb.CFrame:ToObjectSpace(inst.CFrame), weld = weld }
+		if HOLE_ON_AXIS and NEXT_JOINT[limb.Name] and (inst.Name == "BulletHole" or inst.Name == "BulletStress") then
+			local lp = rec.off.Position
+			local hy = limb.Size.Y / 2
+			local flat = Vector3.new(lp.X, 0, lp.Z)
+			rec.t = math.clamp((hy - lp.Y) / (2 * hy), 0.05, 0.95)
+			rec.dir = if flat.Magnitude > 1e-3 then flat.Unit else Vector3.new(0, 0, -1)
+			rec.rot = rec.off.Rotation
+		end
+		B.stuck[inst] = rec
 		weld.Enabled = false
 		inst.Anchored = true
 	end)
@@ -662,6 +681,11 @@ local function drive(body: Body)
 		if d.part.Name == "Head" and d.bone.Name == "Head" then
 			headCf = cf
 		end
+		if HOLE_ON_AXIS then
+			local B2 = body :: any
+			B2.boneCf = B2.boneCf or {}
+			B2.boneCf[d.bone.Name] = cf
+		end
 		if ON_SKIN and d.bone.Name == d.part.Name then
 			-- (ON_SKIN: where this limb is DRAWN this frame (the bone's frame back to its part's), for the holes and bandages)
 			local B0 = body :: any
@@ -685,6 +709,29 @@ local function drive(body: Body)
 					stuck[inst] = nil
 				else
 					local at = B1.drawn[rec.limb]
+					local r: any = rec
+					local bc = B1.boneCf
+					local A = r.t and bc and bc[rec.limb.Name]
+					local Bn = A and bc[NEXT_JOINT[rec.limb.Name]]
+					if A and Bn then
+						local a, b = A.Position, Bn.Position
+						local along = b - a
+						if along.Magnitude > 0.05 then
+							local down = along.Unit
+							local R = A.Rotation
+							local side = rec.limb.CFrame:VectorToWorldSpace(r.dir) -- (dir is in the physics limb's frame; the bone's may be turned)
+							side = side - down * side:Dot(down)
+							side = if side.Magnitude > 1e-3 then side.Unit else R.RightVector
+							-- (HOLE_AXIS_SCALE: the drawn mesh's surface against BodyShape's radius; a workspace attribute of the same name
+							-- overrides it live, for tuning by eye)
+							local k = Workspace:GetAttribute("HoleAxisScale") or (Config :: any).HOLE_AXIS_SCALE or 1
+							local rad = (BodyShapeMod.radius(rec.limb.Name, r.t) or 0.35) * k + 0.008
+							local pos = a + along * r.t + side * rad
+							at = nil
+							table.insert(parts, inst)
+							table.insert(cframes, CFrame.fromMatrix(pos, side, down)) -- (the hole is thin along X: X faces out)
+						end
+					end
 					if at then
 						table.insert(parts, inst)
 						table.insert(cframes, at * rec.off)

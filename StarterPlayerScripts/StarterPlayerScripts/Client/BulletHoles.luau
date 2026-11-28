@@ -334,7 +334,12 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 	-- away from the camera, a graze on the outline, would stand off the silhouette; none is drawn there.)
 	do
 		local cam = workspace.CurrentCamera
-		if skin and cam and worldNormal:Dot((cam.CFrame.Position - worldAt).Unit) < 0.1 then
+		-- (HOLE_V6_GRAZE, PC 28 Nov: on a v6 body this graze step aimed a ray at the OLD skin's real shape (thicker than the
+		-- v6 limb) and moved the hole onto it: measured 0.8 studs from the upper arm's axis where the v6 radius is 0.36, so
+		-- it floated beside the arm. A v6 body keeps the hole on its own round surface.)
+		local v6Body = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).HOLE_V6_GRAZE == true
+			and model:GetAttribute("BodyV6") == true and BodyShape.active()
+		if skin and cam and not v6Body and worldNormal:Dot((cam.CFrame.Position - worldAt).Unit) < 0.1 then
 			-- (23 Nov 2026, owner: every shot must show: a graze goes a little further in, where the limb faces you.)
 			local eye = cam.CFrame.Position
 			local aim = worldAt:Lerp(skin.CFrame:PointToWorldSpace(Vector3.new(0, skin.CFrame:PointToObjectSpace(worldAt).Y, 0)), 0.45)
