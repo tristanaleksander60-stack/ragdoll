@@ -554,6 +554,42 @@ function StretchMachine.build(folder: Instance, floor: CFrame): Model
 		part("RailSide", Vector3.new(0.5, 0.5, 16.4), CFrame.new(s * 7.2, 6.2, 0), STEEL, metal)
 		part("RailEnd", Vector3.new(14.4, 0.5, 0.5), CFrame.new(0, 6.2, s * 8.2), STEEL, metal)
 	end
+	-- (STRETCH_MODEL, RUN 2.7: the four posts, their bands and motors and the top rails were plain blocks. Now a real steel
+	-- gantry (V3Assets "StretchFrame": four posts with motor housings and orange bands, top rails; a Studio-generated mesh)
+	-- stands on the same corners; the old frame blocks are hidden. The drums, booms, claws, lamps and levers stay: they move.)
+	local frameSrc = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).STRETCH_MODEL
+		and game:GetService("ServerStorage"):FindFirstChild("V3Assets") and game:GetService("ServerStorage").V3Assets:FindFirstChild("StretchFrame")
+	if frameSrc then
+		local frame = frameSrc:Clone()
+		local _, fs = frame:GetBoundingBox()
+		-- the mesh is wider along its X: turned a quarter so its long side runs along the machine's Z (8.2 x 2 + a post)
+		local want = Vector3.new(7.2 * 2 + 1.2, 7.8, 8.2 * 2 + 1.2)
+		local inset = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).STRETCH_FRAME_SPREAD or 1 -- (the mesh's posts stand inside its box: spread them out to the corners)
+		local k = Vector3.new(want.Z / fs.X * inset, want.Y / fs.Y, want.X / fs.Z * inset)
+		local pivot = frame:GetPivot()
+		for _, d in frame:GetDescendants() do
+			if d:IsA("BasePart") then
+				local o = pivot:ToObjectSpace(d.CFrame)
+				d.Size = d.Size * k
+				d.CFrame = pivot * CFrame.new(o.Position * k) * o.Rotation
+				d.Anchored = true
+				d.CanCollide = false
+				d.CanQuery = false
+				d.CanTouch = false
+			elseif d:IsA("LuaSourceContainer") then
+				d:Destroy()
+			end
+		end
+		frame:PivotTo(floor * CFrame.new(0, 0.2, 0) * CFrame.Angles(0, math.pi / 2, 0))
+		frame.Parent = model
+		local HIDE = { Post = true, Band = true, Motor = true, RailSide = true, RailEnd = true }
+		for _, d in model:GetChildren() do
+			if d:IsA("BasePart") and HIDE[d.Name] then
+				d.Transparency = 1
+				d.CastShadow = false
+			end
+		end
+	end
 	part("PanelFoot", Vector3.new(1.2, 2.6, 0.8), CFrame.new(0, 1.7, -8.6), DARK, metal, true)
 	part("Panel", Vector3.new(3.2, 1.8, 0.4), CFrame.new(0, 3.4, -8.7) * CFrame.Angles(math.rad(20), 0, 0), STEEL, metal, true)
 	local green = part("PanelGreen", Vector3.new(1, 1, 0.5), CFrame.new(-0.7, 3.4, -8.95), GREEN, paint)
