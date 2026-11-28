@@ -948,11 +948,12 @@ function HudV3.start()
 		if (Config :: any).MORE_GEAR_PC_ONLY then
 			local UIS = game:GetService("UserInputService")
 			local function show()
-				gg.Enabled = not (UIS.TouchEnabled and not UIS.KeyboardEnabled)
+				gg.Enabled = not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("TouchFirst")) :: any).get()
 			end
 			show()
 			UIS:GetPropertyChangedSignal("KeyboardEnabled"):Connect(show)
 			UIS:GetPropertyChangedSignal("TouchEnabled"):Connect(show)
+			;(require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("TouchFirst")) :: any).onChange(show)
 		end
 		gg.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 		gearGui = gg

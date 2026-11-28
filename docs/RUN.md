@@ -164,7 +164,8 @@ Group the items that touch the same files and do them together:
   - Each one unique, with wounds, bone breaks (2.3) and sounds.
   - List every machine and animal that "kills", and give each its own choreography, worst first.
 
-### 1.9 TRY and machine buttons: the ragdoll walks there and hops in: LEFT (`TRY_WALK`; MachineDemos.tryAt, Bowling, MapMachines)
+### 1.9 TRY and machine buttons: the ragdoll walks there and hops in: PART (`TRY_WALK` + cloud `CALLED_WALKS`, TRY_REACH 80)
+- **State (PC, 28 Nov, v1432):** Re-test through the real Session "Try" remote at the bowling lane: the trace is 5/h5 Standing Demo, then 1/h5 Ragdoll, then Getting up, then Standing. So the body now walks to the spot and hops onto it, which confirms CALLED_WALKS is the cause of the "stands still" bug. No capture: the Studio viewport stopped drawing 3D (white) at this point. OWNER CHECK.
 - **State (PC, 28 Nov, v1431):** in Studio, through the real Session "Try" remote. Found:
   - (a) tryWalk returns false, and the OLD call runs (Home by the player), when no DROP HERE spot is within TRY_REACH 45 of you or no free body is within PICK_REACH 120;
   - (b) next to the Shredder with a free body 24 studs away, tryWalk sets Watch=Demo and Home = the spot + 5, but the body stays Standing and never walks; after about 3 s walkIn's loop ends and clears Watch.
@@ -263,7 +264,8 @@ Group the items that touch the same files and do them together:
   - make the model itself do the bite: lean down over the body (PivotTo), `CreatureGrip.grab` into its real mouth, chew (small squeezes), spit it out.
 - **Proof:** captures from the path, and mid-bite.
 
-### 1.17 The round X-RAY button on PC: CLOUD (`XRAY_BUTTON_TOUCH_ONLY`, XRayToggle)
+### 1.17 The round X-RAY button on PC: PART (`XRAY_BUTTON_TOUCH_ONLY` + `TOUCH_FIRST_DEVICE`)
+- **State (PC, 28 Nov, v1432):** Phone: the round button shows (hud_phone2). PC: OWNER CHECK, because the MCP cannot switch the emulator off. In code, Device "pc" hides it.
 - On a computer, X-RAY is already in the bottom-left list (the I key), so the round button now shows on touch screens only.
 - **Proof:** a PC capture without it, and a phone capture with it.
 
@@ -294,7 +296,8 @@ Group the items that touch the same files and do them together:
   - a capture series: the walk-up, the strap-on, the lift-off with the whole rocket (the top included), the chase camera mid-flight on PC and on a phone, and the explosion;
   - steering left, right and up must visibly change the flight.
 
-### 1.20 The phone's left buttons and the hotbar icons: CLOUD (`REVIVE_OVER_SHOP`, `MP_SHORT_LABEL`, `HOTBAR_ICON_CENTER`)
+### 1.20 The phone's left buttons and the hotbar icons: DONE in the phone emulator (`REVIVE_OVER_SHOP`, `MP_SHORT_LABEL`, `HOTBAR_ICON_CENTER`, + PC `TOUCH_FIRST_DEVICE`)
+- **State (PC, 28 Nov, v1432):** Cause found (PC): every phone-only rule asked "TouchEnabled and not KeyboardEnabled", which is false in Studio's phone emulator and on a tablet with a keyboard, so the rules never switched on there. Fixed: Shared/TouchFirst reads the Device attribute (phone/tablet) first (`TOUCH_FIRST_DEVICE`), used by XRayToggle, HudV3, PortalUI and PokeController. The capture hud_phone2 shows "Online" (not "Multipla"), no More gear in the top bar, the round X-RAY button, and hotbar pictures centred. REVIVE only shows when needed, so it is not in the capture.
 - **REVIVE:**
   - **cause:** a fixed offset (142, 66) put it to the right of Weapon;
   - **now:** it is measured from where Shop and Weapon really are, centred over the two of them, right above them.

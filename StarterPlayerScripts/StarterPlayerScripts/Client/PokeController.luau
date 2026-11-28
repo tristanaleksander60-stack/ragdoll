@@ -343,7 +343,7 @@ local function placePicture(slab: Slab, width: number, height: number)
 	-- (HOTBAR_ICON_CENTER: on a touch screen the picture always sits in the middle of its box, selected or not (the
 	-- selected slot drew it small in the top-left corner, beside a hidden word); a PC keeps the name beside it.)
 	local UIS = game:GetService("UserInputService")
-	local centreAll = Config.HOTBAR_ICON_CENTER == true and UIS.TouchEnabled and not UIS.KeyboardEnabled
+	local centreAll = Config.HOTBAR_ICON_CENTER == true and (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("TouchFirst")) :: any).get()
 	if centreAll or PokeController.iconOnly(width, height, label.Text) then
 		-- (UI v2: the picture alone, centred and as big as the face allows.)
 		label.Visible = false

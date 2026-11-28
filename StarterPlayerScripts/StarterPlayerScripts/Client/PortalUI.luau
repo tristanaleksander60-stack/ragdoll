@@ -247,7 +247,7 @@ function PortalUI.start()
 				if typeof(root) ~= "Instance" then
 					return
 				end
-				local touch = UIS.TouchEnabled and not UIS.KeyboardEnabled
+				local touch = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("TouchFirst")) :: any).get()
 				for _, d in (root :: Instance):GetDescendants() do
 					if d:IsA("TextLabel") and (d.Text == "Multiplayer" or d.Text == "Online") then
 						d.Text = if touch then "Online" else "Multiplayer"
@@ -257,6 +257,7 @@ function PortalUI.start()
 			caption()
 			task.delay(1, caption)
 			UIS:GetPropertyChangedSignal("KeyboardEnabled"):Connect(caption)
+			;(require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("TouchFirst")) :: any).onChange(caption)
 		end
 	end
 	remote.OnClientEvent:Connect(function(kind: unknown, data: unknown)

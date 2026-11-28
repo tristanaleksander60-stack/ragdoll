@@ -76,11 +76,12 @@ function XRayToggle.start()
 	if Config.XRAY_BUTTON_TOUCH_ONLY then
 		local UIS = game:GetService("UserInputService")
 		local function show()
-			gui.Enabled = UIS.TouchEnabled and not UIS.KeyboardEnabled
+			gui.Enabled = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("TouchFirst")) :: any).get() -- (TOUCH_FIRST_DEVICE: the Device attribute, not "no keyboard")
 		end
 		show()
 		UIS:GetPropertyChangedSignal("KeyboardEnabled"):Connect(show)
 		UIS:GetPropertyChangedSignal("TouchEnabled"):Connect(show)
+		;(require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("TouchFirst")) :: any).onChange(show)
 	end
 	gui.Parent = player:WaitForChild("PlayerGui")
 	local function toggle()
