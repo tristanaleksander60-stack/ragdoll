@@ -289,6 +289,18 @@ The owner said things were skipped. This is the full list from the chat since 26
   - leaderboards: scroll to top 20, face the right way, no text over them, the owner kept off them;
   - X-ray: the key on PC, the button on the phone only; a limb glows only after 3 shots in a row on it, fades after 2 s over 1 s; toggled on it stays (2.4, 0.7).
 - Other: funnels follow the new map; every event fits the new map (nobody feels scammed).
+- **Ledger checks, PC 28 Nov (Play, phone emulator):**
+  - **"the chicken is not by the spawn": TICKED.** Trigger distances from the player's spawn point:
+    - the chicken is 293 studs away;
+    - nearest are the shark/whale pool (83, 84), the mole (113), the plant (121) and the bear (152).
+  - **"no trees in front of the weapon range's door": TICKED.**
+    - 0 trees within 12 studs of any of the range's 4 faces.
+    - Capture `range_door_trees`: the WEAPON TESTING front from 45 studs, the doorway and sign free, open grass.
+  - **"the shark is in the water, not in the concrete": TICKED by data.**
+    - The PoolWhale's centre is inside `PoolWaterVolume`.
+    - Capture `shark_tank`: the pool full of water inside its concrete rim. The whale is under the surface, not seen from this angle.
+    - It is an open pool, not a glass tank, so the "water through the glass" line does not apply.
+
 
 ## BATCH 1 (do now)
 
