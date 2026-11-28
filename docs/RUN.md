@@ -459,6 +459,13 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 - **Proof:** X-ray captures from the front, the side and above.
 
 ### 2.5 SPAWN_V2: how ragdolls spawn and gather, done properly (see the design below). Steps 2-3 in this batch.
+- **State (PC, 28 Nov): step 1 DONE (`SPAWN_ROOM`).** `RagdollDirector.room(player)` (the near cap minus the living bodies within 45 studs or on their way) is now asked by:
+  - VisitorService (already);
+  - Lab ALWAYS3/FAST_THREE (`missing` is capped by room);
+  - GreeterService.send (no greeter when room is 0; asked again later);
+  - NearbyTwo's refill.
+
+  Not done: EventService's crowd, Watchers and Personas (they do not bring bodies TO a player). Play, 60 s at the spawn: the living bodies within 45 studs every 5 s were 4,4,3,3,3,3,3,3,2,2,4,3. The cap is 5 (the emulator counts as a phone), so it was never over. No errors. Capture spawn_room_above: a few ragdolls under the arch, no crowd. Steps 2-3 (the slot table, request/release) are next.
 
 ### 2.6 Every killer has its own real, creative death: DONE for 5 in this run (`CHICKEN_GRIP`, `FROG_TONGUE_JOINT`, `MOLE_DRAG`, `WASHER_PULL`, `PLANT_LIFT`; `VACUUM_SUCK` not on this map)
 **The killers:**

@@ -127,6 +127,10 @@ function GreeterService.send(player: Player): Model?
 	if not root or not root:IsA("BasePart") then
 		return nil
 	end
+	-- (SPAWN_V2 step 1, SPAWN_ROOM: no greeter when the player already has the near cap round them; asked again later)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SPAWN_ROOM and (require(script.Parent:WaitForChild("RagdollDirector")) :: any).room(player) <= 0 then
+		return nil
+	end
 	greeted[player] = true
 	-- V8-0.2 (audit A): the avatar appears where Roblox spawns it, and Lab moves it into its own lab
 	-- a frame later (task.defer). Wait for that move (at most 3 s), so the route is worked out in the

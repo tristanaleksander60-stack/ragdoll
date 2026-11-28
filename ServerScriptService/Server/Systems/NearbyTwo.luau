@@ -104,7 +104,10 @@ local function step(dummies: Instance)
 			return Lab.plotIndex(player)
 		end)
 		plot = if ok then plot else nil
-		if #list < NearbyTwo.COUNT then
+		-- (SPAWN_V2 step 1, SPAWN_ROOM: no refill beyond the player's near cap)
+		local roomOk = not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SPAWN_ROOM
+			or (require(script.Parent:WaitForChild("RagdollDirector")) :: any).room(player) > 0
+		if #list < NearbyTwo.COUNT and roomOk then
 			local best, bestD = nil, math.huge
 			for _, m in dummies:GetChildren() do
 				if m:IsA("Model") and free(m, plot) then

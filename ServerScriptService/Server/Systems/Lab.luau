@@ -1195,6 +1195,10 @@ local function alwaysThree(plot: Plot, now: number)
 	end
 	assignRoles(player, root, nearList, now)
 	local missing = 3 - near - onWay
+	if (Config :: any).SPAWN_ROOM then
+		-- (SPAWN_V2 step 1: ALWAYS3 / FAST_THREE bring no one beyond the player's near cap)
+		missing = math.min(missing, (require(script.Parent:WaitForChild("RagdollDirector")) :: any).room(player))
+	end
 	-- (OVERVIEW 0.1565, owner: "med det samme der kun er 2 ... så kommer den 3. løbende": each missing one gets its own
 	-- runner, started 0.5 s apart; never waiting for 0)
 	local maxWay = THREE_MAX_WAY
