@@ -377,7 +377,7 @@ Mourning.PROVOKE_LOW = 0.03
 Mourning.PROVOKE_HIGH = 0.35
 Mourning.PROVOKE_GAP = 0.7 -- s between two rolls for one body (an automatic gun is not twenty chances)
 Mourning.PROVOKED_MAX = 25
-Mourning.PROVOKED_LAB = 2 -- mad at once in a lab
+Mourning.PROVOKED_LAB = if (Config :: any).ANGRY_MORE then 3 else 2 -- mad at once in a lab (ANGRY_MORE: 3)
 local rolled: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
 -- NOW 6 (owner, 26 Nov 2026): the first dummy a newcomer hits twice gets angry (unless the first shot killed it:
 -- then the next one hit twice). A red face and a short tantrum, it runs at you, one harmless funny shove
@@ -390,6 +390,11 @@ Mourning.FUNNY_LIFT = 18 -- studs/s up
 local firstHits: { [Player]: { [Model]: number } } = setmetatable({}, { __mode = "k" }) :: any
 function Mourning.chanceOf(near: number): number
 	local n = math.clamp(near, 0, 1)
+	-- (ANGRY_MORE: a shot ragdoll gets mad more often: 15 % when fresh, rising straight to 60 % near death (was 3 % to
+	-- 35 % on a curve that stayed low until the end); at most PROVOKED_LAB mad at once still holds)
+	if (Config :: any).ANGRY_MORE then
+		return 0.15 + (0.6 - 0.15) * n
+	end
 	return Mourning.PROVOKE_LOW + (Mourning.PROVOKE_HIGH - Mourning.PROVOKE_LOW) * n * n
 end
 function Mourning.provoke(m: Model, by: Player, near: number): boolean

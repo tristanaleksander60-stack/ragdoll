@@ -338,6 +338,15 @@ Group the items that touch the same files and do them together:
   2. Its shoves set the player's `AssemblyLinearVelocity` on the server, but the player's body belongs to their own screen, so nothing moved. Now the shove and every 2nd landed punch go through `PlayerRagdoll.knock` (the player's own screen), with the damage as before.
 - **Proof:** kill a ragdoll next to its friend; capture the friend coming to you, landing punches and knocking you over; the health bar going down.
 
+### 1.23 Dead ragdolls frozen in the air; turning to the shooter; madder when shot: CLOUD (`SLEEP_LYING`, `FACE_SHOOTER`, `ANGRY_MORE`)
+- **Frozen in the air.** Cause found (cloud): LAGFREE_SLEEP anchored ANY dead or knocked-out body that was still for 1.5 s (`DummyControl.canSleep`), also one propped on a friend's hand, leaning, or mid-fall, so it hung frozen in that pose. Now it sleeps only when the chest is near flat and has ground within 2.5 studs under it, and is not lying on another ragdoll.
+- **Turning to the shooter.** Cause found (cloud): after a hit, `standsFirm` faced the NEAREST person within 70 studs, often someone else, and never a far shooter. Now it faces the player who shot it (`ServerHitBy`), up to 160 studs. Scared ones (runners) still run.
+- **Madder.** The chance to get mad when shot is now 15 % fresh, rising to 60 % near death (was 3-35 %); up to 3 mad at once in a lab.
+- **Proof:**
+  - knock one out while another holds it: it falls and lies, never hangs;
+  - shoot one from 60 and from 120 studs: it turns to you;
+  - shoot 10 ragdolls each twice: count the mad ones (about 2-4).
+
 ### 1.19 Carried over from FIXES_28NOV: re-check each one (they were built, the owner did not confirm them all)
 For each: one capture showing it working, and the switch. If it is broken, find the cause and fix it here. A line per item in the final message.
 - `WORLD_POPS` off: no floating texts at any machine (DROP, SMASH, TAIL SLAP, RPM, CRACK, the rocket countdown).

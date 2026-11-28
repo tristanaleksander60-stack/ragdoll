@@ -193,9 +193,36 @@ end
 local function canSleep(model: Model): boolean
 	local vital = model:GetAttribute("Vital")
 	local state = model:GetAttribute("RagdollState")
-	return (vital == "Dead" or vital == "Unconscious") and (state == "Ragdoll" or state == "Out" or state == nil)
+	if not ((vital == "Dead" or vital == "Unconscious") and (state == "Ragdoll" or state == "Out" or state == nil)
 		and model:GetAttribute("Held") ~= true and model:GetAttribute("Seat") == nil and model:GetAttribute("InMachine") == nil
-		and model:GetAttribute("MachineHidden") == nil and ice[model] == nil
+		and model:GetAttribute("MachineHidden") == nil and ice[model] == nil) then
+		return false
+	end
+	-- (SLEEP_LYING: a knocked-out body that was still while NOT lying down (propped on a friend's hand, mid-fall, leaning
+	-- on a wall) was anchored in that pose and hung frozen in the air. It sleeps only when it really lies: the chest is
+	-- near the ground and closer to flat than upright, and it is not resting on another ragdoll.)
+	if (require(Shared:WaitForChild("Config")) :: any).SLEEP_LYING then
+		local chest = model:FindFirstChild("UpperTorso")
+		local pe = model:FindFirstChild("LowerTorso")
+		if not (chest and chest:IsA("BasePart") and pe and pe:IsA("BasePart")) then
+			return false
+		end
+		if math.abs(chest.CFrame.UpVector.Y) > 0.6 then
+			return false -- (still upright-ish: sitting up, kneeling, propped)
+		end
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { model }
+		local hit = Workspace:Raycast(chest.Position, Vector3.new(0, -2.5, 0), params)
+		if not hit then
+			return false -- (nothing under it: in the air)
+		end
+		local on = hit.Instance:FindFirstAncestorOfClass("Model")
+		if on and on.Parent == model.Parent then
+			return false -- (lying on another ragdoll: the pile may still move)
+		end
+	end
+	return true
 end
 
 local function sleepStep(dt: number)

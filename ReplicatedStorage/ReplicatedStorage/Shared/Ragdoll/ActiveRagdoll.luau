@@ -1227,7 +1227,17 @@ local function standsFirm(rig: Rig, now: number): Vector3?
 	end
 	local gun = GunThreat.near(rig.chest.Position, FIRM_REACH)
 	if not gun and now - rig.lastHitAt < FIRM_HURT then
-		gun = nearestPerson(rig, FIRM_REACH)
+		-- (FACE_SHOOTER: a body that is not scared turns to WHO shot it (the server stamps ServerHitBy), from as far as
+		-- 160 studs; before it faced the nearest person within 70, often someone else, and never a far shooter)
+		if (GameConfig :: any).FACE_SHOOTER then
+			local by = m:GetAttribute("ServerHitBy")
+			local shooter = if type(by) == "number" and by > 0 then Players:GetPlayerByUserId(by) else nil
+			local root = shooter and shooter.Character and shooter.Character:FindFirstChild("HumanoidRootPart")
+			if root and root:IsA("BasePart") and flat(root.Position - rig.pelvis.Position).Magnitude < 160 then
+				gun = root.Position
+			end
+		end
+		gun = gun or nearestPerson(rig, FIRM_REACH)
 	end
 	own.firmAt = gun
 	return gun
