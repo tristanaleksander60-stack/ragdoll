@@ -38,6 +38,12 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
    - write to live DataStores beyond the game's own saving;
    - delete owner content without a backup.
 10. **After each item:** commit, push, and update its State here (DONE with the capture's line, or LEFT with the reason).
+11. **WHY THE SAME BUGS CAME BACK 10 TIMES (read this; the owner asked):**
+    - **One root cause was patched 10 times instead of fixed once.** The v6 body you SEE is not where its hidden physics parts are (the arms and legs are 0.4-0.5 studs off and turned). Everything stuck on a body (holes, bandages, plasters, X-ray bones, the newspaper and phone, the face) was built on the physics part, and each report got its own offset tweak. 28 Nov: holes, X-ray, bandages and props all had this same cause. **Rule now:** anything attached to a v6 body is placed through SmoothBody's drawn frames (the stick/drive or props path: `V7_ON_AXIS`, `WRAP_ON_SKIN`, `HAND_PROPS`), never by a fixed offset from a physics part.
+    - **Guesses instead of measurements.** Sway, legs and flying got 8+ patch systems, none measured which writer moves the body. **Rule now:** a physics bug is fixed only after a probe names its cause (`SWAY_PROBE`, `CALM_GUARD`); the probe's line goes in the State.
+    - **DONE without the owner's case.** Captures were taken where it worked (a standing body, one angle), not where the owner saw it fail (lying, walking, the side he looked from). **Rule now:** DONE needs a capture of the OWNER'S situation from his screenshot (same place, same angle, same action) before and after.
+    - **Items fell between plan docs** (FIXES_26NOV, 27NOV_LATE, 28NOV, NOW, OVERVIEW): "PART DONE" items were never picked up again (the weapon range). **Rule now:** the OWNER REQUEST LEDGER below is the checklist; a line is ticked only with a capture.
+    - **The cloud broke things it did not test** (V7_SAME_FRAME hid the holes on arms and legs). **Rule now:** the SMOKE ROUND after every batch includes holes, X-ray, bandages and props on arms and legs, standing and lying.
 
 ## HOW TO PROVE THINGS THE MCP CANNOT CLICK (learned 28 Nov: the MCP's mouse does not reach the game view)
 - **Drive it from code during Play** (the command bar or a temporary test script, removed after):
@@ -48,7 +54,7 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
 - **Feel items** (scrolling with a real wheel or finger, steering, pinch, how smooth it feels): build them, prove what code can prove, mark them `OWNER CHECK` and list them first in the final test list. Never write DONE for a feel item.
 
 ## SMOKE ROUND (after EACH batch: about 3 minutes, catches what one item broke in another)
-One Play, then all 13, with a capture each and errors read from the output:
+One Play, then all 15, with a capture each and errors read from the output:
 1. Spawn: no error in the output.
 2. Shoot a ragdoll 5 times: holes and blood, and it falls.
 3. Grab one and drop it into the nearest machine: the DROP HERE sign, and the machine takes it.
@@ -62,6 +68,8 @@ One Play, then all 13, with a capture each and errors read from the output:
 11. Punch a ragdoll and walk after it 10 s: it never moves away from you (0.2).
 12. Read the output: every `[CALM_GUARD]` line is a bug with its cause named; fix it (0.1).
 13. X-ray on: shoot an arm and a leg: the bones lie inside the limbs (0.7).
+14. A bandaged forearm, a plaster, the newspaper carrier: all on the drawn body, standing and lying (0.11, 0.12).
+15. Read the output for `[SWAY]` lines (0.13).
 
 If any step fails, fix it before the next batch: it is a regression from this batch.
 
@@ -148,6 +156,12 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Now:** every screen takes each prop welded to a v6 body's hand over (weld off and anchored on that screen only) and puts it each frame at the v6 grip point (BodyShape.HAND.grip) carried by the drawn hand bone, keeping its turn against the hand; when the server lets go (the weld goes) it is given back.
 - **Check (PC):** the prop's centre sits in the curl of the fingers (HAND_POSES grip). If the paper is held by its middle but should be held by its edge, add a per-prop offset (attribute `GripOffset` on the prop, read in placeProps). Check every prop a ragdoll holds: newspaper, phone, tweezers (PickOut), the shovel/tools (Mourning, NpcCommand).
 - **Proof:** the newspaper carrier walking and reading, a filming ragdoll, from the front and the side at 3 m, PC and phone: each prop in the hand, never beside it.
+
+### 0.13 A standing ragdoll still sways side to side now and then: CLOUD probe (`SWAY_PROBE`, ActiveRagdoll `swayProbe`)
+- **Cause: NOT known.** Six writers move a standing body (the balance turn, the lift's spot, the drive, the pose, turning to a person, the stand hold), and every earlier fix guessed one. Stop guessing.
+- **The probe** samples each upright body every step and, when its sideways speed flips 3+ times in 1 s, warns `[SWAY] <name> flips= amp= state= stateSwitches= liftMoved= headTurn= drive= pose= mood= firm= chestBal= feet=` (also the attribute `SwayWhy`).
+- **Your job (PC):** Play 5 minutes in the lab with 18 bodies; collect every `[SWAY]` line. The writer with the large number is the cause (for example `stateSwitches=4`: Standing/Walking toggling; `headTurn=70 firm=yes`: turning to the player; `liftMoved=1.4`: the stand hold re-set; `feet=Dummy.LeftFoot`: standing on another body). Fix THAT writer at its source; then Play again until no `[SWAY]` line comes in 5 minutes. Write each cause and fix in the State. Then `SWAY_PROBE = false`.
+- **Proof:** the `[SWAY]` list before and after, and a 60 s side capture of 5 standing bodies with no sway.
 
 ### 0.10 The plan doc itself (PC, at the end of the run)
 - Every item you touch: the State line says DONE + the capture line, or LEFT + the exact reason. No "PART" without saying exactly what is missing.

@@ -724,6 +724,78 @@ local function calmGuard(rig: Rig)
 	end
 end
 
+-- SWAY_PROBE (owner 28 Nov: "a ragdoll still bugs from side to side now and then", after many fixes that each guessed).
+-- Six things move a standing body (the balance turn, the lift's spot, the drive, the pose, turning to a person, the
+-- stand hold), and no fix found WHICH one swings it. This probe measures it: for an upright body it samples, every step,
+-- its sideways speed (across its heading) and every writer's target; when the sideways speed flips sign 3+ times in 1 s
+-- at over 0.6 studs/s, it warns once per 8 s per body with what changed in that second:
+--   [SWAY] <name> flips=N amp=X state=<now> stateSwitches=N liftMoved=<studs> headTurn=<deg> drive=<max speed>
+--   pose=<Pose> mood=<Mood> firm=<yes/no> chestBal=<on/off> feet=<what is under them>
+-- The writer with the big number is the cause: fix it there.
+local GAME_SWAY_PROBE = (require(script.Parent.Parent:WaitForChild("Config")) :: any).SWAY_PROBE == true
+ActiveRagdoll.swayEvents = 0
+local function swayProbe(rig: Rig)
+	local r: any = rig
+	local state = rig.state
+	if rig.held > 0 or not (state == "Standing" or state == "Walking") then
+		r.sw = nil
+		return
+	end
+	local now = os.clock()
+	local sw = r.sw
+	if not sw then
+		sw = { t0 = now, flips = 0, lastSign = 0, amp = 0, switches = 0, lastState = state, lift0 = rig.lift.Position,
+			liftMax = 0, look0 = rig.balance.CFrame.LookVector, turnMax = 0, driveMax = 0, firm = false }
+		r.sw = sw
+	end
+	local v = rig.pelvis.AssemblyLinearVelocity
+	local right = Vector3.yAxis:Cross(rig.heading)
+	local side = if right.Magnitude > 1e-3 then v:Dot(right.Unit) else 0
+	if math.abs(side) > 0.6 then
+		local sign = if side > 0 then 1 else -1
+		if sw.lastSign ~= 0 and sign ~= sw.lastSign then
+			sw.flips += 1
+		end
+		sw.lastSign = sign
+		sw.amp = math.max(sw.amp, math.abs(side))
+	end
+	if state ~= sw.lastState then
+		sw.switches += 1
+		sw.lastState = state
+	end
+	sw.liftMax = math.max(sw.liftMax, (rig.lift.Position - sw.lift0).Magnitude)
+	local look = rig.balance.CFrame.LookVector
+	sw.turnMax = math.max(sw.turnMax, math.deg(math.acos(math.clamp(look:Dot(sw.look0), -1, 1))))
+	sw.driveMax = math.max(sw.driveMax, rig.drive.VectorVelocity.Magnitude)
+	sw.firm = sw.firm or (r.firmAt ~= nil)
+	if now - sw.t0 < 1 then
+		return
+	end
+	if sw.flips >= 3 and now - (r.swayWarnAt or -math.huge) > 8 then
+		r.swayWarnAt = now
+		ActiveRagdoll.swayEvents += 1
+		local m = rig.model
+		local under = "?"
+		pcall(function()
+			local hit = Workspace:Raycast(rig.pelvis.Position, Vector3.new(0, -6, 0), rig.rayParams)
+			if hit then
+				local owner = hit.Instance:FindFirstAncestorOfClass("Model")
+				under = (if owner then owner.Name .. "." else "") .. hit.Instance.Name
+			end
+		end)
+		local cb = rig.chest:FindFirstChild("ChestBalance")
+		local text = string.format(
+			"flips=%d amp=%.1f state=%s stateSwitches=%d liftMoved=%.2f headTurn=%.0f drive=%.1f pose=%s mood=%s firm=%s chestBal=%s feet=%s",
+			sw.flips, sw.amp, state, sw.switches, sw.liftMax, sw.turnMax, sw.driveMax,
+			tostring(m:GetAttribute("Pose")), tostring(m:GetAttribute("Mood")), if sw.firm then "yes" else "no",
+			if cb and cb:IsA("AlignOrientation") and cb.Enabled then "on" else "off", under
+		)
+		m:SetAttribute("SwayWhy", text)
+		warn("[SWAY] " .. m.Name .. " " .. text)
+	end
+	r.sw = nil -- (a fresh 1 s window)
+end
+
 local function guardLimbs(rig: Rig)
 	if not LIMB_GUARD or rig.held > 0 or rig.state == "Frozen" then
 		return
@@ -2323,6 +2395,9 @@ local function update(dt: number)
 		end
 		if GAME_CALM_GUARD then
 			calmGuard(rig)
+		end
+		if GAME_SWAY_PROBE then
+			swayProbe(rig)
 		end
 		local state = rig.state
 		if state ~= "Ragdoll" and state ~= "Out" and state ~= "Frozen" and rig.held == 0 and vitalDown(rig) then
