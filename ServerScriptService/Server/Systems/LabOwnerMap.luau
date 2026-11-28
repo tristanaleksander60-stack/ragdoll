@@ -2705,9 +2705,20 @@ local function spawnSet(into: Instance, o: Vector3, top: number)
 		part(set, "ArchCap", Vector3.new(5, 1.2, 5), CFrame.new(p + Vector3.new(0, AH + 0.6, 0)), STEEL_D, Enum.Material.Metal)
 		-- a banner on each pillar, both sides
 		for _, f in { -1, 1 } do
-			local b = part(set, "ArchBanner", Vector3.new(3, 9, 0.15), CFrame.new(p + Vector3.new(0, AH - 7.5, f * 2.15)), Color3.fromRGB(200, 40, 50), Enum.Material.Fabric, true)
+			-- (BANNER_CLEAR: the banner hung 0.075 studs off the pillar's face and its swing (0.06 rad round its top) moved the
+			-- bottom about half a stud, so half of it swung INTO the stone. Now it hangs from a short steel rod 0.5 studs out,
+			-- and sways gently (0.02 rad: under a quarter of a stud at the bottom), never touching the pillar.)
+			local clear = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).BANNER_CLEAR == true
+			local off = if clear then 2.6 else 2.15
+			local b = part(set, "ArchBanner", Vector3.new(3, 9, 0.15), CFrame.new(p + Vector3.new(0, AH - 7.5, f * off)), Color3.fromRGB(200, 40, 50), Enum.Material.Fabric, true)
 			b.CanCollide = false
-			tag(b, "Swing", { Amp = 0.06, Speed = 1.1 + s * 0.2, Pivot = Vector3.new(0, 4.5, 0) })
+			tag(b, "Swing", { Amp = if clear then 0.02 else 0.06, Speed = 1.1 + s * 0.2, Pivot = Vector3.new(0, 4.5, 0) })
+			if clear then
+				part(set, "ArchBannerRod", Vector3.new(3.4, 0.25, 0.25), CFrame.new(p + Vector3.new(0, AH - 3, f * off)), STEEL_D, Enum.Material.Metal, true)
+				for _, x in { -1.4, 1.4 } do
+					part(set, "ArchBannerArm", Vector3.new(0.2, 0.2, 0.7), CFrame.new(p + Vector3.new(x, AH - 3, f * (2 + 0.3))), STEEL_D, Enum.Material.Metal, true)
+				end
+			end
 		end
 	end
 	-- the truss: two chords and braces

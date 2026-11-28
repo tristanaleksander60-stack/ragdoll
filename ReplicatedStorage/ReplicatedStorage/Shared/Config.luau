@@ -182,6 +182,7 @@ local Config = {
 	CREATURE_GRIP = true, -- animals take a ragdoll IN THE MOUTH (a real joint, server-simulated while held), shake it with real bite wounds, then throw it (CreatureGrip, AnimalCove bear maul + T-rex bite; the bear DROP HERE in front of its mouth)
 	TRY_WALK = true, -- TRY: the nearest free ragdoll to you (talkers too) walks to the nearest machine (its DROP HERE spot) and hops in with a real jump; never a teleport, never "no ragdoll near" with one by you (MachineDemos.tryAt)
 	UPRIGHT_POSES = true, -- standing poses never lean back by mistake (a positive Waist X bends BACK): the Scared persona, LookBack, HoldSide, shock, gasp, peek, point and the head flinch were bent backwards (DummyLife, Poses)
+	BANNER_CLEAR = true, -- the spawn arch banners hang from a rod 0.5 studs off the pillar and sway gently, never into the stone (LabOwnerMap spawnSet)
 	SHOVE_SERIES = true, -- F26: the angry dummy shoves a random 1-3 times, a line before each ("Hey!", "Stop that!", "How do YOU like it?"), a short wind-up, following if you back off; knocked over ends it; then it flees (Mourning attack)
 	XRAY_TRACER = true, -- F28: with X-ray on, your round leaves a short bright line through the glass body for 1 s, along the shot (FxController.predictHit)
 	HARD_PHYS = true, -- row 5: the physics watchdog (a NaN or runaway body is stopped and put back at its last good place) and no tunnelling (a body over 70 studs/s that crossed a wall or floor in one step is put back short of it, its speed into it taken off) (ActiveRagdoll hardChecks)

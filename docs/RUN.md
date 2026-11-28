@@ -165,6 +165,12 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
 - **First find the cause:** where each hole is parented and how its CFrame is set (the hidden block part, or the v6 surface). Show a capture of a wrong one with the cause named.
 - **Proof:** 20 shots spread over one body, captures from the front, the back and while it walks; a patched-up body.
 
+### 1.14 The spawn arch banners half inside the pillars: CLOUD (`BANNER_CLEAR`, LabOwnerMap spawnSet)
+- **Cause found:** the banner hung 0.075 studs off the pillar, and its "Swing" (0.06 rad round its top) moved its bottom about 0.5 studs, into the stone.
+- **Now:** it hangs from a steel rod 0.5 studs out and sways at 0.02 rad.
+- **Also:** check every other part tagged "Swing" (flags and banners) the same way: gap > Amp x length + 0.1.
+- **Proof:** captures of all 4 banners from the side, 10 s apart.
+
 ---
 
 ## BATCH 2 (after the owner's test of batch 1)
