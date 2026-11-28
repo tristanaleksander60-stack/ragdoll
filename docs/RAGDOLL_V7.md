@@ -105,8 +105,8 @@
 - **Fewer systems:** about 8 patch systems are removed for living bodies, so fewer bugs can come back.
 - **Better ragdoll fun:** the physical mode can be tuned on its own (the push at the hit point, the stagger, the falls) without breaking standing and walking.
 
-## 5. The steps (each one ends with a SHORT test list for the owner, then STOP and wait)
-1. **V7-1 the spike** (3.1): the natively skinned v6 in Studio, 6 poses plus a limp fall, captured next to the current v6. Owner: "same or better?"
+## 5. The steps (NO stop between them: each is built behind its own Config switch, proven with captures and the SMOKE ROUND in `RUN.md`, and listed for the owner in the ONE final test list. A step that fails its proof is switched OFF and listed as LEFT; the run goes on.)
+1. **V7-1 the spike** (3.1): the natively skinned v6 in Studio, 6 poses plus a limp fall, captured next to the current v6. The captures go in the final message.
 2. **V7-2 animated plus hit:**
    - idle, walk and run clips;
    - the switch to PHYSICAL on a hit at the same pose;

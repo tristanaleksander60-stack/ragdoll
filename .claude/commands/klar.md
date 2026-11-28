@@ -25,6 +25,8 @@ Do every item in `RUN.md`: batch 1, then batch 2, then batch 3 and on, top to bo
 5. **Record it:** commit, push, and set the State (`DONE` plus the capture's line, or `LEFT` plus the reason).
 6. **Pull again** (`git pull --rebase`): the cloud may have added items or code. Run the preflight for any new cloud code, then continue.
 
+**NEVER stop for the owner:** not for a test, a look, a yes or a question. Those go in the final message: under OWNER CHECK in the test list, or under Questions with the default you chose. A step waiting for the owner's opinion is built behind its switch, proven, and you move on.
+
 **Stop ONLY when:**
 - (a) every item in RUN.md is DONE or LEFT; or
 - (b) Studio or the MCP cannot be reached after 3 tries.

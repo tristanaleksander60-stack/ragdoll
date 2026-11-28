@@ -18,7 +18,7 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
    3. Push each of those files into Studio through the MCP, with a length check.
    4. Parse every one before pushing: `stylua --syntax Luau - < file > /dev/null` (a non-zero exit is a syntax error: fix it first).
    5. One Play. Read the output. Fix every error before anything else.
-2. **Do ALL batches in one run, without stopping between them.** The owner checks only at the end. The final message is ONE Danish test list for everything built, numbered, phone first, each line saying where to go and what must happen. Stop early only if Studio or the MCP cannot be reached after 3 tries.
+2. **Do ALL batches in one run, without stopping between them. NEVER stop for an owner test, an owner question or a "next step needs the owner".** Put it under OWNER CHECK or Questions in the final list, pick the safe default behind its switch, and go on. The owner checks only at the end. The final message is ONE Danish test list for everything built, numbered, phone first, each line saying where to go and what must happen. Stop early only if Studio or the MCP cannot be reached after 3 tries.
 3. **DONE = proof.** An item is DONE only with:
    - a capture taken from the angle the item names, showing it working;
    - one line saying what the capture shows.
@@ -381,12 +381,14 @@ Group the items that touch the same files and do them together:
 
 ### 1.19 Carried over from FIXES_28NOV: re-check each one (they were built, the owner did not confirm them all)
 For each: one capture showing it working, and the switch. If it is broken, find the cause and fix it here. A line per item in the final message.
-- `WORLD_POPS` off: no floating texts at any machine (DROP, SMASH, TAIL SLAP, RPM, CRACK, the rocket countdown). **PC 28 Nov:** one was left, the fan's "FAN: || 2" board (FanMachine made its BillboardGui without the switch). Fixed; a scan of every enabled BillboardGui with text in Lab1 found only that one.
+- `WORLD_POPS` off: no floating texts at any machine (DROP, SMASH, TAIL SLAP, RPM, CRACK, the rocket countdown).
+ **PC 28 Nov:** one was left, the fan's "FAN: || 2" board (FanMachine made its BillboardGui without the switch). Fixed; a scan of every enabled BillboardGui with text in Lab1 found only that one.
 - `CARRY_FLOOR_RAY`: carry a ragdoll under the bowling canopy and up every tower floor; it stays in front of you, never on a roof.
 - DROP HERE (`DropSpots`): ONE sign at each machine when carrying, the bear's in front of its mouth.
 - `PLAYER_SWIM`: fall into the aquarium, swim, and jump out on every side; the 25 s safety net.
 - `STAIR_OPENING`: walk up the aquarium stairs onto the platform.
-- `PARKING_STRAIGHT`: a top-down capture of the lot; each plaque in front of its vehicle. **PC 28 Nov (v1441):** the tank (LabMuscleCar, 12.8 wide) had an 11 bay; it was pushed into the Ford and rode up on it, tilted 13 degrees. `PANZER_BAY_FIT` gives it 13.5, and it now stands flat (1 degree). Capture parking_top: every vehicle over its own plaque, straight.
+- `PARKING_STRAIGHT`: a top-down capture of the lot; each plaque in front of its vehicle.
+ **PC 28 Nov (v1441):** the tank (LabMuscleCar, 12.8 wide) had an 11 bay; it was pushed into the Ford and rode up on it, tilted 13 degrees. `PANZER_BAY_FIT` gives it 13.5, and it now stands flat (1 degree). Capture parking_top: every vehicle over its own plaque, straight.
 - The 5 vehicle passes:
   - each prompts the right pass id;
   - each plaque shows its price;
@@ -530,18 +532,10 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 ---
 
 ## BATCH 3 and on
-- **`RAGDOLL_V7.md`:** animated until hit, the lasting cure for jitter, lean and leg bugs (1.3, 1.10 and 1.12 are stopgaps).
-  - Build ONLY the V7-1 spike in this run: the natively skinned v6 in a test model in ServerStorage (`V7Spike`), never in the live game, behind `Config.RAGDOLL_V7 = false`.
-  - Make captures of 6 poses and a limp fall next to the current v6 and save them in `docs/captures/v7/`.
-  - Do NOT switch the game over: the owner decides from the captures, and it goes in the final message as a question. No stop: go on with the next items.
-  - **State (PC, 28 Nov): V7-1 LEFT, a faster path tried and ruled out.** The plan was to skip Blender: keep the one v6 skinned mesh (ReplicatedStorage.SmoothBodyV6.MannequinBody, 44 bones under it) and hang its 15 R15 bones on 15 separate parts, so the engine deforms the skin from the parts. Four tries, each with a capture next to an untouched v6: bones on plain Parts (v7_bone_test2, test4 with a nudge to every bone), on MeshPart holders (test5), and built before parenting (test6). The skin never moved, while turning a bone that stays under the mesh bends it at once (test3). So the skin follows only bones under its own MeshPart. NEXT: the real spike as written in RAGDOLL_V7 3.1: split v6 in Blender into 15 skinned MeshParts (build_v6_xray_pieces.py already splits the faces by bone weight; it needs the armature and weights kept per piece), upload them through Open Cloud (rbx-import-asset), then test whether a piece follows bones in the neighbouring pieces. That is a bigger job and goes to the owner as a question. (Also tried in Play on the server, capture v7_play_test: same, the skin stays put.)
-  - **State 2 (PC, 28 Nov): PART, a real lead WITHOUT Blender.** The missing piece was the joints. Built on the CLIENT in Play: the one v6 mesh, 16 invisible parts at its R15 bones (HumanoidRootPart anchored), the 15 bones moved onto those parts, the parts joined by Motor6Ds (C0 from the rest pose), and the joint Transforms set in Stepped. The skin DID follow: the right knee bent smoothly at 70 degrees next to an untouched v6 (captures v7_motor_play, v7_motor_play2). So the engine deforms the v6 skin from the parts, with no SmoothBody per-frame Lua. NOT proven yet: the skin following a part held by a BallSocket (the limp case). One try with the shoulder motor off, a BallSocket plus a rigid AlignOrientation lifted the hand part to Y 5.5, but the captures were unclear (white body on a white sky; one showed another scene). NEXT: the same test on a dark background, then all 15 joints as BallSockets and a limp fall, then the 6 poses for the owner.
-  - **State 3 (PC, 28 Nov): V7-1 SPIKE DONE, NO BLENDER NEEDED. The game is NOT switched (owner decides).** On a dark backdrop with the camera locked by a script (the MCP camera kept snapping back to the game view):
-    1. the shoulder as a BallSocket held up by an AlignOrientation (ActiveRagdoll's own setup): the arm lifts sideways and the skin bends smoothly at the shoulder (capture v7_limp_front);
-    2. all 15 joints as limited BallSockets (70 degree cone, 30 degree twist), the root let go: the body slumps into a soft heap and the skin follows every joint, nothing torn or left behind (capture v7_limp_fall).
-
-    **The recipe:** clone SmoothBodyV6, put one invisible part at each of the 16 R15 bones, move each R15 bone (its finger bones go with the hand) onto its part, keep the world pose, and join the parts with the ragdoll's joints. The engine then draws the skin from the physics parts itself: no SmoothBody drive per frame, no lag between the physics and the look, and holes, plasters and the face can be welded straight to the parts. NEXT (V7-2, after the owner says yes): build ActiveRagdoll's rig around these 16 parts behind `Config.RAGDOLL_V7`.
-  - **State 4 (PC, 28 Nov, v1450): owner "du bestemmer": V7 step 1 BUILT and ON (`RAGDOLL_V7`, SmoothBody v7Attach/v7Detach).** The live game's own ragdolls now use the recipe: when SmoothBody dresses a body, each R15 bone of the v6 mesh is moved ONCE onto the body's own physics part at its rest offset, and drive() no longer writes 44 bone CFrames a frame (it still places the mesh, the round head and the holes). When the body leaves, the bones go back and the mesh is pooled (not pooled if a bone went with a destroyed part). Play: 7 of 7 skinned bodies native, no errors; standing and walking bodies look as before (v7_live_standing, v7_live_lying); a body knocked out with the real HitRequest remote lies limp on its front in the ring with its round head and a plaster on its back, the skin whole (v7_live_hit). NOT yet done from V7-2: the animated-until-hit walk (clips), the stagger and the get-up; the old balance still drives the standing bodies.
+- **`RAGDOLL_V7.md`:** V7 step 1 is ON (v1450: the engine skins v6 from the physics parts). Go straight on with V7-2: animated walking until hit, the switch to physics at the same pose, the stagger and the get-up by orientation.
+  - Build it behind `Config.RAGDOLL_V7_ANIMATED` and prove it: captures, plus the SMOKE ROUND.
+  - Leave it ON only if the proof passes (no jitter standing, upright walking, hits still knock bodies over); else OFF and LEFT with the reason.
+  - Then V7-3 and V7-4 the same way. NEVER stop for an owner test: everything goes in the one final list.
 - **`PERF_MOBILE.md` §6:** lag-free 2, the items not yet built.
   - **State (PC, 28 Nov):** checked against §6: items 0, 1 and 10 are DONE; 2-9 are PART DONE v1386-v1400 (sleep, the off-screen skin rate, PERF_LEVELS, HighlightCap, the pools, the loop checks, the GroundGuard slices). What is left needs a phone: the standing sleep for far living bodies (item 2 step 2) and the v6 LITE mesh (item 3, PARKED). The owner's phone and iPad test in the final list is the proof.
 - **`MILD_EXTRAS.md`:** finishing.

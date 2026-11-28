@@ -1,3 +1,5 @@
+> **SUPERSEDED (28 Nov late):** this file's "small batches, then STOP" rule is replaced by `docs/RUN.md`. Do every item without stopping; the owner tests once at the end. Read this file only for detail.
+
 # FIXES 28 NOV: the owner's test on the evening of 27 Nov (TOP PRIORITY, before everything else)
 > The owner was angry, and rightly so: "det her ligner noget en 3-årig har lavet", "lad mig teste, så det ikke tager 10 timer", "jeg har bedt dig fikse det 5. gang i dag".
 

@@ -1,3 +1,5 @@
+# RUN WITHOUT STOPPING (owner, 28 Nov late): `/klar` does EVERY item in `docs/RUN.md` and stops only when all are DONE or LEFT (or Studio is unreachable). Every "STOPPED for the owner's test" note below is history: never stop for an owner test again; put it under OWNER CHECK in the final list and go on.
+
 # READ `docs/RUN.md` FIRST: it is the ONE ordered to-do list (batch 1 now). The lines below are history; RUN.md overrides them.
 
 # ⚠⚠⚠ CLOUD CODE ROUND 3: `FIXES_28NOV.md` "CLOUD CODE ROUND 3": NEARBY_CAP_V2 (fewer ragdolls by you, for real) and FACE_ON_SKIN (the face on the round head, not a flat card). Push first.
