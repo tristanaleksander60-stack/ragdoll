@@ -404,6 +404,31 @@ BUILD.Spider = function(f, at, m)
 			ring.Transparency = 0.4
 		end
 	end
+	-- (SPIDER_WEB_MODEL, RUN 2.7: the web was 8 neon sticks and 40 neon ring pieces. Now a real flat silk web (V3Assets
+	-- "SpiderWebModel", Studio-generated) fitted to the same 26 x 26 face; the sticks stay as invisible parts.)
+	do
+		local src = Config.SPIDER_WEB_MODEL and game:GetService("ServerStorage"):FindFirstChild("V3Assets")
+		src = src and src:FindFirstChild("SpiderWebModel")
+		if src and src:IsA("Model") then
+			local wm = src:Clone()
+			local _, ls = wm:GetBoundingBox()
+			wm:ScaleTo(wm:GetScale() * 26 / math.max(ls.X, ls.Y))
+			for _, d in wm:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.Anchored = true
+				elseif d:IsA("LuaSourceContainer") then
+					d:Destroy()
+				end
+			end
+			wm:PivotTo(web.CFrame)
+			wm.Parent = f
+			for _, p in f:GetChildren() do
+				if (p.Name == "WebThread" or p.Name == "WebRing") and p:IsA("BasePart") then
+					p.Transparency = 1
+				end
+			end
+		end
+	end
 	local spider = place(f, "MSpider", (at * CFrame.new(0, 0, -7)).Position, 180, 13)
 	-- (20 Nov 2026, the owner: the spider lives ON its giant web: head down, legs spread on the
 	-- threads, on the side that faces the lab. Its own up is the web's normal; its local +Z is up.)
