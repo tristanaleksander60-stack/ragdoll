@@ -150,11 +150,13 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Proof:** the range from the plaza and from its door: whole facade, roof and sides free.
 
 ### 0.9 CPR kneeling into a bench: CLOUD (`CPR_CLEAR`, Mourning `freeKneel`)
+- **PC 28 Nov: OWNER CHECK.** I killed a body 2.2 studs in front of a ParkBench (at 1038, 173). No mourner came within 40 s (mourning only starts by chance), so the kneel spot could not be seen. The code (`CPR_CLEAR`, `freeKneel`) is pushed and the Play is clean.
 - **Cause found (cloud):** the kneel spot was always 1.6 studs off the chest on the near side, whatever stood there; the kneeling legs were posed into the bench and thrown out.
 - **Now:** a knee-sized box must be free of anything solid; else the other side, then the head end; else no CPR there.
 - **Proof:** kill a ragdoll next to a bench: its friend kneels on the open side.
 
 ### 0.11 Bandages and plasters can't be seen; they hang in the air: CLOUD (`WRAP_ON_SKIN`, `PLASTER_SKIN`, SmoothBody `stick`/`drive`/`plasterOn`)
+- **PC 28 Nov: OWNER CHECK.** No body in the lab had a bandage in 60 s of Play. 2 shots each on a forearm and a shin killed the body, and no bandage came in 25 s: the wraps are drawn from a LIVING wounded body after first aid, which a test cannot stage quickly. The code (`WRAP_ON_SKIN`, `PLASTER_SKIN`) is pushed and the Play is clean.
 - **Causes found (cloud), three:**
   1. DummySkins welds a bandage to the old SKIN piece (the Skins folder), not to the body's limb. SmoothBody took it over with that skin piece as its limb, but the drawn frames are keyed by the physics parts, so it was anchored once and never moved: left hanging in the air.
   2. It sat on the physics axis with BodyShape's radius, about 25 % smaller than the drawn mesh (the PC found `HOLE_AXIS_SCALE` 1.25 for the holes), so it was inside the limb.
