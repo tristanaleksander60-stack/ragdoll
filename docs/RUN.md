@@ -345,6 +345,11 @@ The owner said things were skipped. This is the full list from the chat since 26
       - Capture `wall_broken`: bricks out, a stepped hole.
       - It was whole again (4 panels) about 13 s after the last hit; capture `wall_rebuilt`: the wall smooth again from the same spot.
     - Not checked: concrete walls and crates.
+  - **"bowling: the ragdoll curls up fast and flies into the pins": TICKED.**
+    - Staged: a client-simulated body set on DropSpot_Bowling, then the "Bowl!" lever pulled from the client.
+    - It curled at once (`Curl`) and rolled down the lane. Capture `bowling_roll2`: the curled body on the lane right before the pins.
+    - 4 s later 5 of the 10 pins lay down. Capture `bowling_pins`: the pins scattered at the lane's end.
+  - **"the time dial chips work (not stuck on 2x)": OWNER CHECK.** The MCP cannot press the chips (clicks and keys do not reach the game view in the emulator), and `require(TimeDial)` from execute_luau is a copy.
 
 
 ## BATCH 1 (do now)
