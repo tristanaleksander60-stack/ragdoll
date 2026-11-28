@@ -14,6 +14,8 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
    - one line saying what the capture shows.
 
    Code that is merely "in" is not DONE. If you cannot get a capture that shows it working, the item is NOT DONE: say so in the final message.
+
+   **Before the final message,** run the SMOKE ROUND one last time. In the test list, put the `OWNER CHECK` items first and every LEFT item with what is missing.
 4. **Root cause first.** Before changing code for an item, find the exact cause in the code: the file, the function and why it produces what the item describes. Write it in the item's State line. A change without a found cause is not allowed.
 5. **No plain-part art** for anything a player looks at (machines, arms, props, signs, creatures): use a Blender model with the quality gate, or a malware-checked Creator Store model.
 6. **No dead ends:** no blocked stairs, no pit or tank without a way out, no prompt that does nothing.
@@ -26,6 +28,36 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
    - write to live DataStores beyond the game's own saving;
    - delete owner content without a backup.
 10. **After each item:** commit, push, and update its State here (DONE with the capture's line, or LEFT with the reason).
+
+## HOW TO PROVE THINGS THE MCP CANNOT CLICK (learned 28 Nov: the MCP's mouse does not reach the game view)
+- **Drive it from code during Play** (the command bar or a temporary test script, removed after):
+  - fire the REAL remote the button fires (for example the Session "Try" remote, `Net.event(...)`);
+  - or call the module function the input calls (for example `TimeDial.quick(0.5)`, `FirstPerson.toggle()`);
+  - then read the state (attributes, positions, CFrames) AND take the capture.
+- **Phone:** if the MCP can switch Studio's device emulator, capture in it. If it cannot, say so once, and for touch-only items read the touch layout from code (`HudSlots.context(true, false)` with a 390 x 844 viewport) and put the item under "OWNER CHECK: phone" in the final list.
+- **Feel items** (scrolling with a real wheel or finger, steering, pinch, how smooth it feels): build them, prove what code can prove, mark them `OWNER CHECK` and list them first in the final test list. Never write DONE for a feel item.
+
+## SMOKE ROUND (after EACH batch: about 3 minutes, catches what one item broke in another)
+One Play, then all 10, with a capture each and errors read from the output:
+1. Spawn: no error in the output.
+2. Shoot a ragdoll 5 times: holes and blood, and it falls.
+3. Grab one and drop it into the nearest machine: the DROP HERE sign, and the machine takes it.
+4. TRY at a machine.
+5. X-ray on and off.
+6. Ride the bicycle 10 s.
+7. First person in and out (V).
+8. Stand 30 s at the spawn: count the ragdolls within 45 studs.
+9. A standing ragdoll from the side (upright).
+10. FPS at the spawn.
+
+If any step fails, fix it before the next batch: it is a regression from this batch.
+
+## WORK ORDER INSIDE A BATCH (saves Studio pushes)
+Group the items that touch the same files and do them together:
+- **SmoothBody, DummySkins and BloodFx:** 1.13 holes + 2.2 bandages + 2.4 skull.
+- **Viewmodel and IK:** 1.1 arms, then reuse the same IK for 1.6 bike hands.
+- **ActiveRagdoll, DummyLife and Poses:** 1.10 + 1.12.
+- **Lab, RagdollDirector and Watchers:** 1.5 + 1.11 + SPAWN_V2.
 
 ## STATUS KEY
 `TODO` not started · `CLOUD` code written by the cloud, untested (push and prove it) · `BUILT` built by the PC, not yet proven · `FAILED` the owner's test showed it still broken (the cause was not found: find it) · `DONE` proven with a capture
@@ -41,7 +73,10 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
   - clones of the player's own R15 arm and hand MeshParts, with a copy of the character's Shirt so the sleeves draw;
   - two-bone IK: the right hand on the weapon's grip, and the left hand on the fore-grip for two-handed weapons;
   - the weapon at about 0.55 of today's size, low right, never covering the middle third of the screen; on a phone 0.45 and clear of SHOOT;
-  - sway, recoil, the reload dip and ADS kept;
+  - sway, recoil, the reload dip and ADS kept: in ADS the weapon's sight lines up with the crosshair;
+  - every viewmodel part is in the Camera, with `CanQuery`, `CanTouch` and `CastShadow` off (nothing in the world hits or shadows it);
+  - near a wall (a ray 2.5 studs ahead hits), the weapon pulls back and down instead of poking through the wall;
+  - the real character's arms stay hidden in first person (LocalTransparencyModifier), so there is never a double arm;
   - `Forearm` and `SupportArm` deleted.
 - **Proof:** captures of the pistol, rifle, minigun, a melee weapon, the fart gun and a throwable, on PC and on a phone. The hands are visibly on the weapon; nothing white or blocky.
 
@@ -81,7 +116,7 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
 ### 1.6 The bike and motorbike rider: FAILED (`BIKE_WELD` built), now CLOUD (`BIKE_SEAT_FIT`, BikeService)
 - **Cause found:** the rider was welded at a fixed offset (0, 2.4, 1.1) from the physics box, which is behind the saddle on these models. Now the pelvis sits on the vehicle's own seat part.
 - **Also check:**
-  - the seat part is at the saddle on the bicycle AND the motorbike (move the seat part if not);
+  - the seat part is at the saddle on the bicycle AND the motorbike: VehicleService's seat may sit in the middle of the physics box. Find the saddle in the LOOK model (a part named Seat or Saddle, else the highest part between the two wheels) and move the seat part to its top, then capture it;
   - the hands reach the handlebar grips (IK, as in 1.1);
   - the feet are on the pedals or pegs.
 - **Proof:** side and front captures of both rides, riding and turning.
@@ -108,7 +143,7 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
   - the mouth is found on both models (print which part or Bone is used; if it is the wrong one, name the right one in `MOUTH_NAMES`);
   - the body never sits inside or behind the animal.
 - **Proof:** captures mid-maul and mid-whip from the side, and the wounds after.
-- **NEXT for 9/10:**
+- **NEXT for 9/10: see 2.6** (every killer gets its own choreography). Detail kept here:
   - **Every killer gets its own real animated choreography:**
     - rigged models (Bones or Motor6D for the head, jaw, legs, tail) and AnimationController clips: idle, walk, charge, rear, bite-shake, roar, eat;
     - the bear stands on its hind legs, swipes, mauls and drags the body into its cave;
@@ -162,6 +197,7 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
 - **TO DO:**
   - one MicroProfiler capture at the spawn on PC and in the phone emulator, before and after: name the top 5 costs in the item's State and fix the biggest;
   - check `LAGFREE_SLEEP` really anchors still bodies (count the asleep ones);
+  - with 18 bodies on a PC, check the jobs still add up: ALWAYS3's 3 near you, the watchers (WATCH_EVERY) and the walkers. If the watchers take most bodies, cap them at 1 per machine and only at the machines within 120 studs of you;
   - telemetry `Fps_p10` by device.
 - **Proof:** the profiler numbers and an FPS counter capture at the spawn with every ragdoll in view drawn in v6.
 
@@ -240,6 +276,26 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
   - a capture series: the walk-up, the strap-on, the lift-off with the whole rocket (the top included), the chase camera mid-flight on PC and on a phone, and the explosion;
   - steering left, right and up must visibly change the flight.
 
+### 1.19 Carried over from FIXES_28NOV: re-check each one (they were built, the owner did not confirm them all)
+For each: one capture showing it working, and the switch. If it is broken, find the cause and fix it here. A line per item in the final message.
+- `WORLD_POPS` off: no floating texts at any machine (DROP, SMASH, TAIL SLAP, RPM, CRACK, the rocket countdown).
+- `CARRY_FLOOR_RAY`: carry a ragdoll under the bowling canopy and up every tower floor; it stays in front of you, never on a roof.
+- DROP HERE (`DropSpots`): ONE sign at each machine when carrying, the bear's in front of its mouth.
+- `PLAYER_SWIM`: fall into the aquarium, swim, and jump out on every side; the 25 s safety net.
+- `STAIR_OPENING`: walk up the aquarium stairs onto the platform.
+- `PARKING_STRAIGHT`: a top-down capture of the lot; each plaque in front of its vehicle.
+- The 5 vehicle passes:
+  - each prompts the right pass id;
+  - each plaque shows its price;
+  - the Ford follows its pass when it is on sale.
+- The time chips (5b): 0.25x, 0.5x, 1x, 2x and STOP, in any order; the lit chip is the real speed.
+- Build mode (5c): the DONE button on every device.
+- `FP_AUTO` (5d): a weapon pick puts you in first person; after V out, a shot keeps you out until the next pick. The eye button is on the phone.
+- `HOTBAR_3D` off (5e): no turning 3D gun. The slots never overlap at rest or open, on a phone: measure the gaps (at least 6 px).
+- **Plain-part buildings and machines:**
+  - the gyro (`GYRO_STYLE`) and the weapon range (`RANGE_CLEAR`): the range must stand free with a path to its door, and its shell must be a real model, not plain parts;
+  - the T-rex (`REX_ANIM`): it idles and roars.
+
 ---
 
 ## BATCH 2 (straight after batch 1, no stop)
@@ -282,10 +338,32 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
 
 ### 2.5 SPAWN_V2: how ragdolls spawn and gather, done properly (see the design below). Steps 2-3 in this batch.
 
+### 2.6 Every killer has its own real, creative death: TODO (moved here from 1.8 NEXT)
+1. **List every killer first:** grep `LabCreatures.luau` `BUILD.*`, `AnimalCove`, `MapMachines` (Shredder, Sweeper, Gyro), `LavaPit`, `Compressor`, `StretchMachine`, `FanMachine`, `WhaleSpout` and the others. Write the list here with what each does today.
+2. **Rule for all:** the body is taken by the killer's real part (mouth, claws, rollers, jaws, web) through `CreatureGrip` or a weld to that part, never teleported. Real wounds and bone breaks (2.3); a unique sound; no floating text.
+3. **Each one gets a choreography that no other killer has**, with a target of at least 3 beats: the approach, the kill, the aftermath. For example:
+   - the bear drags the body into its cave;
+   - the crocodile does a death roll under water;
+   - the spider wraps the body in a cocoon that hangs;
+   - the plant swallows it and spits out bones;
+   - the shredder pulls the body in feet first.
+4. **Rigged models:** where a model has no bones for the head, jaw or limbs, find a rigged one (Creator Store, malware pass) or make one in Blender (quality gate), and play AnimationController clips.
+5. **Proof:** a 4-capture series per killer (approach, grab, kill, aftermath). Do them worst first; at least 5 in this run.
+
+### 2.7 No more plain-part machines or creatures: TODO
+1. **List** every machine, creature and building a player sees that is built from plain parts in code (`part(` / `Instance.new("Part")` making its visible body), with a capture of each.
+2. **Replace them, worst first, at least 5 in this run,** with a Blender model (quality gate at 8.5 or more) or a malware-checked Creator Store model. Each keeps its gameplay parts (triggers, DropSpots) invisible.
+3. **Proof:** a before and after capture of each.
+
+
+
 ---
 
 ## BATCH 3 and on
-- **`RAGDOLL_V7.md`:** animated until hit. The V7-1 spike, then STOP for the owner. This is the lasting cure for jitter, lean and leg bugs; 1.3 is a stopgap.
+- **`RAGDOLL_V7.md`:** animated until hit, the lasting cure for jitter, lean and leg bugs (1.3, 1.10 and 1.12 are stopgaps).
+  - Build ONLY the V7-1 spike in this run: the natively skinned v6 in a test model in ServerStorage (`V7Spike`), never in the live game, behind `Config.RAGDOLL_V7 = false`.
+  - Make captures of 6 poses and a limp fall next to the current v6 and save them in `docs/captures/v7/`.
+  - Do NOT switch the game over: the owner decides from the captures, and it goes in the final message as a question. No stop: go on with the next items.
 - **`PERF_MOBILE.md` §6:** lag-free 2, the items not yet built.
 - **`MILD_EXTRAS.md`:** finishing.
 - **The rest of OVERVIEW's ORDER,** at THE FINISH LINE's bar.
@@ -329,6 +407,7 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
    - Each body has ONE job: Activity (at its slot), Walk, Talk (at most 2 per player), Watch (in a machine's ring slots), Event, Chase, Ride, Machine, or Held.
    - Systems never write `Home`. They call `RagdollDirector.request(job, player, n, target)`.
    - The director grants bodies: idle ones first, a spawn only if under budget, never beyond the near cap. It returns the granted bodies. `release(m)` returns a body to an activity slot.
+   - **Visible life:** at any moment within 60 studs of you, at most 2 bodies are talking to you. Every other living body you can see is DOING something at a slot: reading the newspaper, on the phone, sitting on a bench, watching a machine, chatting in a pair, or walking a lane. None stands idle facing you. Prove it with one capture of the plaza and one of a machine area, with each body's job printed.
 5. **The dead.** At most 4 dead bodies within 45 studs of a player. Beyond that, the oldest unseen ones fade out after 20 s (`mayRemove`).
 6. **Out of view only:** every removal, every park and every spawn happens out of every camera.
 
