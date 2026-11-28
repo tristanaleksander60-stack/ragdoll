@@ -201,6 +201,7 @@ local Config = {
 	FACE_SHOOTER = true, -- a ragdoll that is not scared turns to the player who shot it, from up to 160 studs (ActiveRagdoll standsFirm)
 	ANGRY_MORE = true, -- a shot ragdoll gets mad more often: 15 % fresh to 60 % near death (was 3-35 %), up to 3 mad at once in a lab (Mourning.chanceOf)
 	HOLE_CURVE_FIT = true, -- a bullet hole on a round v6 limb is at most 0.8 x its radius across and lifted by the curve's sag, so its rim touches the skin all round (never half inside the arm) (BulletHoles)
+	XRAY_SKULL_MESH = true, -- RUN 2.4: the X-ray skull is a real skull mesh with a cranium, eye holes and a jaw with teeth (ReplicatedStorage.XrayAssets.Skull), not a ball and a block (SmoothBody roundHead)
 	YARD_CONE_MODEL = true, -- RUN 1.15: the orange "boxes" round the map were the yard cones, built as plain blocks; now a real traffic cone model (V3Assets TrafficCone; LabOwnerMap)
 	RIDE_ARMS_FIT = true, -- the bicycle rider's hands reach the bicycle's lower, nearer handlebar (shoulder 52, elbow 34 degrees, the model's RideArms attribute; BikeService, Poses.ride)
 	FP_REAL_ARMS = true, -- RUN 1.1: first person shows the player's own R15 arms and hands with their shirt, hands on the weapon by two-bone IK; the weapon smaller and lower right; pulls back at walls; the plain Forearm/SupportArm blocks hidden (Viewmodel)

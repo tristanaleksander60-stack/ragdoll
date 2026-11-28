@@ -417,10 +417,40 @@ local function roundHead(body: Body)
 		table.insert(skull, p)
 	end
 	local BONE = Color3.fromRGB(236, 226, 200)
-	piece(Enum.PartType.Ball, Vector3.one * 1.22, CFrame.new(0, 0.1, 0.02), BONE)
-	piece(Enum.PartType.Ball, Vector3.one * 0.3, CFrame.new(-0.24, 0.12, -0.5), Color3.fromRGB(60, 52, 48))
-	piece(Enum.PartType.Ball, Vector3.one * 0.3, CFrame.new(0.24, 0.12, -0.5), Color3.fromRGB(60, 52, 48))
-	piece(Enum.PartType.Block, Vector3.new(0.7, 0.24, 0.5), CFrame.new(0, -0.48, -0.22), BONE)
+	-- (XRAY_SKULL_MESH, RUN 2.4: the skull was a plain ball with two ball eyes and a block jaw. Now a real skull mesh (a
+	-- cranium, cheekbones, eye holes, a jaw with teeth: ReplicatedStorage.XrayAssets.Skull, Creator Store, no scripts),
+	-- 1.3 studs tall, centred in the 1.7 round head, its face to the head's front.)
+	local tmpl = (Config :: any).XRAY_SKULL_MESH and game:GetService("ReplicatedStorage"):FindFirstChild("XrayAssets")
+	local skullModel = tmpl and tmpl:FindFirstChild("Skull")
+	if skullModel and skullModel:IsA("Model") then
+		local pivot = skullModel:GetPivot()
+		for _, src in skullModel:GetDescendants() do
+			if src:IsA("BasePart") then
+				local p = src:Clone()
+				for _, k in p:GetChildren() do
+					if not (k:IsA("SurfaceAppearance") or k:IsA("SpecialMesh")) then
+						k:Destroy()
+					end
+				end
+				p.Name = "XraySkull"
+				p.Color = BONE
+				p.CanCollide, p.CanQuery, p.CanTouch, p.Massless, p.Anchored, p.CastShadow = false, false, false, true, false, false
+				p.Transparency = 1
+				p.CFrame = ball.CFrame * CFrame.new(0, 0.05, 0.02) * pivot:ToObjectSpace(src.CFrame)
+				local pw = Instance.new("WeldConstraint")
+				pw.Part0 = ball
+				pw.Part1 = p
+				pw.Parent = p
+				p.Parent = ball
+				table.insert(skull, p)
+			end
+		end
+	else
+		piece(Enum.PartType.Ball, Vector3.one * 1.22, CFrame.new(0, 0.1, 0.02), BONE)
+		piece(Enum.PartType.Ball, Vector3.one * 0.3, CFrame.new(-0.24, 0.12, -0.5), Color3.fromRGB(60, 52, 48))
+		piece(Enum.PartType.Ball, Vector3.one * 0.3, CFrame.new(0.24, 0.12, -0.5), Color3.fromRGB(60, 52, 48))
+		piece(Enum.PartType.Block, Vector3.new(0.7, 0.24, 0.5), CFrame.new(0, -0.48, -0.22), BONE)
+	end
 	body.skull = skull
 end
 

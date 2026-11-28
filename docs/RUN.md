@@ -434,7 +434,8 @@ For each: one capture showing it working, and the switch. If it is broken, find 
   - the crack sound.
 - **Proof:** shots counted to the break for each class; X-ray captures of cracked and broken; a limp walk.
 
-### 2.4 The whole skull in the X-ray: FAILED (half the skull shows); cause candidates from the cloud
+### 2.4 The whole skull in the X-ray: DONE (`XRAY_SKULL_MESH`)
+- **State (PC, 28 Nov, v1437):** in Play the whole skull showed (the half top did not reproduce: XraySkull parts were at T0 inside the 0.6 glass ball). The real gap was the look: a plain ball, two ball eyes and a block jaw. Now a real skull mesh (Creator Store 16315382028: cranium, cheekbones, eye holes, a jaw with teeth; 2 meshes, no scripts) in ReplicatedStorage.XrayAssets.Skull, 1.3 studs tall, centred in the round head. Capture skull_mesh_front: full skulls with jaws and teeth inside the X-ray heads. (A second Creator Store skull, 84446245122458, carried two scripts, one 35 KB "ScreenBuilder": it was deleted, not used.) SAVE THE PLACE.
 - **What the code does:** the skull (SmoothBody `roundHead`) is a 1.22-stud bone ball centred inside the 1.7 round head, with eye holes and a jaw, so the code alone does not explain a missing top.
 - **Test in ONE Play** (X-ray on, a capture after each):
   1. the old Head's X-ray glass shell (DummySkins) drawn opaque over the top: set it to Transparency 1;
