@@ -720,6 +720,7 @@ For each: one capture showing it working, and the switch. If it is broken, find 
   - Capture `swim_out`: the player beside the aquarium, the shark swimming in the glass tank behind.
   - Swimming with the stick and jumping out over a side need held input: an OWNER CHECK.
 - `STAIR_OPENING`: walk up the aquarium stairs onto the platform.
+ **PC 28 Nov (2): TICKED.** Walked (root velocity, step to step) up all 20 FeedSteps to the feeding platform (top step y 16.7, the player's feet at 16.1). Capture `aqua_stairs`: the player at the top of the stairs at the rail's opening, the tank beside.
 - `PARKING_STRAIGHT`: a top-down capture of the lot; each plaque in front of its vehicle.
  **PC 28 Nov (v1441):** the tank (LabMuscleCar, 12.8 wide) had an 11 bay; it was pushed into the Ford and rode up on it, tilted 13 degrees. `PANZER_BAY_FIT` gives it 13.5, and it now stands flat (1 degree). Capture parking_top: every vehicle over its own plaque, straight.
 - **PC 28 Nov (2), the passes: TICKED by code.** `VehicleService.PASSES` holds exactly the owner's ids:
