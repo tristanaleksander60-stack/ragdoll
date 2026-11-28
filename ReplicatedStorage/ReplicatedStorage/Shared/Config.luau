@@ -194,6 +194,7 @@ local Config = {
 	MORE_GEAR_PC_ONLY = true, -- the round "More" gear in the top bar shows on a computer only; phones and tablets have Menu in the left stack (HudV3)
 	TOAST_V2 = true, -- notices sit in the screen's middle (not shifted by old HUD slots), as a rounded pill with a thin coloured edge and centred text; "X: +N KOs!" reads "X  +N KOs" with the reward in gold (Toast)
 	ANGRY_HITS_REAL = true, -- an angry ragdoll's punches reach the player: damage, and a real knock through their own screen (Mourning)
+	ON_SKIN = true, -- holes, stress rings, bandages and plasters on a v6 body move with the DRAWN limb each frame (SmoothBody), not welded to the hidden physics limb the mesh does not follow exactly
 	PLANT_YAW = 0, -- degrees added to the plant model's facing; the PC sets it so the mouth faces the path (check with a capture)
 	SHOVE_SERIES = true, -- F26: the angry dummy shoves a random 1-3 times, a line before each ("Hey!", "Stop that!", "How do YOU like it?"), a short wind-up, following if you back off; knocked over ends it; then it flees (Mourning attack)
 	XRAY_TRACER = true, -- F28: with X-ray on, your round leaves a short bright line through the glass body for 1 s, along the shot (FxController.predictHit)

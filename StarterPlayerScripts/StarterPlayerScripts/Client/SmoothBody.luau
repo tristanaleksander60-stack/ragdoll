@@ -214,7 +214,60 @@ local function showBlocks(body: Body)
 	table.clear(body.hidden)
 end
 
+local ON_SKIN = (Config :: any).ON_SKIN == true
+local STICK_NAMES = { BulletHole = true, BulletStress = true, Bandage = true, Plaster = true, Gauze = true, BruisePatch = true }
+-- A hole or bandage welded to a body limb is taken over: its weld is switched off, it is anchored, and drive() moves it
+-- with the drawn limb (kept relative to the limb exactly as it was welded).
+local function stick(body: Body, inst: Instance)
+	if not (inst:IsA("BasePart") and (STICK_NAMES[inst.Name] or inst:GetAttribute("OnSkin") == true)) then
+		return
+	end
+	task.defer(function()
+		local weld = inst:FindFirstChildOfClass("WeldConstraint")
+		local limb = weld and (if weld.Part0 == inst then weld.Part1 else weld.Part0)
+		if not (weld and limb and limb:IsA("BasePart") and limb:IsDescendantOf(body.model)) then
+			return
+		end
+		local B = body :: any
+		B.stuck = B.stuck or {}
+		B.stuck[inst] = { limb = limb, off = limb.CFrame:ToObjectSpace(inst.CFrame), weld = weld }
+		weld.Enabled = false
+		inst.Anchored = true
+	end)
+end
+local function unstickAll(body: Body)
+	local B = body :: any
+	if B.stickConn then
+		B.stickConn:Disconnect()
+		B.stickConn = nil
+	end
+	for inst, rec in B.stuck or {} do
+		if inst.Parent and rec.limb.Parent then
+			inst.CFrame = rec.limb.CFrame * rec.off
+			inst.Anchored = false
+			rec.weld.Enabled = true
+		end
+	end
+	B.stuck = nil
+end
+function SmoothBody.watchSkin(body: Body)
+	if not ON_SKIN then
+		return
+	end
+	local B = body :: any
+	if B.stickConn then
+		return
+	end
+	for _, d in body.model:GetDescendants() do
+		stick(body, d)
+	end
+	B.stickConn = body.model.DescendantAdded:Connect(function(d)
+		stick(body, d)
+	end)
+end
+
 local function drop(body: Body)
+	unstickAll(body)
 	local fg = (body :: any).faceGui
 	if fg and fg.Parent then
 		fg.Enabled = true
@@ -508,6 +561,7 @@ local function build(model: Model): Body?
 	mesh.Parent = folder
 	bodies[model] = body
 	roundHead(body)
+	SmoothBody.watchSkin(body) -- (ON_SKIN: holes and bandages move with the drawn limb)
 	return body
 end
 
@@ -577,6 +631,39 @@ local function drive(body: Body)
 		d.bone.WorldCFrame = cf
 		if d.part.Name == "Head" and d.bone.Name == "Head" then
 			headCf = cf
+		end
+		if ON_SKIN and d.bone.Name == d.part.Name then
+			-- (ON_SKIN: where this limb is DRAWN this frame (the bone's frame back to its part's), for the holes and bandages)
+			local B0 = body :: any
+			B0.drawn = B0.drawn or {}
+			B0.drawn[d.part] = cf * d.off:Inverse()
+		end
+	end
+	if ON_SKIN then
+		-- Every hole, stress ring, bandage and plaster on this body moves with the DRAWN limb, in the same frame as the mesh,
+		-- so it sits exactly where it was put on the skin (before, they were welded to the hidden physics limb, which the
+		-- FK-drawn mesh does not follow exactly: they hung under or over the skin and glitched as it moved).
+		local B1 = body :: any
+		local stuck = B1.stuck
+		if stuck and B1.drawn then
+			local parts, cframes = B1.movParts or {}, B1.movCFs or {}
+			table.clear(parts)
+			table.clear(cframes)
+			B1.movParts, B1.movCFs = parts, cframes
+			for inst, rec in stuck do
+				if not inst.Parent then
+					stuck[inst] = nil
+				else
+					local at = B1.drawn[rec.limb]
+					if at then
+						table.insert(parts, inst)
+						table.insert(cframes, at * rec.off)
+					end
+				end
+			end
+			if #parts > 0 then
+				Workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
+			end
 		end
 	end
 	local ball = body.ball
