@@ -326,6 +326,11 @@ The owner said things were skipped. This is the full list from the chat since 26
   - **"no Multipla": a Studio artifact, not a phone bug.** The caption reads "Online" when the player's `Device` is phone or tablet.
     - After the MCP sent key presses, Studio's emulator reported a keyboard too (`TouchEnabled` and `KeyboardEnabled`), so `Device` became "pc" and the caption "Multiplayer", cut to "Multipla" in the narrow phone layout.
     - A real phone has no keyboard: "phone", "Online" (as in this run's earlier captures).
+  - **"the water button removed, the water always on": TICKED.** There is no part named like a water button or switch and no ProximityPrompt about water on the whole map. The pool shows its water at once (capture `shark_tank`, earlier in this list).
+  - **"the cave: a real hill and entrance, no black flat wall, no puddle over the land": TICKED.** CAVE_V2 is on (CaveDark, CaveRoot x5, CaveLog, CaveStump, CaveEye x2).
+    - Capture `bear_cave2`, from the bear's yard: a grassy rock hill with a dark arched opening, rocks and a log in front, the bear before it, no flat black wall, no puddle.
+  - **"boxing: 2 ragdolls start a fight" (BOXING_V2): SEEN running.** At the start 2 bodies were already boxing; capture `boxing_v2` shows the two in guard, close, in the middle of the ring.
+    - A third body dropped in did not join: one fight at a time, by design. So the "drop ONE in, an opponent runs in" path was not staged separately this run.
 
 
 ## BATCH 1 (do now)
