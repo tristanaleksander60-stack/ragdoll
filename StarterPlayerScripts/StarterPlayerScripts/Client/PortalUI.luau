@@ -237,7 +237,27 @@ function PortalUI.start()
 	-- (Owner, 26 Nov 2026: "tænk mere ind i telefon": on a phone the HudV3 squares are not shown, so MULTIPLAYER is a
 	-- launcher in the left stack under Shop and Menu there (HudMenu.PHONE_KEEP); it opens the hub with its list.)
 	if Config.MP_ICON then
-		Controller.addHudButton({ window = "Servers", label = "Multiplayer", icon = "friends", theme = "rebirth", layoutOrder = 8, onActivated = PortalUI.openHub })
+		local mpButton = Controller.addHudButton({ window = "Servers", label = "Multiplayer", icon = "friends", theme = "rebirth", layoutOrder = 8, onActivated = PortalUI.openHub })
+		-- (MP_SHORT_LABEL: on a phone "Multiplayer" was cut to "Multipla": its caption reads "Online" there; the button keeps
+		-- its name, so every layout rule that finds it by its label still works)
+		if Config.MP_SHORT_LABEL then
+			local UIS = game:GetService("UserInputService")
+			local function caption()
+				local root = (mpButton :: any).root or mpButton
+				if typeof(root) ~= "Instance" then
+					return
+				end
+				local touch = UIS.TouchEnabled and not UIS.KeyboardEnabled
+				for _, d in (root :: Instance):GetDescendants() do
+					if d:IsA("TextLabel") and (d.Text == "Multiplayer" or d.Text == "Online") then
+						d.Text = if touch then "Online" else "Multiplayer"
+					end
+				end
+			end
+			caption()
+			task.delay(1, caption)
+			UIS:GetPropertyChangedSignal("KeyboardEnabled"):Connect(caption)
+		end
 	end
 	remote.OnClientEvent:Connect(function(kind: unknown, data: unknown)
 		local d = if type(data) == "table" then data :: any else {}

@@ -340,7 +340,11 @@ local function placePicture(slab: Slab, width: number, height: number)
 		return
 	end
 	local label = slab.button.label
-	if PokeController.iconOnly(width, height, label.Text) then
+	-- (HOTBAR_ICON_CENTER: on a touch screen the picture always sits in the middle of its box, selected or not (the
+	-- selected slot drew it small in the top-left corner, beside a hidden word); a PC keeps the name beside it.)
+	local UIS = game:GetService("UserInputService")
+	local centreAll = Config.HOTBAR_ICON_CENTER == true and UIS.TouchEnabled and not UIS.KeyboardEnabled
+	if centreAll or PokeController.iconOnly(width, height, label.Text) then
 		-- (UI v2: the picture alone, centred and as big as the face allows.)
 		label.Visible = false
 		local size = math.max(PokeController.PICTURE_STACKED, math.min(width - 10, height - Theme.Size.depthSmall - 8))

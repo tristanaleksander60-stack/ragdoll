@@ -1187,6 +1187,32 @@ function HudV3.start()
 					end
 				end
 			end
+			-- (REVIVE_OVER_SHOP: centred over the Shop and Weapon buttons, right above them, measured from where they really
+			-- are on this screen, so it fits every phone; it falls back to its old spot if they are not found)
+			if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).REVIVE_OVER_SHOP then
+				local pgui = player:FindFirstChild("PlayerGui")
+				local shop = pgui and pgui:FindFirstChild("Hud_Shop", true)
+				if shop and shop:IsA("GuiObject") and shop.AbsoluteSize.X > 0 then
+					local sp, ss = shop.AbsolutePosition, shop.AbsoluteSize
+					-- the button right of Shop on the same row (Weapon)
+					local right: GuiObject? = nil
+					for _, d in pgui:GetDescendants() do
+						if d:IsA("GuiButton") and d ~= shop and d.Visible and d.AbsoluteSize.X > 20 and math.abs(d.AbsolutePosition.Y - sp.Y) < 8
+							and d.AbsolutePosition.X > sp.X + 4 and d.AbsolutePosition.X < sp.X + ss.X * 2.2 and not d:IsDescendantOf(rg) then
+							if not right or d.AbsolutePosition.X < right.AbsolutePosition.X then
+								right = d
+							end
+						end
+					end
+					local left = sp.X
+					local width = if right then (right.AbsolutePosition.X + right.AbsoluteSize.X) - sp.X else ss.X
+					local cx = left + width / 2
+					local top = sp.Y - 6 - rb.AbsoluteSize.Y
+					local base = rg.AbsolutePosition
+					rb.AnchorPoint = Vector2.zero
+					rb.Position = UDim2.fromOffset(math.floor(cx - rb.AbsoluteSize.X / 2 - base.X), math.floor(top - base.Y))
+				end
+			end
 			rg.Enabled = touch and HudSlots.context(touch, ViewMode.isLab()).phone == true and not held.Left
 				and player:GetAttribute("Building") ~= true and Controller.getCurrent() == nil
 				and needed

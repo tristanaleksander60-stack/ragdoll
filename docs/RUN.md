@@ -276,6 +276,18 @@ Group the items that touch the same files and do them together:
   - a capture series: the walk-up, the strap-on, the lift-off with the whole rocket (the top included), the chase camera mid-flight on PC and on a phone, and the explosion;
   - steering left, right and up must visibly change the flight.
 
+### 1.20 The phone's left buttons and the hotbar icons: CLOUD (`REVIVE_OVER_SHOP`, `MP_SHORT_LABEL`, `HOTBAR_ICON_CENTER`)
+- **REVIVE:**
+  - **cause:** a fixed offset (142, 66) put it to the right of Weapon;
+  - **now:** it is measured from where Shop and Weapon really are, centred over the two of them, right above them.
+- **"Multipla":**
+  - **cause:** the caption "Multiplayer" was cut off on a phone;
+  - **now:** it reads "Online" on touch screens; the button keeps its name.
+- **The hotbar icon:**
+  - **cause:** a slot whose word was not empty put its picture at the left (`placePicture`'s else branch), small, in the top-left of the selected box;
+  - **now:** on touch screens every picture is centred. Also measure the slot gaps at rest and open (at least 6 px apart; the ammo chip inside its slot). If they still overlap, find the cause in `PokeController.plan` (the cell and GAP at the MiniBar's 0.6 scale) and fix it.
+- **Proof:** phone captures of the top-left buttons and the hotbar at rest, opened and with each slot selected.
+
 ### 1.19 Carried over from FIXES_28NOV: re-check each one (they were built, the owner did not confirm them all)
 For each: one capture showing it working, and the switch. If it is broken, find the cause and fix it here. A line per item in the final message.
 - `WORLD_POPS` off: no floating texts at any machine (DROP, SMASH, TAIL SLAP, RPM, CRACK, the rocket countdown).
