@@ -183,6 +183,7 @@ safe("MinuteMoments", function() require(Client:WaitForChild("MinuteMoments")).s
 safe("LabShowcase", function() require(Client:WaitForChild("LabShowcase")).start() end) -- LAB10 R2: machines show off (attract mode) and the "TRY!" chain
 safe("FirstTwo", function() require(Client:WaitForChild("FirstTwo")).start() end) -- FIRST_2_MIN: TRY at the machine, a ragdoll comes, the grab lesson once
 safe("XRayToggle", function() require(Client:WaitForChild("XRayToggle")).start() end) -- BODY_V2 1: the X-RAY button and B key
+safe("RocketPilot", function() require(Client:WaitForChild("RocketPilot")).start() end) -- RUN 1.18: steer your rocket (ROCKET_PILOT)
 safe("GuardDogClient", function() require(Client:WaitForChild("GuardDogClient")).start() end) -- GUARD_DOG: tap a limb to send the dog, the dog button, GOOD BOY!
 safe("FlightTrail", function() require(Client:WaitForChild("FlightTrail")).start() end) -- IMPACT_FX: smoke trail behind flying ragdolls
 safe("NoBlackScreen", function() require(Client:WaitForChild("NoBlackScreen")).start() end) -- F3: the camera stays out of your body while you are knocked

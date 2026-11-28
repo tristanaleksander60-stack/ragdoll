@@ -16,6 +16,48 @@ RocketRide.COUNTDOWN = 3 -- s of smoke before the lift-off
 RocketRide.FLIGHT = 5 -- s of climbing
 RocketRide.ACCEL = 30 -- studs/s^2
 RocketRide.BACK_AFTER = 4 -- s after the burst before it stands on its spot again
+-- (RUN 1.18 the PILOT, Config.ROCKET_PILOT: the lab's owner steers the flight from Client/RocketPilot)
+RocketRide.PILOT_FUEL = 10 -- s of flight
+RocketRide.PILOT_TURN = 90 -- degrees a second the nose may turn
+RocketRide.PILOT_SPEED = 90 -- studs/s at full thrust
+RocketRide.PILOT_RANGE = 700 -- studs from the tower: further out it blows up
+
+type Pilot = { want: Vector3, boom: boolean, at: number }
+local pilots: { [Player]: Pilot } = {}
+local pilotWired = false
+
+-- The two pilot remotes, wired once. Only the player flying a rocket right now is heard.
+local function wirePilot()
+	if pilotWired then
+		return
+	end
+	pilotWired = true
+	local Net = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Net")) :: any
+	-- RocketSteer: the wanted nose direction (a unit Vector3), at most about 25 a second
+	Net.unreliable(Net.Names.RocketSteer).OnServerEvent:Connect(function(player: Player, d: unknown)
+		local p = pilots[player]
+		if not p or typeof(d) ~= "Vector3" then
+			return
+		end
+		local v = d :: Vector3
+		if v.X ~= v.X or v.Y ~= v.Y or v.Z ~= v.Z or v.Magnitude < 0.5 or v.Magnitude > 1.5 then
+			return
+		end
+		local now = os.clock()
+		if now - p.at < 0.04 then
+			return
+		end
+		p.at = now
+		p.want = v.Unit
+	end)
+	-- RocketBoom: blow it up now (no arguments; only the pilot, once a flight)
+	Net.event(Net.Names.RocketBoom).OnServerEvent:Connect(function(player: Player)
+		local p = pilots[player]
+		if p then
+			p.boom = true
+		end
+	end)
+end
 
 local function lazy(name: string): any
 	return require(script.Parent:WaitForChild(name)) :: any
@@ -396,17 +438,80 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 				lazy("FxService").hit(base.Position, 160, "CannonPad")
 				t0 = os.clock()
 				local height = 0
-				while os.clock() - t0 < RocketRide.FLIGHT do
-					local t = os.clock() - t0
-					height = 0.5 * RocketRide.ACCEL * t * t
-					local wob = CFrame.Angles(math.sin(t * 7) * 0.04, 0, math.cos(t * 5) * 0.04)
-					place(CFrame.new(0, height, 0) * wob)
-					RunService.Heartbeat:Wait()
+				local pilotBurst: Vector3? = nil
+				if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).ROCKET_PILOT and owner.Parent then
+					-- (the PILOT: the owner steers; the server turns the nose toward the wanted direction at most PILOT_TURN
+					-- degrees a second, never into the ground, and ends it on a hit, out of fuel, out of range or BOOM)
+					wirePilot()
+					local pilot: Pilot = { want = Vector3.yAxis, boom = false, at = 0 }
+					pilots[owner] = pilot
+					owner:SetAttribute("PilotRocket", base:GetFullName())
+					local len = if axis then top - bottom else size.Y
+					local skip: { Instance } = { rocket }
+					local dummiesF = Workspace:FindFirstChild("Dummies")
+					if dummiesF then
+						table.insert(skip, dummiesF)
+					end
+					for _, pl in game:GetService("Players"):GetPlayers() do
+						if pl.Character then
+							table.insert(skip, pl.Character)
+						end
+					end
+					local params = RaycastParams.new()
+					params.FilterType = Enum.RaycastFilterType.Exclude
+					params.FilterDescendantsInstances = skip
+					local nose = Vector3.yAxis
+					local start = frame.Position
+					local pos = start
+					local last = os.clock()
+					while true do
+						local now = os.clock()
+						local dt = math.min(now - last, 0.1)
+						last = now
+						local t = now - t0
+						if t > RocketRide.PILOT_FUEL or pilot.boom or not owner.Parent then
+							break
+						end
+						local want = pilot.want
+						if pos.Y - start.Y < 12 and want.Y < 0.4 then
+							want = Vector3.new(want.X, 0.4, want.Z).Unit -- (no turning into the ground just after lift-off)
+						elseif want.Y < -0.25 then
+							want = Vector3.new(want.X, -0.25, want.Z).Unit -- (never a dive)
+						end
+						local ang = math.acos(math.clamp(nose:Dot(want), -1, 1))
+						if ang > 1e-3 then
+							local ax = nose:Cross(want)
+							ax = if ax.Magnitude > 1e-4 then ax.Unit else Vector3.xAxis
+							nose = (CFrame.fromAxisAngle(ax, math.min(ang, math.rad(RocketRide.PILOT_TURN) * dt)) * nose).Unit
+						end
+						local speed = math.min(RocketRide.PILOT_SPEED, 8 + 45 * t)
+						local hit = Workspace:Raycast(pos + nose * len, nose * math.max(2, speed * dt * 2), params)
+						pos += nose * speed * dt
+						if hit or (pos - start).Magnitude > RocketRide.PILOT_RANGE then
+							break
+						end
+						local right = nose:Cross(Vector3.zAxis)
+						right = if right.Magnitude > 0.1 then right.Unit else nose:Cross(Vector3.xAxis).Unit
+						place(frame:Inverse() * CFrame.fromMatrix(pos, right, nose))
+						height = pos.Y - start.Y
+						RunService.Heartbeat:Wait()
+					end
+					pilotBurst = pos + nose * len * 0.5
+					pilots[owner] = nil
+					owner:SetAttribute("PilotRocket", nil)
+				else
+					while os.clock() - t0 < RocketRide.FLIGHT do
+						local t = os.clock() - t0
+						height = 0.5 * RocketRide.ACCEL * t * t
+						local wob = CFrame.Angles(math.sin(t * 7) * 0.04, 0, math.cos(t * 5) * 0.04)
+						place(CFrame.new(0, height, 0) * wob)
+						RunService.Heartbeat:Wait()
+					end
 				end
 				-- The burst, high up: the real body falls out of it, flung, a piece or two short.
 				fire.Enabled = false
 				smoke.Enabled = false
-				local burstAt = cf.Position + Vector3.new(0, height, 0)
+				local burstAt = pilotBurst or cf.Position + Vector3.new(0, height, 0)
 				local boom = Instance.new("Explosion")
 				boom.BlastPressure = 0
 				boom.DestroyJointRadiusPercent = 0
@@ -475,6 +580,8 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 			end)
 			if not ok then
 				warn("[RocketRide] " .. tostring(err))
+				pilots[owner] = nil
+				owner:SetAttribute("PilotRocket", nil)
 				place(CFrame.identity)
 				for _, d in rocket:GetDescendants() do
 					if d:IsA("BasePart") and d:GetAttribute("RideTemp") == true then

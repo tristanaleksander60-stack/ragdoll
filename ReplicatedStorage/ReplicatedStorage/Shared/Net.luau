@@ -65,6 +65,8 @@ Net.Names = table.freeze({
 	Terminal = "Terminal", -- client -> server: Press (the terminal's screen part); checked in LabGuide (owner or party, within reach, 4 a second, a queue of 6) (V9-2b)
 	Teleport = "Teleport", -- client -> server: Spawn (no arguments; F80 BACK TO SPAWN, Systems/BackToSpawn: a 5 s cooldown, the server picks the spot)
 	PathSwap = "PathSwap", -- client -> server: (position Vector3, look Vector3) a path walker you come near or aim at becomes a real ragdoll in its place (F90, Systems/PathSwap: on a walkway within 70 studs of you, 1 per 1.5 s); server -> client: (position, model) the real one now stands there
+	RocketSteer = "RocketSteer", -- client -> server (unreliable, ~10/s): the rocket pilot's wanted nose direction (a unit Vector3); checked in RocketRide (only the pilot of a flight now, finite, length 0.5-1.5, at most ~25 a second) (RUN 1.18 PILOT)
+	RocketBoom = "RocketBoom", -- client -> server: blow the rocket up now (no arguments; only its pilot, during the flight) (RUN 1.18 PILOT)
 	CameraView = "CameraView", -- client -> server (unreliable): the camera's position and look, twice a second (OVERVIEW 0.158 the "in view" report); checked in RagdollDirector (Vector3s, finite, within 400 studs of the character, a unit look, at most 4 a second)
 })
 

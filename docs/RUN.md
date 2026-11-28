@@ -312,7 +312,16 @@ Group the items that touch the same files and do them together:
   - **Why the earlier tries failed:** the prompt was OFF while a demo flight ran. It is `Enabled = false` only while `busy`, and 30 s later it was on again.
   - **The press:** with the character next to it, `InputHoldBegin/End` on the client fired it; the prompt went off, so a flight started. Capture rocket_walkup: a ragdoll at the rocket's foot.
   - **The flight:** 17 strap and body-copy parts rode with it, 119 studs up after 1 s. Capture rocket_liftoff: the WHOLE rocket in the air, the nose and capsule on top included, the ragdoll strapped on.
-  - The PILOT (steering, the chase camera, BOOM) is a new system and stays TODO.
+- **State (PC, 28 Nov late): the PILOT BUILT and ON (`ROCKET_PILOT`, RocketRide + new Client/RocketPilot, Net RocketSteer and RocketBoom).**
+  - **How it works:** it keeps the server's anchored flight (`place`). The server holds the nose and turns it toward the pilot's wanted direction at most 90 degrees a second; below 12 studs up it never points lower than 0.4 up, and later never steeper than -0.25 down. Thrust ramps to 90 studs/s. The flight ends on a hit (a ray ahead of the nose), after 10 s of fuel, past 700 studs, or on BOOM; the burst, the parachute and the throw are as before, at the rocket's nose.
+  - **The client** (while the player attribute PilotRocket is set): a chase camera behind and above the rocket along its nose; WASD or the phone stick (the PlayerModule move vector), camera-relative, sent about 10 a second; a HUD with height, speed and a BOOM button. Your character stands still meanwhile.
+  - **The remotes:** the server hears only the current pilot; the steer must be a finite Vector3 of length 0.5-1.5, at most about 25 a second.
+  - **Proof:**
+    - Capture rocket_pilot_1: the HUD "71 studs up, 95 studs/s", BOOM, the chase camera behind the climbing rocket.
+    - A steered flight's path (studs from the tower, every 0.5 s): straight up to (0,205,0) at 3.1 s, then after a sideways steer bending to (81,638,0) at 8.1 s. That is the server turning on the pilot's remote. It turned only part way, because the pilot client also sends "straight on" ten times a second without a key.
+    - The real D key's run did not lift off in time, so the key steering is an OWNER CHECK.
+  - **Moved:** BOOM sat on top of X-RAY on the phone; it is now beside the hotbar.
+  - **Not done:** the camera holding on the blast for 2 s (it goes back at the burst).
 - **State (PC, 28 Nov, v1436):** the rocket's "Strap a ragdoll on" prompt could not be fired from the MCP (two tries: the E key and InputHoldBegin; Triggered never fired on the server), so ROCKET_WHOLE and ROCKET_WALK are unproven. The PILOT (steering, chase camera, BOOM remote) is not built this run: a new client and server system. OWNER CHECK: press E at the rocket.
 - **Causes found** (`RocketRide.luau`):
   - `rocketParts` only took parts within 0.8 column widths, narrower than 1.5 widths and below 1.6 x the stack, so the capsule and nose on top stayed on the tower;
