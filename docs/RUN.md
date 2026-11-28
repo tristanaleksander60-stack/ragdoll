@@ -337,6 +337,11 @@ The owner said things were skipped. This is the full list from the chat since 26
 - **Proof:** 3 ragdolls from the front, 45 degrees and the side, talking and changing face. If the decal stretches badly at the edges, use a sphere MeshPart with a front-cap UV and the face on it. Never a flat gui on a round head.
 
 ### 1.5 Too many ragdolls by you: PART (`NEARBY_CAP_V2`, RagdollDirector `capStepV2` + `room()`, `SPAWN_ROOM` in VisitorService)
+- **PC 28 Nov (2): DONE (phone emulator).** The player stood 40 s each by the boxing ring and by the press; living bodies within 45 studs were counted every 5 s, as free + the machine's own.
+  - Ring: 1, 0, 0, 1, 1, 1, 1, 2 free (+ 0 to 2 boxers).
+  - Press: 1, 1, 2, 2, 3, 3, 3, 4 free.
+  - Never over the phone cap of 5. The spawn was proven before (2 at most).
+  - Capture `crowd_press` (from above, the press in the middle): a few bodies spread round it, no crowd.
 - **State (PC, 28 Nov, v1431):** in Studio. At the spawn: 2 bodies within 45 studs in every 5 s sample for 40 s (phone cap 5); a capture from above shows no crowd. NOT checked: a machine or the ring.
 - **Causes found:**
   - almost everyone near was exempt from the cap: running to you, shot in the last 60 s, any Role3, any watcher;
