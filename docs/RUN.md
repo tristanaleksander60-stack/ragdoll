@@ -485,7 +485,11 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 
 **Proof:** 4 captures per killer, worst first; at least 5 in this run.
 
-### 2.7 No more plain-part machines or creatures: TODO (the list from the cloud)
+### 2.7 No more plain-part machines or creatures: STARTED
+- **State (PC, 28 Nov, v1438):** the yard cones are done (1.15).
+  - Creator Store search for the gyro's booth and fence gave only junk: "Fireball" is 180 loose plain parts; a ticket booth carried two 614 KB "LED SCRIPT V5" scripts and broke without them; a cube3D fence is a generator placeholder box without its scripts. All were deleted, none used.
+  - The compressor capture (m_compressor) shows a plain-part press that reads as a press.
+  - NEXT: Blender 5.3 is installed. Build the gyro booth + fence, the stretcher frame and the range shell with the roblox-blender-modeling gate, upload them (rbx-import-asset), and swap them in behind switches.
 **Built mostly from plain parts** (parts made in the file / models placed):
 - StretchMachine: 21 / 0
 - ShootingRange (WEAPON TESTING): 34 / 0
