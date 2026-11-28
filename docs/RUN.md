@@ -303,6 +303,12 @@ Group the items that touch the same files and do them together:
   - it never covers the KO pill at the top or the hotbar.
 - **Proof:** captures of 3 different notices on PC and on a phone (upright too).
 
+### 1.22 The angry friend punches the air instead of you: CLOUD (`ANGRY_HITS_REAL`, Mourning; RagdollDirector `keptV2`)
+- **Causes found:**
+  1. NEARBY_CAP_V2 counted the revenge attacker as an extra near you and sent it away, and for 30 s put its Home back away from you, so it stood off and punched the air. Now any body with a Mood (angry, mourning, CPR...) or CommandedBy is kept.
+  2. Its shoves set the player's `AssemblyLinearVelocity` on the server, but the player's body belongs to their own screen, so nothing moved. Now the shove and every 2nd landed punch go through `PlayerRagdoll.knock` (the player's own screen), with the damage as before.
+- **Proof:** kill a ragdoll next to its friend; capture the friend coming to you, landing punches and knocking you over; the health bar going down.
+
 ### 1.19 Carried over from FIXES_28NOV: re-check each one (they were built, the owner did not confirm them all)
 For each: one capture showing it working, and the switch. If it is broken, find the cause and fix it here. A line per item in the final message.
 - `WORLD_POPS` off: no floating texts at any machine (DROP, SMASH, TAIL SLAP, RPM, CRACK, the rocket countdown).

@@ -518,7 +518,15 @@ local function attack(m: Model, job: Job, now: number)
 				a.nextHit = math.huge
 			end
 			if shove and not knocked and root.Parent and flat(root.Position - pelvis.Position).Magnitude <= Mourning.REACH + 1 then
-				root.AssemblyLinearVelocity += dir * Mourning.FUNNY_SHOVE + Vector3.new(0, Mourning.FUNNY_LIFT, 0)
+				-- (ANGRY_HITS_REAL: the player's body belongs to their own screen, so a velocity set here did nothing: the
+				-- shove goes to their screen as a real knock)
+				if (Config :: any).ANGRY_HITS_REAL then
+					pcall(function()
+						lazy("PlayerRagdoll").knock(target, dir * Mourning.FUNNY_SHOVE * 1.5 + Vector3.new(0, Mourning.FUNNY_LIFT + 6, 0))
+					end)
+				else
+					root.AssemblyLinearVelocity += dir * Mourning.FUNNY_SHOVE + Vector3.new(0, Mourning.FUNNY_LIFT, 0)
+				end
 				pcall(function()
 					lazy("FxService").hit(root.Position, 30, "Punch")
 				end)
@@ -546,7 +554,17 @@ local function attack(m: Model, job: Job, now: number)
 			return -- (stepped back, or knocked down before it landed: a miss)
 		end
 		hum:TakeDamage(Mourning.HIT_DAMAGE)
-		root.AssemblyLinearVelocity += dir * Mourning.SHOVE
+		if (Config :: any).ANGRY_HITS_REAL then
+			-- (every 2nd landed punch knocks the player over for real (their own screen moves them); the others sting)
+			a.landed = (a.landed or 0) + 1
+			if a.landed % 2 == 0 then
+				pcall(function()
+					lazy("PlayerRagdoll").knock(target, dir * Mourning.SHOVE * 2.2 + Vector3.new(0, 10, 0))
+				end)
+			end
+		else
+			root.AssemblyLinearVelocity += dir * Mourning.SHOVE
+		end
 		pcall(function()
 			lazy("FxService").hit(root.Position, 50, "Punch")
 		end)

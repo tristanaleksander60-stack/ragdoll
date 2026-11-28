@@ -272,6 +272,9 @@ local function keptV2(m: Model): boolean
 	local hitAt = m:GetAttribute("ServerHitAt")
 	return m:GetAttribute("Held") == true or m:GetAttribute("InMachine") ~= nil or m:GetAttribute("MachineHidden") ~= nil
 		or watch == "Demo" or watch == "NeverZero" or m:GetAttribute("TryFor") ~= nil or m:GetAttribute("BoxSide") ~= nil
+		-- (an angry, mourning, CPR or other mood body is busy with you on purpose: the revenge attacker was sent away and
+		-- punched the air far off)
+		or m:GetAttribute("Mood") ~= nil or m:GetAttribute("CommandedBy") ~= nil
 		or (type(hitAt) == "number" and workspace:GetServerTimeNow() - hitAt < 8)
 end
 local function capStepV2()
