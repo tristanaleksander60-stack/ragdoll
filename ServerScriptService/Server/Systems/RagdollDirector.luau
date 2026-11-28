@@ -272,6 +272,40 @@ RagdollDirector.KEEP_NEAR = 25 -- studs: a body this close to you is yours, neve
 RagdollDirector.KEEP_HIT = 60 -- s after any hit or touch (its Hits count went up) it is never sent off
 local lastHits: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
 local hitKeep: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+local SHOO_TO_SLOT = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).SHOO_TO_SLOT == true
+-- A free watch slot (Slots) far from every player (outside NEAR + 15), nearest to `from`; nil when none.
+local function slotAway(p: Player, from: Vector3): (Vector3?, Vector3?)
+	local ok, Slots = pcall(function()
+		return require(script.Parent:WaitForChild("Slots")) :: any
+	end)
+	if not ok then
+		return nil, nil
+	end
+	local roots: { Vector3 } = {}
+	for _, pl in Players:GetPlayers() do
+		local r = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
+		if r and r:IsA("BasePart") then
+			table.insert(roots, r.Position)
+		end
+	end
+	local okL, list = pcall(Slots.watchSlots, p, from, 260)
+	if not okL then
+		return nil, nil
+	end
+	for _, slot in list :: { { at: Vector3, look: Vector3 } } do
+		local far = true
+		for _, r in roots do
+			if Vector3.new(slot.at.X - r.X, 0, slot.at.Z - r.Z).Magnitude < RagdollDirector.NEAR + 15 then
+				far = false
+				break
+			end
+		end
+		if far and Slots.isFree(slot.at) then
+			return slot.at, slot.look
+		end
+	end
+	return nil, nil
+end
 local function keptV2(m: Model): boolean
 	local watch = m:GetAttribute("Watch")
 	local hitAt = m:GetAttribute("ServerHitAt")
@@ -388,9 +422,22 @@ local function capStepV2()
 		end)
 		for i = 1, math.min(over, #movable) do
 			local e = movable[i]
-			local away = Vector3.new(e.at.X - me.X, 0, e.at.Z - me.Z)
-			local dir = if away.Magnitude > 0.1 then away.Unit else Vector3.xAxis
-			shoo(e.m, e.at + dir * 90)
+			if SHOO_TO_SLOT then
+				-- (SHOO_TO_SLOT, PC's CALM_GUARD 28 Nov: the flings happened at the map's rim and at the plaza's rail
+				-- posts. The cause: a body sent off walked 90 studs straight away from the player, never checked: into
+				-- the map edge, the railway, fences and rails, where the lift and drive pressed it against them until the
+				-- solver threw it out sideways at 40+ studs/s. Now it goes to a free watch slot by a machine, on checked
+				-- floor, far from every player; none free: it stays.)
+				local to, look = slotAway(p, e.at)
+				if to then
+					shoo(e.m, to)
+					e.m:SetAttribute("HomeLook", look)
+				end
+			else
+				local away = Vector3.new(e.at.X - me.X, 0, e.at.Z - me.Z)
+				local dir = if away.Magnitude > 0.1 then away.Unit else Vector3.xAxis
+				shoo(e.m, e.at + dir * 90)
+			end
 		end
 	end
 end
