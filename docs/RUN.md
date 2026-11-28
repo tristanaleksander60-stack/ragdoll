@@ -321,7 +321,12 @@ Group the items that touch the same files and do them together:
     - A steered flight's path (studs from the tower, every 0.5 s): straight up to (0,205,0) at 3.1 s, then after a sideways steer bending to (81,638,0) at 8.1 s. That is the server turning on the pilot's remote. It turned only part way, because the pilot client also sends "straight on" ten times a second without a key.
     - The real D key's run did not lift off in time, so the key steering is an OWNER CHECK.
   - **Moved:** BOOM sat on top of X-RAY on the phone; it is now beside the hotbar.
-  - **Not done:** the camera holding on the blast for 2 s (it goes back at the burst).
+  - **PC 28 Nov late, round 2: the KEY steering FIXED and proven, the blast hold built.**
+    - **Cause:** this game has no PlayerModule in PlayerScripts (its own controls), so the pilot's `GetMoveVector` was always 0 and WASD did nothing.
+    - **Now:** WASD and the arrow keys are read from UserInputService; on a phone the stick comes through the character's MoveDirection (camera-relative).
+    - **Proof, the real D key held 2.5 s:** the path goes straight up to (0,386,0) at 5.1 s, then bends hard sideways and round, to (-94,588,-154) at 9.7 s, then the burst. Capture rocket_pilot_steer: the HUD "533 studs up" and BOOM beside the hotbar.
+    - **The blast hold:** the server sets the player's PilotBlast (the burst point) before it ends the flight; the client's camera looks at it for 2 s, then lets go. Seen: the flight ended with PilotBlast set.
+    - **The HUD speed** read 0 (the server moves the rocket less often than the screen draws); it is now measured over 0.25 s, not seen yet.
 - **State (PC, 28 Nov, v1436):** the rocket's "Strap a ragdoll on" prompt could not be fired from the MCP (two tries: the E key and InputHoldBegin; Triggered never fired on the server), so ROCKET_WHOLE and ROCKET_WALK are unproven. The PILOT (steering, chase camera, BOOM remote) is not built this run: a new client and server system. OWNER CHECK: press E at the rocket.
 - **Causes found** (`RocketRide.luau`):
   - `rocketParts` only took parts within 0.8 column widths, narrower than 1.5 widths and below 1.6 x the stack, so the capsule and nose on top stayed on the tower;

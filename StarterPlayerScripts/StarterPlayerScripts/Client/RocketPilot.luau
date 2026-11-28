@@ -2,7 +2,7 @@
 -- RocketPilot (RUN 1.18 the PILOT, Config.ROCKET_PILOT). While the server flies YOUR rocket (the player attribute
 -- "PilotRocket" = the full name of the rocket's RocketPromptPart, which moves with it):
 --   * a CHASE camera behind and above the ragdoll on the rocket, looking along the nose (never first person);
---   * steering: WASD or the phone's move stick (the PlayerModule's move vector), camera-relative; the wanted nose
+--   * steering: WASD / the arrow keys, or the phone's move stick (the character's MoveDirection), camera-relative; the wanted nose
 --     direction goes to the server through Net RocketSteer about 10 times a second (the server turns it at most
 --     90 degrees a second and never into the ground);
 --   * a small HUD: height, speed and a BOOM button (Net RocketBoom: blow it up now).
@@ -29,13 +29,37 @@ local function find(path: string): BasePart?
 	return if node and node:IsA("BasePart") then node else nil
 end
 
+-- The steer as (x right, z back), like a move vector. This game has no PlayerModule (its own controls), so: WASD and the
+-- arrow keys straight from the keyboard; else the character's MoveDirection (the phone stick moves it even while the
+-- walk speed is 0), turned into the camera's frame.
+local UserInputService = game:GetService("UserInputService")
 local function moveVector(): Vector3
-	local ok, mv = pcall(function()
-		local pm = player:WaitForChild("PlayerScripts"):FindFirstChild("PlayerModule")
-		local controls = pm and (require(pm :: ModuleScript) :: any):GetControls()
-		return controls and controls:GetMoveVector() or Vector3.zero
-	end)
-	return if ok and typeof(mv) == "Vector3" then mv else Vector3.zero
+	local x, z = 0, 0
+	local K = Enum.KeyCode
+	if UserInputService:IsKeyDown(K.D) or UserInputService:IsKeyDown(K.Right) then
+		x += 1
+	end
+	if UserInputService:IsKeyDown(K.A) or UserInputService:IsKeyDown(K.Left) then
+		x -= 1
+	end
+	if UserInputService:IsKeyDown(K.W) or UserInputService:IsKeyDown(K.Up) then
+		z -= 1
+	end
+	if UserInputService:IsKeyDown(K.S) or UserInputService:IsKeyDown(K.Down) then
+		z += 1
+	end
+	if x == 0 and z == 0 then
+		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		local md = if hum then hum.MoveDirection else Vector3.zero
+		if md.Magnitude > 0.1 then
+			local cf = Workspace.CurrentCamera.CFrame
+			local fwd = Vector3.new(cf.LookVector.X, 0, cf.LookVector.Z)
+			fwd = if fwd.Magnitude > 0.1 then fwd.Unit else Vector3.zAxis
+			x = md:Dot(cf.RightVector)
+			z = -md:Dot(fwd)
+		end
+	end
+	return Vector3.new(x, 0, z)
 end
 
 local function hud(): (ScreenGui, TextLabel, TextButton)
@@ -106,18 +130,36 @@ local function fly(path: string)
 	end)
 	local startY = part.Position.Y
 	local lastPos = part.Position
+	local lastAt = os.clock()
+	local shownSpeed = 0
 	local sendAt = 0
 	local conn
 	conn = RunService.RenderStepped:Connect(function(dt: number)
 		if not part.Parent or player:GetAttribute("PilotRocket") ~= path then
 			conn:Disconnect()
-			active = false
-			cam.CameraType = oldType
-			if hum and hum.Parent then
-				hum.WalkSpeed = oldSpeed
-				hum.JumpPower = oldJump
-			end
 			gui:Destroy()
+			local function finish()
+				active = false
+				cam.CameraType = oldType
+				if hum and hum.Parent then
+					hum.WalkSpeed = oldSpeed
+					hum.JumpPower = oldJump
+				end
+			end
+			-- the camera stays on the blast for 2 s (the server's PilotBlast), then lets go
+			local blast = player:GetAttribute("PilotBlast")
+			if typeof(blast) == "Vector3" then
+				local from = cam.CFrame.Position
+				local hold = RunService.RenderStepped:Connect(function()
+					cam.CFrame = CFrame.lookAt(from, blast)
+				end)
+				task.delay(2, function()
+					hold:Disconnect()
+					finish()
+				end)
+			else
+				finish()
+			end
 			return
 		end
 		local nose = part.CFrame.UpVector
@@ -128,9 +170,12 @@ local function fly(path: string)
 		local want = CFrame.lookAt(at - nose * 18 + up * 7, at + nose * 30, up)
 		cam.CFrame = cam.CFrame:Lerp(want, math.clamp(dt * 8, 0, 1))
 		-- the HUD
-		local speed = (at - lastPos).Magnitude / math.max(dt, 1e-3)
-		lastPos = at
-		info.Text = string.format("%d studs up  |  %d studs/s", math.floor(at.Y - startY + 0.5), math.floor(speed + 0.5))
+		-- (the speed over a quarter second: the server moves the rocket less often than the screen draws)
+		if os.clock() - lastAt >= 0.25 then
+			shownSpeed = (at - lastPos).Magnitude / (os.clock() - lastAt)
+			lastPos, lastAt = at, os.clock()
+		end
+		info.Text = string.format("%d studs up  |  %d studs/s", math.floor(at.Y - startY + 0.5), math.floor(shownSpeed + 0.5))
 		-- steering, camera-relative, about 10 a second
 		local now = os.clock()
 		if now >= sendAt then

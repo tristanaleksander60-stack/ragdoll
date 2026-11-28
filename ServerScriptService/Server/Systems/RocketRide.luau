@@ -498,7 +498,13 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 					end
 					pilotBurst = pos + nose * len * 0.5
 					pilots[owner] = nil
+					owner:SetAttribute("PilotBlast", pilotBurst) -- (the pilot's camera holds on the blast for 2 s)
 					owner:SetAttribute("PilotRocket", nil)
+					task.delay(2.5, function()
+						if owner.Parent then
+							owner:SetAttribute("PilotBlast", nil)
+						end
+					end)
 				else
 					while os.clock() - t0 < RocketRide.FLIGHT do
 						local t = os.clock() - t0
