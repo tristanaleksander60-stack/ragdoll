@@ -978,6 +978,12 @@ The owner releases after this. It checks what matters on EVERY device, and anyth
 - `WRAP_ON_SKIN` (WRAP_AXIS, 0.11): stage 2 low wounds on a living forearm (see How to stage): the ring goes ROUND the drawn forearm, its axis along the arm; the head wrap round the round head.
 - `STRETCH_HOLD_DOWN` (stretcher): stage it again; read the `[Stretch]` lines (phase, state, owner, each arm's K): the body lies, K grows to 1.5+ while pulling, then shrinks after 30 s.
 - `WALK_SMOOTH` (0.13): 5 min Play, the `[SWAY]` lines for Walking must be gone or rare (amp under 2). The bike rider (`mood=Ride`): if it still sways, weld the rider's pelvis to the saddle for the ride (one assembly, RAGDOLL_V7.md 3.5) behind `BIKE_RIDER_WELD`.
+  - **PC 28 Nov (4), 5 min Play with WALK_SMOOTH: NOT met, the numbers for the cloud.**
+    - 0 errors, 0 `[CALM_GUARD]` flings, 0 Ride lines.
+    - 2 Standing SWAY lines: amp 2.3-2.6, one of them a boxer.
+    - About 26 Walking SWAY lines in 5 min: amp 1.3-5.9 (most 1.6-3.2), headTurn 8-133, drive 2.6-12.6. Before WALK_SMOOTH: amp 2.4-3.9, headTurn 50-151. So the turns are smaller, but the side speed is about the same.
+    - The probe counts any side-speed sign flip over 0.6 studs/s. A walking body shifts its weight left and right on every step (2+ a second), so a normal gait alone reaches flips >= 3 in 1 s.
+    - NEXT (cloud): measure Walking against the step rhythm (e.g. only side speed over 2.5 studs/s, or flips faster than the step rate), or find why the side speed reaches 2-3 studs/s (the hip swing of the balancing walk).
 
 **1. Clean start (each device: PC, phone emulator, tablet emulator, console emulator if the MCP has it):**
 - one Play: 0 errors and 0 warnings from our scripts in the output (read it all; fix every one);
