@@ -542,6 +542,11 @@ For each: one capture showing it working, and the switch. If it is broken, find 
     - The walking "foot stick-slips" are normal steps. LegJitter counts a foot crossing 0.5 and 3 studs/s more than 4 times a second while the pelvis turns. At walking speed (about 8 studs/s, STRIDE 4.2) the cycle runs about 2 times a second, so each foot swings and plants about 4-6 times a second: the 5-7 reported, with a hip twist of only 0-14 degrees. Not a fault.
     - The stagger and the get-up already exist in physics form: the Flinch/Stumble tone profiles (3 Blaster hits = flinches, the body stays up) and the get-up height from face-down or face-up (`standOffset`, `faceDown`).
     - V7-3 (everything that holds a body): with the V7 skin a hit body gets its holes (3 BulletHoles; the left-arm one 0.50 from the limb's centre, on the skin). The close-up capture missed (the body walked off), so the holes are not proven yet. NEXT: a capture of a hole and of the X-ray on a V7 body (key I through user_keyboard_input with `actions` and `datamodel_type`).
+  - **State (PC, 28 Nov): V7-3 checked on a knocked-out V7 body (10 Blaster hits, 4 BulletHoles, Dead, lying still).**
+    - Capture v7_holes_ko2: the body lies whole (no torn skin), the X-eyes face on the round head, dark hole marks on the torso, purple blood beside it.
+    - Capture v7_xray_ko (key I): the glass body with the whole skeleton inside (skull, ribs, spine, arm bones) in exactly the body's lying pose.
+    - Not captured separately: grab and carry, the machines, CPR, the bike and wheelchair. They pose the same physics parts the skin now follows, so they need no change; they go in the owner's test list.
+    - V7-4 (the clean-up) is NOT done on purpose: SmoothBody still places the mesh, the round head and the holes, and the old balance stays as the physics for hits. Removing it is only safe after the owner has played with V7.
   - Leave it ON only if the proof passes (no jitter standing, upright walking, hits still knock bodies over); else OFF and LEFT with the reason.
   - Then V7-3 and V7-4 the same way. NEVER stop for an owner test: everything goes in the one final list.
 - **`PERF_MOBILE.md` §6:** lag-free 2, the items not yet built.
