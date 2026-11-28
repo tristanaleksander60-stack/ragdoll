@@ -393,7 +393,8 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 
 ## BATCH 2 (straight after batch 1, no stop)
 
-### 2.1 "Sitting behind the bench": CLOUD part (`HIDE_TALL_COVER`, Personas `hide`)
+### 2.1 "Sitting behind the bench": OWNER CHECK (`HIDE_TALL_COVER`)
+- **State (PC, 28 Nov, v1438):** no ragdoll sat on a bench or hid in 25 s of Play (18 lab bodies), so there was nothing to capture. The BenchService seat height on v6 is not checked.
 - **Cause found (cloud):** the owner's capture is a SCARED ragdoll HIDING (SCARED_HIDE). It took the nearest anchored part at least 3 studs tall and 2 wide as cover, and benches, lamp posts and signs counted, so it stood behind a bench and peeked over it.
 - **Now:** cover must be taller than its head, at least 1.5 studs thick both ways, and never a bench.
 - **Also check** the real bench sitting (BenchService). Its seat height comes from the OLD limb sizes. On the thicker v6 body, check in a side capture that the hips are on the planks and the back is not inside the backrest; if not, add the v6 hip depth to `seatHeight` and move the seat point 0.25 studs forward.
@@ -406,7 +407,8 @@ For each: one capture showing it working, and the switch. If it is broken, find 
   - **the plaster:** a small rounded beige patch mesh ON the skin at the wound point, aligned to the surface, visible from 30 studs.
 - **Proof:** a patched-up arm, leg, chest and head from 3 m and 10 m.
 
-### 2.3 Bones break by weapon and by number of hits: TODO (cause found by the cloud: the numbers)
+### 2.3 Bones break by weapon and by number of hits: PART (`BONES_RETUNE`)
+- **State (PC, 28 Nov, v1438):** Bones.CLASS retuned as the table. Hits counted to the break on a fresh right lower leg (Bones.hit, Play): Blaster 3, Deagle 2, SMG 6, DMR 2, Shotgun 1, Bat at full charge 2, Punch at full 6; each sets BreakReq. NOT proven by capture: the crack line and broken bone in X-ray, the dangle and the limp (the capture was unclear; the body still walked with BoneStages 4).
 - **Cause found (cloud):** the bone system works (`Systems/Bones.luau`, BONES_V2): 0 integrity means BROKEN, `BreakReq` set, and the joint broken. But with the current numbers a body dies or is revived before a bone breaks:
   - a light pistol (`Blaster` 18 x factor about 1.1) needs about 5 shots on one lower leg;
   - an auto weapon needs about 10;

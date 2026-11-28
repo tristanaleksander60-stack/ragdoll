@@ -43,6 +43,30 @@ Bones.CLASS = {
 } :: { [string]: { number } }
 Bones.BLAST_BASE = 120 -- at the centre, down to 0 at the edge, on the bone it hits
 
+-- (BONES_RETUNE, RUN 2.3: with the numbers above a body died or was revived before any bone broke (a light pistol needed
+-- about 5 hits on one lower leg, an auto weapon about 10). Hits to break a fresh limb bone now: light pistol 3, heavy
+-- pistol 2, auto 6, rifle 2, shotgun or sniper 1, a bat or club at full charge 2, fists 6.)
+if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).BONES_RETUNE then
+	local C = Bones.CLASS
+	C.Blaster = { 32 }
+	C.Deagle, C.Revolver, C.GoldenDeagle = { 48 }, { 48 }, { 48 }
+	for _, id in { "SMG", "TommyGun", "LMG", "Minigun", "NailGun", "AK" } do
+		C[id] = { 16 }
+	end
+	C.DMR = { 50 }
+	C.Shotgun = { 100 }
+	C.Sniper = { 100 }
+	C.Crossbow = { 50 }
+	C.Bow = { 12, 50 }
+	for _, id in { "Bat", "Golf", "Pan", "Crowbar" } do
+		C[id] = { 30, 55 }
+	end
+	for _, id in { "Punch", "Slap", "Shove", "Glove" } do
+		C[id] = { 6, 18 }
+	end
+	C.Kick, C.Uppercut = { 8, 20 }, { 8, 20 }
+end
+
 -- The force of one hit: guns by range (point blank 1.3, normal 1.0, far 0.6); melee and bows by the charge.
 function Bones.damageFor(toyId: string?, charge: number?, range: number?, kind: string, power: number): number
 	local c = toyId and Bones.CLASS[toyId]
