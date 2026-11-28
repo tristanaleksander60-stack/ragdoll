@@ -56,6 +56,12 @@
 - Custom funnels: PlaytimeNew, PlaytimeAll, NewPhone/NewTablet/NewPC/NewConsole, ShopVisit, Vehicles (Pressed, SatFree, PassPrompt, Bought), Multiplayer. Retired: Tutorial, TakedownsNew.
 - Custom events: FirstUse, XrayToggle, BodyCardHidden, CPRDone, BowlingScore (a frame scores at most 30, so the buckets are 0-9 / 10-19 / 20-30, not 0-50/51-100/101+).
 
+## 28 Nov late, /klar loop (v1450): STOPPED for the owner's test of V7 step 1
+- RAGDOLL_V7 step 1 is ON: the engine draws the v6 skin from the physics parts (SmoothBody v7Attach). Owner tests: a fall, standing and walking bodies, holes, plasters, X-ray.
+- STANDING_RUN_GAIT on; 1.12 LEFT (the knee events left are bodies falling onto another body).
+- 2.7 DONE (13 kinds of plain parts replaced, the spider web last). The shredder pit stays closed (owner: "du bestemmer").
+- NEXT after the owner's yes: V7-2 (animated walking until hit, the stagger, the get-up).
+
 ## 28 Nov, /klar run (v1448): batch 2.7 models + batch 3 checked
 - Done: real models for the gyro, the press, the stretcher, the Tesla coil, the archery target, the sweeper, 63 lamps, 34 benches, 27 crates, 15 barrels, 30 bins, the shredder control box, and the FartGun weapon (all in the place file). LabProps split off LabOwnerMap (Studio's 200000-char cap).
 - Left: the shredder's pit is closed, so its rollers cannot be seen; the range shell, the tower rails and the spider web are still plain (the generated web came out as a ball). V7-1 needs the Blender split (the v6 skin follows only bones under its own mesh: v7_bone_test3-6). PERF §6: a phone test. DOG3 last.
