@@ -809,6 +809,31 @@ local function enter(rig: Rig, state: State)
 			end
 		end
 	end
+	if (GameConfig :: any).RAGDOLL_V7_ANIMATED then
+		-- (RAGDOLL_V7 step 2, "animated until hit": an upright body is not balanced on forces any more. Its upright and its
+		-- heading are held RIGIDLY (no wobble, no spin), and its legs do not touch the floor (the lift carries it), so the
+		-- feet never grip, slip or twist. A hit or a fall changes the state, which lets go of all of it: physics at once.)
+		local animated = (state == "Standing" or state == "Walking" or state == "Fleeing") and rig.model:GetAttribute("IsDummy") == true
+		rig.balance.RigidityEnabled = animated
+		local cb = rig.chest:FindFirstChild("ChestBalance")
+		if cb and cb:IsA("AlignOrientation") then
+			cb.RigidityEnabled = animated
+		end
+		local R: any = rig
+		R.legCollide = R.legCollide or {}
+		for _, n in { "LeftUpperLeg", "LeftLowerLeg", "LeftFoot", "RightUpperLeg", "RightLowerLeg", "RightFoot" } do
+			local leg = rig.model:FindFirstChild(n)
+			if leg and leg:IsA("BasePart") then
+				if animated and R.legCollide[leg] == nil then
+					R.legCollide[leg] = leg.CanCollide
+					leg.CanCollide = false
+				elseif not animated and R.legCollide[leg] ~= nil then
+					leg.CanCollide = R.legCollide[leg]
+					R.legCollide[leg] = nil
+				end
+			end
+		end
+	end
 	if state == "Standing" or isMoving(state) then
 		applyPose(rig, Poses.REST)
 	elseif state == "Ragdoll" or state == "Out" then

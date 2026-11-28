@@ -534,6 +534,10 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 ## BATCH 3 and on
 - **`RAGDOLL_V7.md`:** V7 step 1 is ON (v1450: the engine skins v6 from the physics parts). Go straight on with V7-2: animated walking until hit, the switch to physics at the same pose, the stagger and the get-up by orientation.
   - Build it behind `Config.RAGDOLL_V7_ANIMATED` and prove it: captures, plus the SMOKE ROUND.
+  - **State (PC, 28 Nov, v1451): V7-2 slice 1 ON (`RAGDOLL_V7_ANIMATED`, ActiveRagdoll state change).** An upright dummy (Standing, Walking, Fleeing) is no longer balanced on forces: its Balance and ChestBalance are RIGID (exact upright and heading), and its six leg parts do not collide (the lift carries it; the feet were 0.02 over the floor anyway). Any other state (a flinch, a fall, a hit, held, a seat) lets go of all of it at once, and the legs collide again.
+    - LegJitter, 75 s, same spot as the runs before: the spins while standing are gone (13-19 rad/s TURN TWIST while Standing: 3 before, 0 now; one slow 1.7 rad/s left). Knee events 2 → 1. The walking-turn foot slips are unchanged (5 events, 5-10 a second): that is the drawn foot, slice 2.
+    - Hits still work: 3 Blaster hits left a body standing at 68 % health (flinches), 9 knocked it out: it went Ragdoll and slumped, legs colliding again (captures v7a_hit, v7a_hit2; the bodies around it stand upright and calm).
+    - NEXT, slice 2: the walking feet (DummyLife's footstep planting against the root's turn), then the stagger and the get-up by orientation.
   - Leave it ON only if the proof passes (no jitter standing, upright walking, hits still knock bodies over); else OFF and LEFT with the reason.
   - Then V7-3 and V7-4 the same way. NEVER stop for an owner test: everything goes in the one final list.
 - **`PERF_MOBILE.md` §6:** lag-free 2, the items not yet built.
