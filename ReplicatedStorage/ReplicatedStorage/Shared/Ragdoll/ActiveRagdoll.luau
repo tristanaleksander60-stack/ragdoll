@@ -379,8 +379,20 @@ local function reportTransition(rig: Rig)
 	end
 end
 
+-- (LEG_ONE_WRITER: a pose that does not name a leg joint (a mood's upper body: Angry, Box, a gesture) reset the hips, knees
+-- and ankles to straight every physics step, while DummyLife set the walk or stance on the same joints every frame, so
+-- the legs flipped between the two: the "legs bug" in bursts. Now, while the body stands, walks or flees, a pose leaves
+-- the leg joints it does not name to DummyLife.)
+local LEG_ONE_WRITER = (require(script.Parent.Parent:WaitForChild("Config")) :: any).LEG_ONE_WRITER == true
+local function legJoint(name: string): boolean
+	return string.find(name, "Hip", 1, true) ~= nil or string.find(name, "Knee", 1, true) ~= nil or string.find(name, "Ankle", 1, true) ~= nil
+end
 local function applyPose(rig: Rig, pose: Poses.Pose)
+	local upright = LEG_ONE_WRITER and pose ~= Poses.REST and (rig.state == "Standing" or rig.state == "Walking" or rig.state == "Fleeing")
 	for name, joint in rig.joints do
+		if upright and pose[name] == nil and not rig.broken[name] and legJoint(name) then
+			continue
+		end
 		joint.Transform = if rig.broken[name] then CFrame.identity else (pose[name] or CFrame.identity)
 	end
 end

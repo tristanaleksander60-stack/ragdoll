@@ -113,7 +113,12 @@ local function hide(m: Model, from: Vector3)
 	local best: BasePart? = nil
 	local bestD = math.huge
 	for _, p in Workspace:GetPartBoundsInRadius(pe.Position, 22, hideParams) do
-		if p.Anchored and p.CanCollide and p.Size.Y >= 3 and math.max(p.Size.X, p.Size.Z) >= 2 and math.max(p.Size.X, p.Size.Z) <= 30
+		-- (HIDE_TALL_COVER: a bench, a lamp post or a sign was taken as cover, so the ragdoll stood behind a bench peeking
+		-- over it. Real cover is taller than its head and at least 1.5 studs thick both ways, and never a bench.)
+		local tall = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).HIDE_TALL_COVER == true
+		local coverOk = not tall or (p.Position.Y + p.Size.Y / 2 >= pe.Position.Y + 2.8 and math.min(p.Size.X, p.Size.Z) >= 1.5
+			and not (p.Parent and string.find(string.lower(p.Parent.Name .. p.Name), "bench", 1, true)))
+		if coverOk and p.Anchored and p.CanCollide and p.Size.Y >= 3 and math.max(p.Size.X, p.Size.Z) >= 2 and math.max(p.Size.X, p.Size.Z) <= 30
 			and p.Position.Y - p.Size.Y / 2 < pe.Position.Y + 1 then
 			local d = (p.Position - pe.Position).Magnitude
 			if d < bestD then

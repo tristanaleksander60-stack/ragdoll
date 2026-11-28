@@ -1,6 +1,16 @@
 # RUN.md: the ONE ordered to-do list (from 28 Nov)
 This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_27NOV_LATE and FIXES_28NOV as the place that says what to do next. Those docs stay as background (grep them for detail). If anything else disagrees with this file, this file wins.
 
+## WHO DOES WHAT
+- **The cloud session** reads the code, finds the causes, and writes most code changes. It cannot run Studio.
+- **Claude Code on the PC** does what needs Studio:
+  - pushing and running the code (one Play);
+  - tuning numbers by looking;
+  - models: Blender and the Creator Store;
+  - animation clips;
+  - captures and proofs.
+- **When an item says "Cause found (cloud)"**, do not search again: confirm it in one Play, then build and prove it. If the confirmation shows the cause is wrong, say so in the State, find the real one, and fix that.
+
 ## Rules for every run (no exceptions)
 1. **Preflight** (always first; nothing else before it):
    1. `git pull --rebase`.
@@ -201,21 +211,31 @@ Group the items that touch the same files and do them together:
   - telemetry `Fps_p10` by device.
 - **Proof:** the profiler numbers and an FPS counter capture at the spawn with every ragdoll in view drawn in v6.
 
-### 1.12 The legs still bug: TODO (cause not found yet)
-- **First** catch it: watch 10 standing and walking ragdolls for 60 s, and capture the moment a leg bugs (snaps, shakes, twists or folds).
-- **Name the cause in the code.** Candidates to check:
-  - DummyLife's gait and foot IK fighting ActiveRagdoll's joint targets;
-  - LegJitter;
-  - the limb guard;
-  - a broken or loose leg joint while standing;
-  - SmoothBody drawing a leg bone from a stale part.
-- **Fix that cause only.** RAGDOLL_V7 (animated until hit) is the lasting cure; this item is the stopgap.
-- **Proof:** the same 60 s watch with no leg bug, as a capture series.
+### 1.12 The legs still bug: CLOUD (`LEG_ONE_WRITER`, ActiveRagdoll `applyPose`)
+- **Cause found (cloud):** two writers set the same leg joints.
+  - `ActiveRagdoll.applyPose` writes EVERY joint each physics step, and a joint the pose does not name is set to straight. Mood poses (Angry, Box, gestures) name only the upper body.
+  - `DummyLife` sets the walk or stance on the hips, knees and ankles every frame.
+  - So while a mood was on, or on a frame where DummyLife skipped the body (its LOD), the legs flipped between straight and bent: the bursts of leg jitter, worst on the angry ones.
+- **Now:** while a body stands, walks or flees, `applyPose` leaves the leg joints a pose does not name to DummyLife. REST and the full-body poses (falls, sitting, kneeling) still set them.
+- **Confirm with the detector already in the game** (`LEG_JITTER_LOG`: the output and the player attribute `LegJitterLast`):
+  1. 60 s with `LEG_ONE_WRITER = false` near an angry ragdoll and a crowd, counting the events;
+  2. 60 s with it true;
+  3. the count must drop to about 0. Paste both counts in the State.
+- **If events remain:** the log names the state, role and Home changes; fix that cause.
+- **Proof:** the two counts, and a capture series of an angry ragdoll walking with steady legs.
 
-### 1.13 Bullet holes and bandages shown wrong: FAILED (moved up from 2.2: same item, do it now)
-- **See 2.2.** Holes must sit ON the v6 skin at the hit point (never under it, never floating, never a purple blob) on every limb, the round head, the hands and the feet, and follow the body as it moves. Bandages are a ring at the v6 limb radius; plasters are a patch on the skin.
-- **First find the cause:** where each hole is parented and how its CFrame is set (the hidden block part, or the v6 surface). Show a capture of a wrong one with the cause named.
-- **Proof:** 20 shots spread over one body, captures from the front, the back and while it walks; a patched-up body.
+### 1.13 Bullet holes and bandages shown wrong: CLOUD (`ON_SKIN`, SmoothBody `watchSkin`/`drive`)
+- **Cause found (cloud):** the "two bodies" problem.
+  - Holes, stress rings and bandages are WELDED to the hidden physics limb.
+  - The visible v6 mesh is drawn from an FK bone chain, so the drawn limb is often a few centimetres to tenths of a stud away from the physics limb.
+  - So every hole and bandage sat under or over the drawn skin and slid as the body moved.
+- **Now:**
+  - on a v6 body, every BulletHole, BulletStress, Bandage, Plaster, Gauze and BruisePatch (or any part with the attribute `OnSkin`) welded to a limb is taken over: its weld is switched off, it is anchored, and each frame `drive()` moves it with the DRAWN limb (`BulkMoveTo`), keeping the offset it was welded at;
+  - a body that drops its v6 mesh (far away) gets its welds back.
+- **Still to build:**
+  - bandages sized to the v6 limb radius (`BodyShape.radius`), not the old block's size (`DummySkins` uses `limb.Size`);
+  - a visible plaster patch.
+- **Proof:** 20 shots spread over one body; captures from the front, the back and while it walks; a patched-up body from 3 and 10 studs.
 
 ### 1.14 The spawn arch banners half inside the pillars: CLOUD (`BANNER_CLEAR`, LabOwnerMap spawnSet)
 - **Cause found:** the banner hung 0.075 studs off the pillar, and its "Swing" (0.06 rad round its top) moved its bottom about 0.5 studs, into the stone.
@@ -223,17 +243,15 @@ Group the items that touch the same files and do them together:
 - **Also:** check every other part tagged "Swing" (flags and banners) the same way: gap > Amp x length + 0.1.
 - **Proof:** captures of all 4 banners from the side, 10 s apart.
 
-### 1.15 Orange boxes round the map: TODO (remove them)
-- Plain orange box props stand round the map; the owner's capture shows one with 2 bullet holes.
-- **Find every one:**
-  1. In Play, list every BasePart in the lab and plaza whose colour is orange (hue 20-40 degrees, saturation > 0.5) and whose shape is a box 2-6 studs, with its full name.
-  2. Candidates:
-     - WorldDress `V2Crate` (`crate(..., C.orange)`);
-     - LabDress `Crate` (V3Assets);
-     - Knockables;
-     - BuildService crates.
-- **Remove them** behind `Config.NO_ORANGE_BOXES`, at the source (never by deleting from the place file).
-- **Proof:** a capture of the 3 places where one stood, and the list printed empty.
+### 1.15 Orange boxes round the map: TODO (the source is not in the code the cloud could find: find it in Play)
+- **The cloud checked:** WorldDress crates, the LabOwnerMap crates (brown wood), Breakables (wood), Knockables, Surprises and ToyService. None is a plain orange cube, so it is most likely a placed model (V3Assets or LabDress) or a player-built Crate (BuildService).
+- **Find it** by pasting this in the command bar during Play:
+
+  ```lua
+  for _, p in workspace:GetDescendants() do if p:IsA("BasePart") then local h, sat = p.Color:ToHSV() if h > 0.05 and h < 0.12 and sat > 0.5 and p.Size.Magnitude > 3 and p.Size.Magnitude < 12 then print(p:GetFullName(), p.Size) end end end
+  ```
+- **Then remove them at their source** behind `Config.NO_ORANGE_BOXES` (never delete from the place file).
+- **Proof:** the printed list empty, and captures of the spots.
 
 ### 1.16 The man-eating plant: CLOUD part (`PLANT_REAL`, `PLANT_YAW`; LabCreatures BUILD.Plant)
 - **Causes found:**
@@ -333,9 +351,11 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 
 ## BATCH 2 (straight after batch 1, no stop)
 
-### 2.1 Sitting ON the bench, not behind it: TODO
-- **Find the cause** in BenchService: how the sit point is computed, and that it does not use the bench model's real seat. **Fix:** every bench gets seat slots from its seat surface (a free slot per 2 studs of seat), and the pelvis is placed on the seat top, facing out, with the v6 hip height.
-- **Proof:** captures of 3 benches with sitters, from the front and the side.
+### 2.1 "Sitting behind the bench": CLOUD part (`HIDE_TALL_COVER`, Personas `hide`)
+- **Cause found (cloud):** the owner's capture is a SCARED ragdoll HIDING (SCARED_HIDE). It took the nearest anchored part at least 3 studs tall and 2 wide as cover, and benches, lamp posts and signs counted, so it stood behind a bench and peeked over it.
+- **Now:** cover must be taller than its head, at least 1.5 studs thick both ways, and never a bench.
+- **Also check** the real bench sitting (BenchService). Its seat height comes from the OLD limb sizes. On the thicker v6 body, check in a side capture that the hips are on the planks and the back is not inside the backrest; if not, add the v6 hip depth to `seatHeight` and move the seat point 0.25 studs forward.
+- **Proof:** a scared ragdoll hiding behind a wall or tree; 3 benches with sitters, from the front and the side.
 
 ### 2.2 Bandages and plasters that sit right and can be seen: FAILED (FIXES_28NOV 11 built) (now done as 1.13)
 - **Find the cause:** the capture shows a gauze floating as a flat box off the arm, and no plaster at all.
@@ -344,51 +364,89 @@ For each: one capture showing it working, and the switch. If it is broken, find 
   - **the plaster:** a small rounded beige patch mesh ON the skin at the wound point, aligned to the surface, visible from 30 studs.
 - **Proof:** a patched-up arm, leg, chest and head from 3 m and 10 m.
 
-### 2.3 Bones break by weapon and by number of hits: TODO
-- **Find the cause:** why no bone breaks today. Check that the server's BoneStages attribute changes on hits (BONES_V2), and that the X-ray and the joint read it.
-- **The rules (`Config.BONE_BREAK`, a table by weapon):**
+### 2.3 Bones break by weapon and by number of hits: TODO (cause found by the cloud: the numbers)
+- **Cause found (cloud):** the bone system works (`Systems/Bones.luau`, BONES_V2): 0 integrity means BROKEN, `BreakReq` set, and the joint broken. But with the current numbers a body dies or is revived before a bone breaks:
+  - a light pistol (`Blaster` 18 x factor about 1.1) needs about 5 shots on one lower leg;
+  - an auto weapon needs about 10;
+  - every heal or revive resets the bones.
 
-  | Weapon | Hits on one bone to crack it | Hits to break it |
-  |---|---|---|
-  | Fists | 3 | 6 |
-  | Bat or melee | 1 | 2 |
-  | Pistol | 1 | 3 |
-  | Rifle | 1 | 2 |
-  | Shotgun, minigun burst, rocket blast, a fall from over 30 studs | — | 1 |
+  On v6 bodies the crack visuals must also show on the X-ray bones in use.
+- **Fix: retune `Bones.CLASS`** so a fresh limb bone breaks after:
 
-  - The hit count is per bone, kept for 60 s.
-- **What a break looks like:**
-  - in the X-ray, the bone shows a crack line, then two pieces with a gap and a 15-degree bend;
-  - the limb's joint goes loose (broken);
-  - a crack sound;
-  - the ragdoll limps or holds the arm.
-- **Proof:** an X-ray capture of each stage on an arm and a leg; walking with a broken leg.
+  | Weapon | Hits on one bone to break it |
+  |---|---|
+  | light pistol | 3 |
+  | heavy pistol | 2 |
+  | auto | 6 |
+  | rifle | 2 |
+  | shotgun or sniper | 1 |
+  | bat or club, at full charge | 2 |
+  | fists | 6 |
 
-### 2.4 The whole skull in the X-ray: FAILED (half the skull shows)
-- **Cause to confirm:** the skull is built at the OLD head's centre and size, so it sits low inside the bigger round head and its top is missing.
-- **Fix:** build the skull in the round head's frame (the ball's centre, about 0.85 of its radius), with the cranium top, eye holes and jaw, all inside the ball.
+  - Example values: Blaster 32, Deagle 48, SMG 16, DMR 50, Shotgun 100, Bat {30, 55}, Punch {6, 18}.
+- **Check that a limb hit does not kill the body before the bone goes** (VitalsService blood loss per limb round). If it does, lower the limb blood loss, not the bone numbers.
+- **Visible:**
+  - the CRACKED and BROKEN stages on the v6 X-ray bones;
+  - a dangling broken limb;
+  - a limp;
+  - the crack sound.
+- **Proof:** shots counted to the break for each class; X-ray captures of cracked and broken; a limp walk.
+
+### 2.4 The whole skull in the X-ray: FAILED (half the skull shows); cause candidates from the cloud
+- **What the code does:** the skull (SmoothBody `roundHead`) is a 1.22-stud bone ball centred inside the 1.7 round head, with eye holes and a jaw, so the code alone does not explain a missing top.
+- **Test in ONE Play** (X-ray on, a capture after each):
+  1. the old Head's X-ray glass shell (DummySkins) drawn opaque over the top: set it to Transparency 1;
+  2. the round head ball not taking the X-ray transparency at the top (an accessory lifted by `raise`, a hat);
+  3. a CrashMark gui on the ball covering it in X-ray.
+- **Fix the one that shows the top.** Make it read as a skull: a cranium, cheekbones, the eye holes, and the jaw with teeth.
 - **Proof:** X-ray captures from the front, the side and above.
 
 ### 2.5 SPAWN_V2: how ragdolls spawn and gather, done properly (see the design below). Steps 2-3 in this batch.
 
-### 2.6 Every killer has its own real, creative death: TODO (moved here from 1.8 NEXT)
-1. **List every killer first:** grep `LabCreatures.luau` `BUILD.*`, `AnimalCove`, `MapMachines` (Shredder, Sweeper, Gyro), `LavaPit`, `Compressor`, `StretchMachine`, `FanMachine`, `WhaleSpout` and the others. Write the list here with what each does today.
-2. **Rule for all:** the body is taken by the killer's real part (mouth, claws, rollers, jaws, web) through `CreatureGrip` or a weld to that part, never teleported. Real wounds and bone breaks (2.3); a unique sound; no floating text.
-3. **Each one gets a choreography that no other killer has**, with a target of at least 3 beats: the approach, the kill, the aftermath. For example:
-   - the bear drags the body into its cave;
-   - the crocodile does a death roll under water;
-   - the spider wraps the body in a cocoon that hangs;
-   - the plant swallows it and spits out bones;
-   - the shredder pulls the body in feet first.
-4. **Rigged models:** where a model has no bones for the head, jaw or limbs, find a rigged one (Creator Store, malware pass) or make one in Blender (quality gate), and play AnimationController clips.
-5. **Proof:** a 4-capture series per killer (approach, grab, kill, aftermath). Do them worst first; at least 5 in this run.
+### 2.6 Every killer has its own real, creative death: TODO (the list from the cloud)
+**The killers:**
+- **Creatures** (`LabCreatures BUILD.*`): Chicken, Frog, Mole, Plant, Slingshot, Spider, Vacuum, Washer, Whale.
+- **Animals** (`AnimalCove`): Bear, Crocodiles, T-rex (bear and T-rex already use CreatureGrip).
+- **Machines:** MapMachines (the Gyro and the map machines), StretchMachine, Compressor, FanMachine, WhaleSpout, LavaPit, RocketRide, BrickWall, Bowling, BoxingMatch.
 
-### 2.7 No more plain-part machines or creatures: TODO
-1. **List** every machine, creature and building a player sees that is built from plain parts in code (`part(` / `Instance.new("Part")` making its visible body), with a capture of each.
-2. **Replace them, worst first, at least 5 in this run,** with a Blender model (quality gate at 8.5 or more) or a malware-checked Creator Store model. Each keeps its gameplay parts (triggers, DropSpots) invisible.
-3. **Proof:** a before and after capture of each.
+**The rule for all:**
+- the body is taken by the killer's real part (mouth, claws, rollers, jaws, web) through `CreatureGrip` or a weld, never teleported;
+- real wounds and bone breaks (2.3);
+- a unique sound;
+- no floating text;
+- at least 3 beats: the approach, the kill, the aftermath.
 
+**Ideas, one each:**
+- Spider: wraps the body in a cocoon that hangs and wriggles.
+- Frog: its tongue grabs from 15 studs, then a swallow and a burp, and the body is spat out.
+- Plant: swallows the body and spits out bones.
+- Mole: drags the body under the ground.
+- Washer: a spin cycle; the body comes out dizzy.
+- Vacuum: sucks the body in feet first and spits it out flat.
+- Whale: swallows the body and blows it out of its spout.
+- Chicken: pecks the body down.
+- Crocodile: a death roll and a drag under water.
+- Bear: drags the body into its cave.
+- T-rex: sometimes gulps and spits the body out later.
 
+**Proof:** 4 captures per killer, worst first; at least 5 in this run.
+
+### 2.7 No more plain-part machines or creatures: TODO (the list from the cloud)
+**Built mostly from plain parts** (parts made in the file / models placed):
+- StretchMachine: 21 / 0
+- ShootingRange (WEAPON TESTING): 34 / 0
+- Bowling: 29 / 0
+- Compressor: 23 / 2
+- Playground: 83 / 6
+- LabCreatures: 47 / 16
+- the LabOwnerMap machines (Gyro, Sweeper, Shredder, Seesaw, the T-rex pen) and the WorldDress dressing.
+
+**Do this:**
+1. Capture each one.
+2. Score it against a real reference photo.
+3. Replace the 5 worst with Blender (quality gate at 8.5 or more) or malware-checked Creator Store models, keeping the gameplay parts invisible.
+
+**Proof:** before and after captures.
 
 ---
 
