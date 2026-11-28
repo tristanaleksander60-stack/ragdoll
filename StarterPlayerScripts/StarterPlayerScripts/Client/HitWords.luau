@@ -29,6 +29,9 @@ local function reducedMotion(): boolean
 end
 
 function HitWords.show(model: Model, word: string, color: Color3)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).WORLD_POPS == false then
+		return -- (owner: no floating words over bodies: "Knocked out", "Dizzy", "Wobbly")
+	end
 	local head = model:FindFirstChild("Head")
 	if not head or not head:IsA("BasePart") then
 		return

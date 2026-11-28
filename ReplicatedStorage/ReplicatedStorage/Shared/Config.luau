@@ -201,6 +201,7 @@ local Config = {
 	FACE_SHOOTER = true, -- a ragdoll that is not scared turns to the player who shot it, from up to 160 studs (ActiveRagdoll standsFirm)
 	ANGRY_MORE = true, -- a shot ragdoll gets mad more often: 15 % fresh to 60 % near death (was 3-35 %), up to 3 mad at once in a lab (Mourning.chanceOf)
 	HOLE_CURVE_FIT = true, -- a bullet hole on a round v6 limb is at most 0.8 x its radius across and lifted by the curve's sag, so its rim touches the skin all round (never half inside the arm) (BulletHoles)
+	BIKE_UNSTUCK = true, -- the ragdoll's motorbike sees walls, fences, posts and machines ahead (a ray) and turns away, and turns round with a new goal when it has not moved for 1.8 s (BikeService)
 	FEET_GLIDE = false, -- (OFF: did not help, see RUN 1.12) RUN 1.12 TURN TWIST: upright feet have no friction (the lift carries the body), so they never grip and slip in a walking turn (ActiveRagdoll)
 	STANDING_RUN_GAIT = true, -- RUN 1.12 (a): a "Standing" body that really moves (a watcher running to its spot, over 2.5 studs/s) runs the walk cycle instead of the idle stance on running legs (DummyLife)
 	RAGDOLL_V7_ANIMATED = false, -- (OFF 28 Nov, the owner's test: legs frozen in one pose while the body glided on the lift with its legs off the floor. Back on only with a REAL animated walk: RUN.md V7-2)

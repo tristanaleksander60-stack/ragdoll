@@ -298,6 +298,41 @@ local function ride(car: any, owner: Player, rider: Model)
 		if to then
 			local want = math.atan2(-(to.X - here.X), -(to.Z - here.Z))
 			local dodge, near = clearOf(body, rider, heading)
+			-- (BIKE_UNSTUCK, owner: the motorbike rode into things and stayed stuck there. clearOf only sees ragdolls and
+			-- players. Now (1) a ray ahead at knee height sees walls, fences, posts and machines and turns away to the clearer
+			-- side; (2) if it has moved under 1.5 studs in 1.8 s, it turns round and takes a new goal.)
+			if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).BIKE_UNSTUCK then
+				local B: any = car
+				local now0 = os.clock()
+				if not B.progAt or (here - (B.progPos :: Vector3)).Magnitude > 1.5 then
+					B.progAt, B.progPos = now0, here
+				elseif now0 - B.progAt > 1.8 then
+					heading += math.pi * (0.75 + math.random() * 0.5)
+					goal, goalAt = nil, now0
+					if route then
+						leg = leg % #route + 1
+					end
+					B.progAt, B.progPos = now0, here
+				end
+				local params = RaycastParams.new()
+				params.FilterType = Enum.RaycastFilterType.Exclude
+				local skipList: { Instance } = { car.model, rider }
+				local dz = Workspace:FindFirstChild("Dummies")
+				if dz then
+					table.insert(skipList, dz)
+				end
+				params.FilterDescendantsInstances = skipList
+				local function blocked(a: number): boolean
+					local dir = Vector3.new(-math.sin(a), 0, -math.cos(a))
+					local hit = Workspace:Raycast(here + Vector3.new(0, 1.2, 0), dir * 8, params)
+					return hit ~= nil and math.abs(hit.Normal.Y) < 0.6
+				end
+				if blocked(heading) then
+					local left, right = blocked(heading + math.rad(50)), blocked(heading - math.rad(50))
+					dodge += if not left and right then 1.2 elseif left and not right then -1.2 elseif not left then 1.2 else math.pi * 0.6
+					near = math.min(near, 3)
+				end
+			end
 			want += dodge
 			local off = math.atan2(math.sin(want - heading), math.cos(want - heading))
 			heading += math.clamp(off, -BikeService.TURN * dt, BikeService.TURN * dt)

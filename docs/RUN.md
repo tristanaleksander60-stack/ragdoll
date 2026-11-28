@@ -400,6 +400,14 @@ Group the items that touch the same files and do them together:
   - shoot one from 60 and from 120 studs: it turns to you;
   - shoot 10 ragdolls each twice: count the mad ones (about 2-4).
 
+### 1.24 Floating words over bodies; the motorbike stuck in things: CLOUD (`WORLD_POPS` now also HitWords + StuntHud; `BIKE_UNSTUCK`)
+- **Words:** "Knocked out", "Dizzy" and "Wobbly" came from `Client/HitWords` and the live flight count from `Client/StuntHud`. Neither was behind WORLD_POPS. Now both return at once when WORLD_POPS is false.
+  - **Check:** in Play, list every BillboardGui that shows text over a body or in the air. The speech lines (DummyLife) and the TRY! sign are the only ones allowed. Put anything else behind WORLD_POPS.
+- **Motorbike:**
+  - **cause found (cloud):** BikeService only dodged ragdolls and players (`clearOf`), never walls, fences, posts or machines, and nothing noticed when it stopped moving;
+  - **now:** a ray 8 studs ahead at knee height turns it to the clearer side, and if it has moved under 1.5 studs in 1.8 s it turns round and takes a new goal.
+- **Proof:** a capture series of the motorbike meeting a fence and a lamp post and getting free; 2 minutes of riding without a stuck stop over 2 s.
+
 ### 1.19 Carried over from FIXES_28NOV: re-check each one (they were built, the owner did not confirm them all)
 For each: one capture showing it working, and the switch. If it is broken, find the cause and fix it here. A line per item in the final message.
 - `WORLD_POPS` off: no floating texts at any machine (DROP, SMASH, TAIL SLAP, RPM, CRACK, the rocket countdown).

@@ -48,6 +48,9 @@ local function clearLive()
 end
 
 local function showLive()
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).WORLD_POPS == false then
+		return -- (no live count floating over your head)
+	end
 	clearLive()
 	local character = player.Character
 	local head = character and character:FindFirstChild("Head")
