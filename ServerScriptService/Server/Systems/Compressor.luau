@@ -691,6 +691,46 @@ function Compressor.build(folder: Instance, origin: Vector3, at: Vector3?)
 	t.Text = "\u{1F95E} PRESS"
 	t.Parent = gui
 	gui.Parent = sign
+	-- (PRESS_MODEL, RUN 2.7: the press frame was plain blocks (pillars, braces, sleeves, a top beam, bolts, hoses). Now a
+	-- real hydraulic press frame (V3Assets "PressFrame": painted steel columns, a crossbeam with hazard stripes and the big
+	-- cylinder; a Studio-generated mesh) stands round the bed; the old frame pieces are hidden. The bed, the moving plate
+	-- and the footing stay: they are the machine.)
+	local frameSrc = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).PRESS_MODEL
+		and game:GetService("ServerStorage"):FindFirstChild("V3Assets") and game:GetService("ServerStorage").V3Assets:FindFirstChild("PressFrame")
+	if frameSrc then
+		local frame = frameSrc:Clone()
+		local _, fs = frame:GetBoundingBox()
+		local w, h = S + 2.6, 1.6 + H + 2.2
+		for _, d in frame:GetDescendants() do
+			if d:IsA("BasePart") then
+				local o = frame:GetPivot():ToObjectSpace(d.CFrame)
+				local k = Vector3.new(w / fs.X, h / fs.Y, w / fs.X)
+				d.Size = d.Size * k
+				d.CFrame = frame:GetPivot() * CFrame.new(o.Position * k) * o.Rotation
+				d.Anchored = true
+				d.CanCollide = false
+				d.CanQuery = false
+				d.CanTouch = false
+			elseif d:IsA("LuaSourceContainer") then
+				d:Destroy()
+			end
+		end
+		frame:PivotTo(face * CFrame.new(0, 0.6, 0))
+		frame.Parent = m
+		local HIDE = { Pillar = true, PillarFoot = true, PillarBrace = true, Sleeve = true, TopBeam = true, Flange = true, Bolt = true,
+			SideCylinder = true, SideRod = true, Hose = true, Rail = true, Ram = true, Lamp = true, Sign = true }
+		for _, d in m:GetChildren() do
+			if d:IsA("BasePart") and HIDE[d.Name] then
+				d.Transparency = 1
+				d.CastShadow = false
+				for _, g in d:GetChildren() do
+					if g:IsA("SurfaceGui") then
+						g.Enabled = false
+					end
+				end
+			end
+		end
+	end
 	if Compressor.SCALE ~= 1 then
 		m.WorldPivot = face -- (round its footing on the ground)
 		m:ScaleTo(Compressor.SCALE)

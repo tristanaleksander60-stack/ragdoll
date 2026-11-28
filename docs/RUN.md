@@ -492,7 +492,9 @@ For each: one capture showing it working, and the switch. If it is broken, find 
   - the stands are now painted round yellow posts;
   - the old pad and button are invisible gameplay parts.
 
-  Capture gyro_models: the rings on the railed platform with the booth beside it. SAVE THE PLACE. NEXT: the stretcher, the range shell, the compressor.
+  Capture gyro_models: the rings on the railed platform with the booth beside it.
+- **PC 28 Nov (v1440), the PRESS: DONE (`PRESS_MODEL`).** V3Assets.PressFrame is a generated hydraulic press frame: yellow columns, a hazard-striped crossbeam and the big cylinder. It is fitted round the bed (width S + 2.6, height to the old top beam) and scaled with the machine; the plain pillars, braces, sleeves, beam, bolts, hoses, ram, lamp and sign are hidden; the bed, the moving plate and the footing stay. Capture press_front.
+- SAVE THE PLACE. NEXT: the stretcher (its booms hang from the posts, so fit carefully) and the range shell.
 - **State (PC, 28 Nov, v1438):** the yard cones are done (1.15).
   - Creator Store search for the gyro's booth and fence gave only junk: "Fireball" is 180 loose plain parts; a ticket booth carried two 614 KB "LED SCRIPT V5" scripts and broke without them; a cube3D fence is a generator placeholder box without its scripts. All were deleted, none used.
   - The compressor capture (m_compressor) shows a plain-part press that reads as a press.
