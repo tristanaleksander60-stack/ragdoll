@@ -117,6 +117,32 @@ local function benchModel(into: Instance, cf: CFrame)
 	return m
 end
 -- A red barrel: 2 wide, 2.8 high, a white band, a darker lid; `tipped` lies it on its side.
+-- (PROP_MODELS: hide a block prop's parts and draw the real model over them, fitted to `size` (its box) at `cf` (its middle))
+local function dressProp(m: Model, name: string, cf: CFrame, size: Vector3)
+	local look = propModel(name)
+	if not look then
+		return
+	end
+	for _, d in m:GetChildren() do
+		if d:IsA("BasePart") then
+			d.Transparency = 1
+			d.CastShadow = false
+		end
+	end
+	local _, ls = look:GetBoundingBox()
+	local k = Vector3.new(size.X / ls.X, size.Y / ls.Y, size.Z / ls.Z)
+	local pv = look:GetPivot()
+	for _, d in look:GetDescendants() do
+		if d:IsA("BasePart") then
+			local o = pv:ToObjectSpace(d.CFrame)
+			d.Size = d.Size * k
+			d.CFrame = pv * CFrame.new(o.Position * k) * o.Rotation
+		end
+	end
+	look.WorldPivot = pv
+	look:PivotTo(cf)
+	look.Parent = m
+end
 local function barrelModel(into: Instance, at: Vector3, yaw: number, tipped: boolean?)
 	local m = Instance.new("Model")
 	m.Name = "Barrel"
@@ -125,6 +151,7 @@ local function barrelModel(into: Instance, at: Vector3, yaw: number, tipped: boo
 	part(m, "Barrel", Vector3.new(2.8, 2, 2), base * up, PROP.barrel, Enum.Material.SmoothPlastic, false, Enum.PartType.Cylinder)
 	part(m, "BarrelBand", Vector3.new(0.35, 2.06, 2.06), base * CFrame.new(0, 0.35, 0) * up, PROP.band, Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
 	part(m, "BarrelLid", Vector3.new(0.08, 1.7, 1.7), base * CFrame.new(0, 1.41, 0) * up, PROP.lid, Enum.Material.SmoothPlastic, true, Enum.PartType.Cylinder)
+	dressProp(m, "PropBarrel", base, Vector3.new(2, 2.8, 2))
 	m.Parent = into
 	return m
 end
@@ -142,6 +169,7 @@ local function crateModel(into: Instance, cf: CFrame, s: number)
 			part(m, "CrateFrame", Vector3.new(e, e, s), cf * CFrame.new(a * (s / 2 - e / 2), b * (s / 2 - e / 2), 0), PROP.crateFrame, Enum.Material.Wood, true)
 		end
 	end
+	dressProp(m, "PropCrate", cf, Vector3.new(s, s, s))
 	m.Parent = into
 	return m
 end
@@ -153,6 +181,7 @@ local function binModel(into: Instance, at: Vector3)
 	part(m, "Bin", Vector3.new(2.2, 1.4, 1.4), CFrame.new(at + Vector3.new(0, 1.1, 0)) * up, PROP.bin, Enum.Material.Metal, false, Enum.PartType.Cylinder)
 	part(m, "BinRim", Vector3.new(0.15, 1.5, 1.5), CFrame.new(at + Vector3.new(0, 2.2, 0)) * up, PROP.iron, Enum.Material.Metal, true, Enum.PartType.Cylinder)
 	part(m, "BinLid", Vector3.new(0.2, 1.3, 1.3), CFrame.new(at + Vector3.new(0, 2.35, 0)) * up, PROP.bin, Enum.Material.Metal, true, Enum.PartType.Cylinder)
+	dressProp(m, "PropBin", CFrame.new(at + Vector3.new(0, 1.225, 0)), Vector3.new(1.5, 2.45, 1.5))
 	m.Parent = into
 	return m
 end
