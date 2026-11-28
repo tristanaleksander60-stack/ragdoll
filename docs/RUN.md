@@ -18,7 +18,8 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
    3. Push each of those files into Studio through the MCP, with a length check.
    4. Parse every one before pushing: `stylua --syntax Luau - < file > /dev/null` (a non-zero exit is a syntax error: fix it first).
    5. One Play. Read the output. Fix every error before anything else.
-2. **Do ALL batches in one run, without stopping between them. NEVER stop for an owner test, an owner question or a "next step needs the owner".** Put it under OWNER CHECK or Questions in the final list, pick the safe default behind its switch, and go on. The owner checks only at the end. The final message is ONE Danish test list for everything built, numbered, phone first, each line saying where to go and what must happen. Stop early only if Studio or the MCP cannot be reached after 3 tries.
+2. **NEVER END THE RUN EARLY.** OWNER CHECK, "could not be staged", "batch closed", "needs the cloud" are NOT stop reasons (see klar.md "These are NOT reasons to stop"). The run ends only when every item in every batch and every ledger line is DONE or LEFT.
+2b. **Do ALL batches in one run, without stopping between them. NEVER stop for an owner test, an owner question or a "next step needs the owner".** Put it under OWNER CHECK or Questions in the final list, pick the safe default behind its switch, and go on. The owner checks only at the end. The final message is ONE Danish test list for everything built, numbered, phone first, each line saying where to go and what must happen. Stop early only if Studio or the MCP cannot be reached after 3 tries.
 3. **DONE = proof.** An item is DONE only with:
    - a capture taken from the angle the item names, showing it working;
    - one line saying what the capture shows.
@@ -52,6 +53,14 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
   - then read the state (attributes, positions, CFrames) AND take the capture.
 - **Phone:** if the MCP can switch Studio's device emulator, capture in it. If it cannot, say so once, and for touch-only items read the touch layout from code (`HudSlots.context(true, false)` with a 390 x 844 viewport) and put the item under "OWNER CHECK: phone" in the final list.
 - **Feel items** (scrolling with a real wheel or finger, steering, pinch, how smooth it feels): build them, prove what code can prove, mark them `OWNER CHECK` and list them first in the final test list. Never write DONE for a feel item.
+
+## HOW TO STAGE WHAT DOES NOT HAPPEN BY ITSELF (instead of "OWNER CHECK: could not be staged")
+- **A bandage:** wounds make the wrap, from 2 wounds on one arm or leg of a LIVING body (DummySkins `showHurt`: `count >= 2`, and fewer than 3 shots on that piece). On the server: `VitalsService.wound(model, model.LeftLowerArm, model.LeftLowerArm.Position, nil, 0.3)` twice (low power so it lives); same for a shin and the head. Then capture.
+- **A plaster:** `ActiveRagdoll.addPlaster(model.RightLowerLeg)` on the server (the screen draws PLASTER_SKIN on it), or break a bone with Bones.hit until BreakReq.
+- **CPR / mourning by a bench:** spawn a body 2 studs from a bench, kill it, and put a friend 6 studs away; set the mourning chance to 1 for the test (read Mourning: its job start, or a temporary Config value), then set it back.
+- **The angry friend:** `Mourning.provoke(model, player, near)` on a body by the player.
+- **A ragdoll sitting on a bench:** BenchService's seat booking, called for a body next to a bench.
+- **Anything with a random chance or a timer:** set the chance to 1 or the timer to 1 s for the test, then back. Write in the State what you set.
 
 ## SMOKE ROUND (after EACH batch: about 3 minutes, catches what one item broke in another)
 One Play, then all 15, with a capture each and errors read from the output:

@@ -28,8 +28,15 @@ Do every item in `RUN.md`: batch 1, then batch 2, then batch 3 and on, top to bo
 **NEVER stop for the owner:** not for a test, a look, a yes or a question. Those go in the final message: under OWNER CHECK in the test list, or under Questions with the default you chose. A step waiting for the owner's opinion is built behind its switch, proven, and you move on.
 
 **Stop ONLY when:**
-- (a) every item in RUN.md is DONE or LEFT; or
+- (a) every item in EVERY batch of RUN.md (batch 0, 1, 2, 3 and on) AND every line of the OWNER REQUEST LEDGER is DONE or LEFT; or
 - (b) Studio or the MCP cannot be reached after 3 tries.
+
+**These are NOT reasons to stop (the owner was woken at night by a run that stopped for them, 28 Nov):**
+- "The rest needs the owner's test" / "OWNER CHECK": an OWNER CHECK item is noted and you go straight on to the next item. It never ends a run.
+- "It could not be staged in a test": STAGE IT FROM CODE. Call the module function, set the attribute, raise a chance to 1 for the test, spawn the body where you need it (see "How to stage" in RUN.md). Only after 2 real staging tries may it be LEFT, with what you tried.
+- "Batch N closed for this run": a batch is never closed while a later batch has items. Go on to the next batch.
+- "Needs a cloud fix": write the finding in the State, then go on to the next item; pull every 30 minutes for the cloud's fix.
+- Before you write the final message, count the items that are not DONE or LEFT. If the count is above 0, you are not finished: go back to work.
 
 When the context fills up it is summarised: keep going from RUN.md.
 
