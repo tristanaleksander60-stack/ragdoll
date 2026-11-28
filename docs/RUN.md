@@ -8,7 +8,7 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
    3. Push each of those files into Studio through the MCP, with a length check.
    4. Parse every one before pushing: `stylua --syntax Luau - < file > /dev/null` (a non-zero exit is a syntax error: fix it first).
    5. One Play. Read the output. Fix every error before anything else.
-2. **Small batches.** Do the next batch below (about 5-8 items, 1-2 hours), then STOP. The final message is a short Danish test list for exactly that batch: at most 12 numbered lines, phone first, each saying where to go and what must happen.
+2. **Do ALL batches in one run, without stopping between them.** The owner checks only at the end. The final message is ONE Danish test list for everything built, numbered, phone first, each line saying where to go and what must happen. Stop early only if Studio or the MCP cannot be reached after 3 tries.
 3. **DONE = proof.** An item is DONE only with:
    - a capture taken from the angle the item names, showing it working;
    - one line saying what the capture shows.
@@ -134,6 +134,12 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
   - it walks there and HOPS in with a real jump onto the spot; the machine takes it as if you had dropped it;
   - Bowling and the map machines look 70-80 studs out, allow one by you and give it 16 s, and Bowling hops onto the lane instead of teleporting.
 - **Proof:** TRY at 4 machines, each with one ragdoll standing by you; captures of the walk and the hop. No "No ragdoll near" with one in 40 studs.
+- **Cloud, after the PC's finding (28 Nov):**
+  - **Cause of "stays Standing and never walks":** `ActiveRagdoll.standsFirm`. A body near a player holding a weapon stands firm, facing the gun, and never walks, and the player pressing TRY always holds one. Now (`CALLED_WALKS`), a body with TryFor, Watch "Demo" or a Pace set by its caller never stands firm.
+  - `walkIn` no longer gives up on a short Flinch or Fleeing.
+  - `TRY_REACH` is 45 -> 80 (at 45+ studs TRY found no machine).
+  - Prove it again.
+
 
 ### 1.10 Standing ragdolls suddenly leaning far back: CLOUD (`UPRIGHT_POSES`; DummyLife, Poses)
 - **Cause found:** a positive Waist X bends BACKWARDS (CPR leans forward with -43). Several standing poses had the wrong sign or far too much:
@@ -236,7 +242,7 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
 
 ---
 
-## BATCH 2 (after the owner's test of batch 1)
+## BATCH 2 (straight after batch 1, no stop)
 
 ### 2.1 Sitting ON the bench, not behind it: TODO
 - **Find the cause** in BenchService: how the sit point is computed, and that it does not use the bench model's real seat. **Fix:** every bench gets seat slots from its seat surface (a free slot per 2 studs of seat), and the pelvis is placed on the seat top, facing out, with the v6 hip height.

@@ -187,6 +187,7 @@ local Config = {
 	XRAY_BUTTON_TOUCH_ONLY = true, -- the round X-RAY button shows on touch screens only; on a computer X-RAY is in the bottom-left list (the I key) (XRayToggle)
 	ROCKET_WHOLE = true, -- the whole rocket flies, the capsule and nose too (RocketRide rocketParts)
 	ROCKET_WALK = true, -- the ragdoll walks to the rocket before it is strapped on (RocketRide)
+	CALLED_WALKS = true, -- a body called somewhere (TRY, a machine, the rocket, a demo) never stands firm facing your gun: it walks there (ActiveRagdoll standsFirm)
 	PLANT_YAW = 0, -- degrees added to the plant model's facing; the PC sets it so the mouth faces the path (check with a capture)
 	SHOVE_SERIES = true, -- F26: the angry dummy shoves a random 1-3 times, a line before each ("Hey!", "Stop that!", "How do YOU like it?"), a short wind-up, following if you back off; knocked over ends it; then it flees (Mourning attack)
 	XRAY_TRACER = true, -- F28: with X-ray on, your round leaves a short bright line through the glass body for 1 s, along the shot (FxController.predictHit)

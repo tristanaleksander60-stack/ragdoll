@@ -139,7 +139,8 @@ local function walkIn(m: Model, at: Vector3): boolean
 	while os.clock() - t0 < 12 do
 		task.wait(0.25)
 		local st = m:GetAttribute("RagdollState")
-		if not m.Parent or m:GetAttribute("Held") == true or m:GetAttribute("Vital") == "Dead" or not (st == nil or st == "Standing" or st == "Walking") then
+		if not m.Parent or m:GetAttribute("Held") == true or m:GetAttribute("Vital") == "Dead"
+			or not (st == nil or st == "Standing" or st == "Walking" or ((require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).CALLED_WALKS and (st == "Fleeing" or st == "Flinch"))) then
 			break
 		end
 		local pe = m:FindFirstChild("LowerTorso")
@@ -253,7 +254,7 @@ MachineDemos.showFor = show -- (for a quick check)
 -- TRY_REACH), its watcher or the nearest free ragdoll runs there (Pace 2.2), hesitates a moment, hops in, and the machine
 -- throws it (the same arc, rise, spin or drop as the demos). You just watch. Returns false when there is no machine
 -- near or no ragdoll free (then the old TRY: one runs to you).
-MachineDemos.TRY_REACH = 45
+MachineDemos.TRY_REACH = 80 -- (was 45: at 45+ studs from a machine TRY found none)
 -- TRY_WALK (the owner: TRY said "no ragdoll near" with one right there, and the ragdoll appeared in the machine instead of
 -- walking in). Causes: (1) pickDummy skipped every Role3 (the 1-3 ragdolls standing by you ARE Role3) and only the old
 -- MACHINES list was searched, so the new map's machines were never found; (2) after walking up, the body was teleported

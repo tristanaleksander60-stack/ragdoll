@@ -1207,6 +1207,12 @@ local function standsFirm(rig: Rig, now: number): Vector3?
 		or m:GetAttribute("Chaser") ~= nil or m:GetAttribute("Horde") ~= nil or m:GetAttribute("Minigame") ~= nil or m:GetAttribute("Greeter") ~= nil then
 		return nil
 	end
+	-- (CALLED_WALKS: a body CALLED somewhere (TRY, a machine button, the rocket, a demo: TryFor, Watch "Demo", or a Pace
+	-- set by the caller) never "stands firm" facing a gun: the player pressing TRY holds a weapon, so the called ragdoll
+	-- stood still looking at it and TRY gave up.)
+	if (GameConfig :: any).CALLED_WALKS and (m:GetAttribute("TryFor") ~= nil or m:GetAttribute("Watch") == "Demo" or m:GetAttribute("Pace") ~= nil) then
+		return nil
+	end
 	local gun = GunThreat.near(rig.chest.Position, FIRM_REACH)
 	if not gun and now - rig.lastHitAt < FIRM_HURT then
 		gun = nearestPerson(rig, FIRM_REACH)

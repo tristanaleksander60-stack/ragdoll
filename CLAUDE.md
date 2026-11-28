@@ -5,9 +5,9 @@ Studio place "[💥] Ragdoll Havoc", placeId 126037745825106, universe 107747753
 ## How every session runs
 - **The owner types `/klar`.** Read `docs/RUN.md` first: it is the ONE ordered to-do list and overrides every banner in OVERVIEW and NOW. Then follow `.claude/commands/klar.md`:
   1. the preflight (push the cloud's code, parse it, one Play);
-  2. one batch;
+  2. every batch in RUN.md, one after the other, WITHOUT stopping between them;
   3. for each item, the exact cause found in the code and the fix proven by a capture on PC and in the phone emulator;
-  4. then STOP with a short Danish "Test selv" list for that batch.
+  4. STOP only when every item is DONE or LEFT, with ONE Danish "Test selv" list for everything.
 
   `docs/OVERVIEW.md` and `docs/NOW.md` are background and history. Do not read the big plans whole (`docs/V9_PLAN.md`, `docs/V8_PLAN.md`): grep them.
 - **Proof, not runs:** no long play sessions, benches or suites. But nothing is DONE without a capture that shows it working.
