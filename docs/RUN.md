@@ -137,6 +137,12 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Now:** a bandage is carried by the body part of the same name on the DRAWN limb axis, its rings as wide as the drawn limb (x HOLE_AXIS_SCALE), a head wrap round the round head; nothing is ever left without a frame (it follows its limb at worst). Each screen puts a plaster ON the drawn limb (two crossed beige strips at the skin) wherever the server marked one, and removes it with it.
 - **Proof:** a patched-up forearm, shin and head and a plastered (broken) limb, standing, walking and lying, from 3 m and 10 m, PC and phone. If the rings look too thick or thin, tune `HoleAxisScale` live (workspace attribute) and write the value in Config.
 
+### 0.12 The newspaper, the phone and other props are not in the hand (4th report): CLOUD (`HAND_PROPS`, SmoothBody `scanProps`/`placeProps`)
+- **Cause found (cloud):** a held prop is welded to the hidden PHYSICS hand with an offset made for the OLD body (`Newspaper.gripOf`: "DummySkins draws it lower"; the FilmPhone in DummyLife: `hand * (0, -0.45, -0.1)`). On the v6 body the DRAWN hand sits elsewhere and moves with the drawn arm (its axis is off the physics arm, see 0.7), so the prop hung beside the body.
+- **Now:** every screen takes each prop welded to a v6 body's hand over (weld off and anchored on that screen only) and puts it each frame at the v6 grip point (BodyShape.HAND.grip) carried by the drawn hand bone, keeping its turn against the hand; when the server lets go (the weld goes) it is given back.
+- **Check (PC):** the prop's centre sits in the curl of the fingers (HAND_POSES grip). If the paper is held by its middle but should be held by its edge, add a per-prop offset (attribute `GripOffset` on the prop, read in placeProps). Check every prop a ragdoll holds: newspaper, phone, tweezers (PickOut), the shovel/tools (Mourning, NpcCommand).
+- **Proof:** the newspaper carrier walking and reading, a filming ragdoll, from the front and the side at 3 m, PC and phone: each prop in the hand, never beside it.
+
 ### 0.10 The plan doc itself (PC, at the end of the run)
 - Every item you touch: the State line says DONE + the capture line, or LEFT + the exact reason. No "PART" without saying exactly what is missing.
 

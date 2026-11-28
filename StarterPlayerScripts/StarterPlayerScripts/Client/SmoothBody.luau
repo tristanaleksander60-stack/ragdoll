@@ -365,6 +365,94 @@ function stick(body: Body, inst: Instance)
 		inst.Anchored = true
 	end)
 end
+-- HAND_PROPS (owner, 4th time: "the newspaper etc. is still not in the hand"). The cause: a held prop (the newspaper,
+-- the phone, tweezers, a tool) is welded to the hidden physics hand with an offset made for the OLD body (Newspaper
+-- gripOf: "DummySkins draws it lower"); on the v6 body the DRAWN hand sits elsewhere and moves with the drawn arm, so the
+-- prop hung beside the body. Now every screen takes each prop welded to a body's hand over (its weld off, anchored on
+-- this screen only) and puts it each frame in the DRAWN hand: the v6 grip point (BodyShape.HAND.grip) carried by the
+-- hand bone, keeping the prop's turn against the hand. When the server lets go (the weld goes), it is given back.
+local HAND_PROPS = (Config :: any).HAND_PROPS == true
+local gripCache: { [string]: CFrame } = {}
+local function gripOff(handName: string): CFrame?
+	local c = gripCache[handName]
+	if c then
+		return c
+	end
+	local hw = restWorld[handName]
+	local H, J = BodyShapeMod.HAND, BodyShapeMod.JOINT
+	if not (hw and H and J and H.grip and J.Wrist) then
+		return nil
+	end
+	local v = H.grip - J.Wrist
+	if handName == "LeftHand" then
+		v = Vector3.new(-v.X, v.Y, v.Z)
+	end
+	local gw = hw.Position + restFrame:VectorToWorldSpace(v)
+	c = hw:Inverse() * (CFrame.new(gw) * restFrame.Rotation)
+	gripCache[handName] = c
+	return c
+end
+local function scanProps(body: Body)
+	if not HAND_PROPS then
+		return
+	end
+	local B = body :: any
+	B.props = B.props or {}
+	for _, handName in { "RightHand", "LeftHand" } do
+		local hand = body.model:FindFirstChild(handName)
+		if hand and hand:IsA("BasePart") then
+			for _, j in hand:GetJoints() do
+				if (j:IsA("Weld") or j:IsA("WeldConstraint")) and j.Enabled then
+					local other = if (j :: any).Part0 == hand then (j :: any).Part1 else (j :: any).Part0
+					if other and other:IsA("BasePart") and not B.props[other]
+						and (not other:IsDescendantOf(body.model) or other.Name == "FilmPhone" or other:GetAttribute("HandProp") == true)
+						and not STICK_NAMES[other.Name] and other:GetAttribute("OnSkin") ~= true then
+						B.props[other] = { hand = hand, joint = j, rotRel = hand.CFrame.Rotation:Inverse() * other.CFrame.Rotation, anchored = other.Anchored }
+						j.Enabled = false
+						other.Anchored = true
+					end
+				end
+			end
+		end
+	end
+end
+local function releaseProps(body: Body)
+	local B = body :: any
+	for prop, rec in B.props or {} do
+		if prop.Parent then
+			prop.Anchored = rec.anchored
+			if rec.joint.Parent then
+				rec.joint.Enabled = true
+			end
+		end
+	end
+	B.props = nil
+end
+local function placeProps(body: Body, parts: { BasePart }, cframes: { CFrame })
+	local B = body :: any
+	local props = B.props
+	if not props then
+		return
+	end
+	local bc = B.boneCf
+	for prop, rec in props do
+		if not prop.Parent or not rec.joint.Parent or not rec.hand.Parent then
+			-- (the server let go or the prop is gone: give it back as it was)
+			if prop.Parent then
+				prop.Anchored = rec.anchored
+			end
+			props[prop] = nil
+		else
+			local boneCf = bc and bc[rec.hand.Name]
+			local g = gripOff(rec.hand.Name)
+			if boneCf and g then
+				local at = boneCf * g
+				table.insert(parts, prop)
+				table.insert(cframes, CFrame.new(at.Position) * (at.Rotation * rec.rotRel))
+			end
+		end
+	end
+end
 local function unstickAll(body: Body)
 	local B = body :: any
 	if B.stickConn then
@@ -379,6 +467,7 @@ local function unstickAll(body: Body)
 		end
 	end
 	B.stuck = nil
+	releaseProps(body)
 end
 function SmoothBody.watchSkin(body: Body)
 	if not ON_SKIN then
@@ -938,6 +1027,17 @@ local function drive(body: Body)
 			end
 		end
 	end
+	if HAND_PROPS and (body :: any).props then
+		local B3 = body :: any
+		local pp, pc = B3.propParts or {}, B3.propCFs or {}
+		table.clear(pp)
+		table.clear(pc)
+		B3.propParts, B3.propCFs = pp, pc
+		placeProps(body, pp, pc)
+		if #pp > 0 then
+			Workspace:BulkMoveTo(pp, pc, Enum.BulkMoveMode.FireCFrameChanged)
+		end
+	end
 	local ball = body.ball
 	if ball and headCf then
 		local B = body :: any
@@ -1010,6 +1110,7 @@ local function step(dt: number)
 				drop(body)
 			else
 				count += 1
+				scanProps(body) -- (HAND_PROPS: a prop newly put in a hand is taken over)
 			end
 		end
 		if dummies and count < SmoothBody.MAX_BODIES then
