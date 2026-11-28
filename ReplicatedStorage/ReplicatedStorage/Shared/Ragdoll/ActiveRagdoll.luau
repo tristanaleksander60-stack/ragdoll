@@ -638,6 +638,92 @@ local function hardChecks(rig: Rig)
 	end
 end
 
+-- CALM_GUARD (owner 28 Nov: "ragdolls bug around all over and fly around"). An UPRIGHT living body (Standing, Walking,
+-- Fleeing) that nothing hit, shoved, held or rides moves at most at its flee speed (7.5 studs/s). If one suddenly goes
+-- over CALM_FLING_SPEED sideways (or UP over CALM_FLING_VY), something in the world or another system threw it: a prop it
+-- stands in, another body, a pose fighting a bench. It is stopped and put back where it last stood calmly, and the
+-- cause is written on the body (attribute FlingWhy: its state, what it touched, which systems held it) and warned once,
+-- so the exact cause can be read in Studio and fixed at its source.
+local GAME_CALM_GUARD = (require(script.Parent.Parent:WaitForChild("Config")) :: any).CALM_GUARD == true
+local CALM_FLING_SPEED = 25
+local CALM_FLING_VY = 16
+ActiveRagdoll.calmFlings = 0
+local CALM_SKIP = { "Ridden", "RideTemp", "RideNoCollide", "InMachine", "GyroRide", "MachineHidden", "Flat", "TryFor", "CommandedBy" }
+local function calmGuard(rig: Rig)
+	local r: any = rig
+	local state = rig.state
+	if rig.held > 0 or not (state == "Standing" or state == "Walking" or state == "Fleeing") then
+		r.calmAt = nil
+		return
+	end
+	local m = rig.model
+	for _, a in CALM_SKIP do
+		if m:GetAttribute(a) ~= nil and m:GetAttribute(a) ~= false then
+			r.calmAt = nil
+			return
+		end
+	end
+	if m:GetAttribute("Watch") == "Demo" or m:GetAttribute("Held") == true then
+		r.calmAt = nil
+		return
+	end
+	local now = os.clock()
+	local v = rig.pelvis.AssemblyLinearVelocity
+	if v.Magnitude ~= v.Magnitude then
+		return
+	end
+	local quiet = now - (rig.lastImpulseAt or -math.huge) > 1.5 and now - rig.lastHitAt > 1.5
+	if not quiet then
+		r.calmAt = nil
+		return
+	end
+	if v.Magnitude < 8 and math.abs(v.Y) < 6 then
+		r.calmAt = rig.pelvis.CFrame
+		return
+	end
+	local across = Vector3.new(v.X, 0, v.Z).Magnitude
+	if across < CALM_FLING_SPEED and v.Y < CALM_FLING_VY then
+		return -- (falling is gravity, not a fling: only sideways or UP counts)
+	end
+	-- Flung with no cause of ours: note why, stop it, put it back.
+	ActiveRagdoll.calmFlings += 1
+	local touched = {}
+	pcall(function()
+		local params = OverlapParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { m }
+		for _, part in Workspace:GetPartBoundsInRadius(rig.pelvis.Position, 3.5, params) do
+			if #touched >= 4 then
+				break
+			end
+			local owner = part:FindFirstAncestorOfClass("Model")
+			table.insert(touched, (if owner then owner.Name .. "." else "") .. part.Name)
+		end
+	end)
+	local why = string.format(
+		"%s v=%.0f vy=%.0f touch=%s watch=%s mood=%s pose=%s act=%s",
+		state, v.Magnitude, v.Y, table.concat(touched, ","),
+		tostring(m:GetAttribute("Watch")), tostring(m:GetAttribute("Mood")), tostring(m:GetAttribute("Pose")), tostring(m:GetAttribute("Activity"))
+	)
+	m:SetAttribute("FlingWhy", why)
+	if now - (r.calmWarnAt or -math.huge) > 10 then
+		r.calmWarnAt = now
+		warn("[CALM_GUARD] " .. m.Name .. " flung with no hit: " .. why)
+	end
+	for _, part in rig.parts do
+		if not part.Anchored then
+			part.AssemblyLinearVelocity = Vector3.zero
+			part.AssemblyAngularVelocity = Vector3.zero
+		end
+	end
+	local back = r.calmAt
+	if back then
+		pcall(function()
+			m:PivotTo(back * rig.pelvis.CFrame:ToObjectSpace(m:GetPivot())) -- (the pivot keeps its place against the pelvis)
+		end)
+	end
+end
+
 local function guardLimbs(rig: Rig)
 	if not LIMB_GUARD or rig.held > 0 or rig.state == "Frozen" then
 		return
@@ -2234,6 +2320,9 @@ local function update(dt: number)
 		end
 		if GAME_HARD_PHYS then
 			hardChecks(rig)
+		end
+		if GAME_CALM_GUARD then
+			calmGuard(rig)
 		end
 		local state = rig.state
 		if state ~= "Ragdoll" and state ~= "Out" and state ~= "Frozen" and rig.held == 0 and vitalDown(rig) then

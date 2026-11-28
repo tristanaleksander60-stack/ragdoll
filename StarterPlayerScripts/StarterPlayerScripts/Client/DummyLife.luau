@@ -1540,6 +1540,9 @@ local function hideLine(life: Life)
 end
 
 local function showLine(life: Life, kind: string, now: number, given: { string }?)
+	if life.model:GetAttribute("MachineHidden") == true then
+		return -- (PRESS_HOLD: a body hidden in a machine says nothing; its bubble floated in the empty press)
+	end
 	if life.lineKind == "Idle" then
 		idleShown = math.max(0, idleShown - 1)
 	end

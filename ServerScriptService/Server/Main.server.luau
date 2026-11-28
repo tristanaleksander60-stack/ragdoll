@@ -128,6 +128,7 @@ safe("BoxingMatch", function() require(Systems:WaitForChild("BoxingMatch")).star
 safe("AdventService", function() require(Systems:WaitForChild("AdventService")).start() end) -- AUDIT 27 Nov 2: the Christmas advent calendar (Config.ADVENT)
 safe("PassLint", function() require(Systems:WaitForChild("PassLint")).run() end) -- AUDIT 27 Nov 1: every pass on sale reaches a live feature
 safe("PurchaseChat", function() require(Systems:WaitForChild("PurchaseChat")).start() end) -- (V11 B7) Robux purchases in chat on every server
+safe("TerrainClear", function() if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).KEEP_CLEAR then require(Systems:WaitForChild("TerrainClear")).start() end end) -- KEEP_CLEAR: buildings tagged KeepTerrainClear stand in an open terraced site, never inside a hill
 safe("BenchService", function() require(Systems:WaitForChild("BenchService")).start() end) -- benches the lab's ragdolls sit on
 safe("BikeService", function() require(Systems:WaitForChild("BikeService")).start() end) -- a ragdoll rides the bike
 safe("Newspaper", function() require(Systems:WaitForChild("Newspaper")).start() end) -- 24 Nov 2026: one ragdoll carries a newspaper

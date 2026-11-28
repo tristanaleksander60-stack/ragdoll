@@ -272,7 +272,8 @@ function SessionStats.onClient(player: Player, kind: unknown, data: unknown)
 		pcall(function()
 			(require(script.Parent:WaitForChild("Funnels")) :: any).used(player, "Moment" .. tostring(data))
 		end)
-	elseif kind == "Try" and type(data) == "string" and TRY_KINDS[data] then
+	elseif kind == "Try" and type(data) == "string" and TRY_KINDS[data]
+		and (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TRY_OFF ~= true then
 		-- (FIRST_2_MIN: TRY pressed at a machine: the nearest free ragdoll runs to the player. At most one every 3 s.)
 		if os.clock() - (lastTry[player] or -math.huge) >= 3 then
 			lastTry[player] = os.clock()

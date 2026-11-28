@@ -237,10 +237,18 @@ function ShootingRange.buildLab(folder: Instance, origin: Vector3): (Model, { St
 		end
 	end
 	model.Parent = folder
+	-- (KEEP_CLEAR: the land never builds a hill over the range; Landscape cuts it free when its slow fill is done)
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).KEEP_CLEAR then
+		pcall(function()
+			(require(script.Parent:WaitForChild("Landscape")) :: any).keepClear(model)
+			;(require(script.Parent:WaitForChild("TerrainClear")) :: any).free(model) -- (the terraced site round it, now and again later)
+		end)
+	end
 	-- (FIXES_28NOV 15, Config.RANGE_CLEAR: the range stands just outside the compact plan, where the hills begin, and it
 	-- sat half inside the slope. The terrain is cut back round it once it stands: the building's box plus 6 studs every
 	-- side, from the floor up 90 studs, made air (the terrain left ends at the floor). The entrance (north) is flat.)
-	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).RANGE_CLEAR then
+	local CfgR = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any
+	if CfgR.RANGE_CLEAR and not CfgR.KEEP_CLEAR then
 		task.spawn(function()
 			for _, wait in { 10, 15 } do -- (after the landscape's hills are filled in; once more in case they came late)
 				task.wait(wait)

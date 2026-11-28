@@ -76,6 +76,47 @@ local function free(m: Model): boolean
 		and m:GetAttribute("CommandedBy") == nil
 end
 
+-- (CPR_CLEAR, owner's screenshot 28 Nov: a ragdoll giving CPR knelt INTO a bench, its legs through the seat, and bodies
+-- jumped and flew. The cause: the kneel spot was always 1.6 studs off the chest on the near side, whatever stood there;
+-- the kneeling legs were pressed into the bench by the pose and the solver threw them out. Now the spot must be free
+-- (nothing solid but the ground and bodies in a knee-sized box); else the other side, then the head end; none free: no
+-- CPR there, it mourns standing.)
+local function kneelFree(spot: Vector3, groundY: number): boolean
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local ex: { Instance } = {}
+	local d = workspace:FindFirstChild("Dummies")
+	if d then
+		table.insert(ex, d)
+	end
+	params.FilterDescendantsInstances = ex
+	local ok, hits = pcall(function()
+		return workspace:GetPartBoundsInBox(CFrame.new(spot.X, groundY + 1.6, spot.Z), Vector3.new(2.4, 2.6, 2.4), params)
+	end)
+	if not ok then
+		return true
+	end
+	for _, h in hits :: { BasePart } do
+		if h.CanCollide and h.Transparency < 1 and not h:IsDescendantOf(workspace.Terrain) then
+			return false
+		end
+	end
+	return true
+end
+local function freeKneel(aim: Vector3, dir: Vector3, along: Vector3, groundY: number): Vector3?
+	local tries = { dir, -dir }
+	if along.Magnitude > 0.3 then
+		table.insert(tries, along.Unit)
+	end
+	for _, t in tries do
+		local spot = Vector3.new(aim.X, groundY, aim.Z) + t * Mourning.SIDE
+		if kneelFree(spot, groundY - 2.6) then
+			return spot
+		end
+	end
+	return nil
+end
+
 local function stop(m: Model, say: string?)
 	local job = jobs[m]
 	jobs[m] = nil
@@ -632,6 +673,14 @@ local function step()
 				end
 				local dir = if side.Magnitude > 0.1 then side.Unit else Vector3.xAxis
 				local spot = Vector3.new(aim.X, pelvis.Position.Y, aim.Z) + dir * Mourning.SIDE
+				if (Config :: any).CPR_CLEAR then
+					local free = freeKneel(aim, dir, along, pelvis.Position.Y)
+					if not free then
+						stop(m, nil) -- (no free side by this body: no CPR into a bench or a wall)
+						continue
+					end
+					spot = free
+				end
 				job.phase, job.since = "Walk", now
 				m:SetAttribute("Mood", nil)
 				m:SetAttribute("Pace", 2) -- (it runs to it)
@@ -650,7 +699,11 @@ local function step()
 					local aim = if chest and chest:IsA("BasePart") then chest.Position else cp.Position
 					local off = flat(pelvis.Position - aim)
 					local dir = if off.Magnitude > 0.1 then off.Unit else Vector3.xAxis
-					m:SetAttribute("Home", Vector3.new(aim.X, pelvis.Position.Y, aim.Z) + dir * Mourning.SIDE)
+					local kneel = Vector3.new(aim.X, pelvis.Position.Y, aim.Z) + dir * Mourning.SIDE
+					if (Config :: any).CPR_CLEAR then
+						kneel = freeKneel(aim, dir, flat(aim - cp.Position), pelvis.Position.Y) or pelvis.Position
+					end
+					m:SetAttribute("Home", kneel)
 					m:SetAttribute("HomeLook", aim)
 				else
 					m:SetAttribute("Home", pelvis.Position)

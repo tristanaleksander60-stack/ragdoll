@@ -441,7 +441,7 @@ local function tryMe()
 			sign.Parent = player:WaitForChild("PlayerGui")
 			if best ~= current then
 				current = best
-				if os.clock() - lastSaid > 20 then
+				if os.clock() - lastSaid > 20 and (Config :: any).TRY_OFF ~= true then
 					lastSaid = os.clock()
 					pcall(function()
 						(require(script.Parent:WaitForChild("HudV3")) :: any).moment("Try " .. (SHORT[best.label] or "IT") .. countText(), 6) -- (short: the goal pill cuts long lines)

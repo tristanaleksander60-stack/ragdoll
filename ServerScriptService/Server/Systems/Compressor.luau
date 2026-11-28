@@ -293,8 +293,36 @@ local function pancake(machine: Model, body: Model)
 	end
 	flat.Parent = machine
 	body:SetAttribute("MachineHidden", true)
+	-- (PRESS_HOLD, owner: the head went up into the compressor. The cause: the real body stayed a live physics body under
+	-- the plate while the pancake copy was shown; the plate squeezed it to the bed, and the engine pushed the parts out
+	-- of the squeeze, up through the thin plate, where the head was left floating in the press. Now the hidden body is
+	-- frozen where it lay (anchored, no collision, invisible on every screen) for the whole press, and let go after.)
+	local held: { [BasePart]: { boolean | number } } = {}
+	if (Config :: any).PRESS_HOLD then
+		for _, d in body:GetDescendants() do
+			if d:IsA("BasePart") then
+				held[d] = { d.Anchored, d.CanCollide, d.Transparency }
+				d.Anchored = true
+				d.CanCollide = false
+				d.AssemblyLinearVelocity = Vector3.zero
+				d.Transparency = 1
+			end
+		end
+	end
 	task.delay(Compressor.PANCAKE_TIME, function()
 		flat:Destroy()
+		for d, was in held do
+			if d.Parent then
+				d.Anchored = was[1] :: boolean
+				d.CanCollide = was[2] :: boolean
+				d.Transparency = was[3] :: number
+			end
+		end
+		if next(held) and body.Parent then
+			pcall(function()
+				(lazy("DummyControl") :: any).reassertOwner(body) -- (back to the screen that simulates it)
+			end)
+		end
 		if body.Parent then
 			body:SetAttribute("MachineHidden", nil)
 		end

@@ -227,6 +227,12 @@ local function swallow(m: Machine, model: Model, inside: (Model) -> Vector3)
 		end)
 		if not ok then
 			warn("[LabCreatures] " .. m.id .. ": " .. tostring(err))
+			for _, d in model:GetDescendants() do
+				if d:IsA("BasePart") and d:GetAttribute("SpiderPin") == true then
+					d.Anchored = false -- (SPIDER_REAL_BODY: never leave a body pinned in the web)
+					d:SetAttribute("SpiderPin", nil)
+				end
+			end
 			for _, t in m.temp do
 				if t.Parent then
 					t:Destroy() -- (no cocoon, tongue or egg left behind)
@@ -523,13 +529,35 @@ BUILD.Spider = function(f, at, m)
 			local stuck = web.CFrame * CFrame.new(0, -1, -1.5)
 			local groundY = at.Position.Y + 1.2
 			local floorCf = CFrame.new(stuck.Position.X, groundY, stuck.Position.Z) * CFrame.Angles(0, 0, math.rad(90))
-			hideBody(model, true)
-			pcall(lazy("DummyControl").move, model, floorCf)
-			-- The still copy in the web.
+			-- (SPIDER_REAL_BODY, owner: "it is the OLD ragdoll when the spider takes it". The cause: the still copy in
+			-- the web was cloned from the body's physics parts, and on a v6 body those are the hidden old blocks (the
+			-- skin is drawn on them by SmoothBody), so the web showed the old block ragdoll. Now the REAL body hangs in
+			-- the web: every part anchored by the server in the pose it was caught in, so its own skin, face and holes
+			-- show and nothing fights the physics; it is hidden only when the cocoon closes over it.)
+			local REAL = (Config :: any).SPIDER_REAL_BODY == true
+			local pinned: { BasePart } = {}
 			local catch = Instance.new("Model")
 			catch.Name = "SpiderCatch"
 			local pelvis = model:FindFirstChild("LowerTorso")
-			for _, p in model:GetChildren() do
+			if REAL and pelvis and pelvis:IsA("BasePart") then
+				local from = pelvis.CFrame
+				for _, d in model:GetDescendants() do
+					if d:IsA("BasePart") then
+						if not d.Anchored then
+							table.insert(pinned, d)
+							d:SetAttribute("SpiderPin", true)
+						end
+						d.Anchored = true
+						d.AssemblyLinearVelocity = Vector3.zero
+						d.CFrame = stuck * from:ToObjectSpace(d.CFrame)
+					end
+				end
+			else
+			hideBody(model, true)
+			pcall(lazy("DummyControl").move, model, floorCf)
+			end
+			-- The still copy in the web (only without SPIDER_REAL_BODY).
+			for _, p in if REAL then {} else model:GetChildren() do
 				if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" and p.Transparency < 1 and pelvis and pelvis:IsA("BasePart") then
 					local c = Instance.new("Part")
 					c.Name = p.Name
@@ -619,6 +647,9 @@ BUILD.Spider = function(f, at, m)
 				b:Destroy()
 			end
 			catch:Destroy()
+			if REAL then
+				hideBody(model, true) -- (the cocoon has closed over the real body)
+			end
 			-- Sucked dry: the spider on top, bobbing; the cocoon shrinks and goes brown.
 			local brown = Color3.fromRGB(150, 128, 96)
 			local full = cocoon.Size
@@ -643,6 +674,15 @@ BUILD.Spider = function(f, at, m)
 				cocoon.CFrame = stuck:Lerp(dropTo, t * t)
 			end)
 			pcall(lazy("DummyControl").move, model, floorCf)
+			if REAL then
+				for _, d in pinned do
+					if d.Parent then
+						d.Anchored = false
+						d:SetAttribute("SpiderPin", nil)
+					end
+				end
+				pcall(lazy("DummyControl").reassertOwner, model) -- (back to the screen that simulates it)
+			end
 			hideBody(model, false)
 			local keep = if (Config :: any).SPIDER_10 then 10 else 2.5
 			if (Config :: any).SPIDER_10 then

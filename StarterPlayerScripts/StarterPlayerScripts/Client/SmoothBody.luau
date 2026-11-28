@@ -226,14 +226,29 @@ local NEXT_JOINT = {
 	LeftUpperLeg = "LeftLowerLeg", RightUpperLeg = "RightLowerLeg", LeftLowerLeg = "LeftFoot", RightLowerLeg = "RightFoot",
 } :: { [string]: string }
 local STICK_NAMES = { BulletHole = true, BulletStress = true, Bandage = true, Plaster = true, Gauze = true, BruisePatch = true }
+-- (V7_ON_AXIS, owner 28 Nov: "x-ray is turned and made completely wrong in arms and legs" + "bullet holes still can't be
+-- seen on legs and arms". The cause: on the v6 body the DRAWN arm or leg does not lie on its hidden physics part: its
+-- axis runs from the joint bone to the next joint, 0.4-0.5 studs off the part's axis on the upper arms and turned with
+-- the pose. Holes and the X-ray bones were welded to the physics part, so they sat beside or inside the drawn limb and
+-- the X-ray bone stuck out at an angle; under RAGDOLL_V7 the holes were even left on the weld (stick skipped V7). Now
+-- holes AND the X-ray limb bones follow the drawn limb's own axis every frame, V7 or not.)
+local V7_ON_AXIS = (Config :: any).V7_ON_AXIS == true
+if V7_ON_AXIS then
+	STICK_NAMES.XrayBone = true
+	STICK_NAMES.XraySlug = true
+end
 -- A hole or bandage welded to a body limb is taken over: its weld is switched off, it is anchored, and drive() moves it
 -- with the drawn limb (kept relative to the limb exactly as it was welded).
 local function stick(body: Body, inst: Instance)
 	if not (inst:IsA("BasePart") and (STICK_NAMES[inst.Name] or inst:GetAttribute("OnSkin") == true)) then
 		return
 	end
-	if (body :: any).v7 then
+	if (body :: any).v7 and not V7_ON_AXIS then
 		return -- (RAGDOLL_V7: the skin follows the physics parts, so a hole WELDED to its limb is already on the skin; never anchor it)
+	end
+	local B9 = body :: any
+	if B9.stuck and B9.stuck[inst] then
+		return -- (already taken over: a re-parent, e.g. X-ray pieces into their glow model, must not read the moved offset)
 	end
 	task.defer(function()
 		local weld = inst:FindFirstChildOfClass("WeldConstraint")
@@ -251,6 +266,12 @@ local function stick(body: Body, inst: Instance)
 			rec.t = math.clamp((hy - lp.Y) / (2 * hy), 0.05, 0.95)
 			rec.dir = if flat.Magnitude > 1e-3 then flat.Unit else Vector3.new(0, 0, -1)
 			rec.rot = rec.off.Rotation
+		end
+		if V7_ON_AXIS and NEXT_JOINT[limb.Name] and (inst.Name == "XrayBone" or inst.Name == "XraySlug") then
+			rec.xray = true -- (the bone keeps its place along and round the limb, carried onto the drawn axis)
+		end
+		if B.stuck[inst] then
+			return
 		end
 		B.stuck[inst] = rec
 		weld.Enabled = false
@@ -764,9 +785,28 @@ local function drive(body: Body)
 					local at = B1.drawn[rec.limb]
 					local r: any = rec
 					local bc = B1.boneCf
+					if r.xray and bc then
+						local XA, XB = bc[rec.limb.Name], bc[NEXT_JOINT[rec.limb.Name]]
+						if XA and XB then
+							local a, b = XA.Position, XB.Position
+							local len = (b - a).Magnitude
+							if len > 0.05 then
+								local up = (a - b) / len
+								local right = rec.limb.CFrame.RightVector
+								right = right - up * right:Dot(up)
+								right = if right.Magnitude > 1e-3 then right.Unit else XA.RightVector
+								local frame = CFrame.fromMatrix((a + b) / 2, right, up)
+								local o = rec.off
+								local k = len / math.max(rec.limb.Size.Y, 0.1)
+								at = nil
+								table.insert(parts, inst)
+								table.insert(cframes, frame * CFrame.new(o.X, o.Y * k, o.Z) * o.Rotation)
+							end
+						end
+					end
 					local A = r.t and bc and bc[rec.limb.Name]
 					local Bn = A and bc[NEXT_JOINT[rec.limb.Name]]
-					if A and Bn then
+					if A and Bn and not r.xray then
 						local a, b = A.Position, Bn.Position
 						local along = b - a
 						if along.Magnitude > 0.05 then

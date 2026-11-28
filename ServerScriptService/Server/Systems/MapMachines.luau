@@ -176,6 +176,22 @@ local function spin(m: Model, hub: Vector3, by: Player?, power: number?)
 		m:SetAttribute("MoodSay", if pow > 0.8 then "TOO FAST!" else "Whoaaa!")
 	end
 	local wMax = 6 + 10 * pow -- rad/s at the top
+	-- (GYRO_RIDE, owner: in the gyro the ragdoll bounced up and down and flew out. The cause: it was teleported to the hub
+	-- 20 times a second (DummyControl.move) while its own screen let gravity pull it between, and it never sat in the seat,
+	-- which only turns on each screen (the rings are client Spin). Now the body is anchored by the server for the ride and
+	-- every screen holds it in the turning seat itself (Client/GyroRideClient), so it turns with the rings, smoothly.)
+	local RIDE = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).GYRO_RIDE == true
+	local held: { BasePart } = {}
+	if RIDE then
+		for _, d in m:GetDescendants() do
+			if d:IsA("BasePart") and not d.Anchored then
+				d.Anchored = true
+				table.insert(held, d)
+			end
+		end
+		m:PivotTo(CFrame.new(hub + Vector3.new(0, -0.5, 0)))
+		m:SetAttribute("GyroRide", true)
+	end
 	local t0 = os.clock()
 	local ax, ay, az = 0, 0, 0
 	local top = 0
@@ -189,13 +205,24 @@ local function spin(m: Model, hub: Vector3, by: Player?, power: number?)
 		ax += w * dt
 		ay += w * 0.72 * dt
 		az += w * 0.43 * dt
-		pcall(DC.move, m, CFrame.new(hub) * CFrame.Angles(ax, ay, az))
+		if not RIDE then
+			pcall(DC.move, m, CFrame.new(hub) * CFrame.Angles(ax, ay, az))
+		end
 		if whir then
 			whir.PlaybackSpeed = 0.5 + w / 16 * 1.3
 		end
 		task.wait(if live then 0.05 else 0.1)
 	end
 	task.wait(0.05)
+	if RIDE then
+		m:SetAttribute("GyroRide", nil)
+		for _, d in held do
+			if d.Parent then
+				d.Anchored = false
+			end
+		end
+		pcall(DC.reassertOwner, m) -- (back to the screen that simulates it)
+	end
 	m:SetAttribute("InMachine", nil)
 	m:SetAttribute("MoodSay", nil)
 	for _, b in straps do
@@ -273,7 +300,10 @@ local function wireGyro(pad: BasePart)
 	local hub = pad.Position + Vector3.new(0, 19.7, 0)
 	local button = pad.Parent and pad.Parent:FindFirstChild("GyroButton")
 	local live = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).GYRO_10 == true
-	if button and button:IsA("BasePart") and (button.Position - pad.Position).Magnitude < 40 then
+	-- (GYRO_AUTO, owner: "you should not have to press E to spin when it is going all the time": the gyro takes every
+	-- ragdoll dropped or walked into it by itself; no button prompt.)
+	local AUTO = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).GYRO_AUTO == true
+	if not AUTO and button and button:IsA("BasePart") and (button.Position - pad.Position).Magnitude < 40 then
 		local function go(player: Player, power: number)
 			local m = nearestFree(button.Position, if SAFE and not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TRY_WALK then 40 else MapMachines.LOAD_REACH)
 			if m then
@@ -330,8 +360,10 @@ local function wireGyro(pad: BasePart)
 			local dummies = Workspace:FindFirstChild("Dummies")
 			for _, m in if dummies then dummies:GetChildren() else {} do
 				local pe = m:IsA("Model") and pelvisOf(m)
-				if pe and not busy[m] and m:GetAttribute("Held") ~= true and m:GetAttribute("Vital") ~= "Dead" and (pe.Position - hub).Magnitude < MapMachines.HUB_REACH then
-					task.spawn(spin, m, hub, nil)
+				local onPad = AUTO and pe ~= nil and Vector3.new(pe.Position.X - pad.Position.X, 0, pe.Position.Z - pad.Position.Z).Magnitude < math.max(pad.Size.X, pad.Size.Z) / 2
+					and pe.Position.Y - pad.Position.Y < 8
+				if pe and not busy[m] and m:GetAttribute("Held") ~= true and m:GetAttribute("Vital") ~= "Dead" and ((pe.Position - hub).Magnitude < MapMachines.HUB_REACH or onPad) then
+					task.spawn(spin, m, hub, nil, if AUTO then 0.85 else nil)
 				end
 			end
 		end

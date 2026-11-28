@@ -317,6 +317,10 @@ function FirstTwo.start()
 		end)
 	end
 	button.Activated:Connect(press)
+	-- (TRY_OFF, owner: TRY is removed completely: no TRY button, no E for it, no "Try CANNON 0/6" goal line. The machines
+	-- take ragdolls you drop or walk in, and run their own demos.)
+	local TRY_OFF = (Config :: any).TRY_OFF == true
+	if not TRY_OFF then
 	ContextActionService:BindAction("FirstTwoTry", function(_, state)
 		if state == Enum.UserInputState.Begin and near then
 			press()
@@ -324,6 +328,7 @@ function FirstTwo.start()
 		end
 		return Enum.ContextActionResult.Pass
 	end, false, Enum.KeyCode.E, Enum.KeyCode.ButtonX)
+	end
 
 	local function pick(lab: Instance, r: BasePart): (any, Instance?)
 		local S = showcase()
@@ -408,7 +413,7 @@ function FirstTwo.start()
 				if target then
 					if target.kind == "Bowling" then
 						say("Bowl a STRIKE!")
-					else
+					elseif not TRY_OFF then
 						say("Try " .. (showcase().SHORT[target.label] or "IT") .. count())
 					end
 					local pos = showcase().where(targetInst)
@@ -436,7 +441,7 @@ function FirstTwo.start()
 			anchorPart.Parent = if far and not seated() and (Config :: any).TRY_GUIDE_LINE ~= false then Workspace else nil
 			-- The TRY button at an untried machine.
 			local m, inst = pick(lab, r)
-			if m and inst and boxDistance(inst, r.Position) <= FirstTwo.NEAR and not seated() then
+			if not TRY_OFF and m and inst and boxDistance(inst, r.Position) <= FirstTwo.NEAR and not seated() then
 				near, nearInst = m, inst
 				outline.Adornee = inst
 				-- (Owner, 26 Nov 2026: "tænk mere ind i telefon": on touch the TRY button sits right over SHOOT, wherever SHOOT is.)

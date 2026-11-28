@@ -46,6 +46,72 @@ local function heightAt(x: number, z: number, away: number): number
 	return math.max(0, rise * Landscape.PEAK * (0.55 + n))
 end
 
+-- KEEP_CLEAR (owner: "Weapon testing still sits in the mountain"; and "fix all the other maps so they are not inside a
+-- mountain"). The cause: the hills are filled in slowly, in batches (thousands of FillBlocks, a frame's wait every 400),
+-- which takes well over 25 s; the weapon range cut its hill away at 10 s and 25 s (RANGE_CLEAR), and the fill went on
+-- and put the hill back over it. Now any building tagged "KeepTerrainClear" (or registered with keepClear) is a hole in
+-- the land: no hill cell is filled inside its box plus MARGIN studs, the ground slopes up only beyond that, no tree is
+-- put there, and when the fill is done every tagged box is cut once more (a building that came late).
+Landscape.MARGIN = 10 -- studs of flat ground kept round a tagged building before the hill may start
+local clearBoxes: { { cf: CFrame, size: Vector3 } } = {}
+local filled = false
+local function boxOf(inst: Instance): (CFrame?, Vector3?)
+	if inst:IsA("Model") then
+		return inst:GetBoundingBox()
+	elseif inst:IsA("BasePart") then
+		return inst.CFrame, inst.Size
+	end
+	return nil, nil
+end
+local function cutBox(cf: CFrame, size: Vector3)
+	local floorY = cf.Position.Y - size.Y / 2
+	pcall(function()
+		Workspace.Terrain:FillBlock(
+			CFrame.new(cf.Position.X, floorY + 0.5 + 60, cf.Position.Z) * (cf - cf.Position),
+			Vector3.new(size.X + Landscape.MARGIN * 2, 120, size.Z + Landscape.MARGIN * 2),
+			Enum.Material.Air
+		)
+	end)
+end
+function Landscape.keepClear(inst: Instance)
+	local cf, size = boxOf(inst)
+	if not (cf and size) then
+		return
+	end
+	table.insert(clearBoxes, { cf = cf, size = size })
+	if filled then
+		cutBox(cf, size)
+	end
+end
+-- true when the world point (x, z) is inside a kept-clear box plus the margin
+local function inClear(wx: number, wz: number, extra: number): boolean
+	for _, b in clearBoxes do
+		local here = b.cf:PointToObjectSpace(Vector3.new(wx, b.cf.Position.Y, wz))
+		if math.abs(here.X) <= b.size.X / 2 + Landscape.MARGIN + extra and math.abs(here.Z) <= b.size.Z / 2 + Landscape.MARGIN + extra then
+			return true
+		end
+	end
+	return false
+end
+local function collectTagged()
+	if not (Config :: any).KEEP_CLEAR then
+		return
+	end
+	local CollectionService = game:GetService("CollectionService")
+	for _, inst in CollectionService:GetTagged("KeepTerrainClear") do
+		local cf = boxOf(inst)
+		local known = false
+		for _, b in clearBoxes do
+			if cf and (b.cf.Position - cf.Position).Magnitude < 1 then
+				known = true
+			end
+		end
+		if not known then
+			Landscape.keepClear(inst)
+		end
+	end
+end
+
 function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: number)
 	if not Config.LOOK_V3 then
 		return
@@ -109,6 +175,7 @@ function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: num
 	end
 	task.spawn(function()
 		task.wait(3)
+		collectTagged() -- (KEEP_CLEAR: buildings standing by now are holes in the land)
 		local step = Landscape.STEP
 		local done = 0
 		local heights: { [number]: { [number]: number } } = {}
@@ -125,6 +192,10 @@ function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: num
 				if away > 0 then
 					local h = heightAt(x, z, away)
 					column[z] = h
+					if h > 1 and #clearBoxes > 0 and inClear(labOrigin.X + x, labOrigin.Z + z, step / 2) then
+						h = 0 -- (KEEP_CLEAR: flat ground round a tagged building)
+						column[z] = 0
+					end
 					if h > 1 then
 						local slope = 0
 						local left = heights[x - step]
@@ -141,6 +212,16 @@ function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: num
 				end
 			end
 		end
+		-- (KEEP_CLEAR: the fill is done; every tagged building is cut free once more, also one that came late)
+		filled = true
+		collectTagged()
+		for _, b in clearBoxes do
+			cutBox(b.cf, b.size)
+		end
+		pcall(function()
+			(require(script.Parent:WaitForChild("TerrainClear")) :: any).all() -- (the terraces, after the fill)
+		end)
+		Workspace:SetAttribute("LandscapeFilled", true)
 		-- Trees, bushes and rocks on the land (real models only).
 		local roles: { string } = {}
 		for _, role in Landscape.TREE_ROLES do
@@ -169,7 +250,7 @@ function Landscape.build(labOrigin: Vector3, plotSpacing: number, plotCount: num
 			local inPlaza = math.abs(x) < Landscape.PLAZA_HALF_X + 12 and z < Landscape.PLAZA_FRONT + 12 and z > back - 12
 			local from = Vector3.new(labOrigin.X + x, ground + 300, labOrigin.Z + z)
 			local hit = Workspace:Raycast(from, Vector3.new(0, -400, 0), params)
-			if hit and hit.Normal.Y > 0.75 and not inPlaza then
+			if hit and hit.Normal.Y > 0.75 and not inPlaza and not inClear(labOrigin.X + x, labOrigin.Z + z, 8) then
 				local role = roles[rng:NextInteger(1, #roles)]
 				local height = if role == "Bush" then rng:NextNumber(3, 5) elseif role == "Rock" then rng:NextNumber(3, 9) else rng:NextNumber(18, 32)
 				V3Assets.place(role, folder, CFrame.new(hit.Position) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0), { height = height, collide = role == "Rock" })
