@@ -135,6 +135,9 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Proof:** a capture of the spider's catch in the web (the new body), the washer drum mid-spin, the chick.
 
 ### 0.7 X-ray bones turned wrong in arms and legs; holes not seen on arms and legs: CLOUD (`V7_ON_AXIS`, SmoothBody `stick`/`drive`)
+- **PC 28 Nov: the X-ray DONE, the holes PART.** A body killed with 8 chest shots, then 3 shots each on the right upper arm, forearm, thigh and shin. Only the 4 newest holes stayed, all on the thigh (holes fade after 4 shots), 0.74 studs from the thigh's centre: on the drawn skin, not inside it.
+  - Capture xray_thigh_top (X-ray on, from above): the whole skeleton inside the lying body, the arm bones along the drawn arms to the hand bones, nothing turned or sticking out.
+  - Capture hole_thigh_top: from above the thigh holes face down and are not seen. A capture of a hole on an arm or a leg from its own side is still missing.
 - **Cause found (cloud):** the DRAWN v6 arm or leg does not lie on its hidden physics part: its axis runs from its joint bone to the next joint, 0.4-0.5 studs off the part on the upper arms, and turned with the pose. The X-ray limb bones (DummySkins `xrayBone`) were built and welded on the physics part, so they stuck out of the limb at an angle; and under RAGDOLL_V7 the cloud's own V7_SAME_FRAME left the holes on the weld too (stick skipped V7), so they were inside or beside the arms and legs.
 - **Now:** holes AND the X-ray arm/leg bones follow the drawn limb axis every frame, V7 or not.
 - **Proof:** shoot an upper arm, a forearm, a thigh and a shin 3 times each (X-ray off, then on), standing and lying: every hole on the skin, every bone inside its limb along it; captures from 2 m.
