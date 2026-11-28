@@ -45,25 +45,29 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
   - `Forearm` and `SupportArm` deleted.
 - **Proof:** captures of the pistol, rifle, minigun, a melee weapon, the fart gun and a throwable, on PC and on a phone. The hands are visibly on the weapon; nothing white or blocky.
 
-### 1.2 Leaving first person with V and the eye: CLOUD (`FP_EXIT_FIX`, FirstPerson, FirstShotFP)
+### 1.2 Leaving first person with V and the eye: DONE on PC (`FP_EXIT_FIX`, FirstPerson, FirstShotFP)
+- **State (PC, 28 Nov, v1431):** in Studio. Keys V in/out/in/out: the camera goes 12.5 → 0.5 (LockFirstPerson, the gun in view) → 10.0 (Classic, behind you, the gun in your hand) → 0.5 → 10.0. Captures fp_in2 and fp_out show it. The phone eye is not tested.
 - **Cause found:** the camera kept for leaving was itself first person (LockFirstPerson, or a max zoom squeezed by the weapon-pick glide). V hid the gun and kept the camera in the head.
 - **Proof** (a capture after each step):
   - on PC: pick a weapon (in), V (out: the camera behind you, the gun in your hand), shoot (still out), V (in), V (out), pick another weapon (in);
   - the same on a phone with the eye.
 
-### 1.3 Walking upright: CLOUD (`UPRIGHT_WALK`, ActiveRagdoll)
+### 1.3 Walking upright: DONE (`UPRIGHT_WALK`, ActiveRagdoll)
+- **State (PC, 28 Nov, v1431):** in Studio. ChestBalance is on 9 bodies; of 3 moving bodies, 0 lean back (all lean forward). A follow capture shows a walker upright mid-stride. CPR, bench and boxer are not checked.
 - **Causes found:**
   - the walk lean went BACK on any slowing or turn (`R.lean` from negative acceleration);
   - only the pelvis was held upright, so the chest hung back when the drive pushed the hips.
 - **Now:** the lean is forward-only (about 2 degrees at a walk, about 6 at a run). A `ChestBalance` holds the chest to the pelvis's upright, ONLY while the drive is on (walking or fleeing), so CPR, the bench, the newspaper and the boxing crouch keep their bend.
 - **Proof:** side captures of 5 walking, one running to you, one stopping and turning, a CPR, a bench sit and a boxer. None leans back; the bends are unchanged; standing still does not rock.
 
-### 1.4 The face on the round head: CLOUD (`FACE_ON_SKIN`, SmoothBody)
+### 1.4 The face on the round head: DONE (`FACE_ON_SKIN`, SmoothBody)
+- **State (PC, 28 Nov, v1431):** in Studio. The FaceSkin Decal is on the Ball part. Captures from 30 and 45 degrees show the face on the curved head, not sticking out.
 - **Cause found:** the face was a flat SurfaceGui on a ball. It touches only the front point and sticks out from the side.
 - **Now:** a Decal on the ball, following every expression; the crash marks are on the ball; a far (dropped) body gets its gui face back.
 - **Proof:** 3 ragdolls from the front, 45 degrees and the side, talking and changing face. If the decal stretches badly at the edges, use a sphere MeshPart with a front-cap UV and the face on it. Never a flat gui on a round head.
 
-### 1.5 Too many ragdolls by you: FAILED before; now CLOUD (`NEARBY_CAP_V2`, RagdollDirector `capStepV2` + `room()`, `SPAWN_ROOM` in VisitorService)
+### 1.5 Too many ragdolls by you: PART (`NEARBY_CAP_V2`, RagdollDirector `capStepV2` + `room()`, `SPAWN_ROOM` in VisitorService)
+- **State (PC, 28 Nov, v1431):** in Studio. At the spawn: 2 bodies within 45 studs in every 5 s sample for 40 s (phone cap 5); a capture from above shows no crowd. NOT checked: a machine or the ring.
 - **Causes found:**
   - almost everyone near was exempt from the cap: running to you, shot in the last 60 s, any Role3, any watcher;
   - bodies sent away were called back by about 35 systems that write `Home`.
@@ -82,7 +86,8 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
   - the feet are on the pedals or pegs.
 - **Proof:** side and front captures of both rides, riding and turning.
 
-### 1.7 The leaderboards scroll: CLOUD (`BOARD_SCROLL`, Client/BoardScroll)
+### 1.7 The leaderboards scroll: LEFT, scroll not proven (`BOARD_SCROLL`, Client/BoardScroll)
+- **State (PC, 28 Nov, v1431):** in Studio. All 4 Board guis are in the PlayerGui, adorned, with no duplicates and none left in Workspace; the list is 768 tall in a 196 window. Two tries with the MCP mouse wheel did not reach the board (the injected mouse does not land in the game view), so the scroll itself is unproven: the owner tests it.
 - **Cause found:** a SurfaceGui in the Workspace gets no input. Every `Board` gui is now moved into the PlayerGui, adorned to its panel.
 - **Proof:** scroll each board with the wheel on PC and by drag on a phone. Captures before and after the scroll.
 
@@ -114,7 +119,12 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
   - Each one unique, with wounds, bone breaks (2.3) and sounds.
   - List every machine and animal that "kills", and give each its own choreography, worst first.
 
-### 1.9 TRY and machine buttons: the ragdoll walks there and hops in: CLOUD (`TRY_WALK`; MachineDemos.tryAt, Bowling, MapMachines)
+### 1.9 TRY and machine buttons: the ragdoll walks there and hops in: LEFT (`TRY_WALK`; MachineDemos.tryAt, Bowling, MapMachines)
+- **State (PC, 28 Nov, v1431):** in Studio, through the real Session "Try" remote. Found:
+  - (a) tryWalk returns false, and the OLD call runs (Home by the player), when no DROP HERE spot is within TRY_REACH 45 of you or no free body is within PICK_REACH 120;
+  - (b) next to the Shredder with a free body 24 studs away, tryWalk sets Watch=Demo and Home = the spot + 5, but the body stays Standing and never walks; after about 3 s walkIn's loop ends and clears Watch.
+
+  NEXT: find why a body with Watch="Demo" and a new Home does not walk (client DummyLife / RagdollNav for Watch bodies?), and why walkIn's loop breaks early (RagdollState?).
 - **Causes found:**
   - TRY's `pickDummy` skipped every Role3 (the ragdolls standing by you) and only searched an old list of machines, so the new map's machines were never found;
   - Bowling's and MapMachines' callers skipped watchers, anyone within 8 studs of a player and anyone in a mood, within only 40 studs, and gave up after 8 s ("No ragdoll near!" with one right there);
