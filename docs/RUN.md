@@ -76,7 +76,15 @@ Group the items that touch the same files and do them together:
 
 ## BATCH 1 (do now)
 
-### 1.1 First-person arms: TODO
+### 1.1 First-person arms: BUILT, not proven (`FP_REAL_ARMS`, Viewmodel)
+- **State (PC, 28 Nov, v1433):** built as written:
+  - the player's own R15 arm and hand MeshParts, cloned at 0.6 (phone 0.52), in the viewmodel Model with a Humanoid, BodyColors and the Shirt;
+  - two-bone IK, with each shoulder placed behind and below its hand at 92% of reach, so it always reaches;
+  - the weapon at 0.55 of the old size (phone 0.45), low right;
+  - a 2.5-stud wall ray pulls it back and down;
+  - Forearm/SupportArm are hidden.
+
+  Measured in Play (phone emulator, the pistol): the right hand is 0.14 from the grip and the left hand 0.16 from the fore-grip; no errors. NO CAPTURE: the Studio viewport stopped drawing 3D (white in every capture, Play and Edit) from this point, so it is not proven. OWNER CHECK, and the next run captures it.
 - **Cause found:** in `Client/Viewmodel.luau` the arms are two plain `Part` blocks (`Forearm`, `SupportArm`) stretched between fixed points, and the right one is not at the grip. The owner's capture shows a floating pistol and a white block.
 - **Build:**
   - a viewmodel Model in the camera with its own Humanoid;

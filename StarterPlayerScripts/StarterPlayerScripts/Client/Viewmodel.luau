@@ -43,6 +43,30 @@ do
 	end
 end
 
+-- FP_REAL_ARMS (RUN.md 1.1, owner: "a floating pistol and a white block"). The cause: the arms were two plain Parts
+-- (Forearm, SupportArm) stretched between fixed points, and the right one was not at the grip. Now: the player's OWN R15
+-- arms and hands (cloned MeshParts, their skin colour) with a copy of their Shirt, in a small Model with a Humanoid so the
+-- sleeves draw; two-bone IK puts the right hand on the grip and the left hand on the fore-grip (or the handle for
+-- two-handed melee); the weapon is smaller and lower right (0.55 of the old size, 0.45 on a phone: clear of the middle
+-- third and of SHOOT); near a wall it pulls back and down instead of poking through. All of it in the Camera, no query,
+-- touch or shadow. The old Forearm/SupportArm blocks are hidden.
+local REAL_ARMS = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).FP_REAL_ARMS == true
+local TouchFirst = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("TouchFirst")) :: any
+Viewmodel.ARM_SCALE = 0.6 -- the cloned arms' size against the avatar's
+Viewmodel.SHOULDER_R = Vector3.new(0.72, -1.05, 0.05) -- from the camera, off the bottom of the screen
+Viewmodel.SHOULDER_L = Vector3.new(-0.6, -1.05, 0.05)
+Viewmodel.WALL_REACH = 2.5
+local function sizeForDevice()
+	if not REAL_ARMS then
+		return
+	end
+	local phone = TouchFirst.get()
+	Viewmodel.SCALE = if phone then 0.8 * 0.45 else 0.8 * 0.55
+	Viewmodel.OFFSET = if phone then CFrame.new(0.62, -0.62, -1.45) else CFrame.new(0.66, -0.62, -1.5)
+	Viewmodel.ARM_SCALE = if phone then 0.52 else 0.6
+end
+sizeForDevice()
+
 local player = Players.LocalPlayer
 local holder: Model? = nil
 local shownTool: Model? = nil
@@ -63,12 +87,86 @@ local topY = 0.2 -- studs from the grip to the top of the copy (its sights)
 local aimed = 0 -- 0 at the side .. 1 up in the middle
 Viewmodel.AIM_AT = -1.45 -- studs ahead of the eye the grip sits while aiming
 
+type Limb = { upper: BasePart, lower: BasePart, hand: BasePart, l1: number, l2: number, lh: number }
+local limbs: { [string]: Limb } = {}
+local wallPull = 0
+
 local function clear()
 	if holder then
 		holder:Destroy()
 	end
 	holder, copy, arm, tip, flash, flashPart, shownTool = nil, nil, nil, nil, nil, nil, nil
 	support = nil
+	table.clear(limbs)
+end
+
+-- The player's own arm (UpperArm, LowerArm, Hand of one side), cloned small into the viewmodel.
+local function cloneArm(h: Model, side: string): Limb?
+	local character = player.Character
+	if not character then
+		return nil
+	end
+	local parts = {}
+	for i, n in { "UpperArm", "LowerArm", "Hand" } do
+		local src = character:FindFirstChild(side .. n)
+		if not (src and src:IsA("BasePart")) then
+			return nil
+		end
+		local c = src:Clone()
+		for _, d in c:GetDescendants() do
+			if not (d:IsA("SpecialMesh") or d:IsA("SurfaceAppearance") or d:IsA("Decal") or d:IsA("WrapTarget")) then
+				d:Destroy()
+			end
+		end
+		c.Size = src.Size * Viewmodel.ARM_SCALE
+		c.Anchored = true
+		c.CanCollide = false
+		c.CanQuery = false
+		c.CanTouch = false
+		c.CastShadow = false
+		c.Massless = true
+		c.Transparency = 0
+		c.LocalTransparencyModifier = 0
+		c.Parent = h
+		parts[i] = c
+	end
+	return { upper = parts[1], lower = parts[2], hand = parts[3], l1 = parts[1].Size.Y * 0.85, l2 = parts[2].Size.Y * 0.9, lh = parts[3].Size.Y }
+end
+
+-- A segment from a to b: the part's -Y runs from a to b (an R15 arm part hangs along its Y axis), its X along `side`.
+local function seg(p: BasePart, a: Vector3, b: Vector3, side: Vector3)
+	local down = b - a
+	if down.Magnitude < 1e-3 then
+		return
+	end
+	local up = -down.Unit
+	local right = side - up * side:Dot(up)
+	right = if right.Magnitude > 1e-3 then right.Unit else up:Cross(Vector3.zAxis).Unit
+	p.CFrame = CFrame.fromMatrix((a + b) / 2, right, up)
+end
+
+-- Two-bone IK: the shoulder fixed, the wrist on `wrist`, the elbow bent toward `pole`; the hand continues to `grip`.
+local function reachArm(l: Limb, shoulder: Vector3, wrist: Vector3, grip: Vector3, pole: Vector3, side: Vector3)
+	local d = wrist - shoulder
+	local dist = math.clamp(d.Magnitude, 0.05, l.l1 + l.l2 - 1e-3)
+	local dir = if d.Magnitude > 1e-3 then d.Unit else -Vector3.zAxis
+	wrist = shoulder + dir * dist
+	local a = (l.l1 * l.l1 - l.l2 * l.l2 + dist * dist) / (2 * dist)
+	local hgt = math.sqrt(math.max(0, l.l1 * l.l1 - a * a))
+	local bend = pole - dir * pole:Dot(dir)
+	bend = if bend.Magnitude > 1e-3 then bend.Unit else Vector3.yAxis
+	local elbow = shoulder + dir * a + bend * hgt
+	seg(l.upper, shoulder, elbow, side)
+	seg(l.lower, elbow, wrist, side)
+	local toGrip = grip - wrist
+	local handEnd = wrist + (if toGrip.Magnitude > 1e-3 then toGrip.Unit else dir) * l.lh
+	seg(l.hand, wrist, handEnd, side)
+end
+
+-- Where the shoulder sits for a hand at `wrist`: behind, below and to the side of it (camera space), at 92% of the arm's
+-- reach, so the arm always reaches its grip with a natural bend whatever the weapon's size; it stays below the view.
+local function shoulderFor(l: Limb, wrist: Vector3, cam: CFrame, sx: number): Vector3
+	return wrist + cam:VectorToWorldSpace(Vector3.new(sx, -0.62, 0.78).Unit) * ((l.l1 + l.l2) * 0.92)
 end
 
 local function build(held: Model)
@@ -108,6 +206,29 @@ local function build(held: Model)
 	if t and t:IsA("BasePart") then
 		tip = t
 	end
+	if REAL_ARMS then
+		-- the player's own arms with their shirt (a Humanoid in the model makes the Shirt draw on the arm parts)
+		local hum = Instance.new("Humanoid")
+		hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+		hum.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+		hum.RequiresNeck = false
+		hum.EvaluateStateMachine = false
+		hum.Parent = h
+		local shirt = player.Character and player.Character:FindFirstChildOfClass("Shirt")
+		if shirt then
+			shirt:Clone().Parent = h
+		end
+		local colors = player.Character and player.Character:FindFirstChildOfClass("BodyColors")
+		if colors then
+			colors:Clone().Parent = h
+		end
+		for _, side in { "Right", "Left" } do
+			local l = cloneArm(h, side)
+			if l then
+				limbs[side] = l
+			end
+		end
+	end
 	-- A forearm in the avatar's skin colour, from the grip back towards the bottom right.
 	local skin = Color3.fromRGB(230, 190, 150)
 	local hand = player.Character and player.Character:FindFirstChild("RightHand")
@@ -127,12 +248,18 @@ local function build(held: Model)
 	a.CastShadow = false
 	a.Parent = h
 	arm = a
+	if REAL_ARMS and limbs.Right then
+		a.Transparency = 1 -- (the real arms are drawn instead; the block stays only as a hidden fallback)
+	end
 	-- (23 Nov 2026, owner: "both hands on the weapon, always"): the other forearm from the bottom left up to under the
 	-- barrel, same colour.
 	local s2 = a:Clone()
 	s2.Name = "SupportArm"
 	s2.Parent = h
 	support = s2
+	if REAL_ARMS and limbs.Left then
+		s2.Transparency = 1
+	end
 	local fp = Instance.new("Part")
 	fp.Name = "Flash"
 	fp.Shape = Enum.PartType.Ball
@@ -241,8 +368,19 @@ local function frame(dt: number)
 	local place = Viewmodel.OFFSET:Lerp(CFrame.new(0, -topY - 0.035, Viewmodel.AIM_AT), aimed)
 	sway *= 1 - 0.6 * aimed
 	bob *= 1 - 0.8 * aimed
+	-- (FP_REAL_ARMS: near a wall the weapon pulls back and down instead of poking through it)
+	if REAL_ARMS then
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { camera, player.Character :: any }
+		local hit = workspace:Raycast(camera.CFrame.Position, camera.CFrame.LookVector * Viewmodel.WALL_REACH, params)
+		local want = if hit then 1 - hit.Distance / Viewmodel.WALL_REACH else 0
+		wallPull += (want - wallPull) * math.min(1, dt * 12)
+	end
 	local at = camera.CFrame
 		* place
+		* CFrame.new(0, -0.35 * wallPull, 0.55 * wallPull)
+		* CFrame.Angles(-0.9 * wallPull, 0, 0)
 		* CFrame.new(-swing * 0.7, -swing * 0.15, -swing * 0.9)
 		* CFrame.Angles(-swing * 1.3, swing * 0.5, swing * 0.7)
 		* CFrame.new(sway.X * Viewmodel.SWAY, sway.Y * Viewmodel.SWAY - dip * 0.45 + bob, kick)
@@ -265,6 +403,20 @@ local function frame(dt: number)
 				p.CFrame = CFrame.lookAt((hand + elbow) / 2, hand)
 			end
 		end
+		if REAL_ARMS and limbs.Right then
+			local cam = camera.CFrame
+			reachArm(limbs.Right, shoulderFor(limbs.Right, (turn * CFrame.new(0, 0, 0.1)).Position, cam, 0.35), (turn * CFrame.new(0, 0, 0.1)).Position, (turn * CFrame.new(0, 0, -0.15)).Position, cam:VectorToWorldSpace(Vector3.new(0.7, -1, 0.3)), cam.RightVector)
+			local l = limbs.Left
+			if l then
+				for _, p in { l.upper, l.lower, l.hand } do
+					p.Transparency = if hold.both then 0 else 1
+				end
+				if hold.both then
+					reachArm(l, shoulderFor(l, (turn * CFrame.new(0, 0, 0.42)).Position, cam, -0.45), (turn * CFrame.new(0, 0, 0.42)).Position, (turn * CFrame.new(0, 0, 0.2)).Position, cam:VectorToWorldSpace(Vector3.new(-0.7, -1, 0.3)), cam.RightVector)
+				end
+			end
+			return
+		end
 		reach(arm, (base * CFrame.new(0.55, -1.25, 0.75)).Position, (turn * CFrame.new(0, 0, -0.12)).Position)
 		if support then
 			support.Transparency = if hold.both then 0 else 1
@@ -275,6 +427,15 @@ local function frame(dt: number)
 		return
 	end
 	c:PivotTo(at)
+	if REAL_ARMS and limbs.Right then
+		-- the right hand on the grip (the model's handle is at its origin), the left on the fore-grip under the barrel
+		local cam = camera.CFrame
+		local k = Viewmodel.SCALE / 0.8
+		reachArm(limbs.Right, shoulderFor(limbs.Right, (at * CFrame.new(0.02, -0.2 * k, 0.12 * k)).Position, cam, 0.35), (at * CFrame.new(0.02, -0.2 * k, 0.12 * k)).Position, (at * CFrame.new(0, -0.05 * k, -0.1 * k)).Position, cam:VectorToWorldSpace(Vector3.new(0.8, -1, 0.2)), cam.RightVector)
+		if limbs.Left then
+			reachArm(limbs.Left, shoulderFor(limbs.Left, (at * CFrame.new(-0.08 * k, -0.3 * k, -0.95 * k)).Position, cam, -0.55), (at * CFrame.new(-0.08 * k, -0.3 * k, -0.95 * k)).Position, (at * CFrame.new(0, -0.2 * k, -1.15 * k)).Position, cam:VectorToWorldSpace(Vector3.new(-0.8, -1, 0.2)), cam.RightVector)
+		end
+	end
 	local a = arm
 	if a then
 		a.CFrame = at * CFrame.new(0.05, -0.2 - Viewmodel.ARM.Y * 0.4, Viewmodel.ARM.Z * 0.55) * CFrame.Angles(math.rad(12), 0, 0)
@@ -306,6 +467,12 @@ function Viewmodel.swing()
 end
 
 function Viewmodel.start()
+	if REAL_ARMS then
+		TouchFirst.onChange(function()
+			sizeForDevice()
+			clear() -- (rebuilt at the new size on the next frame)
+		end)
+	end
 	RunService.RenderStepped:Connect(frame)
 	table.insert(AmmoClient.onSpent, function(id: string)
 		if FirstPerson.isOn() then

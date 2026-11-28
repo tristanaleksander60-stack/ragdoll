@@ -197,6 +197,7 @@ local Config = {
 	ON_SKIN = true, -- holes, stress rings, bandages and plasters on a v6 body move with the DRAWN limb each frame (SmoothBody), not welded to the hidden physics limb the mesh does not follow exactly
 	LEG_ONE_WRITER = true, -- while a body stands, walks or flees, an upper-body pose (a mood, a gesture) no longer resets the leg joints each step; DummyLife owns them (ActiveRagdoll applyPose): the burst leg jitter
 	HIDE_TALL_COVER = true, -- a scared ragdoll hides only behind cover taller than its head and thick both ways, never a bench, lamp post or sign (Personas hide)
+	FP_REAL_ARMS = true, -- RUN 1.1: first person shows the player's own R15 arms and hands with their shirt, hands on the weapon by two-bone IK; the weapon smaller and lower right; pulls back at walls; the plain Forearm/SupportArm blocks hidden (Viewmodel)
 	TOUCH_FIRST_DEVICE = true, -- the phone-only HUD rules read the Device attribute (phone/tablet) first, not "touch and no keyboard", which is false on a tablet with a keyboard and in Studio's phone emulator (Shared/TouchFirst)
 	PLANT_YAW = 0, -- degrees added to the plant model's facing; the PC sets it so the mouth faces the path (check with a capture)
 	SHOVE_SERIES = true, -- F26: the angry dummy shoves a random 1-3 times, a line before each ("Hey!", "Stop that!", "How do YOU like it?"), a short wind-up, following if you back off; knocked over ends it; then it flees (Mourning attack)
