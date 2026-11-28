@@ -207,6 +207,33 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
 - On a computer, X-RAY is already in the bottom-left list (the I key), so the round button now shows on touch screens only.
 - **Proof:** a PC capture without it, and a phone capture with it.
 
+### 1.18 The rocket: the whole rocket flies, a ragdoll walks to it, and YOU steer it: CLOUD part + TODO
+- **Causes found** (`RocketRide.luau`):
+  - `rocketParts` only took parts within 0.8 column widths, narrower than 1.5 widths and below 1.6 x the stack, so the capsule and nose on top stayed on the tower;
+  - the nearest dummy was never walked over: a still copy was strapped on at once;
+  - the flight is a fixed server animation with no steering and no camera.
+- **CLOUD:**
+  - `ROCKET_WHOLE`: every part over the rocket's footprint, narrower than 2.2 widths, up to 3 widths over the stack, flies;
+  - `ROCKET_WALK`: the chosen ragdoll walks to the rocket's foot (up to 14 s), then it is strapped on.
+- **TODO, the PILOT** (`Config.ROCKET_PILOT`; build and prove it in Studio):
+  1. **At ignition:** weld the flying set into ONE unanchored assembly (the rocket, the strapped body copy, the straps), give it a `LinearVelocity` thrust along its nose (ramping up to about 90 studs/s) and an `AlignOrientation`, and `SetNetworkOwner(player)` so the pilot's screen flies it smoothly.
+  2. **Client `RocketPilot`** (while the player's attribute `Piloting` is set):
+     - **the camera** is a CHASE camera: behind and a little above the RAGDOLL on the rocket, looking along the nose, so you see where you steer (never first person);
+     - **steering:** mouse or WASD on PC; on a phone, the move stick (or tilt); they turn the `AlignOrientation` target (turn rate about 90 degrees/s, it cannot loop under the ground);
+     - **a small HUD:** height, speed and a BOOM button (detonate now).
+  3. **The end:**
+     - it hits something (a Touched on the nose, or a ray ahead each frame), or the fuel runs out (10 s), or BOOM is pressed;
+     - the client sends `Rocket.Boom(position)` through `Net` (validator: within 30 studs of the server's view of the rocket, once per flight);
+     - the server makes a big explosion with fire and smoke, knocks nearby ragdolls flying, flings the real body out of the blast (wounds, mild), and the camera stays on the blast for 2 s, then returns;
+     - the rocket fades back onto its tower after 4 s.
+  4. **Safety:**
+     - only the lab's owner pilots;
+     - a flight that leaves the map's bounds explodes;
+     - the server checks every remote.
+- **Proof:**
+  - a capture series: the walk-up, the strap-on, the lift-off with the whole rocket (the top included), the chase camera mid-flight on PC and on a phone, and the explosion;
+  - steering left, right and up must visibly change the flight.
+
 ---
 
 ## BATCH 2 (after the owner's test of batch 1)

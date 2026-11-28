@@ -105,7 +105,14 @@ local function rocketParts(rocket: Model): ({ BasePart }, Vector3?, number, numb
 		for _, c in columns do
 			d = math.min(d, (Vector2.new(p.Position.X, p.Position.Z) - c).Magnitude)
 		end
-		if d < w * 0.8 and math.max(p.Size.X, p.Size.Z) < w * 1.5 and p.Position.Y > bottom - w * 0.6 and p.Position.Y < bottom + (stackTop - bottom) * 1.6 then -- (the nose, not the tower's crane over it)
+		-- (ROCKET_WHOLE: the top of the rocket (the capsule and the nose, wider than the columns or above 1.6 x the stack)
+		-- stayed on the tower. Now every part centred over the rocket's footprint and narrower than 2.2 column widths goes,
+		-- up to 3 widths over the stack: the tower's crane arm is long and stays.)
+		local whole = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).ROCKET_WHOLE == true
+		local reach = if whole then w * 1.2 else w * 0.8
+		local widest = if whole then w * 2.2 else w * 1.5
+		local high = if whole then stackTop + w * 3 else bottom + (stackTop - bottom) * 1.6
+		if d < reach and math.max(p.Size.X, p.Size.Z) < widest and p.Position.Y > bottom - w * 0.6 and p.Position.Y < high then -- (the nose, not the tower's crane over it)
 			table.insert(fly, p)
 			top = math.max(top, p.Position.Y + p.Size.Y / 2)
 		end
@@ -314,6 +321,33 @@ function RocketRide.wire(rocket: Model, origin: Vector3)
 		end
 		busy = true
 		prompt.Enabled = false
+		-- (ROCKET_WALK: the ragdoll WALKS to the rocket's foot first (up to 14 s), then it is strapped on; no teleport
+		-- from across the lab)
+		if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).ROCKET_WALK then
+			local foot = Vector3.new(cf.Position.X, base.Position.Y, cf.Position.Z)
+			local pe0 = body:FindFirstChild("LowerTorso")
+			local away = if pe0 and pe0:IsA("BasePart") then Vector3.new(pe0.Position.X - foot.X, 0, pe0.Position.Z - foot.Z) else Vector3.xAxis
+			local stand = foot + (if away.Magnitude > 0.1 then away.Unit else Vector3.xAxis) * (radius + 4)
+			body:SetAttribute("TryFor", owner.UserId)
+			body:SetAttribute("Home", stand)
+			body:SetAttribute("HomeLook", foot)
+			body:SetAttribute("Pace", 1.6)
+			body:SetAttribute("MoodSay", "To the moon!")
+			local t0 = os.clock()
+			while os.clock() - t0 < 14 do
+				task.wait(0.25)
+				local pe = body:FindFirstChild("LowerTorso")
+				if not (pe and pe:IsA("BasePart") and body.Parent) or body:GetAttribute("Held") == true then
+					break
+				end
+				if Vector3.new(pe.Position.X - stand.X, 0, pe.Position.Z - stand.Z).Magnitude < 3.5 then
+					break
+				end
+			end
+			body:SetAttribute("Pace", nil)
+			body:SetAttribute("TryFor", nil)
+			body:SetAttribute("MoodSay", nil)
+		end
 		body:SetAttribute("InMachine", "Rocket")
 		body:SetAttribute("MachineHidden", true)
 		task.spawn(function()
