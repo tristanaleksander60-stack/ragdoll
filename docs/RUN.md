@@ -52,7 +52,7 @@ One Play, then all 10, with a capture each and errors read from the output:
 1. Spawn: no error in the output.
 2. Shoot a ragdoll 5 times: holes and blood, and it falls.
 3. Grab one and drop it into the nearest machine: the DROP HERE sign, and the machine takes it.
-4. TRY at a machine.
+4. Drop a ragdoll on the gyro pad: it rides in the seat (no TRY any more: 0.4).
 5. X-ray on and off.
 6. Ride the bicycle 10 s.
 7. First person in and out (V).
@@ -73,6 +73,113 @@ Group the items that touch the same files and do them together:
 `TODO` not started · `CLOUD` code written by the cloud, untested (push and prove it) · `BUILT` built by the PC, not yet proven · `FAILED` the owner's test showed it still broken (the cause was not found: find it) · `DONE` proven with a capture
 
 ---
+
+## BATCH 0 (28 Nov morning: the owner's newest reports; do these FIRST, then batch 1 on)
+All cloud code below is pushed (`c3ab25e` and the commit after it). For each item: push the files, one Play, confirm the cause in that Play, then the proof. A cause that turns out wrong: write the real one in the State and fix that.
+
+### 0.1 Ragdolls bug about and fly round everywhere: CLOUD (`CALM_GUARD`, ActiveRagdoll `calmGuard`)
+- **What the owner sees:** standing and walking ragdolls suddenly jump and fly off with nothing hitting them.
+- **Cause: NOT found yet (cloud could not see it without Studio).** No single cause was found in the code (GroundGuard, the lift, poses and props are all suspects). So the cloud built a guard that catches it AND names the cause:
+  - an upright living body (Standing, Walking, Fleeing) that nothing hit, shoved, held, rides or has in a machine, and that goes over 25 studs/s sideways or 16 up, is stopped and put back where it last stood calmly;
+  - it writes why on the body: the attribute `FlingWhy` (state, speed, what it touched, Watch, Mood, Pose, Activity) and warns once per 10 s per body: `[CALM_GUARD] <name> flung with no hit: ...`.
+- **Your job (PC):** Play 3 minutes in the lab (walk round, shoot, grab, drop into machines). Collect every `[CALM_GUARD]` line. Each distinct cause (for example "touch=Bench.Seat", "pose=CPR", "touch=Lamp") is a REAL bug: fix it at its source (the pose, the spot, the prop's collision), not in the guard. List each in the State with its fix.
+- **Proof:** the warning list before and after; 2 minutes of a capture series with no ragdoll flying without a hit; `ActiveRagdoll.calmFlings` printed at the end (near 0).
+
+### 0.2 A punched ragdoll goes 20 m away and keeps going further as you walk to it: CLOUD (`CAP_NEVER_YOURS`, RagdollDirector `capStepV2`)
+- **Cause found (cloud):** the too-many-near cap (`NEARBY_CAP_V2`) sends extra bodies 90 studs away from the player. It kept a body only if the SERVER stamped a hit on it in the last 8 s (`ServerHitAt`), but a punch on a body your own screen simulates is reported by your screen and never stamped. So the body you punched was sent away, and sent away again every time you walked near it.
+- **Now:** a body within 25 studs of you, in your view, or hit/touched in the last 60 s (its `Hits` count went up) is never sent off, and one already walking off stops when you go to it. Only bodies you cannot see are sent away.
+- **Proof:** punch one 5 times, walk after it for 20 s: it never walks or slides away from you (capture series); stand at the spawn 60 s: the count within 45 studs stays at the cap, and nobody walks off in view.
+
+### 0.3 The gyro: bodies bounce up and down and fly out; it needs E: CLOUD (`GYRO_RIDE`, `GYRO_AUTO`, MapMachines `spin`/`wireGyro`, Client/GyroRideClient)
+- **Cause found (cloud):** `spin()` teleported the client-simulated body to the hub 20 times a second (`DummyControl.move`), while its own screen let gravity pull it between the teleports: it bounced and was thrown out. And it never sat in the seat: the rings and the seat turn only on each screen (GateMotion "Spin").
+- **Now:** the server anchors the body for the ride (`GyroRide` attribute) and every screen holds it in the nearest turning `GyroSeat` (Client/GyroRideClient), so it turns WITH the rings. No E prompt: the gyro takes every ragdoll dropped on its pad or walked in (`GYRO_AUTO`).
+- **Proof:** a capture series of a dropped ragdoll riding in the seat, turning with the rings, then flung out; no prompt visible; on the phone too.
+
+### 0.4 TRY removed completely: CLOUD (`TRY_OFF`, FirstTwo, LabShowcase, SessionStats)
+- No TRY button, no E for it, no "Try CANNON 0/6" goal line; the server ignores a "Try". The bowling FTUE line stays. Item 1.9 and the SMOKE ROUND's step 4 are replaced by 0.3's drop test.
+- **Proof:** walk past 5 machines on PC and phone: no TRY anywhere.
+
+### 0.5 The head floats up in the compressor: CLOUD (`PRESS_HOLD`, Compressor `pancake`; DummyLife: no speech while MachineHidden)
+- **Cause found (cloud):** under the pancake copy the real body stayed a live physics body; the plate squeezed it and the solver pushed its parts up through the thin plate, where the head was left floating; its speech bubble floated there too.
+- **Now:** the hidden body is frozen where it lay (anchored, no collision, invisible on every screen) for the whole press, and let go after (owner reasserted); a hidden body says nothing.
+- **Proof:** press 3 ragdolls: nothing above the bed during the press; each comes back whole after.
+
+### 0.6 The old block ragdoll when the spider takes one: CLOUD (`SPIDER_REAL_BODY`, LabCreatures `BUILD.Spider`)
+- **Cause found (cloud):** the still copy in the web was cloned from the body's physics parts, which on a v6 body are the hidden OLD blocks.
+- **Now:** the real body hangs in the web, anchored in its caught pose (its own v6 skin, face, holes); hidden only when the cocoon closes; let go if the sequence fails.
+- **Also (PC):** the same old-block look in two more places: the washer's spinning drum shows a block `puppet` and the egg hatches a block `puppet` chick (LabCreatures `puppet`). Replace both: the washer spins the REAL body anchored in the drum (same method as the spider: anchored, turned by the server, or by each screen like the gyro), the chick is a small real chick model (Creator Store, malware pass). Search for any other copy made from body parts (`Instance.new("Part")` with `p.Size` of a body part) and fix it the same way.
+- **Proof:** a capture of the spider's catch in the web (the new body), the washer drum mid-spin, the chick.
+
+### 0.7 X-ray bones turned wrong in arms and legs; holes not seen on arms and legs: CLOUD (`V7_ON_AXIS`, SmoothBody `stick`/`drive`)
+- **Cause found (cloud):** the DRAWN v6 arm or leg does not lie on its hidden physics part: its axis runs from its joint bone to the next joint, 0.4-0.5 studs off the part on the upper arms, and turned with the pose. The X-ray limb bones (DummySkins `xrayBone`) were built and welded on the physics part, so they stuck out of the limb at an angle; and under RAGDOLL_V7 the cloud's own V7_SAME_FRAME left the holes on the weld too (stick skipped V7), so they were inside or beside the arms and legs.
+- **Now:** holes AND the X-ray arm/leg bones follow the drawn limb axis every frame, V7 or not.
+- **Proof:** shoot an upper arm, a forearm, a thigh and a shin 3 times each (X-ray off, then on), standing and lying: every hole on the skin, every bone inside its limb along it; captures from 2 m.
+
+### 0.8 Weapon testing still in the mountain: CLOUD (`KEEP_CLEAR`, new Systems/TerrainClear, Landscape, ShootingRange)
+- **Cause found (cloud):** the range stands just outside the compact plan, inside the ring of grass hills round the map (LabOwnerMap `hills`, balls up to 100 studs wide). RANGE_CLEAR cut only 6 studs round its walls, so the hill still rose against its sides and roof; on the old map the slow Landscape fill even put the hill back after the cut.
+- **Now:** the range is tagged `KeepTerrainClear`: it stands in an open terraced site (flat 14 studs round it, then 5 terraces stepping up 5 studs every 9 studs), cut at once and again at 4/20/60/120 s; Landscape never fills there and puts no trees there.
+- **Also (PC):** tag every other building that touches a hill (walk the map edge: one capture per building) and give the range its real model (1.19). Make sure the path to its door is clear of trees (the owner could not get in because trees covered it).
+- **Proof:** the range from the plaza and from its door: whole facade, roof and sides free.
+
+### 0.9 CPR kneeling into a bench: CLOUD (`CPR_CLEAR`, Mourning `freeKneel`)
+- **Cause found (cloud):** the kneel spot was always 1.6 studs off the chest on the near side, whatever stood there; the kneeling legs were posed into the bench and thrown out.
+- **Now:** a knee-sized box must be free of anything solid; else the other side, then the head end; else no CPR there.
+- **Proof:** kill a ragdoll next to a bench: its friend kneels on the open side.
+
+### 0.10 The plan doc itself (PC, at the end of the run)
+- Every item you touch: the State line says DONE + the capture line, or LEFT + the exact reason. No "PART" without saying exactly what is missing.
+
+---
+
+## OWNER REQUEST LEDGER (26-28 Nov): every request the owner made, so nothing is skipped
+The owner said things were skipped. This is the full list from the chat since 26 Nov. For each line, during the run: find where it stands (item, switch) and VERIFY it with one capture. If it works: tick it with the capture's line. If it does not, or it was never built: build it (behind a switch, cause found first) and prove it. Lines marked **NEW** were in no plan before 28 Nov.
+- Ragdolls and physics:
+  - stand still without jitter; walk upright (no leaning back, no "bodybuilder" elbows); legs never flicker on turns; heads stay on the neck walking (1.3, 1.10, 1.12, V7-2);
+  - fall realistically by shots, blood loss; get up, fail to get up (V7 doc 3.2);
+  - never walk into things or each other; never stuck in hedges or walls (**NEW check**: a 60 s capture at a busy spot);
+  - pick the bullets out after waking up (only the shots stay, no injuries);
+  - bones break by weapon and number of hits, belly and back bones too, the bullet visible in the bone where it hit (2.3);
+  - the angry friend shoves 1-3 times and punches the player (1.22);
+  - at most 2-3 holes drip, the newest; a purple splash per hit; holes fade after 4 shots;
+  - thicker bodies, real hands (fingers), no black or purple stripes, neck not too big;
+  - no frozen bodies in the air when they die (1.23);
+  - ragdolls at every machine, 3 alive near you, a runner comes when there are 2 (SPAWN_V2);
+  - nobody disappears in your view (0.2, SPAWN_V2).
+- Machines and creatures:
+  - DROP HERE the right size, one machine at a time (1.19);
+  - carried ragdolls never sent to the top of the tower or machines (1.19 CARRY_FLOOR_RAY);
+  - T-rex and bear really take the ragdoll in the mouth; the bear's DROP HERE in front of its mouth (1.8);
+  - every killer its own creative death (2.6) and good idle animations (Blender is on);
+  - the stretcher stretches limbs long, lets go, the long limb shrinks back over 30 s (**verify**);
+  - the cannon: the ragdoll goes INTO the cannon, the plate never launches the player; the cannonball spot where you lay a ragdoll works (**NEW check**);
+  - bowling: the ragdoll curls up fast and flies into the pins (the hook);
+  - the washer: in and out through the door (0.6);
+  - boxing: drop one in, an opponent runs in, they fight to the death; 2 ragdolls start a fight within 15 s of joining (**verify** BOXING_V2);
+  - the shark tank: the shark is in the water, not in the concrete; a thrown ragdoll swims or drowns; the water is visible through the glass but not drawn through it (**NEW check**);
+  - the cave: a real hill and entrance, no black flat wall, no puddle over the land (**verify** caveV2);
+  - the chicken is not by the spawn; something that hooks people is (**NEW check**);
+  - the slide ("rutsjebanen"): the problem in the owner's capture of 26 Nov (**NEW check**: ride it, fix what breaks);
+  - the wall: brick by brick with gravity, a car breaks it, it resets after 10-15 s; concrete walls and crates too.
+- Map:
+  - no building inside a hill (0.8); paths connect to things; nothing on the paths (lamps, props); the aquarium not half in a wall or the spawn;
+  - trees: you can walk through them; none in front of the weapon range's door (**NEW check**);
+  - the stairs work indoors too; the path wall has an opening;
+  - the water button removed, the water always on (**verify**);
+  - the flower beds are real beds, not flickering circles (**NEW check**);
+  - the parking lot: each vehicle straight over its plaque (1.19);
+  - no orange boxes; banners clear of the arch; the plant faces the path (1.14-1.16).
+- Vehicles:
+  - you are never kicked out of a car while driving (**NEW check**); launch pads launch cars (`PAD_CARS`); vehicles never poke through things (wheelchairs through the ground);
+  - the bicycle: you face forward, never fly over it, no car sound; riders sit right (1.6); the motorbike never stuck (1.24);
+  - the 5 vehicle passes prompt the right ids (1.19).
+- UI and phone:
+  - phone first; the hotbar small until tapped; no keybind letters on the phone (J on the gift); no "Multipla"; REVIVE centred over Shop and Weapon; icons centred, no overlap; no 3D turning icons (1.20);
+  - notices centred and clean (1.21); no floating words anywhere (1.24);
+  - first person on a weapon pick and a shot; V leaves it even holding a weapon; the eye button on the phone (1.2);
+  - the time dial chips work (not stuck on 2x); build mode has a DONE button on every device (1.19);
+  - leaderboards: scroll to top 20, face the right way, no text over them, the owner kept off them;
+  - X-ray: the key on PC, the button on the phone only; a limb glows only after 3 shots in a row on it, fades after 2 s over 1 s; toggled on it stays (2.4, 0.7).
+- Other: funnels follow the new map; every event fits the new map (nobody feels scammed).
 
 ## BATCH 1 (do now)
 
@@ -175,7 +282,7 @@ Group the items that touch the same files and do them together:
   - Each one unique, with wounds, bone breaks (2.3) and sounds.
   - List every machine and animal that "kills", and give each its own choreography, worst first.
 
-### 1.9 TRY and machine buttons: the ragdoll walks there and hops in: DONE at the shredder (`TRY_WALK` + cloud `CALLED_WALKS`, TRY_REACH 80)
+### 1.9 TRY and machine buttons: the ragdoll walks there and hops in: SUPERSEDED for TRY (removed, 0.4); the machine buttons keep `TRY_WALK` (`CALLED_WALKS`, TRY_REACH 80)
 - **State (PC, 28 Nov late): captured.** At the shredder, through the real Session "Try" remote: a ragdoll was given Watch "Demo" within 8 s and was 6 studs from the spot 1.5 s later. Capture try_walk: the ragdoll in mid-jump over the shredder's rail into the pit. Proven at 1 machine (the item asks 4; the trace at the bowling lane, v1432, is a second).
 - **State (PC, 28 Nov, v1432):** Re-test through the real Session "Try" remote at the bowling lane: the trace is 5/h5 Standing Demo, then 1/h5 Ragdoll, then Getting up, then Standing. So the body now walks to the spot and hops onto it, which confirms CALLED_WALKS is the cause of the "stands still" bug. No capture: the Studio viewport stopped drawing 3D (white) at this point. OWNER CHECK.
 - **State (PC, 28 Nov, v1431):** in Studio, through the real Session "Try" remote. Found:
@@ -402,7 +509,7 @@ Group the items that touch the same files and do them together:
 
 ### 1.24 Floating words over bodies; the motorbike stuck in things: CLOUD (`WORLD_POPS` now also HitWords + StuntHud; `BIKE_UNSTUCK`)
 - **Words:** "Knocked out", "Dizzy" and "Wobbly" came from `Client/HitWords` and the live flight count from `Client/StuntHud`. Neither was behind WORLD_POPS. Now both return at once when WORLD_POPS is false.
-  - **Check:** in Play, list every BillboardGui that shows text over a body or in the air. The speech lines (DummyLife) and the TRY! sign are the only ones allowed. Put anything else behind WORLD_POPS.
+  - **Check:** in Play, list every BillboardGui that shows text over a body or in the air. The speech lines (DummyLife) are the only ones allowed (TRY is gone: 0.4). Put anything else behind WORLD_POPS.
 - **Motorbike:**
   - **cause found (cloud):** BikeService only dodged ragdolls and players (`clearOf`), never walls, fences, posts or machines, and nothing noticed when it stopped moving;
   - **now:** a ray 8 studs ahead at knee height turns it to the clearer side, and if it has moved under 1.5 studs in 1.8 s it turns round and takes a new goal.
@@ -598,7 +705,7 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 
 ## BATCH 3 and on
 - **`RAGDOLL_V7.md`:** V7 step 1 is ON (the engine skins v6 from the physics parts).
-  - **Cloud fix 28 Nov (`V7_SAME_FRAME`, SmoothBody):** the round head, the holes and the bandages now use the PHYSICS parts too. The head hung off the walking body, and holes slid off or into the limbs, because SmoothBody still placed them from the old FK chain the skin no longer follows. Under V7, holes stay welded (ON_SKIN does nothing).
+  - **Cloud fix 28 Nov (`V7_SAME_FRAME`, SmoothBody):** the round head, the holes and the bandages now use the PHYSICS parts too. The head hung off the walking body, and holes slid off or into the limbs, because SmoothBody still placed them from the old FK chain the skin no longer follows. (28 Nov later: wrong for arms and legs, whose drawn axis is off the physics part: `V7_ON_AXIS` puts holes and X-ray bones on the drawn axis under V7 too; see 0.7.)
   - **`RAGDOLL_V7_ANIMATED` is OFF:** slice 1 held walking bodies rigid with their legs off the floor, carried by the lift, so the legs froze in one pose and the body GLIDED (the owner's test). The balancing walk with UPRIGHT_WALK and LEG_ONE_WRITER is back until the real thing works.
   - **V7-2 done right (the least laggy walk that looks real on every device):**
     1. An `AnimationController` + `Animator` in every dummy.

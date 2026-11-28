@@ -267,6 +267,11 @@ local function shoo(m: Model, to: Vector3)
 		end)
 	end
 end
+local CAP_NEVER_YOURS = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).CAP_NEVER_YOURS == true
+RagdollDirector.KEEP_NEAR = 25 -- studs: a body this close to you is yours, never sent off
+RagdollDirector.KEEP_HIT = 60 -- s after any hit or touch (its Hits count went up) it is never sent off
+local lastHits: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+local hitKeep: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
 local function keptV2(m: Model): boolean
 	local watch = m:GetAttribute("Watch")
 	local hitAt = m:GetAttribute("ServerHitAt")
@@ -311,6 +316,28 @@ local function capStepV2()
 			if d < RagdollDirector.NEAR or coming then
 				count += 1
 				local s = shooTo[m]
+				-- (CAP_NEVER_YOURS, owner 28 Nov: "I hit a ragdoll, it went 20 m away, and every time I walked to it, it went
+				-- further, as if tied to me but keeping its distance". The cause: this cap sent it 90 studs away from the
+				-- player; a body you just punched was only kept if the SERVER stamped the hit (ServerHitAt, 8 s), and a
+				-- punch on your own lab's body is reported by your screen, so it was never kept and was sent off again each
+				-- time you came near. Now a body is never moved off when it is close to you (KEEP_NEAR), in your view, or
+				-- touched in the last KEEP_HIT s (its Hits count went up); and a body walking away stops when you go to it.)
+				if CAP_NEVER_YOURS then
+					local hits = (m:GetAttribute("Hits") :: number?) or 0
+					if hits ~= (lastHits[m] or hits) then
+						hitKeep[m] = now + RagdollDirector.KEEP_HIT
+					end
+					lastHits[m] = hits
+					local mine = d < RagdollDirector.KEEP_NEAR or now < (hitKeep[m] or 0)
+					if mine then
+						if s and now <= s.untilAt then
+							shooTo[m] = nil
+							m:SetAttribute("Home", pe.Position) -- (you came to it: it stays)
+							m:SetAttribute("Pace", nil)
+						end
+						continue
+					end
+				end
 				if s and now <= s.untilAt then
 					continue -- (already walking away)
 				end
@@ -339,6 +366,16 @@ local function capStepV2()
 		end
 		for _, e in movable do
 			e.seen = RagdollDirector.inView(e.at)
+		end
+		if CAP_NEVER_YOURS then
+			-- (the owner's rule: nobody walks off in your view; only the ones you cannot see leave)
+			local unseen = {}
+			for _, e in movable do
+				if not e.seen then
+					table.insert(unseen, e)
+				end
+			end
+			movable = unseen
 		end
 		table.sort(movable, function(a, b)
 			if a.seen ~= b.seen then

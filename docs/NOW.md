@@ -19,6 +19,8 @@
 
 (Old runs, probe numbers and done instructions: `docs/NOW_ARCHIVE.md`; grep it, never read it whole.)
 
+- **28 Nov morning (cloud):** BATCH 0 in RUN.md: CALM_GUARD (fling stop + cause log), CAP_NEVER_YOURS (punched body sent away), GYRO_RIDE/GYRO_AUTO, TRY_OFF, PRESS_HOLD, SPIDER_REAL_BODY, V7_ON_AXIS (X-ray bones + holes on arms/legs), KEEP_CLEAR/TerrainClear (weapon range in the hill), CPR_CLEAR; plus the OWNER REQUEST LEDGER (every request since 26 Nov, to verify one by one).
+
 ## RULE FOR EVERYTHING IN THIS PLAN (owner, 26 Nov 2026): mobile first, simple enough for a 10-year-old on an iPad
 - **Phone and iPad first:** every new thing is built and checked on the phone and iPad emulators before PC and console.
 - **One tap per action:**
