@@ -314,6 +314,11 @@ The owner said things were skipped. This is the full list from the chat since 26
     - Loading (`CANNON_HOPPER`): a body the player let go over the funnel slid down it, was hidden in the barrel, and fired at 173 studs/s, flying 157 studs. The player stayed put.
     - Capture `cannon_hopper`: the cannon with its striped funnel.
     - **Staging lesson:** do NOT call `DummyControl.setOwner` from execute_luau (it is a copy). The live module still thinks the client owns the body, so the cannon's push went to the client while the server owned the physics, and the body stuck in the barrel. Move a client-simulated body from the CLIENT instead, with `Held` set on the server.
+  - **"the slide: ride it, fix what breaks": TICKED, nothing broke.** SLIDE_V2 is one chute of 23 SlideBed pieces from the tower roof (y 52) to the ground (y 1).
+    - The player, set at the top and walked piece to piece at walking speed, reached the bottom (piece 23) in 3.7 s, with no stop longer than 0 s and no fall off.
+    - Capture `slide_top`: the chute leaving the roof edge by the SLIDE sign.
+    - Capture `slide_ride`: the player half way down the green chute.
+    - Note for proofs: `Humanoid:Move` from execute_luau does nothing (the game's control code resets it each frame); drive the root's velocity instead.
 
 
 ## BATCH 1 (do now)
