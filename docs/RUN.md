@@ -735,6 +735,8 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 - **Plain-part buildings and machines:**
   - the gyro (`GYRO_STYLE`) and the weapon range (`RANGE_CLEAR`): the range must stand free with a path to its door, and its shell must be a real model, not plain parts;
   - the T-rex (`REX_ANIM`): it idles and roars.
+  - **PC 28 Nov (2): the T-rex TICKED.** RexAnim adopted it: AnimSaves has idle, walk and attacc on the client, 33 bones. In 0.6 s 3 of the 21 bones the idle clip moves had changed their Transform (a slow breathing idle; the roar comes every 20-40 s). Capture `rex_idle`: the real skinned T-rex in its pen.
+  - **PC 28 Nov (2): the plaque prices TICKED.** Lab1's vehicle plaques show 8 prices: R$ 25, 149, 49, 199, 49, 99, 125, 149. The plaque capture landed under a truck; the earlier `parking_top` shows each plaque in front of its vehicle.
 
 ---
 
