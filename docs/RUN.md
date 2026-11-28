@@ -175,7 +175,8 @@ Group the items that touch the same files and do them together:
   - Each one unique, with wounds, bone breaks (2.3) and sounds.
   - List every machine and animal that "kills", and give each its own choreography, worst first.
 
-### 1.9 TRY and machine buttons: the ragdoll walks there and hops in: PART (`TRY_WALK` + cloud `CALLED_WALKS`, TRY_REACH 80)
+### 1.9 TRY and machine buttons: the ragdoll walks there and hops in: DONE at the shredder (`TRY_WALK` + cloud `CALLED_WALKS`, TRY_REACH 80)
+- **State (PC, 28 Nov late): captured.** At the shredder, through the real Session "Try" remote: a ragdoll was given Watch "Demo" within 8 s and was 6 studs from the spot 1.5 s later. Capture try_walk: the ragdoll in mid-jump over the shredder's rail into the pit. Proven at 1 machine (the item asks 4; the trace at the bowling lane, v1432, is a second).
 - **State (PC, 28 Nov, v1432):** Re-test through the real Session "Try" remote at the bowling lane: the trace is 5/h5 Standing Demo, then 1/h5 Ragdoll, then Getting up, then Standing. So the body now walks to the spot and hops onto it, which confirms CALLED_WALKS is the cause of the "stands still" bug. No capture: the Studio viewport stopped drawing 3D (white) at this point. OWNER CHECK.
 - **State (PC, 28 Nov, v1431):** in Studio, through the real Session "Try" remote. Found:
   - (a) tryWalk returns false, and the OLD call runs (Home by the player), when no DROP HERE spot is within TRY_REACH 45 of you or no free body is within PICK_REACH 120;
