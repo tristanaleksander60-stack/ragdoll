@@ -184,6 +184,11 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 
 ### 0.9 CPR kneeling into a bench: CLOUD (`CPR_CLEAR`, Mourning `freeKneel`)
 - **PC 28 Nov (2): why try 1 failed.** `VitalsService.wound` called from execute_luau runs in execute_luau's own require cache, whose Mourning never started (`running = false`), so no mourning could begin. The cloud's code is not at fault there. Stage it again by killing the body through the client's HitRequest (head shots).
+- **PC 28 Nov (3), try 3 through the real path: LEFT for the cloud.** JOIN_CHANCE and CPR_CHANCE were set to 1 (back to 0.85 and 0.5 after; Mourning matches disk).
+  - Setup: a lab-slot body (Slot 1, LabOwner the player) was set 2.4 studs off a ParkBench, with 2 friends set 6 studs off. It was killed by head shots through the client's HitRequest and went Dead.
+  - In 25 s no CPR or Mourn mood appeared. One living slot body stood 5 studs away, and the 2 placed friends had `CommandedBy = -6`, so `free()` says no.
+  - Later the victim was Alive and Standing again. Something revived it without CPR; most likely the `mourned[body]` pass never ran for it.
+  - NEXT (cloud): a debug line in the "New mourners" pass (dead bodies seen, `near` count per body), or a `Mourning.testStart(body)` hook. Also: who sets `CommandedBy = -6` on placed bodies?
 - **PC 28 Nov, STAGED twice: LEFT.** For the test JOIN_CHANCE and CPR_CHANCE were set to 1 in the Studio source (put back to 0.85 and 0.5 after; Mourning matches disk again, 32975).
   - **Try 1:** a body 2.2 studs in front of a ParkBench and 2 friends set 6 studs from it, killed with `VitalsService.wound` (no killer). It died, but no friend mourned in 30 s; only one body stayed within 30 studs, with no mood.
   - **Try 2:** the same with the friends 5 studs off, Home held, the player 12 studs away shooting it through the real HitRequest (Blaster, up to 12 shots). It went Unconscious, not Dead, and no mood started.
