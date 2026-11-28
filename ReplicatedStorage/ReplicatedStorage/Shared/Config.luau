@@ -205,6 +205,7 @@ local Config = {
 	STANDING_RUN_GAIT = true, -- RUN 1.12 (a): a "Standing" body that really moves (a watcher running to its spot, over 2.5 studs/s) runs the walk cycle instead of the idle stance on running legs (DummyLife)
 	RAGDOLL_V7_ANIMATED = true, -- RAGDOLL_V7 step 2 slice 1: an upright dummy is held rigidly upright and on its heading (no balancing, no spin) with its legs off the floor; a hit or a fall lets go at once (ActiveRagdoll)
 	RAGDOLL_V7 = true, -- RAGDOLL_V7 step 1 (owner: "du bestemmer"): the v6 skin is drawn by the engine from the ragdoll's physics parts (its R15 bones hang on them), not by SmoothBody writing 44 bone CFrames a frame; no lag between physics and look (SmoothBody v7Attach)
+	PLANT_LIFT = true, -- RUN 2.6: the man-eating plant's jaws really hold the body (a real bite) and lift it while the plant pulls back up, before it is swallowed and chewed, instead of making it vanish at the snap (LabCreatures BUILD.Plant)
 	WASHER_PULL = true, -- RUN 2.6: the washer's drum takes the body by the chest at the open door and pulls it in, before the spin cycle, instead of making it vanish (LabCreatures BUILD.Washer)
 	VACUUM_SUCK = true, -- RUN 2.6: the vacuum robot catches the body by the foot and sucks it in feet first while it shakes, before the spin and the spit-out, instead of making it vanish (LabCreatures BUILD.Vacuum)
 	MOLE_DRAG = true, -- RUN 2.6: the mole bites the body by the foot and pulls it down feet first into its hole before it travels underground, instead of making it vanish (LabCreatures BUILD.Mole)

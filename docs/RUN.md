@@ -460,7 +460,7 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 
 ### 2.5 SPAWN_V2: how ragdolls spawn and gather, done properly (see the design below). Steps 2-3 in this batch.
 
-### 2.6 Every killer has its own real, creative death: TODO (the list from the cloud)
+### 2.6 Every killer has its own real, creative death: DONE for 5 in this run (`CHICKEN_GRIP`, `FROG_TONGUE_JOINT`, `MOLE_DRAG`, `WASHER_PULL`, `PLANT_LIFT`; `VACUUM_SUCK` not on this map)
 **The killers:**
 - **Creatures** (`LabCreatures BUILD.*`): Chicken, Frog, Mole, Plant, Slingshot, Spider, Vacuum, Washer, Whale.
 - **Animals** (`AnimalCove`): Bear, Crocodiles, T-rex (bear and T-rex already use CreatureGrip).
@@ -504,7 +504,11 @@ For each: one capture showing it working, and the switch. If it is broken, find 
   - **Now:** the drum takes the body by the chest at the open door (a real joint, server-simulated, Held) and pulls it in over 0.8 s. Its collision is off and comes back when it is spat out. Then the spin cycle with the puppet runs as before (the real body is too big for the drum).
   - **Proof:** caught 0.7 s after it was put at the door, chest at z 92.4 on its way from the door (91.5) to the drum (95.6). Capture washer_pull: the ragdoll at the washer's open front.
 - **The VACUUM (`VACUUM_SUCK`): built, NOT proven.** The nozzle catches the body by the foot (a real wound) and sucks it in feet first while the robot shakes, then the spin and spit-out as before. But this map has NO vacuum robot (the CreatureYard holds Spider, Frog, Plant, Chicken, Whale, Washer, Compressor, Mole and Slingshot), so it cannot be seen here. It stays behind its switch for a map that has one.
-- Next for the 5th: the Plant (swallows and spits out bones).
+- **State (PC, 28 Nov): 5 of 5 DONE, the PLANT (`PLANT_LIFT`, LabCreatures BUILD.Plant).**
+  - **Cause:** the plant already chews and spits out bones, but the body vanished the moment its jaws shut.
+  - **Now:** the jaws hold it (a joint at the chest, server-simulated, a 2-tooth bite), and it hangs from them while the plant pulls back up (0.9 s). Only then is it swallowed (hidden) for the chewing; it is spat out as before.
+  - **Proof:** held 0.9 s after it was put by the plant, its chest lifted from y 4 to y 14.9 into the plant's head. Capture plant_lift: the plant with the ragdoll up in its jaws, the HUD "Belly, 79 % health". No errors.
+- **2.6 in this run: DONE for 5 (chicken, frog, mole, washer, plant), plus the vacuum built but not on this map.** Left for a later run: Spider (already a cocoon), Whale, Slingshot, the animals (bear and T-rex already use CreatureGrip; crocodile) and the machines.
 
 ### 2.7 No more plain-part machines or creatures: STARTED
 - **PC 28 Nov (v1439), the GYRO: DONE (`GYRO_MODELS`).** Studio's generate_mesh makes good meshes in the place (no upload step), so it is the pipeline for the rest of 2.7:

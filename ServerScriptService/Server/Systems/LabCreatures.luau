@@ -769,10 +769,51 @@ BUILD.Plant = function(f, at, m)
 			end)
 			lazy("FxService").hit(down.Position, 90, "Punch")
 			spray(f, down.Position, { Color3.fromRGB(150, 18, 24) }, 25, 14, 0.5)
-			hideBody(model, true)
-			task.spawn(hold, model, function()
-				return head * CFrame.new(0, -1, 0)
-			end, 3)
+			-- (PLANT_LIFT, RUN 2.6: the body vanished the moment the jaws shut. Now the jaws really hold it (a joint at
+			-- the chest, server-simulated, a real bite wound) and it hangs from them while the plant pulls back up; it is
+			-- swallowed (hidden) only then, for the chewing.)
+			local liftHook: BasePart? = nil
+			local liftSolid: { [BasePart]: boolean } = {}
+			local liftOwner = nil
+			local chest = model:FindFirstChild("UpperTorso")
+			if (Config :: any).PLANT_LIFT and chest and chest:IsA("BasePart") then
+				local DC = lazy("DummyControl")
+				local okO, o = pcall(DC.ownerOf, model)
+				liftOwner = if okO then o else nil
+				pcall(DC.wake, model)
+				pcall(DC.setOwner, model, nil)
+				for _, p in model:GetDescendants() do
+					if p:IsA("BasePart") and p.CanCollide then
+						liftSolid[p] = true
+						p.CanCollide = false
+					end
+				end
+				local hook = Instance.new("Part")
+				hook.Name = "PlantHook"
+				hook.Size = Vector3.one * 0.4
+				hook.Transparency = 1
+				hook.Anchored, hook.CanCollide, hook.CanQuery, hook.CanTouch = true, false, false, false
+				hook.CFrame = down * CFrame.new(0, -1, 0)
+				hook.Parent = f
+				table.insert(m.temp, hook)
+				model:PivotTo(model:GetPivot() + (hook.Position - chest.Position))
+				local a0 = Instance.new("Attachment")
+				a0.Parent = hook
+				local a1 = Instance.new("Attachment")
+				a1.Name = "PlantStuck"
+				a1.Parent = chest
+				local j = Instance.new("BallSocketConstraint")
+				j.Attachment0, j.Attachment1 = a0, a1
+				j.Parent = hook
+				model:SetAttribute("Held", true)
+				pcall(lazy("CreatureGrip").bite, model, chest, m.owner(), 2)
+				liftHook = hook
+			else
+				hideBody(model, true)
+				task.spawn(hold, model, function()
+					return head * CFrame.new(0, -1, 0)
+				end, 3)
+			end
 			if (Config :: any).PLANT_10 then
 				-- 3.15 PLANT (Config.PLANT_10): a cartoon munch: yellow stars spin out of its jaws while it chews, "MUNCH!"
 				local starAt = Instance.new("Part")
@@ -800,12 +841,30 @@ BUILD.Plant = function(f, at, m)
 				end)
 			end
 			-- Back up and chew, juice and blood dripping.
-			play(0.3, function(t)
+			play(if liftHook then 0.9 else 0.3, function(t)
 				setJaws(down:Lerp(head, t), 0)
+				if liftHook then
+					liftHook.CFrame = down:Lerp(head, t) * CFrame.new(0, -1, 0)
+				end
 				if plant then
 					plant:PivotTo(base * CFrame.new(0, -1.5 * (1 - t), 0) * CFrame.Angles(math.rad(15) * (1 - t), 0, 0))
 				end
 			end)
+			if liftHook then
+				liftHook:Destroy()
+				local st = model:FindFirstChild("PlantStuck", true)
+				if st then
+					st:Destroy()
+				end
+				model:SetAttribute("Held", nil)
+				if liftOwner then
+					pcall(lazy("DummyControl").setOwner, model, liftOwner)
+				end
+				hideBody(model, true)
+				task.spawn(hold, model, function()
+					return head * CFrame.new(0, -1, 0)
+				end, 2.4)
+			end
 			play(1.6, function(t)
 				local chew = math.abs(math.sin(t * math.pi * 6))
 				setJaws(head * CFrame.new(0, math.sin(t * 20) * 0.2, 0), chew * 0.25)
@@ -835,6 +894,11 @@ BUILD.Plant = function(f, at, m)
 				plant:PivotTo(base)
 			end
 			hideBody(model, false)
+			for p in liftSolid do
+				if p.Parent then
+					p.CanCollide = true -- (PLANT_LIFT: solid again once it is spat out)
+				end
+			end
 			return Vector3.new(0, 110, 0) + m.toLab * 30
 		end)
 	end
