@@ -645,6 +645,7 @@ end
 -- cause is written on the body (attribute FlingWhy: its state, what it touched, which systems held it) and warned once,
 -- so the exact cause can be read in Studio and fixed at its source.
 local GAME_CALM_GUARD = (require(script.Parent.Parent:WaitForChild("Config")) :: any).CALM_GUARD == true
+local GAME_TELEPORT_LIFT = (require(script.Parent.Parent:WaitForChild("Config")) :: any).TELEPORT_LIFT_RESET == true
 local CALM_FLING_SPEED = 25
 local CALM_FLING_VY = 16
 ActiveRagdoll.calmFlings = 0
@@ -2392,6 +2393,24 @@ local function update(dt: number)
 		end
 		if GAME_HARD_PHYS then
 			hardChecks(rig)
+		end
+		if GAME_TELEPORT_LIFT then
+			-- (TELEPORT_LIFT_RESET, RUN 0.1: after a set-down or any server teleport (DummyControl.move) the standing hold's
+			-- lift still pointed at the OLD spot until think() looked again, and pulled the body back across at up to
+			-- 30-47 studs/s: the "flung with no hit" CALM_GUARD saw. A pelvis that jumped over 6 studs in one step moves the
+			-- lift with it at once, and the body starts still.)
+			local R: any = rig
+			local here = rig.pelvis.Position
+			local last = R.lastPelvisAt
+			R.lastPelvisAt = here
+			if last and (here - last).Magnitude > 6 and rig.lift.Enabled and rig.state == "Standing" then
+				rig.lift.Position = here - Vector3.new(0, WALK_HOVER - 0.02, 0)
+				for _, part in rig.parts do
+					if not part.Anchored then
+						part.AssemblyLinearVelocity = Vector3.zero
+					end
+				end
+			end
 		end
 		if GAME_CALM_GUARD then
 			calmGuard(rig)
