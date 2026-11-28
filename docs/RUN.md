@@ -48,7 +48,7 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
 - **Feel items** (scrolling with a real wheel or finger, steering, pinch, how smooth it feels): build them, prove what code can prove, mark them `OWNER CHECK` and list them first in the final test list. Never write DONE for a feel item.
 
 ## SMOKE ROUND (after EACH batch: about 3 minutes, catches what one item broke in another)
-One Play, then all 10, with a capture each and errors read from the output:
+One Play, then all 13, with a capture each and errors read from the output:
 1. Spawn: no error in the output.
 2. Shoot a ragdoll 5 times: holes and blood, and it falls.
 3. Grab one and drop it into the nearest machine: the DROP HERE sign, and the machine takes it.
@@ -59,6 +59,9 @@ One Play, then all 10, with a capture each and errors read from the output:
 8. Stand 30 s at the spawn: count the ragdolls within 45 studs.
 9. A standing ragdoll from the side (upright).
 10. FPS at the spawn.
+11. Punch a ragdoll and walk after it 10 s: it never moves away from you (0.2).
+12. Read the output: every `[CALM_GUARD]` line is a bug with its cause named; fix it (0.1).
+13. X-ray on: shoot an arm and a leg: the bones lie inside the limbs (0.7).
 
 If any step fails, fix it before the next batch: it is a regression from this batch.
 
