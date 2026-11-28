@@ -495,7 +495,11 @@ For each: one capture showing it working, and the switch. If it is broken, find 
   - **Cause:** the frog already does its idea in 3 beats: the tongue, the gulp with a kicking lump in the belly, the burp with slime and bones, then the body is spat out. The one teleport was the reel: `hold` moved the body to the tongue tip every frame.
   - **Now:** the body is really stuck. There is a BallSocket from the sticky tip to its chest, it counts as Held (no lift fighting) and the server simulates it while the tongue pulls it in. The tongue's slap is a real wound. The joint goes when the tongue does, and the body's player gets it back. Being inside the frog (hidden while the lump kicks) is the swallow itself and stays.
   - **Proof:** a body put 10 studs in front of the frog was stuck 0.9 s later. Capture frog_tongue: the pink tongue stretched from the frog to the ragdoll on its tip, purple blood at the chest, the HUD "Chest, 92 % health". No errors.
-  - Worst left (they still use hideBody): Mole, Vacuum, Washer.
+- **State (PC, 28 Nov): 3 of 5 DONE, the MOLE (`MOLE_DRAG`, LabCreatures BUILD.Mole).**
+  - **Cause:** the hole opened under the body and `hideBody` made it vanish at once.
+  - **Now:** the mole bites it by the LEFT FOOT (CreatureGrip, a real wound) and sinks over 1.8 s, pulling it down feet first into the hole. The body's collision is off meanwhile, so the earth lets it through; it gets it back when it bursts out elsewhere. Only then is it hidden for the trip underground, and the burst-out is as before.
+  - **Proof:** the trace of one drag: foot 1.8 to -2.1, head 6.3 to 2.3 (half the body under the ground) before it was hidden. Capture mole_drag3: the mole up out of its hole, biting, the HUD "Left foot, 96 % health". The drag was 1.1 s, too fast to see; it is now 1.8 s.
+  - Worst left (they still use hideBody): Vacuum, Washer.
 
 ### 2.7 No more plain-part machines or creatures: STARTED
 - **PC 28 Nov (v1439), the GYRO: DONE (`GYRO_MODELS`).** Studio's generate_mesh makes good meshes in the place (no upload step), so it is the pipeline for the rest of 2.7:

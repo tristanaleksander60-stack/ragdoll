@@ -1853,14 +1853,42 @@ BUILD.Mole = function(f, at, m)
 			spray(f, under.Position + Vector3.new(0, 0.5, 0), DIRT, 40, 18, 0.7, Vector3.new(0, 1, 0))
 			lazy("FxService").hit(under.Position, 60, "Punch")
 			-- Dragged under.
-			hideBody(model, true)
-			task.spawn(hold, model, function()
-				return under * CFrame.new(0, -3, 0)
-			end, 1.6)
-			play(0.3, function(t)
-				setMole(under * CFrame.new(0, 0.5 - 6 * t, 0))
-			end)
-			task.wait(0.8)
+			-- (MOLE_DRAG, RUN 2.6: the body vanished the moment the hole opened. Now the mole bites it by the foot
+			-- (CreatureGrip) and sinks, pulling it down feet first into the hole: its collision is off meanwhile, so the
+			-- earth lets it through. Only when it is mostly under is it hidden for the trip underground.)
+			local grip = nil
+			local solid: { [BasePart]: boolean } = {}
+			if (Config :: any).MOLE_DRAG and mole then
+				local okG, g = pcall(lazy("CreatureGrip").grab, mole, model, "LeftFoot", m.owner())
+				grip = if okG then g else nil
+			end
+			if grip then
+				for _, p in model:GetDescendants() do
+					if p:IsA("BasePart") and p.CanCollide then
+						solid[p] = true
+						p.CanCollide = false
+					end
+				end
+				play(1.8, function(t)
+					setMole(under * CFrame.new(0, 0.5 - 7 * t * t, 0) * CFrame.Angles(0, math.sin(t * 30) * 0.15, 0))
+				end)
+				spray(f, under.Position + Vector3.new(0, 0.5, 0), DIRT, 25, 12, 0.6, Vector3.new(0, 1, 0))
+				pcall(lazy("CreatureGrip").release, grip, Vector3.zero, m.owner())
+				hideBody(model, true)
+				task.spawn(hold, model, function()
+					return under * CFrame.new(0, -3, 0)
+				end, 1.6)
+				task.wait(0.4)
+			else
+				hideBody(model, true)
+				task.spawn(hold, model, function()
+					return under * CFrame.new(0, -3, 0)
+				end, 1.6)
+				play(0.3, function(t)
+					setMole(under * CFrame.new(0, 0.5 - 6 * t, 0))
+				end)
+				task.wait(0.8)
+			end
 			-- Up somewhere else: the earth bursts, the body flies.
 			local a = math.random() * math.pi * 2
 			local out = at * CFrame.new(math.cos(a) * 6, 0, math.sin(a) * 6)
@@ -1876,6 +1904,11 @@ BUILD.Mole = function(f, at, m)
 				end)
 			end)
 			hideBody(model, false)
+			for p in solid do
+				if p.Parent then
+					p.CanCollide = true
+				end
+			end
 			if model.Parent then
 				lazy("DummyControl").move(model, out * CFrame.new(0, 3, 0))
 			end
