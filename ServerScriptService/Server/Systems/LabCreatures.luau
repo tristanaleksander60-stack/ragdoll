@@ -925,14 +925,47 @@ BUILD.Frog = function(f, at, m)
 				end)
 			end
 			-- Reel it in: the body stuck to the tip.
-			task.spawn(hold, model, function()
-				return CFrame.new(tip.Position)
-			end, 0.45)
+			-- (FROG_TONGUE_JOINT, RUN 2.6: the body was teleported to the tip every frame. Now it is really stuck: a
+			-- BallSocket from the sticky tip to its chest, the server simulating it meanwhile (like CreatureGrip), so it
+			-- swings in on the tongue; the slap of the tongue is a real wound.)
+			local stuckAt: Attachment? = nil
+			local DC = lazy("DummyControl")
+			local wasOwner = nil
+			local chest = model:FindFirstChild("UpperTorso")
+			if (Config :: any).FROG_TONGUE_JOINT and chest and chest:IsA("BasePart") then
+				local okO, o = pcall(DC.ownerOf, model)
+				wasOwner = if okO then o else nil
+				pcall(DC.wake, model)
+				pcall(DC.setOwner, model, nil)
+				model:PivotTo(model:GetPivot() + (tip.Position - chest.Position))
+				local a0 = Instance.new("Attachment")
+				a0.Parent = tip
+				local a1 = Instance.new("Attachment")
+				a1.Name = "TongueStuck"
+				a1.Parent = chest
+				local j = Instance.new("BallSocketConstraint")
+				j.Attachment0, j.Attachment1 = a0, a1
+				j.Parent = tip
+				stuckAt = a1
+				model:SetAttribute("Held", true) -- (limp on the tongue: no lift or balance fighting the reel)
+				pcall(lazy("CreatureGrip").bite, model, chest, m.owner(), 1)
+			else
+				task.spawn(hold, model, function()
+					return CFrame.new(tip.Position)
+				end, 0.45)
+			end
 			play(0.45, function(t)
 				stretch(target:Lerp(mouth.Position, t * t), math.sin(t * 14) * 0.1)
 			end)
 			tongue:Destroy()
 			tip:Destroy()
+			if stuckAt then
+				stuckAt:Destroy()
+				model:SetAttribute("Held", nil)
+				if wasOwner then
+					pcall(DC.setOwner, model, wasOwner)
+				end
+			end
 			-- Gulp: the body is inside; the frog snaps shut and the throat swells.
 			hideBody(model, true)
 			task.spawn(hold, model, function()

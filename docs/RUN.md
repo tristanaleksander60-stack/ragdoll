@@ -491,7 +491,11 @@ For each: one capture showing it working, and the switch. If it is broken, find 
   - **Cause:** after 3 pecks, `hideBody` made the body vanish and `hold` kept it invisible over the nest while the egg grew: a teleport, no real harm.
   - **Now:** each peck is a real wound (`CreatureGrip.bite`). The hen takes the body by the HEAD in her beak (`CreatureGrip.grab`: a real joint, the server simulates it, it dangles), waddles it to the nest, bites once more and drops it beside the nest. Then the egg gag and the throw run as before. If the grab fails, the old way runs.
   - **Proof (a body put in the coop from the server):** the trace shows it held in the jaws 1.0-2.6 s, lifted to beak height (7.4) and carried 4 studs to the nest (x 1068 to 1064), then dropped and thrown. Captures: chicken_grip_2 (the HUD: "Belly: HAIRLINE, 12 % health, OUT COLD" after the pecks, the egg growing) and chicken_drag (the ragdoll hanging by its head from the hen's beak). The TRY button's Session "Try" "Chicken" did not start the hen within 25 s (1.9 is still PART).
-  - Worst left (they all still use hideBody): Frog, Mole, Vacuum, Washer.
+- **State (PC, 28 Nov): 2 of 5 DONE, the FROG (`FROG_TONGUE_JOINT`, LabCreatures BUILD.Frog).**
+  - **Cause:** the frog already does its idea in 3 beats: the tongue, the gulp with a kicking lump in the belly, the burp with slime and bones, then the body is spat out. The one teleport was the reel: `hold` moved the body to the tongue tip every frame.
+  - **Now:** the body is really stuck. There is a BallSocket from the sticky tip to its chest, it counts as Held (no lift fighting) and the server simulates it while the tongue pulls it in. The tongue's slap is a real wound. The joint goes when the tongue does, and the body's player gets it back. Being inside the frog (hidden while the lump kicks) is the swallow itself and stays.
+  - **Proof:** a body put 10 studs in front of the frog was stuck 0.9 s later. Capture frog_tongue: the pink tongue stretched from the frog to the ragdoll on its tip, purple blood at the chest, the HUD "Chest, 92 % health". No errors.
+  - Worst left (they still use hideBody): Mole, Vacuum, Washer.
 
 ### 2.7 No more plain-part machines or creatures: STARTED
 - **PC 28 Nov (v1439), the GYRO: DONE (`GYRO_MODELS`).** Studio's generate_mesh makes good meshes in the place (no upload step), so it is the pipeline for the rest of 2.7:
