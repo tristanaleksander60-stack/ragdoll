@@ -201,6 +201,7 @@ local Config = {
 	FACE_SHOOTER = true, -- a ragdoll that is not scared turns to the player who shot it, from up to 160 studs (ActiveRagdoll standsFirm)
 	ANGRY_MORE = true, -- a shot ragdoll gets mad more often: 15 % fresh to 60 % near death (was 3-35 %), up to 3 mad at once in a lab (Mourning.chanceOf)
 	HOLE_CURVE_FIT = true, -- a bullet hole on a round v6 limb is at most 0.8 x its radius across and lifted by the curve's sag, so its rim touches the skin all round (never half inside the arm) (BulletHoles)
+	LEGS_WHILE_MOVING = true, -- RUN 1.12: a body in the Standing state that MOVES (a watcher running to its spot) keeps its legs to DummyLife; the REST pose straightened them every physics step, so the knees flipped every frame (ActiveRagdoll applyPose)
 	BONES_RETUNE = true, -- RUN 2.3: hits to break a fresh limb bone: light pistol 3, heavy pistol 2, auto 6, rifle 2, shotgun or sniper 1, bat at full charge 2, fists 6 (Bones.CLASS)
 	XRAY_SKULL_MESH = true, -- RUN 2.4: the X-ray skull is a real skull mesh with a cranium, eye holes and a jaw with teeth (ReplicatedStorage.XrayAssets.Skull), not a ball and a block (SmoothBody roundHead)
 	YARD_CONE_MODEL = true, -- RUN 1.15: the orange "boxes" round the map were the yard cones, built as plain blocks; now a real traffic cone model (V3Assets TrafficCone; LabOwnerMap)

@@ -114,6 +114,8 @@ function FanMachine.setup(m: Model, owner: Player)
 	gui.Size = UDim2.fromOffset(150, 40)
 	gui.StudsOffsetWorldSpace = Vector3.new(0, size.Y / 2 + 2, 0)
 	gui.MaxDistance = 80
+	-- (WORLD_POPS off, RUN 1.19: no floating text at any machine; the fan's speed board was missed)
+	gui.Enabled = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).WORLD_POPS ~= false
 	gui.Parent = anchor
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)

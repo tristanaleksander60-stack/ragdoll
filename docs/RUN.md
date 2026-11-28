@@ -225,7 +225,8 @@ Group the items that touch the same files and do them together:
   - telemetry `Fps_p10` by device.
 - **Proof:** the profiler numbers and an FPS counter capture at the spawn with every ragdoll in view drawn in v6.
 
-### 1.12 The legs still bug: LEFT (`LEG_ONE_WRITER` is in, but it is not the cause of what the detector sees)
+### 1.12 The legs still bug: PART (`LEG_ONE_WRITER` + PC `LEGS_WHILE_MOVING`)
+- **State (PC, 28 Nov, v1439):** cause (a) found and fixed. The knee flipping every frame ("N rev/s" = knee reversals at 70% of the fps) came from ActiveRagdoll.applyPose: a Standing body with the REST pose that MOVES (a watcher running to its spot at Pace 1.8) got its legs straightened each physics step, while DummyLife drew the run gait. LEG_ONE_WRITER excluded REST. Now REST leaves the legs to DummyLife while the body moves over 2 studs/s. Counted: before, 3 "rev/s" events in 75 s; after, 0 in 90 s. LEFT: (b) "TURN TWIST" (12 in 90 s), slow walking turns of about 1 rad/s with 5-7 foot stick-slips a second, which is DummyLife's foot planting. The lasting cure is RAGDOLL_V7.
 - **State (PC, 28 Nov, v1436):** 60-75 s at the spawn with LEG_ONE_WRITER on: 9 LegJitter events of two kinds:
   - (a) "N rev/s, state=Standing" with Pace 1.8 (a watcher running to its spot, e.g. EntranceVehicles#2, RagdollBowling#2), speed 13 and 20-30 rev/s, once "feet on Body" (standing on another ragdoll);
   - (b) "TURN TWIST" while Walking at 1 rad/s with 5-8 foot stick-slips a second.
@@ -371,7 +372,7 @@ Group the items that touch the same files and do them together:
 
 ### 1.19 Carried over from FIXES_28NOV: re-check each one (they were built, the owner did not confirm them all)
 For each: one capture showing it working, and the switch. If it is broken, find the cause and fix it here. A line per item in the final message.
-- `WORLD_POPS` off: no floating texts at any machine (DROP, SMASH, TAIL SLAP, RPM, CRACK, the rocket countdown).
+- `WORLD_POPS` off: no floating texts at any machine (DROP, SMASH, TAIL SLAP, RPM, CRACK, the rocket countdown). **PC 28 Nov:** one was left, the fan's "FAN: || 2" board (FanMachine made its BillboardGui without the switch). Fixed; a scan of every enabled BillboardGui with text in Lab1 found only that one.
 - `CARRY_FLOOR_RAY`: carry a ragdoll under the bowling canopy and up every tower floor; it stays in front of you, never on a roof.
 - DROP HERE (`DropSpots`): ONE sign at each machine when carrying, the bear's in front of its mouth.
 - `PLAYER_SWIM`: fall into the aquarium, swim, and jump out on every side; the 25 s safety net.

@@ -388,7 +388,15 @@ local function legJoint(name: string): boolean
 	return string.find(name, "Hip", 1, true) ~= nil or string.find(name, "Knee", 1, true) ~= nil or string.find(name, "Ankle", 1, true) ~= nil
 end
 local function applyPose(rig: Rig, pose: Poses.Pose)
-	local upright = LEG_ONE_WRITER and pose ~= Poses.REST and (rig.state == "Standing" or rig.state == "Walking" or rig.state == "Fleeing")
+	local upright = LEG_ONE_WRITER and (rig.state == "Standing" or rig.state == "Walking" or rig.state == "Fleeing")
+	if upright and pose == Poses.REST then
+		-- (LEGS_WHILE_MOVING, PC 28 Nov: the LegJitter detector caught knees flipping EVERY frame (20-30 reversals a second)
+		-- on bodies in the Standing state running to their watch spot at Pace 1.8: their pose was REST, so this straightened
+		-- the legs each physics step while DummyLife drew the run gait on the same joints. REST leaves the legs to DummyLife
+		-- while the body moves; standing still, REST still straightens them.)
+		local v = rig.pelvis.AssemblyLinearVelocity
+		upright = (GameConfig :: any).LEGS_WHILE_MOVING == true and Vector3.new(v.X, 0, v.Z).Magnitude > 2
+	end
 	for name, joint in rig.joints do
 		if upright and pose[name] == nil and not rig.broken[name] and legJoint(name) then
 			continue
