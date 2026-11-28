@@ -719,6 +719,11 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 - `STAIR_OPENING`: walk up the aquarium stairs onto the platform.
 - `PARKING_STRAIGHT`: a top-down capture of the lot; each plaque in front of its vehicle.
  **PC 28 Nov (v1441):** the tank (LabMuscleCar, 12.8 wide) had an 11 bay; it was pushed into the Ford and rode up on it, tilted 13 degrees. `PANZER_BAY_FIT` gives it 13.5, and it now stands flat (1 degree). Capture parking_top: every vehicle over its own plaque, straight.
+- **PC 28 Nov (2), the passes: TICKED by code.** `VehicleService.PASSES` holds exactly the owner's ids:
+  - GoKart 2098603396, Police 2098855450, MonsterTruck 2099065438, Bulldozer 2098381516, FireTruck 2101716732;
+  - Car 2092302232 and MuscleCar 2093220108; the Ford (Truck) 0 = free.
+
+  A SOON vehicle reads "Coming soon" only while its pass is 0, so all 5 say "Drive" and prompt their own pass. `HOTBAR_3D = false` (no turning 3D gun). The plaque prices still need one look in Play.
 - The 5 vehicle passes:
   - each prompts the right pass id;
   - each plaque shows its price;
