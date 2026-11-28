@@ -2356,7 +2356,17 @@ local function step(life: Life, now: number, dt: number)
 	end
 	setFace(life, expression)
 
-	if state == "Standing" and model:GetAttribute("Frozen") ~= true then
+	-- (STANDING_RUN_GAIT, RUN 1.12 (a): a watcher running to its spot is "Standing" on the server while it moves at up to
+	-- 13 studs/s, so the idle stance was drawn on running legs and the knees flipped 13-30 times a second. A Standing
+	-- body that really moves now runs the walk cycle, like a Walking one.)
+	local standRun = false
+	if state == "Standing" and (Config :: any).STANDING_RUN_GAIT and model:GetAttribute("Frozen") ~= true and model:GetAttribute("Mood") == nil then
+		local v = life.pelvis.AssemblyLinearVelocity
+		standRun = Vector3.new(v.X, 0, v.Z).Magnitude > 2.5
+	end
+	if standRun then
+		updateGait(life, "Walking", now, dt)
+	elseif state == "Standing" and model:GetAttribute("Frozen") ~= true then
 		if not moodPose(life, now, dt, false) then
 			updateIdle(life, now, dt)
 			clutch(life, 1)
@@ -2383,7 +2393,7 @@ local function step(life: Life, now: number, dt: number)
 	swimLayer(life, state, now, dt)
 	filmLayer(life, state, now, dt)
 	freeLoose(life)
-	if not MOVING[state] then
+	if not MOVING[state] and not standRun then
 		life.lastPosition = life.pelvis.Position
 		life.groundSpeed = 0
 	end

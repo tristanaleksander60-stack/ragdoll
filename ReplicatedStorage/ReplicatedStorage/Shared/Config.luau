@@ -201,6 +201,7 @@ local Config = {
 	FACE_SHOOTER = true, -- a ragdoll that is not scared turns to the player who shot it, from up to 160 studs (ActiveRagdoll standsFirm)
 	ANGRY_MORE = true, -- a shot ragdoll gets mad more often: 15 % fresh to 60 % near death (was 3-35 %), up to 3 mad at once in a lab (Mourning.chanceOf)
 	HOLE_CURVE_FIT = true, -- a bullet hole on a round v6 limb is at most 0.8 x its radius across and lifted by the curve's sag, so its rim touches the skin all round (never half inside the arm) (BulletHoles)
+	STANDING_RUN_GAIT = true, -- RUN 1.12 (a): a "Standing" body that really moves (a watcher running to its spot, over 2.5 studs/s) runs the walk cycle instead of the idle stance on running legs (DummyLife)
 	RAGDOLL_V7 = true, -- RAGDOLL_V7 step 1 (owner: "du bestemmer"): the v6 skin is drawn by the engine from the ragdoll's physics parts (its R15 bones hang on them), not by SmoothBody writing 44 bone CFrames a frame; no lag between physics and look (SmoothBody v7Attach)
 	SPIDER_WEB_MODEL = true, -- RUN 2.7: the spider web is a real flat silk web (V3Assets SpiderWebModel; Studio-generated) in place of 48 neon sticks (LabCreatures)
 	SHREDDER_MODEL = true, -- RUN 2.7: the shredder has real toothed rollers in its pit and a real control box with lever and red button (V3Assets ShredderRollers, ShredderControl; Studio-generated) (LabOwnerMap)
