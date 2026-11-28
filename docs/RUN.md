@@ -487,6 +487,11 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 - T-rex: sometimes gulps and spits the body out later.
 
 **Proof:** 4 captures per killer, worst first; at least 5 in this run.
+- **State (PC, 28 Nov): 1 of 5 DONE, the CHICKEN (`CHICKEN_GRIP`, LabCreatures BUILD.Chicken).**
+  - **Cause:** after 3 pecks, `hideBody` made the body vanish and `hold` kept it invisible over the nest while the egg grew: a teleport, no real harm.
+  - **Now:** each peck is a real wound (`CreatureGrip.bite`). The hen takes the body by the HEAD in her beak (`CreatureGrip.grab`: a real joint, the server simulates it, it dangles), waddles it to the nest, bites once more and drops it beside the nest. Then the egg gag and the throw run as before. If the grab fails, the old way runs.
+  - **Proof (a body put in the coop from the server):** the trace shows it held in the jaws 1.0-2.6 s, lifted to beak height (7.4) and carried 4 studs to the nest (x 1068 to 1064), then dropped and thrown. Captures: chicken_grip_2 (the HUD: "Belly: HAIRLINE, 12 % health, OUT COLD" after the pecks, the egg growing) and chicken_drag (the ragdoll hanging by its head from the hen's beak). The TRY button's Session "Try" "Chicken" did not start the hen within 25 s (1.9 is still PART).
+  - Worst left (they all still use hideBody): Frog, Mole, Vacuum, Washer.
 
 ### 2.7 No more plain-part machines or creatures: STARTED
 - **PC 28 Nov (v1439), the GYRO: DONE (`GYRO_MODELS`).** Studio's generate_mesh makes good meshes in the place (no upload step), so it is the pipeline for the rest of 2.7:

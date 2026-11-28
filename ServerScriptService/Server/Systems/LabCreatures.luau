@@ -1383,15 +1383,33 @@ BUILD.Chicken = function(f, at, m)
 				local beak = (near * CFrame.new(0, 1.5, -2)).Position
 				spray(f, beak, { Color3.fromRGB(255, 255, 255), Color3.fromRGB(240, 220, 190) }, 10, 10, 0.4)
 				lazy("FxService").hit(beak, 30, "Punch")
+				local torso = model:FindFirstChild("UpperTorso")
+				if (Config :: any).CHICKEN_GRIP and torso and torso:IsA("BasePart") then
+					pcall(lazy("CreatureGrip").bite, model, torso, m.owner(), 1) -- (RUN 2.6: each peck is a real wound)
+				end
 			end
-			hideBody(model, true)
-			task.spawn(hold, model, function()
-				return nest * CFrame.new(0, 3, 0)
-			end, 5)
+			-- (CHICKEN_GRIP, RUN 2.6: the hen no longer makes the body vanish. She takes it by the head in her beak
+			-- (CreatureGrip: a real joint, it dangles) and drags it to her nest, where she drops it beside the egg.)
+			local grip = nil
+			if (Config :: any).CHICKEN_GRIP and hen then
+				local okG, g = pcall(lazy("CreatureGrip").grab, hen, model, "Head", m.owner())
+				grip = if okG then g else nil
+			end
+			if not grip then
+				hideBody(model, true)
+				task.spawn(hold, model, function()
+					return nest * CFrame.new(0, 3, 0)
+				end, 5)
+			end
 			local onNest = CFrame.lookAt(nest.Position, nest.Position + henHome.LookVector) * CFrame.new(0, 1.2, 0)
-			play(0.5, function(t)
-				setHen(near:Lerp(onNest, t) * CFrame.new(0, math.abs(math.sin(t * math.pi * 3)) * 0.5, 0))
+			play(if grip then 1.6 else 0.5, function(t)
+				setHen(near:Lerp(onNest, t) * CFrame.new(0, math.abs(math.sin(t * math.pi * (if grip then 8 else 3))) * 0.5, 0))
 			end)
+			if grip then
+				pcall(lazy("CreatureGrip").bite, model, grip.limb, m.owner(), 1)
+				pcall(lazy("CreatureGrip").release, grip, henHome.LookVector * 6 + Vector3.new(0, 4, 0), m.owner())
+				task.wait(0.3)
+			end
 			local egg = part(f, "DummyEgg", Vector3.new(1, 1.3, 1), nest * CFrame.new(0, 1.2, 0), Color3.fromRGB(250, 246, 236), Enum.Material.SmoothPlastic, Enum.PartType.Ball)
 			table.insert(m.temp, egg)
 			play(0.9, function(t)

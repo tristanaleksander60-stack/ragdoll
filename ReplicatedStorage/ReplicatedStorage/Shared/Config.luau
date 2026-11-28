@@ -205,6 +205,7 @@ local Config = {
 	STANDING_RUN_GAIT = true, -- RUN 1.12 (a): a "Standing" body that really moves (a watcher running to its spot, over 2.5 studs/s) runs the walk cycle instead of the idle stance on running legs (DummyLife)
 	RAGDOLL_V7_ANIMATED = true, -- RAGDOLL_V7 step 2 slice 1: an upright dummy is held rigidly upright and on its heading (no balancing, no spin) with its legs off the floor; a hit or a fall lets go at once (ActiveRagdoll)
 	RAGDOLL_V7 = true, -- RAGDOLL_V7 step 1 (owner: "du bestemmer"): the v6 skin is drawn by the engine from the ragdoll's physics parts (its R15 bones hang on them), not by SmoothBody writing 44 bone CFrames a frame; no lag between physics and look (SmoothBody v7Attach)
+	CHICKEN_GRIP = true, -- RUN 2.6: the hen pecks with real wounds, takes the body by the head in her beak (CreatureGrip) and drags it to her nest, instead of making it vanish (LabCreatures BUILD.Chicken)
 	SPIDER_WEB_MODEL = true, -- RUN 2.7: the spider web is a real flat silk web (V3Assets SpiderWebModel; Studio-generated) in place of 48 neon sticks (LabCreatures)
 	SHREDDER_MODEL = true, -- RUN 2.7: the shredder has real toothed rollers in its pit and a real control box with lever and red button (V3Assets ShredderRollers, ShredderControl; Studio-generated) (LabOwnerMap)
 	PROP_MODELS = true, -- RUN 2.7: the park lamps and benches are real models (V3Assets ParkLamp, ParkBench; Studio-generated) over invisible block parts (BenchService still sits on them; the lamp light stays) (LabOwnerMap)
