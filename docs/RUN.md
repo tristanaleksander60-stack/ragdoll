@@ -212,7 +212,8 @@ Group the items that touch the same files and do them together:
 - **The previous proof missed this:** it measured walking bodies only.
 - **Proof:** side captures of a standing Scared persona, a LookBack, a shocked one (BOO), a gasp, a peek, a point and a head flinch (shoot the head). Also count, over 60 s, the standing bodies whose chest is more than 6 degrees back: it must be 0.
 
-### 1.11 Heavy lag on a good PC, not every ragdoll drawn: CLOUD part (`LAB_DUMMIES_PC` 40 -> 18; SmoothBody PC 28 bodies within 200)
+### 1.11 Heavy lag on a good PC, not every ragdoll drawn: PART (`LAB_DUMMIES_PC` 18, SmoothBody 28/200)
+- **State (PC, 28 Nov, v1436):** Studio PC: 60 FPS at the spawn; 18 lab dummies; in view within 200 studs, 3 of 3 in v6 (capture spawn_v6_fps). 0 bodies asleep at that moment. NOT done: the MicroProfiler top 5 and the phone-emulator numbers.
 - **Causes found:**
   - the PC simulated 40 balancing ragdolls itself (each lab's bodies belong to its player's computer);
   - only the nearest 24 within 120 studs got the v6 body; the rest showed the old block body ("not all load in").
@@ -224,7 +225,12 @@ Group the items that touch the same files and do them together:
   - telemetry `Fps_p10` by device.
 - **Proof:** the profiler numbers and an FPS counter capture at the spawn with every ragdoll in view drawn in v6.
 
-### 1.12 The legs still bug: CLOUD (`LEG_ONE_WRITER`, ActiveRagdoll `applyPose`)
+### 1.12 The legs still bug: LEFT (`LEG_ONE_WRITER` is in, but it is not the cause of what the detector sees)
+- **State (PC, 28 Nov, v1436):** 60-75 s at the spawn with LEG_ONE_WRITER on: 9 LegJitter events of two kinds:
+  - (a) "N rev/s, state=Standing" with Pace 1.8 (a watcher running to its spot, e.g. EntranceVehicles#2, RagdollBowling#2), speed 13 and 20-30 rev/s, once "feet on Body" (standing on another ragdoll);
+  - (b) "TURN TWIST" while Walking at 1 rad/s with 5-8 foot stick-slips a second.
+
+  So a fast-running watcher spins, and slow walking turns slip the feet. The lasting cure is RAGDOLL_V7 (animated until hit). NEXT: for (a), cap a Standing body's spin when Pace >= 1.4 (the run drive vs the balance yaw).
 - **Cause found (cloud):** two writers set the same leg joints.
   - `ActiveRagdoll.applyPose` writes EVERY joint each physics step, and a joint the pose does not name is set to straight. Mood poses (Angry, Box, gestures) name only the upper body.
   - `DummyLife` sets the walk or stance on the hips, knees and ankles every frame.
@@ -284,7 +290,8 @@ Group the items that touch the same files and do them together:
   - make the model itself do the bite: lean down over the body (PivotTo), `CreatureGrip.grab` into its real mouth, chew (small squeezes), spit it out.
 - **Proof:** captures from the path, and mid-bite.
 
-### 1.17 The round X-RAY button on PC: PART (`XRAY_BUTTON_TOUCH_ONLY` + `TOUCH_FIRST_DEVICE`)
+### 1.17 The round X-RAY button on PC: DONE (`XRAY_BUTTON_TOUCH_ONLY` + `TOUCH_FIRST_DEVICE`)
+- **State (PC, 28 Nov, v1436):** PC: there is no round button in the toast_v2 and spawn captures (X-ray is in the bottom-left list). Phone: hud_phone2 shows it.
 - **State (PC, 28 Nov, v1432):** Phone: the round button shows (hud_phone2). PC: OWNER CHECK, because the MCP cannot switch the emulator off. In code, Device "pc" hides it.
 - On a computer, X-RAY is already in the bottom-left list (the I key), so the round button now shows on touch screens only.
 - **Proof:** a PC capture without it, and a phone capture with it.
@@ -346,7 +353,8 @@ Group the items that touch the same files and do them together:
   - it never covers the KO pill at the top or the hotbar.
 - **Proof:** captures of 3 different notices on PC and on a phone (upright too).
 
-### 1.22 The angry friend punches the air instead of you: CLOUD (`ANGRY_HITS_REAL`, Mourning; RagdollDirector `keptV2`)
+### 1.22 The angry friend punches the air instead of you: OWNER CHECK (`ANGRY_HITS_REAL`, `ANGRY_MORE`)
+- **State (PC, 28 Nov, v1436):** in Studio, no error; not triggered from the MCP (the anger is a dice roll on the server's own shot handling).
 - **Causes found:**
   1. NEARBY_CAP_V2 counted the revenge attacker as an extra near you and sent it away, and for 30 s put its Home back away from you, so it stood off and punched the air. Now any body with a Mood (angry, mourning, CPR...) or CommandedBy is kept.
   2. Its shoves set the player's `AssemblyLinearVelocity` on the server, but the player's body belongs to their own screen, so nothing moved. Now the shove and every 2nd landed punch go through `PlayerRagdoll.knock` (the player's own screen), with the damage as before.
