@@ -183,6 +183,9 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Proof:** the range from the plaza and from its door: whole facade, roof and sides free.
 
 ### 0.9 CPR kneeling into a bench: CLOUD (`CPR_CLEAR`, Mourning `freeKneel`)
+- **PC 28 Nov (4): the cloud's MOURN_RETRY + CPR_CLEAR ground fix PROVEN (phone emulator).** Preflight: Config, ActiveRagdoll, Mourning, StretchMachine and SmoothBody pushed (lengths 158281 / 159291 / 34719 / 26614 / 52784, equal to the repo).
+  - A slot body marked `MournTest`, killed by head shots through the client's HitRequest: a friend started CPR (`CPRFast`) 5.9 s after the death. Capture `cpr_staged`: the friend kneeling by the lying body on open floor.
+  - The same staged 1.9 studs off a ParkBench: no friend came within 20 s (no living slot body within 25 studs there), and no leg was inside the bench.
 - **PC 28 Nov (2): why try 1 failed.** `VitalsService.wound` called from execute_luau runs in execute_luau's own require cache, whose Mourning never started (`running = false`), so no mourning could begin. The cloud's code is not at fault there. Stage it again by killing the body through the client's HitRequest (head shots).
 - **PC 28 Nov (3), try 3 through the real path: LEFT for the cloud.** JOIN_CHANCE and CPR_CHANCE were set to 1 (back to 0.85 and 0.5 after; Mourning matches disk).
   - Setup: a lab-slot body (Slot 1, LabOwner the player) was set 2.4 studs off a ParkBench, with 2 friends set 6 studs off. It was killed by head shots through the client's HitRequest and went Dead.
@@ -199,6 +202,8 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Proof:** kill a ragdoll next to a bench: its friend kneels on the open side.
 
 ### 0.11 Bandages and plasters can't be seen; they hang in the air: CLOUD (`WRAP_ON_SKIN`, `PLASTER_SKIN`, SmoothBody `stick`/`drive`/`plasterOn`)
+- **PC 28 Nov (4): the cloud's WRAP_AXIS PROVEN.** 2 wounds each on a living body's left forearm and right shin (`VitalsService.wound` on the server: the Wounds attribute is real) gave 6 rings, 3 per limb. Each lies 0.05-0.23 studs from its limb's axis, its axis along the limb (dot 1.00).
+  - Capture `wrap_axis3`: the lying body with the white band round its left forearm, none in front of the chest.
 - **PC 28 Nov, STAGED: FAILED, LEFT for the cloud.** On the server `VitalsService.wound(body, limb, limb.Position, nil, 0.3)` twice each on a living body's LeftLowerArm, RightLowerLeg and Head (it stayed Alive). On the client 10 Bandage parts were made within 1 s: rings on the left forearm and the right shin, about 1.0-1.1 across, 0.3-0.4 studs from the PHYSICS limb parts, anchored (WRAP_ON_SKIN took them over). No head wrap.
   - Capture bandage_forearm: the white ring hangs in front of the body's chin and chest, facing out like a disc, NOT round the drawn forearm.
   - Likely cause: with RAGDOLL_V7 on, the drawn forearm lies on its BONE (the physics part times the bone offset `d.off`), not on the physics part. The wrap's `rec.off` is taken from the physics limb, and the `r.xray` frame turns the ring with the bone axis from `boneCf`, while its offset still comes from the physics block. So it sits off the skin and turned.
@@ -335,7 +340,10 @@ The owner said things were skipped. This is the full list from the chat since 26
     - Capture `bear_cave2`, from the bear's yard: a grassy rock hill with a dark arched opening, rocks and a log in front, the bear before it, no flat black wall, no puddle.
   - **"boxing: 2 ragdolls start a fight" (BOXING_V2): SEEN running.** At the start 2 bodies were already boxing; capture `boxing_v2` shows the two in guard, close, in the middle of the ring.
     - A third body dropped in did not join: one fight at a time, by design. So the "drop ONE in, an opponent runs in" path was not staged separately this run.
-  - **"the stretcher stretches limbs long, lets go, the long limb shrinks back": LEFT after 2 staging tries, for the cloud.**
+  - **"the stretcher ...": FIXED by the cloud's STRETCH_HOLD_DOWN, PROVEN PC 28 Nov (4).**
+    - Staged the same way: the body locked, kept lying (Ragdoll); after "Pull all four" its limbs were at K 2.05 within 9 s. Capture `stretch_long2`: the body lying in the machine, its limbs pulled out.
+    - After Release, K per 4 s: 2.10 held until 28 s, then 1.68, 1.19 and 1.00 at 40 s. That is the 30 s hold and the 10 s shrink back.
+  - **"the stretcher stretches limbs long, lets go, the long limb shrinks back": (earlier state)**
     - The code path reads right: after the release a limb holds 30 s (`HOLD_LONG`), then shrinks over 10 s (`SHRINK`, eased); the owner asked for 30 s.
     - Staged in Play: a client-simulated body let go on DropSpot_Stretch (`Held` set on the server) was locked (`InMachine = Stretch`, 4 springs on), then "Pull all four" was fired from the client next to it.
     - After 10 s every limb's `StretchK` was still 1.00. Capture `stretch_long`: the body STANDING upright in the middle of the machine, its cables on, saying "Just stretching my legs".
