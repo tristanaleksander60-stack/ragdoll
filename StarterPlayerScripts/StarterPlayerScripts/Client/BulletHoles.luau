@@ -244,7 +244,29 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 	end
 	-- On a dummy's sculpted skin (DummySkins): onto the skin's real surface under that spot, lying
 	-- on it (the block underneath is hidden on this screen).
+	local limbR: number? = nil -- (HOLE_CURVE_FIT: the v6 limb's radius at the hit, when known)
 	local skin = DummySkins.skinOf(part)
+	-- (HOLE_CURVE_FIT: a v6 body WITHOUT the old skins (the crowd, V6_EVERYONE) put the hole on the physics BLOCK's flat
+	-- face, which lies inside the round v6 limb: the hole never showed. Now it goes on the v6 limb's round surface round
+	-- the part's own axis.)
+	if not skin and model:GetAttribute("BodyV6") == true and BodyShape.active()
+		and (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).HOLE_CURVE_FIT then
+		local l0 = part.CFrame:PointToObjectSpace(at)
+		local hy = part.Size.Y / 2
+		local ly = math.clamp(l0.Y, -hy * 0.85, hy * 0.85)
+		local r = BodyShape.radius(part.Name, (hy - ly) / (2 * hy))
+		if r then
+			local flatDir = Vector3.new(l0.X, 0, l0.Z)
+			if flatDir.Magnitude < 1e-3 then
+				local back = part.CFrame:VectorToObjectSpace(worldNormal)
+				flatDir = Vector3.new(back.X, 0, back.Z)
+			end
+			flatDir = if flatDir.Magnitude > 1e-3 then flatDir.Unit else Vector3.new(0, 0, -1)
+			worldAt = part.CFrame:PointToWorldSpace(Vector3.new(0, ly, 0) + flatDir * r)
+			worldNormal = part.CFrame:VectorToWorldSpace(flatDir)
+			limbR = r
+		end
+	end
 	if skin then
 		-- V9-NOW 13 (owner, 21 Nov 2026: "holes hang outside the dummy"): the skins' collision is their box
 		-- (CollisionFidelity Box, not changeable in a live game), so a ray stopped on the box, off the visible
@@ -262,6 +284,7 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 			local r = BodyShape.radius(part.Name, (hy - ly) / (2 * hy))
 			if r then
 				a, b, v6shape = r, r, true
+				limbR = r
 			elseif part.Name == "UpperTorso" or part.Name == "LowerTorso" then
 				local w, d = BodyShape.torsoAt((if part.Name == "UpperTorso" then 0.9 else -0.1) + ly)
 				a, b, v6shape = w, d, true
@@ -355,16 +378,33 @@ function BulletHoles.body(model: Model, at: Vector3, mild: boolean?, scale: numb
 	-- v6 skin a flat picture wider than the limb's curve sticks out at its edges; the hole is kept small (0.35 on a limb,
 	-- 0.45 on the torso), lies 0.005 off the skin, and the 3D ring and chip discs are not made (they poked out).)
 	local onV6 = model:GetAttribute("BodyV6") == true and (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).HOLES_ON_SKIN == true
+	local lift = if onV6 then 0.005 else 0.02
 	if onV6 then
 		local cap = if part.Name == "UpperTorso" or part.Name == "LowerTorso" then 0.45 else 0.35
+		-- (HOLE_CURVE_FIT: on a thin round limb (radius 0.3-0.375) a flat 0.35 picture only 0.005 off the skin had its edges
+		-- about 0.05 studs INSIDE the arm, so half of it vanished. The picture is now at most 0.8 x the limb's radius across,
+		-- and lifted by the curve's sag at its edge, so its rim just touches the skin all round.)
+		local fit = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).HOLE_CURVE_FIT == true
+		local r = limbR
+		if fit and r then
+			cap = math.min(cap, r * 0.8)
+		end
 		local big = math.max(tall, across)
 		if big > cap then
 			tall, across = tall * cap / big, across * cap / big
 		end
+		if fit and r then
+			local half = math.max(tall, across) / 2
+			local sag = r - math.sqrt(math.max(r * r - half * half, 0))
+			lift = sag + 0.006
+		elseif fit and part.Name == "Head" then
+			local half = math.max(tall, across) / 2
+			lift = 0.855 - math.sqrt(math.max(0.855 * 0.855 - half * half, 0)) + 0.006
+		end
 	end
 	hole.Shape = Enum.PartType.Block
 	hole.Size = Vector3.new(0.02, tall, across)
-	hole.CFrame = flatOn(worldAt, worldNormal, if onV6 then 0.005 else 0.02) * CFrame.Angles(math.random() * math.pi * 2, 0, 0)
+	hole.CFrame = flatOn(worldAt, worldNormal, lift) * CFrame.Angles(math.random() * math.pi * 2, 0, 0)
 	hole.Transparency = 1
 	local art = Instance.new("Decal")
 	local big = (scale or 1) >= 1.35

@@ -246,6 +246,10 @@ Group the items that touch the same files and do them together:
   - a visible plaster patch.
 - **Proof:** 20 shots spread over one body; captures from the front, the back and while it walks; a patched-up body from 3 and 10 studs.
 
+- **Two more causes found (cloud, 28 Nov late), now CLOUD (`HOLE_CURVE_FIT`, BulletHoles):**
+  1. **Half inside the arm:** a v6 arm is round with radius 0.3-0.375, and a flat 0.35 hole picture lay only 0.005 off it, so its rim was about 0.05 studs inside the arm. Now the picture is at most 0.8 x the radius across and lifted by the curve's sag, so its rim touches the skin all round (the round head too).
+  2. **Not shown at all:** a v6 body WITHOUT the old skins (the crowd, V6_EVERYONE) got the hole on the physics block's flat face, inside the round limb. Now it goes on the v6 limb's round surface round the part's axis.
+- **Proof:** 5 shots on each arm and each leg of a lab ragdoll AND a crowd person; captures from 3 studs, front and side.
 ### 1.14 The spawn arch banners half inside the pillars: CLOUD (`BANNER_CLEAR`, LabOwnerMap spawnSet)
 - **Cause found:** the banner hung 0.075 studs off the pillar, and its "Swing" (0.06 rad round its top) moved its bottom about 0.5 studs, into the stone.
 - **Now:** it hangs from a steel rod 0.5 studs out and sways at 0.02 rad.
