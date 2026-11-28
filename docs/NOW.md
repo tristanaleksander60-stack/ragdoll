@@ -60,6 +60,25 @@
 - Custom funnels: PlaytimeNew, PlaytimeAll, NewPhone/NewTablet/NewPC/NewConsole, ShopVisit, Vehicles (Pressed, SatFree, PassPrompt, Bought), Multiplayer. Retired: Tutorial, TakedownsNew.
 - Custom events: FirstUse, XrayToggle, BodyCardHidden, CPRDone, BowlingScore (a frame scores at most 30, so the buckets are 0-9 / 10-19 / 20-30, not 0-50/51-100/101+).
 
+## 28 Nov afternoon, /klar loop (v1465): STOPPED, every RUN item and ledger line DONE / LEFT / OWNER CHECK
+- **New switches, all on, all in Studio (v1465 saved):**
+  - `TELEPORT_LIFT_RESET` and `BOX_SOFT_PLACE`: 0 CALM_GUARD flings in the last runs (was 3 in 2.5 min);
+  - `CALM_GUARD_CARS`;
+  - `WASHER_REAL_BODY` and `WASHER_DOOR_FIT`: the washer drum sat on top of the machine;
+  - `CHICK_REAL`: a new model, V3Assets.MChick, in the place file;
+  - `DROPSPOT_STABLE`: the bear's DROP HERE had crept 53 studs off;
+  - `XRAY_TEST_HOOK`;
+  - `JUNCTION_ONCE`: the flickering circles;
+  - `WALL_FAST_RESET`: the wall rebuilds at 12 s.
+- **LEFT for the cloud, with findings in RUN.md:**
+  - 0.9 CPR never starts in 3 staged tries;
+  - 0.11 the bandage ring floats in front of the chest under V7;
+  - the stretcher never stretches (the body stands in the machine);
+  - 0.13 the rest (Ride and walking turns);
+  - V7-2 (its own run);
+  - 2.5 step 3.
+- **Staging lessons (RUN.md):** `require` in execute_luau is a copy. Stage through HitRequest, client moves, `Held` on the server, and `XRayWant`.
+
 ## 28 Nov night, /klar loop (v1451): STOPPED, every RUN item DONE / LEFT / PART; DOG3 not started
 - V7: step 1 (native skin) and step 2 slice 1 (rigid upright, legs off the floor) ON; V7-3 checked (holes, face, X-ray).
 - 2.6: CHICKEN_GRIP, FROG_TONGUE_JOINT, MOLE_DRAG, WASHER_PULL, PLANT_LIFT ON (VACUUM_SUCK: no vacuum on this map).

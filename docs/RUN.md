@@ -219,6 +219,10 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
 - **Proof:** the newspaper carrier walking and reading, a filming ragdoll, from the front and the side at 3 m, PC and phone: each prop in the hand, never beside it.
 
 ### 0.13 A standing ragdoll still sways side to side now and then: CLOUD probe (`SWAY_PROBE`, ActiveRagdoll `swayProbe`)
+- **PC 28 Nov (2): LEFT (the rest is moving bodies, not standing ones).**
+  - The standing causes are fixed: boxers (BOX_SOFT_PLACE) and teleported bodies (TELEPORT_LIFT_RESET).
+  - The last SWAY lines are the bike rider (`mood=Ride`, the bike turning under it) and walking turns (headTurn 50-150 while Walking).
+  - NEXT (cloud): skip SWAY_PROBE for Ride, or hold the rider's hips to the seat; cap the turn rate of a walking body.
 - **Cause: NOT known.** Six writers move a standing body (the balance turn, the lift's spot, the drive, the pose, turning to a person, the stand hold), and every earlier fix guessed one. Stop guessing.
 - **The probe** samples each upright body every step and, when its sideways speed flips 3+ times in 1 s, warns `[SWAY] <name> flips= amp= state= stateSwitches= liftMoved= headTurn= drive= pose= mood= firm= chestBal= feet=` (also the attribute `SwayWhy`).
 - **Your job (PC):** Play 5 minutes in the lab with 18 bodies; collect every `[SWAY]` line. The writer with the large number is the cause (for example `stateSwitches=4`: Standing/Walking toggling; `headTurn=70 firm=yes`: turning to the player; `liftMoved=1.4`: the stand hold re-set; `feet=Dummy.LeftFoot`: standing on another body). Fix THAT writer at its source; then Play again until no `[SWAY]` line comes in 5 minutes. Write each cause and fix in the State. Then `SWAY_PROBE = false`.
@@ -714,6 +718,10 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 - `WORLD_POPS` off: no floating texts at any machine (DROP, SMASH, TAIL SLAP, RPM, CRACK, the rocket countdown).
  **PC 28 Nov:** one was left, the fan's "FAN: || 2" board (FanMachine made its BillboardGui without the switch). Fixed; a scan of every enabled BillboardGui with text in Lab1 found only that one.
 - `CARRY_FLOOR_RAY`: carry a ragdoll under the bowling canopy and up every tower floor; it stays in front of you, never on a roof.
+  **PC 28 Nov (2): TICKED by code, carrying itself an OWNER CHECK.**
+  - GrabController caps a carried body at 3 studs over your middle.
+  - Its floor ray starts just above the body (GROUND_CLEARANCE + 1, not 30 studs up), so only the floor under it counts, never a roof over it.
+  - A grab cannot be driven from execute_luau: GrabController is local state, and `require` gives a copy.
 - DROP HERE (`DropSpots`): ONE sign at each machine when carrying, the bear's in front of its mouth.
 - `PLAYER_SWIM`: fall into the aquarium, swim, and jump out on every side; the 25 s safety net.
  **PC 28 Nov (2): the safety net TICKED.** The player was set in AquaWaterVolume (39 x 12.5 x 25) and left alone. They sank to the bottom in 2 s and were set outside after 7.8 s (the 6 s "still on the bottom" net), 16.7 studs out, on the floor.
@@ -735,6 +743,7 @@ For each: one capture showing it working, and the switch. If it is broken, find 
 - The time chips (5b): 0.25x, 0.5x, 1x, 2x and STOP, in any order; the lit chip is the real speed.
 - Build mode (5c): the DONE button on every device.
 - `FP_AUTO` (5d): a weapon pick puts you in first person; after V out, a shot keeps you out until the next pick. The eye button is on the phone.
+  **PC 28 Nov (2): OWNER CHECK.** A weapon pick is a hotbar tap the MCP cannot make in the emulator. `FP_AUTO = true`.
 - `HOTBAR_3D` off (5e): no turning 3D gun. The slots never overlap at rest or open, on a phone: measure the gaps (at least 6 px).
 - **Plain-part buildings and machines:**
   - the gyro (`GYRO_STYLE`) and the weapon range (`RANGE_CLEAR`): the range must stand free with a path to its door, and its shell must be a real model, not plain parts;
@@ -930,6 +939,7 @@ For each: one capture showing it working, and the switch. If it is broken, find 
     6. Every screen plays the clip locally from the replicated speed and state, so the network sends no joint data and phones pay only for the clip.
     7. A hit switches to physics at the same pose (as now).
   - **Proof:** a side capture series of a walk and a run (feet planted, no sliding, no glide, the head on the neck), FPS on a phone, and the SMOKE ROUND. Only then `RAGDOLL_V7_ANIMATED = true`.
+  - **PC 28 Nov (2): LEFT for its own run.** It is a rewrite of how every ragdoll walks (an Animator and clips in each dummy, foot IK, the drive at stride speed). The owner already rejected one slice (the gliding legs). It needs walk and run clips the game owns (Animation Editor or Blender, published) and a phone FPS check, so it does not fit inside a check run.
 - **`PERF_MOBILE.md` §6:** lag-free 2, the items not yet built.
   - **State (PC, 28 Nov):** checked against §6: items 0, 1 and 10 are DONE; 2-9 are PART DONE v1386-v1400 (sleep, the off-screen skin rate, PERF_LEVELS, HighlightCap, the pools, the loop checks, the GroundGuard slices). What is left needs a phone: the standing sleep for far living bodies (item 2 step 2) and the v6 LITE mesh (item 3, PARKED). The owner's phone and iPad test in the final list is the proof.
 - **`MILD_EXTRAS.md`:** finishing.
