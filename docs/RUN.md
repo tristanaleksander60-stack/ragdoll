@@ -466,6 +466,12 @@ For each: one capture showing it working, and the switch. If it is broken, find 
   - NearbyTwo's refill.
 
   Not done: EventService's crowd, Watchers and Personas (they do not bring bodies TO a player). Play, 60 s at the spawn: the living bodies within 45 studs every 5 s were 4,4,3,3,3,3,3,3,2,2,4,3. The cap is 5 (the emulator counts as a phone), so it was never over. No errors. Capture spawn_room_above: a few ragdolls under the arch, no crowd. Steps 2-3 (the slot table, request/release) are next.
+- **State (PC, 28 Nov): step 2 PART (`SPAWN_SLOTS`, new `Systems/Slots.luau`).**
+  - **Built:** the slot table for watching. There are 3 WATCH places round every machine's DropSpot (19 machines), 7-9 studs out, on level free floor (its own ray and room check). Bench seats stay with BenchService, which already books one body a seat. A slot is free when no living body's Home is within 4 studs and its 20 x 20 cell holds fewer than 4. API: `Slots.watchSlots`, `Slots.isFree`, `Slots.watchSpot(owner, near, maxD)`.
+  - **Proof in Play:** 41 slots on the map, all free; `watchSpot` by the player gives the free slot 9 studs away, looking at its machine.
+  - **Wired to:** VisitorService (a visitor's goal is a free watch slot, looking at the machine).
+  - **Found:** on the OWNER MAP VisitorService never walks anyone in. Its `floorAt` needs an old lab plot: `Lab.originFor` is (0,0,0) and `Lab.ownerAt` is nil there, so every spot fails (0 visitors in Play).
+  - NEXT (step 3): ask Slots from the systems that DO place bodies on this map (Lab rounds, Watchers, EventService), then the capture of spread-out watchers.
 
 ### 2.6 Every killer has its own real, creative death: DONE for 5 in this run (`CHICKEN_GRIP`, `FROG_TONGUE_JOINT`, `MOLE_DRAG`, `WASHER_PULL`, `PLANT_LIFT`; `VACUUM_SUCK` not on this map)
 **The killers:**

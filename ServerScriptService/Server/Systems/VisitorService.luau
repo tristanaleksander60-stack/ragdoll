@@ -376,6 +376,16 @@ local function walkIn(player: Player, list: { Visitor }): boolean
 	end
 	local spawnAt = at :: Vector3
 	local goal = here + facing * math.random(18, 30) + Vector3.new(facing.Z, 0, -facing.X) * math.random(-10, 10)
+	local lookAt: Vector3 = here
+	if (Config :: any).SPAWN_SLOTS then
+		-- (SPAWN_V2 step 2: not a random point in front of the player, where they bunched up: a free WATCH slot by a
+		-- machine near the player (Slots: 4 studs apart, at most 4 in a 20 x 20 cell), looking at the machine)
+		local okS, sAt, sLook = pcall((require(script.Parent:WaitForChild("Slots")) :: any).watchSpot, player, here + facing * 20, 45)
+		if okS and sAt then
+			goal = sAt
+			lookAt = sLook or here
+		end
+	end
 	puff(spawnAt)
 	local model = DummyFactory.spawn(spawnAt, goal, player)
 	model.Name = "Visitor"
@@ -384,7 +394,7 @@ local function walkIn(player: Player, list: { Visitor }): boolean
 	model:SetAttribute("WalkInAt", spawnAt) -- (where it came in: T166 checks it was free floor)
 	model:SetAttribute("Personality", "Brave")
 	model:SetAttribute("Home", Vector3.new(goal.X, spawnAt.Y, goal.Z))
-	model:SetAttribute("HomeLook", here)
+	model:SetAttribute("HomeLook", lookAt)
 	local shirt = SHIRTS[(#list) % #SHIRTS + 1]
 	for _, d in model:GetChildren() do
 		if d:IsA("BasePart") and string.find(d.Name, "Torso") then
