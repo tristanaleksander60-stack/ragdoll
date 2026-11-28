@@ -401,7 +401,15 @@ local function bout(canvas: BasePart, boxers: { Model }, quiet: boolean)
 	local function place(i: number, gap: number)
 		local m = boxers[i]
 		if m.Parent and standing(m) then
-			pcall(DC.move, m, CFrame.lookAt(spotOf(i, gap), spotOf(3 - i, gap)))
+			-- (BOX_SOFT_PLACE, RUN 0.13: SWAY_PROBE named the boxers as half of all sways. The cause: before every
+			-- exchange both were TELEPORTED onto their spots (DummyControl.move), even 0.4 studs away, while their own
+			-- screen simulated them: the body jumped back and forth several times a second. Now it is moved only when a
+			-- knock sent it over 2 studs off its spot; else it just steps there (Home).)
+			local pe = m:FindFirstChild("LowerTorso")
+			local off = if pe and pe:IsA("BasePart") then (Vector3.new(pe.Position.X, 0, pe.Position.Z) - Vector3.new(spotOf(i, gap).X, 0, spotOf(i, gap).Z)).Magnitude else math.huge
+			if not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).BOX_SOFT_PLACE or off > 2 then
+				pcall(DC.move, m, CFrame.lookAt(spotOf(i, gap), spotOf(3 - i, gap)))
+			end
 			m:SetAttribute("Home", spotOf(i, gap))
 			m:SetAttribute("HomeLook", spotOf(3 - i, gap))
 		end

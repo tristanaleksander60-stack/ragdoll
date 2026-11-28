@@ -187,6 +187,11 @@ All cloud code below is pushed (`c3ab25e` and the commit after it). For each ite
   - **One bike rider:** `mood=Ride`, liftMoved 9.7.
   - **No standing body outside the ring swayed with stateSwitches > 1:** the state toggle is NOT the cause.
   - NEXT (cloud): the boxers' sideways footwork (BoxingMatch) and the turn rate while walking. The 60 s side capture comes after that fix.
+- **PC 28 Nov: the boxers FIXED (`BOX_SOFT_PLACE`, BoxingMatch `place`).**
+  - **Cause:** before every exchange both boxers were TELEPORTED onto their ring spots (`DummyControl.move`), even 0.4 studs away, while their own screen simulated them.
+  - **Now:** they are only moved when a knock sent them over 2 studs off; else they step there.
+  - **The same 2.5 min Play:** boxer SWAY events 6-8 down to 3 (amplitude 1-10, was up to 18), and **0 CALM_GUARD flings** in the whole run.
+  - **What is left in the list:** the bike rider (`mood=Ride`, the bike turning under it, 8 lines) and walking turns (headTurn 50-150), both moving bodies, not standing ones.
 
 ### 0.10 The plan doc itself (PC, at the end of the run)
 - Every item you touch: the State line says DONE + the capture line, or LEFT + the exact reason. No "PART" without saying exactly what is missing.
