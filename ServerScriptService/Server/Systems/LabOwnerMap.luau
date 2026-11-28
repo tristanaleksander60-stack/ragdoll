@@ -1450,6 +1450,33 @@ local function east(into: Instance, o: Vector3, top: number)
 	part(into, "TeslaBase", Vector3.new(10, 3, 10), CFrame.new(tc + Vector3.new(0, 1.5, 0)), Color3.fromRGB(60, 62, 70), Enum.Material.Metal)
 	part(into, "TeslaColumn", Vector3.new(18, 4.4, 4.4), CFrame.new(tc + Vector3.new(0, 12, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(180, 120, 60), Enum.Material.Metal, false, Enum.PartType.Cylinder)
 	local top2 = part(into, "TeslaTop", Vector3.new(3, 11, 11), CFrame.new(tc + Vector3.new(0, 22.5, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color3.fromRGB(200, 204, 210), Enum.Material.Metal, false, Enum.PartType.Cylinder)
+	-- (TESLA_MODEL, RUN 2.7: the Tesla coil was a dark block, an orange cylinder and a grey disc. Now a real Tesla coil (a
+	-- metal base, a tall copper-wound column and a horizontal toroid ring: V3Assets "TeslaTower", a Studio-generated mesh);
+	-- the old three parts stay as the invisible gameplay parts (the base's spot, the top's sparks).)
+	do
+		local src = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TESLA_MODEL
+			and game:GetService("ServerStorage"):FindFirstChild("V3Assets") and game:GetService("ServerStorage").V3Assets:FindFirstChild("TeslaTower")
+		if src then
+			local tower = src:Clone()
+			for _, d in tower:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.Anchored = true
+					d.CanQuery = false
+					d.CanTouch = false
+				elseif d:IsA("LuaSourceContainer") then
+					d:Destroy()
+				end
+			end
+			tower:PivotTo(CFrame.new(tc))
+			tower.Parent = into
+			for _, p in into:GetChildren() do
+				if (p.Name == "TeslaBase" or p.Name == "TeslaColumn" or p.Name == "TeslaTop") and p:IsA("BasePart") and (Vector3.new(p.Position.X, tc.Y, p.Position.Z) - tc).Magnitude < 2 then
+					p.Transparency = 1
+					p.CastShadow = false
+				end
+			end
+		end
+	end
 	local spark = Instance.new("ParticleEmitter")
 	spark.Texture = "rbxasset://textures/particles/sparkles_main.dds"
 	spark.Color = ColorSequence.new(Color3.fromRGB(150, 210, 255))
