@@ -383,12 +383,25 @@ local function ground(into: Instance, o: Vector3)
 	end
 	part(into, "OwnerGrass", Vector3.new(size.X, 2, size.Y), CFrame.new(o.X + c.X, top - 1, o.Z + c.Y), GRASS, Enum.Material.Grass)
 	-- Roads (boulevard 36, cross roads 26, avenues 16, spurs 14), each leg a slab; a round paved plaza at every corner.
+	local junctions: { [string]: BasePart } = {}
+	local JUNCTION_ONCE = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).JUNCTION_ONCE == true
 	for _, r in Plan.ROADS do
 		for i = 1, #r.points - 1 do
 			slab(into, "OwnerRoad", w(r.points[i]), w(r.points[i + 1]), r.width, 0.2)
 		end
 		for _, p in r.points do
-			disc(into, "OwnerJunction", w(p), r.width / 2 + 2, if F82 then 0.3 else 0.19, WALK)
+			-- (JUNCTION_ONCE: roads share end points, so two discs at the same height lay on each other and flickered
+			-- (the owner's "flickering circles"); one disc a point now, the widest)
+			local key = math.round(p.X) .. "," .. math.round(p.Y)
+			local had = junctions[key]
+			if JUNCTION_ONCE and had then
+				local d = 2 * (r.width / 2 + 2)
+				if d > had.Size.Y then
+					had.Size = Vector3.new(had.Size.X, d, d)
+				end
+			else
+				junctions[key] = disc(into, "OwnerJunction", w(p), r.width / 2 + 2, if F82 then 0.3 else 0.19, WALK)
+			end
 		end
 	end
 	-- Inner paths (12): entrance -> courtyard -> the front of every attraction.

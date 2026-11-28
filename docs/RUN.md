@@ -300,6 +300,11 @@ The owner said things were skipped. This is the full list from the chat since 26
     - The PoolWhale's centre is inside `PoolWaterVolume`.
     - Capture `shark_tank`: the pool full of water inside its concrete rim. The whale is under the surface, not seen from this angle.
     - It is an open pool, not a glass tank, so the "water through the glass" line does not apply.
+  - **"the flower beds are real beds, not flickering circles": FIXED (`JUNCTION_ONCE`, LabOwnerMap `ground`).**
+    - There are no flower beds left on the owner map; the only round shapes on the ground are the paved road junction discs.
+    - Cause: roads share end points, and each road laid its own disc at every point, so 8 of the 16 discs lay on another disc at exactly the same height and flickered (z-fighting).
+    - Now there is one disc a point (the widest): 12 discs, 0 on another.
+    - Capture `junction_once`: a junction by the spawn, clean and even.
 
 
 ## BATCH 1 (do now)
