@@ -358,6 +358,10 @@ The owner said things were skipped. This is the full list from the chat since 26
 - **Proof:** side and front captures of both rides, riding and turning.
 
 ### 1.7 The leaderboards scroll: LEFT, scroll not proven (`BOARD_SCROLL`, Client/BoardScroll)
+- **PC 28 Nov (2): OWNER CHECK (a feel item), drawing proven.** In Play, the 4 Board guis are in the PlayerGui, adorned to the Lab1 panels; each list's canvas is 768 tall.
+  - Capture `board_before` (MOST TAKEDOWNS, top 5 shown).
+  - With `CanvasPosition` set to 320 from code, capture `board_after` shows the list moved on (ranks 10-15) inside the frame, with the scrollbar lower.
+  - Note: the ScrollingFrame's `Active` is false. If the owner's wheel or drag does nothing, set `Active = true` first.
 - **State (PC, 28 Nov, v1431):** in Studio. All 4 Board guis are in the PlayerGui, adorned, with no duplicates and none left in Workspace; the list is 768 tall in a 196 window. Two tries with the MCP mouse wheel did not reach the board (the injected mouse does not land in the game view), so the scroll itself is unproven: the owner tests it.
 - **Cause found:** a SurfaceGui in the Workspace gets no input. Every `Board` gui is now moved into the PlayerGui, adorned to its panel.
 - **Proof:** scroll each board with the wheel on PC and by drag on a phone. Captures before and after the scroll.
