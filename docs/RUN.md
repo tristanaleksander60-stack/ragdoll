@@ -591,6 +591,19 @@ For each: one capture showing it working, and the switch. If it is broken, find 
   - **State (PC, 28 Nov, v1448): DONE.** CRUDE_HUMOR and BOO_MASK are on. The one gap was the Play log line "[N7Models] no Weapons model 'FartGun'": the fart gun was a built stand-in. Now ReplicatedStorage.N7Assets.Weapons.FartGun is a generated cartoon toy (a lime-green blaster with a gas tank on top and a purple grip; capture gen_fartgun_side), 2.2 long, facing -Z like the others. The warning is gone in Play. Before publishing: the questionnaire (crude humour Mild, fear mild).
 - **The rest of OVERVIEW's ORDER,** at THE FINISH LINE's bar.
 - **DOG3 last.**
+  - **State (PC, 28 Nov): BUILT in Blender, NOT in the game.**
+    - The script is `art/models/dog/build_shepherd_v3.py`; v1 is kept. It gives 9,090 tris, the same 24 bone names, 6.45 studs long.
+    - The 7 points:
+      1. real hind legs with the dog's Z (the stifle forward, the hock back and up, a near-vertical metatarsus; a second round moved the hock and shrank the haunch so the angle shows);
+      2. flat paws with 4 toe pads;
+      3. a longer muzzle with a black nose and a mouth line;
+      4. a short, thick neck;
+      5. a deeper, broader chest (from the front: one broad body);
+      6. a crisper saddle edge (still a little frayed where the mesh is coarse);
+      7. a long, bushy tail.
+    - Renders: `art/models/dog/review_v3/` (side, three_quarter, front, closeup_head).
+    - **Found:** the GAME's guard dog is still `V3Assets.GermanShepherd`, the Creator Store K9 mesh (asset 432602064, no bones). The Blender v1 was only imported once as a loose `Workspace.shepherd` model.
+    - NEXT: upload `shepherd_v3.fbx` (Open Cloud, a permanent asset on the owner's account), then make GuardDog use it behind a switch. Owner question.
 
 ---
 
