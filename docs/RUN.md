@@ -114,6 +114,17 @@ This file replaces every banner in OVERVIEW and NOW and the item lists in FIXES_
   - Each one unique, with wounds, bone breaks (2.3) and sounds.
   - List every machine and animal that "kills", and give each its own choreography, worst first.
 
+### 1.9 TRY and machine buttons: the ragdoll walks there and hops in: CLOUD (`TRY_WALK`; MachineDemos.tryAt, Bowling, MapMachines)
+- **Causes found:**
+  - TRY's `pickDummy` skipped every Role3 (the ragdolls standing by you) and only searched an old list of machines, so the new map's machines were never found;
+  - Bowling's and MapMachines' callers skipped watchers, anyone within 8 studs of a player and anyone in a mood, within only 40 studs, and gave up after 8 s ("No ragdoll near!" with one right there);
+  - after walking up, the body was TELEPORTED in (`DummyControl.move`), which looks like a spawn.
+- **Now:**
+  - TRY takes the nearest DROP HERE spot in your lab (every machine has one) and the nearest free ragdoll to YOU (talkers too);
+  - it walks there and HOPS in with a real jump onto the spot; the machine takes it as if you had dropped it;
+  - Bowling and the map machines look 70-80 studs out, allow one by you and give it 16 s, and Bowling hops onto the lane instead of teleporting.
+- **Proof:** TRY at 4 machines, each with one ragdoll standing by you; captures of the walk and the hop. No "No ragdoll near" with one in 40 studs.
+
 ---
 
 ## BATCH 2 (after the owner's test of batch 1)

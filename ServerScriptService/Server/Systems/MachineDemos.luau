@@ -254,6 +254,85 @@ MachineDemos.showFor = show -- (for a quick check)
 -- throws it (the same arc, rise, spin or drop as the demos). You just watch. Returns false when there is no machine
 -- near or no ragdoll free (then the old TRY: one runs to you).
 MachineDemos.TRY_REACH = 45
+-- TRY_WALK (the owner: TRY said "no ragdoll near" with one right there, and the ragdoll appeared in the machine instead of
+-- walking in). Causes: (1) pickDummy skipped every Role3 (the 1-3 ragdolls standing by you ARE Role3) and only the old
+-- MACHINES list was searched, so the new map's machines were never found; (2) after walking up, the body was teleported
+-- into the machine (DummyControl.move). Now: the machine is the nearest DROP HERE spot of your lab (every machine has one:
+-- DropSpots); the ragdoll is the nearest free one to YOU (Role3 allowed: you asked for it); it walks there and HOPS in
+-- with a real jump that lands on the spot, so the machine takes it exactly as if you had dropped it. Never a teleport.
+local function nearestSpot(lab: Instance, from: Vector3): BasePart?
+	local best: BasePart?, bestD = nil, MachineDemos.TRY_REACH
+	for _, s in game:GetService("CollectionService"):GetTagged("DropSpot") do
+		if s:IsA("BasePart") and s:IsDescendantOf(lab) then
+			local d = (Vector3.new(s.Position.X, 0, s.Position.Z) - Vector3.new(from.X, 0, from.Z)).Magnitude
+			if d < bestD then
+				best, bestD = s, d
+			end
+		end
+	end
+	return best
+end
+
+local function pickForTry(near: Vector3): Model?
+	local dummies = Workspace:FindFirstChild("Dummies")
+	local best, bestD = nil :: Model?, MachineDemos.PICK_REACH
+	for _, m in if dummies then dummies:GetChildren() else {} do
+		local pelvis = m:FindFirstChild("LowerTorso")
+		local st = m:GetAttribute("RagdollState") or "Standing"
+		if m:IsA("Model") and pelvis and pelvis:IsA("BasePart") and m:GetAttribute("Held") ~= true and m:GetAttribute("Vital") ~= "Dead"
+			and m:GetAttribute("Vital") ~= "Unconscious" and m:GetAttribute("InMachine") == nil and m:GetAttribute("MachineHidden") ~= true
+			and m:GetAttribute("TryFor") == nil and m:GetAttribute("Watch") ~= "Demo" and m:GetAttribute("BoxSide") == nil
+			and (st == "Standing" or st == "Walking") then
+			local d = (pelvis.Position - near).Magnitude
+			if d < bestD then
+				best, bestD = m, d
+			end
+		end
+	end
+	return best
+end
+
+-- A real jump from where it stands onto `spot` (lands on it): no teleport.
+local function hopInto(m: Model, spot: Vector3)
+	local pe = m:FindFirstChild("LowerTorso")
+	if not (pe and pe:IsA("BasePart")) then
+		return
+	end
+	local g = Workspace.Gravity
+	local rise = math.max(0, spot.Y - pe.Position.Y) + 2.5
+	local vy = math.sqrt(2 * g * rise)
+	local t = vy / g + math.sqrt(2 * 2.5 / g)
+	local flat = Vector3.new(spot.X - pe.Position.X, 0, spot.Z - pe.Position.Z)
+	local DummyControl = require(script.Parent:WaitForChild("DummyControl")) :: any
+	pcall(DummyControl.push, m, Vector3.new(0, vy, 0) + flat / math.max(t, 0.2))
+end
+
+local function tryWalk(player: Player, lab: Instance, root: BasePart): boolean
+	local spot = nearestSpot(lab, root.Position)
+	if not spot then
+		return false
+	end
+	local m = pickForTry(root.Position)
+	if not m then
+		return false
+	end
+	m:SetAttribute("Role3", nil) -- (it has a job now: the near cap may bring another)
+	m:SetAttribute("TryFor", player.UserId)
+	task.spawn(function()
+		local at = spot.Position
+		if walkIn(m, at) then
+			say(m, MachineDemos.SET_OFF[math.random(1, #MachineDemos.SET_OFF)])
+			hopInto(m, at)
+		end
+		task.delay(6, function()
+			if m.Parent and m:GetAttribute("TryFor") == player.UserId then
+				m:SetAttribute("TryFor", nil)
+			end
+		end)
+	end)
+	return true
+end
+
 function MachineDemos.tryAt(player: Player): boolean
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	if not (root and root:IsA("BasePart")) then
@@ -266,6 +345,9 @@ function MachineDemos.tryAt(player: Player): boolean
 	local lab = ok and idx and pg and pg:FindFirstChild("Lab" .. tostring(idx))
 	if not lab then
 		return false
+	end
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TRY_WALK then
+		return tryWalk(player, lab, root)
 	end
 	local best: Machine?, bestAt: Vector3?, bestD = nil, nil, MachineDemos.TRY_REACH
 	for _, mc in MachineDemos.MACHINES do

@@ -261,12 +261,14 @@ end
 local function freeRagdoll(near: Vector3): Model?
 	local safe = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).MACHINE_SAFE == true
 	local dummies = Workspace:FindFirstChild("Dummies")
-	local best, bestD = nil :: Model?, if safe then 40 else 90
+	local walk = (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TRY_WALK == true
+	local best, bestD = nil :: Model?, if walk then 80 elseif safe then 40 else 90
 	local now = Workspace:GetServerTimeNow()
 	for _, m in if dummies then dummies:GetChildren() else {} do
 		local pe = m:FindFirstChild("LowerTorso")
 		if m:IsA("Model") and pe and pe:IsA("BasePart") and m:GetAttribute("Vital") ~= "Dead" and m:GetAttribute("Held") ~= true
-			and m:GetAttribute("InMachine") == nil and m:GetAttribute("Watch") == nil and m:GetAttribute("Bowling") == nil
+			and m:GetAttribute("InMachine") == nil and m:GetAttribute("Bowling") == nil
+			and (if walk then (m:GetAttribute("Watch") ~= "Demo" and m:GetAttribute("Watch") ~= "NeverZero" and m:GetAttribute("BoxSide") == nil) else m:GetAttribute("Watch") == nil)
 			and m:GetAttribute("CommandedBy") == nil and m:GetAttribute("TryFor") == nil then
 			local ok = true
 			if safe then
@@ -274,7 +276,7 @@ local function freeRagdoll(near: Vector3): Model?
 				local hitAt = m:GetAttribute("ServerHitAt")
 				ok = (st == nil or st == "Standing" or st == "Walking") and m:GetAttribute("Mood") == nil
 					and not (type(hitAt) == "number" and now - hitAt < 5)
-				if ok then
+				if ok and not walk then -- (TRY_WALK: one standing by you may come: you asked for it)
 					for _, pl in Players:GetPlayers() do
 						local r = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
 						if r and r:IsA("BasePart") and (r.Position - pe.Position).Magnitude < 8 then
@@ -320,7 +322,7 @@ local function bowl(lane: Lane, by: Player)
 		ball:SetAttribute("Pace", 2.4)
 		local t0 = os.clock()
 		local there = false
-		while os.clock() - t0 < 8 do
+		while os.clock() - t0 < (if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TRY_WALK then 16 else 8) do
 			local pe = ball:FindFirstChild("LowerTorso")
 			if not (pe and pe:IsA("BasePart") and ball.Parent) or ball:GetAttribute("Held") == true then
 				break
@@ -345,7 +347,21 @@ local function bowl(lane: Lane, by: Player)
 		pcall(function()
 			(require(script.Parent:WaitForChild("RagdollDirector")) :: any).logRemoval(ball, "Bowling", "called; ran to the approach and hopped on")
 		end)
-		pcall(DC.move, ball, CFrame.lookAt(lane.at + Vector3.new(0, 3, 0), lane.at + Vector3.new(0, 3, 0) + lane.dir) * CFrame.Angles(math.rad(-80), 0, 0))
+		if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).TRY_WALK then
+			-- (TRY_WALK: no teleport onto the lane: a real hop from the approach onto the lane's start)
+			local pe = ball:FindFirstChild("LowerTorso")
+			if pe and pe:IsA("BasePart") then
+				local g = Workspace.Gravity
+				local rise = math.max(0, lane.at.Y + 1 - pe.Position.Y) + 2
+				local vy = math.sqrt(2 * g * rise)
+				local t = vy / g + math.sqrt(4 / g)
+				local flat = Vector3.new(lane.at.X - pe.Position.X, 0, lane.at.Z - pe.Position.Z)
+				pcall(DC.push, ball, Vector3.new(0, vy, 0) + flat / math.max(t, 0.2))
+				task.wait(t + 0.15)
+			end
+		else
+			pcall(DC.move, ball, CFrame.lookAt(lane.at + Vector3.new(0, 3, 0), lane.at + Vector3.new(0, 3, 0) + lane.dir) * CFrame.Angles(math.rad(-80), 0, 0))
+		end
 	else
 		-- The ball: put on the approach, curled (a ragdoll on its side), then a real push down the lane.
 		ball:PivotTo(CFrame.lookAt(lane.at + Vector3.new(0, 3, 0), lane.at + Vector3.new(0, 3, 0) + lane.dir) * CFrame.Angles(math.rad(-80), 0, 0))

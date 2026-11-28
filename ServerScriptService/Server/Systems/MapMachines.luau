@@ -39,6 +39,9 @@ local function safeToCall(m: Model, pe: BasePart): boolean
 	if m:GetAttribute("Mood") ~= nil or (type(hitAt) == "number" and Workspace:GetServerTimeNow() - hitAt < 5) then
 		return false
 	end
+	if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TRY_WALK then
+		return true -- (TRY_WALK: one standing by you may come when you press the machine's button: you asked for it)
+	end
 	for _, pl in Players:GetPlayers() do
 		local r = pl.Character and pl.Character:FindFirstChild("HumanoidRootPart")
 		if r and r:IsA("BasePart") and (r.Position - pe.Position).Magnitude < 8 then
@@ -76,7 +79,7 @@ local function callIn(m: Model, spot: Vector3, name: string): boolean
 	m:SetAttribute("Pace", 2.4)
 	local t0 = os.clock()
 	local there = false
-	while os.clock() - t0 < 8 do
+	while os.clock() - t0 < (if (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TRY_WALK then 16 else 8) do
 		local pe = pelvisOf(m)
 		if not (pe and m.Parent) or m:GetAttribute("Held") == true then
 			break
@@ -272,7 +275,7 @@ local function wireGyro(pad: BasePart)
 	local live = (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).GYRO_10 == true
 	if button and button:IsA("BasePart") and (button.Position - pad.Position).Magnitude < 40 then
 		local function go(player: Player, power: number)
-			local m = nearestFree(button.Position, if SAFE then 40 else MapMachines.LOAD_REACH)
+			local m = nearestFree(button.Position, if SAFE and not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TRY_WALK then 40 else MapMachines.LOAD_REACH)
 			if m then
 				task.spawn(function()
 					if callIn(m, Vector3.new(pad.Position.X, pad.Position.Y, pad.Position.Z), "Gyro") then
@@ -413,7 +416,7 @@ local function wireShredder(pit: BasePart)
 	local button = pit.Parent and pit.Parent:FindFirstChild("ShredderButton")
 	if button and button:IsA("BasePart") and (button.Position - pit.Position).Magnitude < 60 then
 		prompt(button, "Shred!", function(player)
-			local m = nearestFree(button.Position, if SAFE then 40 else MapMachines.LOAD_REACH)
+			local m = nearestFree(button.Position, if SAFE and not (require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config")) :: any).TRY_WALK then 40 else MapMachines.LOAD_REACH)
 			if m then
 				task.spawn(function()
 					if callIn(m, pit.Position, "Shredder") then
