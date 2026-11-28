@@ -338,6 +338,13 @@ The owner said things were skipped. This is the full list from the chat since 26
     - Likely cause: the trunk is not held down and lifted (HOLD/LIFT) while the standing balance keeps the body upright, so the body walks with the claws and the joint-to-claw distance never grows. Or `may(player)` / phase refused the press; there is no log line to tell which.
     - NEXT (cloud): a `[Stretch]` debug line for phase, pulling and K each second, and make sure a locked body is put in `Ragdoll` state (lying, held at LIFT) before the arms pull.
     - Try 1 was spoiled by me: I fired every prompt, Release included.
+  - **"the wall: brick by brick with gravity, it resets after 10-15 s": FIXED (`WALL_FAST_RESET`, BrickWall).**
+    - Cause: the wall rebuilt 45 s after the last hit (`REBUILD = 45`), and its loose bricks faded after 30 s.
+    - Now: rebuild at 12 s, fade at 10 s.
+    - In Play a body thrown into it at 90 studs/s 3 times broke it from 4 panels into 60 parts.
+      - Capture `wall_broken`: bricks out, a stepped hole.
+      - It was whole again (4 panels) about 13 s after the last hit; capture `wall_rebuilt`: the wall smooth again from the same spot.
+    - Not checked: concrete walls and crates.
 
 
 ## BATCH 1 (do now)

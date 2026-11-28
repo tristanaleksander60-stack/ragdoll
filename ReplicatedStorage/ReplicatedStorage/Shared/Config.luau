@@ -54,6 +54,7 @@ local Config = {
 	MAP_MACHINES_LIVE = true, -- map round 3: the gyro cage catches, tumbles and flings; the shredder hides, confettis and spits out (Systems/MapMachines); the gyro rings turn on the client
 	TREES_V2 = true, -- OVERVIEW 1a: trees and bushes from V3Assets/YTrees (textured bark + leaf canopies, mixed species, 5 greens, rare autumn, lean) instead of the flat green meshes (LabOwnerMap yTree)
 	ROAD_WALKERS = true, -- OVERVIEW 1c: 3 groups of 2-3 ragdolls walk the outer ring / boulevard side by side, stop to chat every 20-40 s, say "Hi!" (Systems/RoadWalkers)
+	WALL_FAST_RESET = true, -- ledger: the brick wall rebuilds 12 s after the last hit (was 45) and its loose bricks fade after 10 s (was 30) (BrickWall)
 	BRICK_WALL = true, -- OVERVIEW 1d: the crash wall breaks one brick at a time with gravity (hybrid panels, sleeping debris, cap 50; Systems/BrickWall)
 	SOLO_HIDE = true, -- OVERVIEW 2 / F30: in the START place, other players (characters, name tags, sounds, effects) are hidden on this screen if a server ever holds 2+ (Client/SoloHide)
 	M10_CANNON = true, -- MACHINES_10 3.1: the cannon's fuse spark + "Cover your ears!", then the landing distance pops ("123 studs!", NEW BEST, 1 in 20 GOLDEN) (Playground cannonWindUp/cannonScore)

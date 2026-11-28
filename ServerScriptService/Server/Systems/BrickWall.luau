@@ -27,6 +27,12 @@ BrickWall.CASCADE = 0.07
 BrickWall.MAX_LOOSE = 50
 BrickWall.FADE = 30
 BrickWall.REBUILD = 45
+-- (WALL_FAST_RESET, ledger "it resets after 10-15 s": the wall stood broken 45 s. Now the loose bricks fade after 10 s
+-- and the wall rebuilds 12 s after the last hit, so the rubble is gone before it rises again.)
+if (require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config")) :: any).WALL_FAST_RESET then
+	BrickWall.FADE = 10
+	BrickWall.REBUILD = 12
+end
 local splatAt: { [Instance]: number } = setmetatable({}, { __mode = "k" }) :: any -- (3.10: one splat a body per 1.5 s)
 
 local BRICK = Color3.fromRGB(170, 78, 58)
